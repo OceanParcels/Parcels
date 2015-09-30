@@ -16,12 +16,20 @@ class PeninsulaGrid(object):
     """
 
     def __init__(self, xdim, ydim):
+        """Construct the Peninsula flow field on a C-grid.
+
+        :param xdim: Horizontal dimension of the generated C-grid
+        :param xdim: Vertical dimension of the generated C-grid
+
+        Note that an A-grid version of the flow field is generated
+        first and then converted to the C-grid.
+        """
         self.xdim = xdim
         self.ydim = ydim
 
         # Generate lat/lon on A-grid and convert from km to degrees
-        self.lonA = np.arange(xdim, dtype=np.int) / 1.852 / 60.
-        self.latA = np.arange(ydim, dtype=np.int) / 1.852 / 60.
+        self.lonA = np.arange(self.xdim, dtype=np.int) / 1.852 / 60.
+        self.latA = np.arange(self.ydim, dtype=np.int) / 1.852 / 60.
 
         # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
         # surface height) all on A-grid
@@ -46,3 +54,23 @@ class PeninsulaGrid(object):
         self.Ua[I] = np.nan
         self.Va[I] = np.nan
         self.Wa[I] = np.nan
+
+        # Set the lon and lat mesh for U and V on c-grid
+        self.lonC_u = (self.lonA[1:] + self.lonA[:-1]) / 2.
+        self.latC_u = self.latA
+        self.lonC_v = self.lonA
+        self.latC_v = (self.latA[1:] + self.latA[:-1]) / 2.
+
+        # Create c-grid fields
+        self.Uc = np.zeros((self.xdim-1, self.ydim), dtype=np.float)
+        self.Vc = np.zeros((self.xdim, self.ydim-1), dtype=np.float)
+
+        # Set Uc
+        for x in range(self.xdim-1):
+            for y in range(self.ydim):
+                self.Uc[x, y] = (self.Ua[x+1, y] + self.Ua[x, y]) / 2.
+
+        # Set Vc
+        for x in range(self.xdim):
+            for y in range(self.ydim-1):
+                self.Vc[x, y]=(self.Va[x, y+1] + self.Va[x,y]) / 2.
