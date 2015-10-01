@@ -1,0 +1,26 @@
+notifications:
+  email: false
+
+language: python
+python:
+    - "2.7"
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libhdf5-serial-dev
+      - netcdf-bin
+      - libnetcdf-dev
+
+install:
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+
+script:
+    - export PYTHONPATH=`pwd`:$PYTHONPATH
+    - flake8 parcels
+    - flake8 tests
+    - python tests/peninsula.py
+    - ncdump ncdf_test_U -l 200
