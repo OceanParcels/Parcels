@@ -1,5 +1,6 @@
-from parcels.nemo_grid import NEMOGrid
+from parcels import NEMOGrid
 import numpy as np
+from argparse import ArgumentParser
 
 
 class PeninsulaGrid(NEMOGrid):
@@ -78,3 +79,21 @@ class PeninsulaGrid(NEMOGrid):
         for x in range(self.x):
             for y in range(self.y-1):
                 self.V[x, y] = (self.Va[x, y+1] + self.Va[x, y]) / 2.
+
+
+def main():
+    p = ArgumentParser(description="")
+    p.add_argument('x', metavar='x', type=int, default=1,
+                   help='Number of horizontal grid cells')
+    p.add_argument('y', metavar='y', type=int, default=1,
+                   help='Number of vertical grid cells')
+    p.add_argument('-f', '--filename', default='peninsula',
+                   help='Basename for the output grid files')
+    args = p.parse_args()
+
+    grid = PeninsulaGrid(args.x, args.y)
+    grid.write(args.filename)
+
+
+if __name__ == "__main__":
+    main()
