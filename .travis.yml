@@ -23,4 +23,4 @@ script:
     - flake8 parcels
     - flake8 tests
     - python tests/peninsula.py 20 10
-    - ncdump peninsula_U -l 200
+    - ncdump peninsula_U.nc -l 200

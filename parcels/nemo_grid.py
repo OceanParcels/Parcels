@@ -32,8 +32,8 @@ class NEMOGrid(object):
     def __init__(self, filename=None):
         """Initialise pointers into NEMO grid files"""
         if filename:
-            self.dset_u = Dataset('%s_U' % filename, 'r', format="NETCDF4")
-            self.dset_v = Dataset('%s_V' % filename, 'r', format="NETCDF4")
+            self.dset_u = Dataset('%s_U.nc' % filename, 'r', format="NETCDF4")
+            self.dset_v = Dataset('%s_V.nc' % filename, 'r', format="NETCDF4")
 
             # Get U, V and flow-specific lat/lon from netCF file
             self.lon_u = self.dset_u['nav_lon']
@@ -62,7 +62,7 @@ class NEMOGrid(object):
         print "Generating NEMO grid output:", filepath
 
         # Generate NEMO-style output for U
-        dset_u = Dataset('%s_U' % filepath, 'w', format="NETCDF4")
+        dset_u = Dataset('%s_U.nc' % filepath, 'w', format="NETCDF4")
         dset_u.createDimension('x', self.x-1)
         dset_u.createDimension('y', self.y)
         dset_u.createDimension('depthu', self.depth.size)
@@ -88,7 +88,7 @@ class NEMOGrid(object):
         dset_u.close()
 
         # Generate NEMO-style output for V
-        dset_v = Dataset('%s_V' % filepath, 'w', format="NETCDF4")
+        dset_v = Dataset('%s_V.nc' % filepath, 'w', format="NETCDF4")
         dset_v.createDimension('x', self.x)
         dset_v.createDimension('y', self.y-1)
         dset_v.createDimension('depthv', self.depth.size)
