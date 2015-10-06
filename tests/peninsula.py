@@ -7,15 +7,12 @@ class PeninsulaGrid(NEMOGrid):
     """Grid encapsulating the flow field around an idealised
     peninsula.
 
-    The original test description can be found in Fig. 2 in:
-    C. B. Paris, J. Helgers, E. van Sebille, A. Srinivasan,
-    "Connectivity Modeling System: A probabilistic modeling tool for
-    the multi-scale tracking of biotic and abiotic variability in the
-    ocean",
-    Environmental Modelling & Software, Volume 42,
-    April 2013, Pages 47-54, ISSN 1364-8152,
-    http://dx.doi.org/10.1016/j.envsoft.2012.12.006.
-    """
+    The original test description can be found in Fig. 2.2.3 in:
+    North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
+    recommended practices for modelling physical - biological
+    interactions during fish early life.
+    ICES Cooperative Research Report No. 295. 111 pp.
+    http://archimer.ifremer.fr/doc/00157/26792/24888.pdf"""
 
     def __init__(self, xdim, ydim):
         """Construct the Peninsula flow field on a C-grid.
