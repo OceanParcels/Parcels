@@ -48,9 +48,9 @@ class NEMOGrid(object):
             self.V[np.isnan(self.V)] = 0.
 
             # Set up linear interpolator spline objects, currently limited to 2D
-            self.interp_u = RectBivariateSpline(self.lon_u[:, 0], self.lat_u[0, :],
+            self.interp_u = RectBivariateSpline(self.lat_u[:, 0], self.lon_u[0, :],
                                                 self.U[:, :], kx=1, ky=1)
-            self.interp_v = RectBivariateSpline(self.lon_v[:, 0], self.lat_v[0, :],
+            self.interp_v = RectBivariateSpline(self.lat_v[:, 0], self.lon_v[0, :],
                                                 self.V[:, :], kx=1, ky=1)
 
     def add_particle(self, p):
@@ -68,23 +68,23 @@ class NEMOGrid(object):
         dset_u.createDimension('depthu', self.depth.size)
         dset_u.createDimension('time_counter', None)
 
-        dset_u.createVariable('nav_lon', np.float32, ('x', 'y'))
-        dset_u.createVariable('nav_lat', np.float32, ('x', 'y'))
+        dset_u.createVariable('nav_lon', np.float32, ('y', 'x'))
+        dset_u.createVariable('nav_lat', np.float32, ('y', 'x'))
         dset_u.createVariable('depthu', np.float32, ('depthu',))
         dset_u.createVariable('time_counter', np.float64, ('time_counter',))
-        dset_u.createVariable('vozocrtx', np.float32, ('time_counter', 'depthu', 'x', 'y'))
+        dset_u.createVariable('vozocrtx', np.float32, ('time_counter', 'depthu', 'y', 'x'))
 
         for y in range(self.y):
-            dset_u['nav_lon'][:, y] = self.lon_u
+            dset_u['nav_lon'][y, :] = self.lon_u
         dset_u['nav_lon'].valid_min = self.lon_u[0]
         dset_u['nav_lon'].valid_max = self.lon_u[-1]
         for x in range(self.x-1):
-            dset_u['nav_lat'][x, :] = self.lat_u
+            dset_u['nav_lat'][:, x] = self.lat_u
         dset_u['nav_lat'].valid_min = self.lat_u[0]
         dset_u['nav_lat'].valid_max = self.lat_u[-1]
         dset_u['depthu'][:] = self.depth
         dset_u['time_counter'][:] = self.time_counter
-        dset_u['vozocrtx'][0, 0, :, :] = self.U
+        dset_u['vozocrtx'][0, 0, :, :] = np.transpose(self.U)
         dset_u.close()
 
         # Generate NEMO-style output for V
@@ -94,21 +94,21 @@ class NEMOGrid(object):
         dset_v.createDimension('depthv', self.depth.size)
         dset_v.createDimension('time_counter', None)
 
-        dset_v.createVariable('nav_lon', np.float32, ('x', 'y'))
-        dset_v.createVariable('nav_lat', np.float32, ('x', 'y'))
+        dset_v.createVariable('nav_lon', np.float32, ('y', 'x'))
+        dset_v.createVariable('nav_lat', np.float32, ('y', 'x'))
         dset_v.createVariable('depthv', np.float32, ('depthv',))
         dset_v.createVariable('time_counter', np.float64, ('time_counter',))
-        dset_v.createVariable('vomecrty', np.float32, ('time_counter', 'depthv', 'x', 'y'))
+        dset_v.createVariable('vomecrty', np.float32, ('time_counter', 'depthv', 'y', 'x'))
 
         for y in range(self.y-1):
-            dset_v['nav_lon'][:, y] = self.lon_v
+            dset_v['nav_lon'][y, :] = self.lon_v
         dset_v['nav_lon'].valid_min = self.lon_u[0]
         dset_v['nav_lon'].valid_max = self.lon_u[-1]
         for x in range(self.x):
-            dset_v['nav_lat'][x, :] = self.lat_v
+            dset_v['nav_lat'][:, x] = self.lat_v
         dset_v['nav_lat'].valid_min = self.lat_u[0]
         dset_v['nav_lat'].valid_max = self.lat_u[-1]
         dset_v['depthv'][:] = self.depth
         dset_v['time_counter'][:] = self.time_counter
-        dset_v['vomecrty'][0, 0, :, :] = self.V
+        dset_v['vomecrty'][0, 0, :, :] = np.transpose(self.V)
         dset_v.close()
