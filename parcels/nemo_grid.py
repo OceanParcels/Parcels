@@ -25,6 +25,12 @@ class NEMOGrid(object):
     U = None
     V = None
 
+    # Particle set
+    _particles = []
+
+    def add_particle(self, p):
+        self._particles.append(p)
+
     def write(self, filename):
         """Write flow field to NetCDF file using NEMO convention"""
         filepath = path.local(filename)
