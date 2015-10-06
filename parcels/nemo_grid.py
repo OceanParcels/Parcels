@@ -1,6 +1,7 @@
 import numpy as np
 from py import path
 from netCDF4 import Dataset
+from scipy.interpolate import RectBivariateSpline
 
 
 __all__ = ['NEMOGrid']
@@ -27,6 +28,30 @@ class NEMOGrid(object):
 
     # Particle set
     _particles = []
+
+    def __init__(self, filename=None):
+        """Initialise pointers into NEMO grid files"""
+        if filename:
+            self.dset_u = Dataset('%s_U' % filename, 'r', format="NETCDF4")
+            self.dset_v = Dataset('%s_V' % filename, 'r', format="NETCDF4")
+
+            # Get U, V and flow-specific lat/lon from netCF file
+            self.lon_u = self.dset_u['nav_lon']
+            self.lat_u = self.dset_u['nav_lat']
+            self.lon_v = self.dset_v['nav_lon']
+            self.lat_v = self.dset_v['nav_lat']
+            self.U = self.dset_u['vozocrtx'][0, 0, :, :]
+            self.V = self.dset_v['vomecrty'][0, 0, :, :]
+
+            # Hack around the fact that NaN values propagate in SciPy's interpolators
+            self.U[np.isnan(self.U)] = 0.
+            self.V[np.isnan(self.V)] = 0.
+
+            # Set up linear interpolator spline objects, currently limited to 2D
+            self.interp_u = RectBivariateSpline(self.lon_u[:, 0], self.lat_u[0, :],
+                                                self.U[:, :], kx=1, ky=1)
+            self.interp_v = RectBivariateSpline(self.lon_v[:, 0], self.lat_v[0, :],
+                                                self.V[:, :], kx=1, ky=1)
 
     def add_particle(self, p):
         self._particles.append(p)
