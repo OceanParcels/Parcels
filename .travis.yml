@@ -33,3 +33,4 @@ script:
     - flake8 tests
     - python tests/peninsula.py 20 10
     - ncdump peninsula_U.nc -l 200
+    - python tests/example_peninsula.py -p 20 --degree 3
