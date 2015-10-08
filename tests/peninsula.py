@@ -29,9 +29,11 @@ class PeninsulaGrid(NEMOGrid):
         self.depth = np.zeros(1, dtype=np.float32)
         self.time_counter = np.zeros(1, dtype=np.float32)
 
-        # Generate lat/lon on A-grid and convert from km to degrees
-        self.lonA = np.arange(self.x, dtype=np.int) / 1.852 / 60.
-        self.latA = np.arange(self.y, dtype=np.int) / 1.852 / 60.
+        # Generate the original test setup on A-grid in km
+        xoff = 100. / self.x / 2.
+        yoff = 50. / self.y / 2.
+        La = np.linspace(xoff, 100.-xoff, self.x, dtype=np.float)
+        Wa = np.linspace(yoff, 50.-yoff, self.y, dtype=np.float)
 
         # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
         # surface height) all on A-grid
@@ -41,21 +43,25 @@ class PeninsulaGrid(NEMOGrid):
         self.P = np.zeros((self.x, self.y), dtype=np.float)
 
         u0 = 1
-        x0 = round(self.x / 2.)
-        R = 0.32 * self.y
+        x0 = 50.
+        R = 0.32 * 50.
 
         # Create the fields
-        for x in range(1, self.x+1):
-            for y in range(1, self.y+1):
-                self.P[x-1, y-1] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-                self.Ua[x-1, y-1] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-                self.Va[x-1, y-1] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+        for i, x in enumerate(La):
+            for j, y in enumerate(Wa):
+                self.P[i, j] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+                self.Ua[i, j] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+                self.Va[i, j] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
 
         # Set land points to NaN
         I = self.P >= 0.
         self.Ua[I] = np.nan
         self.Va[I] = np.nan
         self.Wa[I] = np.nan
+
+        # Convert from km to lat/lon
+        self.lonA = La / 1.852 / 60.
+        self.latA = Wa / 1.852 / 60.
 
         # Set the lon and lat mesh for U and V on c-grid
         self.lon_u = (self.lonA[1:] + self.lonA[:-1]) / 2.
