@@ -1,0 +1,36 @@
+notifications:
+  email: false
+
+language: python
+python:
+    - "2.7"
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libhdf5-serial-dev
+      - netcdf-bin
+      - libnetcdf-dev
+
+before_install:
+    # Setup anaconda
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - chmod +x miniconda.sh
+    - ./miniconda.sh -b
+    - export PATH=/home/travis/miniconda/bin:$PATH
+    - conda update --yes conda
+
+install:
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+
+script:
+    - export PYTHONPATH=`pwd`:$PYTHONPATH
+    - flake8 parcels
+    - flake8 tests
+    - python tests/peninsula.py 20 10
+    - ncdump peninsula_U.nc -l 200
+    - python tests/example_peninsula.py -p 20 --degree 3
