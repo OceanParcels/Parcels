@@ -53,6 +53,11 @@ class NEMOGrid(object):
             self.interp_v = RectBivariateSpline(self.lat_v[:, 0], self.lon_v[0, :],
                                                 self.V[:, :], kx=1, ky=1)
 
+    def eval(self, x, y):
+        u = self.interp_u.ev(y, x)[0]
+        v = self.interp_v.ev(y, x)[0]
+        return u, v
+
     def add_particle(self, p):
         self._particles.append(p)
 
