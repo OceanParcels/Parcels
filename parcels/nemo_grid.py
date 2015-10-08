@@ -54,8 +54,8 @@ class NEMOGrid(object):
                                                 self.V[:, :], kx=degree, ky=degree)
 
     def eval(self, x, y):
-        u = self.interp_u.ev(y, x)[0]
-        v = self.interp_v.ev(y, x)[0]
+        u = self.interp_u.ev(y, x)
+        v = self.interp_v.ev(y, x)
         return u, v
 
     def add_particle(self, p):
