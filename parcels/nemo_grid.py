@@ -29,7 +29,7 @@ class NEMOGrid(object):
     # Particle set
     _particles = []
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, degree=3):
         """Initialise pointers into NEMO grid files"""
         if filename:
             self.dset_u = Dataset('%s_U.nc' % filename, 'r', format="NETCDF4")
@@ -49,9 +49,9 @@ class NEMOGrid(object):
 
             # Set up linear interpolator spline objects, currently limited to 2D
             self.interp_u = RectBivariateSpline(self.lat_u[:, 0], self.lon_u[0, :],
-                                                self.U[:, :], kx=1, ky=1)
+                                                self.U[:, :], kx=degree, ky=degree)
             self.interp_v = RectBivariateSpline(self.lat_v[:, 0], self.lon_v[0, :],
-                                                self.V[:, :], kx=1, ky=1)
+                                                self.V[:, :], kx=degree, ky=degree)
 
     def eval(self, x, y):
         u = self.interp_u.ev(y, x)[0]
