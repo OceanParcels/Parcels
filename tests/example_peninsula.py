@@ -13,8 +13,8 @@ def pensinsula_example(filename, npart, degree=3):
 
     # Initialise particles
     for p in range(npart):
-        y = p * grid.lat_u.valid_max / npart + 0.45 / 1.852 / 60.
-        grid.add_particle(Particle(x=3 / 1.852 / 60., y=y))
+        lat = p * grid.lat_u.valid_max / npart + 0.45 / 1.852 / 60.
+        grid.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
 
     print "Initial particle positions:"
     for p in grid._particles:
