@@ -68,8 +68,8 @@ class NEMOGrid(object):
 
         # Generate NEMO-style output for U
         dset_u = Dataset('%s_U.nc' % filepath, 'w', format="NETCDF4")
-        dset_u.createDimension('x', self.x-1)
-        dset_u.createDimension('y', self.y)
+        dset_u.createDimension('x', len(self.lon_u))
+        dset_u.createDimension('y', len(self.lat_u))
         dset_u.createDimension('depthu', self.depth.size)
         dset_u.createDimension('time_counter', None)
 
@@ -79,11 +79,11 @@ class NEMOGrid(object):
         dset_u.createVariable('time_counter', np.float64, ('time_counter',))
         dset_u.createVariable('vozocrtx', np.float32, ('time_counter', 'depthu', 'y', 'x'))
 
-        for y in range(self.y):
+        for y in range(len(self.lat_u)):
             dset_u['nav_lon'][y, :] = self.lon_u
         dset_u['nav_lon'].valid_min = self.lon_u[0]
         dset_u['nav_lon'].valid_max = self.lon_u[-1]
-        for x in range(self.x-1):
+        for x in range(len(self.lon_u)):
             dset_u['nav_lat'][:, x] = self.lat_u
         dset_u['nav_lat'].valid_min = self.lat_u[0]
         dset_u['nav_lat'].valid_max = self.lat_u[-1]
@@ -94,8 +94,8 @@ class NEMOGrid(object):
 
         # Generate NEMO-style output for V
         dset_v = Dataset('%s_V.nc' % filepath, 'w', format="NETCDF4")
-        dset_v.createDimension('x', self.x)
-        dset_v.createDimension('y', self.y-1)
+        dset_v.createDimension('x', len(self.lon_v))
+        dset_v.createDimension('y', len(self.lat_v))
         dset_v.createDimension('depthv', self.depth.size)
         dset_v.createDimension('time_counter', None)
 
@@ -105,11 +105,11 @@ class NEMOGrid(object):
         dset_v.createVariable('time_counter', np.float64, ('time_counter',))
         dset_v.createVariable('vomecrty', np.float32, ('time_counter', 'depthv', 'y', 'x'))
 
-        for y in range(self.y-1):
+        for y in range(len(self.lat_v)):
             dset_v['nav_lon'][y, :] = self.lon_v
         dset_v['nav_lon'].valid_min = self.lon_u[0]
         dset_v['nav_lon'].valid_max = self.lon_u[-1]
-        for x in range(self.x):
+        for x in range(len(self.lon_v)):
             dset_v['nav_lat'][:, x] = self.lat_v
         dset_v['nav_lat'].valid_min = self.lat_u[0]
         dset_v['nav_lat'].valid_max = self.lat_u[-1]
