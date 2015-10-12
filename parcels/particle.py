@@ -1,4 +1,31 @@
-__all__ = ['Particle']
+import numpy as np
+
+__all__ = ['Particle', 'ParticleSet']
+
+
+class ParticleSet(object):
+    """Container class for storing and executing over sets of particles.
+
+    Please note that this currently only supports fixed size partcile sets.
+
+    :param size: Initial size of particle set
+    :param grid: Grid object from which to sample velocity"""
+
+    def __init__(self, size, grid):
+        self._grid = grid
+        self._particles = np.empty(size, dtype=Particle)
+        self._npart = 0
+
+    def add_particle(self, particle):
+        self._particles[self._npart] = particle
+        self._npart += 1
+
+    def advect(self, timesteps=1, dt=None):
+        print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
+            % (self._npart, timesteps)
+        for t in range(timesteps):
+            for p in self._particles:
+                p.advect_rk4(self._grid, dt)
 
 
 class Particle(object):

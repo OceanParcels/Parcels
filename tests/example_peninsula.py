@@ -1,4 +1,4 @@
-from parcels import NEMOGrid, Particle
+from parcels import NEMOGrid, Particle, ParticleSet
 from argparse import ArgumentParser
 
 
@@ -12,24 +12,23 @@ def pensinsula_example(filename, npart, degree=3):
     grid = NEMOGrid(filename, degree=degree)
 
     # Initialise particles
+    pset = ParticleSet(npart, grid)
     for p in range(npart):
         lat = p * grid.lat_u.valid_max / npart + 0.45 / 1.852 / 60.
-        grid.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
+        pset.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
 
     print "Initial particle positions:"
-    for p in grid._particles:
+    for p in pset._particles:
         print p
 
     # Advect the particles for 24h
     time = 86400.
     dt = 36.
-    ntimesteps = int(time / dt)
-    for t in range(ntimesteps):
-        for p in grid._particles:
-            p.advect_rk4(grid, dt)
+    timesteps = int(time / dt)
+    pset.advect(timesteps=timesteps, dt=dt)
 
     print "Final particle positions:"
-    for p in grid._particles:
+    for p in pset._particles:
         print p
 
 if __name__ == "__main__":
