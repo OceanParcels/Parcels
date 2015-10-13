@@ -1,4 +1,6 @@
 import numpy as np
+cimport numpy as np
+import cython
 
 __all__ = ['Particle', 'ParticleSet']
 
@@ -28,17 +30,24 @@ class ParticleSet(object):
                 p.advect_rk4(self._grid, dt)
 
 
-class Particle(object):
+cdef class Particle(object):
     """Classe encapsualting the basic attributes of a particle"""
 
-    def __init__(self, lon, lat):
+    cdef np.float32_t lon, lat
+
+    def __cinit__(self, np.float32_t lon, np.float32_t lat):
         self.lon = lon
         self.lat = lat
 
     def __repr__(self):
         return "P(%f, %f)" % (self.lon, self.lat)
 
-    def advect_rk4(self, grid, dt):
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def advect_rk4(self, grid, np.float32_t dt):
+        cdef:
+            np.float32_t f, u1, v1, u2, v2, u3, v3, u4, v4
+            np.float32_t lon1, lat1, lon2, lat2, lon3, lat3
         f = dt / 1000. / 1.852 / 60.
         u1, v1 = grid.eval(self.lon, self.lat)
         lon1, lat1 = (self.lon + u1*.5*f, self.lat + v1*.5*f)
