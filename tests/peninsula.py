@@ -20,9 +20,9 @@ class PeninsulaGrid(NEMOGrid):
         :param xdim: Horizontal dimension of the generated grid
         :param xdim: Vertical dimension of the generated grid
 
-        Note that the problem is defined on an A-grid while NEMO 
-        normally returns C-grids. However, to avoid accuracy 
-        problems with interpolation from A-grid to C-grid, we 
+        Note that the problem is defined on an A-grid while NEMO
+        normally returns C-grids. However, to avoid accuracy
+        problems with interpolation from A-grid to C-grid, we
         return NetCDF files that are on an A-grid.
         """
         # Set NEMO grid variables
@@ -37,10 +37,10 @@ class PeninsulaGrid(NEMOGrid):
 
         # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
         # surface height) all on A-grid
-        self.U = np.zeros((xdim,ydim), dtype=np.float)
-        self.V = np.zeros((xdim,ydim), dtype=np.float)
-        self.W = np.zeros((xdim,ydim), dtype=np.float)
-        self.P = np.zeros((xdim,ydim), dtype=np.float)
+        self.U = np.zeros((xdim, ydim), dtype=np.float)
+        self.V = np.zeros((xdim, ydim), dtype=np.float)
+        self.W = np.zeros((xdim, ydim), dtype=np.float)
+        self.P = np.zeros((xdim, ydim), dtype=np.float)
 
         u0 = 1
         x0 = 50.
