@@ -21,7 +21,7 @@ python tests/peninsula.py <xdim> <ydim>
 where `xdim` and `ydim` are the numbers of grid cells in each
 dimension. The particle advection example can then be run with:
 ```
-python tests/peninsula.py -p <npart> --degree <deg>
+python tests/example_peninsula.py -p <npart> --degree <deg>
 ```
 where `npart` is the number of evenly initialised particles and `deg`
 is the degree of spatial interpolation used.
