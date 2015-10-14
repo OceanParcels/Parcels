@@ -1,8 +1,8 @@
-from parcels import NEMOGrid, Particle
+from parcels import NEMOGrid, Particle, ParticleSet
 from argparse import ArgumentParser
 
 
-def pensinsula_example(filename, npart, degree=3):
+def pensinsula_example(filename, npart, degree=3, verbose=False):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
@@ -12,25 +12,26 @@ def pensinsula_example(filename, npart, degree=3):
     grid = NEMOGrid(filename, degree=degree)
 
     # Initialise particles
+    pset = ParticleSet(npart, grid)
     for p in range(npart):
         lat = p * grid.lat_u.valid_max / npart + 0.45 / 1.852 / 60.
-        grid.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
+        pset.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
 
-    print "Initial particle positions:"
-    for p in grid._particles:
-        print p
+    if verbose:
+        print "Initial particle positions:"
+        for p in pset._particles:
+            print p
 
     # Advect the particles for 24h
     time = 86400.
     dt = 36.
-    ntimesteps = int(time / dt)
-    for t in range(ntimesteps):
-        for p in grid._particles:
-            p.advect_rk4(grid, dt)
+    timesteps = int(time / dt)
+    pset.advect(timesteps=timesteps, dt=dt)
 
-    print "Final particle positions:"
-    for p in grid._particles:
-        print p
+    if verbose:
+        print "Final particle positions:"
+        for p in pset._particles:
+            print p
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""
@@ -39,5 +40,18 @@ Example of particle advection around an idealised peninsula""")
                    help='Number of particles to advect')
     p.add_argument('-d', '--degree', type=int, default=3,
                    help='Degree of spatial interpolation')
+    p.add_argument('-v', '--verbose', action='store_true', default=False,
+                   help='Print particle information before and after execution')
+    p.add_argument('--profiling', action='store_true', default=False,
+                   help='Print profiling information after run')
     args = p.parse_args()
-    pensinsula_example('peninsula', args.particles, degree=args.degree)
+
+    if args.profiling:
+        from cProfile import runctx
+        from pstats import Stats
+        runctx("pensinsula_example('peninsula', args.particles, degree=args.degree, verbose=args.verbose)",
+               globals(), locals(), "Profile.prof")
+        Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
+    else:
+        pensinsula_example('peninsula', args.particles, degree=args.degree,
+                           verbose=args.verbose)
