@@ -1,5 +1,6 @@
 from parcels import NEMOGrid, Particle, ParticleSet
 from argparse import ArgumentParser
+import numpy as np
 
 
 def pensinsula_example(filename, npart, degree=3, verbose=False):
@@ -13,8 +14,9 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
 
     # Initialise particles
     pset = ParticleSet(npart, grid)
-    for p in range(npart):
-        lat = p * grid.lat_u.valid_max / npart + 0.45 / 1.852 / 60.
+    min_y = 0.45 / 1.852 / 60
+    max_y = 45. / 1.852 / 60
+    for lat in np.linspace(min_y, max_y, npart, dtype=np.float):
         pset.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
 
     if verbose:
