@@ -40,7 +40,7 @@ class ParticleSet(object):
 
     def generate_jit_kernel(self, filename):
         self._kernel = Kernel(filename)
-        self._kernel.generate_code()
+        self._kernel.generate_code(self._grid)
         self._kernel.compile(compiler=GNUCompiler())
         self._kernel.load_lib()
 
@@ -58,7 +58,7 @@ class ParticleSet(object):
             for p in self._particles:
                 p.advect_rk4_cython(self._grid, dt)
 
-        self._kernel.execute(self)
+        self._kernel.execute(self, timesteps, dt)
 
 
 cdef class Particle(object):

@@ -1,7 +1,8 @@
 from py import path
 import subprocess
 from os import environ
-import numpy as np
+import numpy.ctypeslib as npct
+from ctypes import c_int, c_float
 
 
 class Kernel(object):
@@ -17,9 +18,11 @@ class Kernel(object):
         self.log_file = str(path.local("%s.log" % self.filename))
         self._lib = None
 
-    def generate_code(self):
+    def generate_code(self, grid):
+        parameters = dict(xdim=grid.U.lon.size, ydim=grid.U.lat.size)
         self.code = """
 #include <stdio.h>
+
 
 typedef struct
 {
@@ -27,11 +30,30 @@ typedef struct
     int xi, yi;
 } Particle;
 
-void particle_kernel(Particle *p)
+
+static inline void particle_kernel(Particle *p, float lon[%(xdim)d], float lat[%(ydim)d],
+                                   float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
 {
-    printf("Particle: P(%f, %f)[%d, %d]\\n", p->lon, p->lat, p->xi, p->yi);
+  printf("Particle: P(%%f, %%f)[%%d, %%d]\\n", p->lon, p->lat, p->xi, p->yi);
+  printf("Grid: Q_11(%%f, %%f), U[Q_11](%%f) \\n", lon[p->xi], lat[p->yi], u[p->yi][p->xi]);
 }
-"""
+
+
+void particle_loop(int num_particles, Particle *particles,
+                   int timesteps, float dt,
+                   float lon[%(xdim)d], float lat[%(ydim)d],
+                   float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
+{
+  int p, t;
+
+  for (t = 0; t < timesteps; ++t) {
+    for (p = 0; p < num_particles; ++p) {
+        particle_kernel(&(particles[0]), lon, lat, u, v);
+    }
+  }
+}
+
+""" % parameters
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
@@ -40,11 +62,15 @@ void particle_kernel(Particle *p)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
 
     def load_lib(self):
-        self._lib = np.ctypeslib.load_library(self.lib_file, '.')
-        self._function = self._lib.particle_kernel
+        self._lib = npct.load_library(self.lib_file, '.')
+        self._function = self._lib.particle_loop
 
-    def execute(self, pset):
-        self._function(pset._p_array.ctypes.data)
+    def execute(self, pset, timesteps, dt):
+        grid = pset._grid
+        self._function(c_int(pset._npart), pset._p_array.ctypes.data,
+                       c_int(timesteps), c_float(dt),
+                       grid.U.lon.ctypes.data, grid.U.lat.ctypes.data,
+                       grid.U.data.ctypes.data, grid.V.data.ctypes.data)
 
 
 class Compiler(object):
@@ -63,7 +89,6 @@ class Compiler(object):
         self._ld = environ.get('LDSHARED', ld)
         self._cppargs = cppargs
         self._ldargs = ldargs
-
 
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
