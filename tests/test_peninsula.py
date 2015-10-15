@@ -33,6 +33,9 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
         for p in pset._particles:
             print p
 
+    # Prepare JIT execution
+    pset.generate_jit_kernel("particle_kernel")
+
     # Advect the particles for 24h
     time = 86400.
     dt = 36.

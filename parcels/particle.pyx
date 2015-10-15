@@ -1,6 +1,7 @@
 import numpy as np
 cimport numpy as np
 import cython
+from parcels.jit_module import Kernel, GNUCompiler
 
 __all__ = ['Particle', 'ParticleSet']
 
@@ -18,12 +19,19 @@ class ParticleSet(object):
         self._particles = np.empty(size, dtype=Particle)
         self._npart = 0
 
+        self._kernel = None
+
     def add_particle(self, p):
         p.xi = np.where(p.lon > self._grid.U.lon)[0][-1]
         p.yi = np.where(p.lat > self._grid.U.lat)[0][-1]
 
         self._particles[self._npart] = p
         self._npart += 1
+
+    def generate_jit_kernel(self, filename):
+        self._kernel = Kernel(filename)
+        self._kernel.generate_code()
+        self._kernel.compile(compiler=GNUCompiler())
 
     def advect(self, timesteps=1, dt=None):
         print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
