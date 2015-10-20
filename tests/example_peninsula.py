@@ -10,7 +10,7 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
     :arg npart: Number of particles to intialise"""
 
     # Open grid file set
-    grid = NEMOGrid(filename, degree=degree)
+    grid = NEMOGrid.from_file(filename)
 
     # Initialise particles
     pset = ParticleSet(npart, grid)

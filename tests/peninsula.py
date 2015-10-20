@@ -26,8 +26,8 @@ class PeninsulaGrid(NEMOGrid):
         return NetCDF files that are on an A-grid.
         """
         # Set NEMO grid variables
-        self.depth = np.zeros(1, dtype=np.float32)
-        self.time_counter = np.zeros(1, dtype=np.float32)
+        depth = np.zeros(1, dtype=np.float32)
+        time = np.zeros(1, dtype=np.float32)
 
         # Generate the original test setup on A-grid in km
         La = np.linspace(0, 100., xdim, dtype=np.float)
@@ -35,10 +35,10 @@ class PeninsulaGrid(NEMOGrid):
 
         # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
         # surface height) all on A-grid
-        self.U = np.zeros((xdim, ydim), dtype=np.float)
-        self.V = np.zeros((xdim, ydim), dtype=np.float)
-        self.W = np.zeros((xdim, ydim), dtype=np.float)
-        self.P = np.zeros((xdim, ydim), dtype=np.float)
+        U = np.zeros((xdim, ydim), dtype=np.float)
+        V = np.zeros((xdim, ydim), dtype=np.float)
+        W = np.zeros((xdim, ydim), dtype=np.float)
+        P = np.zeros((xdim, ydim), dtype=np.float)
 
         u0 = 1
         x0 = 50.
@@ -47,28 +47,26 @@ class PeninsulaGrid(NEMOGrid):
         # Create the fields
         for i, x in enumerate(La):
             for j, y in enumerate(Wa):
-                self.P[i, j] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-                self.U[i, j] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-                self.V[i, j] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+                P[i, j] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+                U[i, j] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+                V[i, j] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
 
         # Set land points to NaN
-        I = self.P >= 0.
-        self.U[I] = np.nan
-        self.V[I] = np.nan
-        self.W[I] = np.nan
+        I = P >= 0.
+        U[I] = np.nan
+        V[I] = np.nan
+        W[I] = np.nan
 
         # Convert from km to lat/lon
-        self.lonA = La / 1.852 / 60.
-        self.latA = Wa / 1.852 / 60.
+        lon = La / 1.852 / 60.
+        lat = Wa / 1.852 / 60.
 
-        # Set the lon and lat mesh for U and V on c-grid
-        self.lon_u = self.lonA
-        self.lat_u = self.latA
-        self.lon_v = self.lonA
-        self.lat_v = self.latA
+        super(PeninsulaGrid, self).__init__(lon, lat, lon, lat, depth, time, U, V)
 
 
 def main():
+    np.set_printoptions(linewidth=220)
+
     p = ArgumentParser(description="")
     p.add_argument('x', metavar='x', type=int, default=1,
                    help='Number of horizontal grid cells')
