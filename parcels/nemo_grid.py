@@ -1,6 +1,7 @@
 import numpy as np
 from netCDF4 import Dataset
 from parcels.field import Field
+from py import path
 
 
 __all__ = ['NEMOGrid']
@@ -37,8 +38,14 @@ class NEMOGrid(object):
 
         :param filename: Base name of a set of NEMO files
         """
-        dset_u = Dataset('%s_U.nc' % filename, 'r', format="NETCDF4")
-        dset_v = Dataset('%s_V.nc' % filename, 'r', format="NETCDF4")
+        filepath_u = path.local("%s_U.nc" % filename)
+        filepath_v = path.local("%s_V.nc" % filename)
+        if not filepath_u.exists():
+            raise IOError("Grid file not found: %s" % filepath_u)
+        if not path.local(filepath_v).exists():
+            raise IOError("Grid file not found: %s" % filepath_v)
+        dset_u = Dataset(str(filepath_u), 'r', format="NETCDF4")
+        dset_v = Dataset(str(filepath_v), 'r', format="NETCDF4")
 
         # Get U, V and flow-specific lat/lon from netCF file
         lon_u = dset_u['nav_lon'][0, :]
