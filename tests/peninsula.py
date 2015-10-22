@@ -61,7 +61,8 @@ class PeninsulaGrid(NEMOGrid):
         lon = La / 1.852 / 60.
         lat = Wa / 1.852 / 60.
 
-        super(PeninsulaGrid, self).__init__(lon, lat, lon, lat, depth, time, U, V)
+        super(PeninsulaGrid, self).__init__(lon, lat, lon, lat, depth, time,
+                                            U, V, fields={'P': P})
 
 
 def main():
