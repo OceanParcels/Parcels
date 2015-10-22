@@ -1,0 +1,9 @@
+build/*
+docs/_build/*
+gh-pages/html
+
+*.so
+*.log
+*.nc
+
+Profile.prof

@@ -33,7 +33,7 @@ class ParticleSet(object):
 cdef class Particle(object):
     """Classe encapsualting the basic attributes of a particle"""
 
-    cdef np.float32_t lon, lat
+    cdef public np.float32_t lon, lat
 
     def __cinit__(self, np.float32_t lon, np.float32_t lat):
         self.lon = lon

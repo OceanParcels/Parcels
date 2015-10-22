@@ -1,5 +1,10 @@
 from parcels import NEMOGrid, Particle, ParticleSet
 from argparse import ArgumentParser
+import numpy as np
+
+
+class MyParticle(Particle):
+    p = None
 
 
 def pensinsula_example(filename, npart, degree=3, verbose=False):
@@ -9,18 +14,20 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
     :arg npart: Number of particles to intialise"""
 
     # Open grid file set
-    grid = NEMOGrid(filename, degree=degree)
+    grid = NEMOGrid.from_file(filename)
 
     # Initialise particles
     pset = ParticleSet(npart, grid)
-    for p in range(npart):
-        lat = p * grid.lat_u.valid_max / npart + 0.45 / 1.852 / 60.
-        pset.add_particle(Particle(lon=3 / 1.852 / 60., lat=lat))
+    min_y = 0.45 / 1.852 / 60
+    max_y = 45. / 1.852 / 60
+    for lat in np.linspace(min_y, max_y, npart, dtype=np.float):
+        pset.add_particle(MyParticle(lon=3 / 1.852 / 60., lat=lat))
 
     if verbose:
         print "Initial particle positions:"
         for p in pset._particles:
-            print p
+            p.p = grid.P.eval(p.lon, p.lat)
+            print p, "P(init)", p.p
 
     # Advect the particles for 24h
     time = 86400.
@@ -31,7 +38,7 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
     if verbose:
         print "Final particle positions:"
         for p in pset._particles:
-            print p
+            print p, "P(init)", p.p, "P(final)", grid.P.eval(p.lon, p.lat)
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""
