@@ -1,7 +1,7 @@
 import numpy as np
 from py import path
 from netCDF4 import Dataset
-from scipy.interpolate import RectBivariateSpline
+from parcels.field import Field
 
 
 __all__ = ['NEMOGrid']
@@ -25,20 +25,12 @@ class NEMOGrid(object):
     def __init__(self, lon_u, lat_u, lon_v, lat_v, depth, time, U, V):
         """Initialise Grid object from raw data"""
         # Grid dimension arrays
-        self.lon_u = lon_u
-        self.lat_u = lat_u
-        self.lon_v = lon_v
-        self.lat_v = lat_v
         self.depth = depth
         self.time_counter = time
 
-        # Field data
-        self.U = U
-        self.V = V
-
-        # Set up linear interpolator spline objects, currently limited to 2D
-        self.interp_u = None
-        self.interp_v = None
+        # Velocity data
+        self.U = Field('U', U, lon_u, lat_u)
+        self.V = Field('V', V, lon_v, lat_v)
 
     @classmethod
     def from_file(cls, filename):
@@ -67,13 +59,8 @@ class NEMOGrid(object):
         return cls(lon_u, lat_u, lon_v, lat_v, depth, time, u, v)
 
     def eval(self, x, y):
-        if self.interp_u is None:
-            self.interp_u = RectBivariateSpline(self.lat_u, self.lon_u, self.U)
-        if self.interp_v is None:
-            self.interp_v = RectBivariateSpline(self.lat_v, self.lon_v, self.V)
-
-        u = self.interp_u.ev(y, x)
-        v = self.interp_v.ev(y, x)
+        u = self.U.eval(y, x)
+        v = self.V.eval(y, x)
         return u, v
 
     def add_particle(self, p):
@@ -86,8 +73,8 @@ class NEMOGrid(object):
 
         # Generate NEMO-style output for U
         dset_u = Dataset('%s_U.nc' % filepath, 'w', format="NETCDF4")
-        dset_u.createDimension('x', len(self.lon_u))
-        dset_u.createDimension('y', len(self.lat_u))
+        dset_u.createDimension('x', len(self.U.lon))
+        dset_u.createDimension('y', len(self.U.lat))
         dset_u.createDimension('depthu', self.depth.size)
         dset_u.createDimension('time_counter', None)
 
@@ -97,23 +84,19 @@ class NEMOGrid(object):
         dset_u.createVariable('time_counter', np.float64, ('time_counter',))
         dset_u.createVariable('vozocrtx', np.float32, ('time_counter', 'depthu', 'y', 'x'))
 
-        for y in range(len(self.lat_u)):
-            dset_u['nav_lon'][y, :] = self.lon_u
-        dset_u['nav_lon'].valid_min = self.lon_u[0]
-        dset_u['nav_lon'].valid_max = self.lon_u[-1]
-        for x in range(len(self.lon_u)):
-            dset_u['nav_lat'][:, x] = self.lat_u
-        dset_u['nav_lat'].valid_min = self.lat_u[0]
-        dset_u['nav_lat'].valid_max = self.lat_u[-1]
+        for y in range(len(self.U.lat)):
+            dset_u['nav_lon'][y, :] = self.U.lon
+        for x in range(len(self.U.lon)):
+            dset_u['nav_lat'][:, x] = self.U.lat
         dset_u['depthu'][:] = self.depth
         dset_u['time_counter'][:] = self.time_counter
-        dset_u['vozocrtx'][0, 0, :, :] = np.transpose(self.U)
+        dset_u['vozocrtx'][0, 0, :, :] = np.transpose(self.U.data)
         dset_u.close()
 
         # Generate NEMO-style output for V
         dset_v = Dataset('%s_V.nc' % filepath, 'w', format="NETCDF4")
-        dset_v.createDimension('x', len(self.lon_v))
-        dset_v.createDimension('y', len(self.lat_v))
+        dset_v.createDimension('x', len(self.V.lon))
+        dset_v.createDimension('y', len(self.V.lat))
         dset_v.createDimension('depthv', self.depth.size)
         dset_v.createDimension('time_counter', None)
 
@@ -123,15 +106,11 @@ class NEMOGrid(object):
         dset_v.createVariable('time_counter', np.float64, ('time_counter',))
         dset_v.createVariable('vomecrty', np.float32, ('time_counter', 'depthv', 'y', 'x'))
 
-        for y in range(len(self.lat_v)):
-            dset_v['nav_lon'][y, :] = self.lon_v
-        dset_v['nav_lon'].valid_min = self.lon_u[0]
-        dset_v['nav_lon'].valid_max = self.lon_u[-1]
-        for x in range(len(self.lon_v)):
-            dset_v['nav_lat'][:, x] = self.lat_v
-        dset_v['nav_lat'].valid_min = self.lat_u[0]
-        dset_v['nav_lat'].valid_max = self.lat_u[-1]
+        for y in range(len(self.V.lat)):
+            dset_v['nav_lon'][y, :] = self.V.lon
+        for x in range(len(self.V.lon)):
+            dset_v['nav_lat'][:, x] = self.V.lat
         dset_v['depthv'][:] = self.depth
         dset_v['time_counter'][:] = self.time_counter
-        dset_v['vomecrty'][0, 0, :, :] = np.transpose(self.V)
+        dset_v['vomecrty'][0, 0, :, :] = np.transpose(self.V.data)
         dset_v.close()
