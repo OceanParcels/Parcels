@@ -1,5 +1,4 @@
 import numpy as np
-from py import path
 from netCDF4 import Dataset
 from parcels.field import Field
 
@@ -67,50 +66,10 @@ class NEMOGrid(object):
         self._particles.append(p)
 
     def write(self, filename):
-        """Write flow field to NetCDF file using NEMO convention"""
-        filepath = path.local(filename)
-        print "Generating NEMO grid output:", filepath
+        """Write flow field to NetCDF file using NEMO convention
 
-        # Generate NEMO-style output for U
-        dset_u = Dataset('%s_U.nc' % filepath, 'w', format="NETCDF4")
-        dset_u.createDimension('x', len(self.U.lon))
-        dset_u.createDimension('y', len(self.U.lat))
-        dset_u.createDimension('depthu', self.depth.size)
-        dset_u.createDimension('time_counter', None)
+        :param filename: Basename of the output fileset"""
+        print "Generating NEMO grid output with basename:", filename
 
-        dset_u.createVariable('nav_lon', np.float32, ('y', 'x'))
-        dset_u.createVariable('nav_lat', np.float32, ('y', 'x'))
-        dset_u.createVariable('depthu', np.float32, ('depthu',))
-        dset_u.createVariable('time_counter', np.float64, ('time_counter',))
-        dset_u.createVariable('vozocrtx', np.float32, ('time_counter', 'depthu', 'y', 'x'))
-
-        for y in range(len(self.U.lat)):
-            dset_u['nav_lon'][y, :] = self.U.lon
-        for x in range(len(self.U.lon)):
-            dset_u['nav_lat'][:, x] = self.U.lat
-        dset_u['depthu'][:] = self.depth
-        dset_u['time_counter'][:] = self.time_counter
-        dset_u['vozocrtx'][0, 0, :, :] = np.transpose(self.U.data)
-        dset_u.close()
-
-        # Generate NEMO-style output for V
-        dset_v = Dataset('%s_V.nc' % filepath, 'w', format="NETCDF4")
-        dset_v.createDimension('x', len(self.V.lon))
-        dset_v.createDimension('y', len(self.V.lat))
-        dset_v.createDimension('depthv', self.depth.size)
-        dset_v.createDimension('time_counter', None)
-
-        dset_v.createVariable('nav_lon', np.float32, ('y', 'x'))
-        dset_v.createVariable('nav_lat', np.float32, ('y', 'x'))
-        dset_v.createVariable('depthv', np.float32, ('depthv',))
-        dset_v.createVariable('time_counter', np.float64, ('time_counter',))
-        dset_v.createVariable('vomecrty', np.float32, ('time_counter', 'depthv', 'y', 'x'))
-
-        for y in range(len(self.V.lat)):
-            dset_v['nav_lon'][y, :] = self.V.lon
-        for x in range(len(self.V.lon)):
-            dset_v['nav_lat'][:, x] = self.V.lat
-        dset_v['depthv'][:] = self.depth
-        dset_v['time_counter'][:] = self.time_counter
-        dset_v['vomecrty'][0, 0, :, :] = np.transpose(self.V.data)
-        dset_v.close()
+        self.U.write(filename, varname='vozocrtx')
+        self.V.write(filename, varname='vomecrty')
