@@ -22,7 +22,8 @@ class NEMOGrid(object):
     # Particle set
     _particles = []
 
-    def __init__(self, lon_u, lat_u, lon_v, lat_v, depth, time, U, V):
+    def __init__(self, lon_u, lat_u, lon_v, lat_v, depth, time,
+                 U, V, fields=None):
         """Initialise Grid object from raw data"""
         # Grid dimension arrays
         self.depth = depth
@@ -31,6 +32,13 @@ class NEMOGrid(object):
         # Velocity data
         self.U = Field('U', U, lon_u, lat_u)
         self.V = Field('V', V, lon_v, lat_v)
+
+        # Additional data fields
+        self.fields = fields
+        if self.fields is not None:
+            for name, data in self.fields.items():
+                field = Field(name, data, lon_v, lat_u)
+                setattr(self, name, field)
 
     @classmethod
     def from_file(cls, filename):
@@ -62,7 +70,18 @@ class NEMOGrid(object):
         u[np.isnan(u)] = 0.
         v[np.isnan(v)] = 0.
 
-        return cls(lon_u, lat_u, lon_v, lat_v, depth, time, u, v)
+        # Detect additional field data
+        basedir = filepath_u.dirpath()
+        fields = {}
+        for fp in basedir.listdir('%s_*.nc' % filename):
+            if not fp.samefile(filepath_u) and not fp.samefile(filepath_v):
+                # Derive field name, read data and add to fields
+                fname = fp.basename.split('.')[0].split('_')[1]
+                dset = Dataset(str(fp), 'r', format="NETCDF4")
+                fields[fname] = dset[fname][0, 0, :, :]
+
+        return cls(lon_u, lat_u, lon_v, lat_v, depth, time,
+                   u, v, fields=fields)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)
@@ -80,3 +99,7 @@ class NEMOGrid(object):
 
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
+
+        for f in self.fields:
+            field = getattr(self, f)
+            field.write(filename)
