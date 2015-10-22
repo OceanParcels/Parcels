@@ -28,7 +28,7 @@ class Field(object):
         return RectBivariateSpline(self.lat, self.lon, self.data)
 
     def eval(self, x, y):
-        return self.interpolator.ev(x, y)
+        return self.interpolator.ev(y, x)
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s_%s.nc' % (filename, self.name)))

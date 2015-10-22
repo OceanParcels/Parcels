@@ -65,8 +65,8 @@ class NEMOGrid(object):
         return cls(lon_u, lat_u, lon_v, lat_v, depth, time, u, v)
 
     def eval(self, x, y):
-        u = self.U.eval(y, x)
-        v = self.V.eval(y, x)
+        u = self.U.eval(x, y)
+        v = self.V.eval(x, y)
         return u, v
 
     def add_particle(self, p):
