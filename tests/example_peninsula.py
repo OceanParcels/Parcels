@@ -6,6 +6,9 @@ import numpy as np
 class MyParticle(Particle):
     p = None
 
+    def __repr__(self):
+        return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
+
 
 def pensinsula_example(filename, npart, degree=3, verbose=False):
     """Example configuration of particle flow around an idealised Peninsula
@@ -18,16 +21,19 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
 
     # Initialise particles
     pset = ParticleSet(npart, grid)
-    min_y = 0.45 / 1.852 / 60
-    max_y = 45. / 1.852 / 60
+    km2deg = 1. / 1.852 / 60
+    min_y = grid.U.lat[0] + 3. * km2deg
+    max_y = grid.U.lat[-1] - 3. * km2deg
     for lat in np.linspace(min_y, max_y, npart, dtype=np.float):
-        pset.add_particle(MyParticle(lon=3 / 1.852 / 60., lat=lat))
+        lon = 3. * km2deg
+        particle = MyParticle(lon=lon, lat=lat)
+        particle.p = grid.P.eval(lon, lat)
+        pset.add_particle(particle)
 
     if verbose:
         print "Initial particle positions:"
         for p in pset._particles:
-            p.p = grid.P.eval(p.lon, p.lat)
-            print p, "P(init)", p.p
+            print p
 
     # Advect the particles for 24h
     time = 86400.
@@ -38,7 +44,8 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
     if verbose:
         print "Final particle positions:"
         for p in pset._particles:
-            print p, "P(init)", p.p, "P(final)", grid.P.eval(p.lon, p.lat)
+            p_local = grid.P.eval(p.lon, p.lat)
+            print p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p)
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""
