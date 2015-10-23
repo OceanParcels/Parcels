@@ -23,13 +23,16 @@ class NEMOGrid(object):
     _particles = []
 
     def __init__(self, lon_u, lat_u, lon_v, lat_v, depth, time,
-                 U, V, fields=None):
+                 U, V, transpose=True, fields=None):
         """Initialise Grid object from raw data"""
         # Grid dimension arrays
         self.depth = depth
         self.time_counter = time
 
         # Velocity data
+        if transpose:
+            U = np.transpose(U)
+            V = np.transpose(V)
         self.U = Field('U', U, lon_u, lat_u)
         self.V = Field('V', V, lon_v, lat_v)
 
@@ -37,6 +40,8 @@ class NEMOGrid(object):
         self.fields = fields
         if self.fields is not None:
             for name, data in self.fields.items():
+                if transpose:
+                    data = np.transpose(data)
                 field = Field(name, data, lon_v, lat_u)
                 setattr(self, name, field)
 
@@ -66,10 +71,6 @@ class NEMOGrid(object):
         u = dset_u['vozocrtx'][0, 0, :, :]
         v = dset_v['vomecrty'][0, 0, :, :]
 
-        # Hack around the fact that NaN values propagate in SciPy's interpolators
-        u[np.isnan(u)] = 0.
-        v[np.isnan(v)] = 0.
-
         # Detect additional field data
         basedir = filepath_u.dirpath()
         fields = {}
@@ -81,7 +82,7 @@ class NEMOGrid(object):
                 fields[fname] = dset[fname][0, 0, :, :]
 
         return cls(lon_u, lat_u, lon_v, lat_v, depth, time,
-                   u, v, fields=fields)
+                   u, v, transpose=False, fields=fields)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)
