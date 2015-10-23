@@ -11,7 +11,7 @@ class MyParticle(Particle):
         return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
 
-def pensinsula_example(grid, npart, degree=3, verbose=False):
+def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
@@ -37,7 +37,10 @@ def pensinsula_example(grid, npart, degree=3, verbose=False):
     time = 86400.
     dt = 36.
     timesteps = int(time / dt)
-    pset.advect(timesteps=timesteps, dt=dt)
+    if mode == 'cython':
+        pset.advect_cython(timesteps=timesteps, dt=dt)
+    else:
+        pset.advect(timesteps=timesteps, dt=dt)
 
     if verbose:
         print "Final particle positions:"
@@ -70,6 +73,8 @@ def test_peninsula_file():
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
+    p.add_argument('mode', choices=('scipy', 'cython'), nargs='?', default='cython',
+                   help='Execution mode for performing RK4 computation')
     p.add_argument('-p', '--particles', type=int, default=20,
                    help='Number of particles to advect')
     p.add_argument('-d', '--degree', type=int, default=3,
@@ -86,9 +91,10 @@ Example of particle advection around an idealised peninsula""")
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("pensinsula_example(grid, args.particles, degree=args.degree, verbose=args.verbose)",
+        runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
+                                   degree=args.degree, verbose=args.verbose)",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        pensinsula_example(grid, args.particles, degree=args.degree,
-                           verbose=args.verbose)
+        pensinsula_example(grid, args.particles, mode=args.mode,
+                           degree=args.degree, verbose=args.verbose)
