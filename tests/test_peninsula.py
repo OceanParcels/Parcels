@@ -1,4 +1,5 @@
 from parcels import NEMOGrid, Particle, ParticleSet
+from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
 
@@ -10,14 +11,11 @@ class MyParticle(Particle):
         return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
 
-def pensinsula_example(filename, npart, degree=3, verbose=False):
+def pensinsula_example(grid, npart, degree=3, verbose=False):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
     :arg npart: Number of particles to intialise"""
-
-    # Open grid file set
-    grid = NEMOGrid.from_file(filename)
 
     # Initialise particles
     pset = ParticleSet(npart, grid)
@@ -47,6 +45,21 @@ def pensinsula_example(filename, npart, degree=3, verbose=False):
             p_local = grid.P.eval(p.lon, p.lat)
             print p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p)
 
+    return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset._particles])
+
+
+def test_peninsula_file():
+    filename = 'peninsula'
+    # Generate the grid files
+    grid = PeninsulaGrid(100, 50)
+    grid.write(filename)
+
+    # Open grid files and execute
+    grid = NEMOGrid.from_file(filename)
+    error = pensinsula_example(grid, 100, degree=1)
+    assert(error <= 2.e-4).all()
+
+
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
@@ -60,12 +73,15 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     args = p.parse_args()
 
+    # Open grid file set
+    grid = NEMOGrid.from_file('peninsula')
+
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("pensinsula_example('peninsula', args.particles, degree=args.degree, verbose=args.verbose)",
+        runctx("pensinsula_example(grid, args.particles, degree=args.degree, verbose=args.verbose)",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        pensinsula_example('peninsula', args.particles, degree=args.degree,
+        pensinsula_example(grid, args.particles, degree=args.degree,
                            verbose=args.verbose)
