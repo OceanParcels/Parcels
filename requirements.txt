@@ -6,3 +6,4 @@ scipy>=0.16.0
 Cython>=0.22
 cached-property>=1.2.0
 xray>=0.5.1
+pytest>=2.7.0

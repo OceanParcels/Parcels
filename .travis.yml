@@ -33,5 +33,4 @@ script:
     - flake8 parcels
     - flake8 tests
     - python tests/grid_peninsula.py 20 10
-    - ncdump peninsula_U.nc -l 220 -p 1,3
-    - python tests/test_peninsula.py -p 20 --degree 3 --verbose
+    - py.test -v -s tests/
