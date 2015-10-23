@@ -19,19 +19,30 @@ class ParticleSet(object):
         self._particles = np.empty(size, dtype=Particle)
         self._npart = 0
 
+        # Particle array for JIT kernel
         self._kernel = None
+        self._p_dtype = np.dtype([('lon', np.float32), ('lat', np.float32),
+                                  ('xi', np.int32), ('yi', np.int32)])
+        self._p_array = np.empty(size, dtype=self._p_dtype)
 
     def add_particle(self, p):
         p.xi = np.where(p.lon > self._grid.U.lon)[0][-1]
         p.yi = np.where(p.lat > self._grid.U.lat)[0][-1]
-
         self._particles[self._npart] = p
+
+        # Populate the partcile's struct
+        self._p_array[self._npart]['lon'] = p.lon
+        self._p_array[self._npart]['lat'] = p.lat
+        self._p_array[self._npart]['xi'] = p.xi
+        self._p_array[self._npart]['yi'] = p.yi
+
         self._npart += 1
 
     def generate_jit_kernel(self, filename):
         self._kernel = Kernel(filename)
         self._kernel.generate_code()
         self._kernel.compile(compiler=GNUCompiler())
+        self._kernel.load_lib()
 
     def advect(self, timesteps=1, dt=None):
         print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
@@ -46,6 +57,8 @@ class ParticleSet(object):
         for t in range(timesteps):
             for p in self._particles:
                 p.advect_rk4_cython(self._grid, dt)
+
+        self._kernel.execute(self)
 
 
 cdef class Particle(object):

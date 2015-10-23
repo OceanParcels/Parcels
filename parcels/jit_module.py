@@ -1,6 +1,7 @@
 from py import path
 import subprocess
 from os import environ
+import numpy as np
 
 
 class Kernel(object):
@@ -14,6 +15,7 @@ class Kernel(object):
         self.src_file = str(path.local("%s.c" % self.filename))
         self.lib_file = str(path.local("%s.so" % self.filename))
         self.log_file = str(path.local("%s.log" % self.filename))
+        self._lib = None
 
     def generate_code(self):
         self.code = """
@@ -25,9 +27,9 @@ typedef struct
     int xi, yi;
 } Particle;
 
-void particle_kernel(Particle p)
+void particle_kernel(Particle *p)
 {
-    printf("Particle: P(%f, %f)[%d, %d]\\n", p.lon, p.lat, p.xi, p.yi);
+    printf("Particle: P(%f, %f)[%d, %d]\\n", p->lon, p->lat, p->xi, p->yi);
 }
 """
 
@@ -36,6 +38,13 @@ void particle_kernel(Particle p)
         with file(self.src_file, 'w') as f:
             f.write(self.code)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
+
+    def load_lib(self):
+        self._lib = np.ctypeslib.load_library(self.lib_file, '.')
+        self._function = self._lib.particle_kernel
+
+    def execute(self, pset):
+        self._function(pset._p_array.ctypes.data)
 
 
 class Compiler(object):
