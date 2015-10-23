@@ -30,8 +30,10 @@ class PeninsulaGrid(NEMOGrid):
         time = np.zeros(1, dtype=np.float32)
 
         # Generate the original test setup on A-grid in km
-        La = np.linspace(0, 100., xdim, dtype=np.float)
-        Wa = np.linspace(0, 50., ydim, dtype=np.float)
+        dx = 100. / xdim / 2.
+        dy = 50. / ydim / 2.
+        La = np.linspace(dx, 100.-dx, xdim, dtype=np.float)
+        Wa = np.linspace(dy, 50.-dy, ydim, dtype=np.float)
 
         # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
         # surface height) all on A-grid

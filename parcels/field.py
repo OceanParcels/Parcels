@@ -23,6 +23,10 @@ class Field(object):
         self.lon = lon
         self.lat = lat
 
+        # Hack around the fact that NaN values
+        # propagate in SciPy's interpolators
+        self.data[np.isnan(self.data)] = 0.
+
     @cached_property
     def interpolator(self):
         return RectBivariateSpline(self.lat, self.lon, self.data)
@@ -43,7 +47,7 @@ class Field(object):
                             coords=[('y', self.lat), ('x', self.lon)])
         nav_lat = DataArray(self.lat.reshape(y, 1) + np.zeros(x),
                             coords=[('y', self.lat), ('x', self.lon)])
-        vardata = DataArray(np.transpose(self.data).reshape((1, 1, y, x)),
+        vardata = DataArray(self.data.reshape((1, 1, y, x)),
                             coords=[('time_counter', np.zeros(1, dtype=np.float64)),
                                     (vname_depth, np.zeros(1, dtype=np.float)),
                                     ('y', self.lat), ('x', self.lon)])
