@@ -18,8 +18,11 @@ class ParticleSet(object):
         self._particles = np.empty(size, dtype=Particle)
         self._npart = 0
 
-    def add_particle(self, particle):
-        self._particles[self._npart] = particle
+    def add_particle(self, p):
+        p.xi = np.where(p.lon > self._grid.U.lon)[0][-1]
+        p.yi = np.where(p.lat > self._grid.U.lat)[0][-1]
+
+        self._particles[self._npart] = p
         self._npart += 1
 
     def advect(self, timesteps=1, dt=None):
@@ -33,14 +36,15 @@ class ParticleSet(object):
 cdef class Particle(object):
     """Classe encapsualting the basic attributes of a particle"""
 
-    cdef public np.float32_t lon, lat
+    cdef public np.float32_t lon, lat  # Particle position in (lon, lat)
+    cdef public np.int32_t xi, yi      # Current indices on the underlying grid
 
     def __cinit__(self, np.float32_t lon, np.float32_t lat):
         self.lon = lon
         self.lat = lat
 
     def __repr__(self):
-        return "P(%f, %f)" % (self.lon, self.lat)
+        return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
