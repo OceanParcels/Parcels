@@ -43,13 +43,13 @@ class Field(object):
 
         # Create DataArray objects for file I/O
         x, y = (self.lon.size, self.lat.size)
-        nav_lon = DataArray(self.lon + np.zeros((y, x)),
+        nav_lon = DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
                             coords=[('y', self.lat), ('x', self.lon)])
-        nav_lat = DataArray(self.lat.reshape(y, 1) + np.zeros(x),
+        nav_lat = DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
                             coords=[('y', self.lat), ('x', self.lon)])
         vardata = DataArray(self.data.reshape((1, 1, y, x)),
                             coords=[('time_counter', np.zeros(1, dtype=np.float64)),
-                                    (vname_depth, np.zeros(1, dtype=np.float)),
+                                    (vname_depth, np.zeros(1, dtype=np.float32)),
                                     ('y', self.lat), ('x', self.lon)])
         # Create xray Dataset and output to netCDF format
         dset = Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
