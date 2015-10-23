@@ -33,14 +33,13 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
         for p in pset._particles:
             print p
 
-    # Prepare JIT execution
-    pset.generate_jit_kernel("particle_kernel")
-
     # Advect the particles for 24h
     time = 86400.
     dt = 36.
     timesteps = int(time / dt)
-    if mode == 'cython':
+    if mode == 'jit':
+        pset.advect_jit(timesteps=timesteps, dt=dt)
+    elif mode == 'cython':
         pset.advect_cython(timesteps=timesteps, dt=dt)
     else:
         pset.advect(timesteps=timesteps, dt=dt)
@@ -76,7 +75,7 @@ def test_peninsula_file():
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
-    p.add_argument('mode', choices=('scipy', 'cython'), nargs='?', default='cython',
+    p.add_argument('mode', choices=('scipy', 'cython', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing RK4 computation')
     p.add_argument('-p', '--particles', type=int, default=20,
                    help='Number of particles to advect')

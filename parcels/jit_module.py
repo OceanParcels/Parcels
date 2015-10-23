@@ -2,7 +2,7 @@ from py import path
 import subprocess
 from os import environ
 import numpy.ctypeslib as npct
-from ctypes import c_int, c_float
+from ctypes import c_int, c_float, c_void_p
 
 
 class Kernel(object):
@@ -31,24 +31,68 @@ typedef struct
 } Particle;
 
 
-static inline void particle_kernel(Particle *p, float lon[%(xdim)d], float lat[%(ydim)d],
-                                   float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
+static inline int advance_index(float x, int i, int size, float *xvals)
 {
-  printf("Particle: P(%%f, %%f)[%%d, %%d]\\n", p->lon, p->lat, p->xi, p->yi);
-  printf("Grid: Q_11(%%f, %%f), U[Q_11](%%f) \\n", lon[p->xi], lat[p->yi], u[p->yi][p->xi]);
+    while (i < size-1 && x > xvals[i+1]) ++i;
+    while (i > 0 && x < xvals[i]) --i;
+    return i;
+}
+
+static inline float interpolate_bilinear(float x, float y, int xi, int yi,
+                                        float *xvals, float *yvals,
+                                        float qvals[%(ydim)d][%(xdim)d])
+{
+  int i = xi, j = yi;
+  i = advance_index(x, i, %(ydim)d, xvals);
+  j = advance_index(y, j, %(xdim)d, yvals);
+  return (qvals[i][j] * (xvals[i+1] - x) * (yvals[j+1] - y)
+        + qvals[i+1][j] * (x - xvals[i]) * (yvals[j+1] - y)
+        + qvals[i][j+1] * (xvals[i+1] - x) * (y - yvals[j])
+        + qvals[i+1][j+1] * (x - xvals[i]) * (y - yvals[j]))
+        / ((xvals[i+1] - xvals[i]) * (yvals[j+1] - yvals[j]));
+}
+
+
+static inline void runge_kutta4(Particle *p, float dt,
+                                float lon_u[%(xdim)d], float lat_u[%(ydim)d],
+                                float lon_v[%(xdim)d], float lat_v[%(ydim)d],
+                                float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
+{
+  float f, u1, v1, u2, v2, u3, v3, u4, v4;
+  float lon1, lat1, lon2, lat2, lon3, lat3;
+
+  f = dt / 1000. / 1.852 / 60.;
+  u1 = interpolate_bilinear(p->lat, p->lon, p->yi, p->xi, lat_u, lon_u, u);
+  v1 = interpolate_bilinear(p->lat, p->lon, p->yi, p->xi, lat_v, lon_v, v);
+  lon1 = p->lon + u1*.5*f; lat1 = p->lat + v1*.5*f;
+  u2 = interpolate_bilinear(lat1, lon1, p->yi, p->xi, lat_u, lon_u, u);
+  v2 = interpolate_bilinear(lat1, lon1, p->yi, p->xi, lat_v, lon_v, v);
+  lon2 = p->lon + u2*.5*f; lat2 = p->lat + v2*.5*f;
+  u3 = interpolate_bilinear(lat2, lon2, p->yi, p->xi, lat_u, lon_u, u);
+  v3 = interpolate_bilinear(lat2, lon2, p->yi, p->xi, lat_v, lon_v, v);
+  lon3 = p->lon + u3*f; lat3 = p->lat + v3*f;
+  u4 = interpolate_bilinear(lat3, lon3, p->yi, p->xi, lat_u, lon_u, u);
+  v4 = interpolate_bilinear(lat3, lon3, p->yi, p->xi, lat_v, lon_v, v);
+
+  // Advance particle position in space and on the grid
+  p->lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f;
+  p->lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f;
+  p->xi = advance_index(p->lon, p->xi, %(xdim)d, lon_u);
+  p->yi = advance_index(p->lat, p->yi, %(ydim)d, lat_u);
 }
 
 
 void particle_loop(int num_particles, Particle *particles,
                    int timesteps, float dt,
-                   float lon[%(xdim)d], float lat[%(ydim)d],
+                   float lon_u[%(xdim)d], float lat_u[%(ydim)d],
+                   float lon_v[%(xdim)d], float lat_v[%(ydim)d],
                    float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
 {
   int p, t;
 
   for (t = 0; t < timesteps; ++t) {
     for (p = 0; p < num_particles; ++p) {
-        particle_kernel(&(particles[0]), lon, lat, u, v);
+        runge_kutta4(&(particles[p]), dt, lon_u, lat_u, lon_v, lat_v, u, v);
     }
   }
 }
@@ -67,10 +111,11 @@ void particle_loop(int num_particles, Particle *particles,
 
     def execute(self, pset, timesteps, dt):
         grid = pset._grid
-        self._function(c_int(pset._npart), pset._p_array.ctypes.data,
+        self._function(c_int(pset._npart), pset._p_array.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_float(dt),
-                       grid.U.lon.ctypes.data, grid.U.lat.ctypes.data,
-                       grid.U.data.ctypes.data, grid.V.data.ctypes.data)
+                       grid.U.lon.ctypes.data_as(c_void_p), grid.U.lat.ctypes.data_as(c_void_p),
+                       grid.V.lon.ctypes.data_as(c_void_p), grid.V.lat.ctypes.data_as(c_void_p),
+                       grid.U.data.ctypes.data_as(c_void_p), grid.V.data.ctypes.data_as(c_void_p))
 
 
 class Compiler(object):

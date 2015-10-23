@@ -58,6 +58,12 @@ class ParticleSet(object):
             for p in self._particles:
                 p.advect_rk4_cython(self._grid, dt)
 
+    def advect_jit(self, timesteps=1, dt=None):
+        print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
+            % (self._npart, timesteps)
+
+        # Generate, compile and execute JIT kernel
+        self.generate_jit_kernel("particle_kernel")
         self._kernel.execute(self, timesteps, dt)
 
 
