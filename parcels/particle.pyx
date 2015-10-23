@@ -66,6 +66,13 @@ class ParticleSet(object):
         self.generate_jit_kernel("particle_kernel")
         self._kernel.execute(self, timesteps, dt)
 
+        # Transferrring particle data back onto original array
+        for i, p in enumerate(self._particles):
+            p.lon = self._p_array[i]['lon']
+            p.lat = self._p_array[i]['lat']
+            p.xi = self._p_array[i]['xi']
+            p.yi = self._p_array[i]['yi']
+
 
 cdef class Particle(object):
     """Classe encapsualting the basic attributes of a particle"""

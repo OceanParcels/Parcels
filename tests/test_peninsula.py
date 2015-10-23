@@ -2,6 +2,7 @@ from parcels import NEMOGrid, Particle, ParticleSet
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
+import pytest
 
 
 class MyParticle(Particle):
@@ -53,22 +54,28 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset._particles])
 
 
-def test_peninsula_grid():
-    # Generate grid on-the-fly and execute
+@pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])
+def test_peninsula_grid(mode):
+    """Execute peninsula test from grid generated in memory"""
     grid = PeninsulaGrid(100, 50)
-    error = pensinsula_example(grid, 100, degree=1)
+    error = pensinsula_example(grid, 100, mode=mode, degree=1)
     assert(error <= 2.e-4).all()
 
 
-def test_peninsula_file():
+@pytest.fixture(scope='module')
+def gridfile():
+    """Generate grid files for peninsula test"""
     filename = 'peninsula'
-    # Generate the grid files
     grid = PeninsulaGrid(100, 50)
     grid.write(filename)
+    return filename
 
-    # Open grid files and execute
-    grid = NEMOGrid.from_file(filename)
-    error = pensinsula_example(grid, 100, degree=1)
+
+@pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])
+def test_peninsula_file(gridfile, mode):
+    """Open grid files and execute"""
+    grid = NEMOGrid.from_file(gridfile)
+    error = pensinsula_example(grid, 100, mode=mode, degree=1)
     assert(error <= 2.e-4).all()
 
 
