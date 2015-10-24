@@ -52,11 +52,20 @@ class ParticleSet(object):
                 p.advect_rk4(self._grid, dt)
 
     def advect_cython(self, timesteps=1, dt=None):
+        cdef:
+            np.int32_t t, tsteps = timesteps
+            np.ndarray[np.float32_t, ndim=1, mode="c"] lon_u = self._grid.U.lon,
+            np.ndarray[np.float32_t, ndim=1, mode="c"] lat_u = self._grid.U.lat,
+            np.ndarray[np.float32_t, ndim=2, mode="c"] U = self._grid.U.data,
+            np.ndarray[np.float32_t, ndim=1, mode="c"] lon_v = self._grid.V.lon,
+            np.ndarray[np.float32_t, ndim=1, mode="c"] lat_v = self._grid.V.lat,
+            np.ndarray[np.float32_t, ndim=2, mode="c"] V = self._grid.V.data
         print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
             % (self._npart, timesteps)
-        for t in range(timesteps):
+
+        for t in range(tsteps):
             for p in self._particles:
-                p.advect_rk4_cython(self._grid, dt)
+                advect_rk4_cython(p, dt, lon_u, lat_u, U, lon_v, lat_v, V)
 
     def advect_jit(self, timesteps=1, dt=None):
         print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
@@ -105,50 +114,57 @@ cdef class Particle(object):
         self.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
 
 
-    def advect_rk4_cython(self, grid, np.float32_t dt):
-        cdef:
-            np.float32_t f, u1, v1, u2, v2, u3, v3, u4, v4
-            np.float32_t lon1, lat1, lon2, lat2, lon3, lat3
-        f = dt / 1000. / 1.852 / 60.
-        u1 = interpolate_bilinear(self.lat, self.lon, self.yi, self.xi,
-                                  grid.U.lat, grid.U.lon, grid.U.data)
-        v1 = interpolate_bilinear(self.lat, self.lon, self.yi, self.xi,
-                                  grid.V.lat, grid.V.lon, grid.V.data)
-        lon1, lat1 = (self.lon + u1*.5*f, self.lat + v1*.5*f)
-        u2 = interpolate_bilinear(lat1, lon1, self.yi, self.xi,
-                                  grid.U.lat, grid.U.lon, grid.U.data)
-        v2 = interpolate_bilinear(lat1, lon1, self.yi, self.xi,
-                                  grid.V.lat, grid.V.lon, grid.V.data)
-        lon2, lat2 = (self.lon + u2*.5*f, self.lat + v2*.5*f)
-        u3 = interpolate_bilinear(lat2, lon2, self.yi, self.xi,
-                                  grid.U.lat, grid.U.lon, grid.U.data)
-        v3 = interpolate_bilinear(lat2, lon2, self.yi, self.xi,
-                                  grid.V.lat, grid.V.lon, grid.V.data)
-        lon3, lat3 = (self.lon + u3*f, self.lat + v3*f)
-        u4 = interpolate_bilinear(lat3, lon3, self.yi, self.xi,
-                                  grid.U.lat, grid.U.lon, grid.U.data)
-        v4 = interpolate_bilinear(lat3, lon3, self.yi, self.xi,
-                                  grid.V.lat, grid.V.lon, grid.V.data)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef advect_rk4_cython(Particle p, np.float32_t dt,
+                       np.ndarray[np.float32_t, ndim=1, mode="c"] lon_u,
+                       np.ndarray[np.float32_t, ndim=1, mode="c"] lat_u,
+                       np.ndarray[np.float32_t, ndim=2, mode="c"] U,
+                       np.ndarray[np.float32_t, ndim=1, mode="c"] lon_v,
+                       np.ndarray[np.float32_t, ndim=1, mode="c"] lat_v,
+                       np.ndarray[np.float32_t, ndim=2, mode="c"] V):
+    cdef:
+        np.float32_t f, u1, v1, u2, v2, u3, v3, u4, v4
+        np.float32_t lon1, lat1, lon2, lat2, lon3, lat3
+    f = dt / 1000. / 1.852 / 60.
+    u1 = interpolate_bilinear(p.lat, p.lon, p.yi, p.xi, lat_u, lon_u, U)
+    v1 = interpolate_bilinear(p.lat, p.lon, p.yi, p.xi, lat_v, lon_v, V)
+    lon1, lat1 = (p.lon + u1*.5*f, p.lat + v1*.5*f)
+    u2 = interpolate_bilinear(lat1, lon1, p.yi, p.xi, lat_u, lon_u, U)
+    v2 = interpolate_bilinear(lat1, lon1, p.yi, p.xi, lat_v, lon_v, V)
+    lon2, lat2 = (p.lon + u2*.5*f, p.lat + v2*.5*f)
+    u3 = interpolate_bilinear(lat2, lon2, p.yi, p.xi, lat_u, lon_u, U)
+    v3 = interpolate_bilinear(lat2, lon2, p.yi, p.xi, lat_v, lon_v, V)
+    lon3, lat3 = (p.lon + u3*f, p.lat + v3*f)
+    u4 = interpolate_bilinear(lat3, lon3, p.yi, p.xi, lat_u, lon_u, U)
+    v4 = interpolate_bilinear(lat3, lon3, p.yi, p.xi, lat_v, lon_v, V)
 
-        # Advance particle position in space and on the grid
-        self.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
-        self.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
-        self.xi = advance_index(self.lon, self.xi, grid.U.lon)
-        self.yi = advance_index(self.lat, self.yi, grid.U.lat)
+    # Advance particle position in space and on the grid
+    p.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
+    p.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
+    p.xi = advance_index(p.lon, p.xi, lon_u)
+    p.yi = advance_index(p.lat, p.yi, lat_u)
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cdef np.int32_t advance_index(np.float32_t x, np.int32_t i,
                               np.ndarray[np.float32_t, ndim=1, mode="c"] xvals) except? -1:
-    while i < xvals.size-1 and x > xvals[i+1]:
+    while x > xvals[i+1]:
         i += 1
-    while i > 0 and x < xvals[i]:
+    while x < xvals[i]:
         i -= 1
     return i
 
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cdef np.float32_t interpolate_bilinear(np.float32_t x, np.float32_t y,
                                        np.int32_t xi, np.int32_t yi,
                                        np.ndarray[np.float32_t, ndim=1, mode="c"] xvals,
                                        np.ndarray[np.float32_t, ndim=1, mode="c"] yvals,
-                                       np.ndarray[np.float32_t, ndim=2, mode="c"] qvals) except? -1:
+                                       np.ndarray[np.float32_t, ndim=2, mode="c"] qvals):
     """Bilinear interpolation function
 
     Computes f(x, y), given f(x0, y0), f(x0, y1), f(x1, y0) and f(x1, y1)
