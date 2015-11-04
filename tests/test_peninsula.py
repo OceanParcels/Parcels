@@ -1,15 +1,9 @@
-from parcels import NEMOGrid, Particle, ParticleSet
+from parcels import NEMOGrid, Particle, ParticleSet, JITParticleSet
+from parcels import CythonParticle, CythonParticleSet
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
 import pytest
-
-
-class MyParticle(Particle):
-    p = None
-
-    def __repr__(self):
-        return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
 
 def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
@@ -18,8 +12,29 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     :arg filename: Basename of the input grid file set
     :arg npart: Number of particles to intialise"""
 
+    # First, we define a custom Particle class to which we add a
+    # custom variable, the initial stream function value p
+    BaseClass = CythonParticle if mode=='cython' else Particle
+    class MyParticle(BaseClass):
+        def __init__(self, lon, lat):
+            """Custom initialisation function which calls the base
+            initialisation and adds the instance variable p"""
+            super(MyParticle, self).__init__(lon, lat)
+            self.p = None
+
+        def __repr__(self):
+            """Custom print function which overrides the built-in"""
+            return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
+
+    # Build particle set according to execution mode
+    if mode == 'jit':
+        pset = JITParticleSet(npart, grid)
+    elif mode == 'cython':
+        pset = CythonParticleSet(npart, grid)
+    else:
+        pset = ParticleSet(npart, grid)
+
     # Initialise particles
-    pset = ParticleSet(npart, grid)
     km2deg = 1. / 1.852 / 60
     min_y = grid.U.lat[0] + 3. * km2deg
     max_y = grid.U.lat[-1] - 3. * km2deg
@@ -38,12 +53,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     time = 86400.
     dt = 36.
     timesteps = int(time / dt)
-    if mode == 'jit':
-        pset.advect_jit(timesteps=timesteps, dt=dt)
-    elif mode == 'cython':
-        pset.advect_cython(timesteps=timesteps, dt=dt)
-    else:
-        pset.advect(timesteps=timesteps, dt=dt)
+    pset.advect(timesteps=timesteps, dt=dt)
 
     if verbose:
         print "Final particle positions:"

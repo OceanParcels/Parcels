@@ -1,12 +1,13 @@
 import numpy as np
 cimport numpy as np
 import cython
+from parcels.particle import ParticleSet
 from parcels.jit_module import Kernel, GNUCompiler
 
-__all__ = ['Particle', 'ParticleSet']
+__all__ = ['CythonParticle', 'CythonParticleSet']
 
 
-class ParticleSet(object):
+class CythonParticleSet(ParticleSet):
     """Container class for storing and executing over sets of particles.
 
     Please note that this currently only supports fixed size partcile sets.
@@ -14,44 +15,7 @@ class ParticleSet(object):
     :param size: Initial size of particle set
     :param grid: Grid object from which to sample velocity"""
 
-    def __init__(self, size, grid):
-        self._grid = grid
-        self._particles = np.empty(size, dtype=Particle)
-        self._npart = 0
-
-        # Particle array for JIT kernel
-        self._kernel = None
-        self._p_dtype = np.dtype([('lon', np.float32), ('lat', np.float32),
-                                  ('xi', np.int32), ('yi', np.int32)])
-        self._p_array = np.empty(size, dtype=self._p_dtype)
-
-    def add_particle(self, p):
-        p.xi = np.where(p.lon > self._grid.U.lon)[0][-1]
-        p.yi = np.where(p.lat > self._grid.U.lat)[0][-1]
-        self._particles[self._npart] = p
-
-        # Populate the partcile's struct
-        self._p_array[self._npart]['lon'] = p.lon
-        self._p_array[self._npart]['lat'] = p.lat
-        self._p_array[self._npart]['xi'] = p.xi
-        self._p_array[self._npart]['yi'] = p.yi
-
-        self._npart += 1
-
-    def generate_jit_kernel(self, filename):
-        self._kernel = Kernel(filename)
-        self._kernel.generate_code(self._grid)
-        self._kernel.compile(compiler=GNUCompiler())
-        self._kernel.load_lib()
-
     def advect(self, timesteps=1, dt=None):
-        print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
-            % (self._npart, timesteps)
-        for t in range(timesteps):
-            for p in self._particles:
-                p.advect_rk4(self._grid, dt)
-
-    def advect_cython(self, timesteps=1, dt=None):
         cdef:
             np.int32_t t, tsteps = timesteps
             np.ndarray[np.float32_t, ndim=1, mode="c"] lon_u = self._grid.U.lon,
@@ -60,30 +24,15 @@ class ParticleSet(object):
             np.ndarray[np.float32_t, ndim=1, mode="c"] lon_v = self._grid.V.lon,
             np.ndarray[np.float32_t, ndim=1, mode="c"] lat_v = self._grid.V.lat,
             np.ndarray[np.float32_t, ndim=2, mode="c"] V = self._grid.V.data
-        print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
+        print "Parcels::CythonParticleSet: Advecting %d particles for %d timesteps" \
             % (self._npart, timesteps)
 
         for t in range(tsteps):
             for p in self._particles:
                 advect_rk4_cython(p, dt, lon_u, lat_u, U, lon_v, lat_v, V)
 
-    def advect_jit(self, timesteps=1, dt=None):
-        print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
-            % (self._npart, timesteps)
 
-        # Generate, compile and execute JIT kernel
-        self.generate_jit_kernel("particle_kernel")
-        self._kernel.execute(self, timesteps, dt)
-
-        # Transferrring particle data back onto original array
-        for i, p in enumerate(self._particles):
-            p.lon = self._p_array[i]['lon']
-            p.lat = self._p_array[i]['lat']
-            p.xi = self._p_array[i]['xi']
-            p.yi = self._p_array[i]['yi']
-
-
-cdef class Particle(object):
+cdef class CythonParticle(object):
     """Classe encapsualting the basic attributes of a particle"""
 
     cdef public np.float32_t lon, lat  # Particle position in (lon, lat)
@@ -116,7 +65,7 @@ cdef class Particle(object):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef advect_rk4_cython(Particle p, np.float32_t dt,
+cdef advect_rk4_cython(CythonParticle p, np.float32_t dt,
                        np.ndarray[np.float32_t, ndim=1, mode="c"] lon_u,
                        np.ndarray[np.float32_t, ndim=1, mode="c"] lat_u,
                        np.ndarray[np.float32_t, ndim=2, mode="c"] U,
