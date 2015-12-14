@@ -36,21 +36,19 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
             """Custom print function which overrides the built-in"""
             return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
-    # Build particle set according to execution mode
-    pset = PSetClass(npart, grid, pclass=MyParticle)
-
     # Initialise particles
     km2deg = 1. / 1.852 / 60
     min_y = grid.U.lat[0] + 3. * km2deg
     max_y = grid.U.lat[-1] - 3. * km2deg
-    for i, lat in enumerate(np.linspace(min_y, max_y, npart, dtype=np.float)):
-        lon = 3. * km2deg
-        pset[i] = MyParticle(lon=lon, lat=lat, grid=grid)
-        pset[i].p = grid.P.eval(lon, lat)
+    lon = 3. * km2deg * np.ones(npart)
+    lat = np.linspace(min_y, max_y, npart, dtype=np.float)
+    pset = PSetClass(npart, grid, pclass=MyParticle, lon=lon, lat=lat)
+    for particle in pset:
+        particle.p = grid.P.eval(particle.lon, particle.lat)
 
     if verbose:
         print "Initial particle positions:"
-        for p in pset._particles:
+        for p in pset:
             print p
 
     # Advect the particles for 24h
@@ -61,7 +59,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
 
     if verbose:
         print "Final particle positions:"
-        for p in pset._particles:
+        for p in pset:
             p_local = grid.P.eval(p.lon, p.lat)
             print p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p)
 

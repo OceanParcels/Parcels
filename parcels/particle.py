@@ -38,9 +38,15 @@ class ParticleSet(object):
     :param size: Initial size of particle set
     :param grid: Grid object from which to sample velocity"""
 
-    def __init__(self, size, grid, pclass=Particle):
+    def __init__(self, size, grid, pclass=Particle, lon=None, lat=None):
         self._grid = grid
         self._particles = np.empty(size, dtype=pclass)
+
+        if lon is not None and lat is not None:
+            for i in range(size):
+                self._particles[i] = pclass(lon=lon[i], lat=lat[i], grid=grid)
+        else:
+            raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     def __len__(self):
         return self._particles.size
