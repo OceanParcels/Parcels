@@ -37,9 +37,9 @@ class ParticleSet(object):
     :param size: Initial size of particle set
     :param grid: Grid object from which to sample velocity"""
 
-    def __init__(self, size, grid):
+    def __init__(self, size, grid, pclass=Particle):
         self._grid = grid
-        self._particles = np.empty(size, dtype=Particle)
+        self._particles = np.empty(size, dtype=pclass)
         self._npart = 0
 
     def add_particle(self, p):
@@ -66,9 +66,9 @@ class JITParticleSet(object):
     :param size: Initial size of particle set
     :param grid: Grid object from which to sample velocity"""
 
-    def __init__(self, size, grid):
+    def __init__(self, size, grid, pclass=Particle):
         self._grid = grid
-        self._particles = np.empty(size, dtype=Particle)
+        self._particles = np.empty(size, dtype=pclass)
         self._npart = 0
 
         # Particle array for JIT kernel

@@ -12,10 +12,20 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     :arg filename: Basename of the input grid file set
     :arg npart: Number of particles to intialise"""
 
+    # Determine particle and set classes according to mode
+    if mode == 'jit':
+        ParticleClass = Particle
+        PSetClass = JITParticleSet
+    elif mode == 'cython':
+        ParticleClass = CythonParticle
+        PSetClass = CythonParticleSet
+    else:
+        ParticleClass = Particle
+        PSetClass = ParticleSet
+
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p
-    BaseClass = CythonParticle if mode=='cython' else Particle
-    class MyParticle(BaseClass):
+    class MyParticle(ParticleClass):
         def __init__(self, lon, lat):
             """Custom initialisation function which calls the base
             initialisation and adds the instance variable p"""
@@ -27,12 +37,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
             return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
     # Build particle set according to execution mode
-    if mode == 'jit':
-        pset = JITParticleSet(npart, grid)
-    elif mode == 'cython':
-        pset = CythonParticleSet(npart, grid)
-    else:
-        pset = ParticleSet(npart, grid)
+    pset = PSetClass(npart, grid, pclass=MyParticle)
 
     # Initialise particles
     km2deg = 1. / 1.852 / 60
