@@ -25,7 +25,7 @@ class CythonParticleSet(ParticleSet):
             np.ndarray[np.float32_t, ndim=1, mode="c"] lat_v = self._grid.V.lat,
             np.ndarray[np.float32_t, ndim=2, mode="c"] V = self._grid.V.data
         print "Parcels::CythonParticleSet: Advecting %d particles for %d timesteps" \
-            % (self._npart, timesteps)
+            % (len(self), timesteps)
 
         for t in range(tsteps):
             for p in self._particles:
@@ -38,9 +38,12 @@ cdef class CythonParticle(object):
     cdef public np.float32_t lon, lat  # Particle position in (lon, lat)
     cdef public np.int32_t xi, yi      # Current indices on the underlying grid
 
-    def __cinit__(self, np.float32_t lon, np.float32_t lat):
+    def __cinit__(self, np.float32_t lon, np.float32_t lat, grid):
         self.lon = lon
         self.lat = lat
+
+        self.xi = np.where(self.lon > grid.U.lon)[0][-1]
+        self.yi = np.where(self.lat > grid.U.lat)[0][-1]
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)

@@ -26,10 +26,10 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p
     class MyParticle(ParticleClass):
-        def __init__(self, lon, lat):
+        def __init__(self, lon, lat, grid):
             """Custom initialisation function which calls the base
             initialisation and adds the instance variable p"""
-            super(MyParticle, self).__init__(lon, lat)
+            super(MyParticle, self).__init__(lon, lat, grid)
             self.p = None
 
         def __repr__(self):
@@ -43,11 +43,10 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     km2deg = 1. / 1.852 / 60
     min_y = grid.U.lat[0] + 3. * km2deg
     max_y = grid.U.lat[-1] - 3. * km2deg
-    for lat in np.linspace(min_y, max_y, npart, dtype=np.float):
+    for i, lat in enumerate(np.linspace(min_y, max_y, npart, dtype=np.float)):
         lon = 3. * km2deg
-        particle = MyParticle(lon=lon, lat=lat)
-        particle.p = grid.P.eval(lon, lat)
-        pset.add_particle(particle)
+        pset[i] = MyParticle(lon=lon, lat=lat, grid=grid)
+        pset[i].p = grid.P.eval(lon, lat)
 
     if verbose:
         print "Initial particle positions:"
@@ -66,7 +65,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
             p_local = grid.P.eval(p.lon, p.lat)
             print p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p)
 
-    return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset._particles])
+    return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])

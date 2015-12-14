@@ -111,7 +111,7 @@ void particle_loop(int num_particles, Particle *particles,
 
     def execute(self, pset, timesteps, dt):
         grid = pset._grid
-        self._function(c_int(pset._npart), pset._p_array.ctypes.data_as(c_void_p),
+        self._function(c_int(len(pset)), pset._p_array.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_float(dt),
                        grid.U.lon.ctypes.data_as(c_void_p), grid.U.lat.ctypes.data_as(c_void_p),
                        grid.V.lon.ctypes.data_as(c_void_p), grid.V.lat.ctypes.data_as(c_void_p),
