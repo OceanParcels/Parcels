@@ -75,12 +75,6 @@ class JITParticleSet(ParticleSet):
     :param size: Initial size of particle set
     :param grid: Grid object from which to sample velocity"""
 
-    def generate_jit_kernel(self, filename):
-        self._kernel = Kernel(filename)
-        self._kernel.generate_code(self._grid)
-        self._kernel.compile(compiler=GNUCompiler())
-        self._kernel.load_lib()
-
     def advect(self, timesteps=1, dt=None):
         # Particle array for JIT kernel
         self._kernel = None
@@ -99,7 +93,10 @@ class JITParticleSet(ParticleSet):
             self._p_array[i]['yi'] = p.yi
 
         # Generate, compile and execute JIT kernel
-        self.generate_jit_kernel("particle_kernel")
+        self._kernel = Kernel("particle_kernel")
+        self._kernel.generate_code(self._grid)
+        self._kernel.compile(compiler=GNUCompiler())
+        self._kernel.load_lib()
         self._kernel.execute(self, timesteps, dt)
 
         # Transferrring particle data back onto original array
