@@ -1,4 +1,4 @@
-from parcels import NEMOGrid, Particle, ParticleSet, JITParticleSet
+from parcels import NEMOGrid, Particle, ParticleSet, JITParticle, JITParticleSet
 from parcels import CythonParticle, CythonParticleSet
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
@@ -14,7 +14,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
 
     # Determine particle and set classes according to mode
     if mode == 'jit':
-        ParticleClass = Particle
+        ParticleClass = JITParticle
         PSetClass = JITParticleSet
     elif mode == 'cython':
         ParticleClass = CythonParticle
@@ -26,10 +26,14 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p
     class MyParticle(ParticleClass):
-        def __init__(self, lon, lat, grid):
+        # JIT compilation requires a-priori knowledge of the particle
+        # data structure, so we define additional variables here.
+        user_vars = [('p', np.float32)]
+
+        def __init__(self, *args, **kwargs):
             """Custom initialisation function which calls the base
             initialisation and adds the instance variable p"""
-            super(MyParticle, self).__init__(lon, lat, grid)
+            super(MyParticle, self).__init__(*args, **kwargs)
             self.p = None
 
         def __repr__(self):

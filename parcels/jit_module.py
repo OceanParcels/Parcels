@@ -18,17 +18,14 @@ class Kernel(object):
         self.log_file = str(path.local("%s.log" % self.filename))
         self._lib = None
 
-    def generate_code(self, grid):
-        parameters = dict(xdim=grid.U.lon.size, ydim=grid.U.lat.size)
+    def generate_code(self, grid, ptype):
+        parameters = dict(xdim=grid.U.lon.size, ydim=grid.U.lat.size,
+                          ptype=ptype.code)
         self.code = """
 #include <stdio.h>
 
 
-typedef struct
-{
-    float lon, lat;
-    int xi, yi;
-} Particle;
+%(ptype)s
 
 
 static inline int advance_index(float x, int i, int size, float *xvals)
@@ -111,7 +108,7 @@ void particle_loop(int num_particles, Particle *particles,
 
     def execute(self, pset, timesteps, dt):
         grid = pset._grid
-        self._function(c_int(len(pset)), pset._p_array.ctypes.data_as(c_void_p),
+        self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_float(dt),
                        grid.U.lon.ctypes.data_as(c_void_p), grid.U.lat.ctypes.data_as(c_void_p),
                        grid.V.lon.ctypes.data_as(c_void_p), grid.V.lat.ctypes.data_as(c_void_p),

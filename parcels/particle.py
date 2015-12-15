@@ -1,7 +1,9 @@
 import numpy as np
 from parcels.jit_module import Kernel, GNUCompiler
 
-__all__ = ['Particle', 'ParticleSet', 'JITParticleSet']
+__all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet']
+
+ctype = {np.int32: 'int', np.float32: 'float'}
 
 
 class Particle(object):
@@ -65,6 +67,49 @@ class ParticleSet(object):
                 p.advect_rk4(self._grid, dt)
 
 
+class ParticleType(object):
+    """Class encapsulating the type information for custom particles"""
+
+    def __init__(self, user=[]):
+        self.base = [('lon', np.float32), ('lat', np.float32),
+                     ('xi', np.int32), ('yi', np.int32)]
+        self.user = user
+
+    @property
+    def dtype(self):
+        return np.dtype(self.base + self.user)
+
+    @property
+    def code(self, name='Particle'):
+        """Type definition for the corresponding C struct"""
+        tdef = '\n'.join(['  %s %s;' % (ctype[t], v) for v, t in self.base + self.user])
+        return """typedef struct
+{
+%s
+} %s;""" % (tdef, name)
+
+
+class JITParticle(Particle):
+
+    user_vars = []
+
+    def __init__(self, *args, **kwargs):
+        self._cptr = kwargs.pop('cptr', None)
+        super(JITParticle, self).__init__(*args, **kwargs)
+
+    def __getattr__(self, attr):
+        if hasattr(self, '_cptr'):
+            return self._cptr.__getitem__(attr)
+        else:
+            return super(JITParticle, self).__getattr__(attr)
+
+    def __setattr__(self, key, value):
+        if hasattr(self, '_cptr'):
+            self._cptr.__setitem__(key, value)
+        else:
+            super(JITParticle, self).__setattr__(key, value)
+
+
 class JITParticleSet(ParticleSet):
     """Container class for storing and executing over sets of
     particles using Just-in-Time (JIT) compialtion techniques.
@@ -75,33 +120,23 @@ class JITParticleSet(ParticleSet):
     :param size: Initial size of particle set
     :param grid: Grid object from which to sample velocity"""
 
-    def advect(self, timesteps=1, dt=None):
-        # Particle array for JIT kernel
-        self._kernel = None
-        self._p_dtype = np.dtype([('lon', np.float32), ('lat', np.float32),
-                                  ('xi', np.int32), ('yi', np.int32)])
-        self._p_array = np.empty(len(self), dtype=self._p_dtype)
+    def __init__(self, size, grid, pclass=JITParticle, lon=None, lat=None):
+        self._grid = grid
+        self.ptype = ParticleType(pclass.user_vars)
+        self._particles = np.empty(size, dtype=pclass)
+        self._particle_data = np.empty(size, dtype=self.ptype.dtype)
 
+        for i in range(size):
+            self._particles[i] = pclass(lon[i], lat[i], grid=grid,
+                                        cptr=self._particle_data[i])
+
+    def advect(self, timesteps=1, dt=None):
         print "Parcels::JITParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
 
-        # Transferrring particle data back into C array
-        for i, p in enumerate(self._particles):
-            self._p_array[i]['lon'] = p.lon
-            self._p_array[i]['lat'] = p.lat
-            self._p_array[i]['xi'] = p.xi
-            self._p_array[i]['yi'] = p.yi
-
         # Generate, compile and execute JIT kernel
         self._kernel = Kernel("particle_kernel")
-        self._kernel.generate_code(self._grid)
+        self._kernel.generate_code(self._grid, self.ptype)
         self._kernel.compile(compiler=GNUCompiler())
         self._kernel.load_lib()
         self._kernel.execute(self, timesteps, dt)
-
-        # Transferrring particle data back onto original array
-        for i, p in enumerate(self._particles):
-            p.lon = self._p_array[i]['lon']
-            p.lat = self._p_array[i]['lat']
-            p.xi = self._p_array[i]['xi']
-            p.yi = self._p_array[i]['yi']
