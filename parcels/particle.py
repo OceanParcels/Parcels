@@ -83,7 +83,8 @@ class ParticleType(object):
     def code(self, name='Particle'):
         """Type definition for the corresponding C struct"""
         tdef = '\n'.join(['  %s %s;' % (ctype[t], v) for v, t in self.base + self.user])
-        return """typedef struct
+        return """#define PARCELS_PTYPE
+typedef struct
 {
 %s
 } %s;""" % (tdef, name)
@@ -136,7 +137,7 @@ class JITParticleSet(ParticleSet):
 
         # Generate, compile and execute JIT kernel
         self._kernel = Kernel("particle_kernel")
-        self._kernel.generate_code(self._grid, self.ptype)
+        self._kernel.generate_code(self._grid, ptype=self.ptype)
         self._kernel.compile(compiler=GNUCompiler())
         self._kernel.load_lib()
         self._kernel.execute(self, timesteps, dt)

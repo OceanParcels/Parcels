@@ -1,8 +1,12 @@
 from py import path
 import subprocess
-from os import environ
+import os
 import numpy.ctypeslib as npct
-from ctypes import c_int, c_float, c_void_p
+from ctypes import c_int, c_float, c_void_p, POINTER
+
+
+def get_package_dir():
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 
 
 class Kernel(object):
@@ -18,72 +22,23 @@ class Kernel(object):
         self.log_file = str(path.local("%s.log" % self.filename))
         self._lib = None
 
-    def generate_code(self, grid, ptype):
+    def generate_code(self, grid, ptype=None):
         parameters = dict(xdim=grid.U.lon.size, ydim=grid.U.lat.size,
-                          ptype=ptype.code)
+                          ptype=ptype.code if ptype else "")
         self.code = """
-#include <stdio.h>
-
-
 %(ptype)s
 
+const int GRID_XDIM = %(xdim)d;
+const int GRID_YDIM = %(ydim)d;
 
-static inline int advance_index(float x, int i, int size, float *xvals)
-{
-    while (i < size-1 && x > xvals[i+1]) ++i;
-    while (i > 0 && x < xvals[i]) --i;
-    return i;
-}
+#include "parcels.h"
 
-static inline float interpolate_bilinear(float x, float y, int xi, int yi,
-                                        float *xvals, float *yvals,
-                                        float qvals[%(ydim)d][%(xdim)d])
-{
-  int i = xi, j = yi;
-  i = advance_index(x, i, %(ydim)d, xvals);
-  j = advance_index(y, j, %(xdim)d, yvals);
-  return (qvals[i][j] * (xvals[i+1] - x) * (yvals[j+1] - y)
-        + qvals[i+1][j] * (x - xvals[i]) * (yvals[j+1] - y)
-        + qvals[i][j+1] * (xvals[i+1] - x) * (y - yvals[j])
-        + qvals[i+1][j+1] * (x - xvals[i]) * (y - yvals[j]))
-        / ((xvals[i+1] - xvals[i]) * (yvals[j+1] - yvals[j]));
-}
-
-
-static inline void runge_kutta4(Particle *p, float dt,
-                                float lon_u[%(xdim)d], float lat_u[%(ydim)d],
-                                float lon_v[%(xdim)d], float lat_v[%(ydim)d],
-                                float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
-{
-  float f, u1, v1, u2, v2, u3, v3, u4, v4;
-  float lon1, lat1, lon2, lat2, lon3, lat3;
-
-  f = dt / 1000. / 1.852 / 60.;
-  u1 = interpolate_bilinear(p->lat, p->lon, p->yi, p->xi, lat_u, lon_u, u);
-  v1 = interpolate_bilinear(p->lat, p->lon, p->yi, p->xi, lat_v, lon_v, v);
-  lon1 = p->lon + u1*.5*f; lat1 = p->lat + v1*.5*f;
-  u2 = interpolate_bilinear(lat1, lon1, p->yi, p->xi, lat_u, lon_u, u);
-  v2 = interpolate_bilinear(lat1, lon1, p->yi, p->xi, lat_v, lon_v, v);
-  lon2 = p->lon + u2*.5*f; lat2 = p->lat + v2*.5*f;
-  u3 = interpolate_bilinear(lat2, lon2, p->yi, p->xi, lat_u, lon_u, u);
-  v3 = interpolate_bilinear(lat2, lon2, p->yi, p->xi, lat_v, lon_v, v);
-  lon3 = p->lon + u3*f; lat3 = p->lat + v3*f;
-  u4 = interpolate_bilinear(lat3, lon3, p->yi, p->xi, lat_u, lon_u, u);
-  v4 = interpolate_bilinear(lat3, lon3, p->yi, p->xi, lat_v, lon_v, v);
-
-  // Advance particle position in space and on the grid
-  p->lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f;
-  p->lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f;
-  p->xi = advance_index(p->lon, p->xi, %(xdim)d, lon_u);
-  p->yi = advance_index(p->lat, p->yi, %(ydim)d, lat_u);
-}
-
-
+/* Outer execution loop for particle computation */
 void particle_loop(int num_particles, Particle *particles,
                    int timesteps, float dt,
-                   float lon_u[%(xdim)d], float lat_u[%(ydim)d],
-                   float lon_v[%(xdim)d], float lat_v[%(ydim)d],
-                   float u[%(ydim)d][%(xdim)d], float v[%(ydim)d][%(xdim)d])
+                   float lon_u[GRID_XDIM], float lat_u[GRID_YDIM],
+                   float lon_v[GRID_XDIM], float lat_v[GRID_YDIM],
+                   float u[GRID_YDIM][GRID_XDIM], float v[GRID_YDIM][GRID_XDIM])
 {
   int p, t;
 
@@ -93,7 +48,6 @@ void particle_loop(int num_particles, Particle *particles,
     }
   }
 }
-
 """ % parameters
 
     def compile(self, compiler):
@@ -110,9 +64,12 @@ void particle_loop(int num_particles, Particle *particles,
         grid = pset._grid
         self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_float(dt),
-                       grid.U.lon.ctypes.data_as(c_void_p), grid.U.lat.ctypes.data_as(c_void_p),
-                       grid.V.lon.ctypes.data_as(c_void_p), grid.V.lat.ctypes.data_as(c_void_p),
-                       grid.U.data.ctypes.data_as(c_void_p), grid.V.data.ctypes.data_as(c_void_p))
+                       grid.U.lon.ctypes.data_as(POINTER(c_float)),
+                       grid.U.lat.ctypes.data_as(POINTER(c_float)),
+                       grid.V.lon.ctypes.data_as(POINTER(c_float)),
+                       grid.V.lat.ctypes.data_as(POINTER(c_float)),
+                       grid.U.data.ctypes.data_as(POINTER(POINTER(c_float))),
+                       grid.V.data.ctypes.data_as(POINTER(POINTER(c_float))))
 
 
 class Compiler(object):
@@ -127,8 +84,8 @@ class Compiler(object):
     :arg ldargs: A list of arguments to the linker (optional)."""
 
     def __init__(self, cc, ld=None, cppargs=[], ldargs=[]):
-        self._cc = environ.get('CC', cc)
-        self._ld = environ.get('LDSHARED', ld)
+        self._cc = os.environ.get('CC', cc)
+        self._ld = os.environ.get('LDSHARED', ld)
         self._cppargs = cppargs
         self._ldargs = ldargs
 
@@ -159,6 +116,6 @@ class GNUCompiler(Compiler):
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=[], ldargs=[]):
         opt_flags = ['-g', '-O3']
-        cppargs = ['-Wall', '-fPIC'] + opt_flags + cppargs
+        cppargs = ['-Wall', '-fPIC', '-I%s/include' % get_package_dir()] + opt_flags + cppargs
         ldargs = ['-shared'] + ldargs
         super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
