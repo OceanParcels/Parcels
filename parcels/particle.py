@@ -7,7 +7,12 @@ ctype = {np.int32: 'int', np.float32: 'float'}
 
 
 class Particle(object):
-    """Class encapsualting the basic attributes of a particle"""
+    """Class encapsualting the basic attributes of a particle
+
+    :param lon: Initial longitude of particle
+    :param lat: Initial latitude of particle
+    :param grid: :Class Grid: object to track this particle on
+    """
 
     def __init__(self, lon, lat, grid):
         self.lon = lon
@@ -68,7 +73,10 @@ class ParticleSet(object):
 
 
 class ParticleType(object):
-    """Class encapsulating the type information for custom particles"""
+    """Class encapsulating the type information for custom particles
+
+    :param user: Optional list of (name, dtype) tuples for custom variables
+    """
 
     def __init__(self, user=[]):
         self.base = [('lon', np.float32), ('lat', np.float32),
@@ -77,6 +85,7 @@ class ParticleType(object):
 
     @property
     def dtype(self):
+        """Numpy.dtype object that defines the C struct"""
         return np.dtype(self.base + self.user)
 
     @property
@@ -91,6 +100,14 @@ typedef struct
 
 
 class JITParticle(Particle):
+    """Particle class for JIT-based Particle objects
+
+    Users should extend this type for custom particles with fast
+    advection computation. Additional variables need to be defined
+    via the :user_vars: list of (name, dtype) tuples.
+
+    :param user_vars: Class variable that defines additional particle variables
+    """
 
     user_vars = []
 
@@ -113,13 +130,17 @@ class JITParticle(Particle):
 
 class JITParticleSet(ParticleSet):
     """Container class for storing and executing over sets of
-    particles using Just-in-Time (JIT) compialtion techniques.
+    particles using Just-in-Time (JIT) compilation techniques.
 
     Please note that this currently only supports fixed size particle
     sets.
 
     :param size: Initial size of particle set
-    :param grid: Grid object from which to sample velocity"""
+    :param grid: Grid object from which to sample velocity
+    :param pclass: Optional class object that defines custom particle
+    :param lon: List of initial longitude values for particles
+    :param lat: List of initial latitude values for particles
+    """
 
     def __init__(self, size, grid, pclass=JITParticle, lon=None, lat=None):
         self._grid = grid
