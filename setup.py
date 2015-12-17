@@ -6,7 +6,7 @@ except ImportError:
 import numpy as np
 
 numpy_includes = [np.get_include()]
-particle_sources = ['parcels/particle.pyx']
+particle_sources = ['parcels/cython_particle.pyx']
 
 setup(name='parcels',
       version = '0.0.1',
@@ -14,6 +14,6 @@ setup(name='parcels',
       ocean particles in the petascale age.""",
       author = "Imperial College London",
       packages = ['parcels'],
-      ext_modules=[Extension('parcels.particle', particle_sources,
+      ext_modules=[Extension('parcels.cython_particle', particle_sources,
                              include_dirs=numpy_includes),]
 )
