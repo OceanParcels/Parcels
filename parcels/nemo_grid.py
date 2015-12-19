@@ -36,8 +36,8 @@ class NEMOGrid(object):
             # for Cython and JIT mode.
             U = np.transpose(U).copy()
             V = np.transpose(V).copy()
-        self.U = Field('U', U, lon_u, lat_u)
-        self.V = Field('V', V, lon_v, lat_v)
+        self.U = Field('U', U, lon_u, lat_u, depth=depth, time=time)
+        self.V = Field('V', V, lon_v, lat_v, depth=depth, time=time)
 
         # Additional data fields
         self.fields = fields
@@ -45,7 +45,7 @@ class NEMOGrid(object):
             for name, data in self.fields.items():
                 if transpose:
                     data = np.transpose(data)
-                field = Field(name, data, lon_v, lat_u)
+                field = Field(name, data, lon_v, lat_u, depth=depth, time=time)
                 setattr(self, name, field)
 
     @classmethod

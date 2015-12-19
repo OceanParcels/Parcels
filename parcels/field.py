@@ -17,11 +17,13 @@ class Field(object):
     :param lat: Latitude coordinates of the field
     """
 
-    def __init__(self, name, data, lon, lat):
+    def __init__(self, name, data, lon, lat, depth=None, time=None):
         self.name = name
         self.data = data
         self.lon = lon
         self.lat = lat
+        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.time = np.zeros(1, dtype=np.float64) if time is None else time
 
         # Hack around the fact that NaN values
         # propagate in SciPy's interpolators
@@ -56,14 +58,15 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        x, y = (self.lon.size, self.lat.size)
+        t, d, x, y = (self.time.size, self.depth.size,
+                      self.lon.size, self.lat.size)
         nav_lon = DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
                             coords=[('y', self.lat), ('x', self.lon)])
         nav_lat = DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
                             coords=[('y', self.lat), ('x', self.lon)])
-        vardata = DataArray(self.data.reshape((1, 1, y, x)),
-                            coords=[('time_counter', np.zeros(1, dtype=np.float64)),
-                                    (vname_depth, np.zeros(1, dtype=np.float32)),
+        vardata = DataArray(self.data.reshape((t, d, y, x)),
+                            coords=[('time_counter', self.time),
+                                    (vname_depth, self.depth),
                                     ('y', self.lat), ('x', self.lon)])
         # Create xray Dataset and output to netCDF format
         dset = Dataset({varname: vardata}, coords={'nav_lon': nav_lon,

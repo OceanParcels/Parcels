@@ -27,7 +27,7 @@ class PeninsulaGrid(NEMOGrid):
         """
         # Set NEMO grid variables
         depth = np.zeros(1, dtype=np.float32)
-        time = np.zeros(1, dtype=np.float32)
+        time = np.zeros(1, dtype=np.float64)
 
         # Generate the original test setup on A-grid in km
         dx = 100. / xdim / 2.
