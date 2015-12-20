@@ -46,27 +46,21 @@ class MovingEddiesGrid(NEMOGrid):
         eddyspeed = 0.1  # Translational speed in m/s
         dX = eddyspeed * 86400 / dx  # Grid cell movement of eddy max each day
 
+        [x, y] = np.mgrid[:lon.size, :lat.size]
         for t in range(time.size):
             hymax_1 = int(lat.size / 7)
             hxmax_1 = int(.75 * lon.size) - dX * (t-2)
             hymax_2 = int(3 * lat.size / 7) + dX * (t-2)
             hxmax_2 = int(.75 * lon.size) - dX * (t-2)
-            for x in range(lon.size):
-                for y in range(lat.size):
-                    P[x, y, t] = h0 * np.exp(-((x-hxmax_1)**2+(y-hymax_1)**2)/sig**2)
-                    P[x, y, t] += h0 * np.exp(-((x-hxmax_2)**2+(y-hymax_2)**2)/sig**2)
 
-            for x in range(lon.size-1):
-                for y in range(lat.size):
-                    V[x, y, t] = -(P[x+1, y, t] - P[x, y, t]) / dx / corio_0 * g
-                for y in range(lat.size):
-                    V[-1, y, t] = V[-2, y, t]
+            P[:, :, t] = h0 * np.exp(-((x-hxmax_1)**2+(y-hymax_1)**2)/sig**2)
+            P[:, :, t] += h0 * np.exp(-((x-hxmax_2)**2+(y-hymax_2)**2)/sig**2)
 
-            for x in range(lon.size):
-                for y in range(lat.size-1):
-                    U[x, y, t] = (P[x, y+1, t] - P[x, y, t]) / dy / corio_0 * g
-                for x in range(lon.size):
-                    U[x, -1, t] = V[x, -2, t]
+            V[:-1, :, t] = -np.diff(P[:, :, t], axis=0) / dx / corio_0 * g
+            V[-1, :, t] = V[-2, :, t]  # Fill in the last column
+
+            U[:, :-1, t] = np.diff(P[:, :, t], axis=1) / dy / corio_0 * g
+            V[:, -1, t] = U[:, -2, t]  # Fill in the last row
 
         super(MovingEddiesGrid, self).__init__(lon, lat, lon, lat, depth, time,
                                                U, V, fields={'P': P})
