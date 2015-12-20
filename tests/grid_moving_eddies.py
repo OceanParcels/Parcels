@@ -15,7 +15,7 @@ class MovingEddiesGrid(NEMOGrid):
     T. Soomere and E. Quak (Eds.),
     http://www.springer.com/gb/book/9783319004396"""
 
-    def __init__(self, xdim, ydim):
+    def __init__(self, xdim=200, ydim=350):
         """Construct the two-eddy flow field on a NEMO grid
         """
         # Set NEMO grid variables
@@ -23,10 +23,8 @@ class MovingEddiesGrid(NEMOGrid):
         time = np.arange(0., 25., dtype=np.float64)
 
         # Coordinates of the test grid (on A-grid in deg)
-        # lon = np.linspace(0, 4, xdim, dtype=np.float32)
-        # lat = np.linspace(45, 52, ydim, dtype=np.float32)
-        lon = np.arange(0, 4, 0.02, dtype=np.float32)
-        lat = np.arange(45, 52, 0.02, dtype=np.float32)
+        lon = np.linspace(0, 4, xdim, dtype=np.float32)
+        lat = np.linspace(45, 52, ydim, dtype=np.float32)
 
         # Grid spacing in m
         def cosd(x):
@@ -49,10 +47,10 @@ class MovingEddiesGrid(NEMOGrid):
         dX = eddyspeed * 86400 / dx  # Grid cell movement of eddy max each day
 
         for t in range(time.size):
-            hymax_1 = 50
-            hxmax_1 = lon.size - 50 - dX * (t-2)
-            hymax_2 = 150 + dX * (t-2)
-            hxmax_2 = lon.size - 50 - dX * (t-2)
+            hymax_1 = int(lat.size / 7)
+            hxmax_1 = int(.75 * lon.size) - dX * (t-2)
+            hymax_2 = int(3 * lat.size / 7) + dX * (t-2)
+            hxmax_2 = int(.75 * lon.size) - dX * (t-2)
             for x in range(lon.size):
                 for y in range(lat.size):
                     P[x, y, t] = h0 * np.exp(-((x-hxmax_1)**2+(y-hymax_1)**2)/sig**2)
@@ -78,9 +76,9 @@ def main():
     np.set_printoptions(linewidth=220)
 
     p = ArgumentParser(description="")
-    p.add_argument('x', metavar='x', type=int, default=1,
+    p.add_argument('-x', type=int, default=200,
                    help='Number of horizontal grid cells')
-    p.add_argument('y', metavar='y', type=int, default=1,
+    p.add_argument('-y', type=int, default=350,
                    help='Number of vertical grid cells')
     p.add_argument('-f', '--filename', default='moving_eddies',
                    help='Basename for the output grid files')
