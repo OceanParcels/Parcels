@@ -55,8 +55,12 @@ class ParticleSet(object):
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
-    def __len__(self):
+    @property
+    def size(self):
         return self._particles.size
+
+    def __len__(self):
+        return self.size
 
     def __getitem__(self, key):
         return self._particles[key]
