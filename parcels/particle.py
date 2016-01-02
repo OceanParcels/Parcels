@@ -8,6 +8,23 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
 ctype = {np.int32: 'int', np.float32: 'float'}
 
 
+def particle_advect_rk4(particle, grid, dt):
+    f = dt / 1000. / 1.852 / 60.
+    u1 = grid.U.eval(particle.lon, particle.lat)
+    v1 = grid.V.eval(particle.lon, particle.lat)
+    lon1, lat1 = (particle.lon + u1*.5*f, particle.lat + v1*.5*f)
+    u2 = grid.U.eval(lon1, lat1)
+    v2 = grid.V.eval(lon1, lat1)
+    lon2, lat2 = (particle.lon + u2*.5*f, particle.lat + v2*.5*f)
+    u3 = grid.U.eval(lon2, lat2)
+    v3 = grid.V.eval(lon2, lat2)
+    lon3, lat3 = (particle.lon + u3*f, particle.lat + v3*f)
+    u4 = grid.U.eval(lon3, lat3)
+    v4 = grid.V.eval(lon3, lat3)
+    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
+    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
+
+
 class Particle(object):
     """Class encapsualting the basic attributes of a particle
 
@@ -27,16 +44,7 @@ class Particle(object):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
     def advect_rk4(self, grid, dt):
-        f = dt / 1000. / 1.852 / 60.
-        u1, v1 = grid.eval(self.lon, self.lat)
-        lon1, lat1 = (self.lon + u1*.5*f, self.lat + v1*.5*f)
-        u2, v2 = grid.eval(lon1, lat1)
-        lon2, lat2 = (self.lon + u2*.5*f, self.lat + v2*.5*f)
-        u3, v3 = grid.eval(lon2, lat2)
-        lon3, lat3 = (self.lon + u3*f, self.lat + v3*f)
-        u4, v4 = grid.eval(lon3, lat3)
-        self.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
-        self.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
+        particle_advect_rk4(self, grid, dt)
 
 
 class ParticleSet(object):
