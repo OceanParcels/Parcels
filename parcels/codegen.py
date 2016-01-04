@@ -1,19 +1,26 @@
 import ast
 import inspect
+import cgen as c
 
 
 class IntrinsicNode(ast.AST):
-
     def __init__(self, obj, ccode):
         self.obj = obj
         self.ccode = ccode
 
+
+class GridNode(IntrinsicNode):
     def __getattr__(self, attr):
-        return IntrinsicNode(getattr(self.obj, attr),
-                             ccode="%s.%s" % (self.ccode, attr))
+        return FieldNode(getattr(self.obj, attr),
+                         ccode="%s.%s" % (self.ccode, attr))
 
 
-class IntrinsicParticle(IntrinsicNode):
+class FieldNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return IntrinsicNode(None, ccode=self.obj.ccode_subscript(*attr))
+
+
+class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
         if attr in self.obj.base_vars or attr in self.obj.user_vars:
             return IntrinsicNode(None, ccode="%s.%s" % (self.ccode, attr))
@@ -34,16 +41,18 @@ class CodeGenerator(ast.NodeTransformer):
         self.py_ast = ast.parse(inspect.getsource(pyfunc.func_code))
         self.py_ast = self.py_ast.body[0]
 
-        ccode = self.visit(self.py_ast)
-        return ast.dump(ccode)
+        ccode = self.visit(self.py_ast.body[1])
+        return ccode
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
         'particle' or 'grid' and inserts our placeholder objects"""
         if node.id == 'grid':
-            return IntrinsicNode(self.grid, ccode='grid')
+            return GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
-            return IntrinsicParticle(self.Particle, ccode='particle')
+            return ParticleNode(self.Particle, ccode='particle')
+        else:
+            node.ccode = node.id
         return node
 
     def visit_Attribute(self, node):
@@ -52,3 +61,23 @@ class CodeGenerator(ast.NodeTransformer):
             return getattr(node.value, node.attr)
         else:
             return node
+
+    def visit_Assign(self, node):
+        t = self.visit(node.targets[0])
+        v = self.visit(node.value)
+        return c.Statement("%s = %s" % (t.ccode, v.ccode))
+
+    def visit_Index(self, node):
+        return self.visit(node.value)
+
+    def visit_Tuple(self, node):
+        return tuple([self.visit(e) for e in node.elts])
+
+    def visit_Subscript(self, node):
+        v = self.visit(node.value)
+        s = self.visit(node.slice)
+        if isinstance(v, FieldNode):
+            return v.__getitem__(s)
+        elif isinstance(v, IntrinsicNode):
+            raise NotImplementedError("Subscript not implemented for object type %s"
+                                      % type(v).__name__)
