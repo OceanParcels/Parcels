@@ -123,6 +123,7 @@ class JITParticle(Particle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
+    base_vars = ['lat', 'lon']
     user_vars = []
 
     def __init__(self, *args, **kwargs):
