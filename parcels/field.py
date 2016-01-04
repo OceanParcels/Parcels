@@ -27,6 +27,9 @@ class Field(object):
         # propagate in SciPy's interpolators
         self.data[np.isnan(self.data)] = 0.
 
+    def __getitem__(self, key):
+        return self.eval(*key)
+
     @cached_property
     def interpolator(self):
         return RectBivariateSpline(self.lat, self.lon, self.data)
