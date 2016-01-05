@@ -123,13 +123,30 @@ class CodeGenerator(ast.NodeVisitor):
 
         # Generate C-code for all nodes in the Python AST
         self.visit(self.py_ast)
+        self.ccode = self.py_ast.ccode
 
-        return self.py_ast.ccode
+        return self.ccode
 
     def visit_FunctionDef(self, node):
+        # Create function declaration and argument list
+        decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
+        U, V = (self.grid.U, self.grid.V)
+        args = [c.Pointer(c.Value("Particle", "particle")), c.Value("float", "dt"),
+                c.ArrayOf(c.Value("float", U.ccode_lon), count=U.lon.size),
+                c.ArrayOf(c.Value("float", U.ccode_lat), count=U.lat.size),
+                c.ArrayOf(c.Value("float", V.ccode_lon), count=V.lon.size),
+                c.ArrayOf(c.Value("float", V.ccode_lat), count=V.lat.size),
+                c.ArrayOf(c.ArrayOf(c.Value("float", U.ccode_data),
+                                    count=U.data.shape[0]), count=U.data.shape[1]),
+                c.ArrayOf(c.ArrayOf(c.Value("float", V.ccode_data),
+                                    count=V.data.shape[0]), count=V.data.shape[1])]
+
+        # Generate "ccode" attribute by traversing the Python AST
         for stmt in node.body:
             self.visit(stmt)
-        node.ccode = c.Block([stmt.ccode for stmt in node.body])
+        # Create function body as C-code object
+        body = c.Block([stmt.ccode for stmt in node.body])
+        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), body)
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
