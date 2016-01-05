@@ -12,7 +12,7 @@ class IntrinsicNode(ast.AST):
 class GridNode(IntrinsicNode):
     def __getattr__(self, attr):
         return FieldNode(getattr(self.obj, attr),
-                         ccode="%s.%s" % (self.ccode, attr))
+                         ccode="%s->%s" % (self.ccode, attr))
 
 
 class FieldNode(IntrinsicNode):
@@ -20,10 +20,41 @@ class FieldNode(IntrinsicNode):
         return IntrinsicNode(None, ccode=self.obj.ccode_subscript(*attr))
 
 
+class ParticleAttributeNode(IntrinsicNode):
+    def __init__(self, obj, attr):
+        self.obj = obj
+        self.attr = attr
+        self.ccode = "%s->%s" % (obj.ccode, attr)
+        self.ccode_index_var = None
+
+        if self.attr == 'lon':
+            self.ccode_index_var = "%s->%s" % (self.obj.ccode, "xi")
+        elif self.attr == 'lat':
+            self.ccode_index_var = "%s->%s" % (self.obj.ccode, "yi")
+
+    @property
+    def pyast_index_update(self):
+        pyast = ast.Assign()
+        pyast.targets = [IntrinsicNode(None, ccode=self.ccode_index_var)]
+        pyast.value = IntrinsicNode(None, ccode=self.ccode_index_update)
+        return pyast
+
+    @property
+    def ccode_index_update(self):
+        """C-code for the index update requires after updating p.lon/p.lat"""
+        if self.attr == 'lon':
+            return "advance_index(%s, %s, GRID_XDIM, U_lon)" \
+                % (self.ccode, self.ccode_index_var)
+        if self.attr == 'lat':
+            return "advance_index(%s, %s, GRID_YDIM, U_lat)" \
+                % (self.ccode, self.ccode_index_var)
+        return ""
+
+
 class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
         if attr in self.obj.base_vars or attr in self.obj.user_vars:
-            return IntrinsicNode(None, ccode="%s.%s" % (self.ccode, attr))
+            return ParticleAttributeNode(self, attr)
         else:
             raise AttributeError("""Particle type %s does not define
 attribute "%s".  Please add '%s' to %s.users_vars or define an appropriate sub-class."""
@@ -48,11 +79,32 @@ class IntrinsicTransformer(ast.NodeTransformer):
             return node
 
     def visit_Attribute(self, node):
-        node.value = ast.NodeTransformer.visit(self, node.value)
+        node.value = self.visit(node.value)
         if isinstance(node.value, IntrinsicNode):
             return getattr(node.value, node.attr)
         else:
             raise NotImplementedError("Cannot propagate attribute access to C-code")
+
+    def visit_AugAssign(self, node):
+        node.target = self.visit(node.target)
+        node.op = self.visit(node.op)
+        node.value = self.visit(node.value)
+
+        # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
+        if isinstance(node.target, ParticleAttributeNode) \
+           and node.target.ccode_index_var is not None:
+            node = [node, node.target.pyast_index_update]
+        return node
+
+    def visit_Assign(self, node):
+        node.targets = [self.visit(t) for t in node.targets]
+        node.value = self.visit(node.value)
+
+        # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
+        if isinstance(node.targets[0], ParticleAttributeNode) \
+           and node.targets[0].ccode_index_var is not None:
+            node = [node, node.targets[0].pyast_index_update]
+        return node
 
 
 class CodeGenerator(ast.NodeVisitor):

@@ -44,7 +44,7 @@ class Field(object):
 
     def ccode_subscript(self, x, y):
         ccode = "interpolate_bilinear(%s, %s, %s, %s, %s, %s, %s)" \
-                % (x, y, "particle.xi", "particle.yi",
+                % (x, y, "particle->xi", "particle->yi",
                    self.ccode_lon, self.ccode_lat, self.ccode_data)
         return ccode
 
