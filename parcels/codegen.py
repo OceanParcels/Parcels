@@ -107,6 +107,21 @@ class IntrinsicTransformer(ast.NodeTransformer):
         return node
 
 
+class TupleSplitter(ast.NodeTransformer):
+    def visit_Assign(self, node):
+        if isinstance(node.targets[0], ast.Tuple) \
+           and isinstance(node.value, ast.Tuple):
+            t_elts = node.targets[0].elts
+            v_elts = node.value.elts
+            if len(t_elts) != len(v_elts):
+                raise AttributeError("Tuple lenghts in assignment do not agree")
+            node = [ast.Assign() for _ in t_elts]
+            for n, t, v in zip(node, t_elts, v_elts):
+                n.targets = [t]
+                n.value = v
+        return node
+
+
 class CodeGenerator(ast.NodeVisitor):
 
     def __init__(self, grid, Particle):
@@ -116,6 +131,9 @@ class CodeGenerator(ast.NodeVisitor):
     def generate(self, pyfunc):
         # Parse the Python code into an AST
         self.py_ast = ast.parse(inspect.getsource(pyfunc.func_code))
+
+        # Untangle Pythonic tuple-assignment statements
+        self.py_ast = TupleSplitter().visit(self.py_ast)
 
         # Replace occurences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.grid, self.Particle)
