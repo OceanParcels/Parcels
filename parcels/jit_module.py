@@ -3,6 +3,7 @@ import subprocess
 import os
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_void_p, POINTER
+from parcels.codegen import KernelGenerator, LoopGenerator
 
 
 def get_package_dir():
@@ -14,46 +15,23 @@ class Kernel(object):
 
     :arg filename: Basename for kernel files to generate"""
 
-    def __init__(self, filename):
-        self.code = ""
-        self.filename = filename
-        self.src_file = str(path.local("%s.c" % self.filename))
-        self.lib_file = str(path.local("%s.so" % self.filename))
-        self.log_file = str(path.local("%s.log" % self.filename))
+    def __init__(self, name):
+        self.name = name
+        self.ccode = None
         self._lib = None
 
-    def generate_code(self, grid, ptype=None):
-        parameters = dict(xdim=grid.U.lon.size, ydim=grid.U.lat.size,
-                          ptype=ptype.code if ptype else "")
-        self.code = """
-%(ptype)s
+        self.src_file = str(path.local("%s.c" % self.name))
+        self.lib_file = str(path.local("%s.so" % self.name))
+        self.log_file = str(path.local("%s.log" % self.name))
 
-const int GRID_XDIM = %(xdim)d;
-const int GRID_YDIM = %(ydim)d;
-
-#include "parcels.h"
-
-/* Outer execution loop for particle computation */
-void particle_loop(int num_particles, Particle *particles,
-                   int timesteps, float dt,
-                   float lon_u[GRID_XDIM], float lat_u[GRID_YDIM],
-                   float lon_v[GRID_XDIM], float lat_v[GRID_YDIM],
-                   float u[GRID_YDIM][GRID_XDIM], float v[GRID_YDIM][GRID_XDIM])
-{
-  int p, t;
-
-  for (t = 0; t < timesteps; ++t) {
-    for (p = 0; p < num_particles; ++p) {
-        runge_kutta4(&(particles[p]), dt, lon_u, lat_u, lon_v, lat_v, u, v);
-    }
-  }
-}
-""" % parameters
+    def generate_code(self, grid, ptype, pyfunc):
+        ccode_kernel = KernelGenerator(grid, ptype).generate(pyfunc)
+        self.ccode = LoopGenerator(grid, ptype).generate(self.name, ccode_kernel)
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
         with file(self.src_file, 'w') as f:
-            f.write(self.code)
+            f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
 
     def load_lib(self):

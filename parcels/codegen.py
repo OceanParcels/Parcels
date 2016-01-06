@@ -122,7 +122,10 @@ class TupleSplitter(ast.NodeTransformer):
         return node
 
 
-class CodeGenerator(ast.NodeVisitor):
+class KernelGenerator(ast.NodeVisitor):
+
+    # Intrinsic variables that appear as function arguments
+    kernel_vars = ['particle', 'grid', 'dt']
 
     def __init__(self, grid, ptype):
         self.grid = grid
@@ -142,6 +145,12 @@ class CodeGenerator(ast.NodeVisitor):
         # Generate C-code for all nodes in the Python AST
         self.visit(self.py_ast)
         self.ccode = self.py_ast.ccode
+
+        # Derive local function variables and insert declaration
+        funcvars = list(pyfunc.func_code.co_varnames)
+        for kvar in self.kernel_vars:
+            funcvars.remove(kvar)
+        self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
 
         return self.ccode
 
@@ -222,3 +231,44 @@ class CodeGenerator(ast.NodeVisitor):
 
     def visit_Num(self, node):
         node.ccode = str(node.n)
+
+
+class LoopGenerator(object):
+
+    def __init__(self, grid, ptype=None):
+        self.grid = grid
+        self.ptype = ptype
+
+    def generate(self, funcname, ccode_kernel):
+        parameters = dict(xdim=self.grid.U.lon.size,
+                          ydim=self.grid.U.lat.size,
+                          ptype=self.ptype.code if self.ptype else "",
+                          funcname=funcname)
+        ccode_header = """
+%(ptype)s
+
+const int GRID_XDIM = %(xdim)d;
+const int GRID_YDIM = %(ydim)d;
+
+#include "parcels.h"
+
+""" % parameters
+        ccode_loop = """
+
+/* Outer execution loop for particle computation */
+void particle_loop(int num_particles, Particle *particles,
+                   int timesteps, float dt,
+                   float lon_u[GRID_XDIM], float lat_u[GRID_YDIM],
+                   float lon_v[GRID_XDIM], float lat_v[GRID_YDIM],
+                   float u[GRID_YDIM][GRID_XDIM], float v[GRID_YDIM][GRID_XDIM])
+{
+  int p, t;
+
+  for (t = 0; t < timesteps; ++t) {
+    for (p = 0; p < num_particles; ++p) {
+        %(funcname)s(&(particles[p]), dt, lon_u, lat_u, lon_v, lat_v, u, v);
+    }
+  }
+}
+""" % parameters
+        return ccode_header + str(ccode_kernel) + ccode_loop

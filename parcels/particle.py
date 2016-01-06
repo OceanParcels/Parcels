@@ -176,14 +176,14 @@ class JITParticleSet(ParticleSet):
             self._particles[i] = pclass(lon[i], lat[i], grid=grid,
                                         cptr=self._particle_data[i])
 
-    def advect(self, timesteps=1, dt=None):
+    def advect(self, timesteps=1, dt=None, pyfunc=AdvectionRK4):
         print "Parcels::JITParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
 
         if self.kernel is None:
             # Generate and compile JIT kernel
-            self.kernel = Kernel("particle_kernel")
-            self.kernel.generate_code(self._grid, ptype=self.ptype)
+            self.kernel = Kernel(pyfunc.__name__)
+            self.kernel.generate_code(self._grid, self.ptype, pyfunc=pyfunc)
             self.kernel.compile(compiler=GNUCompiler())
             self.kernel.load_lib()
 
