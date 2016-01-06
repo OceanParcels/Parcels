@@ -4,6 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from argparse import ArgumentParser
+import matplotlib.animation as animation
 
 def particleplotting(filename,tracerfile, mode):
     """Quick and simple plotting of PARCELS trajectories"""
@@ -13,7 +14,7 @@ def particleplotting(filename,tracerfile, mode):
     lat = pfile.variables['lat']
     z = pfile.variables['z']
 
-    fig = plt.figure()
+    fig, ax = plt.subplots()
     if tracerfile != 'none':
       tfile = Dataset(tracerfile,'r')
       X = tfile.variables['x']
@@ -31,14 +32,27 @@ def particleplotting(filename,tracerfile, mode):
     elif mode == '2d':
       plt.plot(np.transpose(lon),np.transpose(lat),'.-')
       plt.xlabel('Longitude')
-      plt.ylabel('Latitude')      
+      plt.ylabel('Latitude')    
+    elif mode =='movie2d':
 
+      line, = ax.plot(lon[:,0], lat[:,0],'ow')
+      if tracerfile == 'none': # need to set ax limits
+        plt.axis((np.amin(lon),np.amax(lon),np.amin(lat),np.amax(lat)))
+        
+      def animate(i):
+          line.set_xdata(lon[:,i])
+          line.set_ydata(lat[:,i])
+          return line,
+
+      ani = animation.FuncAnimation(fig, animate, np.arange(1, lon.shape[1]),
+          interval=100, blit=False)
+      plt.show()
 
     plt.show()
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""Quick and simple plotting of PARCELS trajectories""")
-    p.add_argument('mode', choices=('2d', '3d'), nargs='?', default='2d',
+    p.add_argument('mode', choices=('2d', '3d','movie2d'), nargs='?', default='2d',
                    help='Type of display')
     p.add_argument('-p', '--particlefile', type=str, default='MyParticle.nc',
                    help='Name of particle file')
