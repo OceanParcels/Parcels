@@ -53,11 +53,11 @@ class ParticleAttributeNode(IntrinsicNode):
 
 class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
-        if attr in self.obj.base_vars or attr in self.obj.user_vars:
+        if attr in dict(self.obj.base) or attr in dict(self.obj.user):
             return ParticleAttributeNode(self, attr)
         else:
-            raise AttributeError("""Particle type %s does not define
-attribute "%s".  Please add '%s' to %s.users_vars or define an appropriate sub-class."""
+            raise AttributeError("""Particle type %s does not define attribute "%s".
+Please add '%s' to %s.users_vars or define an appropriate sub-class."""
                                  % (self.obj, attr, attr, self.obj))
 
 
@@ -66,15 +66,15 @@ class IntrinsicTransformer(ast.NodeTransformer):
     names, such as 'particle' or 'grid', inserts placeholder objects
     and propagates attribute access"""
 
-    def __init__(self, grid, Particle):
+    def __init__(self, grid, ptype):
         self.grid = grid
-        self.Particle = Particle
+        self.ptype = ptype
 
     def visit_Name(self, node):
         if node.id == 'grid':
             return GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
-            return ParticleNode(self.Particle, ccode='particle')
+            return ParticleNode(self.ptype, ccode='particle')
         else:
             return node
 
@@ -124,9 +124,9 @@ class TupleSplitter(ast.NodeTransformer):
 
 class CodeGenerator(ast.NodeVisitor):
 
-    def __init__(self, grid, Particle):
+    def __init__(self, grid, ptype):
         self.grid = grid
-        self.Particle = Particle
+        self.ptype = ptype
 
     def generate(self, pyfunc):
         # Parse the Python code into an AST
@@ -136,7 +136,7 @@ class CodeGenerator(ast.NodeVisitor):
         self.py_ast = TupleSplitter().visit(self.py_ast)
 
         # Replace occurences of intrinsic objects in Python AST
-        transformer = IntrinsicTransformer(self.grid, self.Particle)
+        transformer = IntrinsicTransformer(self.grid, self.ptype)
         self.py_ast = transformer.visit(self.py_ast.body[0])
 
         # Generate C-code for all nodes in the Python AST

@@ -89,10 +89,19 @@ class ParticleType(object):
     :param user: Optional list of (name, dtype) tuples for custom variables
     """
 
-    def __init__(self, user=[]):
+    def __init__(self, pclass):
+        if not isinstance(pclass, type):
+            raise TypeError("Class object required to derive ParticleType")
+        if not issubclass(pclass, Particle):
+            raise TypeError("Class object does not inherit from parcels.Particle")
+
+        self.pclass = pclass
         self.base = [('lon', np.float32), ('lat', np.float32),
                      ('xi', np.int32), ('yi', np.int32)]
-        self.user = user
+        self.user = pclass.user_vars or []
+
+    def __repr__(self):
+        return self.pclass.__name__
 
     @property
     def dtype(self):
@@ -156,7 +165,7 @@ class JITParticleSet(ParticleSet):
 
     def __init__(self, size, grid, pclass=JITParticle, lon=None, lat=None):
         self._grid = grid
-        self.ptype = ParticleType(pclass.user_vars)
+        self.ptype = ParticleType(pclass)
         self._particles = np.empty(size, dtype=pclass)
         self._particle_data = np.empty(size, dtype=self.ptype.dtype)
         self.kernel = None
