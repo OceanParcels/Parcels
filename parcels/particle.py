@@ -1,6 +1,7 @@
 import numpy as np
 from parcels.jit_module import Kernel, GNUCompiler
 import netCDF4
+from collections import OrderedDict
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
            'ParticleFile']
@@ -96,22 +97,25 @@ class ParticleType(object):
             raise TypeError("Class object does not inherit from parcels.Particle")
 
         self.pclass = pclass
-        self.base = [('lon', np.float32), ('lat', np.float32),
-                     ('xi', np.int32), ('yi', np.int32)]
-        self.user = pclass.user_vars or []
+        self.base = pclass.base_vars
+        self.user = pclass.user_vars or {}
 
     def __repr__(self):
         return self.pclass.__name__
 
     @property
+    def var_types(self):
+        return self.base.items() + self.user.items()
+
+    @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
-        return np.dtype(self.base + self.user)
+        return np.dtype(self.var_types)
 
     @property
     def code(self, name='Particle'):
         """Type definition for the corresponding C struct"""
-        tdef = '\n'.join(['  %s %s;' % (ctype[t], v) for v, t in self.base + self.user])
+        tdef = '\n'.join(['  %s %s;' % (ctype[t], v) for v, t in self.var_types])
         return """#define PARCELS_PTYPE
 typedef struct
 {
@@ -129,8 +133,9 @@ class JITParticle(Particle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
-    base_vars = ['lat', 'lon']
-    user_vars = []
+    base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
+                             ('xi', np.int32), ('yi', np.int32)])
+    user_vars = {}
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)

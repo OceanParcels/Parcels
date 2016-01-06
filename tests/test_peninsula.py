@@ -30,7 +30,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
     class MyParticle(ParticleClass):
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
-        user_vars = [('p', np.float32)]
+        user_vars = {'p': np.float32}
 
         def __init__(self, *args, **kwargs):
             """Custom initialisation function which calls the base
