@@ -215,7 +215,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.left)
         self.visit(node.op)
         self.visit(node.right)
-        node.ccode = "%s %s %s" % (node.left.ccode, node.op.ccode, node.right.ccode)
+        node.ccode = "(%s %s %s)" % (node.left.ccode, node.op.ccode, node.right.ccode)
 
     def visit_Add(self, node):
         node.ccode = "+"
