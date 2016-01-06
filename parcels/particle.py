@@ -4,12 +4,12 @@ import netCDF4
 from collections import OrderedDict
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
-           'ParticleFile']
+           'ParticleFile', 'AdvectionRK4']
 
 ctype = {np.int32: 'int', np.float32: 'float'}
 
 
-def particle_advect_rk4(particle, grid, dt):
+def AdvectionRK4(particle, grid, dt):
     f = dt / 1000. / 1.852 / 60.
     u1 = grid.U[particle.lon, particle.lat]
     v1 = grid.V[particle.lon, particle.lat]
@@ -40,9 +40,6 @@ class Particle(object):
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
-
-    def advect_rk4(self, grid, dt):
-        particle_advect_rk4(self, grid, dt)
 
 
 class ParticleSet(object):
@@ -81,7 +78,7 @@ class ParticleSet(object):
             % (len(self), timesteps)
         for t in range(timesteps):
             for p in self._particles:
-                p.advect_rk4(self._grid, dt)
+                AdvectionRK4(p, self._grid, dt)
 
 
 class ParticleType(object):
