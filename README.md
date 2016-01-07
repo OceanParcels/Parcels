@@ -34,7 +34,11 @@ python tests/peninsula.py <xdim> <ydim>
 where `xdim` and `ydim` are the numbers of grid cells in each
 dimension. The particle advection example can then be run with:
 ```
-python tests/example_peninsula.py -p <npart> --degree <deg>
+python tests/test_peninsula.py -p <npart> --degree <deg> --output
 ```
 where `npart` is the number of evenly initialised particles and `deg`
-is the degree of spatial interpolation used.
+is the degree of spatial interpolation used. The resulting particle
+trajectories can be visualised using Parcel's utility plotting script:
+```
+python scripts/plotParticles.py 2d -p MyParticle.nc
+```
