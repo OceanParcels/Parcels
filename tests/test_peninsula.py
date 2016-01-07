@@ -1,12 +1,14 @@
-from parcels import NEMOGrid, Particle, ParticleSet, JITParticle, JITParticleSet
+from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
 from parcels import CythonParticle, CythonParticleSet
+from parcels import NEMOGrid, ParticleFile
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
 import pytest
 
 
-def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
+def pensinsula_example(grid, npart, mode='cython', degree=3,
+                       verbose=False, output=False):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
@@ -55,11 +57,27 @@ def pensinsula_example(grid, npart, mode='cython', degree=3, verbose=False):
         for p in pset:
             print p
 
+    # Write initial output to file
+    if output:
+        out = ParticleFile(name="MyParticle", particleset=pset)
+        out.write(pset, 0.)
+
     # Advect the particles for 24h
-    time = 86400.
+    time = 24 * 3600.
     dt = 36.
-    timesteps = int(time / dt)
-    pset.advect(timesteps=timesteps, dt=dt)
+    if output:
+        # Use sub-timesteps when doing trajectory I/O
+        substeps = 100
+        timesteps = int(time / substeps / dt)
+        current = 0.
+        for _ in range(timesteps):
+            pset.advect(timesteps=substeps, dt=dt)
+            current += substeps * dt
+            out.write(pset, current)
+    else:
+        # Execution without I/O for performance benchmarks
+        timesteps = int(time / dt)
+        pset.advect(timesteps=timesteps, dt=dt)
 
     if verbose:
         print "Final particle positions:"
@@ -106,6 +124,8 @@ Example of particle advection around an idealised peninsula""")
                    help='Degree of spatial interpolation')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
+    p.add_argument('-o', '--output', action='store_true', default=False,
+                   help='Output trajectory data to file')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
     args = p.parse_args()
@@ -117,9 +137,11 @@ Example of particle advection around an idealised peninsula""")
         from cProfile import runctx
         from pstats import Stats
         runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
-                                   degree=args.degree, verbose=args.verbose)",
+                                   degree=args.degree, verbose=args.verbose,\
+                                   output=args.output)",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         pensinsula_example(grid, args.particles, mode=args.mode,
-                           degree=args.degree, verbose=args.verbose)
+                           degree=args.degree, verbose=args.verbose,
+                           output=args.output)
