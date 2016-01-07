@@ -65,15 +65,19 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
     # Advect the particles for 24h
     time = 24 * 3600.
     dt = 36.
-    substeps = 100
-    timesteps = int(time / substeps / dt)
-    current = 0.
-    for _ in range(timesteps):
-        pset.advect(timesteps=substeps, dt=dt)
-
-        current += substeps * dt
-        if output:
+    if output:
+        # Use sub-timesteps when doing trajectory I/O
+        substeps = 100
+        timesteps = int(time / substeps / dt)
+        current = 0.
+        for _ in range(timesteps):
+            pset.advect(timesteps=substeps, dt=dt)
+            current += substeps * dt
             out.write(pset, current)
+    else:
+        # Execution without I/O for performance benchmarks
+        timesteps = int(time / dt)
+        pset.advect(timesteps=timesteps, dt=dt)
 
     if verbose:
         print "Final particle positions:"
