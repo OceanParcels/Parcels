@@ -163,13 +163,15 @@ class JITParticleSet(ParticleSet):
         print "Parcels::JITParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
 
-        # Generate, compile and execute JIT kernel
-        if self.kernel is not None:
+        if self.kernel is None:
+            # Generate and compile JIT kernel
             self.kernel = Kernel("particle_kernel")
             self.kernel.generate_code(self._grid, ptype=self.ptype)
             self.kernel.compile(compiler=GNUCompiler())
             self.kernel.load_lib()
-            self.kernel.execute(self, timesteps, dt)
+
+        # Execute JIT kernel
+        self.kernel.execute(self, timesteps, dt)
 
 
 class ParticleFile(object):
