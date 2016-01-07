@@ -153,6 +153,7 @@ class JITParticleSet(ParticleSet):
         self.ptype = ParticleType(pclass.user_vars)
         self._particles = np.empty(size, dtype=pclass)
         self._particle_data = np.empty(size, dtype=self.ptype.dtype)
+        self.kernel = None
 
         for i in range(size):
             self._particles[i] = pclass(lon[i], lat[i], grid=grid,
@@ -163,11 +164,12 @@ class JITParticleSet(ParticleSet):
             % (len(self), timesteps)
 
         # Generate, compile and execute JIT kernel
-        self._kernel = Kernel("particle_kernel")
-        self._kernel.generate_code(self._grid, ptype=self.ptype)
-        self._kernel.compile(compiler=GNUCompiler())
-        self._kernel.load_lib()
-        self._kernel.execute(self, timesteps, dt)
+        if self.kernel is not None:
+            self.kernel = Kernel("particle_kernel")
+            self.kernel.generate_code(self._grid, ptype=self.ptype)
+            self.kernel.compile(compiler=GNUCompiler())
+            self.kernel.load_lib()
+            self.kernel.execute(self, timesteps, dt)
 
 
 class ParticleFile(object):
