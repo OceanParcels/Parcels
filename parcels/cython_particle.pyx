@@ -1,8 +1,9 @@
+from parcels.kernel import Kernel
+from parcels.compiler import GNUCompiler
+from parcels.particle import ParticleSet
 import numpy as np
 cimport numpy as np
 import cython
-from parcels.particle import ParticleSet
-from parcels.jit_module import Kernel, GNUCompiler
 
 __all__ = ['CythonParticle', 'CythonParticleSet']
 

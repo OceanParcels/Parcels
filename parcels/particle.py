@@ -1,5 +1,6 @@
+from parcels.kernel import Kernel
+from parcels.compiler import GNUCompiler
 import numpy as np
-from parcels.jit_module import Kernel, GNUCompiler
 import netCDF4
 from collections import OrderedDict
 
