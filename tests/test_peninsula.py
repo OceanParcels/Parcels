@@ -1,6 +1,6 @@
 from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
 from parcels import CythonParticle, CythonParticleSet
-from parcels import NEMOGrid, ParticleFile
+from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
@@ -71,13 +71,13 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
         timesteps = int(time / substeps / dt)
         current = 0.
         for _ in range(timesteps):
-            pset.advect(timesteps=substeps, dt=dt)
+            pset.execute(AdvectionRK4, timesteps=substeps, dt=dt)
             current += substeps * dt
             out.write(pset, current)
     else:
         # Execution without I/O for performance benchmarks
         timesteps = int(time / dt)
-        pset.advect(timesteps=timesteps, dt=dt)
+        pset.execute(AdvectionRK4, timesteps=timesteps, dt=dt)
 
     if verbose:
         print "Final particle positions:"

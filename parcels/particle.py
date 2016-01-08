@@ -72,12 +72,12 @@ class ParticleSet(object):
     def __setitem__(self, key, value):
         self.particles[key] = value
 
-    def advect(self, timesteps=1, dt=None):
+    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
         print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
         for t in range(timesteps):
             for p in self.particles:
-                AdvectionRK4(p, self.grid, dt)
+                pyfunc(p, self.grid, dt)
 
 
 class ParticleType(object):
@@ -167,7 +167,7 @@ class JITParticleSet(ParticleSet):
             self.particles[i] = pclass(lon[i], lat[i], grid=grid,
                                        cptr=self._particle_data[i])
 
-    def advect(self, timesteps=1, dt=None, pyfunc=AdvectionRK4):
+    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
         print "Parcels::JITParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
 
