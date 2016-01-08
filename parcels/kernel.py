@@ -33,7 +33,7 @@ class Kernel(object):
         self._function = self._lib.particle_loop
 
     def execute(self, pset, timesteps, dt):
-        grid = pset._grid
+        grid = pset.grid
         self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_float(dt),
                        grid.U.lon.ctypes.data_as(POINTER(c_float)),
