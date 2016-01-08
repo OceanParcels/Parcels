@@ -158,7 +158,7 @@ class KernelGenerator(ast.NodeVisitor):
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
         U, V = (self.grid.U, self.grid.V)
-        args = [c.Pointer(c.Value("Particle", "particle")), c.Value("float", "dt"),
+        args = [c.Pointer(c.Value(self.ptype.name, "particle")), c.Value("float", "dt"),
                 c.ArrayOf(c.Value("float", U.ccode_lon), count=U.lon.size),
                 c.ArrayOf(c.Value("float", U.ccode_lat), count=U.lat.size),
                 c.ArrayOf(c.Value("float", V.ccode_lon), count=V.lon.size),
@@ -239,36 +239,44 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, ccode_kernel):
-        parameters = dict(xdim=self.grid.U.lon.size,
-                          ydim=self.grid.U.lat.size,
-                          ptype=self.ptype.code if self.ptype else "",
-                          funcname=funcname)
-        ccode_header = """
-%(ptype)s
+    def generate(self, funcname, kernel):
+        ccode = []
+        U, V = (self.grid.U, self.grid.V)
 
-const int GRID_XDIM = %(xdim)d;
-const int GRID_YDIM = %(ydim)d;
+        # Generate const declarations for grid size
+        cdecl = c.Const(c.Value("int", "GRID_XDIM")).inline(with_semicolon=False)
+        ccode += [str(c.Assign(cdecl, U.lon.size))]
+        cdecl = c.Const(c.Value("int", "GRID_YDIM")).inline(with_semicolon=False)
+        ccode += [str(c.Assign(cdecl, U.lat.size))]
 
-#include "parcels.h"
+        # Add include for Parcels header
+        ccode += [str(c.Include("parcels.h", system=False))]
 
-""" % parameters
-        ccode_loop = """
+        # Generate type definition for particle type
+        vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types]
+        ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
-/* Outer execution loop for particle computation */
-void particle_loop(int num_particles, Particle *particles,
-                   int timesteps, float dt,
-                   float lon_u[GRID_XDIM], float lat_u[GRID_YDIM],
-                   float lon_v[GRID_XDIM], float lat_v[GRID_YDIM],
-                   float u[GRID_YDIM][GRID_XDIM], float v[GRID_YDIM][GRID_XDIM])
-{
-  int p, t;
+        # Insert kernel code
+        ccode += [str(kernel)]
 
-  for (t = 0; t < timesteps; ++t) {
-    for (p = 0; p < num_particles; ++p) {
-        %(funcname)s(&(particles[p]), dt, lon_u, lat_u, lon_v, lat_v, u, v);
-    }
-  }
-}
-""" % parameters
-        return ccode_header + str(ccode_kernel) + ccode_loop
+        # Generate outer loop for repeated kernel invocation
+        args = [c.Value("int", "num_particles"),
+                c.Pointer(c.Value(self.ptype.name, "particles")),
+                c.Value("int", "timesteps"), c.Value("float", "dt"),
+                c.ArrayOf(c.Value("float", U.ccode_lon), count=U.lon.size),
+                c.ArrayOf(c.Value("float", U.ccode_lat), count=U.lat.size),
+                c.ArrayOf(c.Value("float", V.ccode_lon), count=V.lon.size),
+                c.ArrayOf(c.Value("float", V.ccode_lat), count=V.lat.size),
+                c.ArrayOf(c.ArrayOf(c.Value("float", U.ccode_data),
+                                    count=U.data.shape[0]), count=U.data.shape[1]),
+                c.ArrayOf(c.ArrayOf(c.Value("float", V.ccode_data),
+                                    count=V.data.shape[0]), count=V.data.shape[1])]
+        loop_body = c.Statement("%s(&(particles[p]), dt, %s, %s, %s, %s, %s, %s)" %
+                                (funcname, U.ccode_lon, U.ccode_lat, V.ccode_lon,
+                                 V.ccode_lat, U.ccode_data, V.ccode_data))
+        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block([loop_body]))
+        tloop = c.For("t = 0", "t < timesteps", "++t", c.Block([ploop]))
+        fbody = c.Block([c.Value("int", "p, t"), tloop])
+        fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
+        ccode += [str(c.FunctionBody(fdecl, fbody))]
+        return "\n\n".join(ccode)

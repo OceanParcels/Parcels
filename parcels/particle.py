@@ -93,12 +93,12 @@ class ParticleType(object):
         if not issubclass(pclass, Particle):
             raise TypeError("Class object does not inherit from parcels.Particle")
 
-        self.pclass = pclass
+        self.name = pclass.__name__
         self.base = pclass.base_vars
         self.user = pclass.user_vars or {}
 
     def __repr__(self):
-        return self.pclass.__name__
+        return self.name
 
     @property
     def var_types(self):
