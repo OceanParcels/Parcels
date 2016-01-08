@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 
-def pensinsula_example(grid, npart, mode='cython', degree=3,
+def pensinsula_example(grid, npart, mode='jit', degree=1,
                        verbose=False, output=False):
     """Example configuration of particle flow around an idealised Peninsula
 
@@ -120,7 +120,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Execution mode for performing RK4 computation')
     p.add_argument('-p', '--particles', type=int, default=20,
                    help='Number of particles to advect')
-    p.add_argument('-d', '--degree', type=int, default=3,
+    p.add_argument('-d', '--degree', type=int, default=1,
                    help='Degree of spatial interpolation')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
