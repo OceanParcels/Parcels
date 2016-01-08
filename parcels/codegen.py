@@ -64,7 +64,7 @@ Please add '%s' to %s.users_vars or define an appropriate sub-class."""
 class IntrinsicTransformer(ast.NodeTransformer):
     """AST transformer that catches any mention of intrinsic variable
     names, such as 'particle' or 'grid', inserts placeholder objects
-    and propagates attribute access"""
+    and propagates attribute access."""
 
     def __init__(self, grid, ptype):
         self.grid = grid
@@ -108,6 +108,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
 
 class TupleSplitter(ast.NodeTransformer):
+    """AST transformer that detects and splits Pythonic tuple
+    assignments into multiple statements for conversion to C."""
+
     def visit_Assign(self, node):
         if isinstance(node.targets[0], ast.Tuple) \
            and isinstance(node.value, ast.Tuple):
@@ -123,6 +126,9 @@ class TupleSplitter(ast.NodeTransformer):
 
 
 class KernelGenerator(ast.NodeVisitor):
+    """Code generator class that translates simple Python kernel
+    functions into C functions by populating and accessing the `ccode`
+    attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ['particle', 'grid', 'dt']
@@ -234,6 +240,8 @@ class KernelGenerator(ast.NodeVisitor):
 
 
 class LoopGenerator(object):
+    """Code generator class that adds type definitions and the outer
+    loop around kernel functions to generate compilable C code."""
 
     def __init__(self, grid, ptype=None):
         self.grid = grid
