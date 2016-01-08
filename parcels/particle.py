@@ -6,8 +6,6 @@ from collections import OrderedDict
 __all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
            'ParticleFile', 'AdvectionRK4']
 
-ctype = {np.int32: 'int', np.float32: 'float'}
-
 
 def AdvectionRK4(particle, grid, dt):
     f = dt / 1000. / 1.852 / 60.
@@ -108,16 +106,6 @@ class ParticleType(object):
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
         return np.dtype(self.var_types)
-
-    @property
-    def code(self, name='Particle'):
-        """Type definition for the corresponding C struct"""
-        tdef = '\n'.join(['  %s %s;' % (ctype[t], v) for v, t in self.var_types])
-        return """#define PARCELS_PTYPE
-typedef struct
-{
-%s
-} %s;""" % (tdef, name)
 
 
 class JITParticle(Particle):
