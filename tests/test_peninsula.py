@@ -1,5 +1,4 @@
 from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
-from parcels import CythonParticle, CythonParticleSet
 from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
@@ -18,9 +17,6 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     if mode == 'jit':
         ParticleClass = JITParticle
         PSetClass = JITParticleSet
-    elif mode == 'cython':
-        ParticleClass = CythonParticle
-        PSetClass = CythonParticleSet
     else:
         ParticleClass = Particle
         PSetClass = ParticleSet
@@ -88,7 +84,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset])
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
     grid = PeninsulaGrid(100, 50)
@@ -105,7 +101,7 @@ def gridfile():
     return filename
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
     grid = NEMOGrid.from_file(gridfile)
@@ -116,7 +112,7 @@ def test_peninsula_file(gridfile, mode):
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
-    p.add_argument('mode', choices=('scipy', 'cython', 'jit'), nargs='?', default='jit',
+    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing RK4 computation')
     p.add_argument('-p', '--particles', type=int, default=20,
                    help='Number of particles to advect')
