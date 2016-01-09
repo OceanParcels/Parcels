@@ -19,9 +19,6 @@ class NEMOGrid(object):
     :param U: Zonal velocity component
     :param V: Meridional velocity component"""
 
-    # Particle set
-    _particles = []
-
     def __init__(self, lon_u, lat_u, lon_v, lat_v, depth, time,
                  U, V, transpose=True, fields=None):
         """Initialise Grid object from raw data"""
@@ -91,9 +88,6 @@ class NEMOGrid(object):
         u = self.U.eval(x, y)
         v = self.V.eval(x, y)
         return u, v
-
-    def add_particle(self, p):
-        self._particles.append(p)
 
     def write(self, filename):
         """Write flow field to NetCDF file using NEMO convention
