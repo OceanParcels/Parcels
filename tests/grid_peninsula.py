@@ -47,11 +47,10 @@ class PeninsulaGrid(NEMOGrid):
         R = 0.32 * 50.
 
         # Create the fields
-        for i, x in enumerate(La):
-            for j, y in enumerate(Wa):
-                P[i, j] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-                U[i, j] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-                V[i, j] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+        x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
+        P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+        U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+        V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
 
         # Set land points to NaN
         I = P >= 0.
