@@ -80,7 +80,7 @@ class NEMOGrid(object):
         for fp in basedir.listdir('%s_*.nc' % filename):
             if not fp.samefile(filepath_u) and not fp.samefile(filepath_v):
                 # Derive field name, read data and add to fields
-                fname = fp.basename.split('.')[0].split('_')[1]
+                fname = fp.basename.split('.')[0].split('_')[-1]
                 dset = Dataset(str(fp), 'r', format="NETCDF4")
                 fields[fname] = dset[fname][0, 0, :, :]
 
