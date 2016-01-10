@@ -35,18 +35,24 @@ class Field(object):
         self.ccode_lon = self.name + "_lon"
         self.ccode_lat = self.name + "_lat"
 
-        self.interp_cache = LRUCache(maxsize=1)
+        self.interpolator_cache = LRUCache(maxsize=1)
+        self.time_index_cache = LRUCache(maxsize=1)
 
     def __getitem__(self, key):
         return self.eval(*key)
 
-    @cachedmethod(operator.attrgetter('interp_cache'))
-    def interpolator(self, time):
-        idx = np.argmax(self.time >= time)
-        return RectBivariateSpline(self.lat, self.lon, self.data[idx, :])
+    @cachedmethod(operator.attrgetter('interpolator_cache'))
+    def interpolator(self, t_idx):
+        return RectBivariateSpline(self.lat, self.lon,
+                                   self.data[t_idx, :])
+
+    @cachedmethod(operator.attrgetter('time_index_cache'))
+    def time_index(self, time):
+        return np.argmax(self.time >= time)
 
     def eval(self, time, x, y):
-        return self.interpolator(time).ev(y, x)
+        interpolator = self.interpolator(self.time_index(time))
+        return interpolator.ev(y, x)
 
     def ccode_subscript(self, x, y):
         ccode = "interpolate_bilinear(%s, %s, %s, %s, %s, %s, %s)" \
