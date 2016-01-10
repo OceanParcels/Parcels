@@ -24,7 +24,7 @@ class NEMOGrid(object):
         """Initialise Grid object from raw data"""
         # Grid dimension arrays
         self.depth = depth
-        self.time_counter = time
+        self.time = time
 
         # Velocity data
         if transpose:
@@ -66,10 +66,10 @@ class NEMOGrid(object):
         lon_v = dset_v['nav_lon'][0, :]
         lat_v = dset_v['nav_lat'][:, 0]
         depth = np.zeros(1, dtype=np.float32)
-        time = np.zeros(1, dtype=np.float32)
+        time = dset_v['time_counter'][:]
 
-        u = dset_u['vozocrtx'][0, 0, :, :]
-        v = dset_v['vomecrty'][0, 0, :, :]
+        u = dset_u['vozocrtx'][:, 0, :, :]
+        v = dset_v['vomecrty'][:, 0, :, :]
 
         # Detect additional field data
         basedir = filepath_u.dirpath()
@@ -79,7 +79,7 @@ class NEMOGrid(object):
                 # Derive field name, read data and add to fields
                 fname = fp.basename.split('.')[0].split('_')[-1]
                 dset = Dataset(str(fp), 'r', format="NETCDF4")
-                fields[fname] = dset[fname][0, 0, :, :]
+                fields[fname] = dset[fname][:, 0, :, :]
 
         return cls(lon_u, lat_u, lon_v, lat_v, depth, time,
                    u, v, transpose=False, fields=fields)

@@ -20,7 +20,7 @@ class MovingEddiesGrid(NEMOGrid):
         """
         # Set NEMO grid variables
         depth = np.zeros(1, dtype=np.float32)
-        time = np.arange(0., 25., dtype=np.float64)
+        time = np.arange(0., 25. * 86400., 86400., dtype=np.float64)
 
         # Coordinates of the test grid (on A-grid in deg)
         lon = np.linspace(0, 4, xdim, dtype=np.float32)

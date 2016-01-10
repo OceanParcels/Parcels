@@ -1,8 +1,9 @@
 from scipy.interpolate import RectBivariateSpline
-from cached_property import cached_property
+from cachetools import cachedmethod, LRUCache
 from py import path
 import numpy as np
 from xray import DataArray, Dataset
+import operator
 
 
 __all__ = ['Field']
@@ -34,15 +35,18 @@ class Field(object):
         self.ccode_lon = self.name + "_lon"
         self.ccode_lat = self.name + "_lat"
 
+        self.interp_cache = LRUCache(maxsize=1)
+
     def __getitem__(self, key):
         return self.eval(*key)
 
-    @cached_property
-    def interpolator(self):
-        return RectBivariateSpline(self.lat, self.lon, self.data)
+    @cachedmethod(operator.attrgetter('interp_cache'))
+    def interpolator(self, time):
+        idx = np.argmax(self.time >= time)
+        return RectBivariateSpline(self.lat, self.lon, self.data[idx, :])
 
-    def eval(self, x, y):
-        return self.interpolator.ev(y, x)
+    def eval(self, time, x, y):
+        return self.interpolator(time).ev(y, x)
 
     def ccode_subscript(self, x, y):
         ccode = "interpolate_bilinear(%s, %s, %s, %s, %s, %s, %s)" \
