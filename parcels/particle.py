@@ -1,11 +1,25 @@
+from parcels.kernel import Kernel
+from parcels.compiler import GNUCompiler
 import numpy as np
-from parcels.jit_module import Kernel, GNUCompiler
 import netCDF4
+from collections import OrderedDict
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
-           'ParticleFile']
+           'ParticleFile', 'AdvectionRK4']
 
-ctype = {np.int32: 'int', np.float32: 'float'}
+
+def AdvectionRK4(particle, grid, dt):
+    f = dt / 1000. / 1.852 / 60.
+    u1 = grid.U[particle.lon, particle.lat]
+    v1 = grid.V[particle.lon, particle.lat]
+    lon1, lat1 = (particle.lon + u1*.5*f, particle.lat + v1*.5*f)
+    u2, v2 = (grid.U[lon1, lat1], grid.V[lon1, lat1])
+    lon2, lat2 = (particle.lon + u2*.5*f, particle.lat + v2*.5*f)
+    u3, v3 = (grid.U[lon2, lat2], grid.V[lon2, lat2])
+    lon3, lat3 = (particle.lon + u3*f, particle.lat + v3*f)
+    u4, v4 = (grid.U[lon3, lat3], grid.V[lon3, lat3])
+    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
+    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
 
 
 class Particle(object):
@@ -26,18 +40,6 @@ class Particle(object):
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
-    def advect_rk4(self, grid, dt):
-        f = dt / 1000. / 1.852 / 60.
-        u1, v1 = grid.eval(self.lon, self.lat)
-        lon1, lat1 = (self.lon + u1*.5*f, self.lat + v1*.5*f)
-        u2, v2 = grid.eval(lon1, lat1)
-        lon2, lat2 = (self.lon + u2*.5*f, self.lat + v2*.5*f)
-        u3, v3 = grid.eval(lon2, lat2)
-        lon3, lat3 = (self.lon + u3*f, self.lat + v3*f)
-        u4, v4 = grid.eval(lon3, lat3)
-        self.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
-        self.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
-
 
 class ParticleSet(object):
     """Container class for storing and executing over sets of particles.
@@ -48,34 +50,34 @@ class ParticleSet(object):
     :param grid: Grid object from which to sample velocity"""
 
     def __init__(self, size, grid, pclass=Particle, lon=None, lat=None):
-        self._grid = grid
-        self._particles = np.empty(size, dtype=pclass)
+        self.grid = grid
+        self.particles = np.empty(size, dtype=pclass)
 
         if lon is not None and lat is not None:
             for i in range(size):
-                self._particles[i] = pclass(lon=lon[i], lat=lat[i], grid=grid)
+                self.particles[i] = pclass(lon=lon[i], lat=lat[i], grid=grid)
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @property
     def size(self):
-        return self._particles.size
+        return self.particles.size
 
     def __len__(self):
         return self.size
 
     def __getitem__(self, key):
-        return self._particles[key]
+        return self.particles[key]
 
     def __setitem__(self, key, value):
-        self._particles[key] = value
+        self.particles[key] = value
 
-    def advect(self, timesteps=1, dt=None):
+    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
         print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
         for t in range(timesteps):
-            for p in self._particles:
-                p.advect_rk4(self._grid, dt)
+            for p in self.particles:
+                pyfunc(p, self.grid, dt)
 
 
 class ParticleType(object):
@@ -84,25 +86,27 @@ class ParticleType(object):
     :param user: Optional list of (name, dtype) tuples for custom variables
     """
 
-    def __init__(self, user=[]):
-        self.base = [('lon', np.float32), ('lat', np.float32),
-                     ('xi', np.int32), ('yi', np.int32)]
-        self.user = user
+    def __init__(self, pclass):
+        if not isinstance(pclass, type):
+            raise TypeError("Class object required to derive ParticleType")
+        if not issubclass(pclass, Particle):
+            raise TypeError("Class object does not inherit from parcels.Particle")
+
+        self.name = pclass.__name__
+        self.base = pclass.base_vars
+        self.user = pclass.user_vars or {}
+
+    def __repr__(self):
+        return self.name
+
+    @property
+    def var_types(self):
+        return self.base.items() + self.user.items()
 
     @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
-        return np.dtype(self.base + self.user)
-
-    @property
-    def code(self, name='Particle'):
-        """Type definition for the corresponding C struct"""
-        tdef = '\n'.join(['  %s %s;' % (ctype[t], v) for v, t in self.base + self.user])
-        return """#define PARCELS_PTYPE
-typedef struct
-{
-%s
-} %s;""" % (tdef, name)
+        return np.dtype(self.var_types)
 
 
 class JITParticle(Particle):
@@ -115,7 +119,9 @@ class JITParticle(Particle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
-    user_vars = []
+    base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
+                             ('xi', np.int32), ('yi', np.int32)])
+    user_vars = {}
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -149,24 +155,26 @@ class JITParticleSet(ParticleSet):
     """
 
     def __init__(self, size, grid, pclass=JITParticle, lon=None, lat=None):
-        self._grid = grid
-        self.ptype = ParticleType(pclass.user_vars)
-        self._particles = np.empty(size, dtype=pclass)
-        self._particle_data = np.empty(size, dtype=self.ptype.dtype)
+        self.grid = grid
+        self.ptype = ParticleType(pclass)
+        self.particles = np.empty(size, dtype=pclass)
         self.kernel = None
 
-        for i in range(size):
-            self._particles[i] = pclass(lon[i], lat[i], grid=grid,
-                                        cptr=self._particle_data[i])
+        # Pointer to the C-allocated particle data
+        self._particle_data = np.empty(size, dtype=self.ptype.dtype)
 
-    def advect(self, timesteps=1, dt=None):
+        for i in range(size):
+            self.particles[i] = pclass(lon[i], lat[i], grid=grid,
+                                       cptr=self._particle_data[i])
+
+    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
         print "Parcels::JITParticleSet: Advecting %d particles for %d timesteps" \
             % (len(self), timesteps)
 
         if self.kernel is None:
             # Generate and compile JIT kernel
-            self.kernel = Kernel("particle_kernel")
-            self.kernel.generate_code(self._grid, ptype=self.ptype)
+            self.kernel = Kernel(pyfunc.__name__)
+            self.kernel.generate_code(self.grid, self.ptype, pyfunc=pyfunc)
             self.kernel.compile(compiler=GNUCompiler())
             self.kernel.load_lib()
 

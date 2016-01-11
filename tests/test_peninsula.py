@@ -1,13 +1,12 @@
 from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
-from parcels import CythonParticle, CythonParticleSet
-from parcels import NEMOGrid, ParticleFile
+from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
 import pytest
 
 
-def pensinsula_example(grid, npart, mode='cython', degree=3,
+def pensinsula_example(grid, npart, mode='jit', degree=1,
                        verbose=False, output=False):
     """Example configuration of particle flow around an idealised Peninsula
 
@@ -18,9 +17,6 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
     if mode == 'jit':
         ParticleClass = JITParticle
         PSetClass = JITParticleSet
-    elif mode == 'cython':
-        ParticleClass = CythonParticle
-        PSetClass = CythonParticleSet
     else:
         ParticleClass = Particle
         PSetClass = ParticleSet
@@ -30,7 +26,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
     class MyParticle(ParticleClass):
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
-        user_vars = [('p', np.float32)]
+        user_vars = {'p': np.float32}
 
         def __init__(self, *args, **kwargs):
             """Custom initialisation function which calls the base
@@ -71,13 +67,13 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
         timesteps = int(time / substeps / dt)
         current = 0.
         for _ in range(timesteps):
-            pset.advect(timesteps=substeps, dt=dt)
+            pset.execute(AdvectionRK4, timesteps=substeps, dt=dt)
             current += substeps * dt
             out.write(pset, current)
     else:
         # Execution without I/O for performance benchmarks
         timesteps = int(time / dt)
-        pset.advect(timesteps=timesteps, dt=dt)
+        pset.execute(AdvectionRK4, timesteps=timesteps, dt=dt)
 
     if verbose:
         print "Final particle positions:"
@@ -88,7 +84,7 @@ def pensinsula_example(grid, npart, mode='cython', degree=3,
     return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset])
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
     grid = PeninsulaGrid(100, 50)
@@ -105,7 +101,7 @@ def gridfile():
     return filename
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'cython', 'jit'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
     grid = NEMOGrid.from_file(gridfile)
@@ -116,11 +112,11 @@ def test_peninsula_file(gridfile, mode):
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
-    p.add_argument('mode', choices=('scipy', 'cython', 'jit'), nargs='?', default='jit',
+    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing RK4 computation')
     p.add_argument('-p', '--particles', type=int, default=20,
                    help='Number of particles to advect')
-    p.add_argument('-d', '--degree', type=int, default=3,
+    p.add_argument('-d', '--degree', type=int, default=1,
                    help='Degree of spatial interpolation')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')

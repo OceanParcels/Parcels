@@ -27,12 +27,26 @@ class Field(object):
         # propagate in SciPy's interpolators
         self.data[np.isnan(self.data)] = 0.
 
+        # Variable names in JIT code
+        self.ccode_data = self.name
+        self.ccode_lon = self.name + "_lon"
+        self.ccode_lat = self.name + "_lat"
+
+    def __getitem__(self, key):
+        return self.eval(*key)
+
     @cached_property
     def interpolator(self):
         return RectBivariateSpline(self.lat, self.lon, self.data)
 
     def eval(self, x, y):
         return self.interpolator.ev(y, x)
+
+    def ccode_subscript(self, x, y):
+        ccode = "interpolate_bilinear(%s, %s, %s, %s, %s, %s, %s)" \
+                % (y, x, "particle->yi", "particle->xi",
+                   self.ccode_lat, self.ccode_lon, self.ccode_data)
+        return ccode
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s_%s.nc' % (filename, self.name)))
