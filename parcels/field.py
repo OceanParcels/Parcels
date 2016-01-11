@@ -35,8 +35,8 @@ class Field(object):
         self.ccode_lon = self.name + "_lon"
         self.ccode_lat = self.name + "_lat"
 
-        self.interpolator_cache = LRUCache(maxsize=1)
-        self.time_index_cache = LRUCache(maxsize=1)
+        self.interpolator_cache = LRUCache(maxsize=2)
+        self.time_index_cache = LRUCache(maxsize=2)
 
     def __getitem__(self, key):
         return self.eval(*key)
@@ -51,8 +51,16 @@ class Field(object):
         return np.argmax(self.time >= time)
 
     def eval(self, time, x, y):
-        interpolator = self.interpolator(self.time_index(time))
-        return interpolator.ev(y, x)
+        idx = self.time_index(time)
+        if idx > 0:
+            # Return linearly interpolated field value:
+            f0 = self.interpolator(idx-1).ev(y, x)
+            f1 = self.interpolator(idx).ev(y, x)
+            t0 = self.time[idx-1]
+            t1 = self.time[idx]
+            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+        else:
+            return self.interpolator(idx).ev(y, x)
 
     def ccode_subscript(self, x, y):
         ccode = "interpolate_bilinear(%s, %s, %s, %s, %s, %s, %s)" \
