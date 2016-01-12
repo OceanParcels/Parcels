@@ -124,16 +124,16 @@ class JITParticle(Particle):
         super(JITParticle, self).__init__(*args, **kwargs)
 
     def __getattr__(self, attr):
-        if hasattr(self, '_cptr'):
-            return self._cptr.__getitem__(attr)
-        else:
+        if attr == "_cptr":
             return super(JITParticle, self).__getattr__(attr)
+        else:
+            return self._cptr.__getitem__(attr)
 
     def __setattr__(self, key, value):
-        if hasattr(self, '_cptr'):
-            self._cptr.__setitem__(key, value)
-        else:
+        if key == "_cptr":
             super(JITParticle, self).__setattr__(key, value)
+        else:
+            self._cptr.__setitem__(key, value)
 
 
 class JITParticleSet(ParticleSet):
