@@ -53,7 +53,7 @@ class ParticleAttributeNode(IntrinsicNode):
 
 class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
-        if attr in dict(self.obj.base) or attr in dict(self.obj.user):
+        if attr in self.obj.var_types:
             return ParticleAttributeNode(self, attr)
         else:
             raise AttributeError("""Particle type %s does not define attribute "%s".
@@ -261,7 +261,7 @@ class LoopGenerator(object):
         ccode += [str(c.Include("parcels.h", system=False))]
 
         # Generate type definition for particle type
-        vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types]
+        vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types.items()]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         # Insert kernel code

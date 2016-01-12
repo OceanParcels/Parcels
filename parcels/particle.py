@@ -93,20 +93,16 @@ class ParticleType(object):
             raise TypeError("Class object does not inherit from parcels.Particle")
 
         self.name = pclass.__name__
-        self.base = pclass.base_vars
-        self.user = pclass.user_vars or {}
+        self.var_types = pclass.base_vars
+        self.var_types.update(pclass.user_vars)
 
     def __repr__(self):
         return self.name
 
     @property
-    def var_types(self):
-        return self.base.items() + self.user.items()
-
-    @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
-        return np.dtype(self.var_types)
+        return np.dtype(list(self.var_types.items()))
 
 
 class JITParticle(Particle):
@@ -121,7 +117,7 @@ class JITParticle(Particle):
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
                              ('xi', np.int32), ('yi', np.int32)])
-    user_vars = {}
+    user_vars = OrderedDict()
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
