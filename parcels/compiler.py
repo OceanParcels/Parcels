@@ -39,7 +39,7 @@ Compilation command: %s
 Source file: %s
 Log file: %s""" % (" ".join(cc), src, logfile.name)
                 raise RuntimeError(err)
-        print "Compiled:", obj
+        print("Compiled:", obj)
 
 
 class GNUCompiler(Compiler):

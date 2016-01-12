@@ -49,9 +49,9 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         particle.p = grid.P.eval(particle.lon, particle.lat)
 
     if verbose:
-        print "Initial particle positions:"
+        print("Initial particle positions:")
         for p in pset:
-            print p
+            print(p)
 
     # Write initial output to file
     if output:
@@ -76,10 +76,10 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         pset.execute(AdvectionRK4, timesteps=timesteps, dt=dt)
 
     if verbose:
-        print "Final particle positions:"
+        print("Final particle positions:")
         for p in pset:
             p_local = grid.P.eval(p.lon, p.lat)
-            print p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p)
+            print(p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p))
 
     return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset])
 
