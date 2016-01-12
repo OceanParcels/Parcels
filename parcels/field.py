@@ -20,11 +20,11 @@ class Field(object):
 
     def __init__(self, name, data, lon, lat, depth=None, time=None):
         self.name = name
-        self.data = data
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        self.data = data.reshape((time.size, lat.size, lon.size))
 
         # Hack around the fact that NaN values
         # propagate in SciPy's interpolators
