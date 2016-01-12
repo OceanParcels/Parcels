@@ -139,7 +139,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     def generate(self, pyfunc):
         # Parse the Python code into an AST
-        self.py_ast = ast.parse(inspect.getsource(pyfunc.func_code))
+        self.py_ast = ast.parse(inspect.getsource(pyfunc.__code__))
 
         # Untangle Pythonic tuple-assignment statements
         self.py_ast = TupleSplitter().visit(self.py_ast)
@@ -153,7 +153,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode = self.py_ast.ccode
 
         # Derive local function variables and insert declaration
-        funcvars = list(pyfunc.func_code.co_varnames)
+        funcvars = list(pyfunc.__code__.co_varnames)
         for kvar in self.kernel_vars:
             funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
