@@ -46,7 +46,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     lat = np.linspace(min_y, max_y, npart, dtype=np.float)
     pset = PSetClass(npart, grid, pclass=MyParticle, lon=lon, lat=lat)
     for particle in pset:
-        particle.p = grid.P.eval(particle.lon, particle.lat)
+        particle.p = grid.P[0., particle.lon, particle.lat]
 
     if verbose:
         print("Initial particle positions:")
@@ -78,10 +78,10 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     if verbose:
         print("Final particle positions:")
         for p in pset:
-            p_local = grid.P.eval(p.lon, p.lat)
+            p_local = grid.P[0., p.lon, p.lat]
             print(p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p))
 
-    return np.array([abs(p.p - grid.P.eval(p.lon, p.lat)) for p in pset])
+    return np.array([abs(p.p - grid.P[0., p.lon, p.lat]) for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
