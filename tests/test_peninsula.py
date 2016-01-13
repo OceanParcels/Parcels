@@ -79,7 +79,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         print("Final particle positions:")
         for p in pset:
             p_local = grid.P[0., p.lon, p.lat]
-            print(p, "\tP(final)%.5f \tdelta(P): %0.5g" % (p_local, p_local - p.p))
+            print("%s\tP(final)%.5f \tdelta(P): %0.5g" % (str(p), p_local, p_local - p.p))
 
     return np.array([abs(p.p - grid.P[0., p.lon, p.lat]) for p in pset])
 
