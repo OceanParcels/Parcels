@@ -1,7 +1,7 @@
 from parcels.codegen import KernelGenerator, LoopGenerator
 from py import path
 import numpy.ctypeslib as npct
-from ctypes import c_int, c_float, c_void_p, POINTER
+from ctypes import c_int, c_float, c_void_p, byref
 
 
 class Kernel(object):
@@ -36,9 +36,4 @@ class Kernel(object):
         grid = pset.grid
         self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_float(dt),
-                       grid.U.lon.ctypes.data_as(POINTER(c_float)),
-                       grid.U.lat.ctypes.data_as(POINTER(c_float)),
-                       grid.V.lon.ctypes.data_as(POINTER(c_float)),
-                       grid.V.lat.ctypes.data_as(POINTER(c_float)),
-                       grid.U.data.ctypes.data_as(POINTER(POINTER(c_float))),
-                       grid.V.data.ctypes.data_as(POINTER(POINTER(c_float))))
+                       byref(grid.U.ctypes_struct), byref(grid.V.ctypes_struct))

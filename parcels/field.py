@@ -4,6 +4,7 @@ from py import path
 import numpy as np
 from xray import DataArray, Dataset
 import operator
+from ctypes import Structure, c_int, c_float, POINTER
 
 
 __all__ = ['Field']
@@ -63,10 +64,27 @@ class Field(object):
             return self.interpolator(idx).ev(y, x)
 
     def ccode_subscript(self, t, x, y):
-        ccode = "interpolate_bilinear(%s, %s, %s, %s, %s, %s, %s)" \
-                % (y, x, "particle->yi", "particle->xi",
-                   self.ccode_lat, self.ccode_lon, self.ccode_data)
+        ccode = "interpolate_bilinear(%s, %s, %s, %s, %s)" \
+                % (y, x, "particle->yi", "particle->xi", self.name)
         return ccode
+
+    @property
+    def ctypes_struct(self):
+        """Returns a ctypes struct object containing all relevnt
+        pointers and sizes for this field."""
+
+        # Ctypes struct corresponding to the type definition in parcels.h
+        class CField(Structure):
+            _fields_ = [('xdim', c_int), ('ydim', c_int),
+                        ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
+                        ('data', POINTER(POINTER(c_float)))]
+
+        # Create and populate the c-struct object
+        cstruct = CField(self.lat.size, self.lon.size,
+                         self.lat.ctypes.data_as(POINTER(c_float)),
+                         self.lon.ctypes.data_as(POINTER(c_float)),
+                         self.data.ctypes.data_as(POINTER(POINTER(c_float))))
+        return cstruct
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s_%s.nc' % (filename, self.name)))
