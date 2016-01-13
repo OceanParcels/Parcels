@@ -53,7 +53,7 @@ class ParticleAttributeNode(IntrinsicNode):
 
 class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
-        if attr in dict(self.obj.base) or attr in dict(self.obj.user):
+        if attr in self.obj.var_types:
             return ParticleAttributeNode(self, attr)
         else:
             raise AttributeError("""Particle type %s does not define attribute "%s".
@@ -139,7 +139,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     def generate(self, pyfunc):
         # Parse the Python code into an AST
-        self.py_ast = ast.parse(inspect.getsource(pyfunc.func_code))
+        self.py_ast = ast.parse(inspect.getsource(pyfunc.__code__))
 
         # Untangle Pythonic tuple-assignment statements
         self.py_ast = TupleSplitter().visit(self.py_ast)
@@ -153,7 +153,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode = self.py_ast.ccode
 
         # Derive local function variables and insert declaration
-        funcvars = list(pyfunc.func_code.co_varnames)
+        funcvars = list(pyfunc.__code__.co_varnames)
         for kvar in self.kernel_vars:
             funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
@@ -261,7 +261,7 @@ class LoopGenerator(object):
         ccode += [str(c.Include("parcels.h", system=False))]
 
         # Generate type definition for particle type
-        vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types]
+        vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types.items()]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         # Insert kernel code

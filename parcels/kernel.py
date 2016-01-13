@@ -24,7 +24,7 @@ class Kernel(object):
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
-        with file(self.src_file, 'w') as f:
+        with open(self.src_file, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
 

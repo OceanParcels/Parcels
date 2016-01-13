@@ -73,8 +73,8 @@ class ParticleSet(object):
         self.particles[key] = value
 
     def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
-        print "Parcels::ParticleSet: Advecting %d particles for %d timesteps" \
-            % (len(self), timesteps)
+        print("Parcels::ParticleSet: Advecting %d particles for %d timesteps"
+              % (len(self), timesteps))
         for t in range(timesteps):
             for p in self.particles:
                 pyfunc(p, self.grid, dt)
@@ -93,20 +93,16 @@ class ParticleType(object):
             raise TypeError("Class object does not inherit from parcels.Particle")
 
         self.name = pclass.__name__
-        self.base = pclass.base_vars
-        self.user = pclass.user_vars or {}
+        self.var_types = pclass.base_vars
+        self.var_types.update(pclass.user_vars)
 
     def __repr__(self):
         return self.name
 
     @property
-    def var_types(self):
-        return self.base.items() + self.user.items()
-
-    @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
-        return np.dtype(self.var_types)
+        return np.dtype(list(self.var_types.items()))
 
 
 class JITParticle(Particle):
@@ -121,23 +117,23 @@ class JITParticle(Particle):
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
                              ('xi', np.int32), ('yi', np.int32)])
-    user_vars = {}
+    user_vars = OrderedDict()
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         super(JITParticle, self).__init__(*args, **kwargs)
 
     def __getattr__(self, attr):
-        if hasattr(self, '_cptr'):
-            return self._cptr.__getitem__(attr)
-        else:
+        if attr == "_cptr":
             return super(JITParticle, self).__getattr__(attr)
+        else:
+            return self._cptr.__getitem__(attr)
 
     def __setattr__(self, key, value):
-        if hasattr(self, '_cptr'):
-            self._cptr.__setitem__(key, value)
-        else:
+        if key == "_cptr":
             super(JITParticle, self).__setattr__(key, value)
+        else:
+            self._cptr.__setitem__(key, value)
 
 
 class JITParticleSet(ParticleSet):
@@ -168,8 +164,8 @@ class JITParticleSet(ParticleSet):
                                        cptr=self._particle_data[i])
 
     def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
-        print "Parcels::JITParticleSet: Advecting %d particles for %d timesteps" \
-            % (len(self), timesteps)
+        print("Parcels::JITParticleSet: Advecting %d particles for %d timesteps"
+              % (len(self), timesteps))
 
         if self.kernel is None:
             # Generate and compile JIT kernel

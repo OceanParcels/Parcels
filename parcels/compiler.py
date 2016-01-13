@@ -25,7 +25,7 @@ class Compiler(object):
 
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
-        with file(log, 'w') as logfile:
+        with open(log, 'w') as logfile:
             logfile.write("Compiling: %s\n" % " ".join(cc))
             try:
                 subprocess.check_call(cc, stdout=logfile, stderr=logfile)
@@ -39,7 +39,7 @@ Compilation command: %s
 Source file: %s
 Log file: %s""" % (" ".join(cc), src, logfile.name)
                 raise RuntimeError(err)
-        print "Compiled:", obj
+        print("Compiled:", obj)
 
 
 class GNUCompiler(Compiler):
