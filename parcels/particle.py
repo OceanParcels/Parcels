@@ -164,7 +164,7 @@ class JITParticleSet(ParticleSet):
             self.particles[i] = pclass(lon[i], lat[i], grid=grid,
                                        cptr=self._particle_data[i])
 
-    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
+    def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
         print("Parcels::JITParticleSet: Advecting %d particles for %d timesteps"
               % (len(self), timesteps))
 
