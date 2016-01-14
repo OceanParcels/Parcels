@@ -176,7 +176,7 @@ class JITParticleSet(ParticleSet):
             self.kernel.load_lib()
 
         # Execute JIT kernel
-        self.kernel.execute(self, timesteps, dt)
+        self.kernel.execute(self, timesteps, time, dt)
 
 
 class ParticleFile(object):

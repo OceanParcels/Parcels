@@ -4,7 +4,7 @@ from py import path
 import numpy as np
 from xray import DataArray, Dataset
 import operator
-from ctypes import Structure, c_int, c_float, POINTER
+from ctypes import Structure, c_int, c_float, c_double, POINTER
 
 
 __all__ = ['Field']
@@ -64,7 +64,7 @@ class Field(object):
             return self.interpolator(idx).ev(y, x)
 
     def ccode_subscript(self, t, x, y):
-        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s)" \
+        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, time, %s)" \
                 % (y, x, "particle->yi", "particle->xi", self.name)
         return ccode
 
@@ -75,14 +75,16 @@ class Field(object):
 
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
-            _fields_ = [('xdim', c_int), ('ydim', c_int),
+            _fields_ = [('xdim', c_int), ('ydim', c_int), ('tdim', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
+                        ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
-        cstruct = CField(self.lat.size, self.lon.size,
+        cstruct = CField(self.lat.size, self.lon.size, self.time.size,
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.lon.ctypes.data_as(POINTER(c_float)),
+                         self.time.ctypes.data_as(POINTER(c_double)),
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
 

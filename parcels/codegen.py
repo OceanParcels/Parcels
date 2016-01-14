@@ -131,7 +131,7 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'grid', 'dt']
+    kernel_vars = ['particle', 'grid', 'time', 'dt']
 
     def __init__(self, grid, ptype):
         self.grid = grid
@@ -165,7 +165,7 @@ class KernelGenerator(ast.NodeVisitor):
         decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
         U, V = (self.grid.U, self.grid.V)
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
-                c.Value("float", "dt"),
+                c.Value("double", "time"), c.Value("float", "dt"),
                 c.Pointer(c.Value("CField", "%s" % U.name)),
                 c.Pointer(c.Value("CField", "%s" % V.name))]
 
@@ -259,13 +259,15 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
-                c.Value("int", "timesteps"), c.Value("float", "dt"),
+                c.Value("int", "timesteps"), c.Value("double", "time"),
+                c.Value("float", "dt"),
                 c.Pointer(c.Value("CField", "%s" % U.name)),
                 c.Pointer(c.Value("CField", "%s" % V.name))]
-        loop_body = c.Statement("%s(&(particles[p]), dt, %s, %s)" %
-                                (funcname, U.name, V.name))
-        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block([loop_body]))
-        tloop = c.For("t = 0", "t < timesteps", "++t", c.Block([ploop]))
+        loop_body = [c.Statement("%s(&(particles[p]), time, dt, %s, %s)" %
+                                 (funcname, U.name, V.name))]
+        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
+        tloop = c.For("t = 0", "t < timesteps", "++t",
+                      c.Block([ploop, c.Statement("time += (double)dt")]))
         fbody = c.Block([c.Value("int", "p, t"), tloop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]

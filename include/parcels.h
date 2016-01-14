@@ -2,8 +2,9 @@
 
 typedef struct
 {
-  int xdim, ydim;
+  int xdim, ydim, tdim;
   float *lon, *lat;
+  double *time;
   float ***data;
 } CField;
 
@@ -32,7 +33,7 @@ static inline float spatial_interpolation_bilinear(float x, float y, int i, int 
 
 /* Linear interpolation along the time axis */
 static inline float temporal_interpolation_linear(float x, float y, int xi, int yi,
-                                                  CField *f)
+                                                  double time, CField *f)
 {
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
   float (*data)[f->xdim][f->ydim] = (float (*)[f->xdim][f->ydim]) f->data;
