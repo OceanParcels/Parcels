@@ -4,7 +4,7 @@ typedef struct
 {
   int xdim, ydim;
   float *lon, *lat;
-  float **data;
+  float ***data;
 } CField;
 
 
@@ -18,16 +18,28 @@ static inline int advance_index(float x, int i, int size, float *xvals)
 
 
 /* Bilinear interpolation routine for 2D grid */
-static inline float interpolate_bilinear(float x, float y, int xi, int yi, CField *f)
+static inline float spatial_interpolation_bilinear(float x, float y, int i, int j, int ydim,
+                                                   float *lon, float *lat, float **f_data)
 {
-  /* Cast data array intp data[lat][lon] as per NEMO data convention */
-  float (*data)[f->ydim] = (float (*)[f->ydim]) f->data;
+  /* Cast data array into data[lat][lon] as per NEMO convention */
+  float (*data)[ydim] = (float (*)[ydim]) f_data;
+  return (data[i][j] * (lon[i+1] - x) * (lat[j+1] - y)
+        + data[i+1][j] * (x - lon[i]) * (lat[j+1] - y)
+        + data[i][j+1] * (lon[i+1] - x) * (y - lat[j])
+        + data[i+1][j+1] * (x - lon[i]) * (y - lat[j]))
+        / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
+}
+
+/* Linear interpolation along the time axis */
+static inline float temporal_interpolation_linear(float x, float y, int xi, int yi,
+                                                  CField *f)
+{
+  /* Cast data array intp data[time][lat][lon] as per NEMO convention */
+  float (*data)[f->xdim][f->ydim] = (float (*)[f->xdim][f->ydim]) f->data;
+  float x0;
   int i = xi, j = yi;
   i = advance_index(x, i, f->xdim, f->lon);
   j = advance_index(y, j, f->ydim, f->lat);
-  return (data[i][j] * (f->lon[i+1] - x) * (f->lat[j+1] - y)
-        + data[i+1][j] * (x - f->lon[i]) * (f->lat[j+1] - y)
-        + data[i][j+1] * (f->lon[i+1] - x) * (y - f->lat[j])
-        + data[i+1][j+1] * (x - f->lon[i]) * (y - f->lat[j]))
-        / ((f->lon[i+1] - f->lon[i]) * (f->lat[j+1] - f->lat[j]));
+  x0 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[0]));
+  return x0;
 }

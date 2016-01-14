@@ -64,7 +64,7 @@ class Field(object):
             return self.interpolator(idx).ev(y, x)
 
     def ccode_subscript(self, t, x, y):
-        ccode = "interpolate_bilinear(%s, %s, %s, %s, %s)" \
+        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s)" \
                 % (y, x, "particle->yi", "particle->xi", self.name)
         return ccode
 
