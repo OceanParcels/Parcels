@@ -73,8 +73,6 @@ class ParticleSet(object):
         self.particles[key] = value
 
     def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
-        print("Parcels::ParticleSet: Advecting %d particles for %d timesteps"
-              % (len(self), timesteps))
         for _ in range(timesteps):
             for p in self.particles:
                 pyfunc(p, self.grid, time, dt)
@@ -165,9 +163,6 @@ class JITParticleSet(ParticleSet):
                                        cptr=self._particle_data[i])
 
     def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
-        print("Parcels::JITParticleSet: Advecting %d particles for %d timesteps"
-              % (len(self), timesteps))
-
         if self.kernel is None:
             # Generate and compile JIT kernel
             self.kernel = Kernel(pyfunc.__name__)

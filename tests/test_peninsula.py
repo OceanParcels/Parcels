@@ -61,6 +61,8 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     # Advect the particles for 24h
     time = 24 * 3600.
     dt = 36.
+    print("Peninsula: Advecting %d particles for %d timesteps"
+          % (npart, int(time / dt)))
     if output:
         # Use sub-timesteps when doing trajectory I/O
         substeps = 100

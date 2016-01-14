@@ -28,12 +28,19 @@ def moving_eddies(grid, npart=2, mode='jit', verbose=False):
 
     out = ParticleFile(name="EddyParticle", particleset=pset)
     out.write(pset, 0.)
+
+    # 25 days, with 5min timesteps and hourly output
+    hours = 24 * 25
+    timesteps = 12
+    dt = 300.
     current = 0.
-    for _ in range(24 * 25):
+    print("MovingEddies: Advecting %d particles for %d timesteps"
+          % (npart, hours * timesteps))
+    for _ in range(hours):
         pset.execute(AdvectionRK4, time=current,
-                     timesteps=12, dt=300.)
+                     timesteps=timesteps, dt=dt)
         out.write(pset, current)
-        current += 3600.
+        current += timesteps * dt
 
     if verbose:
         print("Final particle positions:")
