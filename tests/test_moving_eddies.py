@@ -1,13 +1,14 @@
 from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
 from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from argparse import ArgumentParser
+import numpy as np
 
 
 pclasses = {'scipy': (Particle, ParticleSet),
             'jit': (JITParticle, JITParticleSet)}
 
 
-def moving_eddies(grid, npart, mode='jit', verbose=False):
+def moving_eddies(grid, npart=2, mode='jit', verbose=False):
     """Configuration of a particle set that follows two moving eddies
 
     :arg grid: :class NEMOGrid: that defines the flow field
@@ -16,9 +17,9 @@ def moving_eddies(grid, npart, mode='jit', verbose=False):
     # Determine particle and set classes according to mode
     ParticleClass, ParticleSetClass = pclasses[mode]
 
-    lon = [3.3, 3.3]
-    lat = [46., 47.8]
-    pset = ParticleSetClass(2, grid, lon=lon, lat=lat)
+    lon = 3.3 * np.ones(npart, dtype=np.float)
+    lat = np.linspace(46., 47.8, npart, dtype=np.float)
+    pset = ParticleSetClass(npart, grid, lon=lon, lat=lat)
 
     if verbose:
         print("Initial particle positions:")
@@ -39,12 +40,13 @@ def moving_eddies(grid, npart, mode='jit', verbose=False):
         for p in pset:
             print(p)
 
+
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing RK4 computation')
-    p.add_argument('-p', '--particles', type=int, default=20,
+    p.add_argument('-p', '--particles', type=int, default=2,
                    help='Number of particles to advect')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
