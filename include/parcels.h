@@ -2,7 +2,7 @@
 
 typedef struct
 {
-  int xdim, ydim, tdim;
+  int xdim, ydim, tdim, tidx;
   float *lon, *lat;
   double *time;
   float ***data;
@@ -46,19 +46,18 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
   float (*data)[f->xdim][f->ydim] = (float (*)[f->xdim][f->ydim]) f->data;
   float f0, f1;
   double t0, t1;
-  int i = xi, j = yi, t = 0;
+  int i = xi, j = yi;
   /* Identify grid cell to sample through local linear search */
   i = search_linear_float(x, i, f->xdim, f->lon);
   j = search_linear_float(y, j, f->ydim, f->lat);
   /* Find time index for temporal interpolation */
-  t = search_linear_double(time, t, f->tdim, f->time);
-
-  if (t < f->tdim-1) {
-    t0 = f->time[t]; t1 = f->time[t+1];
-    f0 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[t]));
-    f1 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[t+1]));
+  f->tidx = search_linear_double(time, f->tidx, f->tdim, f->time);
+  if (f->tidx < f->tdim-1) {
+    t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
+    f0 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx]));
+    f1 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx+1]));
     return f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
   } else {
-    return spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[t]));
+    return spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx]));
   }
 }

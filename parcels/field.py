@@ -75,13 +75,14 @@ class Field(object):
 
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
-            _fields_ = [('xdim', c_int), ('ydim', c_int), ('tdim', c_int),
+            _fields_ = [('xdim', c_int), ('ydim', c_int),
+                        ('tdim', c_int), ('tidx', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
-        cstruct = CField(self.lat.size, self.lon.size, self.time.size,
+        cstruct = CField(self.lat.size, self.lon.size, self.time.size, 0,
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.lon.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
