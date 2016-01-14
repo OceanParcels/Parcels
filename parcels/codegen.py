@@ -43,10 +43,10 @@ class ParticleAttributeNode(IntrinsicNode):
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
         if self.attr == 'lon':
-            return "advance_index(%s, %s, U->xdim, U->lat)" \
+            return "search_linear_float(%s, %s, U->xdim, U->lat)" \
                 % (self.ccode, self.ccode_index_var)
         if self.attr == 'lat':
-            return "advance_index(%s, %s, U->ydim, U->lon)" \
+            return "search_linear_float(%s, %s, U->ydim, U->lon)" \
                 % (self.ccode, self.ccode_index_var)
         return ""
 

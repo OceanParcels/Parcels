@@ -8,8 +8,8 @@ typedef struct
 } CField;
 
 
-/* Local search to update grid index */
-static inline int advance_index(float x, int i, int size, float *xvals)
+/* Local linear search to update grid index */
+static inline int search_linear_float(float x, int i, int size, float *xvals)
 {
     while (i < size-1 && x > xvals[i+1]) ++i;
     while (i > 0 && x < xvals[i]) --i;
@@ -38,8 +38,8 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
   float (*data)[f->xdim][f->ydim] = (float (*)[f->xdim][f->ydim]) f->data;
   float x0;
   int i = xi, j = yi;
-  i = advance_index(x, i, f->xdim, f->lon);
-  j = advance_index(y, j, f->ydim, f->lat);
+  i = search_linear_float(x, i, f->xdim, f->lon);
+  j = search_linear_float(y, j, f->ydim, f->lat);
   x0 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[0]));
   return x0;
 }
