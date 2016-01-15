@@ -9,18 +9,16 @@ class Kernel(object):
 
     :arg filename: Basename for kernel files to generate"""
 
-    def __init__(self, name):
-        self.name = name
-        self.ccode = None
-        self._lib = None
-
+    def __init__(self, grid, ptype, pyfunc):
+        self.name = "%s%s" % (ptype.name, pyfunc.__name__)
         self.src_file = str(path.local("%s.c" % self.name))
         self.lib_file = str(path.local("%s.so" % self.name))
         self.log_file = str(path.local("%s.log" % self.name))
+        self._lib = None
 
-    def generate_code(self, grid, ptype, pyfunc):
+        # Generate the kernel function and add the outer loop
         ccode_kernel = KernelGenerator(grid, ptype).generate(pyfunc)
-        self.ccode = LoopGenerator(grid, ptype).generate(self.name, ccode_kernel)
+        self.ccode = LoopGenerator(grid, ptype).generate(pyfunc.__name__, ccode_kernel)
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""

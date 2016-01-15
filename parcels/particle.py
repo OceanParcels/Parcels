@@ -165,8 +165,7 @@ class JITParticleSet(ParticleSet):
     def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
         if self.kernel is None:
             # Generate and compile JIT kernel
-            self.kernel = Kernel(pyfunc.__name__)
-            self.kernel.generate_code(self.grid, self.ptype, pyfunc=pyfunc)
+            self.kernel = Kernel(self.grid, self.ptype, pyfunc)
             self.kernel.compile(compiler=GNUCompiler())
             self.kernel.load_lib()
 
