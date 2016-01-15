@@ -49,7 +49,13 @@ class Field(object):
 
     @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
-        return np.argmax(self.time >= time)
+        time_index = self.time < time
+        if time_index.all():
+            # If given time > last known grid time, use
+            # the last grid frame without interpolation
+            return -1
+        else:
+            return time_index.argmin()
 
     def eval(self, time, x, y):
         idx = self.time_index(time)
