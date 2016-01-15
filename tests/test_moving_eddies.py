@@ -1,7 +1,9 @@
 from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
 from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from argparse import ArgumentParser
+from grid_moving_eddies import MovingEddiesGrid
 import numpy as np
+import pytest
 
 
 pclasses = {'scipy': (Particle, ParticleSet),
@@ -46,6 +48,16 @@ def moving_eddies(grid, npart=2, mode='jit', verbose=False):
         print("Final particle positions:")
         for p in pset:
             print(p)
+
+    return pset
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_moving_eddies_grid(mode):
+    grid = MovingEddiesGrid()
+    pset = moving_eddies(grid, 2, mode=mode)
+    assert(pset[0].lon < 0.5 and 45.8 < pset[0].lat < 46.15)
+    assert(pset[1].lon < 0.5 and 50.4 < pset[1].lat < 50.7)
 
 
 if __name__ == "__main__":
