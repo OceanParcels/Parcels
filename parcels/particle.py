@@ -8,16 +8,16 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
            'ParticleFile', 'AdvectionRK4']
 
 
-def AdvectionRK4(particle, grid, dt):
+def AdvectionRK4(particle, grid, time, dt):
     f = dt / 1000. / 1.852 / 60.
-    u1 = grid.U[particle.lon, particle.lat]
-    v1 = grid.V[particle.lon, particle.lat]
+    u1 = grid.U[time, particle.lon, particle.lat]
+    v1 = grid.V[time, particle.lon, particle.lat]
     lon1, lat1 = (particle.lon + u1*.5*f, particle.lat + v1*.5*f)
-    u2, v2 = (grid.U[lon1, lat1], grid.V[lon1, lat1])
+    u2, v2 = (grid.U[time, lon1, lat1], grid.V[time, lon1, lat1])
     lon2, lat2 = (particle.lon + u2*.5*f, particle.lat + v2*.5*f)
-    u3, v3 = (grid.U[lon2, lat2], grid.V[lon2, lat2])
+    u3, v3 = (grid.U[time, lon2, lat2], grid.V[time, lon2, lat2])
     lon3, lat3 = (particle.lon + u3*f, particle.lat + v3*f)
-    u4, v4 = (grid.U[lon3, lat3], grid.V[lon3, lat3])
+    u4, v4 = (grid.U[time, lon3, lat3], grid.V[time, lon3, lat3])
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
 
@@ -72,12 +72,11 @@ class ParticleSet(object):
     def __setitem__(self, key, value):
         self.particles[key] = value
 
-    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
-        print("Parcels::ParticleSet: Advecting %d particles for %d timesteps"
-              % (len(self), timesteps))
-        for t in range(timesteps):
+    def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
+        for _ in range(timesteps):
             for p in self.particles:
-                pyfunc(p, self.grid, dt)
+                pyfunc(p, self.grid, time, dt)
+            time += dt
 
 
 class ParticleType(object):
@@ -163,19 +162,15 @@ class JITParticleSet(ParticleSet):
             self.particles[i] = pclass(lon[i], lat[i], grid=grid,
                                        cptr=self._particle_data[i])
 
-    def execute(self, pyfunc=AdvectionRK4, timesteps=1, dt=None):
-        print("Parcels::JITParticleSet: Advecting %d particles for %d timesteps"
-              % (len(self), timesteps))
-
+    def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
         if self.kernel is None:
             # Generate and compile JIT kernel
-            self.kernel = Kernel(pyfunc.__name__)
-            self.kernel.generate_code(self.grid, self.ptype, pyfunc=pyfunc)
+            self.kernel = Kernel(self.grid, self.ptype, pyfunc)
             self.kernel.compile(compiler=GNUCompiler())
             self.kernel.load_lib()
 
         # Execute JIT kernel
-        self.kernel.execute(self, timesteps, dt)
+        self.kernel.execute(self, timesteps, time, dt)
 
 
 class ParticleFile(object):

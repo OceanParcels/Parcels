@@ -43,10 +43,10 @@ class ParticleAttributeNode(IntrinsicNode):
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
         if self.attr == 'lon':
-            return "advance_index(%s, %s, GRID_XDIM, U_lon)" \
+            return "search_linear_float(%s, %s, U->xdim, U->lat)" \
                 % (self.ccode, self.ccode_index_var)
         if self.attr == 'lat':
-            return "advance_index(%s, %s, GRID_YDIM, U_lat)" \
+            return "search_linear_float(%s, %s, U->ydim, U->lon)" \
                 % (self.ccode, self.ccode_index_var)
         return ""
 
@@ -131,7 +131,7 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'grid', 'dt']
+    kernel_vars = ['particle', 'grid', 'time', 'dt']
 
     def __init__(self, grid, ptype):
         self.grid = grid
@@ -164,15 +164,10 @@ class KernelGenerator(ast.NodeVisitor):
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
         U, V = (self.grid.U, self.grid.V)
-        args = [c.Pointer(c.Value(self.ptype.name, "particle")), c.Value("float", "dt"),
-                c.ArrayOf(c.Value("float", U.ccode_lon), count=U.lon.size),
-                c.ArrayOf(c.Value("float", U.ccode_lat), count=U.lat.size),
-                c.ArrayOf(c.Value("float", V.ccode_lon), count=V.lon.size),
-                c.ArrayOf(c.Value("float", V.ccode_lat), count=V.lat.size),
-                c.ArrayOf(c.ArrayOf(c.Value("float", U.ccode_data),
-                                    count=U.data.shape[0]), count=U.data.shape[1]),
-                c.ArrayOf(c.ArrayOf(c.Value("float", V.ccode_data),
-                                    count=V.data.shape[0]), count=V.data.shape[1])]
+        args = [c.Pointer(c.Value(self.ptype.name, "particle")),
+                c.Value("double", "time"), c.Value("float", "dt"),
+                c.Pointer(c.Value("CField", "%s" % U.name)),
+                c.Pointer(c.Value("CField", "%s" % V.name))]
 
         # Generate "ccode" attribute by traversing the Python AST
         for stmt in node.body:
@@ -251,12 +246,6 @@ class LoopGenerator(object):
         ccode = []
         U, V = (self.grid.U, self.grid.V)
 
-        # Generate const declarations for grid size
-        cdecl = c.Const(c.Value("int", "GRID_XDIM")).inline(with_semicolon=False)
-        ccode += [str(c.Assign(cdecl, U.lon.size))]
-        cdecl = c.Const(c.Value("int", "GRID_YDIM")).inline(with_semicolon=False)
-        ccode += [str(c.Assign(cdecl, U.lat.size))]
-
         # Add include for Parcels header
         ccode += [str(c.Include("parcels.h", system=False))]
 
@@ -270,20 +259,15 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
-                c.Value("int", "timesteps"), c.Value("float", "dt"),
-                c.ArrayOf(c.Value("float", U.ccode_lon), count=U.lon.size),
-                c.ArrayOf(c.Value("float", U.ccode_lat), count=U.lat.size),
-                c.ArrayOf(c.Value("float", V.ccode_lon), count=V.lon.size),
-                c.ArrayOf(c.Value("float", V.ccode_lat), count=V.lat.size),
-                c.ArrayOf(c.ArrayOf(c.Value("float", U.ccode_data),
-                                    count=U.data.shape[0]), count=U.data.shape[1]),
-                c.ArrayOf(c.ArrayOf(c.Value("float", V.ccode_data),
-                                    count=V.data.shape[0]), count=V.data.shape[1])]
-        loop_body = c.Statement("%s(&(particles[p]), dt, %s, %s, %s, %s, %s, %s)" %
-                                (funcname, U.ccode_lon, U.ccode_lat, V.ccode_lon,
-                                 V.ccode_lat, U.ccode_data, V.ccode_data))
-        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block([loop_body]))
-        tloop = c.For("t = 0", "t < timesteps", "++t", c.Block([ploop]))
+                c.Value("int", "timesteps"), c.Value("double", "time"),
+                c.Value("float", "dt"),
+                c.Pointer(c.Value("CField", "%s" % U.name)),
+                c.Pointer(c.Value("CField", "%s" % V.name))]
+        loop_body = [c.Statement("%s(&(particles[p]), time, dt, %s, %s)" %
+                                 (funcname, U.name, V.name))]
+        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
+        tloop = c.For("t = 0", "t < timesteps", "++t",
+                      c.Block([ploop, c.Statement("time += (double)dt")]))
         fbody = c.Block([c.Value("int", "p, t"), tloop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
