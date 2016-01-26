@@ -41,35 +41,6 @@ class Particle(object):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
 
-class ParticleType(object):
-    """Class encapsulating the type information for custom particles
-
-    :param user: Optional list of (name, dtype) tuples for custom variables
-    """
-
-    def __init__(self, pclass):
-        if not isinstance(pclass, type):
-            raise TypeError("Class object required to derive ParticleType")
-        if not issubclass(pclass, Particle):
-            raise TypeError("Class object does not inherit from parcels.Particle")
-
-        self.name = pclass.__name__
-        self.uses_jit = issubclass(pclass, JITParticle)
-        if self.uses_jit:
-            self.var_types = pclass.base_vars
-            self.var_types.update(pclass.user_vars)
-        else:
-            self.var_types = None
-
-    def __repr__(self):
-        return self.name
-
-    @property
-    def dtype(self):
-        """Numpy.dtype object that defines the C struct"""
-        return np.dtype(list(self.var_types.items()))
-
-
 class JITParticle(Particle):
     """Particle class for JIT-based Particle objects
 
@@ -99,6 +70,35 @@ class JITParticle(Particle):
             super(JITParticle, self).__setattr__(key, value)
         else:
             self._cptr.__setitem__(key, value)
+
+
+class ParticleType(object):
+    """Class encapsulating the type information for custom particles
+
+    :param user: Optional list of (name, dtype) tuples for custom variables
+    """
+
+    def __init__(self, pclass):
+        if not isinstance(pclass, type):
+            raise TypeError("Class object required to derive ParticleType")
+        if not issubclass(pclass, Particle):
+            raise TypeError("Class object does not inherit from parcels.Particle")
+
+        self.name = pclass.__name__
+        self.uses_jit = issubclass(pclass, JITParticle)
+        if self.uses_jit:
+            self.var_types = pclass.base_vars
+            self.var_types.update(pclass.user_vars)
+        else:
+            self.var_types = None
+
+    def __repr__(self):
+        return self.name
+
+    @property
+    def dtype(self):
+        """Numpy.dtype object that defines the C struct"""
+        return np.dtype(list(self.var_types.items()))
 
 
 class ParticleSet(object):
