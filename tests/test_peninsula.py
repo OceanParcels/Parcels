@@ -184,7 +184,14 @@ Example of particle advection around an idealised peninsula""")
                    help='Output trajectory data to file')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
+    p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
+                   help='Generate grid file with given dimensions')
     args = p.parse_args()
+
+    if args.grid is not None:
+        filename = 'peninsula'
+        grid = peninsula_grid(args.grid[0], args.grid[1])
+        grid.write(filename)
 
     # Open grid file set
     grid = NEMOGrid.from_file('peninsula')
