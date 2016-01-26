@@ -17,15 +17,23 @@ class Field(object):
     :param data: 2D array of field data
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
+    :param transpose: Transpose data to required (lon, lat) layout
     """
 
-    def __init__(self, name, data, lon, lat, depth=None, time=None):
+    def __init__(self, name, data, lon, lat, depth=None, time=None,
+                 transpose=False):
         self.name = name
+        self.data = data
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
-        self.data = data.reshape((time.size, lat.size, lon.size))
+
+        if transpose:
+            # Make a copy of the transposed array to enforce
+            # C-contiguous memory layout for JIT mode.
+            self.data = np.transpose(self.data).copy()
+        self.data = self.data.reshape((time.size, lat.size, lon.size))
 
         # Hack around the fact that NaN values
         # propagate in SciPy's interpolators

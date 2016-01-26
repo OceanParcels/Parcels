@@ -61,7 +61,8 @@ def peninsula_grid(xdim, ydim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
 
-    return NEMOGrid(lon, lat, lon, lat, depth, time, U, V, fields={'P': P})
+    return NEMOGrid.from_data(U, lon, lat, V, lon, lat,
+                              depth, time, field_data={'P': P})
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,

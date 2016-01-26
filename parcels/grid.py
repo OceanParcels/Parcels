@@ -10,40 +10,46 @@ __all__ = ['NEMOGrid']
 class NEMOGrid(object):
     """Grid class used to generate and read NEMO output files
 
-    :param lon_u: Longitude coordinates of the U components
-    :param lat_u: Latitude coordinates of the U components
-    :param lon_v: Longitude coordinates of the V components
-    :param lat_v: Latitude coordinates of the V components
+    :param U: :class:`Field` for zonal velocity component
+    :param V: :class:`Field` for meridional velocity component
     :param depth: Depth coordinates of the grid
     :param time: Time coordinates of the grid
-    :param U: Zonal velocity component
-    :param V: Meridional velocity component"""
-
-    def __init__(self, lon_u, lat_u, lon_v, lat_v, depth, time,
-                 U, V, transpose=True, fields=None):
-        """Initialise Grid object from raw data"""
-        # Grid dimension arrays
+    :param fields: Dictionary of additional fields
+    """
+    def __init__(self, U, V, depth, time, fields={}):
+        self.U = U
+        self.V = V
         self.depth = depth
         self.time = time
-
-        # Velocity data
-        if transpose:
-            # Make a copy of the transposed array to enforce
-            # C-contiguous memory layout. This is required
-            # for Cython and JIT mode.
-            U = np.transpose(U).copy()
-            V = np.transpose(V).copy()
-        self.U = Field('U', U, lon_u, lat_u, depth=depth, time=time)
-        self.V = Field('V', V, lon_v, lat_v, depth=depth, time=time)
-
-        # Additional data fields
         self.fields = fields
-        if self.fields is not None:
-            for name, data in self.fields.items():
-                if transpose:
-                    data = np.transpose(data)
-                field = Field(name, data, lon_v, lat_u, depth=depth, time=time)
-                setattr(self, name, field)
+
+        # Add additional fields as attributes
+        for name, field in fields.items():
+            setattr(self, name, field)
+
+    @classmethod
+    def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
+                  depth, time, field_data={}, transpose=True):
+        """Initialise Grid object from raw data
+
+        :param data_u: Zonal velocity data
+        :param lon_u: Longitude coordinates of the U components
+        :param lat_u: Latitude coordinates of the U components
+        :param data_v: Meridional velocity data
+        :param lon_v: Longitude coordinates of the V components
+        :param lat_v: Latitude coordinates of the V components
+        :param depth: Depth coordinates of the grid
+        :param time: Time coordinates of the grid
+        """
+        # Create velocity fields
+        ufield = Field('U', data_u, lon_u, lat_u, depth=depth, time=time, transpose=transpose)
+        vfield = Field('V', data_v, lon_v, lat_v, depth=depth, time=time, transpose=transpose)
+        # Create additional data fields
+        fields = {}
+        for name, data in field_data.items():
+            fields[name] = Field(name, data, lon_v, lat_u, depth=depth,
+                                 time=time, transpose=transpose)
+        return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
     def from_file(cls, filename):
@@ -81,8 +87,8 @@ class NEMOGrid(object):
                 dset = Dataset(str(fp), 'r', format="NETCDF4")
                 fields[fname] = dset[fname][:, 0, :, :]
 
-        return cls(lon_u, lat_u, lon_v, lat_v, depth, time,
-                   u, v, transpose=False, fields=fields)
+        return cls.from_data(u, lon_u, lat_u, v, lon_v, lat_v, depth, time,
+                             transpose=False, field_data=fields)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)
