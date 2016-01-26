@@ -33,5 +33,5 @@ script:
     - export PYTHONPATH=`pwd`:$PYTHONPATH
     - flake8 parcels
     - flake8 tests
-    - python tests/grid_peninsula.py 20 10
+    - python tests/test_peninsula.py --grid 20 10
     - py.test -v -s tests/

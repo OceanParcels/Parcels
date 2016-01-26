@@ -1,5 +1,6 @@
 from scipy.interpolate import RectBivariateSpline
 from cachetools import cachedmethod, LRUCache
+from collections import Iterable
 from py import path
 import numpy as np
 from xray import DataArray, Dataset
@@ -17,15 +18,23 @@ class Field(object):
     :param data: 2D array of field data
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
+    :param transpose: Transpose data to required (lon, lat) layout
     """
 
-    def __init__(self, name, data, lon, lat, depth=None, time=None):
+    def __init__(self, name, data, lon, lat, depth=None, time=None,
+                 transpose=False):
         self.name = name
+        self.data = data
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
-        self.data = data.reshape((time.size, lat.size, lon.size))
+
+        if transpose:
+            # Make a copy of the transposed array to enforce
+            # C-contiguous memory layout for JIT mode.
+            self.data = np.transpose(self.data).copy()
+        self.data = self.data.reshape((time.size, lat.size, lon.size))
 
         # Hack around the fact that NaN values
         # propagate in SciPy's interpolators
@@ -38,6 +47,35 @@ class Field(object):
 
         self.interpolator_cache = LRUCache(maxsize=2)
         self.time_index_cache = LRUCache(maxsize=2)
+
+    @classmethod
+    def from_netcdf(cls, name, varname, datasets):
+        """Create field from netCDF file using NEMO conventions
+
+        :param name: Name of the field to create
+        :param varname: Variable in the file that holds the data
+        :param dataset: Single or multiple netcdf.Dataset object(s)
+        containing field data. If multiple datasets are present they
+        will be concatenated along the time axis
+        """
+        if not isinstance(datasets, Iterable):
+            datasets = [datasets]
+        lon = datasets[0]['nav_lon'][0, :]
+        lat = datasets[0]['nav_lat'][:, 0]
+        # Default depth to zeros until we implement 3D grids properly
+        depth = np.zeros(1, dtype=np.float32)
+        # Concatenate time variable to determine overall dimension
+        # across multiple files
+        timeslices = [dset['time_counter'][:] for dset in datasets]
+        time = np.concatenate(timeslices)
+
+        # Pre-allocate grid data before reading files into buffer
+        data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
+        tidx = 0
+        for tslice, dset in zip(timeslices, datasets):
+            data[tidx:, 0, :, :] = dset[varname][:, 0, :, :]
+            tidx += tslice.size
+        return cls(name, data, lon, lat, depth=depth, time=time)
 
     def __getitem__(self, key):
         return self.eval(*key)
@@ -96,7 +134,7 @@ class Field(object):
         return cstruct
 
     def write(self, filename, varname=None):
-        filepath = str(path.local('%s_%s.nc' % (filename, self.name)))
+        filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention

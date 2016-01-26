@@ -1,9 +1,68 @@
 from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
 from parcels import NEMOGrid, ParticleFile, AdvectionRK4
-from grid_peninsula import PeninsulaGrid
 from argparse import ArgumentParser
 import numpy as np
 import pytest
+
+
+def peninsula_grid(xdim, ydim):
+    """Construct a grid encapsulating the flow field around an
+    idealised peninsula.
+
+    :param xdim: Horizontal dimension of the generated grid
+    :param xdim: Vertical dimension of the generated grid
+
+    The original test description can be found in Fig. 2.2.3 in:
+    North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
+    recommended practices for modelling physical - biological
+    interactions during fish early life.
+    ICES Cooperative Research Report No. 295. 111 pp.
+    http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
+
+    Note that the problem is defined on an A-grid while NEMO
+    normally returns C-grids. However, to avoid accuracy
+    problems with interpolation from A-grid to C-grid, we
+    return NetCDF files that are on an A-grid.
+    """
+    # Set NEMO grid variables
+    depth = np.zeros(1, dtype=np.float32)
+    time = np.zeros(1, dtype=np.float64)
+
+    # Generate the original test setup on A-grid in km
+    dx = 100. / xdim / 2.
+    dy = 50. / ydim / 2.
+    La = np.linspace(dx, 100.-dx, xdim, dtype=np.float32)
+    Wa = np.linspace(dy, 50.-dy, ydim, dtype=np.float32)
+
+    # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
+    # surface height) all on A-grid
+    U = np.zeros((xdim, ydim), dtype=np.float32)
+    V = np.zeros((xdim, ydim), dtype=np.float32)
+    W = np.zeros((xdim, ydim), dtype=np.float32)
+    P = np.zeros((xdim, ydim), dtype=np.float32)
+
+    u0 = 1
+    x0 = 50.
+    R = 0.32 * 50.
+
+    # Create the fields
+    x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
+    P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+    U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+    V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+
+    # Set land points to NaN
+    I = P >= 0.
+    U[I] = np.nan
+    V[I] = np.nan
+    W[I] = np.nan
+
+    # Convert from km to lat/lon
+    lon = La / 1.852 / 60.
+    lat = Wa / 1.852 / 60.
+
+    return NEMOGrid.from_data(U, lon, lat, V, lon, lat,
+                              depth, time, field_data={'P': P})
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
@@ -89,7 +148,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
-    grid = PeninsulaGrid(100, 50)
+    grid = peninsula_grid(100, 50)
     error = pensinsula_example(grid, 100, mode=mode, degree=1)
     assert(error <= 2.e-4).all()
 
@@ -98,7 +157,7 @@ def test_peninsula_grid(mode):
 def gridfile():
     """Generate grid files for peninsula test"""
     filename = 'peninsula'
-    grid = PeninsulaGrid(100, 50)
+    grid = peninsula_grid(100, 50)
     grid.write(filename)
     return filename
 
@@ -106,7 +165,7 @@ def gridfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
-    grid = NEMOGrid.from_file(gridfile)
+    grid = NEMOGrid.from_file(gridfile, extra_vars={'P': 'P'})
     error = pensinsula_example(grid, 100, mode=mode, degree=1)
     assert(error <= 2.e-4).all()
 
@@ -126,10 +185,17 @@ Example of particle advection around an idealised peninsula""")
                    help='Output trajectory data to file')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
+    p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
+                   help='Generate grid file with given dimensions')
     args = p.parse_args()
 
+    if args.grid is not None:
+        filename = 'peninsula'
+        grid = peninsula_grid(args.grid[0], args.grid[1])
+        grid.write(filename)
+
     # Open grid file set
-    grid = NEMOGrid.from_file('peninsula')
+    grid = NEMOGrid.from_file('peninsula', extra_vars={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx
