@@ -1,13 +1,9 @@
-from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
+from parcels import Particle, ParticleSet, JITParticle
 from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
-
-
-pclasses = {'scipy': (Particle, ParticleSet),
-            'jit': (JITParticle, JITParticleSet)}
 
 
 def moving_eddies_grid(xdim=200, ydim=350):
@@ -74,12 +70,12 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
     :arg grid: :class NEMOGrid: that defines the flow field
     :arg npart: Number of particles to intialise"""
 
-    # Determine particle and set classes according to mode
-    ParticleClass, ParticleSetClass = pclasses[mode]
+    # Determine particle class according to mode
+    ParticleClass = JITParticle if mode == 'jit' else Particle
 
     lon = 3.3 * np.ones(npart, dtype=np.float)
     lat = np.linspace(46., 47.8, npart, dtype=np.float)
-    pset = ParticleSetClass(npart, grid, lon=lon, lat=lat)
+    pset = ParticleSet(npart, grid, lon=lon, lat=lat, pclass=ParticleClass)
 
     if verbose:
         print("Initial particle positions:")

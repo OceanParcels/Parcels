@@ -1,4 +1,4 @@
-from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
+from parcels import Particle, ParticleSet, JITParticle
 from parcels import NEMOGrid, ParticleFile, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
@@ -72,13 +72,8 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     :arg filename: Basename of the input grid file set
     :arg npart: Number of particles to intialise"""
 
-    # Determine particle and set classes according to mode
-    if mode == 'jit':
-        ParticleClass = JITParticle
-        PSetClass = JITParticleSet
-    else:
-        ParticleClass = Particle
-        PSetClass = ParticleSet
+    # Determine particle class according to mode
+    ParticleClass = JITParticle if mode == 'jit' else Particle
 
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p
@@ -103,7 +98,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     max_y = grid.U.lat[-1] - 3. * km2deg
     lon = 3. * km2deg * np.ones(npart)
     lat = np.linspace(min_y, max_y, npart, dtype=np.float)
-    pset = PSetClass(npart, grid, pclass=MyParticle, lon=lon, lat=lat)
+    pset = ParticleSet(npart, grid, pclass=MyParticle, lon=lon, lat=lat)
     for particle in pset:
         particle.p = grid.P[0., particle.lon, particle.lat]
 
