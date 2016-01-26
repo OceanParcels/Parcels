@@ -66,16 +66,8 @@ class NEMOGrid(object):
         dset_u = Dataset(str(filepath_u), 'r', format="NETCDF4")
         dset_v = Dataset(str(filepath_v), 'r', format="NETCDF4")
 
-        # Get U, V and flow-specific lat/lon from netCF file
-        lon_u = dset_u['nav_lon'][0, :]
-        lat_u = dset_u['nav_lat'][:, 0]
-        lon_v = dset_v['nav_lon'][0, :]
-        lat_v = dset_v['nav_lat'][:, 0]
-        depth = np.zeros(1, dtype=np.float32)
-        time = dset_v['time_counter'][:]
-
-        u = dset_u['vozocrtx'][:, 0, :, :]
-        v = dset_v['vomecrty'][:, 0, :, :]
+        u = Field.from_netcdf('U', 'vozocrtx', dset_u)
+        v = Field.from_netcdf('V', 'vomecrty', dset_v)
 
         # Detect additional field data
         basedir = filepath_u.dirpath()
@@ -85,10 +77,9 @@ class NEMOGrid(object):
                 # Derive field name, read data and add to fields
                 fname = fp.basename.split('.')[0].split('_')[-1]
                 dset = Dataset(str(fp), 'r', format="NETCDF4")
-                fields[fname] = dset[fname][:, 0, :, :]
+                fields[fname] = Field.from_netcdf(fname, fname, dset)
 
-        return cls.from_data(u, lon_u, lat_u, v, lon_v, lat_v, depth, time,
-                             transpose=False, field_data=fields)
+        return cls(u, v, u.depth, u.time, fields)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)

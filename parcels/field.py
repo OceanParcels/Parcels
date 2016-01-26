@@ -47,6 +47,22 @@ class Field(object):
         self.interpolator_cache = LRUCache(maxsize=2)
         self.time_index_cache = LRUCache(maxsize=2)
 
+    @classmethod
+    def from_netcdf(cls, name, varname, dataset):
+        """Create field from netCDF file using NEMO conventions
+
+        :param name: Name of the field to create
+        :param varname: Variable in the file that holds the data
+        :param dataset: netcdf.Dataset object containing field data
+        """
+        lon = dataset['nav_lon'][0, :]
+        lat = dataset['nav_lat'][:, 0]
+        # Default depth to zeros until we implement 3D grids properly
+        depth = np.zeros(1, dtype=np.float32)
+        time = dataset['time_counter'][:]
+        data = dataset[varname][:, 0, :, :]
+        return cls(name, data, lon, lat, depth=depth, time=time)
+
     def __getitem__(self, key):
         return self.eval(*key)
 
