@@ -30,7 +30,7 @@ class Particle(object):
     :param grid: :Class Grid: object to track this particle on
     """
 
-    def __init__(self, lon, lat, grid):
+    def __init__(self, lon, lat, grid, cptr=None):
         self.lon = lon
         self.lat = lat
 
@@ -124,14 +124,18 @@ class ParticleSet(object):
             # Allocate underlying data for C-allocated particles
             self._particle_data = np.empty(size, dtype=self.ptype.dtype)
 
+            def cptr(i):
+                return self._particle_data[i]
+        else:
+            def cptr(i):
+                return None
+
         if lon is not None and lat is not None:
-            if self.ptype.uses_jit:
-                for i in range(size):
-                    self.particles[i] = pclass(lon[i], lat[i], grid=grid,
-                                               cptr=self._particle_data[i])
-            else:
-                for i in range(size):
-                    self.particles[i] = pclass(lon=lon[i], lat=lat[i], grid=grid)
+            # Initialise from lists of lon/lat coordinates
+            assert(size == len(lon) and size == len(lat))
+
+            for i in range(size):
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i))
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
