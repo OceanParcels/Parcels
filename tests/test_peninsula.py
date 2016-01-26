@@ -165,7 +165,7 @@ def gridfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
-    grid = NEMOGrid.from_file(gridfile)
+    grid = NEMOGrid.from_file(gridfile, extra_vars={'P': 'P'})
     error = pensinsula_example(grid, 100, mode=mode, degree=1)
     assert(error <= 2.e-4).all()
 
@@ -195,7 +195,7 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid file set
-    grid = NEMOGrid.from_file('peninsula')
+    grid = NEMOGrid.from_file('peninsula', extra_vars={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx

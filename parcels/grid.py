@@ -1,7 +1,7 @@
-import numpy as np
 from netCDF4 import Dataset
 from parcels.field import Field
 from py import path
+from glob import glob
 
 
 __all__ = ['NEMOGrid']
@@ -52,34 +52,27 @@ class NEMOGrid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_file(cls, filename):
+    def from_file(cls, filename, uvar='vozocrtx', vvar='vomecrty',
+                  extra_vars={}):
         """Initialises grid data from files using NEMO conventions.
 
-        :param filename: Base name of a set of NEMO files
+        :param filename: Base name of the file(s); may contain
+        wildcards to indicate multiple files.
         """
-        filepath_u = path.local("%s_U.nc" % filename)
-        filepath_v = path.local("%s_V.nc" % filename)
-        if not filepath_u.exists():
-            raise IOError("Grid file not found: %s" % filepath_u)
-        if not path.local(filepath_v).exists():
-            raise IOError("Grid file not found: %s" % filepath_v)
-        dset_u = Dataset(str(filepath_u), 'r', format="NETCDF4")
-        dset_v = Dataset(str(filepath_v), 'r', format="NETCDF4")
-
-        u = Field.from_netcdf('U', 'vozocrtx', dset_u)
-        v = Field.from_netcdf('V', 'vomecrty', dset_v)
-
-        # Detect additional field data
-        basedir = filepath_u.dirpath()
         fields = {}
-        for fp in basedir.listdir('%s_*.nc' % filename):
-            if not fp.samefile(filepath_u) and not fp.samefile(filepath_v):
-                # Derive field name, read data and add to fields
-                fname = fp.basename.split('.')[0].split('_')[-1]
-                dset = Dataset(str(fp), 'r', format="NETCDF4")
-                fields[fname] = Field.from_netcdf(fname, fname, dset)
-
-        return cls(u, v, u.depth, u.time, fields)
+        extra_vars.update({'U': uvar, 'V': vvar})
+        for var, vname in extra_vars.items():
+            # Resolve all matching paths for the current variable
+            basepath = path.local("%s%s.nc" % (filename, var))
+            paths = [path.local(fp) for fp in glob(str(basepath))]
+            for fp in paths:
+                if not fp.exists():
+                    raise IOError("Grid file not found: %s" % str(fp))
+            dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fpath in paths]
+            fields[var] = Field.from_netcdf(var, vname, dsets)
+        u = fields.pop('U')
+        v = fields.pop('V')
+        return cls(u, v, u.depth, u.time, fields=fields)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)

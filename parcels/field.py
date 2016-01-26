@@ -134,7 +134,7 @@ class Field(object):
         return cstruct
 
     def write(self, filename, varname=None):
-        filepath = str(path.local('%s_%s.nc' % (filename, self.name)))
+        filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
