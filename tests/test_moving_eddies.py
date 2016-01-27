@@ -77,9 +77,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
                        start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
-        print("Initial particle positions:")
-        for p in pset:
-            print(p)
+        print("Initial particle positions:\n%s" % pset)
 
     out = ParticleFile(name="EddyParticle", particleset=pset)
     out.write(pset, 0.)
@@ -98,9 +96,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
         current += timesteps * dt
 
     if verbose:
-        print("Final particle positions:")
-        for p in pset:
-            print(p)
+        print("Final particle positions:\n%s" % pset)
 
     return pset
 

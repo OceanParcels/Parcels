@@ -150,6 +150,9 @@ class ParticleSet(object):
     def size(self):
         return self.particles.size
 
+    def __repr__(self):
+        return "\n".join([str(p) for p in self])
+
     def __len__(self):
         return self.size
 

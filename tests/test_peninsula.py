@@ -100,9 +100,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         particle.p = grid.P[0., particle.lon, particle.lat]
 
     if verbose:
-        print("Initial particle positions:")
-        for p in pset:
-            print(p)
+        print("Initial particle positions:\n%s" % pset)
 
     # Write initial output to file
     if output:
