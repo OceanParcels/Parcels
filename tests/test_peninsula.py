@@ -1,5 +1,4 @@
-from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
-from parcels import NEMOGrid, ParticleFile, AdvectionRK4
+from parcels import NEMOGrid, Particle, JITParticle, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import pytest
@@ -66,19 +65,14 @@ def peninsula_grid(xdim, ydim):
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
-                       verbose=False, output=False):
+                       verbose=False, output=True):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
     :arg npart: Number of particles to intialise"""
 
-    # Determine particle and set classes according to mode
-    if mode == 'jit':
-        ParticleClass = JITParticle
-        PSetClass = JITParticleSet
-    else:
-        ParticleClass = Particle
-        PSetClass = ParticleSet
+    # Determine particle class according to mode
+    ParticleClass = JITParticle if mode == 'jit' else Particle
 
     # First, we define a custom Particle class to which we add a
     # custom variable, the initial stream function value p
@@ -98,43 +92,24 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
             return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
     # Initialise particles
-    km2deg = 1. / 1.852 / 60
-    min_y = grid.U.lat[0] + 3. * km2deg
-    max_y = grid.U.lat[-1] - 3. * km2deg
-    lon = 3. * km2deg * np.ones(npart)
-    lat = np.linspace(min_y, max_y, npart, dtype=np.float)
-    pset = PSetClass(npart, grid, pclass=MyParticle, lon=lon, lat=lat)
+    x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
+    y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
+    pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
         particle.p = grid.P[0., particle.lon, particle.lat]
 
     if verbose:
-        print("Initial particle positions:")
-        for p in pset:
-            print(p)
-
-    # Write initial output to file
-    if output:
-        out = ParticleFile(name="MyParticle", particleset=pset)
-        out.write(pset, 0.)
+        print("Initial particle positions:\n%s" % pset)
 
     # Advect the particles for 24h
     time = 24 * 3600.
     dt = 36.
+    substeps = 100 if output else -1
+    out = pset.ParticleFile(name="MyParticle") if output else None
     print("Peninsula: Advecting %d particles for %d timesteps"
           % (npart, int(time / dt)))
-    if output:
-        # Use sub-timesteps when doing trajectory I/O
-        substeps = 100
-        timesteps = int(time / substeps / dt)
-        current = 0.
-        for _ in range(timesteps):
-            pset.execute(AdvectionRK4, timesteps=substeps, dt=dt)
-            current += substeps * dt
-            out.write(pset, current)
-    else:
-        # Execution without I/O for performance benchmarks
-        timesteps = int(time / dt)
-        pset.execute(AdvectionRK4, timesteps=timesteps, dt=dt)
+    pset.execute(AdvectionRK4, timesteps=int(time / dt), dt=dt,
+                 output_file=out, output_steps=substeps)
 
     if verbose:
         print("Final particle positions:")
@@ -181,8 +156,8 @@ Example of particle advection around an idealised peninsula""")
                    help='Degree of spatial interpolation')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
-    p.add_argument('-o', '--output', action='store_true', default=False,
-                   help='Output trajectory data to file')
+    p.add_argument('-o', '--nooutput', action='store_true', default=False,
+                   help='Suppress trajectory output')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
@@ -202,10 +177,10 @@ Example of particle advection around an idealised peninsula""")
         from pstats import Stats
         runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
-                                   output=args.output)",
+                                   output=not args.nooutput)",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         pensinsula_example(grid, args.particles, mode=args.mode,
                            degree=args.degree, verbose=args.verbose,
-                           output=args.output)
+                           output=not args.nooutput)

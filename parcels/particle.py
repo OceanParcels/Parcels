@@ -4,7 +4,7 @@ import numpy as np
 import netCDF4
 from collections import OrderedDict
 
-__all__ = ['Particle', 'ParticleSet', 'JITParticle', 'JITParticleSet',
+__all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4']
 
 
@@ -30,7 +30,7 @@ class Particle(object):
     :param grid: :Class Grid: object to track this particle on
     """
 
-    def __init__(self, lon, lat, grid):
+    def __init__(self, lon, lat, grid, cptr=None):
         self.lon = lon
         self.lat = lat
 
@@ -39,69 +39,6 @@ class Particle(object):
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
-
-
-class ParticleSet(object):
-    """Container class for storing and executing over sets of particles.
-
-    Please note that this currently only supports fixed size particle sets.
-
-    :param size: Initial size of particle set
-    :param grid: Grid object from which to sample velocity"""
-
-    def __init__(self, size, grid, pclass=Particle, lon=None, lat=None):
-        self.grid = grid
-        self.particles = np.empty(size, dtype=pclass)
-
-        if lon is not None and lat is not None:
-            for i in range(size):
-                self.particles[i] = pclass(lon=lon[i], lat=lat[i], grid=grid)
-        else:
-            raise ValueError("Latitude and longitude required for generating ParticleSet")
-
-    @property
-    def size(self):
-        return self.particles.size
-
-    def __len__(self):
-        return self.size
-
-    def __getitem__(self, key):
-        return self.particles[key]
-
-    def __setitem__(self, key, value):
-        self.particles[key] = value
-
-    def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
-        for _ in range(timesteps):
-            for p in self.particles:
-                pyfunc(p, self.grid, time, dt)
-            time += dt
-
-
-class ParticleType(object):
-    """Class encapsulating the type information for custom particles
-
-    :param user: Optional list of (name, dtype) tuples for custom variables
-    """
-
-    def __init__(self, pclass):
-        if not isinstance(pclass, type):
-            raise TypeError("Class object required to derive ParticleType")
-        if not issubclass(pclass, Particle):
-            raise TypeError("Class object does not inherit from parcels.Particle")
-
-        self.name = pclass.__name__
-        self.var_types = pclass.base_vars
-        self.var_types.update(pclass.user_vars)
-
-    def __repr__(self):
-        return self.name
-
-    @property
-    def dtype(self):
-        """Numpy.dtype object that defines the C struct"""
-        return np.dtype(list(self.var_types.items()))
 
 
 class JITParticle(Particle):
@@ -135,9 +72,37 @@ class JITParticle(Particle):
             self._cptr.__setitem__(key, value)
 
 
-class JITParticleSet(ParticleSet):
-    """Container class for storing and executing over sets of
-    particles using Just-in-Time (JIT) compilation techniques.
+class ParticleType(object):
+    """Class encapsulating the type information for custom particles
+
+    :param user: Optional list of (name, dtype) tuples for custom variables
+    """
+
+    def __init__(self, pclass):
+        if not isinstance(pclass, type):
+            raise TypeError("Class object required to derive ParticleType")
+        if not issubclass(pclass, Particle):
+            raise TypeError("Class object does not inherit from parcels.Particle")
+
+        self.name = pclass.__name__
+        self.uses_jit = issubclass(pclass, JITParticle)
+        if self.uses_jit:
+            self.var_types = pclass.base_vars
+            self.var_types.update(pclass.user_vars)
+        else:
+            self.var_types = None
+
+    def __repr__(self):
+        return self.name
+
+    @property
+    def dtype(self):
+        """Numpy.dtype object that defines the C struct"""
+        return np.dtype(list(self.var_types.items()))
+
+
+class ParticleSet(object):
+    """Container class for storing particle and executing kernel over them.
 
     Please note that this currently only supports fixed size particle
     sets.
@@ -149,33 +114,103 @@ class JITParticleSet(ParticleSet):
     :param lat: List of initial latitude values for particles
     """
 
-    def __init__(self, size, grid, pclass=JITParticle, lon=None, lat=None):
+    def __init__(self, size, grid, pclass=JITParticle,
+                 lon=None, lat=None, start=None, finish=None):
         self.grid = grid
-        self.ptype = ParticleType(pclass)
         self.particles = np.empty(size, dtype=pclass)
+        self.ptype = ParticleType(pclass)
         self.kernel = None
 
-        # Pointer to the C-allocated particle data
-        self._particle_data = np.empty(size, dtype=self.ptype.dtype)
+        if self.ptype.uses_jit:
+            # Allocate underlying data for C-allocated particles
+            self._particle_data = np.empty(size, dtype=self.ptype.dtype)
 
-        for i in range(size):
-            self.particles[i] = pclass(lon[i], lat[i], grid=grid,
-                                       cptr=self._particle_data[i])
+            def cptr(i):
+                return self._particle_data[i]
+        else:
+            def cptr(i):
+                return None
 
-    def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
-        if self.kernel is None:
-            # Generate and compile JIT kernel
-            self.kernel = Kernel(self.grid, self.ptype, pyfunc)
-            self.kernel.compile(compiler=GNUCompiler())
-            self.kernel.load_lib()
+        if start is not None and finish is not None:
+            # Initialise from start/finish coordinates with equidistant spacing
+            assert(lon is None and lat is None)
+            lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
+            lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
 
-        # Execute JIT kernel
-        self.kernel.execute(self, timesteps, time, dt)
+        if lon is not None and lat is not None:
+            # Initialise from lists of lon/lat coordinates
+            assert(size == len(lon) and size == len(lat))
+
+            for i in range(size):
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i))
+        else:
+            raise ValueError("Latitude and longitude required for generating ParticleSet")
+
+    @property
+    def size(self):
+        return self.particles.size
+
+    def __repr__(self):
+        return "\n".join([str(p) for p in self])
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, key):
+        return self.particles[key]
+
+    def __setitem__(self, key, value):
+        self.particles[key] = value
+
+    def execute(self, pyfunc=AdvectionRK4, time=0., dt=1., timesteps=1,
+                output_file=None, output_steps=-1):
+        """Execute a given kernel function over the particle set for
+        multiple timesteps. Optionally also provide sub-timestepping
+        for particle output.
+
+        :param pyfunc: Kernel funtion to execute
+        :param time: Starting time for the timestepping loop
+        :param dt: Timestep interval to be passed to the kernel
+        :param timesteps: Number of individual timesteps to execute
+        :param output_file: ParticleFile object for particle output
+        :param output_steps: Size of output intervals in timesteps
+        """
+        # Prepare kernel execution
+        if self.ptype.uses_jit:
+            if self.kernel is None:
+                # Generate and compile JIT kernel
+                self.kernel = Kernel(self.grid, self.ptype, pyfunc)
+                self.kernel.compile(compiler=GNUCompiler())
+                self.kernel.load_lib()
+            execute = self.kernel.execute
+        else:
+            # Python equivalent to the inner loops of a JIT kernel
+            def py_execute(pset, timesteps, time, dt):
+                for _ in range(timesteps):
+                    for p in self.particles:
+                        pyfunc(p, self.grid, time, dt)
+                    time += dt
+            execute = py_execute
+
+        # Check if output is required and compute outer leaps
+        if output_file is None or output_steps <= 0:
+            output_steps = timesteps
+        timeleaps = int(timesteps / output_steps)
+        # Execute kernel in sub-stepping intervals (leaps)
+        current = 0.
+        for _ in range(timeleaps):
+            execute(self, output_steps, current, dt)
+            current += output_steps * dt
+            if output_file:
+                output_file.write(self, current)
+
+    def ParticleFile(self, *args, **kwargs):
+        return ParticleFile(*args, particleset=self, **kwargs)
 
 
 class ParticleFile(object):
 
-    def __init__(self, name, particleset):
+    def __init__(self, name, particleset, initial_dump=True):
         """Initialise netCDF4.Dataset for trajectory output.
 
         The output follows the format outlined in the Discrete
@@ -188,6 +223,10 @@ class ParticleFile(object):
         Developer note: We cannot use xray.Dataset here, since it does
         not yet allow incremental writes to disk:
         https://github.com/xray/xray/issues/199
+
+        :param name: Basename of the output file
+        :param particlset: ParticleSet to output
+        :param initial_dump: Perform initial output at time 0.
         """
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
@@ -229,6 +268,9 @@ class ParticleFile(object):
         self.z.positive = "down"
 
         self.idx = 0
+
+        if initial_dump:
+            self.write(particleset, 0.)
 
     def __del__(self):
         self.dataset.close()

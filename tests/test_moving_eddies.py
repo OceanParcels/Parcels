@@ -1,13 +1,8 @@
-from parcels import Particle, ParticleSet, JITParticle, JITParticleSet
-from parcels import NEMOGrid, ParticleFile, AdvectionRK4
+from parcels import NEMOGrid, Particle, JITParticle, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
-
-
-pclasses = {'scipy': (Particle, ParticleSet),
-            'jit': (JITParticle, JITParticleSet)}
 
 
 def moving_eddies_grid(xdim=200, ydim=350):
@@ -74,38 +69,26 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
     :arg grid: :class NEMOGrid: that defines the flow field
     :arg npart: Number of particles to intialise"""
 
-    # Determine particle and set classes according to mode
-    ParticleClass, ParticleSetClass = pclasses[mode]
+    # Determine particle class according to mode
+    ParticleClass = JITParticle if mode == 'jit' else Particle
 
-    lon = 3.3 * np.ones(npart, dtype=np.float)
-    lat = np.linspace(46., 47.8, npart, dtype=np.float)
-    pset = ParticleSetClass(npart, grid, lon=lon, lat=lat)
+    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+                            start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
-        print("Initial particle positions:")
-        for p in pset:
-            print(p)
+        print("Initial particle positions:\n%s" % pset)
 
-    out = ParticleFile(name="EddyParticle", particleset=pset)
-    out.write(pset, 0.)
-
-    # 25 days, with 5min timesteps and hourly output
-    hours = 24 * 25
-    timesteps = 12
-    dt = 300.
-    current = 0.
+    # Execte for 25 days, with 5min timesteps and hourly output
+    hours = 25*24
+    substeps = 12
     print("MovingEddies: Advecting %d particles for %d timesteps"
-          % (npart, hours * timesteps))
-    for _ in range(hours):
-        pset.execute(AdvectionRK4, time=current,
-                     timesteps=timesteps, dt=dt)
-        out.write(pset, current)
-        current += timesteps * dt
+          % (npart, hours * substeps))
+    pset.execute(AdvectionRK4, timesteps=hours*substeps, dt=300.,
+                 output_file=pset.ParticleFile(name="EddyParticle"),
+                 output_steps=substeps)
 
     if verbose:
-        print("Final particle positions:")
-        for p in pset:
-            print(p)
+        print("Final particle positions:\n%s" % pset)
 
     return pset
 
