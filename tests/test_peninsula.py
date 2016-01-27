@@ -102,27 +102,15 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
-    if output:
-        out = ParticleFile(name="MyParticle", particleset=pset)
-
     # Advect the particles for 24h
     time = 24 * 3600.
     dt = 36.
+    substeps = 100 if output else -1
+    out = ParticleFile(name="MyParticle", particleset=pset) if output else None
     print("Peninsula: Advecting %d particles for %d timesteps"
           % (npart, int(time / dt)))
-    if output:
-        # Use sub-timesteps when doing trajectory I/O
-        substeps = 100
-        timesteps = int(time / substeps / dt)
-        current = 0.
-        for _ in range(timesteps):
-            pset.execute(AdvectionRK4, timesteps=substeps, dt=dt)
-            current += substeps * dt
-            out.write(pset, current)
-    else:
-        # Execution without I/O for performance benchmarks
-        timesteps = int(time / dt)
-        pset.execute(AdvectionRK4, timesteps=timesteps, dt=dt)
+    pset.execute(AdvectionRK4, timesteps=int(time / dt), dt=dt,
+                 output_file=out, output_steps=substeps)
 
     if verbose:
         print("Final particle positions:")

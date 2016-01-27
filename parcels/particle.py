@@ -162,21 +162,47 @@ class ParticleSet(object):
     def __setitem__(self, key, value):
         self.particles[key] = value
 
-    def execute(self, pyfunc=AdvectionRK4, time=0., timesteps=1, dt=None):
+    def execute(self, pyfunc=AdvectionRK4, time=0., dt=1., timesteps=1,
+                output_file=None, output_steps=-1):
+        """Execute a given kernel function over the particle set for
+        multiple timesteps. Optionally also provide sub-timestepping
+        for particle output.
+
+        :param pyfunc: Kernel funtion to execute
+        :param time: Starting time for the timestepping loop
+        :param dt: Timestep interval to be passed to the kernel
+        :param timesteps: Number of individual timesteps to execute
+        :param output_file: ParticleFile object for particle output
+        :param output_steps: Size of output intervals in timesteps
+        """
+        # Prepare kernel execution
         if self.ptype.uses_jit:
             if self.kernel is None:
                 # Generate and compile JIT kernel
                 self.kernel = Kernel(self.grid, self.ptype, pyfunc)
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
-
-            # Execute JIT kernel
-            self.kernel.execute(self, timesteps, time, dt)
+            execute = self.kernel.execute
         else:
-            for _ in range(timesteps):
-                for p in self.particles:
-                    pyfunc(p, self.grid, time, dt)
-                time += dt
+            # Python equivalent to the inner loops of a JIT kernel
+            def py_execute(pset, timesteps, time, dt):
+                for _ in range(timesteps):
+                    for p in self.particles:
+                        pyfunc(p, self.grid, time, dt)
+                    time += dt
+            execute = py_execute
+
+        # Check if output is required and compute outer leaps
+        if output_file is None or output_steps <= 0:
+            output_steps = timesteps
+        timeleaps = int(timesteps / output_steps)
+        # Execute kernel in sub-stepping intervals (leaps)
+        current = 0.
+        for _ in range(timeleaps):
+            execute(self, output_steps, current, dt)
+            current += output_steps * dt
+            if output_file:
+                output_file.write(self, current)
 
 
 class ParticleFile(object):
