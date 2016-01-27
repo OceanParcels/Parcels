@@ -73,9 +73,8 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
     # Determine particle class according to mode
     ParticleClass = JITParticle if mode == 'jit' else Particle
 
-    lon = 3.3 * np.ones(npart, dtype=np.float)
-    lat = np.linspace(46., 47.8, npart, dtype=np.float)
-    pset = ParticleSet(npart, grid, lon=lon, lat=lat, pclass=ParticleClass)
+    pset = ParticleSet(npart, grid, pclass=ParticleClass,
+                       start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
         print("Initial particle positions:")

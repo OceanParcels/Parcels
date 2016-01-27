@@ -93,12 +93,9 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
             return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
 
     # Initialise particles
-    km2deg = 1. / 1.852 / 60
-    min_y = grid.U.lat[0] + 3. * km2deg
-    max_y = grid.U.lat[-1] - 3. * km2deg
-    lon = 3. * km2deg * np.ones(npart)
-    lat = np.linspace(min_y, max_y, npart, dtype=np.float)
-    pset = ParticleSet(npart, grid, pclass=MyParticle, lon=lon, lat=lat)
+    x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
+    y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
+    pset = ParticleSet(npart, grid, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
         particle.p = grid.P[0., particle.lon, particle.lat]
 

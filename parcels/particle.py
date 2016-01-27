@@ -114,7 +114,8 @@ class ParticleSet(object):
     :param lat: List of initial latitude values for particles
     """
 
-    def __init__(self, size, grid, pclass=JITParticle, lon=None, lat=None):
+    def __init__(self, size, grid, pclass=JITParticle,
+                 lon=None, lat=None, start=None, finish=None):
         self.grid = grid
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = ParticleType(pclass)
@@ -129,6 +130,12 @@ class ParticleSet(object):
         else:
             def cptr(i):
                 return None
+
+        if start is not None and finish is not None:
+            # Initialise from start/finish coordinates with equidistant spacing
+            assert(lon is None and lat is None)
+            lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
+            lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
