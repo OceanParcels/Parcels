@@ -1,5 +1,4 @@
-from parcels import Particle, ParticleSet, JITParticle
-from parcels import NEMOGrid, ParticleFile, AdvectionRK4
+from parcels import NEMOGrid, Particle, JITParticle, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import math
@@ -73,21 +72,20 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
     # Determine particle class according to mode
     ParticleClass = JITParticle if mode == 'jit' else Particle
 
-    pset = ParticleSet(npart, grid, pclass=ParticleClass,
-                       start=(3.3, 46.), finish=(3.3, 47.8))
+    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+                            start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
-
-    out = ParticleFile(name="EddyParticle", particleset=pset)
 
     # Execte for 25 days, with 5min timesteps and hourly output
     hours = 25*24
     substeps = 12
     print("MovingEddies: Advecting %d particles for %d timesteps"
           % (npart, hours * substeps))
-    pset.execute(AdvectionRK4, time=0., timesteps=hours*substeps,
-                 dt=300., output_file=out, output_steps=substeps)
+    pset.execute(AdvectionRK4, timesteps=hours*substeps, dt=300.,
+                 output_file=pset.ParticleFile(name="EddyParticle"),
+                 output_steps=substeps)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)

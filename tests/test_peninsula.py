@@ -1,5 +1,4 @@
-from parcels import Particle, ParticleSet, JITParticle
-from parcels import NEMOGrid, ParticleFile, AdvectionRK4
+from parcels import NEMOGrid, Particle, JITParticle, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import pytest
@@ -95,7 +94,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
-    pset = ParticleSet(npart, grid, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
+    pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
         particle.p = grid.P[0., particle.lon, particle.lat]
 
@@ -106,7 +105,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     time = 24 * 3600.
     dt = 36.
     substeps = 100 if output else -1
-    out = ParticleFile(name="MyParticle", particleset=pset) if output else None
+    out = pset.ParticleFile(name="MyParticle") if output else None
     print("Peninsula: Advecting %d particles for %d timesteps"
           % (npart, int(time / dt)))
     pset.execute(AdvectionRK4, timesteps=int(time / dt), dt=dt,

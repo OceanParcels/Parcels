@@ -204,6 +204,9 @@ class ParticleSet(object):
             if output_file:
                 output_file.write(self, current)
 
+    def ParticleFile(self, *args, **kwargs):
+        return ParticleFile(*args, particleset=self, **kwargs)
+
 
 class ParticleFile(object):
 

@@ -1,5 +1,6 @@
 from netCDF4 import Dataset
 from parcels.field import Field
+from parcels.particle import ParticleSet
 from py import path
 from glob import glob
 
@@ -73,6 +74,9 @@ class NEMOGrid(object):
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
+
+    def ParticleSet(self, *args, **kwargs):
+        return ParticleSet(*args, grid=self, **kwargs)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)
