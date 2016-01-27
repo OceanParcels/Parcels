@@ -65,7 +65,7 @@ def peninsula_grid(xdim, ydim):
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
-                       verbose=False, output=False):
+                       verbose=False, output=True):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
@@ -156,8 +156,8 @@ Example of particle advection around an idealised peninsula""")
                    help='Degree of spatial interpolation')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
-    p.add_argument('-o', '--output', action='store_true', default=False,
-                   help='Output trajectory data to file')
+    p.add_argument('-o', '--nooutput', action='store_true', default=False,
+                   help='Suppress trajectory output')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
@@ -177,10 +177,10 @@ Example of particle advection around an idealised peninsula""")
         from pstats import Stats
         runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
-                                   output=args.output)",
+                                   output=not args.nooutput)",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         pensinsula_example(grid, args.particles, mode=args.mode,
                            degree=args.degree, verbose=args.verbose,
-                           output=args.output)
+                           output=not args.nooutput)

@@ -34,7 +34,7 @@ python tests/grid_peninsula.py <xdim> <ydim>
 where `xdim` and `ydim` are the numbers of grid cells in each
 dimension. The particle advection example can then be run with:
 ```
-python tests/test_peninsula.py -p <npart> --output
+python tests/test_peninsula.py -p <npart>
 ```
 where `npart` is the number of evenly initialised particles. The
 resulting particle trajectories can be visualised using Parcel's
