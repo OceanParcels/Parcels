@@ -102,10 +102,8 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
-    # Write initial output to file
     if output:
         out = ParticleFile(name="MyParticle", particleset=pset)
-        out.write(pset, 0.)
 
     # Advect the particles for 24h
     time = 24 * 3600.

@@ -80,7 +80,6 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
         print("Initial particle positions:\n%s" % pset)
 
     out = ParticleFile(name="EddyParticle", particleset=pset)
-    out.write(pset, 0.)
 
     # 25 days, with 5min timesteps and hourly output
     hours = 24 * 25

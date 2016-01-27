@@ -181,7 +181,7 @@ class ParticleSet(object):
 
 class ParticleFile(object):
 
-    def __init__(self, name, particleset):
+    def __init__(self, name, particleset, initial_dump=True):
         """Initialise netCDF4.Dataset for trajectory output.
 
         The output follows the format outlined in the Discrete
@@ -194,6 +194,10 @@ class ParticleFile(object):
         Developer note: We cannot use xray.Dataset here, since it does
         not yet allow incremental writes to disk:
         https://github.com/xray/xray/issues/199
+
+        :param name: Basename of the output file
+        :param particlset: ParticleSet to output
+        :param initial_dump: Perform initial output at time 0.
         """
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
@@ -235,6 +239,9 @@ class ParticleFile(object):
         self.z.positive = "down"
 
         self.idx = 0
+
+        if initial_dump:
+            self.write(particleset, 0.)
 
     def __del__(self):
         self.dataset.close()
