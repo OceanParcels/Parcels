@@ -133,6 +133,15 @@ class Field(object):
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
 
+    def show(self):
+        import matplotlib.pyplot as plt
+        plt.contourf(self.lon, self.lat, np.squeeze(self.data), 256)
+        plt.colorbar()
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title(self.name)
+        plt.show()
+
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
