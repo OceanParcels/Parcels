@@ -204,6 +204,16 @@ class ParticleSet(object):
             if output_file:
                 output_file.write(self, current)
 
+    def show(self, field=None):
+        import matplotlib.pyplot as plt
+        lon = [p.lon for p in self]
+        lat = [p.lat for p in self]
+        plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
+        if field is None:
+            plt.show()
+        else:
+            field.show()
+
     def ParticleFile(self, *args, **kwargs):
         return ParticleFile(*args, particleset=self, **kwargs)
 
