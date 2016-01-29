@@ -30,6 +30,10 @@ class Field(object):
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
 
+        # Ensure that field data is the right data type
+        if not self.data.dtype == np.float32:
+            print("WARNING: Casting field data to np.float32")
+            self.data = self.data.astype(np.float32)
         if transpose:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
