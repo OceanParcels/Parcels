@@ -34,8 +34,8 @@ class Particle(object):
         self.lon = lon
         self.lat = lat
 
-        self.xi = np.where(self.lon > grid.U.lon)[0][-1]
-        self.yi = np.where(self.lat > grid.U.lat)[0][-1]
+        self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
+        self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
@@ -203,6 +203,16 @@ class ParticleSet(object):
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
+
+    def show(self, field=None):
+        import matplotlib.pyplot as plt
+        lon = [p.lon for p in self]
+        lat = [p.lat for p in self]
+        plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
+        if field is None:
+            plt.show()
+        else:
+            field.show()
 
     def ParticleFile(self, *args, **kwargs):
         return ParticleFile(*args, particleset=self, **kwargs)

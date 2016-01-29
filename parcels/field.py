@@ -30,6 +30,10 @@ class Field(object):
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
 
+        # Ensure that field data is the right data type
+        if not self.data.dtype == np.float32:
+            print("WARNING: Casting field data to np.float32")
+            self.data = self.data.astype(np.float32)
         if transpose:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
@@ -132,6 +136,15 @@ class Field(object):
                          self.time.ctypes.data_as(POINTER(c_double)),
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
+
+    def show(self):
+        import matplotlib.pyplot as plt
+        plt.contourf(self.lon, self.lat, np.squeeze(self.data), 256)
+        plt.colorbar()
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title(self.name)
+        plt.show()
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
