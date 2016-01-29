@@ -34,8 +34,8 @@ class Particle(object):
         self.lon = lon
         self.lat = lat
 
-        self.xi = np.where(self.lon > grid.U.lon)[0][-1]
-        self.yi = np.where(self.lat > grid.U.lat)[0][-1]
+        self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
+        self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
