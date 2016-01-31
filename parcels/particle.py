@@ -162,7 +162,7 @@ class ParticleSet(object):
     def __setitem__(self, key, value):
         self.particles[key] = value
 
-    def execute(self, pyfunc=AdvectionRK4, time=0., dt=1., timesteps=1,
+    def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
                 output_file=None, output_steps=-1):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -197,7 +197,7 @@ class ParticleSet(object):
             output_steps = timesteps
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
-        current = 0.
+        current = time or self.grid.time[0]
         for _ in range(timeleaps):
             execute(self, output_steps, current, dt)
             current += output_steps * dt
