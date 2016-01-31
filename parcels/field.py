@@ -22,7 +22,7 @@ class Field(object):
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False):
+                 transpose=False, vmin=None, vmax=None):
         self.name = name
         self.data = data
         self.lon = lon
@@ -40,8 +40,12 @@ class Field(object):
             self.data = np.transpose(self.data).copy()
         self.data = self.data.reshape((time.size, lat.size, lon.size))
 
-        # Hack around the fact that NaN values
+        # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
+        if vmin is not None:
+            self.data[self.data < vmin] = 0.
+        if vmax is not None:
+            self.data[self.data > vmax] = 0.
         self.data[np.isnan(self.data)] = 0.
 
         # Variable names in JIT code
@@ -53,7 +57,7 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, varname, datasets):
+    def from_netcdf(cls, name, varname, datasets, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
@@ -79,7 +83,7 @@ class Field(object):
         for tslice, dset in zip(timeslices, datasets):
             data[tidx:, 0, :, :] = dset[varname][:, 0, :, :]
             tidx += tslice.size
-        return cls(name, data, lon, lat, depth=depth, time=time)
+        return cls(name, data, lon, lat, depth=depth, time=time, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)
