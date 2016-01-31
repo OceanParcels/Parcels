@@ -137,10 +137,18 @@ class Field(object):
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
 
-    def show(self):
+    def show(self, **kwargs):
         import matplotlib.pyplot as plt
-        plt.contourf(self.lon, self.lat, np.squeeze(self.data), 256)
-        plt.colorbar()
+        t = kwargs.get('t', 0)
+        data = np.squeeze(self.data[t, :])
+        vmin = kwargs.get('vmin', data.min())
+        vmax = kwargs.get('vmax', data.max())
+        cs = plt.contourf(self.lon, self.lat, data,
+                          levels=np.linspace(vmin, vmax, 256))
+        cs.cmap.set_over('k')
+        cs.cmap.set_under('w')
+        cs.set_clim(vmin, vmax)
+        plt.colorbar(cs)
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
         plt.title(self.name)
