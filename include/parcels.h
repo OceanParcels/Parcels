@@ -52,7 +52,7 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
   j = search_linear_float(y, j, f->ydim, f->lat);
   /* Find time index for temporal interpolation */
   f->tidx = search_linear_double(time, f->tidx, f->tdim, f->time);
-  if (f->tidx < f->tdim-1) {
+  if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
     f0 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx]));
     f1 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx+1]));
