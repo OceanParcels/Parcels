@@ -179,7 +179,10 @@ class ParticleSet(object):
         if self.ptype.uses_jit:
             if self.kernel is None:
                 # Generate and compile JIT kernel
-                self.kernel = Kernel(self.grid, self.ptype, pyfunc)
+                if isinstance(pyfunc, Kernel):
+                    self.kernel = pyfunc
+                else:
+                    self.kernel = self.Kernel(pyfunc)
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
             execute = self.kernel.execute

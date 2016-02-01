@@ -69,3 +69,9 @@ class Kernel(object):
                                decorator_list=[], lineno=1, col_offset=0)
         return Kernel(self.grid, self.ptype, pyfunc=None, funcname=funcname,
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
+
+    def __add__(self, kernel):
+        return self.merge(kernel)
+
+    def __radd__(self, kernel):
+        return kernel.merge(self)
