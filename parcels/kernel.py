@@ -1,4 +1,4 @@
-from parcels.codegen import KernelGenerator, LoopGenerator
+from parcels.codegenerator import KernelGenerator, LoopGenerator
 from py import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
