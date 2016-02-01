@@ -17,8 +17,13 @@ class Kernel(object):
         self._lib = None
 
         # Generate the kernel function and add the outer loop
-        ccode_kernel = KernelGenerator(grid, ptype).generate(pyfunc)
-        self.ccode = LoopGenerator(grid, ptype).generate(pyfunc.__name__, ccode_kernel)
+        kernelgen = KernelGenerator(grid, ptype)
+        self.ccode = kernelgen.generate(pyfunc)
+        self.field_args = kernelgen.field_args
+
+        loopgen = LoopGenerator(grid, ptype)
+        self.ccode = loopgen.generate(pyfunc.__name__, self.field_args,
+                                      self.ccode)
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
@@ -32,6 +37,6 @@ class Kernel(object):
 
     def execute(self, pset, timesteps, time, dt):
         grid = pset.grid
+        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
-                       c_int(timesteps), c_double(time), c_float(dt),
-                       byref(grid.U.ctypes_struct), byref(grid.V.ctypes_struct))
+                       c_int(timesteps), c_double(time), c_float(dt), *fargs)
