@@ -71,7 +71,7 @@ class NEMOGrid(object):
             for fp in paths:
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
-            dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fpath in paths]
+            dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
             fields[var] = Field.from_netcdf(var, vname, dsets, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
