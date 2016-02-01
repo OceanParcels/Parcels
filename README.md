@@ -29,22 +29,18 @@ A basic example of particle advection around an idealised peninsula
 Runge-Kutta scheme is provided in the `tests` directory. The necessary
 grid files are generated (using NEMO conventions) with:
 ```
-python tests/grid_peninsula.py <xdim> <ydim>
+python tests/test_peninsula.py --grid <xdim> <ydim> -p <npart>
 ```
 where `xdim` and `ydim` are the numbers of grid cells in each
-dimension. The particle advection example can then be run with:
-```
-python tests/test_peninsula.py -p <npart>
-```
-where `npart` is the number of evenly initialised particles. The
-resulting particle trajectories can be visualised using Parcel's
-utility plotting script:
+dimension and `npart` is the number of evenly initialised
+particles. The resulting particle trajectories can be visualised using
+Parcel's utility plotting script:
 ```
 python scripts/plotParticles.py 2d -p MyParticle.nc
 ```
 An alternative execution mode that utilises SciPy's interpolator
 functions for spatial interpolation can be utilised with:
 ```
-python tests/test_peninsula.py scipy -p <npart> --degree <deg> --output
+python tests/test_peninsula.py scipy -p <npart> --degree <deg>
 ```
 where `deg` is the degree of spatial interpoaltion to use.
