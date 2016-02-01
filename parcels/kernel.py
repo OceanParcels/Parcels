@@ -2,6 +2,8 @@ from parcels.codegenerator import KernelGenerator, LoopGenerator
 from py import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
+from ast import parse
+import inspect
 
 
 class Kernel(object):
@@ -16,9 +18,12 @@ class Kernel(object):
         self.log_file = str(path.local("%s.log" % self.name))
         self._lib = None
 
+        # Parse the Python code into an AST
+        self.py_ast = parse(inspect.getsource(pyfunc.__code__))
+        funcvars = list(pyfunc.__code__.co_varnames)
         # Generate the kernel function and add the outer loop
         kernelgen = KernelGenerator(grid, ptype)
-        self.ccode = kernelgen.generate(pyfunc)
+        self.ccode = kernelgen.generate(self.py_ast, funcvars)
         self.field_args = kernelgen.field_args
 
         loopgen = LoopGenerator(grid, ptype)

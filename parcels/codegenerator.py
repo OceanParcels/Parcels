@@ -1,5 +1,4 @@
 import ast
-import inspect
 import cgen as c
 from collections import OrderedDict
 
@@ -139,25 +138,22 @@ class KernelGenerator(ast.NodeVisitor):
         self.ptype = ptype
         self.field_args = OrderedDict()
 
-    def generate(self, pyfunc):
-        # Parse the Python code into an AST
-        self.py_ast = ast.parse(inspect.getsource(pyfunc.__code__))
-
+    def generate(self, py_ast, funcvars):
         # Untangle Pythonic tuple-assignment statements
-        self.py_ast = TupleSplitter().visit(self.py_ast)
+        py_ast = TupleSplitter().visit(py_ast)
 
         # Replace occurences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.grid, self.ptype)
-        self.py_ast = transformer.visit(self.py_ast.body[0])
+        py_ast = transformer.visit(py_ast.body[0])
 
         # Generate C-code for all nodes in the Python AST
-        self.visit(self.py_ast)
-        self.ccode = self.py_ast.ccode
+        self.visit(py_ast)
+        self.ccode = py_ast.ccode
 
-        # Derive local function variables and insert declaration
-        funcvars = list(pyfunc.__code__.co_varnames)
+        # Insert variable declarations for non-instrinsics
         for kvar in self.kernel_vars:
-            funcvars.remove(kvar)
+            if kvar in funcvars:
+                funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
 
         return self.ccode
