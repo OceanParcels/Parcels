@@ -2,8 +2,9 @@ from parcels.codegenerator import KernelGenerator, LoopGenerator
 from py import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
-from ast import parse
+from ast import parse, FunctionDef
 import inspect
+from copy import deepcopy
 
 
 class Kernel(object):
@@ -11,24 +12,39 @@ class Kernel(object):
 
     :arg filename: Basename for kernel files to generate"""
 
-    def __init__(self, grid, ptype, pyfunc):
-        self.name = "%s%s" % (ptype.name, pyfunc.__name__)
+    def __init__(self, grid, ptype, pyfunc=None, funcname=None,
+                 py_ast=None, funcvars=None):
+        self.grid = grid
+        self.ptype = ptype
+
+        if pyfunc is not None:
+            self.funcname = pyfunc.__name__
+            self.funcvars = list(pyfunc.__code__.co_varnames)
+            # Parse the Python code into an AST
+            self.py_ast = parse(inspect.getsource(pyfunc.__code__))
+            self.py_ast = self.py_ast.body[0]
+        else:
+            self.funcname = funcname
+            self.py_ast = py_ast
+            self.funcvars = funcvars
+
+        self.name = "%s%s" % (ptype.name, funcname)
+
         self.src_file = str(path.local("%s.c" % self.name))
         self.lib_file = str(path.local("%s.so" % self.name))
         self.log_file = str(path.local("%s.log" % self.name))
         self._lib = None
 
-        # Parse the Python code into an AST
-        self.py_ast = parse(inspect.getsource(pyfunc.__code__))
-        funcvars = list(pyfunc.__code__.co_varnames)
         # Generate the kernel function and add the outer loop
-        kernelgen = KernelGenerator(grid, ptype)
-        self.ccode = kernelgen.generate(self.py_ast, funcvars)
-        self.field_args = kernelgen.field_args
-
-        loopgen = LoopGenerator(grid, ptype)
-        self.ccode = loopgen.generate(pyfunc.__name__, self.field_args,
-                                      self.ccode)
+        if self.ptype.uses_jit:
+            kernelgen = KernelGenerator(grid, ptype)
+            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
+                                              self.funcvars)
+            self.field_args = kernelgen.field_args
+            loopgen = LoopGenerator(grid, ptype)
+            self.ccode = loopgen.generate(self.funcname,
+                                          self.field_args,
+                                          kernel_ccode)
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
@@ -45,3 +61,11 @@ class Kernel(object):
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
                        c_int(timesteps), c_double(time), c_float(dt), *fargs)
+
+    def merge(self, kernel):
+        funcname = self.funcname + kernel.funcname
+        func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
+                               body=self.py_ast.body + kernel.py_ast.body,
+                               decorator_list=[], lineno=1, col_offset=0)
+        return Kernel(self.grid, self.ptype, pyfunc=None, funcname=funcname,
+                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)

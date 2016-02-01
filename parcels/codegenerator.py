@@ -144,7 +144,7 @@ class KernelGenerator(ast.NodeVisitor):
 
         # Replace occurences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.grid, self.ptype)
-        py_ast = transformer.visit(py_ast.body[0])
+        py_ast = transformer.visit(py_ast)
 
         # Generate C-code for all nodes in the Python AST
         self.visit(py_ast)
