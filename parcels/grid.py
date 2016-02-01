@@ -30,7 +30,7 @@ class NEMOGrid(object):
 
     @classmethod
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
-                  depth, time, field_data={}, transpose=True):
+                  depth, time, field_data={}, transpose=True, **kwargs):
         """Initialise Grid object from raw data
 
         :param data_u: Zonal velocity data
@@ -43,18 +43,20 @@ class NEMOGrid(object):
         :param time: Time coordinates of the grid
         """
         # Create velocity fields
-        ufield = Field('U', data_u, lon_u, lat_u, depth=depth, time=time, transpose=transpose)
-        vfield = Field('V', data_v, lon_v, lat_v, depth=depth, time=time, transpose=transpose)
+        ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
+                       time=time, transpose=transpose, **kwargs)
+        vfield = Field('V', data_v, lon_v, lat_v, depth=depth,
+                       time=time, transpose=transpose, **kwargs)
         # Create additional data fields
         fields = {}
         for name, data in field_data.items():
             fields[name] = Field(name, data, lon_v, lat_u, depth=depth,
-                                 time=time, transpose=transpose)
+                                 time=time, transpose=transpose, **kwargs)
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
     def from_file(cls, filename, uvar='vozocrtx', vvar='vomecrty',
-                  extra_vars={}):
+                  extra_vars={}, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param filename: Base name of the file(s); may contain
@@ -69,8 +71,8 @@ class NEMOGrid(object):
             for fp in paths:
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
-            dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fpath in paths]
-            fields[var] = Field.from_netcdf(var, vname, dsets)
+            dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
+            fields[var] = Field.from_netcdf(var, vname, dsets, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
