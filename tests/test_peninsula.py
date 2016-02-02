@@ -64,6 +64,10 @@ def peninsula_grid(xdim, ydim):
                               depth, time, field_data={'P': P})
 
 
+def UpdateP(particle, grid, time, dt):
+    particle.p = grid.P[time, particle.lon, particle.lat]
+
+
 def pensinsula_example(grid, npart, mode='jit', degree=1,
                        verbose=False, output=True):
     """Example configuration of particle flow around an idealised Peninsula
@@ -79,24 +83,26 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     class MyParticle(ParticleClass):
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
-        user_vars = {'p': np.float32}
+        user_vars = {'p': np.float32, 'p_start': np.float32}
 
         def __init__(self, *args, **kwargs):
             """Custom initialisation function which calls the base
             initialisation and adds the instance variable p"""
             super(MyParticle, self).__init__(*args, **kwargs)
-            self.p = None
+            self.p = 0.
+            self.p_start = 0.
 
         def __repr__(self):
             """Custom print function which overrides the built-in"""
-            return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
+            return "P(%.4f, %.4f)[p=%.5f, p_start=%f]" % (self.lon, self.lat,
+                                                          self.p, self.p_start)
 
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
     pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
-        particle.p = grid.P[0., particle.lon, particle.lat]
+        particle.p_start = grid.P[0., particle.lon, particle.lat]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
@@ -108,24 +114,28 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     out = pset.ParticleFile(name="MyParticle") if output else None
     print("Peninsula: Advecting %d particles for %d timesteps"
           % (npart, int(time / dt)))
-    pset.execute(AdvectionRK4, timesteps=int(time / dt), dt=dt,
+    k_adv = pset.Kernel(AdvectionRK4)
+    k_p = pset.Kernel(UpdateP)
+    pset.execute(k_adv + k_p, timesteps=int(time / dt), dt=dt,
                  output_file=out, output_steps=substeps)
 
     if verbose:
-        print("Final particle positions:")
-        for p in pset:
-            p_local = grid.P[0., p.lon, p.lat]
-            print("%s\tP(final)%.5f \tdelta(P): %0.5g" % (str(p), p_local, p_local - p.p))
+        print("Final particle positions:\n%s" % pset)
 
-    return np.array([abs(p.p - grid.P[0., p.lon, p.lat]) for p in pset])
+    return pset
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('mode', ['jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
     grid = peninsula_grid(100, 50)
-    error = pensinsula_example(grid, 100, mode=mode, degree=1)
-    assert(error <= 2.e-4).all()
+    pset = pensinsula_example(grid, 100, mode=mode, degree=1)
+    # Test advection accuracy by comparing streamline values
+    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    assert(err_adv <= 1.e-3).all()
+    # Test grid sampling accuracy by comparing kernel against grid sampling
+    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    assert(err_smpl <= 1.e-3).all()
 
 
 @pytest.fixture(scope='module')
@@ -141,8 +151,13 @@ def gridfile():
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
     grid = NEMOGrid.from_file(gridfile, extra_vars={'P': 'P'})
-    error = pensinsula_example(grid, 100, mode=mode, degree=1)
-    assert(error <= 2.e-4).all()
+    pset = pensinsula_example(grid, 100, mode=mode, degree=1)
+    # Test advection accuracy by comparing streamline values
+    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    assert(err_adv <= 1.e-3).all()
+    # Test grid sampling accuracy by comparing kernel against grid sampling
+    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    assert(err_smpl <= 1.e-3).all()
 
 
 if __name__ == "__main__":
