@@ -2,7 +2,7 @@ from parcels.codegenerator import KernelGenerator, LoopGenerator
 from py import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
-from ast import parse, FunctionDef
+from ast import parse, FunctionDef, Module
 import inspect
 from copy import deepcopy
 
@@ -63,10 +63,16 @@ class Kernel(object):
         self._function = self._lib.particle_loop
 
     def execute(self, pset, timesteps, time, dt):
-        grid = pset.grid
-        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        self._function(c_int(len(pset)), pset._particle_data.ctypes.data_as(c_void_p),
-                       c_int(timesteps), c_double(time), c_float(dt), *fargs)
+        if self.ptype.uses_jit:
+            fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+            particle_data = pset._particle_data.ctypes.data_as(c_void_p)
+            self._function(c_int(len(pset)), particle_data, c_int(timesteps),
+                           c_double(time), c_float(dt), *fargs)
+        else:
+            for _ in range(timesteps):
+                for p in pset.particles:
+                    self.pyfunc(p, pset.grid, time, dt)
+                time += dt
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

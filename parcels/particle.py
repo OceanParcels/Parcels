@@ -175,25 +175,16 @@ class ParticleSet(object):
         :param output_file: ParticleFile object for particle output
         :param output_steps: Size of output intervals in timesteps
         """
-        # Prepare kernel execution
-        if self.ptype.uses_jit:
-            if self.kernel is None:
-                # Generate and compile JIT kernel
-                if isinstance(pyfunc, Kernel):
-                    self.kernel = pyfunc
-                else:
-                    self.kernel = self.Kernel(pyfunc)
+        if self.kernel is None:
+            # Generate and store Kernel
+            if isinstance(pyfunc, Kernel):
+                self.kernel = pyfunc
+            else:
+                self.kernel = self.Kernel(pyfunc)
+            # Prepare JIT kernel execution
+            if self.ptype.uses_jit:
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
-            execute = self.kernel.execute
-        else:
-            # Python equivalent to the inner loops of a JIT kernel
-            def py_execute(pset, timesteps, time, dt):
-                for _ in range(timesteps):
-                    for p in self.particles:
-                        pyfunc(p, self.grid, time, dt)
-                    time += dt
-            execute = py_execute
 
         # Check if output is required and compute outer leaps
         if output_file is None or output_steps <= 0:
@@ -202,7 +193,7 @@ class ParticleSet(object):
         # Execute kernel in sub-stepping intervals (leaps)
         current = time or self.grid.time[0]
         for _ in range(timeleaps):
-            execute(self, output_steps, current, dt)
+            self.kernel.execute(self, output_steps, current, dt)
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
