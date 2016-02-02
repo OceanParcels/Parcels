@@ -23,10 +23,16 @@ class Kernel(object):
             # Parse the Python code into an AST
             self.py_ast = parse(inspect.getsource(pyfunc.__code__))
             self.py_ast = self.py_ast.body[0]
+            self.pyfunc = pyfunc
         else:
             self.funcname = funcname
             self.py_ast = py_ast
             self.funcvars = funcvars
+            # Compile and generate Python function from AST
+            py_mod = Module(body=[self.py_ast])
+            py_ctx = {}
+            exec(compile(py_mod, "<ast>", "exec"), py_ctx)
+            self.pyfunc = py_ctx[self.funcname]
 
         self.name = "%s%s" % (ptype.name, funcname)
 
