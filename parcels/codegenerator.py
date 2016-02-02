@@ -1,6 +1,6 @@
 import ast
-import inspect
 import cgen as c
+from collections import OrderedDict
 
 
 class IntrinsicNode(ast.AST):
@@ -136,42 +136,40 @@ class KernelGenerator(ast.NodeVisitor):
     def __init__(self, grid, ptype):
         self.grid = grid
         self.ptype = ptype
+        self.field_args = OrderedDict()
 
-    def generate(self, pyfunc):
-        # Parse the Python code into an AST
-        self.py_ast = ast.parse(inspect.getsource(pyfunc.__code__))
-
+    def generate(self, py_ast, funcvars):
         # Untangle Pythonic tuple-assignment statements
-        self.py_ast = TupleSplitter().visit(self.py_ast)
+        py_ast = TupleSplitter().visit(py_ast)
 
         # Replace occurences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.grid, self.ptype)
-        self.py_ast = transformer.visit(self.py_ast.body[0])
+        py_ast = transformer.visit(py_ast)
 
         # Generate C-code for all nodes in the Python AST
-        self.visit(self.py_ast)
-        self.ccode = self.py_ast.ccode
+        self.visit(py_ast)
+        self.ccode = py_ast.ccode
 
-        # Derive local function variables and insert declaration
-        funcvars = list(pyfunc.__code__.co_varnames)
+        # Insert variable declarations for non-instrinsics
         for kvar in self.kernel_vars:
-            funcvars.remove(kvar)
+            if kvar in funcvars:
+                funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
 
         return self.ccode
 
     def visit_FunctionDef(self, node):
-        # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
-        U, V = (self.grid.U, self.grid.V)
-        args = [c.Pointer(c.Value(self.ptype.name, "particle")),
-                c.Value("double", "time"), c.Value("float", "dt"),
-                c.Pointer(c.Value("CField", "%s" % U.name)),
-                c.Pointer(c.Value("CField", "%s" % V.name))]
-
         # Generate "ccode" attribute by traversing the Python AST
         for stmt in node.body:
             self.visit(stmt)
+
+        # Create function declaration and argument list
+        decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
+        args = [c.Pointer(c.Value(self.ptype.name, "particle")),
+                c.Value("double", "time"), c.Value("float", "dt")]
+        for field, _ in self.field_args.items():
+            args += [c.Pointer(c.Value("CField", "%s" % field))]
+
         # Create function body as C-code object
         body = c.Block([stmt.ccode for stmt in node.body])
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), body)
@@ -233,6 +231,10 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Num(self, node):
         node.ccode = str(node.n)
 
+    def visit_FieldNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        self.field_args[node.obj.name] = node.obj
+
 
 class LoopGenerator(object):
     """Code generator class that adds type definitions and the outer
@@ -242,9 +244,8 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, kernel):
+    def generate(self, funcname, field_args, kernel_ast):
         ccode = []
-        U, V = (self.grid.U, self.grid.V)
 
         # Add include for Parcels header
         ccode += [str(c.Include("parcels.h", system=False))]
@@ -254,17 +255,18 @@ class LoopGenerator(object):
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         # Insert kernel code
-        ccode += [str(kernel)]
+        ccode += [str(kernel_ast)]
 
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
                 c.Value("int", "timesteps"), c.Value("double", "time"),
-                c.Value("float", "dt"),
-                c.Pointer(c.Value("CField", "%s" % U.name)),
-                c.Pointer(c.Value("CField", "%s" % V.name))]
-        loop_body = [c.Statement("%s(&(particles[p]), time, dt, %s, %s)" %
-                                 (funcname, U.name, V.name))]
+                c.Value("float", "dt")]
+        for field, _ in field_args.items():
+            args += [c.Pointer(c.Value("CField", "%s" % field))]
+        fargs_str = ", ".join(field_args.keys())
+        loop_body = [c.Statement("%s(&(particles[p]), time, dt, %s)" %
+                                 (funcname, fargs_str))]
         ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
         tloop = c.For("t = 0", "t < timesteps", "++t",
                       c.Block([ploop, c.Statement("time += (double)dt")]))
