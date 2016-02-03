@@ -154,7 +154,8 @@ class KernelGenerator(ast.NodeVisitor):
         for kvar in self.kernel_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
-        self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
+        if len(funcvars) > 0:
+            self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
 
         return self.ccode
 
@@ -264,8 +265,8 @@ class LoopGenerator(object):
                 c.Value("float", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-        fargs_str = ", ".join(field_args.keys())
-        loop_body = [c.Statement("%s(&(particles[p]), time, dt, %s)" %
+        fargs_str = ", ".join(['time', 'dt'] + list(field_args.keys()))
+        loop_body = [c.Statement("%s(&(particles[p]), %s)" %
                                  (funcname, fargs_str))]
         ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
         tloop = c.For("t = 0", "t < timesteps", "++t",
