@@ -1,5 +1,6 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from py import path
+import math  # NOQA get flake8 to ignore unused import.
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
 from ast import parse, FunctionDef, Module
@@ -30,9 +31,8 @@ class Kernel(object):
             self.funcvars = funcvars
             # Compile and generate Python function from AST
             py_mod = Module(body=[self.py_ast])
-            py_ctx = {}
-            exec(compile(py_mod, "<ast>", "exec"), py_ctx)
-            self.pyfunc = py_ctx[self.funcname]
+            exec(compile(py_mod, "<ast>", "exec"), globals())
+            self.pyfunc = globals()[self.funcname]
 
         self.name = "%s%s" % (ptype.name, funcname)
 
