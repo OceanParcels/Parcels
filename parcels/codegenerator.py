@@ -1,6 +1,7 @@
 import ast
 import cgen as c
 from collections import OrderedDict
+import math
 
 
 class IntrinsicNode(ast.AST):
@@ -18,6 +19,19 @@ class GridNode(IntrinsicNode):
 class FieldNode(IntrinsicNode):
     def __getitem__(self, attr):
         return IntrinsicNode(None, ccode=self.obj.ccode_subscript(*attr))
+
+
+class MathNode(IntrinsicNode):
+    symbol_map = {'pi': 'M_PI', 'e': 'M_E'}
+
+    def __getattr__(self, attr):
+        if hasattr(math, attr):
+            if attr in self.symbol_map:
+                attr = self.symbol_map[attr]
+            return IntrinsicNode(None, ccode=attr)
+        else:
+            raise AttributeError("""Unknown math function encountered: %s"""
+                                 % attr)
 
 
 class ParticleAttributeNode(IntrinsicNode):
@@ -75,6 +89,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             return GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
             return ParticleNode(self.ptype, ccode='particle')
+        if node.id == 'math':
+            return MathNode(math, ccode='')
         else:
             return node
 
@@ -248,8 +264,9 @@ class LoopGenerator(object):
     def generate(self, funcname, field_args, kernel_ast):
         ccode = []
 
-        # Add include for Parcels header
+        # Add include for Parcels and math header
         ccode += [str(c.Include("parcels.h", system=False))]
+        ccode += [str(c.Include("math.h", system=False))]
 
         # Generate type definition for particle type
         vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types.items()]
