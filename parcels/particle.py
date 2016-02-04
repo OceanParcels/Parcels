@@ -3,6 +3,7 @@ from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
 from collections import OrderedDict
+import math
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -10,7 +11,7 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle',
 
 def AdvectionRK4(particle, grid, time, dt):
     f_lat = dt / 1000. / 1.852 / 60.
-    f_lon = f_lat / np.cos(particle.lat*np.pi/180)
+    f_lon = f_lat / math.cos(particle.lat*math.pi/180)
     u1 = grid.U[time, particle.lon, particle.lat]
     v1 = grid.V[time, particle.lon, particle.lat]
     lon1, lat1 = (particle.lon + u1*.5*f_lon, particle.lat + v1*.5*f_lat)
