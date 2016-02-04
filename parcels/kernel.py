@@ -83,7 +83,11 @@ class Kernel(object):
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
 
     def __add__(self, kernel):
+        if not isinstance(kernel, Kernel):
+            kernel = Kernel(self.grid, self.ptype, pyfunc=kernel)
         return self.merge(kernel)
 
     def __radd__(self, kernel):
+        if not isinstance(kernel, Kernel):
+            kernel = Kernel(self.grid, self.ptype, pyfunc=kernel)
         return kernel.merge(self)
