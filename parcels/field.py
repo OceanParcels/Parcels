@@ -38,7 +38,7 @@ class Field(object):
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        self.data = self.data.reshape((time.size, lat.size, lon.size))
+        self.data = self.data.reshape((self.time.size, self.lat.size, self.lon.size))
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
