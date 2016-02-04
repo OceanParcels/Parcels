@@ -191,6 +191,15 @@ class KernelGenerator(ast.NodeVisitor):
         body = c.Block([stmt.ccode for stmt in node.body])
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), body)
 
+    def visit_Call(self, node):
+        """Generate C code for simple C-style function calls. Please
+        note that starred and keyword arguments are currently not
+        supported."""
+        for a in node.args:
+            self.visit(a)
+        ccode_args = ", ".join([a.ccode for a in node.args])
+        node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
         'particle' or 'grid' and inserts our placeholder objects"""
