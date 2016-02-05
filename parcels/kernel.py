@@ -29,10 +29,19 @@ class Kernel(object):
             self.funcname = funcname
             self.py_ast = py_ast
             self.funcvars = funcvars
+            # Extract user context by inspecting the call stack
+            stack = inspect.stack()
+            try:
+                user_ctx = stack[-1][0].f_globals
+            except:
+                print("Warning: Could not access user context when merging kernels")
+                user_ctx = globals()
+            finally:
+                del stack  # Remove cyclic references
             # Compile and generate Python function from AST
             py_mod = Module(body=[self.py_ast])
-            exec(compile(py_mod, "<ast>", "exec"), globals())
-            self.pyfunc = globals()[self.funcname]
+            exec(compile(py_mod, "<ast>", "exec"), user_ctx)
+            self.pyfunc = user_ctx[self.funcname]
 
         self.name = "%s%s" % (ptype.name, funcname)
 
