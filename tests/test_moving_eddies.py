@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
 from argparse import ArgumentParser
 import numpy as np
 import math
@@ -63,7 +63,8 @@ def moving_eddies_grid(xdim=200, ydim=350):
                           depth, time, field_data={'P': P})
 
 
-def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
+def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
+                          method=AdvectionRK4):
     """Configuration of a particle set that follows two moving eddies
 
     :arg grid: :class Grid: that defines the flow field
@@ -83,7 +84,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False):
     substeps = 12
     print("MovingEddies: Advecting %d particles for %d timesteps"
           % (npart, hours * substeps))
-    pset.execute(AdvectionRK4, timesteps=hours*substeps, dt=300.,
+    pset.execute(method, timesteps=hours*substeps, dt=300.,
                  output_file=pset.ParticleFile(name="EddyParticle"),
                  output_steps=substeps)
 
@@ -114,8 +115,12 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
+    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
+                   help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'moving_eddies'
+    
+    method = locals()['Advection' + args.method]
 
     # Generate grid files according to given dimensions
     if args.grid is not None:
@@ -134,4 +139,4 @@ Example of particle advection around an idealised peninsula""")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         moving_eddies_example(grid, args.particles, mode=args.mode,
-                              verbose=args.verbose)
+                              verbose=args.verbose, method=method)
