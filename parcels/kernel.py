@@ -31,8 +31,9 @@ class Kernel(object):
             self.funcvars = funcvars
             # Compile and generate Python function from AST
             py_mod = Module(body=[self.py_ast])
-            exec(compile(py_mod, "<ast>", "exec"), globals())
-            self.pyfunc = globals()[self.funcname]
+            user_ctx = inspect.stack()[-1][0].f_globals
+            exec(compile(py_mod, "<ast>", "exec"), user_ctx)
+            self.pyfunc = user_ctx[self.funcname]
 
         self.name = "%s%s" % (ptype.name, funcname)
 
