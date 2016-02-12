@@ -116,8 +116,8 @@ class Field(object):
             return self.interpolator(idx).ev(y, x)
 
     def ccode_subscript(self, t, x, y):
-        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, time, %s)" \
-                % (y, x, "particle->yi", "particle->xi", self.name)
+        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
+                % (y, x, "particle->yi", "particle->xi", t, self.name)
         return ccode
 
     @property
