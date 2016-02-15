@@ -97,3 +97,66 @@ class NEMOGrid(object):
         for f in self.fields:
             field = getattr(self, f)
             field.write(filename)
+
+
+
+class NetCDF_Grid(object):
+    """Grid class used to generate and read NetCDF files
+        
+        :param depth: Depth coordinates of the grid
+        :param time: Time coordinates of the grid
+        :param fields: Dictionary of fields variables across these coordinates
+        """
+    def __init__(self, depth, time, fields={}):
+        self.depth = depth
+        self.time = time
+        self.fields = fields.keys()
+        
+        # Add additional fields as attributes
+        for name, field in fields.items():
+            setattr(self, name, field)
+
+    @classmethod
+    def from_file(cls, loc, filenames={}, vars={}, dimensions={}, **kwargs):
+        """Initialises grid data from files using NEMO conventions.
+            
+            :param filenames: Dictionary of filenames for each variable stored within
+            :param vars: Dictionary of variables and the corresponding naming convention within the netcdf file
+            :param dimensions: Dictionary of dimensions used and the naming convention within the netcdf file
+            """
+        fields = {}
+        for var, vname in vars.items(): #Cycle through files and variables loading netcdf data
+            # Resolve all matching paths for the current variable
+            filename = filenames[var]
+            fp = path.local(loc+"/"+filename)
+            if not fp.exists():
+                raise IOError("Grid file not found: %s" % str(fp))
+            dset = Dataset(str(fp), 'r', format="NETCDF4")
+            print("Loading %s data from %s" % (var, str(fp)))
+            fields[var] = Field.from_netcdf(var, vname, dset, dimensions, **kwargs)
+        
+        #Assumes depth and time dimensions are the same size across separate NetCDF loaded fields
+        return cls(fields[fields.keys()[0]].depth, fields[fields.keys()[0]].time, fields=fields)
+    
+    def ParticleSet(self, *args, **kwargs):
+        return ParticleSet(*args, grid=self, **kwargs)
+    
+    def eval(self, x, y):
+        u = self.U.eval(x, y)
+        v = self.V.eval(x, y)
+        return u, v
+    
+    def write(self, filename):
+        """Write only the flow field components of the grid to NetCDF file using a simple convention
+            
+            :param filename: Basename of the output fileset"""
+        print("Generating NetCDF grid output with basename: %s" % filename)
+        
+        self.U.write(filename, varname='U')
+        self.V.write(filename, varname='V')
+        
+        for f in self.fields:
+            field = getattr(self, f)
+            field.write(filename)
+
+

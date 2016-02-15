@@ -18,10 +18,10 @@ def particleplotting(filename,tracerfile, mode):
     fig, ax = plt.subplots()
     if tracerfile != 'none':
       tfile = Dataset(tracerfile,'r')
-      X = tfile.variables['x']
-      Y = tfile.variables['y']
-      P = tfile.variables['P']
-      plt.contourf(np.squeeze(X),np.squeeze(Y),np.squeeze(P))
+      X = tfile.variables['xu_ocean']
+      Y = tfile.variables['yu_ocean']
+      P = tfile.variables['u']
+      plt.contourf(np.squeeze(X[:]),np.squeeze(Y[:]),np.squeeze(P[0,0,:,:]))
 
     if mode == '3d':
       ax = fig.gca(projection='3d')
