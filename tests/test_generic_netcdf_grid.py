@@ -20,7 +20,7 @@ if __name__ == "__main__":
                    help='List of field variables to extract, using PARCELS naming convention')
     p.add_argument('-n', '--netcdf_vars', default=['u', 'v'],
                    help='List of field variable names, as given in the NetCDF file. Order must match --variables args')
-    p.add_argument('-d', '--dimensions', default=['lat', 'long', 'time'],
+    p.add_argument('-d', '--dimensions', default=['lat', 'lon', 'time'],
                    help='List of PARCELS convention named dimensions across which field variables occur')
     p.add_argument('-m', '--map_dimensions', default=['yu_ocean', 'xu_ocean', 'Time'],
                    help='List of dimensions across which field variables occur, as given in the NetCDF files, to map to the --dimensions args')

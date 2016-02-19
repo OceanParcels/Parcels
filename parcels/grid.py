@@ -63,6 +63,8 @@ class NEMOGrid(object):
         wildcards to indicate multiple files.
         """
         fields = {}
+        # Hacked for (some) NEMO file conventions, and those used in test_peninsula
+        dimensions = {'lat': 'nav_lat', 'lon': 'nav_lon', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
         for var, vname in extra_vars.items():
             # Resolve all matching paths for the current variable
@@ -72,7 +74,7 @@ class NEMOGrid(object):
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
-            fields[var] = Field.from_netcdf(var, vname, dsets, **kwargs)
+            fields[var] = Field.from_netcdf(var, vname, dsets, dimensions=dimensions, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
@@ -117,7 +119,7 @@ class NetCDF_Grid(object):
             setattr(self, name, field)
 
     @classmethod
-    def from_file(cls, loc, filenames={}, vars={}, dimensions={}, **kwargs):
+    def from_file(cls, loc=None, filenames={}, vars={}, dimensions={}, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
             :param filenames: Dictionary of filenames for each variable stored within
@@ -125,6 +127,8 @@ class NetCDF_Grid(object):
             :param dimensions: Dictionary of dimensions used and the naming convention within the netcdf file
             """
         fields = {}
+        if loc is None:
+            loc = str(path.local())+'/'
         for var, vname in vars.items():  # Cycle through files and variables loading netcdf data
             # Resolve all matching paths for the current variable
             filename = filenames[var]

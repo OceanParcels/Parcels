@@ -1,4 +1,5 @@
 from parcels import NEMOGrid, Particle, JITParticle, AdvectionRK4
+from parcels.grid import NetCDF_Grid
 from argparse import ArgumentParser
 import numpy as np
 import pytest
@@ -185,7 +186,15 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid file set
-    grid = NEMOGrid.from_file('peninsula', extra_vars={'P': 'P'})
+    # grid = NEMOGrid.from_file('peninsula', extra_vars={'P': 'P'})
+
+    vars = ['U', 'V', 'P']
+    files = dict(zip(vars, ['peninsulaU.nc', 'peninsulaV.nc', 'peninsulaP.nc']))
+    dimensions = dict(zip(['lat', 'lon', 'depth', 'time'], ['y', 'x', 'depth', 'time_counter']))
+    variables = dict(zip(vars, ['vozocrtx', 'vomecrty', 'P']))
+    print(files)
+
+    grid = NetCDF_Grid.from_file(filenames=files, vars=variables, dimensions=dimensions)
 
     if args.profiling:
         from cProfile import runctx
