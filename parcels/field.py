@@ -57,7 +57,7 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, varname, datasets, **kwargs):
+    def from_netcdf(cls, name, varname, datasets, dimensions={}, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
@@ -68,13 +68,14 @@ class Field(object):
         """
         if not isinstance(datasets, Iterable):
             datasets = [datasets]
-        lon = datasets[0]['nav_lon'][0, :]
-        lat = datasets[0]['nav_lat'][:, 0]
+        lon = datasets[0].variables[dimensions["lon"]]
+        lat = datasets[0].variables[dimensions["lat"]]
+        # lat = datasets[0][dimensions["lat"]][:, 0]
         # Default depth to zeros until we implement 3D grids properly
         depth = np.zeros(1, dtype=np.float32)
         # Concatenate time variable to determine overall dimension
         # across multiple files
-        timeslices = [dset['time_counter'][:] for dset in datasets]
+        timeslices = [dset[dimensions["time"]][:] for dset in datasets]
         time = np.concatenate(timeslices)
 
         # Pre-allocate grid data before reading files into buffer
@@ -163,7 +164,7 @@ class Field(object):
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
-        vname_depth = 'depth%s' % self.name.lower()
+        vname_depth = 'depth'
 
         # Create DataArray objects for file I/O
         t, d, x, y = (self.time.size, self.depth.size,

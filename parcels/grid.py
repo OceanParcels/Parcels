@@ -4,7 +4,6 @@ from parcels.particle import ParticleSet
 from py import path
 from glob import glob
 
-
 __all__ = ['NEMOGrid']
 
 
@@ -17,6 +16,7 @@ class NEMOGrid(object):
     :param time: Time coordinates of the grid
     :param fields: Dictionary of additional fields
     """
+
     def __init__(self, U, V, depth, time, fields={}):
         self.U = U
         self.V = V
@@ -63,6 +63,8 @@ class NEMOGrid(object):
         wildcards to indicate multiple files.
         """
         fields = {}
+        # Hacked for (some) NEMO file conventions, and those used in test_peninsula
+        dimensions = {'lat': 'nav_lat', 'lon': 'nav_lon', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
         for var, vname in extra_vars.items():
             # Resolve all matching paths for the current variable
@@ -72,7 +74,7 @@ class NEMOGrid(object):
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
-            fields[var] = Field.from_netcdf(var, vname, dsets, **kwargs)
+            fields[var] = Field.from_netcdf(var, vname, dsets, dimensions=dimensions, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
@@ -93,6 +95,69 @@ class NEMOGrid(object):
 
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
+
+        for f in self.fields:
+            field = getattr(self, f)
+            field.write(filename)
+
+
+class NetCDF_Grid(object):
+    """Grid class used to generate and read NetCDF files
+
+        :param depth: Depth coordinates of the grid
+        :param time: Time coordinates of the grid
+        :param fields: Dictionary of fields variables across these coordinates
+        """
+
+    def __init__(self, depth, time, fields={}):
+        self.depth = depth
+        self.time = time
+        self.fields = fields.keys()
+
+        # Add additional fields as attributes
+        for name, field in fields.items():
+            setattr(self, name, field)
+
+    @classmethod
+    def from_file(cls, loc=None, filenames={}, vars={}, dimensions={}, **kwargs):
+        """Initialises grid data from files using NEMO conventions.
+
+            :param filenames: Dictionary of filenames for each variable stored within
+            :param vars: Dictionary of variables and the corresponding naming convention within the netcdf file
+            :param dimensions: Dictionary of dimensions used and the naming convention within the netcdf file
+            """
+        fields = {}
+        if loc is None:
+            loc = str(path.local())+'/'
+        for var, vname in vars.items():  # Cycle through files and variables loading netcdf data
+            # Resolve all matching paths for the current variable
+            filename = filenames[var]
+            fp = path.local(loc + "/" + filename)
+            if not fp.exists():
+                raise IOError("Grid file not found: %s" % str(fp))
+            dset = Dataset(str(fp), 'r', format="NETCDF4")
+            print("Loading %s data from %s" % (var, str(fp)))
+            fields[var] = Field.from_netcdf(var, vname, dset, dimensions, **kwargs)
+
+        # Assumes depth and time dimensions are the same size across separate NetCDF loaded fields
+        return cls(fields[fields.keys()[0]].depth, fields[fields.keys()[0]].time, fields=fields)
+
+    def ParticleSet(self, *args, **kwargs):
+        return ParticleSet(*args, grid=self, **kwargs)
+
+    def eval(self, x, y):
+        u = self.U.eval(x, y)
+        v = self.V.eval(x, y)
+        return u, v
+
+    def write(self, filename):
+        """Write only the flow field components of the grid to NetCDF file using a simple convention
+
+            :param filename: Basename of the output fileset"""
+        print("Generating NetCDF grid output with basename: %s" % filename)
+
+        self.U.write(filename, varname='U')
+        self.V.write(filename, varname='V')
 
         for f in self.fields:
             field = getattr(self, f)
