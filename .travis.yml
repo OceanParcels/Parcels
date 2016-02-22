@@ -27,11 +27,13 @@ install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy netcdf4 pandas
     - pip install --upgrade pip
     - pip install -r requirements.txt
-    - python setup.py build_ext --inplace
+    - git submodule update --init --recursive
 
 script:
     - export PYTHONPATH=`pwd`:$PYTHONPATH
     - flake8 parcels
     - flake8 tests
+    - flake8 examples
     - python tests/test_peninsula.py --grid 20 10
     - py.test -v -s tests/
+    - py.test -v -s examples/

@@ -5,10 +5,10 @@ from py import path
 from glob import glob
 
 
-__all__ = ['NEMOGrid']
+__all__ = ['Grid']
 
 
-class NEMOGrid(object):
+class Grid(object):
     """Grid class used to generate and read NEMO output files
 
     :param U: :class:`Field` for zonal velocity component
@@ -55,27 +55,46 @@ class NEMOGrid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_file(cls, filename, uvar='vozocrtx', vvar='vomecrty',
-                  extra_vars={}, **kwargs):
+    def from_netcdf(cls, filenames, variables, dimensions, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
-        :param filename: Base name of the file(s); may contain
-        wildcards to indicate multiple files.
+        :param filenames: Dictionary mapping variables to file(s). The
+        filepath may contain wildcards to indicate multiple files.
+        :param variabels: Dictionary mapping variables to variable
+        names in the netCDF file(s).
+        :param dimensions: Dictionary mapping data dimensions (lon,
+        lat, depth, time, data) to dimensions in the netCF file(s).
         """
         fields = {}
-        extra_vars.update({'U': uvar, 'V': vvar})
-        for var, vname in extra_vars.items():
+        for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            basepath = path.local("%s%s.nc" % (filename, var))
+            basepath = path.local(filenames[var])
             paths = [path.local(fp) for fp in glob(str(basepath))]
             for fp in paths:
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
-            fields[var] = Field.from_netcdf(var, vname, dsets, **kwargs)
+            dimensions['data'] = name
+            fields[var] = Field.from_netcdf(var, dimensions, dsets, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
+
+    @classmethod
+    def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
+                  extra_vars={}, **kwargs):
+        """Initialises grid data from files using NEMO conventions.
+
+        :param basename: Base name of the file(s); may contain
+        wildcards to indicate multiple files.
+        """
+        dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
+                      'depth': 'depth', 'time': 'time_counter'}
+        extra_vars.update({'U': uvar, 'V': vvar})
+        filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
+                          for v in extra_vars.keys()])
+        return cls.from_netcdf(filenames, variables=extra_vars,
+                               dimensions=dimensions, **kwargs)
 
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)

@@ -1,6 +1,9 @@
-## PARCELS
+## Parcels
 
-PARCELS (acronym to be decided) is an experimental prototype code aimed at exploring novel approaches for Lagrangian tracking of virtual ocean particles in the petascale age.
+**Parcels** (**P**robably **A** **R**eally **C**omputationally
+**E**fficient **L**agrangian **S**imulator) is an experimental
+prototype code aimed at exploring novel approaches for Lagrangian
+tracking of virtual ocean particles in the petascale age.
 
 ### Motivation
 
@@ -12,16 +15,25 @@ In this project, we will scope out and develop a new generic, open-source commun
 
 ### Installation
 
-The easiest way to install the latest realease of PARCELS is through pip:
+The latest version of Parcels, including tests adn examples, can be
+obtained directly from github via:
 ```
-pip install git+https://github.com/OceanPARCELS/parcels.git
-```
-Alternatively, the latest version of Parcels can be checked out locally with:
-```
-git clone https://github.com/OceanPARCELS/PARCELScode.git parcels
+git clone --recursive https://github.com/OceanPARCELS/parcels.git
 cd parcels; pip install -r requirements.txt
 export PYTHONPATH="$PYTHONPATH:$PWD"
 ```
+For a lighter checkout that does not include example data please omit
+the `--recursive` flag from the above command. As an alternatively,
+Parcels can also be installed directly via pip:
+```
+pip install git+https://github.com/OceanPARCELS/parcels.git
+```
+The above assumes that all dependencies are met, which can be achieved with:
+```
+curl -O https://raw.githubusercontent.com/OceanPARCELS/parcels/master/requirements.txt
+pip install -r requirements.txt
+```
+In both cases a functional netCDF install is required.
 
 ### Example
 A basic example of particle advection around an idealised peninsula
