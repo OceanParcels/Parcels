@@ -5,10 +5,10 @@ from py import path
 from glob import glob
 
 
-__all__ = ['NEMOGrid']
+__all__ = ['Grid']
 
 
-class NEMOGrid(object):
+class Grid(object):
     """Grid class used to generate and read NEMO output files
 
     :param U: :class:`Field` for zonal velocity component

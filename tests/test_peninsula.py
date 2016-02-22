@@ -1,4 +1,4 @@
-from parcels import NEMOGrid, Particle, JITParticle, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import pytest
@@ -60,8 +60,8 @@ def peninsula_grid(xdim, ydim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
 
-    return NEMOGrid.from_data(U, lon, lat, V, lon, lat,
-                              depth, time, field_data={'P': P})
+    return Grid.from_data(U, lon, lat, V, lon, lat,
+                          depth, time, field_data={'P': P})
 
 
 def UpdateP(particle, grid, time, dt):
@@ -150,7 +150,7 @@ def gridfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
-    grid = NEMOGrid.from_nemo(gridfile, extra_vars={'P': 'P'})
+    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'})
     pset = pensinsula_example(grid, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -185,7 +185,7 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid file set
-    grid = NEMOGrid.from_file('peninsula', extra_vars={'P': 'P'})
+    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx
