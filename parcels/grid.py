@@ -55,16 +55,20 @@ class Grid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_netcdf(cls, filename, variables, dimensions, **kwargs):
+    def from_netcdf(cls, filenames, variables, dimensions, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
-        :param filename: Base name of the file(s); may contain
-        wildcards to indicate multiple files.
+        :param filenames: Dictionary mapping variables to file(s). The
+        filepath may contain wildcards to indicate multiple files.
+        :param variabels: Dictionary mapping variables to variable
+        names in the netCDF file(s).
+        :param dimensions: Dictionary mapping data dimensions (lon,
+        lat, depth, time, data) to dimensions in the netCF file(s).
         """
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            basepath = path.local("%s%s.nc" % (filename, var))
+            basepath = path.local(filenames[var])
             paths = [path.local(fp) for fp in glob(str(basepath))]
             for fp in paths:
                 if not fp.exists():
@@ -77,17 +81,19 @@ class Grid(object):
         return cls(u, v, u.depth, u.time, fields=fields)
 
     @classmethod
-    def from_nemo(cls, filename, uvar='vozocrtx', vvar='vomecrty',
+    def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
                   extra_vars={}, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
-        :param filename: Base name of the file(s); may contain
+        :param basename: Base name of the file(s); may contain
         wildcards to indicate multiple files.
         """
         dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
                       'depth': 'depth', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
-        return cls.from_netcdf(filename, variables=extra_vars,
+        filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
+                          for v in extra_vars.keys()])
+        return cls.from_netcdf(filenames, variables=extra_vars,
                                dimensions=dimensions, **kwargs)
 
     def ParticleSet(self, *args, **kwargs):
