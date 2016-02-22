@@ -1,7 +1,11 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
 from argparse import ArgumentParser
 import numpy as np
+import math  # NOQA
 import pytest
+
+
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
 
 
 def peninsula_grid(xdim, ydim):
@@ -69,7 +73,7 @@ def UpdateP(particle, grid, time, dt):
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
-                       verbose=False, output=True):
+                       verbose=False, output=True, method=AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
@@ -114,7 +118,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     out = pset.ParticleFile(name="MyParticle") if output else None
     print("Peninsula: Advecting %d particles for %d timesteps"
           % (npart, int(time / dt)))
-    k_adv = pset.Kernel(AdvectionRK4)
+    k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
     pset.execute(k_adv + k_p, timesteps=int(time / dt), dt=dt,
                  output_file=out, output_steps=substeps)
@@ -177,6 +181,8 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
+    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
+                   help='Numerical method used for advection')
     args = p.parse_args()
 
     if args.grid is not None:
@@ -192,10 +198,10 @@ Example of particle advection around an idealised peninsula""")
         from pstats import Stats
         runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
-                                   output=not args.nooutput)",
+                                   output=not args.nooutput, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         pensinsula_example(grid, args.particles, mode=args.mode,
                            degree=args.degree, verbose=args.verbose,
-                           output=not args.nooutput)
+                           output=not args.nooutput, method=method[args.method])

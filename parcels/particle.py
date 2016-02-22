@@ -3,23 +3,34 @@ from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
 from collections import OrderedDict
+import math
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
-           'ParticleFile', 'AdvectionRK4']
+           'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
 
 
 def AdvectionRK4(particle, grid, time, dt):
-    f = dt / 1000. / 1.852 / 60.
+    f_lat = dt / 1000. / 1.852 / 60.
+    f_lon = f_lat / math.cos(particle.lat*math.pi/180)
     u1 = grid.U[time, particle.lon, particle.lat]
     v1 = grid.V[time, particle.lon, particle.lat]
-    lon1, lat1 = (particle.lon + u1*.5*f, particle.lat + v1*.5*f)
-    u2, v2 = (grid.U[time, lon1, lat1], grid.V[time, lon1, lat1])
-    lon2, lat2 = (particle.lon + u2*.5*f, particle.lat + v2*.5*f)
-    u3, v3 = (grid.U[time, lon2, lat2], grid.V[time, lon2, lat2])
-    lon3, lat3 = (particle.lon + u3*f, particle.lat + v3*f)
-    u4, v4 = (grid.U[time, lon3, lat3], grid.V[time, lon3, lat3])
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f
+    lon1, lat1 = (particle.lon + u1*.5*f_lon, particle.lat + v1*.5*f_lat)
+    u2, v2 = (grid.U[time + .5 * dt, lon1, lat1], grid.V[time + .5 * dt, lon1, lat1])
+    lon2, lat2 = (particle.lon + u2*.5*f_lon, particle.lat + v2*.5*f_lat)
+    u3, v3 = (grid.U[time + .5 * dt, lon2, lat2], grid.V[time + .5 * dt, lon2, lat2])
+    lon3, lat3 = (particle.lon + u3*f_lon, particle.lat + v3*f_lat)
+    u4, v4 = (grid.U[time + dt, lon3, lat3], grid.V[time + dt, lon3, lat3])
+    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f_lon
+    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f_lat
+
+
+def AdvectionEE(particle, grid, time, dt):
+    f_lat = dt / 1000. / 1.852 / 60.
+    f_lon = f_lat / math.cos(particle.lat*math.pi/180)
+    u1 = grid.U[time, particle.lon, particle.lat]
+    v1 = grid.V[time, particle.lon, particle.lat]
+    particle.lon += u1 * f_lon
+    particle.lat += v1 * f_lat
 
 
 class Particle(object):
