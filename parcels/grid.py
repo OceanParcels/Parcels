@@ -55,18 +55,14 @@ class NEMOGrid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_file(cls, filename, uvar='vozocrtx', vvar='vomecrty',
-                  extra_vars={}, **kwargs):
+    def from_netcdf(cls, filename, variables, dimensions, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param filename: Base name of the file(s); may contain
         wildcards to indicate multiple files.
         """
         fields = {}
-        extra_vars.update({'U': uvar, 'V': vvar})
-        vnames = {'lon': 'nav_lon', 'lat': 'nav_lat',
-                  'depth': 'depth', 'time': 'time_counter'}
-        for var, name in extra_vars.items():
+        for var, name in variables.items():
             # Resolve all matching paths for the current variable
             basepath = path.local("%s%s.nc" % (filename, var))
             paths = [path.local(fp) for fp in glob(str(basepath))]
@@ -74,11 +70,25 @@ class NEMOGrid(object):
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
-            vnames['data'] = name
-            fields[var] = Field.from_netcdf(var, vnames, dsets, **kwargs)
+            dimensions['data'] = name
+            fields[var] = Field.from_netcdf(var, dimensions, dsets, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
+
+    @classmethod
+    def from_nemo(cls, filename, uvar='vozocrtx', vvar='vomecrty',
+                  extra_vars={}, **kwargs):
+        """Initialises grid data from files using NEMO conventions.
+
+        :param filename: Base name of the file(s); may contain
+        wildcards to indicate multiple files.
+        """
+        dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
+                      'depth': 'depth', 'time': 'time_counter'}
+        extra_vars.update({'U': uvar, 'V': vvar})
+        return cls.from_netcdf(filename, variables=extra_vars,
+                               dimensions=dimensions, **kwargs)
 
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)

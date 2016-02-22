@@ -150,7 +150,7 @@ def gridfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
-    grid = NEMOGrid.from_file(gridfile, extra_vars={'P': 'P'})
+    grid = NEMOGrid.from_nemo(gridfile, extra_vars={'P': 'P'})
     pset = pensinsula_example(grid, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])

@@ -123,7 +123,7 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid files
-    grid = NEMOGrid.from_file(filename)
+    grid = NEMOGrid.from_nemo(filename)
 
     if args.profiling:
         from cProfile import runctx
