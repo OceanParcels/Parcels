@@ -57,31 +57,31 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, varname, datasets, **kwargs):
+    def from_netcdf(cls, name, dimensions, datasets, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
-        :param varname: Variable in the file that holds the data
+        :param dimensions: Variable names for the relevant dimensions
         :param dataset: Single or multiple netcdf.Dataset object(s)
         containing field data. If multiple datasets are present they
         will be concatenated along the time axis
         """
         if not isinstance(datasets, Iterable):
             datasets = [datasets]
-        lon = datasets[0]['nav_lon'][0, :]
-        lat = datasets[0]['nav_lat'][:, 0]
+        lon = datasets[0][dimensions['lon']][0, :]
+        lat = datasets[0][dimensions['lat']][:, 0]
         # Default depth to zeros until we implement 3D grids properly
         depth = np.zeros(1, dtype=np.float32)
         # Concatenate time variable to determine overall dimension
         # across multiple files
-        timeslices = [dset['time_counter'][:] for dset in datasets]
+        timeslices = [dset[dimensions['time']][:] for dset in datasets]
         time = np.concatenate(timeslices)
 
         # Pre-allocate grid data before reading files into buffer
         data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, dset in zip(timeslices, datasets):
-            data[tidx:, 0, :, :] = dset[varname][:, 0, :, :]
+            data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
             tidx += tslice.size
         return cls(name, data, lon, lat, depth=depth, time=time, **kwargs)
 

@@ -64,7 +64,9 @@ class NEMOGrid(object):
         """
         fields = {}
         extra_vars.update({'U': uvar, 'V': vvar})
-        for var, vname in extra_vars.items():
+        vnames = {'lon': 'nav_lon', 'lat': 'nav_lat',
+                  'depth': 'depth', 'time': 'time_counter'}
+        for var, name in extra_vars.items():
             # Resolve all matching paths for the current variable
             basepath = path.local("%s%s.nc" % (filename, var))
             paths = [path.local(fp) for fp in glob(str(basepath))]
@@ -72,7 +74,8 @@ class NEMOGrid(object):
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
-            fields[var] = Field.from_netcdf(var, vname, dsets, **kwargs)
+            vnames['data'] = name
+            fields[var] = Field.from_netcdf(var, vnames, dsets, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
