@@ -1,6 +1,9 @@
-## PARCELS
+## Parcels
 
-PARCELS (acronym to be decided) is an experimental prototype code aimed at exploring novel approaches for Lagrangian tracking of virtual ocean particles in the petascale age.
+**Parcels** (**P**robably **A** **R**eally **C**omputationally
+**E**fficient **L**agrangian **S**imulator) is an experimental
+prototype code aimed at exploring novel approaches for Lagrangian
+tracking of virtual ocean particles in the petascale age.
 
 ### Motivation
 
