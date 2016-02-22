@@ -68,8 +68,10 @@ class Field(object):
         """
         if not isinstance(datasets, Iterable):
             datasets = [datasets]
-        lon = datasets[0][dimensions['lon']][0, :]
-        lat = datasets[0][dimensions['lat']][:, 0]
+        lon = datasets[0][dimensions['lon']]
+        lon = lon[0, :] if len(lon.shape) > 1 else lon[:]
+        lat = datasets[0][dimensions['lat']]
+        lat = lat[:, 0] if len(lat.shape) > 1 else lat[:]
         # Default depth to zeros until we implement 3D grids properly
         depth = np.zeros(1, dtype=np.float32)
         # Concatenate time variable to determine overall dimension
