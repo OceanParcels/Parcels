@@ -1,8 +1,11 @@
 from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
 from argparse import ArgumentParser
 import numpy as np
-import math
+import math  # NOQA
 import pytest
+
+
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
 
 
 def peninsula_grid(xdim, ydim):
@@ -181,8 +184,6 @@ Example of particle advection around an idealised peninsula""")
     p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
-    
-    method = locals()['Advection' + args.method]
 
     if args.grid is not None:
         filename = 'peninsula'
@@ -197,10 +198,10 @@ Example of particle advection around an idealised peninsula""")
         from pstats import Stats
         runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
-                                   output=not args.nooutput)",
+                                   output=not args.nooutput, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         pensinsula_example(grid, args.particles, mode=args.mode,
                            degree=args.degree, verbose=args.verbose,
-                           output=not args.nooutput, method=method)
+                           output=not args.nooutput, method=method[args.method])

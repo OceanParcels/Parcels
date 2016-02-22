@@ -5,6 +5,9 @@ import math
 import pytest
 
 
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+
+
 def moving_eddies_grid(xdim=200, ydim=350):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
@@ -119,8 +122,6 @@ Example of particle advection around an idealised peninsula""")
                    help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'moving_eddies'
-    
-    method = locals()['Advection' + args.method]
 
     # Generate grid files according to given dimensions
     if args.grid is not None:
@@ -134,9 +135,9 @@ Example of particle advection around an idealised peninsula""")
         from cProfile import runctx
         from pstats import Stats
         runctx("moving_eddies_example(grid, args.particles, mode=args.mode, \
-                              verbose=args.verbose)",
+                              verbose=args.verbose, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
         moving_eddies_example(grid, args.particles, mode=args.mode,
-                              verbose=args.verbose, method=method)
+                              verbose=args.verbose, method=method[args.method])
