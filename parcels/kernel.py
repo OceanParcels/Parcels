@@ -93,11 +93,19 @@ class Kernel(object):
             self._function(c_int(len(pset)), particle_data, c_int(timesteps),
                            c_double(time), c_float(dt), *fargs)
         else:
-            for _ in range(timesteps):
+            for _ in range(int(timesteps)):
                 for p in pset.particles:
                     if p.active == 1:
                         self.pyfunc(p, pset.grid, time, dt)
                 time += dt
+
+    def execute_adaptive(self, pset, tol, output_time=None, end_time=None):
+        for p in pset.particles:
+            if output_time is None:
+                self.pyfunc(p, pset.grid, end_time, tol)
+                return
+            while p.time < output_time:
+                self.pyfunc(p, pset.grid, output_time, tol)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
