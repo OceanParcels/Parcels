@@ -1,11 +1,12 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle
+from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
 
 
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
 def ground_truth(lon, lat):
@@ -46,8 +47,8 @@ def analytical_eddies_grid(xdim=200, ydim=200):
     # Some constants
     day = 11.6
     r = 1 / (day * 86400)
-    beta = 4e-9
-    a = 10000
+    beta = 2e-11
+    a = 2000000
     e_s = r / (beta * a)
 
     [x, y] = np.mgrid[:lon.size, :lat.size]
@@ -74,20 +75,33 @@ def stommel_eddies_example(grid, npart=1, mode='jit', verbose=False,
     # Determine particle class according to mode
     ParticleClass = JITParticle if mode == 'jit' else Particle
     pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
-                            start=(10., 50.), finish=(10., 50.))
+                            start=(10., 50.), finish=(7., 30.))
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
     # Execute for 25 days, with 5min timesteps and hourly output
-    hours = 1000*24
+    hours = 27.635*24.*3600.-330.
     substeps = 1
-    dt = 1200
-    print("MovingEddies: Advecting %d particles for %d timesteps"
-          % (npart, hours * substeps * 3600 / dt))
-    pset.execute(method, timesteps=hours*substeps*3600/dt, dt=dt,
-                 output_file=pset.ParticleFile(name="StommelParticle" + method.__name__),
-                 output_steps=substeps)
+    timesteps = 20.
+    dt = hours/timesteps    # To make sure it ends exactly on the end time
+
+    if method == AdvectionRK45:
+        for particle in pset:
+            particle.time = 0.
+            particle.dt = dt
+        tol = 1e-13
+        print("Stommel: Advecting %d particles with adaptive step size"
+              % (npart))
+        pset.execute(method, timesteps=timesteps, dt=dt,
+                     output_file=pset.ParticleFile(name="StommelParticle" + method.__name__),
+                     output_steps=substeps, tol=tol)
+    else:
+        print("Stommel: Advecting %d particles for %d timesteps"
+              % (npart, hours*substeps/dt))
+        pset.execute(method, timesteps=timesteps, dt=dt,
+                     output_file=pset.ParticleFile(name="StommelParticle" + method.__name__),
+                     output_steps=substeps)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -116,7 +130,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
+    p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'analytical_eddies'

@@ -351,7 +351,8 @@ class ParticleSet(object):
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
         current = time or self.grid.time[0]
-        if self.kernel.funcname == 'AdvectionRK45UpdateP':
+        if self.kernel.funcname == 'AdvectionRK45UpdateP' or\
+           self.kernel.funcname == 'AdvectionRK45':
             end_time = timesteps * self.particles[0].dt
             for p in self:
                 while p.time <= end_time:

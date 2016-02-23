@@ -1,11 +1,12 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle
+from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
 
 
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
 def ground_truth(x_0, y_0, time, dt, pset, output_file):
@@ -106,11 +107,25 @@ def analytical_eddies_example(grid, npart=1, mode='jit', verbose=False,
     hours = 3*24
     substeps = 1
     dt = 600
-    print("MovingEddies: Advecting %d particles for %d timesteps"
-          % (npart, hours * substeps * 3600 / dt))
-    pset.execute(method, timesteps=hours*substeps*3600/dt, dt=dt,
-                 output_file=pset.ParticleFile(name="AnalyticalParticle" + method.__name__),
-                 output_steps=substeps)
+
+    if method == AdvectionRK45:
+        for particle in pset:
+            particle.time = 0.
+            particle.dt = dt
+        tol = 1e-10
+        print("MovingEddies: Advecting %d particles with adaptive timesteps"
+              % (npart))
+        pset.execute(method, timesteps=hours*substeps*3600/dt, dt=dt,
+                     output_file=pset.ParticleFile(name="AnalyticalParticle" +
+                                                   method.__name__),
+                     output_steps=substeps, tol=tol)
+    else:
+        print("MovingEddies: Advecting %d particles for %d timesteps"
+              % (npart, hours * substeps * 3600 / dt))
+        pset.execute(method, timesteps=hours*substeps*3600/dt, dt=dt,
+                     output_file=pset.ParticleFile(name="AnalyticalParticle" +
+                                                   method.__name__),
+                     output_steps=substeps)
 
     # Analytical solution
     if 1:
@@ -146,7 +161,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
+    p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'analytical_eddies'

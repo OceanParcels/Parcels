@@ -1,11 +1,12 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle
+from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
 
 
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
 def moving_eddies_grid(xdim=200, ydim=350):
@@ -73,21 +74,33 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 
     # Determine particle class according to mode
     ParticleClass = JITParticle if mode == 'jit' else Particle
-
     pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
                             start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
-    # Execte for 25 days, with 5min timesteps and hourly output
-    hours = 25*24
-    substeps = 12
-    print("MovingEddies: Advecting %d particles for %d timesteps"
-          % (npart, hours * substeps))
-    pset.execute(method, timesteps=hours*substeps, dt=300.,
-                 output_file=pset.ParticleFile(name="EddyParticle"),
-                 output_steps=substeps, show_movie=False)
+    # Execute for 25 days, with 5min timesteps and hourly output
+    hours = 16.*86400.
+    substeps = 1   # Output every substeps dt
+    dt = 7200.     # Timestep size
+
+    if method == AdvectionRK45:
+        for particle in pset:
+            particle.time = 0.
+            particle.dt = dt
+        tol = 1e-11
+        print("MovingEddies: Advecting %d particles with adaptive timesteps"
+              % (npart))
+        pset.execute(method, timesteps=int(hours/dt), dt=dt,
+                     output_file=pset.ParticleFile(name="EddyParticle"),
+                     output_steps=substeps, tol=tol)
+    else:
+        print("MovingEddies: Advecting %d particles for %d timesteps"
+              % (npart, int(hours/dt)))
+        pset.execute(method, timesteps=int(hours/dt), dt=dt,
+                     output_file=pset.ParticleFile(name="EddyParticle"),
+                     output_steps=substeps, show_movie=False)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -116,7 +129,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
+    p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'moving_eddies'
