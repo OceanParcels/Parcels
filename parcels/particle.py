@@ -141,9 +141,12 @@ class Particle(object):
     """
     user_vars = OrderedDict()
 
-    def __init__(self, lon, lat, grid, cptr=None):
+    def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         self.lon = lon
         self.lat = lat
+        self.time = time
+        self.dt = dt
+
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
         self.active = 1
@@ -152,7 +155,8 @@ class Particle(object):
             setattr(self, var, 0)
 
     def __repr__(self):
-        return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
+        return "P(%f, %f, %f)[%d, %d]" % (self.lon, self.lat, self.time,
+                                          self.xi, self.yi)
 
     @classmethod
     def getPType(cls):
@@ -173,6 +177,7 @@ class JITParticle(Particle):
     """
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
+                             ('time', np.float32), ('dt', np.float32),
                              ('xi', np.int32), ('yi', np.int32),
                              ('active', np.int32)])
     user_vars = OrderedDict()
