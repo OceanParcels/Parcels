@@ -257,7 +257,8 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, output_file=None, output_interval=-1, show_movie=False):
+                runtime=None, output_file=None, output_interval=-1, tol=None,
+                show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -332,13 +333,23 @@ class ParticleSet(object):
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
         current = starttime
-        for _ in range(timeleaps):
-            self.kernel.execute(self, int(output_steps), current, dt)
-            current += output_steps * dt
-            if output_file:
-                output_file.write(self, current)
+        if 'AdvectionRK45' in self.kernel.funcname:
+            end_time = timesteps * self.particles[0].dt
+            for p in self:
+                while p.time <= end_time:
+                    self.kernel.execute_adaptive(p, self.grid, tol)
+                    if output_file:
+                        output_file.write(self, p.time)
             if show_movie:
-                self.show(field=show_movie, t=current)
+                print("WARNING: Can't currently show movie for RK-4/5 method")
+        else:
+            for _ in range(timeleaps):
+                self.kernel.execute(self, output_steps, current, dt)
+                current += output_steps * dt
+                if output_file:
+                    output_file.write(self, current)
+                if show_movie:
+                    self.show(field=show_movie, t=current)
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
         if len(to_remove) > 0:
             self.remove(to_remove)
