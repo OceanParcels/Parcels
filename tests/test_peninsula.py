@@ -1,4 +1,5 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle
+from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
 import math  # NOQA
@@ -6,7 +7,7 @@ import pytest
 from datetime import timedelta as delta
 
 
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
 def peninsula_grid(xdim, ydim):
@@ -113,12 +114,25 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
 
     # Advect the particles for 24h
     time = delta(hours=24)
-    print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
+    dt = delta(minutes=5)
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    pset.execute(k_adv + k_p, endtime=time, dt=delta(minutes=5),
-                 output_file=pset.ParticleFile(name="MyParticle") if output else None,
-                 output_interval=delta(hours=1) if output else -1)
+    out = pset.ParticleFile(name="MyParticle") if output else None
+    output_interval = delta(hours=1) if output else -1
+    if method == AdvectionRK45:
+        for particle in pset:
+            particle.time = 0.
+            particle.dt = dt.total_seconds()
+        tol = 1e-10
+        print("Peninsula: Advecting %d particles with adaptive timesteps"
+              % (npart))
+        pset.execute(k_adv + k_p, timesteps=int(time / dt), dt=dt,
+                     output_file=out, output_interval=output_interval, tol=tol)
+
+    else:
+        print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
+        pset.execute(k_adv + k_p, endtime=time, dt=delta(minutes=5),
+                     output_file=out, output_interval=delta(hours=1) if output else -1)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -178,7 +192,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
+    p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
 
