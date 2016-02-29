@@ -21,13 +21,13 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     """
 
-    def __init__(self, name, data, lon, lat, depth=None, time=None,
+    def __init__(self, name, data, lon, lat, depth, time=None,
                  transpose=False, vmin=None, vmax=None):
         self.name = name
         self.data = data
         self.lon = lon
         self.lat = lat
-        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.depth = depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
 
         # Ensure that field data is the right data type
@@ -38,7 +38,11 @@ class Field(object):
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        self.data = self.data.reshape((self.time.size, self.depth.size, self.lat.size, self.lon.size))
+        if self.depth.size > 1:
+            self.data = self.data.reshape((self.time.size, self.depth.size, 
+                                           self.lat.size, self.lon.size))
+        else:
+            self.data = self.data.reshape((self.time.size, self.lat.size, self.lon.size))
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -73,7 +77,7 @@ class Field(object):
         lat = datasets[0][dimensions['lat']]
         lat = lat[:, 0] if len(lat.shape) > 1 else lat[:]
         # Default depth to zeros until we implement 3D grids properly
-        depth = np.zeros(1, dtype=np.float32)
+        depth = datasets[0][dimensions['depth']]
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = [dset[dimensions['time']][:] for dset in datasets]
@@ -165,7 +169,7 @@ class Field(object):
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
-        vname_depth = 'depth%s' % self.name.lower()
+        vname_depth = 'depth'
 
         # Create DataArray objects for file I/O
         t, d, x, y = (self.time.size, self.depth.size,
