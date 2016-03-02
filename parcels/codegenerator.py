@@ -227,6 +227,11 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(e)
         node.ccode = tuple([e.ccode for e in node.elts])
 
+    def visit_List(self, node):
+        for e in node.elts:
+            self.visit(e)
+        node.ccode = "{" + ", ".join([e.ccode for e in node.elts]) + "}"
+
     def visit_Subscript(self, node):
         self.visit(node.value)
         self.visit(node.slice)
@@ -235,6 +240,8 @@ class KernelGenerator(ast.NodeVisitor):
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError("Subscript not implemented for object type %s"
                                       % type(node.value).__name__)
+        else:
+            node.ccode = "%s[%s]" % (node.value.ccode, node.slice.ccode)
 
     def visit_BinOp(self, node):
         self.visit(node.left)
