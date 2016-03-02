@@ -36,7 +36,7 @@ def AdvectionEE(particle, grid, time, dt):
     particle.lat += v1 * dt
 
 
-def AdvectionRK45(particle, grid, tol):
+def AdvectionRK45(particle, grid, output_time, tol):
     time = particle.time
     dt = particle.dt
     c = [1./4., 3./8., 12./13., 1., 1./2.]
@@ -47,6 +47,11 @@ def AdvectionRK45(particle, grid, tol):
          [-8./27., 2., -3544./2565., 1859./4104., -11./40.]]
     b4 = [25./216., 0., 1408./2565., 2197./4104., -1./5.]
     b5 = [16./135., 0., 6656./12825., 28561./56430., -9./50., 2./55.]
+    if time + dt >= output_time:
+        dt = output_time - time
+        final = True
+    else:
+        final = False
 
     while True:
         f_lat = dt / 1000. / 1.852 / 60.
@@ -94,12 +99,14 @@ def AdvectionRK45(particle, grid, tol):
             particle.lon = lon_4th
             particle.lat = lat_4th
             particle.time += dt
-            if kappa <= dt*tol/10:
-                particle.dt *= 2
-            else:
-                particle.dt = dt
+            if not final:
+                if kappa <= dt*tol/10 and particle.dt*2 < output_time - time:
+                    particle.dt *= 2
+                else:
+                    particle.dt = dt
             break
         dt /= 2
+        final = False
 
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
