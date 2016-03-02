@@ -355,17 +355,23 @@ class ParticleSet(object):
         # Check if output is required and compute outer leaps
         if output_file is None or output_steps <= 0:
             output_steps = timesteps
-        timeleaps = int(timesteps / output_steps)
+        timeleaps = int(timesteps / output_steps)   # Number of output points
         # Execute kernel in sub-stepping intervals (leaps)
         current = time or self.grid.time[0]
         if self.kernel.funcname == 'AdvectionRK45UpdateP' or\
            self.kernel.funcname == 'AdvectionRK45':
-            end_time = timesteps * self.particles[0].dt
-            for p in self:
-                while p.time <= end_time:
-                    self.kernel.execute_adaptive(p, self.grid, tol)
+            if len(self.particles) == 1 and output_steps == 1:  # Single particle, save all time steps
+                end_time = timesteps * self.particles[0].dt
+                while self.particles[0].time < end_time:
+                    self.kernel.execute_adaptive(self, tol, end_time=end_time)
                     if output_file:
-                        output_file.write(self, p.time)
+                        output_file.write(self, self.particles[0].time)
+            else:
+                for _ in range(timeleaps):
+                    self.kernel.execute_adaptive(self, tol, output_time=current)
+                    current += output_steps * dt
+                    if output_file:
+                        output_file.write(self, current)
             if show_movie:
                 print("WARNING: Can't currently show movie for RK-4/5 method")
         else:
