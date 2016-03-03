@@ -204,6 +204,10 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
         'particle' or 'grid' and inserts our placeholder objects"""
+        if node.id == 'True':
+            node.id = "1"
+        if node.id == 'False':
+            node.id = "0"
         node.ccode = node.id
 
     def visit_Assign(self, node):
@@ -279,6 +283,11 @@ class KernelGenerator(ast.NodeVisitor):
         else:
             node.ccode = "%s[%s]" % (node.value.ccode, node.slice.ccode)
 
+    def visit_UnaryOp(self, node):
+        self.visit(node.op)
+        self.visit(node.operand)
+        node.ccode = "%s(%s)" % (node.op.ccode, node.operand.ccode)
+
     def visit_BinOp(self, node):
         self.visit(node.left)
         self.visit(node.op)
@@ -300,6 +309,13 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Num(self, node):
         node.ccode = str(node.n)
 
+    def visit_BoolOp(self, node):
+        self.visit(node.op)
+        for v in node.values:
+            self.visit(v)
+        op_str = " %s " % node.op.ccode
+        node.ccode = op_str.join([v.ccode for v in node.values])
+
     def visit_Eq(self, node):
         node.ccode = "=="
 
@@ -314,6 +330,27 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_GtE(self, node):
         node.ccode = ">="
+
+    def visit_And(self, node):
+        node.ccode = "&&"
+
+    def visit_Or(self, node):
+        node.ccode = "||"
+
+    def visit_Not(self, node):
+        node.ccode = "!"
+
+    def visit_While(self, node):
+        self.visit(node.test)
+        for b in node.body:
+            self.visit(b)
+        if len(node.orelse) > 0:
+            raise RuntimeError("Else clause in while clauses cannot be translated to C")
+        body = c.Block([b.ccode for b in node.body])
+        node.ccode = c.DoWhile(node.test.ccode, body)
+
+    def visit_Break(self, node):
+        node.ccode = c.Statement("break")
 
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
