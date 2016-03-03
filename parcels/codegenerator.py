@@ -218,6 +218,25 @@ class KernelGenerator(ast.NodeVisitor):
                                                 node.op.ccode,
                                                 node.value.ccode))
 
+    def visit_If(self, node):
+        self.visit(node.test)
+        for b in node.body:
+            self.visit(b)
+        for b in node.orelse:
+            self.visit(b)
+        body = c.Block([b.ccode for b in node.body])
+        orelse = c.Block([b.ccode for b in node.orelse]) if len(node.orelse) > 0 else None
+        node.ccode = c.If(node.test.ccode, body, orelse)
+
+    def visit_Compare(self, node):
+        self.visit(node.left)
+        assert(len(node.ops) == 1)
+        self.visit(node.ops[0])
+        assert(len(node.comparators) == 1)
+        self.visit(node.comparators[0])
+        node.ccode = "%s %s %s" % (node.left.ccode, node.ops[0].ccode,
+                                   node.comparators[0].ccode)
+
     def visit_Index(self, node):
         self.visit(node.value)
         node.ccode = node.value.ccode
@@ -263,6 +282,21 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Num(self, node):
         node.ccode = str(node.n)
+
+    def visit_Eq(self, node):
+        node.ccode = "=="
+
+    def visit_Lt(self, node):
+        node.ccode = "<"
+
+    def visit_LtE(self, node):
+        node.ccode = "<="
+
+    def visit_Gt(self, node):
+        node.ccode = ">"
+
+    def visit_GtE(self, node):
+        node.ccode = ">="
 
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
