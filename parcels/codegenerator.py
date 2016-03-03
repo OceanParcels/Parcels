@@ -148,6 +148,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ['particle', 'grid', 'time', 'dt']
+    array_vars = []
 
     def __init__(self, grid, ptype):
         self.grid = grid
@@ -167,7 +168,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode = py_ast.ccode
 
         # Insert variable declarations for non-instrinsics
-        for kvar in self.kernel_vars:
+        for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
         if len(funcvars) > 0:
@@ -208,7 +209,23 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Assign(self, node):
         self.visit(node.targets[0])
         self.visit(node.value)
-        node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
+        if isinstance(node.value, ast.List):
+            # Detect in-place initialisation of multi-dimensional arrays
+            tmp_node = node.value
+            decl = c.Value('float', node.targets[0].id)
+            while isinstance(tmp_node, ast.List):
+                decl = c.ArrayOf(decl, len(tmp_node.elts))
+                if isinstance(tmp_node.elts[0], ast.List):
+                    # Check type and dimension are the same
+                    if not all(isinstance(e, ast.List) for e in tmp_node.elts):
+                        raise TypeError("Non-list element discovered in array declaration")
+                    if not all(len(e.elts) == len(tmp_node.elts[0].elts) for e in tmp_node.elts):
+                        raise TypeError("Irregular array length not allowed in array declaration")
+                tmp_node = tmp_node.elts[0]
+            node.ccode = c.Initializer(decl, node.value.ccode)
+            self.array_vars += [node.targets[0].id]
+        else:
+            node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
 
     def visit_AugAssign(self, node):
         self.visit(node.target)
