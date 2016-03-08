@@ -148,6 +148,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     # Intrinsic variables that appear as function arguments
     kernel_vars = ['particle', 'grid', 'time', 'dt']
+    array_vars = []
 
     def __init__(self, grid, ptype):
         self.grid = grid
@@ -167,7 +168,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode = py_ast.ccode
 
         # Insert variable declarations for non-instrinsics
-        for kvar in self.kernel_vars:
+        for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
         if len(funcvars) > 0:
@@ -203,12 +204,32 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
         'particle' or 'grid' and inserts our placeholder objects"""
+        if node.id == 'True':
+            node.id = "1"
+        if node.id == 'False':
+            node.id = "0"
         node.ccode = node.id
 
     def visit_Assign(self, node):
         self.visit(node.targets[0])
         self.visit(node.value)
-        node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
+        if isinstance(node.value, ast.List):
+            # Detect in-place initialisation of multi-dimensional arrays
+            tmp_node = node.value
+            decl = c.Value('float', node.targets[0].id)
+            while isinstance(tmp_node, ast.List):
+                decl = c.ArrayOf(decl, len(tmp_node.elts))
+                if isinstance(tmp_node.elts[0], ast.List):
+                    # Check type and dimension are the same
+                    if not all(isinstance(e, ast.List) for e in tmp_node.elts):
+                        raise TypeError("Non-list element discovered in array declaration")
+                    if not all(len(e.elts) == len(tmp_node.elts[0].elts) for e in tmp_node.elts):
+                        raise TypeError("Irregular array length not allowed in array declaration")
+                tmp_node = tmp_node.elts[0]
+            node.ccode = c.Initializer(decl, node.value.ccode)
+            self.array_vars += [node.targets[0].id]
+        else:
+            node.ccode = c.Assign(node.targets[0].ccode, node.value.ccode)
 
     def visit_AugAssign(self, node):
         self.visit(node.target)
@@ -217,6 +238,25 @@ class KernelGenerator(ast.NodeVisitor):
         node.ccode = c.Statement("%s %s= %s" % (node.target.ccode,
                                                 node.op.ccode,
                                                 node.value.ccode))
+
+    def visit_If(self, node):
+        self.visit(node.test)
+        for b in node.body:
+            self.visit(b)
+        for b in node.orelse:
+            self.visit(b)
+        body = c.Block([b.ccode for b in node.body])
+        orelse = c.Block([b.ccode for b in node.orelse]) if len(node.orelse) > 0 else None
+        node.ccode = c.If(node.test.ccode, body, orelse)
+
+    def visit_Compare(self, node):
+        self.visit(node.left)
+        assert(len(node.ops) == 1)
+        self.visit(node.ops[0])
+        assert(len(node.comparators) == 1)
+        self.visit(node.comparators[0])
+        node.ccode = "%s %s %s" % (node.left.ccode, node.ops[0].ccode,
+                                   node.comparators[0].ccode)
 
     def visit_Index(self, node):
         self.visit(node.value)
@@ -227,6 +267,11 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(e)
         node.ccode = tuple([e.ccode for e in node.elts])
 
+    def visit_List(self, node):
+        for e in node.elts:
+            self.visit(e)
+        node.ccode = "{" + ", ".join([e.ccode for e in node.elts]) + "}"
+
     def visit_Subscript(self, node):
         self.visit(node.value)
         self.visit(node.slice)
@@ -235,6 +280,13 @@ class KernelGenerator(ast.NodeVisitor):
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError("Subscript not implemented for object type %s"
                                       % type(node.value).__name__)
+        else:
+            node.ccode = "%s[%s]" % (node.value.ccode, node.slice.ccode)
+
+    def visit_UnaryOp(self, node):
+        self.visit(node.op)
+        self.visit(node.operand)
+        node.ccode = "%s(%s)" % (node.op.ccode, node.operand.ccode)
 
     def visit_BinOp(self, node):
         self.visit(node.left)
@@ -256,6 +308,49 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Num(self, node):
         node.ccode = str(node.n)
+
+    def visit_BoolOp(self, node):
+        self.visit(node.op)
+        for v in node.values:
+            self.visit(v)
+        op_str = " %s " % node.op.ccode
+        node.ccode = op_str.join([v.ccode for v in node.values])
+
+    def visit_Eq(self, node):
+        node.ccode = "=="
+
+    def visit_Lt(self, node):
+        node.ccode = "<"
+
+    def visit_LtE(self, node):
+        node.ccode = "<="
+
+    def visit_Gt(self, node):
+        node.ccode = ">"
+
+    def visit_GtE(self, node):
+        node.ccode = ">="
+
+    def visit_And(self, node):
+        node.ccode = "&&"
+
+    def visit_Or(self, node):
+        node.ccode = "||"
+
+    def visit_Not(self, node):
+        node.ccode = "!"
+
+    def visit_While(self, node):
+        self.visit(node.test)
+        for b in node.body:
+            self.visit(b)
+        if len(node.orelse) > 0:
+            raise RuntimeError("Else clause in while clauses cannot be translated to C")
+        body = c.Block([b.ccode for b in node.body])
+        node.ccode = c.DoWhile(node.test.ccode, body)
+
+    def visit_Break(self, node):
+        node.ccode = c.Statement("break")
 
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
