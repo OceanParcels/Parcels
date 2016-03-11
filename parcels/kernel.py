@@ -72,9 +72,9 @@ class Kernel(object):
                                               self.funcvars)
             self.field_args = kernelgen.field_args
             loopgen = LoopGenerator(grid, ptype)
-            self.ccode = loopgen.generate(self.funcname,
-                                          self.field_args,
-                                          kernel_ccode)
+            adaptive = 'AdvectionRK45' in self.funcname
+            self.ccode = loopgen.generate(self.funcname, self.field_args,
+                                          kernel_ccode, adaptive=adaptive)
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
@@ -104,7 +104,7 @@ class Kernel(object):
             if output_time is None:
                 self.pyfunc(p, pset.grid, end_time, tol)
                 return
-            while p.time < output_time:
+            while math.ceil(p.time) < math.floor(output_time):
                 self.pyfunc(p, pset.grid, output_time, tol)
 
     def merge(self, kernel):
