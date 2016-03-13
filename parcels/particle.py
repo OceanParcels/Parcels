@@ -279,7 +279,11 @@ class ParticleSet(object):
             output_steps = timesteps
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
-        current = time or self.grid.time[0]
+        if dt < 0:
+            startind = -1
+        else:
+            startind = 0
+        current = time or self.grid.time[startind]
         for _ in range(timeleaps):
             self.kernel.execute(self, output_steps, current, dt)
             current += output_steps * dt
