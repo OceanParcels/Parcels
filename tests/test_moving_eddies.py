@@ -41,20 +41,21 @@ def moving_eddies_grid(xdim=200, ydim=350):
     # Some constants
     corio_0 = 1.e-4  # Coriolis parameter
     h0 = 1  # Max eddy height
-    sig = 30  # Eddy e-folding decay scale (in grid points)
+    sig = 0.5  # Eddy e-folding decay scale (in degrees)
     g = 10  # Gravitational constant
     eddyspeed = 0.1  # Translational speed in m/s
     dX = eddyspeed * 86400 / dx  # Grid cell movement of eddy max each day
+    dY = eddyspeed * 86400 / dy  # Grid cell movement of eddy max each day
 
     [x, y] = np.mgrid[:lon.size, :lat.size]
     for t in range(time.size):
-        hymax_1 = int(lat.size / 7)
-        hxmax_1 = int(.75 * lon.size) - dX * (t-2)
-        hymax_2 = int(3 * lat.size / 7) + dX * (t-2)
-        hxmax_2 = int(.75 * lon.size) - dX * (t-2)
+        hymax_1 = lat.size / 7.
+        hxmax_1 = .75 * lon.size - dX * t
+        hymax_2 = 3. * lat.size / 7. + dY * t
+        hxmax_2 = .75 * lon.size - dX * t
 
-        P[:, :, t] = h0 * np.exp(-((x-hxmax_1)**2+(y-hymax_1)**2)/sig**2)
-        P[:, :, t] += h0 * np.exp(-((x-hxmax_2)**2+(y-hymax_2)**2)/sig**2)
+        P[:, :, t] = h0 * np.exp(-(x-hxmax_1)**2/(sig*lon.size/4.)**2-(y-hymax_1)**2/(sig*lat.size/7.)**2)
+        P[:, :, t] += h0 * np.exp(-(x-hxmax_2)**2/(sig*lon.size/4.)**2-(y-hymax_2)**2/(sig*lat.size/7.)**2)
 
         V[:-1, :, t] = -np.diff(P[:, :, t], axis=0) / dx / corio_0 * g
         V[-1, :, t] = V[-2, :, t]  # Fill in the last column
