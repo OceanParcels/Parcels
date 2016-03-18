@@ -12,11 +12,8 @@ def moving_eddies_grid(xdim=200, ydim=350):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
-    The original test description can be found in: K. Doos,
-    J. Kjellsson and B. F. Jonsson. 2013 TRACMASS - A Lagrangian
-    Trajectory Model, in Preventive Methods for Coastal Protection,
-    T. Soomere and E. Quak (Eds.),
-    http://www.springer.com/gb/book/9783319004396
+    Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
+    artificially with uniform velocities. Velocities are calculated from geostrophy.
     """
     # Set NEMO grid variables
     depth = np.zeros(1, dtype=np.float32)
