@@ -8,7 +8,7 @@ import pytest
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
 
 
-def moving_eddies_grid(xdim=200, ydim=350):
+def moving_eddies_grid(xdim=200, ydim=350, ndays=25):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
@@ -17,7 +17,7 @@ def moving_eddies_grid(xdim=200, ydim=350):
     """
     # Set NEMO grid variables
     depth = np.zeros(1, dtype=np.float32)
-    time = np.arange(0., 25. * 86400., 86400., dtype=np.float64)
+    time = np.arange(0., ndays * 86400., 86400., dtype=np.float64)
 
     # Coordinates of the test grid (on A-grid in deg)
     lon = np.linspace(0, 4, xdim, dtype=np.float32)
