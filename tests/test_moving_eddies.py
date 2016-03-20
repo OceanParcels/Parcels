@@ -96,6 +96,38 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_moving_eddies_fwdbwd(mode, npart=2):
+    method = AdvectionRK4
+    grid = moving_eddies_grid(ndays=15.)
+
+    # Determine particle class according to mode
+    ParticleClass = JITParticle if mode == 'jit' else Particle
+
+    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+                            start=(3.3, 46.), finish=(3.3, 47.8))
+
+    # Execte for 14 days, with 5min timesteps and hourly output
+    hours = 14*24*10
+    substeps = 12
+    dt = 5 * 6.
+    print("MovingEddies: Advecting %d particles for %d seconds"
+          % (npart, hours * substeps * dt))
+    pset.execute(method, timesteps=hours*substeps, dt=dt,
+                 output_file=pset.ParticleFile(name="EddyParticlefwd"),
+                 output_steps=substeps)
+
+    print("Now running in backward time mode")
+    pset.execute(method, timesteps=hours*substeps, dt=-dt,
+                 output_file=pset.ParticleFile(name="EddyParticlebwd"),
+                 output_steps=substeps)
+
+    assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
+    assert(pset[1].lon > 3.2 and 47.7 < pset[1].lat < 47.9)
+
+    return pset
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_grid(mode):
     grid = moving_eddies_grid()
     pset = moving_eddies_example(grid, 2, mode=mode)
