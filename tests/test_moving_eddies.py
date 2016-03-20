@@ -99,8 +99,8 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 def test_moving_eddies_grid(mode):
     grid = moving_eddies_grid()
     pset = moving_eddies_example(grid, 2, mode=mode)
-    assert(pset[0].lon < 0.5 and 45.8 < pset[0].lat < 46.15)
-    assert(pset[1].lon < 0.5 and 50.4 < pset[1].lat < 50.7)
+    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
+    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
 
 
 if __name__ == "__main__":
