@@ -39,14 +39,18 @@ class Particle(object):
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle
     :param grid: :Class Grid: object to track this particle on
+    :param user_vars: Dictionary of any user variables that might be defined in subclasses
     """
+    user_vars = OrderedDict()
 
     def __init__(self, lon, lat, grid, cptr=None):
         self.lon = lon
         self.lat = lat
-
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
+
+        for var in self.user_vars:
+            setattr(self, var, 0)
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
@@ -86,7 +90,7 @@ class JITParticle(Particle):
 class ParticleType(object):
     """Class encapsulating the type information for custom particles
 
-    :param user: Optional list of (name, dtype) tuples for custom variables
+    :param user_vars: Optional list of (name, dtype) tuples for custom variables
     """
 
     def __init__(self, pclass):
@@ -100,8 +104,8 @@ class ParticleType(object):
         if self.uses_jit:
             self.var_types = pclass.base_vars
             self.var_types.update(pclass.user_vars)
-        else:
-            self.var_types = None
+
+        self.user_vars = pclass.user_vars
 
     def __repr__(self):
         return self.name
@@ -246,6 +250,7 @@ class ParticleFile(object):
         :param name: Basename of the output file
         :param particlset: ParticleSet to output
         :param initial_dump: Perform initial output at time 0.
+        :param user_vars: A list of additional user defined particle variables to write
         """
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
@@ -286,6 +291,16 @@ class ParticleFile(object):
         self.z.units = "m"
         self.z.positive = "down"
 
+        if particleset.ptype.user_vars is not None:
+            self.user_vars = particleset.ptype.user_vars.keys()
+            for var in self.user_vars:
+                setattr(self, var, self.dataset.createVariable(var, "f4", ("trajectory", "obs"), fill_value=0.))
+                getattr(self, var).long_name = ""
+                getattr(self, var).standard_name = var
+                getattr(self, var).units = "unknown"
+        else:
+            self.user_vars = {}
+
         self.idx = 0
 
         if initial_dump:
@@ -302,6 +317,8 @@ class ParticleFile(object):
             self.lat[:, self.idx] = np.array([p.lat for p in pset])
             self.lon[:, self.idx] = np.array([p.lon for p in pset])
             self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
+            for var in self.user_vars:
+                getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
         else:
             raise TypeError("NetCDF output is only enabled for ParticleSet obects")
 
