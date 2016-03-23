@@ -84,6 +84,10 @@ class Particle(object):
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
+    @classmethod
+    def getPType(cls):
+        return ParticleType(cls)
+
 
 class JITParticle(Particle):
     """Particle class for JIT-based Particle objects
@@ -101,6 +105,10 @@ class JITParticle(Particle):
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
+        if self._cptr is None:
+            # Allocate data for a single particle
+            ptype = super(JITParticle, self).getPType()
+            self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
     def __getattr__(self, attr):
@@ -137,7 +145,7 @@ class ParticleType(object):
         self.user_vars = pclass.user_vars
 
     def __repr__(self):
-        return self.name
+        return "PType<self.name>"
 
     @property
     def dtype(self):
