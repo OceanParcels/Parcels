@@ -35,17 +35,16 @@ def AdvectionEE(particle, grid, time, dt):
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
     # initialise particles from a field
-    print("Starting from " + startfield.name + " field")
-
-    # Gradient ends up with overall negative sum of cells, not sure if this makes sense
-    # so working with lat long points still for the moment
-    # startcells = np.gradient(startfield.data[0,:,:])
-    # total = np.sum(startcells)
-
+    print("Initialising particles from " + startfield.name + " field")
     total = np.sum(startfield.data[0, :, :])
     startfield.data[0, :, :] = startfield.data[0, :, :]/total
     lonwidth = (startfield.lon[1] - startfield.lon[0])/2
     latwidth = (startfield.lat[1] - startfield.lat[0])/2
+
+    def jitter_pos(pos, width, list=[]):
+        list[-1] = pos + np.random.uniform(-width, width)
+        return list
+
     if(mode is 'monte_carlo'):
         probs = np.random.uniform(size=pnum)
         lon = []
@@ -53,10 +52,12 @@ def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
         for p in probs:
             cell = np.unravel_index(np.where([p < i for i in np.cumsum(startfield.data[0, :, :])])[0][0],
                                     np.shape(startfield.data[0, :, :]))
-            jitter = np.random.uniform(-lonwidth, lonwidth)
-            lon.append(startfield.lon[cell[1]] + jitter)
-            jitter = np.random.uniform(-latwidth, latwidth)
-            lat.append(startfield.lat[cell[0]] + jitter)
+            lon.append(None)
+            while np.max(startfield.lon) > jitter_pos(startfield.lon[cell[1]], lonwidth, lon)[-1] < np.min(startfield.lon):
+                pass
+            lat.append(None)
+            while np.max(startfield.lat) > jitter_pos(startfield.lat[cell[0]], latwidth, lat)[-1] < np.min(startfield.lat):
+                pass
 
     return lon, lat
 
@@ -177,7 +178,7 @@ class ParticleSet(object):
             lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
 
         if start_field is not None:
-            lon, lat = positions_from_density_field(size, getattr(self.grid, start_field))
+            lon, lat = positions_from_density_field(size, start_field)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates

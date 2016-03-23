@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print(grid.fields)
 
     pset = grid.ParticleSet(size=args.particles, pclass=ParticleClass,
-                            start_field='Start')
+                            start_field=grid.Start)
 
     hours = 25*24
     substeps = 12
