@@ -106,21 +106,21 @@ def analytical_eddies_example(grid, npart=1, mode='jit', verbose=False,
     # Execute for 3 days, with 5min timesteps and hourly output
     hours = 3*24
     substeps = 1
-    dt = 600
+    dt = 300
 
     if method == AdvectionRK45:
         for particle in pset:
             particle.time = 0.
             particle.dt = dt
         tol = 1e-10
-        print("MovingEddies: Advecting %d particles with adaptive timesteps"
+        print("Analytical: Advecting %d particles with adaptive timesteps"
               % (npart))
         pset.execute(method, timesteps=hours*substeps*3600/dt, dt=dt,
                      output_file=pset.ParticleFile(name="AnalyticalParticle" +
                                                    method.__name__),
                      output_steps=substeps, tol=tol)
     else:
-        print("MovingEddies: Advecting %d particles for %d timesteps"
+        print("Analytical: Advecting %d particles for %d timesteps"
               % (npart, hours * substeps * 3600 / dt))
         pset.execute(method, timesteps=hours*substeps*3600/dt, dt=dt,
                      output_file=pset.ParticleFile(name="AnalyticalParticle" +
@@ -144,8 +144,7 @@ def analytical_eddies_example(grid, npart=1, mode='jit', verbose=False,
 def test_analytic_eddies_grid(mode):
     grid = analytical_eddies_grid()
     pset = analytical_eddies_example(grid, 1, mode=mode)
-    assert(pset[0].lon < 0.5 and 45.8 < pset[0].lat < 46.15)
-    assert(pset[1].lon < 0.5 and 50.4 < pset[1].lat < 50.7)
+    assert(1.12 < pset[0].lon < 1.14 and 44.98 < pset[0].lat < 44.99)
 
 
 if __name__ == "__main__":

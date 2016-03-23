@@ -20,7 +20,7 @@ def ground_truth(lon, lat):
     return psi
 
 
-def analytical_eddies_grid(xdim=200, ydim=200):
+def stommel_grid(xdim=200, ydim=200):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
@@ -65,8 +65,8 @@ def analytical_eddies_grid(xdim=200, ydim=200):
                           depth, time, field_data={'P': P})
 
 
-def stommel_eddies_example(grid, npart=1, mode='jit', verbose=False,
-                           method=AdvectionRK4):
+def stommel_example(grid, npart=1, mode='jit', verbose=False,
+                    method=AdvectionRK4):
     """Configuration of a particle set that follows two moving eddies
 
     :arg grid: :class NEMOGrid: that defines the flow field
@@ -83,7 +83,7 @@ def stommel_eddies_example(grid, npart=1, mode='jit', verbose=False,
     # Execute for 25 days, with 5min timesteps and hourly output
     hours = 27.635*24.*3600.-330.
     substeps = 1
-    timesteps = 20.
+    timesteps = 1000.
     dt = hours/timesteps    # To make sure it ends exactly on the end time
 
     if method == AdvectionRK45:
@@ -110,16 +110,17 @@ def stommel_eddies_example(grid, npart=1, mode='jit', verbose=False,
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_analytic_eddies_grid(mode):
-    grid = analytical_eddies_grid()
-    pset = stommel_eddies_example(grid, 1, mode=mode)
-    assert(pset[0].lon < 0.5 and 45.8 < pset[0].lat < 46.15)
-    assert(pset[1].lon < 0.5 and 50.4 < pset[1].lat < 50.7)
+def test_stommel_grid(mode):
+    grid = stommel_grid()
+    pset = stommel_example(grid, 3, mode=mode)
+    assert(3. < pset[0].lon < 3.5 and 4.75 < pset[0].lat < 5.25)
+    assert(7.4 < pset[1].lon < 8. and 40. < pset[1].lat < 40.6)
+    assert(4. < pset[2].lon < 4.3 and 26.7 < pset[2].lat < 27.)
 
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""
-Example of particle advection around an idealised peninsula""")
+Example of particle advection in the steady-state solution of the Stommel equation""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
                    help='Execution mode for performing computation')
     p.add_argument('-p', '--particles', type=int, default=1,
@@ -133,11 +134,11 @@ Example of particle advection around an idealised peninsula""")
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
-    filename = 'analytical_eddies'
+    filename = 'stommel'
 
     # Generate grid files according to given dimensions
     if args.grid is not None:
-        grid = analytical_eddies_grid(args.grid[0], args.grid[1])
+        grid = stommel_grid(args.grid[0], args.grid[1])
         grid.write(filename)
 
     # Open grid files
@@ -146,10 +147,10 @@ Example of particle advection around an idealised peninsula""")
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("stommel_eddies_example(grid, args.particles, mode=args.mode, \
+        runctx("stommel_example(grid, args.particles, mode=args.mode, \
                               verbose=args.verbose)",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        stommel_eddies_example(grid, args.particles, mode=args.mode,
-                               verbose=args.verbose, method=method[args.method])
+        stommel_example(grid, args.particles, mode=args.mode,
+                        verbose=args.verbose, method=method[args.method])
