@@ -250,11 +250,14 @@ class ParticleSet(object):
         field = kwargs.get('field', None)
         lon = [p.lon for p in self]
         lat = [p.lat for p in self]
+        plt.ion()
+        plt.clf()
         plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
         if field is None:
             plt.show()
         else:
             field.show(**kwargs)
+        plt.pause(0.0001)
 
     def Kernel(self, pyfunc):
         return Kernel(self.grid, self.ptype, pyfunc)

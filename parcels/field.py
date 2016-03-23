@@ -146,7 +146,13 @@ class Field(object):
     def show(self, **kwargs):
         import matplotlib.pyplot as plt
         t = kwargs.get('t', 0)
-        data = np.squeeze(self.data[t, :])
+        idx = self.time_index(t)
+        t0 = self.time[idx-1]
+        t1 = self.time[idx]
+        f0 = self.data[idx-1, :]
+        f1 = self.data[idx, :]
+        val = f0 + (f1 - f0) * ((t - t0) / (t1 - t0))
+        data = np.squeeze(val)
         vmin = kwargs.get('vmin', data.min())
         vmax = kwargs.get('vmax', data.max())
         cs = plt.contourf(self.lon, self.lat, data,
