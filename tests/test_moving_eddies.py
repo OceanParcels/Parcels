@@ -87,7 +87,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
           % (npart, hours * substeps))
     pset.execute(method, timesteps=hours*substeps, dt=300.,
                  output_file=pset.ParticleFile(name="EddyParticle"),
-                 output_steps=substeps)
+                 output_steps=substeps, show_movie=True)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)

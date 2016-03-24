@@ -3,6 +3,7 @@ from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
 from collections import OrderedDict
+import matplotlib.pyplot as plt
 import math
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
@@ -210,7 +211,7 @@ class ParticleSet(object):
         self.particles[key] = value
 
     def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
-                output_file=None, output_steps=-1):
+                output_file=None, show_movie=False, output_steps=-1):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -244,9 +245,10 @@ class ParticleSet(object):
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
+            if show_movie:
+                self.show(field=self.grid.U, t=current)
 
     def show(self, **kwargs):
-        import matplotlib.pyplot as plt
         field = kwargs.get('field', None)
         lon = [p.lon for p in self]
         lat = [p.lat for p in self]
