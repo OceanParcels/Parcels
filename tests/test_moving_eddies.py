@@ -58,7 +58,7 @@ def moving_eddies_grid(xdim=200, ydim=350):
         V[-1, :, t] = V[-2, :, t]  # Fill in the last column
 
         U[:, :-1, t] = np.diff(P[:, :, t], axis=1) / dy / corio_0 * g
-        V[:, -1, t] = U[:, -2, t]  # Fill in the last row
+        U[:, -1, t] = U[:, -2, t]  # Fill in the last row
 
     return Grid.from_data(U, lon, lat, V, lon, lat,
                           depth, time, field_data={'P': P})
