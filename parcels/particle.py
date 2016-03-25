@@ -217,6 +217,10 @@ class ParticleSet(object):
     def __setitem__(self, key, value):
         self.particles[key] = value
 
+    def __iadd__(self, particles):
+        self.add(particles)
+        return self
+
     def add(self, particles):
         if isinstance(particles, ParticleSet):
             particles = particles.particles
