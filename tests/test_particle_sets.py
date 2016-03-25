@@ -64,7 +64,6 @@ def test_pset_custom_ptype(grid, mode, npart=100):
     assert np.allclose([p.n - 2 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
-@pytest.mark.xfail(reason="Particle addition to set has not been implemented yet")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_explicit(grid, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -91,7 +90,6 @@ def test_pset_add_shorthand(grid, mode, npart=100):
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
 
-@pytest.mark.xfail(reason="ParticleSet merge has not been implemented yet")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_merge_inplace(grid, mode, npart=100):
     pset1 = grid.ParticleSet(npart, pclass=ptype[mode],

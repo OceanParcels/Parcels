@@ -2,7 +2,7 @@ from parcels.kernel import Kernel
 from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 import math
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
@@ -216,6 +216,16 @@ class ParticleSet(object):
 
     def __setitem__(self, key, value):
         self.particles[key] = value
+
+    def add(self, particles):
+        if isinstance(particles, ParticleSet):
+            particles = particles.particles
+        if not isinstance(particles, Iterable):
+            particles = [particles]
+        self.particles = np.append(self.particles, particles)
+        if self.ptype.uses_jit:
+            particles_data = [p._cptr for p in particles]
+            self._particle_data = np.append(self._particle_data, particles_data)
 
     def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
                 output_file=None, output_steps=-1):
