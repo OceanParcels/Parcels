@@ -118,7 +118,6 @@ def test_pset_merge_duplicate(grid, mode, npart=100):
     assert(pset3.size == 200)
 
 
-@pytest.mark.xfail(reason="Particle removal has not been implemented yet")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_remove_index(grid, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)

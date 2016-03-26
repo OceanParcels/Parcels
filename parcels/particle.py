@@ -231,6 +231,16 @@ class ParticleSet(object):
             particles_data = [p._cptr for p in particles]
             self._particle_data = np.append(self._particle_data, particles_data)
 
+    def remove(self, indices):
+        if isinstance(indices, Iterable):
+            particles = [self.particles[i] for i in indices]
+        else:
+            particles = self.particles[indices]
+        if self.ptype.uses_jit:
+            self._particle_data = np.delete(self._particle_data, indices)
+        self.particles = np.delete(self.particles, indices)
+        return particles
+
     def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
                 output_file=None, output_steps=-1):
         """Execute a given kernel function over the particle set for
