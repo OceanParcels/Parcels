@@ -95,7 +95,8 @@ class Kernel(object):
         else:
             for _ in range(timesteps):
                 for p in pset.particles:
-                    self.pyfunc(p, pset.grid, time, dt)
+                    if p.active == 1:
+                        self.pyfunc(p, pset.grid, time, dt)
                 time += dt
 
     def merge(self, kernel):

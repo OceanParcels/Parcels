@@ -77,6 +77,7 @@ class Particle(object):
         self.lat = lat
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
+        self.active = 1
 
         for var in self.user_vars:
             setattr(self, var, 0)
@@ -87,6 +88,9 @@ class Particle(object):
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
+
+    def delete(self):
+        self.active = 0
 
 
 class JITParticle(Particle):
@@ -100,7 +104,8 @@ class JITParticle(Particle):
     """
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
-                             ('xi', np.int32), ('yi', np.int32)])
+                             ('xi', np.int32), ('yi', np.int32),
+                             ('active', np.int32)])
     user_vars = OrderedDict()
 
     def __init__(self, *args, **kwargs):
@@ -276,6 +281,8 @@ class ParticleSet(object):
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
+        to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
+        self.remove(to_remove)
 
     def show(self, **kwargs):
         import matplotlib.pyplot as plt
