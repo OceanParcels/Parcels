@@ -141,3 +141,16 @@ def test_pset_remove_particle(grid, mode, npart=100):
         assert(p.lon == ilon)
         assert(p.lat == ilat)
     assert(pset.size == 0)
+
+
+@pytest.mark.parametrize('mode', ['scipy'])
+def test_pset_remove_kernel(grid, mode, npart=100):
+    def DeleteKernel(particle, grid, time, dt):
+        if particle.lon >= .4:
+            particle.delete()
+
+    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+                            lon=np.linspace(0, 1, npart, dtype=np.float32),
+                            lat=np.linspace(1, 0, npart, dtype=np.float32))
+    pset.execute(pset.Kernel(DeleteKernel), timesteps=1, dt=1.0)
+    assert(pset.size == 40)
