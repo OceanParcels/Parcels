@@ -58,7 +58,7 @@ class Kernel(object):
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
 
-        self.name = "%s%s" % (ptype.name, funcname)
+        self.name = "%s%s" % (ptype.name, self.funcname)
 
         self.src_file = str(path.local("%s.c" % self.name))
         self.lib_file = str(path.local("%s.so" % self.name))
