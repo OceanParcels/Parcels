@@ -69,6 +69,8 @@ class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
         if attr in self.obj.var_types:
             return ParticleAttributeNode(self, attr)
+        elif attr in ['delete']:
+            return ParticleAttributeNode(self, 'active')
         else:
             raise AttributeError("""Particle type %s does not define attribute "%s".
 Please add '%s' to %s.users_vars or define an appropriate sub-class."""
@@ -120,6 +122,14 @@ class IntrinsicTransformer(ast.NodeTransformer):
         if isinstance(node.targets[0], ParticleAttributeNode) \
            and node.targets[0].ccode_index_var is not None:
             node = [node, node.targets[0].pyast_index_update]
+        return node
+
+    def visit_Call(self, node):
+        node.func = self.visit(node.func)
+        node.args = [self.visit(a) for a in node.args]
+        if isinstance(node.func, ParticleAttributeNode) \
+           and node.func.attr == 'active':
+            node = IntrinsicNode(node, "%s = 0" % node.func.ccode)
         return node
 
 
@@ -209,6 +219,10 @@ class KernelGenerator(ast.NodeVisitor):
         if node.id == 'False':
             node.id = "0"
         node.ccode = node.id
+
+    def visit_Expr(self, node):
+        self.visit(node.value)
+        node.ccode = c.Statement(node.value.ccode)
 
     def visit_Assign(self, node):
         self.visit(node.targets[0])
@@ -389,6 +403,7 @@ class LoopGenerator(object):
         fargs_str = ", ".join(['time', 'dt'] + list(field_args.keys()))
         loop_body = [c.Statement("%s(&(particles[p]), %s)" %
                                  (funcname, fargs_str))]
+        loop_body = [c.If("particles[p].active", c.Block(loop_body))]
         ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
         tloop = c.For("t = 0", "t < timesteps", "++t",
                       c.Block([ploop, c.Statement("time += (double)dt")]))

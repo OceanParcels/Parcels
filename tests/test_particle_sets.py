@@ -143,7 +143,7 @@ def test_pset_remove_particle(grid, mode, npart=100):
     assert(pset.size == 0)
 
 
-@pytest.mark.parametrize('mode', ['scipy'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_remove_kernel(grid, mode, npart=100):
     def DeleteKernel(particle, grid, time, dt):
         if particle.lon >= .4:
