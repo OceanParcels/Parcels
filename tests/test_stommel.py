@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
+from py import path
 
 
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
@@ -86,6 +87,12 @@ def stommel_example(grid, npart=1, mode='jit', verbose=False,
     timesteps = 1000.
     dt = hours/timesteps    # To make sure it ends exactly on the end time
 
+    ker = pset.Kernel(method)
+    ker.name = "%s%s" % (pset.ptype.name, 'Stommel')
+    ker.src_file = str(path.local("%s.c" % ker.name))
+    ker.lib_file = str(path.local("%s.so" % ker.name))
+    ker.log_file = str(path.local("%s.log" % ker.name))
+
     if method == AdvectionRK45:
         for particle in pset:
             particle.time = 0.
@@ -93,13 +100,13 @@ def stommel_example(grid, npart=1, mode='jit', verbose=False,
         tol = 1e-13
         print("Stommel: Advecting %d particles with adaptive step size"
               % (npart))
-        pset.execute(method, timesteps=timesteps, dt=dt,
+        pset.execute(ker, timesteps=timesteps, dt=dt,
                      output_file=pset.ParticleFile(name="StommelParticle" + method.__name__),
                      output_steps=substeps, tol=tol)
     else:
         print("Stommel: Advecting %d particles for %d timesteps"
               % (npart, hours*substeps/dt))
-        pset.execute(method, timesteps=timesteps, dt=dt,
+        pset.execute(ker, timesteps=timesteps, dt=dt,
                      output_file=pset.ParticleFile(name="StommelParticle" + method.__name__),
                      output_steps=substeps)
 
