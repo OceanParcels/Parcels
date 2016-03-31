@@ -96,11 +96,11 @@ if __name__ == "__main__":
 
     pset = grid.ParticleSet(size=args.particles, pclass=Sampler, start=(0, 45), finish=(4, 47))
 
-    hours = 25*24
+    endtime = 25*24
     substeps = 12
 
     record_user_vars = pset.Kernel(updateUserVars)
 
-    pset.execute(AdvectionRK4 + record_user_vars, timesteps=hours*substeps, dt=800.,
+    pset.execute(AdvectionRK4 + record_user_vars, endtime=endtime, dt=800.,
                  output_file=pset.ParticleFile(name="SamplerParticle"),
                  output_steps=substeps)

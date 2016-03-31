@@ -81,11 +81,11 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
         print("Initial particle positions:\n%s" % pset)
 
     # Execte for 25 days, with 5min timesteps and hourly output
-    hours = 25*24
+    endtime = 25*24*3600
     substeps = 12
-    print("MovingEddies: Advecting %d particles for %d timesteps"
-          % (npart, hours * substeps))
-    pset.execute(method, timesteps=hours*substeps, dt=300.,
+    print("MovingEddies: Advecting %d particles for %d seconds"
+          % (npart, endtime))
+    pset.execute(method, endtime=endtime, dt=300.,
                  output_file=pset.ParticleFile(name="EddyParticle"),
                  output_steps=substeps, show_movie=False)
 

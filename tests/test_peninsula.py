@@ -116,11 +116,11 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     dt = 36.
     substeps = 100 if output else -1
     out = pset.ParticleFile(name="MyParticle") if output else None
-    print("Peninsula: Advecting %d particles for %d timesteps"
-          % (npart, int(time / dt)))
+    print("Peninsula: Advecting %d particles for %d seconds"
+          % (npart, time))
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    pset.execute(k_adv + k_p, timesteps=int(time / dt), dt=dt,
+    pset.execute(k_adv + k_p, endtime=time, dt=dt,
                  output_file=out, output_steps=substeps)
 
     if verbose:
