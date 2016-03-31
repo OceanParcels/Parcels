@@ -8,7 +8,7 @@ import pytest
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
 
 
-def moving_eddies_grid(xdim=200, ydim=350, ndays=25):
+def moving_eddies_grid(xdim=200, ydim=350):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
@@ -17,7 +17,7 @@ def moving_eddies_grid(xdim=200, ydim=350, ndays=25):
     """
     # Set NEMO grid variables
     depth = np.zeros(1, dtype=np.float32)
-    time = np.arange(0., ndays * 86400., 86400., dtype=np.float64)
+    time = np.arange(0., 25. * 86400., 86400., dtype=np.float64)
 
     # Coordinates of the test grid (on A-grid in deg)
     lon = np.linspace(0, 4, xdim, dtype=np.float32)
@@ -98,7 +98,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_fwdbwd(mode, npart=2):
     method = AdvectionRK4
-    grid = moving_eddies_grid(ndays=15.)
+    grid = moving_eddies_grid()
 
     # Determine particle class according to mode
     ParticleClass = JITParticle if mode == 'jit' else Particle
@@ -106,20 +106,20 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
     pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
                             start=(3.3, 46.), finish=(3.3, 47.8))
 
-    # Execte for 14 days, with 5min timesteps and hourly output
-    hours = 14*24*10
-    substeps = 12
+    # Execte for 14 days, with 30sec timesteps and hourly output
+    endtime = 14 * 86400
+    output_time = 3600
     dt = 5 * 6.
     print("MovingEddies: Advecting %d particles for %d seconds"
-          % (npart, hours * substeps * dt))
-    pset.execute(method, timesteps=hours*substeps, dt=dt,
+          % (npart, endtime))
+    pset.execute(method, starttime=0, endtime=endtime, dt=dt,
                  output_file=pset.ParticleFile(name="EddyParticlefwd"),
-                 output_steps=substeps)
+                 output_steps=output_time/dt)
 
     print("Now running in backward time mode")
-    pset.execute(method, timesteps=hours*substeps, dt=-dt,
+    pset.execute(method, starttime=endtime, endtime=0, dt=-dt,
                  output_file=pset.ParticleFile(name="EddyParticlebwd"),
-                 output_steps=substeps)
+                 output_steps=output_time/dt)
 
     assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
     assert(pset[1].lon > 3.2 and 47.7 < pset[1].lat < 47.9)

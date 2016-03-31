@@ -249,16 +249,16 @@ class ParticleSet(object):
         self.particles = np.delete(self.particles, indices)
         return particles
 
-    def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
+    def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
                 output_file=None, show_movie=False, output_steps=-1):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
 
         :param pyfunc: Kernel funtion to execute
-        :param time: Starting time for the timestepping loop
+        :param starttime: Starting time for the timestepping loop
+        :param endtime: End time for the timestepping loop
         :param dt: Timestep interval to be passed to the kernel
-        :param timesteps: Number of individual timesteps to execute
         :param output_file: ParticleFile object for particle output
         :param output_steps: Size of output intervals in timesteps
         :param show_movie: True shows particles; name of field plots that field as background
@@ -274,18 +274,33 @@ class ParticleSet(object):
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
 
+        # Check if starttime, endtime and dt are consistent and compute timesteps
+        if starttime is None:
+            if dt > 0:
+                starttime = self.grid.time[0]
+            else:
+                starttime = self.grid.time[-1]
+        if endtime is None:
+            if dt > 0:
+                endtime = self.grid.time[-1]
+            else:
+                endtime = self.grid.time[0]
+        if endtime < starttime and dt > 0:
+            dt = -1. * dt
+            print("negating dt because running in time-backward mode")
+        if endtime > starttime and dt < 0:
+            dt = -1. * dt
+            print("negating dt because running in time-forward mode")
+        timesteps = int((endtime - starttime) / dt)
+
         # Check if output is required and compute outer leaps
         if output_file is None or output_steps <= 0:
             output_steps = timesteps
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
-        if dt < 0:
-            startind = -1
-        else:
-            startind = 0
-        current = time or self.grid.time[startind]
+        current = starttime
         for _ in range(timeleaps):
-            self.kernel.execute(self, output_steps, current, dt)
+            self.kernel.execute(self, int(output_steps), current, dt)
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
