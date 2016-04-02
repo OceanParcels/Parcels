@@ -222,6 +222,7 @@ class ParticleSet(object):
         :param timesteps: Number of individual timesteps to execute
         :param output_file: ParticleFile object for particle output
         :param output_steps: Size of output intervals in timesteps
+        :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
             # Generate and store Kernel
@@ -246,18 +247,19 @@ class ParticleSet(object):
             if output_file:
                 output_file.write(self, current)
             if show_movie:
-                self.show(field=self.grid.U, t=current)
+                self.show(field=show_movie, t=current)
 
     def show(self, **kwargs):
-        field = kwargs.get('field', None)
+        field = kwargs.get('field', True)
         lon = [p.lon for p in self]
         lat = [p.lat for p in self]
         plt.ion()
         plt.clf()
         plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
-        if field is None:
+        if field is True:
             plt.show()
         else:
+            field = getattr(self.grid, field)
             field.show(**kwargs)
         plt.pause(0.0001)
 
