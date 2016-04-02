@@ -257,6 +257,9 @@ class ParticleSet(object):
         plt.clf()
         plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
         if field is True:
+            axes = plt.gca()
+            axes.set_xlim([self.grid.U.lon[0], self.grid.U.lon[-1]])
+            axes.set_ylim([self.grid.U.lat[0], self.grid.U.lat[-1]])
             plt.show()
         else:
             field = getattr(self.grid, field)
