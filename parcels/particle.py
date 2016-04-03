@@ -1,4 +1,5 @@
 from parcels.kernel import Kernel
+from parcels.field import Field
 from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
@@ -262,7 +263,8 @@ class ParticleSet(object):
             axes.set_ylim([self.grid.U.lat[0], self.grid.U.lat[-1]])
             plt.show()
         else:
-            field = getattr(self.grid, field)
+            if not isinstance(field, Field):
+                field = getattr(self.grid, field)
             field.show(**kwargs)
         plt.pause(0.0001)
 
