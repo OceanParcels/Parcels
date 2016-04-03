@@ -156,7 +156,10 @@ class Field(object):
     def show(self, **kwargs):
         t = kwargs.get('t', 0)
         idx = self.time_index(t)
-        data = np.squeeze(self.interpolator1D(idx, t, None, None))
+        if self.time.size > 1:
+            data = np.squeeze(self.interpolator1D(idx, t, None, None))
+        else:
+            data = np.squeeze(self.data)
         vmin = kwargs.get('vmin', data.min())
         vmax = kwargs.get('vmax', data.max())
         cs = plt.contourf(self.lon, self.lat, data,
