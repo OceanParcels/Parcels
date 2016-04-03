@@ -250,7 +250,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                output_file=None, show_movie=False, output_steps=-1):
+                output_file=None, output_interval=-1, show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -260,7 +260,7 @@ class ParticleSet(object):
         :param endtime: End time for the timestepping loop
         :param dt: Timestep interval to be passed to the kernel
         :param output_file: ParticleFile object for particle output
-        :param output_steps: Size of output intervals in timesteps
+        :param output_interval: Size of output intervals in seconds
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -294,8 +294,10 @@ class ParticleSet(object):
         timesteps = int((endtime - starttime) / dt)
 
         # Check if output is required and compute outer leaps
-        if output_file is None or output_steps <= 0:
+        if output_file is None or output_interval <= 0:
             output_steps = timesteps
+        else:
+            output_steps = abs(int(output_interval / dt))
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
         current = starttime

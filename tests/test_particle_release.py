@@ -51,8 +51,9 @@ if __name__ == "__main__":
                             start_field=grid.Start)
 
     endtime = 25*24*3600
-    substeps = 12
+    dt = 800
+    output_interval = 12 * dt
 
-    pset.execute(AdvectionRK4, endtime=endtime, dt=800.,
+    pset.execute(AdvectionRK4, endtime=endtime, dt=dt,
                  output_file=pset.ParticleFile(name="ReleaseTestParticle"),
-                 output_steps=substeps)
+                 output_interval=output_interval)
