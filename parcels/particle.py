@@ -3,7 +3,7 @@ from parcels.field import Field
 from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 import math
 
@@ -79,12 +79,20 @@ class Particle(object):
         self.lat = lat
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
+        self.active = 1
 
         for var in self.user_vars:
             setattr(self, var, 0)
 
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
+
+    @classmethod
+    def getPType(cls):
+        return ParticleType(cls)
+
+    def delete(self):
+        self.active = 0
 
 
 class JITParticle(Particle):
@@ -98,11 +106,16 @@ class JITParticle(Particle):
     """
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
-                             ('xi', np.int32), ('yi', np.int32)])
+                             ('xi', np.int32), ('yi', np.int32),
+                             ('active', np.int32)])
     user_vars = OrderedDict()
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
+        if self._cptr is None:
+            # Allocate data for a single particle
+            ptype = super(JITParticle, self).getPType()
+            self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
     def __getattr__(self, attr):
@@ -139,7 +152,7 @@ class ParticleType(object):
         self.user_vars = pclass.user_vars
 
     def __repr__(self):
-        return self.name
+        return "PType<self.name>"
 
     @property
     def dtype(self):
@@ -211,6 +224,30 @@ class ParticleSet(object):
     def __setitem__(self, key, value):
         self.particles[key] = value
 
+    def __iadd__(self, particles):
+        self.add(particles)
+        return self
+
+    def add(self, particles):
+        if isinstance(particles, ParticleSet):
+            particles = particles.particles
+        if not isinstance(particles, Iterable):
+            particles = [particles]
+        self.particles = np.append(self.particles, particles)
+        if self.ptype.uses_jit:
+            particles_data = [p._cptr for p in particles]
+            self._particle_data = np.append(self._particle_data, particles_data)
+
+    def remove(self, indices):
+        if isinstance(indices, Iterable):
+            particles = [self.particles[i] for i in indices]
+        else:
+            particles = self.particles[indices]
+        if self.ptype.uses_jit:
+            self._particle_data = np.delete(self._particle_data, indices)
+        self.particles = np.delete(self.particles, indices)
+        return particles
+
     def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
                 output_file=None, show_movie=False, output_steps=-1):
         """Execute a given kernel function over the particle set for
@@ -249,6 +286,8 @@ class ParticleSet(object):
                 output_file.write(self, current)
             if show_movie:
                 self.show(field=show_movie, t=current)
+        to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
+        self.remove(to_remove)
 
     def show(self, **kwargs):
         field = kwargs.get('field', True)
