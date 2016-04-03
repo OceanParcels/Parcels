@@ -6,6 +6,7 @@ import netCDF4
 from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 import math
+import datetime
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -291,6 +292,7 @@ class ParticleSet(object):
 
     def show(self, **kwargs):
         field = kwargs.get('field', True)
+        t = kwargs.get('t', 0)
         lon = [p.lon for p in self]
         lat = [p.lat for p in self]
         plt.ion()
@@ -300,11 +302,16 @@ class ParticleSet(object):
             axes = plt.gca()
             axes.set_xlim([self.grid.U.lon[0], self.grid.U.lon[-1]])
             axes.set_ylim([self.grid.U.lat[0], self.grid.U.lat[-1]])
-            plt.show()
+            namestr = ''
         else:
             if not isinstance(field, Field):
                 field = getattr(self.grid, field)
             field.show(**kwargs)
+            namestr = ' on ' + field.name
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('Particles' + namestr + ' after ' + str(datetime.timedelta(seconds=t)) + ' hours')
+        plt.show()
         plt.pause(0.0001)
 
     def Kernel(self, pyfunc):

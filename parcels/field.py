@@ -168,10 +168,6 @@ class Field(object):
         cs.cmap.set_under('w')
         cs.set_clim(vmin, vmax)
         plt.colorbar(cs)
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
-        plt.title(self.name + ' at  time ' + str(t) + ' seconds')
-        plt.show()
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
