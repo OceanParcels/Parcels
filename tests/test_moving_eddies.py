@@ -92,7 +92,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
         tol = 1e-11
         print("MovingEddies: Advecting %d particles with adaptive timesteps"
               % (npart))
-        pset.execute(method, timesteps=int(hours/dt), dt=dt,
+        pset.execute(method, timesteps=int(hours*3600/dt), dt=dt,
                      output_file=pset.ParticleFile(name="EddyParticle"),
                      output_steps=substeps, tol=tol)
     else:
