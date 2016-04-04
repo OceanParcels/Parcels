@@ -5,6 +5,7 @@ from py import path
 import numpy as np
 from xray import DataArray, Dataset
 import operator
+import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 
 
@@ -91,9 +92,23 @@ class Field(object):
         return self.eval(*key)
 
     @cachedmethod(operator.attrgetter('interpolator_cache'))
-    def interpolator(self, t_idx):
+    def interpolator2D(self, t_idx):
         return RectBivariateSpline(self.lat, self.lon,
                                    self.data[t_idx, :])
+
+    def interpolator1D(self, idx, time, y, x):
+        # Return linearly interpolated field value:
+        if x is None and y is None:
+            t0 = self.time[idx-1]
+            t1 = self.time[idx]
+            f0 = self.data[idx-1, :]
+            f1 = self.data[idx, :]
+        else:
+            f0 = self.interpolator2D(idx-1).ev(y, x)
+            f1 = self.interpolator2D(idx).ev(y, x)
+            t0 = self.time[idx-1]
+            t1 = self.time[idx]
+        return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
@@ -108,14 +123,9 @@ class Field(object):
     def eval(self, time, x, y):
         idx = self.time_index(time)
         if idx > 0:
-            # Return linearly interpolated field value:
-            f0 = self.interpolator(idx-1).ev(y, x)
-            f1 = self.interpolator(idx).ev(y, x)
-            t0 = self.time[idx-1]
-            t1 = self.time[idx]
-            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+            return self.interpolator1D(idx, time, y, x)
         else:
-            return self.interpolator(idx).ev(y, x)
+            return self.interpolator2D(idx).ev(y, x)
 
     def ccode_subscript(self, t, x, y):
         ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
@@ -144,9 +154,12 @@ class Field(object):
         return cstruct
 
     def show(self, **kwargs):
-        import matplotlib.pyplot as plt
         t = kwargs.get('t', 0)
-        data = np.squeeze(self.data[t, :])
+        idx = self.time_index(t)
+        if self.time.size > 1:
+            data = np.squeeze(self.interpolator1D(idx, t, None, None))
+        else:
+            data = np.squeeze(self.data)
         vmin = kwargs.get('vmin', data.min())
         vmax = kwargs.get('vmax', data.max())
         cs = plt.contourf(self.lon, self.lat, data,
@@ -155,10 +168,6 @@ class Field(object):
         cs.cmap.set_under('w')
         cs.set_clim(vmin, vmax)
         plt.colorbar(cs)
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
-        plt.title(self.name)
-        plt.show()
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))

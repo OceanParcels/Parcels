@@ -1,9 +1,12 @@
 from parcels.kernel import Kernel
+from parcels.field import Field
 from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
 from collections import OrderedDict, Iterable
+import matplotlib.pyplot as plt
 import math
+import datetime
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -247,7 +250,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
-                output_file=None, output_steps=-1):
+                output_file=None, show_movie=False, output_steps=-1):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -258,6 +261,7 @@ class ParticleSet(object):
         :param timesteps: Number of individual timesteps to execute
         :param output_file: ParticleFile object for particle output
         :param output_steps: Size of output intervals in timesteps
+        :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
             # Generate and store Kernel
@@ -281,19 +285,34 @@ class ParticleSet(object):
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
+            if show_movie:
+                self.show(field=show_movie, t=current)
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
         self.remove(to_remove)
 
     def show(self, **kwargs):
-        import matplotlib.pyplot as plt
-        field = kwargs.get('field', None)
+        field = kwargs.get('field', True)
+        t = kwargs.get('t', 0)
         lon = [p.lon for p in self]
         lat = [p.lat for p in self]
+        plt.ion()
+        plt.clf()
         plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
-        if field is None:
-            plt.show()
+        if field is True:
+            axes = plt.gca()
+            axes.set_xlim([self.grid.U.lon[0], self.grid.U.lon[-1]])
+            axes.set_ylim([self.grid.U.lat[0], self.grid.U.lat[-1]])
+            namestr = ''
         else:
+            if not isinstance(field, Field):
+                field = getattr(self.grid, field)
             field.show(**kwargs)
+            namestr = ' on ' + field.name
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('Particles' + namestr + ' after ' + str(datetime.timedelta(seconds=t)) + ' hours')
+        plt.show()
+        plt.pause(0.0001)
 
     def Kernel(self, pyfunc):
         return Kernel(self.grid, self.ptype, pyfunc)
