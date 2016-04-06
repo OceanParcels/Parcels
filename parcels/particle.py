@@ -308,9 +308,13 @@ class ParticleSet(object):
                 field = getattr(self.grid, field)
             field.show(**kwargs)
             namestr = ' on ' + field.name
+        if self.grid.U.time_origin == 0:
+            timestr = ' after ' + str(datetime.timedelta(seconds=t)) + ' hours'
+        else:
+            timestr = ' on ' + str(self.grid.U.time_origin + datetime.timedelta(seconds=t))
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
-        plt.title('Particles' + namestr + ' after ' + str(datetime.timedelta(seconds=t)) + ' hours')
+        plt.title('Particles' + namestr + timestr)
         plt.show()
         plt.pause(0.0001)
 

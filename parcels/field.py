@@ -23,7 +23,7 @@ class Field(object):
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None):
+                 transpose=False, vmin=None, vmax=None, time_origin=0):
         self.name = name
         self.data = data
         self.lon = lon
@@ -56,6 +56,7 @@ class Field(object):
 
         self.interpolator_cache = LRUCache(maxsize=2)
         self.time_index_cache = LRUCache(maxsize=2)
+        self.time_origin = time_origin
 
     @classmethod
     def from_netcdf(cls, name, dimensions, datasets, **kwargs):
