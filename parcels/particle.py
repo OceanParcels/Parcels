@@ -360,7 +360,7 @@ class ParticleFile(object):
         self.trajectory[:] = np.arange(particleset.size, dtype=np.int32)
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=0.)
+        self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=-9999.)
         self.time.long_name = ""
         self.time.standard_name = "time"
         if time_origin == 0:
@@ -370,19 +370,19 @@ class ParticleFile(object):
             self.time.calendar = "julian"
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=-9999.)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.lon = self.dataset.createVariable("lon", "f4", ("trajectory", "obs"), fill_value=-9999.)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=-9999.)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"
