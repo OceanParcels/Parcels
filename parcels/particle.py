@@ -327,7 +327,7 @@ class ParticleSet(object):
 
 class ParticleFile(object):
 
-    def __init__(self, name, particleset, initial_dump=True):
+    def __init__(self, name, particleset, initial_dump=True, time_origin=0):
         """Initialise netCDF4.Dataset for trajectory output.
 
         The output follows the format outlined in the Discrete
@@ -363,8 +363,11 @@ class ParticleFile(object):
         self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=0.)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        self.time.units = "seconds since 1970-01-01 00:00:00 0:00"
-        self.time.calendar = "julian"
+        if time_origin == 0:
+            self.time.units = "seconds"
+        else:
+            self.time.units = "seconds since " + str(time_origin)
+            self.time.calendar = "julian"
         self.time.axis = "T"
 
         self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=0.)
