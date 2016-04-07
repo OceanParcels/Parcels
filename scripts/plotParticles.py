@@ -33,8 +33,6 @@ def particleplotting(filename, recordedvar, backgroundfield, mode):
             if checkShape(bfile.variables[v]):
                 bVar = bfile.variables[v]
         bMax = np.max(bVar)
-        # Adjust particle time variable to sync with background field
-        time += bT[0]
 
     if mode == '3d':
         fig = plt.figure(1)
