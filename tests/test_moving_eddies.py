@@ -12,11 +12,8 @@ def moving_eddies_grid(xdim=200, ydim=350):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
-    The original test description can be found in: K. Doos,
-    J. Kjellsson and B. F. Jonsson. 2013 TRACMASS - A Lagrangian
-    Trajectory Model, in Preventive Methods for Coastal Protection,
-    T. Soomere and E. Quak (Eds.),
-    http://www.springer.com/gb/book/9783319004396
+    Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
+    artificially with uniform velocities. Velocities are calculated from geostrophy.
     """
     # Set NEMO grid variables
     depth = np.zeros(1, dtype=np.float32)
@@ -41,26 +38,27 @@ def moving_eddies_grid(xdim=200, ydim=350):
     # Some constants
     corio_0 = 1.e-4  # Coriolis parameter
     h0 = 1  # Max eddy height
-    sig = 30  # Eddy e-folding decay scale (in grid points)
+    sig = 0.5  # Eddy e-folding decay scale (in degrees)
     g = 10  # Gravitational constant
     eddyspeed = 0.1  # Translational speed in m/s
     dX = eddyspeed * 86400 / dx  # Grid cell movement of eddy max each day
+    dY = eddyspeed * 86400 / dy  # Grid cell movement of eddy max each day
 
     [x, y] = np.mgrid[:lon.size, :lat.size]
     for t in range(time.size):
-        hymax_1 = int(lat.size / 7)
-        hxmax_1 = int(.75 * lon.size) - dX * (t-2)
-        hymax_2 = int(3 * lat.size / 7) + dX * (t-2)
-        hxmax_2 = int(.75 * lon.size) - dX * (t-2)
+        hymax_1 = lat.size / 7.
+        hxmax_1 = .75 * lon.size - dX * t
+        hymax_2 = 3. * lat.size / 7. + dY * t
+        hxmax_2 = .75 * lon.size - dX * t
 
-        P[:, :, t] = h0 * np.exp(-((x-hxmax_1)**2+(y-hymax_1)**2)/sig**2)
-        P[:, :, t] += h0 * np.exp(-((x-hxmax_2)**2+(y-hymax_2)**2)/sig**2)
+        P[:, :, t] = h0 * np.exp(-(x-hxmax_1)**2/(sig*lon.size/4.)**2-(y-hymax_1)**2/(sig*lat.size/7.)**2)
+        P[:, :, t] += h0 * np.exp(-(x-hxmax_2)**2/(sig*lon.size/4.)**2-(y-hymax_2)**2/(sig*lat.size/7.)**2)
 
         V[:-1, :, t] = -np.diff(P[:, :, t], axis=0) / dx / corio_0 * g
         V[-1, :, t] = V[-2, :, t]  # Fill in the last column
 
         U[:, :-1, t] = np.diff(P[:, :, t], axis=1) / dy / corio_0 * g
-        V[:, -1, t] = U[:, -2, t]  # Fill in the last row
+        U[:, -1, t] = U[:, -2, t]  # Fill in the last row
 
     return Grid.from_data(U, lon, lat, V, lon, lat,
                           depth, time, field_data={'P': P})
@@ -89,7 +87,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
           % (npart, hours * substeps))
     pset.execute(method, timesteps=hours*substeps, dt=300.,
                  output_file=pset.ParticleFile(name="EddyParticle"),
-                 output_steps=substeps)
+                 output_steps=substeps, show_movie=False)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -101,8 +99,8 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 def test_moving_eddies_grid(mode):
     grid = moving_eddies_grid()
     pset = moving_eddies_example(grid, 2, mode=mode)
-    assert(pset[0].lon < 0.5 and 45.8 < pset[0].lat < 46.15)
-    assert(pset[1].lon < 0.5 and 50.4 < pset[1].lat < 50.7)
+    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
+    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
 
 
 if __name__ == "__main__":
