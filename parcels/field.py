@@ -85,7 +85,7 @@ class Field(object):
         time = np.concatenate(timeslices)
 
         # Pre-allocate grid data before reading files into buffer
-        data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
+        data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, dset in zip(timeslices, datasets):
             data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
