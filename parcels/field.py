@@ -78,7 +78,7 @@ class Field(object):
         lat = datasets[0][dimensions['lat']]
         lat = lat[:, 0] if len(lat.shape) > 1 else lat[:]
         # Default depth to zeros until we implement 3D grids properly
-        depth = datasets[0][dimensions['depth']]
+        depth = datasets[0][dimensions['depth']][:]
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = [dset[dimensions['time']][:] for dset in datasets]
