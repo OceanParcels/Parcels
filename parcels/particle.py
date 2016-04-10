@@ -34,6 +34,9 @@ def AdvectionEE(particle, grid, time, dt):
     v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
     particle.lon += u1 * f_lon
     particle.lat += v1 * f_lat
+    if hasattr(grid, 'W'):
+        w1 = grid.W[time, particle.lon, particle.lat, particle.dep]
+        particle.dep += -1.0 * w1 * dt  # TODO: Decide on direction of positive w
 
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):

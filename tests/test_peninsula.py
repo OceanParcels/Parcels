@@ -55,7 +55,7 @@ def peninsula_grid(xdim, ydim, zdim):
         P[:,:,z] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
         U[:,:,z] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
         V[:,:,z] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
-        W[:,:,z] = 1e4
+        W[:,:,z] = 1e-4
 
 
     # Set land points to NaN
@@ -197,7 +197,7 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid file set
-    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'})
+    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P', 'W': 'W'})
 
     if args.profiling:
         from cProfile import runctx
