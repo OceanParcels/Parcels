@@ -59,7 +59,7 @@ class Field(object):
         self.ccode_lat = self.name + "_lat"
 
         self.interpolator_cache = LRUCache(maxsize=2)
-        self.time_index_cache = LRUCache(maxsize=2)
+        self.find_higher_index_cache = LRUCache(maxsize=2)
 
     @classmethod
     def from_netcdf(cls, name, dimensions, datasets, **kwargs):
@@ -114,18 +114,19 @@ class Field(object):
             t1 = self.time[idx]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    @cachedmethod(operator.attrgetter('time_index_cache'))
-    def time_index(self, time):
-        time_index = self.time < time
-        if time_index.all():
-            # If given time > last known grid time, use
+    @cachedmethod(operator.attrgetter('find_higher_index_cache'))
+    def find_higher_index(self, field, var):
+        field = getattr(self, field)
+        index = field < var
+        if index.all():
+            # If given var > last known grid index, use
             # the last grid frame without interpolation
             return -1
         else:
-            return time_index.argmin()
+            return index.argmin()
 
     def eval(self, time, x, y, z):
-        idx = self.time_index(time)
+        idx = self.find_higher_index('time',time)
         if idx > 0:
             return self.interpolator1D(idx, time, y, x)
         elif self.depth.size == 1:
@@ -161,7 +162,7 @@ class Field(object):
 
     def show(self, **kwargs):
         t = kwargs.get('t', 0)
-        idx = self.time_index(t)
+        idx = self.find_higher_index('time',t)
         if self.time.size > 1:
             data = np.squeeze(self.interpolator1D(idx, t, None, None))
         else:
