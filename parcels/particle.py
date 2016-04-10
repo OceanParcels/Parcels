@@ -172,6 +172,7 @@ class ParticleSet(object):
     :param pclass: Optional class object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
+    :param time_origin: Time origin of the particles (taken from grid)
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
@@ -180,6 +181,7 @@ class ParticleSet(object):
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = ParticleType(pclass)
         self.kernel = None
+        self.time_origin = grid.time_origin
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
@@ -327,7 +329,7 @@ class ParticleSet(object):
 
 class ParticleFile(object):
 
-    def __init__(self, name, particleset, initial_dump=True, time_origin=0):
+    def __init__(self, name, particleset, initial_dump=True):
         """Initialise netCDF4.Dataset for trajectory output.
 
         The output follows the format outlined in the Discrete
@@ -363,10 +365,10 @@ class ParticleFile(object):
         self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=-9999.)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        if time_origin == 0:
+        if particleset.time_origin == 0:
             self.time.units = "seconds"
         else:
-            self.time.units = "seconds since " + str(time_origin)
+            self.time.units = "seconds since " + str(particleset.time_origin)
             self.time.calendar = "julian"
         self.time.axis = "T"
 
