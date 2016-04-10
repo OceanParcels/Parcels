@@ -1,4 +1,4 @@
-from netCDF4 import Dataset
+from netCDF4 import Dataset, num2date
 from parcels.field import Field
 from parcels.particle import ParticleSet
 from py import path
@@ -17,11 +17,12 @@ class Grid(object):
     :param time: Time coordinates of the grid
     :param fields: Dictionary of additional fields
     """
-    def __init__(self, U, V, depth, time, fields={}):
+    def __init__(self, U, V, depth, time, time_origin=0, fields={}):
         self.U = U
         self.V = V
         self.depth = depth
         self.time = time
+        self.time_origin = time_origin
         self.fields = fields
 
         # Add additional fields as attributes
@@ -78,7 +79,16 @@ class Grid(object):
             fields[var] = Field.from_netcdf(var, dimensions, dsets, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
-        return cls(u, v, u.depth, u.time, fields=fields)
+
+        # assign time_origin if the time dimension has units and calendar
+        try:
+            time_units = dsets[0][dimensions['time']].units
+            calendar = dsets[0][dimensions['time']].calendar
+            time_origin = num2date(0, time_units, calendar)
+        except:
+            time_origin = 0
+
+        return cls(u, v, u.depth, u.time, fields=fields, time_origin=time_origin)
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
