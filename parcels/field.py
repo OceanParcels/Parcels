@@ -88,7 +88,7 @@ class Field(object):
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, dset in zip(timeslices, datasets):
-            data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
+            data[tidx:, :, :, :] = dset[dimensions['data']][:, :, :, :]
             tidx += tslice.size
         return cls(name, data, lon, lat, depth=depth, time=time, **kwargs)
 
