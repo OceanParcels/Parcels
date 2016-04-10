@@ -52,11 +52,10 @@ def peninsula_grid(xdim, ydim, zdim):
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
     for z in range(zdim):
-        P[:,:,z] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-        U[:,:,z] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-        V[:,:,z] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
-        W[:,:,z] = 1e-4
-
+        P[:, :, z] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+        U[:, :, z] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+        V[:, :, z] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+        W[:, :, z] = 1e-4 * z
 
     # Set land points to NaN
     I = P >= 0.
@@ -68,7 +67,7 @@ def peninsula_grid(xdim, ydim, zdim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
     depth = Da
-    
+
     return Grid.from_data(U, lon, lat, V, lon, lat,
                           depth, time, field_data={'P': P, 'W': W})
 
@@ -104,15 +103,16 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         def __repr__(self):
             """Custom print function which overrides the built-in"""
             return "P(%.4f, %.4f, %.4f)[p=%.5f, p_start=%f]" % (self.lon, self.lat, self.dep,
-                                                          self.p, self.p_start)
+                                                                self.p, self.p_start)
 
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
-    z = (0, 5) # depth range
+    z = (0, 200)  # depth range
+
     pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0], z[0]), finish=(x, y[1], z[1]))
     for particle in pset:
-        particle.p_start = grid.P[0., particle.dep, particle.lon, particle.lat]
+        particle.p_start = grid.P[0., particle.lon, particle.lat, particle.dep]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)

@@ -95,10 +95,23 @@ class Field(object):
     def __getitem__(self, key):
         return self.eval(*key)
 
+    def interpolator3D(self, idx, time, z, y, x):
+        # First interpolate in the horizontal, then in the vertical
+        zdx = self.find_higher_index('depth', z)
+        f0 = self.interpolator2D(idx, z_idx=zdx-1).ev(y, x)
+        f1 = self.interpolator2D(idx, z_idx=zdx).ev(y, x)
+        z0 = self.depth[zdx-1]
+        z1 = self.depth[zdx]
+        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+
     @cachedmethod(operator.attrgetter('interpolator_cache'))
-    def interpolator2D(self, t_idx):
-        return RectBivariateSpline(self.lat, self.lon,
-                                   self.data[t_idx, :])
+    def interpolator2D(self, t_idx, z_idx=None):
+        if z_idx is None:
+            return RectBivariateSpline(self.lat, self.lon,
+                                       self.data[t_idx, :])
+        else:
+            return RectBivariateSpline(self.lat, self.lon,
+                                       self.data[t_idx, z_idx, :, :])
 
     def interpolator1D(self, idx, time, y, x):
         # Return linearly interpolated field value:
@@ -126,13 +139,13 @@ class Field(object):
             return index.argmin()
 
     def eval(self, time, x, y, z):
-        idx = self.find_higher_index('time',time)
+        idx = self.find_higher_index('time', time)
         if idx > 0:
             return self.interpolator1D(idx, time, y, x)
         elif self.depth.size == 1:
             return self.interpolator2D(idx).ev(y, x)
         else:
-            return self.interpolator3D(idx).ev(z, y, x)
+            return self.interpolator3D(idx, time, z, y, x)
 
     def ccode_subscript(self, t, x, y, z):
         ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, %s)" \
@@ -162,7 +175,7 @@ class Field(object):
 
     def show(self, **kwargs):
         t = kwargs.get('t', 0)
-        idx = self.find_higher_index('time',t)
+        idx = self.find_higher_index('time', t)
         if self.time.size > 1:
             data = np.squeeze(self.interpolator1D(idx, t, None, None))
         else:
