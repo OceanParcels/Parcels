@@ -30,8 +30,8 @@ def AdvectionRK4(particle, grid, time, dt):
 def AdvectionEE(particle, grid, time, dt):
     f_lat = dt / 1000. / 1.852 / 60.
     f_lon = f_lat / math.cos(particle.lat*math.pi/180)
-    u1 = grid.U[time, particle.lon, particle.lat]
-    v1 = grid.V[time, particle.lon, particle.lat]
+    u1 = grid.U[time, particle.lon, particle.lat, particle.dep]
+    v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
     particle.lon += u1 * f_lon
     particle.lat += v1 * f_lat
 
@@ -75,11 +75,13 @@ class Particle(object):
     """
     user_vars = OrderedDict()
 
-    def __init__(self, lon, lat, grid, cptr=None):
+    def __init__(self, lon, lat, dep, grid, cptr=None):
         self.lon = lon
         self.lat = lat
+        self.dep = dep
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
+        self.zi = np.where(self.dep >= grid.U.depth)[0][-1]
         self.active = 1
 
         for var in self.user_vars:
@@ -172,10 +174,11 @@ class ParticleSet(object):
     :param pclass: Optional class object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
+    :param dep: List of initial depth values for particles
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
-                 lon=None, lat=None, start=None, finish=None, start_field=None):
+                 lon=None, lat=None, dep=None, start=None, finish=None, start_field=None):
         self.grid = grid
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = ParticleType(pclass)
@@ -196,6 +199,7 @@ class ParticleSet(object):
             assert(lon is None and lat is None)
             lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
             lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+            dep = np.linspace(start[2], finish[2], size, dtype=np.float32)
 
         if start_field is not None:
             lon, lat = positions_from_density_field(size, start_field)
@@ -205,7 +209,7 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i))
+                self.particles[i] = pclass(lon[i], lat[i], dep[i], grid=grid, cptr=cptr(i))
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
@@ -375,11 +379,11 @@ class ParticleFile(object):
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=0.)
-        self.z.long_name = ""
-        self.z.standard_name = "depth"
-        self.z.units = "m"
-        self.z.positive = "down"
+        self.dep = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.dep.long_name = ""
+        self.dep.standard_name = "depth"
+        self.dep.units = "m"
+        self.dep.positive = "down"
 
         if particleset.ptype.user_vars is not None:
             self.user_vars = particleset.ptype.user_vars.keys()
@@ -404,9 +408,9 @@ class ParticleFile(object):
             # Write multiple particles at once
             pset = data
             self.time[:, self.idx] = time
+            self.dep[:, self.idx] = np.array([p.dep for p in pset])
             self.lat[:, self.idx] = np.array([p.lat for p in pset])
             self.lon[:, self.idx] = np.array([p.lon for p in pset])
-            self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
             for var in self.user_vars:
                 getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
         else:

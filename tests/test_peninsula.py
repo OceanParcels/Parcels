@@ -74,7 +74,7 @@ def peninsula_grid(xdim, ydim, zdim):
 
 
 def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
+    particle.p = grid.P[time, particle.lon, particle.lat, particle.dep]
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
@@ -103,15 +103,16 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
 
         def __repr__(self):
             """Custom print function which overrides the built-in"""
-            return "P(%.4f, %.4f)[p=%.5f, p_start=%f]" % (self.lon, self.lat,
+            return "P(%.4f, %.4f, %.4f)[p=%.5f, p_start=%f]" % (self.lon, self.lat, self.dep,
                                                           self.p, self.p_start)
 
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
-    pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
+    z = (0, 5) # depth range
+    pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0], z[0]), finish=(x, y[1], z[1]))
     for particle in pset:
-        particle.p_start = grid.P[0., particle.lon, particle.lat]
+        particle.p_start = grid.P[0., particle.dep, particle.lon, particle.lat]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)

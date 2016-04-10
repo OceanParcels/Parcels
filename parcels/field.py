@@ -40,7 +40,7 @@ class Field(object):
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
         if self.depth.size > 1:
-            self.data = self.data.reshape((self.time.size, self.depth.size, 
+            self.data = self.data.reshape((self.time.size, self.depth.size,
                                            self.lat.size, self.lon.size))
         else:
             self.data = self.data.reshape((self.time.size, self.lat.size, self.lon.size))
@@ -124,16 +124,18 @@ class Field(object):
         else:
             return time_index.argmin()
 
-    def eval(self, time, x, y):
+    def eval(self, time, x, y, z):
         idx = self.time_index(time)
         if idx > 0:
             return self.interpolator1D(idx, time, y, x)
-        else:
+        elif self.depth.size == 1:
             return self.interpolator2D(idx).ev(y, x)
+        else:
+            return self.interpolator3D(idx).ev(z, y, x)
 
-    def ccode_subscript(self, t, x, y):
-        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
-                % (y, x, "particle->yi", "particle->xi", t, self.name)
+    def ccode_subscript(self, t, x, y, z):
+        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, %s)" \
+                % (z, y, x, "particle->zi", "particle->yi", "particle->xi", t, self.name)
         return ccode
 
     @property
