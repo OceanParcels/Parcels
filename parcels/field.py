@@ -7,6 +7,7 @@ from xray import DataArray, Dataset
 import operator
 import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
+from netCDF4 import num2date
 
 
 __all__ = ['Field']
@@ -23,13 +24,14 @@ class Field(object):
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None):
+                 transpose=False, vmin=None, vmax=None, time_origin=0):
         self.name = name
         self.data = data
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        self.time_origin = time_origin
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -80,13 +82,22 @@ class Field(object):
         timeslices = [dset[dimensions['time']][:] for dset in datasets]
         time = np.concatenate(timeslices)
 
+        # assign time_origin if the time dimension has units and calendar
+        try:
+            time_units = dset[dimensions['time']].units
+            calendar = dset[dimensions['time']].calendar
+            time_origin = num2date(0, time_units, calendar)
+        except:
+            time_origin = 0
+
         # Pre-allocate grid data before reading files into buffer
         data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, dset in zip(timeslices, datasets):
             data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
             tidx += tslice.size
-        return cls(name, data, lon, lat, depth=depth, time=time, **kwargs)
+        return cls(name, data, lon, lat, depth=depth, time=time,
+                   time_origin=time_origin, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)
