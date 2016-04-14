@@ -178,8 +178,12 @@ class Field(object):
         idx = self.find_higher_index('time', t)
         if self.time.size > 1:
             data = np.squeeze(self.interpolator1D(idx, t, None, None))
+        elif self.data.ndim == 3:
+            data = np.squeeze(self.data[0, :, :])
+        elif self.data.ndim == 4:
+            data = np.squeeze(self.data[0, 0, :, :])
         else:
-            data = np.squeeze(self.data)
+            data = self.data
         vmin = kwargs.get('vmin', data.min())
         vmax = kwargs.get('vmax', data.max())
         cs = plt.contourf(self.lon, self.lat, data,
