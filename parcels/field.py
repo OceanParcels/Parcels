@@ -84,8 +84,8 @@ class Field(object):
 
         # assign time_origin if the time dimension has units and calendar
         try:
-            time_units = dset[dimensions['time']].units
-            calendar = dset[dimensions['time']].calendar
+            time_units = datasets[0][dimensions['time']].units
+            calendar = datasets[0][dimensions['time']].calendar
             time_origin = num2date(0, time_units, calendar)
         except:
             time_origin = 0
