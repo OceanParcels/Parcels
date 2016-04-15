@@ -157,7 +157,7 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'grid', 'time', 'dt']
+    kernel_vars = ['particle', 'grid', 'time', 'dt', 'output_time', 'tol']
     array_vars = []
 
     def __init__(self, grid, ptype):
@@ -194,7 +194,8 @@ class KernelGenerator(ast.NodeVisitor):
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
-                c.Value("double", "time"), c.Value("float", "dt")]
+                c.Value("double", "time"), c.Value("float", "dt"),
+                c.Value("double", "output_time"), c.Value("float", "tol")]
         for field, _ in self.field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
 
@@ -379,7 +380,7 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, kernel_ast):
+    def generate(self, funcname, field_args, kernel_ast, adaptive=False):
         ccode = []
 
         # Add include for Parcels and math header
@@ -397,16 +398,21 @@ class LoopGenerator(object):
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
                 c.Value("int", "timesteps"), c.Value("double", "time"),
-                c.Value("float", "dt")]
+                c.Value("float", "dt"), c.Value("double", "output_time"),
+                c.Value("float", "tol")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-        fargs_str = ", ".join(['time', 'dt'] + list(field_args.keys()))
+        fargs_str = ", ".join(['time', 'dt', 'output_time', 'tol'] + list(field_args.keys()))
         loop_body = [c.Statement("%s(&(particles[p]), %s)" %
                                  (funcname, fargs_str))]
         loop_body = [c.If("particles[p].active", c.Block(loop_body))]
-        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
-        tloop = c.For("t = 0", "t < timesteps", "++t",
-                      c.Block([ploop, c.Statement("time += (double)dt")]))
+        if adaptive:
+            ploop = c.While("ceil(particles[p].time) < floor(output_time)", c.Block(loop_body))
+            tloop = c.For("p = 0", "p < num_particles", "++p", c.Block([ploop]))
+        else:
+            ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
+            tloop = c.For("t = 0", "t < timesteps", "++t",
+                          c.Block([ploop, c.Statement("time += (double)dt")]))
         fbody = c.Block([c.Value("int", "p, t"), tloop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
