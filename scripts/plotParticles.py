@@ -116,7 +116,7 @@ if __name__ == "__main__":
                    help='Name of variable to display in background field')
     p.add_argument('-c', '--colourmap', type=str, default='jet',
                    help='Colourmap for field data')
-    p.add_argument('-s', '--size', type=str, default='none',
+    p.add_argument('-s', '--size', type=int, default='none',
                    help='Size of drawn particles and tracks')
     p.add_argument('-l', '--landdraw', type=bool, default=False,
                    help='Boolean for whether to draw land using mpl.basemap package')
