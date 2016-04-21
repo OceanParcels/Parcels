@@ -152,7 +152,7 @@ def test_pset_remove_kernel(grid, mode, npart=100):
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
-    pset.execute(pset.Kernel(DeleteKernel), timesteps=1, dt=1.0)
+    pset.execute(pset.Kernel(DeleteKernel), starttime=0., endtime=1., dt=1.0)
     assert(pset.size == 40)
 
 
@@ -166,7 +166,7 @@ def test_pset_multi_execute(grid, mode, npart=10, n=5):
                             lat=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
-        pset.execute(k_add, timesteps=1, dt=1.0)
+        pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
@@ -181,6 +181,6 @@ def test_pset_multi_execute_delete(grid, mode, npart=10, n=5):
                             lat=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
-        pset.execute(k_add, timesteps=1, dt=1.0)
+        pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
         pset.remove(-1)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
