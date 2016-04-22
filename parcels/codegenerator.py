@@ -164,6 +164,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.grid = grid
         self.ptype = ptype
         self.field_args = OrderedDict()
+        # Hack alert: JIT requires U field to update grid indexes
+        self.field_args['U'] = grid.U
 
     def generate(self, py_ast, funcvars):
         # Untangle Pythonic tuple-assignment statements
