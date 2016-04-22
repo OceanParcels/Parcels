@@ -288,7 +288,8 @@ class ParticleSet(object):
             if show_movie:
                 self.show(field=show_movie, t=current)
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
-        self.remove(to_remove)
+        if len(to_remove) > 0:
+            self.remove(to_remove)
 
     def show(self, **kwargs):
         field = kwargs.get('field', True)
