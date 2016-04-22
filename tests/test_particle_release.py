@@ -50,9 +50,10 @@ if __name__ == "__main__":
     pset = grid.ParticleSet(size=args.particles, pclass=ParticleClass,
                             start_field=grid.Start)
 
-    hours = 25*24
-    substeps = 12
+    endtime = 25*24*3600
+    dt = 800
+    output_interval = 12 * dt
 
-    pset.execute(AdvectionRK4, timesteps=hours*substeps, dt=800.,
+    pset.execute(AdvectionRK4, endtime=endtime, dt=dt,
                  output_file=pset.ParticleFile(name="ReleaseTestParticle"),
-                 output_steps=substeps)
+                 output_interval=output_interval)

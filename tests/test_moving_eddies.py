@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
+from datetime import timedelta as td
 
 
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
@@ -81,16 +82,49 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
         print("Initial particle positions:\n%s" % pset)
 
     # Execte for 25 days, with 5min timesteps and hourly output
-    hours = 25*24
-    substeps = 12
-    print("MovingEddies: Advecting %d particles for %d timesteps"
-          % (npart, hours * substeps))
-    pset.execute(method, timesteps=hours*substeps, dt=300.,
+    endtime = td(days=25).total_seconds()
+    dt = td(minutes=5).total_seconds()
+    output_interval = td(hours=1).total_seconds()
+    print("MovingEddies: Advecting %d particles for %d seconds"
+          % (npart, endtime))
+    pset.execute(method, endtime=endtime, dt=dt,
                  output_file=pset.ParticleFile(name="EddyParticle"),
-                 output_steps=substeps, show_movie=False)
+                 output_interval=output_interval, show_movie=False)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
+
+    return pset
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_moving_eddies_fwdbwd(mode, npart=2):
+    method = AdvectionRK4
+    grid = moving_eddies_grid()
+
+    # Determine particle class according to mode
+    ParticleClass = JITParticle if mode == 'jit' else Particle
+
+    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+                            start=(3.3, 46.), finish=(3.3, 47.8))
+
+    # Execte for 14 days, with 30sec timesteps and hourly output
+    endtime = td(days=14).total_seconds()
+    output_interval = td(hours=1).total_seconds()
+    dt = td(seconds=30).total_seconds()
+    print("MovingEddies: Advecting %d particles for %d seconds"
+          % (npart, endtime))
+    pset.execute(method, starttime=0, endtime=endtime, dt=dt,
+                 output_file=pset.ParticleFile(name="EddyParticlefwd"),
+                 output_interval=output_interval)
+
+    print("Now running in backward time mode")
+    pset.execute(method, starttime=endtime, endtime=0, dt=-dt,
+                 output_file=pset.ParticleFile(name="EddyParticlebwd"),
+                 output_interval=output_interval)
+
+    assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
+    assert(pset[1].lon > 3.2 and 47.7 < pset[1].lat < 47.9)
 
     return pset
 
