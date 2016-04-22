@@ -154,3 +154,17 @@ def test_pset_remove_kernel(grid, mode, npart=100):
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     pset.execute(pset.Kernel(DeleteKernel), timesteps=1, dt=1.0)
     assert(pset.size == 40)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_multi_execute(grid, mode, npart=2, n=5):
+    def AddLat(particle, grid, time, dt):
+        particle.lat += 0.1
+
+    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+                            lon=np.linspace(0, 1, npart, dtype=np.float32),
+                            lat=np.zeros(npart, dtype=np.float32))
+    k_add = pset.Kernel(AddLat)
+    for _ in range(n):
+        pset.execute(k_add, timesteps=1, dt=1.0)
+    assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
