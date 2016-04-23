@@ -330,7 +330,7 @@ class ParticleSet(object):
         else:
             if not isinstance(field, Field):
                 field = getattr(self.grid, field)
-            field.show(**kwargs)
+            field.show(animation=True, **kwargs)
             namestr = ' on ' + field.name
         if field.time_origin == 0:
             timestr = ' after ' + str(datetime.timedelta(seconds=t)) + ' hours'

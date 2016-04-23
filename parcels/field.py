@@ -166,6 +166,7 @@ class Field(object):
 
     def show(self, **kwargs):
         t = kwargs.get('t', 0)
+        animation = kwargs.get('animation', False)
         idx = self.time_index(t)
         if self.time.size > 1:
             data = np.squeeze(self.interpolator1D(idx, t, None, None))
@@ -179,6 +180,8 @@ class Field(object):
         cs.cmap.set_under('w')
         cs.set_clim(vmin, vmax)
         plt.colorbar(cs)
+        if not animation:
+            plt.show()
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
