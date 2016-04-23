@@ -296,7 +296,7 @@ class ParticleSet(object):
         timesteps = int((endtime - starttime) / dt)
 
         # Check if output is required and compute outer leaps
-        if output_file is None or output_interval <= 0:
+        if output_interval <= 0:
             output_steps = timesteps
         else:
             output_steps = abs(int(output_interval / dt))
