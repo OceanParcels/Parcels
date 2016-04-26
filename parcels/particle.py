@@ -6,7 +6,7 @@ import netCDF4
 from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 import math
-import datetime
+from datetime import timedelta as delta
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -276,6 +276,15 @@ class ParticleSet(object):
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
 
+        if isinstance(starttime, delta):
+            starttime = starttime.total_seconds()
+        if isinstance(endtime, delta):
+            endtime = endtime.total_seconds()
+        if isinstance(dt, delta):
+            dt = dt.total_seconds()
+        if isinstance(output_interval, delta):
+            output_interval = output_interval.total_seconds()
+
         # Check if starttime, endtime and dt are consistent and compute timesteps
         if starttime is None:
             if dt > 0:
@@ -296,7 +305,7 @@ class ParticleSet(object):
         timesteps = int((endtime - starttime) / dt)
 
         # Check if output is required and compute outer leaps
-        if output_file is None or output_interval <= 0:
+        if output_interval <= 0:
             output_steps = timesteps
         else:
             output_steps = abs(int(output_interval / dt))
@@ -330,12 +339,12 @@ class ParticleSet(object):
         else:
             if not isinstance(field, Field):
                 field = getattr(self.grid, field)
-            field.show(**kwargs)
+            field.show(animation=True, **kwargs)
             namestr = ' on ' + field.name
         if field.time_origin == 0:
-            timestr = ' after ' + str(datetime.timedelta(seconds=t)) + ' hours'
+            timestr = ' after ' + str(delta(seconds=t)) + ' hours'
         else:
-            timestr = ' on ' + str(field.time_origin + datetime.timedelta(seconds=t))
+            timestr = ' on ' + str(field.time_origin + delta(seconds=t))
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
         plt.title('Particles' + namestr + timestr)
