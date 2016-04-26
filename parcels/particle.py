@@ -172,6 +172,7 @@ class ParticleSet(object):
     :param pclass: Optional class object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
+    :param time_origin: Time origin of the particles (taken from grid)
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
@@ -180,6 +181,7 @@ class ParticleSet(object):
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = ParticleType(pclass)
         self.kernel = None
+        self.time_origin = grid.U.time_origin
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
@@ -330,9 +332,13 @@ class ParticleSet(object):
                 field = getattr(self.grid, field)
             field.show(**kwargs)
             namestr = ' on ' + field.name
+        if field.time_origin == 0:
+            timestr = ' after ' + str(datetime.timedelta(seconds=t)) + ' hours'
+        else:
+            timestr = ' on ' + str(field.time_origin + datetime.timedelta(seconds=t))
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
-        plt.title('Particles' + namestr + ' after ' + str(datetime.timedelta(seconds=t)) + ' hours')
+        plt.title('Particles' + namestr + timestr)
         plt.show()
         plt.pause(0.0001)
 
@@ -378,26 +384,29 @@ class ParticleFile(object):
         self.trajectory[:] = np.arange(particleset.size, dtype=np.int32)
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=0.)
+        self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=np.nan)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        self.time.units = "seconds since 1970-01-01 00:00:00 0:00"
-        self.time.calendar = "julian"
+        if particleset.time_origin == 0:
+            self.time.units = "seconds"
+        else:
+            self.time.units = "seconds since " + str(particleset.time_origin)
+            self.time.calendar = "julian"
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=np.nan)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.lon = self.dataset.createVariable("lon", "f4", ("trajectory", "obs"), fill_value=np.nan)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=np.nan)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"
