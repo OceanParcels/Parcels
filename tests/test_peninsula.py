@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import numpy as np
 import math  # NOQA
 import pytest
-from datetime import timedelta as td
+from datetime import timedelta as delta
 
 
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
@@ -113,16 +113,13 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         print("Initial particle positions:\n%s" % pset)
 
     # Advect the particles for 24h
-    time = td(hours=24).total_seconds()
-    dt = td(seconds=36).total_seconds()
-    output_interval = td(hours=1).total_seconds() if output else -1
-    out = pset.ParticleFile(name="MyParticle") if output else None
-    print("Peninsula: Advecting %d particles for %d seconds"
-          % (npart, time))
+    time = delta(hours=24)
+    print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    pset.execute(k_adv + k_p, endtime=time, dt=dt,
-                 output_file=out, output_interval=output_interval)
+    pset.execute(k_adv + k_p, endtime=time, dt=delta(seconds=36),
+                 output_file=pset.ParticleFile(name="MyParticle") if output else None,
+                 output_interval=delta(hours=1) if output else -1)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
