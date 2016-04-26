@@ -117,7 +117,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    pset.execute(k_adv + k_p, endtime=time, dt=delta(seconds=36),
+    pset.execute(k_adv + k_p, endtime=time, dt=delta(minutes=5),
                  output_file=pset.ParticleFile(name="MyParticle") if output else None,
                  output_interval=delta(hours=1) if output else -1)
 
@@ -127,7 +127,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     return pset
 
 
-@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
     grid = peninsula_grid(100, 50)

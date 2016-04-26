@@ -107,7 +107,7 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
 
     # Execte for 14 days, with 30sec timesteps and hourly output
     endtime = delta(days=14)
-    dt = delta(seconds=30)
+    dt = delta(minutes=5)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
     pset.execute(method, starttime=0, endtime=endtime, dt=dt,
                  output_file=pset.ParticleFile(name="EddyParticlefwd"),
