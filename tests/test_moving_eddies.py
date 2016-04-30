@@ -75,7 +75,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
     ParticleClass = JITParticle if mode == 'jit' else Particle
 
     pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
-                            start=(3.3, 46.), finish=(3.3, 47.8))
+                            start=(3.3, 46., 0.), finish=(3.3, 47.8, 0.))
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
