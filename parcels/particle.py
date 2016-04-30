@@ -23,6 +23,8 @@ def AdvectionRK4(particle, grid, time, dt):
     if hasattr(grid, 'W'):
         w1 = grid.W[time, particle.lon, particle.lat, particle.dep] * posvertdir
         dep1 = particle.dep + w1*.5*dt
+    else:
+        dep1 = particle.dep
     u2 = grid.U[time + .5 * dt, lon1, lat1, dep1]
     lon2 = particle.lon + u2*.5*f_lon
     v2 = grid.V[time + .5 * dt, lon1, lat1, dep1]
@@ -30,6 +32,8 @@ def AdvectionRK4(particle, grid, time, dt):
     if hasattr(grid, 'W'):
         w2 = grid.W[time + .5 * dt, lon1, lat1, dep1] * posvertdir
         dep2 = particle.dep + w2*.5*dt
+    else:
+        dep2 = particle.dep
     u3 = grid.U[time + .5 * dt, lon2, lat2, dep2]
     lon3 = particle.lon + u3*f_lon
     v3 = grid.V[time + .5 * dt, lon2, lat2, dep2]
@@ -37,13 +41,16 @@ def AdvectionRK4(particle, grid, time, dt):
     if hasattr(grid, 'W'):
         w3 = grid.W[time + .5 * dt, lon2, lat2, dep2] * posvertdir
         dep3 = particle.dep + w3*.5*dt
+    else:
+        dep3 = particle.dep
     u4 = grid.U[time + dt, lon3, lat3, dep3]
     v4 = grid.V[time + dt, lon3, lat3, dep3]
     if hasattr(grid, 'W'):
         w4 = grid.W[time + dt, lon3, lat3, dep3] * posvertdir
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f_lon
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f_lat
-    particle.dep += (w1 + 2*w2 + 2*w3 + w4) / 6. * dt
+    if hasattr(grid, 'W'):
+        particle.dep += (w1 + 2*w2 + 2*w3 + w4) / 6. * dt
 
 
 def AdvectionEE(particle, grid, time, dt):
