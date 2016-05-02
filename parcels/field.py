@@ -7,9 +7,39 @@ from xray import DataArray, Dataset
 import operator
 import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
+from netCDF4 import num2date
 
 
-__all__ = ['Field']
+__all__ = ['CentralDifferences', 'Field']
+
+
+def CentralDifferences(field_data, lat, lon):
+    r = 6.371e6  # radius of the earth
+    deg2rd = np.pi / 180
+    dy = r * np.diff(lat) * deg2rd
+    # calculate the width of each cell, dependent on lon spacing and latitude
+    dx = np.zeros([len(lon)-1, len(lat)], dtype=np.float32)
+    for x in range(len(lon))[1:]:
+        for y in range(len(lat)):
+            dx[x-1, y] = r * np.cos(lat[y] * deg2rd) * (lon[x]-lon[x-1]) * deg2rd
+    # calculate central differences for non-edge cells (with equal weighting)
+    dVdx = np.zeros(shape=np.shape(field_data), dtype=np.float32)
+    dVdy = np.zeros(shape=np.shape(field_data), dtype=np.float32)
+    for x in range(len(lon))[1:-1]:
+        for y in range(len(lat)):
+            dVdx[x, y] = (field_data[x+1, y] - field_data[x-1, y]) / (2 * dx[x-1, y])
+    for x in range(len(lon)):
+        for y in range(len(lat))[1:-1]:
+            dVdy[x, y] = (field_data[x, y+1] - field_data[x, y-1]) / (2 * dy[y-1])
+    # Forward and backward difference for edges
+    for x in range(len(lon)):
+        dVdy[x, 0] = (field_data[x, 1] - field_data[x, 0]) / dy[0]
+        dVdy[x, len(lat)-1] = (field_data[x, len(lat)-1] - field_data[x, len(lat)-2]) / dy[len(lat)-2]
+    for y in range(len(lat)):
+        dVdx[0, y] = (field_data[1, y] - field_data[0, y]) / dx[0, y]
+        dVdx[len(lon)-1, y] = (field_data[len(lon)-1, y] - field_data[len(lon)-2, y]) / dx[len(lon)-2, y]
+
+    return [dVdx, dVdy]
 
 
 class Field(object):
@@ -23,13 +53,14 @@ class Field(object):
     """
 
     def __init__(self, name, data, lon, lat, depth, time=None,
-                 transpose=False, vmin=None, vmax=None):
+                 transpose=False, vmin=None, vmax=None, time_origin=0):
         self.name = name
         self.data = data
         self.lon = lon
         self.lat = lat
         self.depth = depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        self.time_origin = time_origin
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -84,16 +115,58 @@ class Field(object):
         timeslices = [dset[dimensions['time']][:] for dset in datasets]
         time = np.concatenate(timeslices)
 
+        # assign time_origin if the time dimension has units and calendar
+        try:
+            time_units = datasets[0][dimensions['time']].units
+            calendar = datasets[0][dimensions['time']].calendar
+            time_origin = num2date(0, time_units, calendar)
+        except:
+            time_origin = 0
+
         # Pre-allocate grid data before reading files into buffer
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, dset in zip(timeslices, datasets):
             data[tidx:, :, :, :] = dset[dimensions['data']][:, :, :, :]
             tidx += tslice.size
-        return cls(name, data, lon, lat, depth=depth, time=time, **kwargs)
+        return cls(name, data, lon, lat, depth=depth, time=time,
+                   time_origin=time_origin, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)
+
+    def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
+        if name is None:
+            name = 'd' + self.name
+
+        if timerange is None:
+            time_i = range(len(self.time))
+            time = self.time
+        else:
+            time_i = range(np.where(self.time >= timerange[0])[0][0], np.where(self.time <= timerange[1])[0][-1]+1)
+            time = self.time[time_i]
+        if lonrange is None:
+            lon_i = range(len(self.lon))
+            lon = self.lon
+        else:
+            lon_i = range(np.where(self.lon >= lonrange[0])[0][0], np.where(self.lon <= lonrange[1])[0][-1]+1)
+            lon = self.lon[lon_i]
+        if latrange is None:
+            lat_i = range(len(self.lat))
+            lat = self.lat
+        else:
+            lat_i = range(np.where(self.lat >= latrange[0])[0][0], np.where(self.lat <= latrange[1])[0][-1]+1)
+            lat = self.lat[lat_i]
+
+        dVdx = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
+        dVdy = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
+        for t in np.nditer(np.int32(time_i)):
+            grad = CentralDifferences(np.transpose(self.data[t, :, :][np.ix_(lat_i, lon_i)]), lat, lon)
+            dVdx[t, :, :] = np.array(np.transpose(grad[0]))
+            dVdy[t, :, :] = np.array(np.transpose(grad[1]))
+
+        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time),
+                Field(name + '_dy', dVdy, lon, lat, self.depth, time)])
 
     def interpolator3D(self, idx, time, z, y, x):
         # First interpolate in the horizontal, then in the vertical
@@ -175,6 +248,7 @@ class Field(object):
 
     def show(self, **kwargs):
         t = kwargs.get('t', 0)
+        animation = kwargs.get('animation', False)
         idx = self.find_higher_index('time', t)
         if self.time.size > 1:
             data = np.squeeze(self.interpolator1D(idx, t, None, None))
@@ -192,6 +266,8 @@ class Field(object):
         cs.cmap.set_under('w')
         cs.set_clim(vmin, vmax)
         plt.colorbar(cs)
+        if not animation:
+            plt.show()
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))

@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from parcels.field import Field
 import numpy as np
 from parcels.particle import Particle, JITParticle, AdvectionRK4
+from datetime import timedelta as delta
 
 
 def CreateInitialPositionField(grid):
@@ -50,9 +51,7 @@ if __name__ == "__main__":
     pset = grid.ParticleSet(size=args.particles, pclass=ParticleClass,
                             start_field=grid.Start)
 
-    hours = 25*24
-    substeps = 12
-
-    pset.execute(AdvectionRK4, timesteps=hours*substeps, dt=800.,
+    dt = delta(seconds=800)
+    pset.execute(AdvectionRK4, endtime=delta(days=25), dt=dt,
                  output_file=pset.ParticleFile(name="ReleaseTestParticle"),
-                 output_steps=substeps)
+                 output_interval=12 * dt)

@@ -6,7 +6,7 @@ import netCDF4
 from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 import math
-import datetime
+from datetime import timedelta as delta
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -205,6 +205,7 @@ class ParticleSet(object):
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
     :param dep: List of initial depth values for particles
+    :param time_origin: Time origin of the particles (taken from grid)
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
@@ -213,6 +214,7 @@ class ParticleSet(object):
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = ParticleType(pclass)
         self.kernel = None
+        self.time_origin = grid.U.time_origin
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
@@ -283,18 +285,18 @@ class ParticleSet(object):
         self.particles = np.delete(self.particles, indices)
         return particles
 
-    def execute(self, pyfunc=AdvectionRK4, time=None, dt=1., timesteps=1,
-                output_file=None, show_movie=False, output_steps=-1):
+    def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
+                output_file=None, output_interval=-1, show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
 
         :param pyfunc: Kernel funtion to execute
-        :param time: Starting time for the timestepping loop
+        :param starttime: Starting time for the timestepping loop
+        :param endtime: End time for the timestepping loop
         :param dt: Timestep interval to be passed to the kernel
-        :param timesteps: Number of individual timesteps to execute
         :param output_file: ParticleFile object for particle output
-        :param output_steps: Size of output intervals in timesteps
+        :param output_interval: Size of output intervals in seconds
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -308,21 +310,52 @@ class ParticleSet(object):
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
 
+        if isinstance(starttime, delta):
+            starttime = starttime.total_seconds()
+        if isinstance(endtime, delta):
+            endtime = endtime.total_seconds()
+        if isinstance(dt, delta):
+            dt = dt.total_seconds()
+        if isinstance(output_interval, delta):
+            output_interval = output_interval.total_seconds()
+
+        # Check if starttime, endtime and dt are consistent and compute timesteps
+        if starttime is None:
+            if dt > 0:
+                starttime = self.grid.time[0]
+            else:
+                starttime = self.grid.time[-1]
+        if endtime is None:
+            if dt > 0:
+                endtime = self.grid.time[-1]
+            else:
+                endtime = self.grid.time[0]
+        if endtime < starttime and dt > 0:
+            dt = -1. * dt
+            print("negating dt because running in time-backward mode")
+        if endtime > starttime and dt < 0:
+            dt = -1. * dt
+            print("negating dt because running in time-forward mode")
+        timesteps = int((endtime - starttime) / dt)
+
         # Check if output is required and compute outer leaps
-        if output_file is None or output_steps <= 0:
+        if output_interval <= 0:
             output_steps = timesteps
+        else:
+            output_steps = abs(int(output_interval / dt))
         timeleaps = int(timesteps / output_steps)
         # Execute kernel in sub-stepping intervals (leaps)
-        current = time or self.grid.time[0]
+        current = starttime
         for _ in range(timeleaps):
-            self.kernel.execute(self, output_steps, current, dt)
+            self.kernel.execute(self, int(output_steps), current, dt)
             current += output_steps * dt
             if output_file:
                 output_file.write(self, current)
             if show_movie:
                 self.show(field=show_movie, t=current)
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
-        self.remove(to_remove)
+        if len(to_remove) > 0:
+            self.remove(to_remove)
 
     def show(self, **kwargs):
         field = kwargs.get('field', True)
@@ -340,11 +373,15 @@ class ParticleSet(object):
         else:
             if not isinstance(field, Field):
                 field = getattr(self.grid, field)
-            field.show(**kwargs)
+            field.show(animation=True, **kwargs)
             namestr = ' on ' + field.name
+        if field.time_origin == 0:
+            timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+        else:
+            timestr = ' on ' + str(field.time_origin + delta(seconds=t))
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
-        plt.title('Particles' + namestr + ' after ' + str(datetime.timedelta(seconds=t)) + ' hours')
+        plt.title('Particles' + namestr + timestr)
         plt.show()
         plt.pause(0.0001)
 
@@ -390,26 +427,29 @@ class ParticleFile(object):
         self.trajectory[:] = np.arange(particleset.size, dtype=np.int32)
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=0.)
+        self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=np.nan)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        self.time.units = "seconds since 1970-01-01 00:00:00 0:00"
-        self.time.calendar = "julian"
+        if particleset.time_origin == 0:
+            self.time.units = "seconds"
+        else:
+            self.time.units = "seconds since " + str(particleset.time_origin)
+            self.time.calendar = "julian"
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.lat = self.dataset.createVariable("lat", "f4", ("trajectory", "obs"), fill_value=np.nan)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.lon = self.dataset.createVariable("lon", "f4", ("trajectory", "obs"), fill_value=np.nan)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.dep = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=0.)
+        self.dep = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=np.nan)
         self.dep.long_name = ""
         self.dep.standard_name = "depth"
         self.dep.units = "m"

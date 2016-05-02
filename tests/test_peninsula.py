@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import numpy as np
 import math  # NOQA
 import pytest
+from datetime import timedelta as delta
 
 
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
@@ -113,16 +114,13 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         print("Initial particle positions:\n%s" % pset)
 
     # Advect the particles for 24h
-    time = 24 * 3600.
-    dt = 36.
-    substeps = 100 if output else -1
-    out = pset.ParticleFile(name="MyParticle") if output else None
-    print("Peninsula: Advecting %d particles for %d timesteps"
-          % (npart, int(time / dt)))
+    time = delta(hours=24)
+    print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    pset.execute(k_adv + k_p, timesteps=int(time / dt), dt=dt,
-                 output_file=out, output_steps=substeps)
+    pset.execute(k_adv + k_p, endtime=time, dt=delta(minutes=5),
+                 output_file=pset.ParticleFile(name="MyParticle") if output else None,
+                 output_interval=delta(hours=1) if output else -1)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -130,7 +128,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     return pset
 
 
-@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
     grid = peninsula_grid(100, 50)
