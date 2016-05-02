@@ -14,9 +14,9 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle',
 
 def AdvectionRK4(particle, grid, time, dt):
     if hasattr(grid, 'W'):
-        AdvectionRK4_2D(particle, grid, time, dt)
-    else:
         AdvectionRK4_3D(particle, grid, time, dt)
+    else:
+        AdvectionRK4_2D(particle, grid, time, dt)
 
 
 def AdvectionRK4_2D(particle, grid, time, dt):

@@ -103,7 +103,7 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
     ParticleClass = JITParticle if mode == 'jit' else Particle
 
     pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
-                            start=(3.3, 46.), finish=(3.3, 47.8))
+                            start=(3.3, 46., 0.), finish=(3.3, 47.8, 0.))
 
     # Execte for 14 days, with 30sec timesteps and hourly output
     endtime = delta(days=14)
