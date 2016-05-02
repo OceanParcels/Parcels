@@ -2,6 +2,7 @@ from parcels import Grid, Particle, JITParticle, AdvectionRK4
 from argparse import ArgumentParser
 import numpy as np
 import pytest
+from datetime import timedelta as delta
 
 
 def generate_vertvel_grid(zdim, wvel, xdim=20, ydim=20, tdim=1):
@@ -28,11 +29,11 @@ def test_vertvel(mode):
     ParticleClass = JITParticle if mode == 'jit' else Particle
     pset = grid.ParticleSet(1, pclass=ParticleClass, start=(0, 0, 0.), finish=(0, 0, 0.))
 
-    time = 24 * 3600.
-    dt = 5*60.
+    time = delta(days=1)
+    dt = delta(minutes=5)
     k_adv = pset.Kernel(AdvectionRK4)
-    pset.execute(k_adv, timesteps=int(time / dt), dt=dt)
-    err_adv = np.array([abs(-p.dep - wvel*time) for p in pset])
+    pset.execute(k_adv, endtime=time, dt=dt)
+    err_adv = np.array([abs(-p.dep - wvel*time.total_seconds()) for p in pset])
     assert(err_adv <= 1.e-3).all()
 
 

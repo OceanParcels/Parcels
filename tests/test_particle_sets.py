@@ -177,7 +177,8 @@ def test_pset_multi_execute(grid, mode, npart=10, n=5):
 
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
-                            lat=np.zeros(npart, dtype=np.float32))
+                            lat=np.zeros(npart, dtype=np.float32),
+                            dep=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
         pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
