@@ -53,8 +53,14 @@ class UnitConverter(object):
     def to_target(self, value, x, y):
         return value
 
+    def ccode_to_target(self, x, y):
+        return "1.0"
+
     def to_source(self, value, x, y):
         return value
+
+    def ccode_to_source(self, x, y):
+        return "1.0"
 
 
 class Geographic(UnitConverter):
@@ -64,6 +70,9 @@ class Geographic(UnitConverter):
 
     def to_target(self, value, x, y):
         return value / 1000. / 1.852 / 60.
+
+    def ccode_to_target(self, x, y):
+        return "(1.0 / (1000.0 * 1.852 * 60.0))"
 
 
 class GeographicPolar(UnitConverter):
@@ -75,6 +84,9 @@ class GeographicPolar(UnitConverter):
 
     def to_target(self, value, x, y):
         return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
+
+    def ccode_to_target(self, x, y):
+        return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
 
 
 class Field(object):
@@ -238,8 +250,9 @@ class Field(object):
         return self.units.to_target(value, x, y)
 
     def ccode_subscript(self, t, x, y):
-        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
-                % (y, x, "particle->yi", "particle->xi", t, self.name)
+        ccode = "%s * temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
+                % (self.units.ccode_to_target(x, y),
+                   y, x, "particle->yi", "particle->xi", t, self.name)
         return ccode
 
     @property
