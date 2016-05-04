@@ -47,7 +47,6 @@ Compilation command: %s
 Source file: %s
 Log file: %s""" % (" ".join(cc), src, logfile.name)
                 raise RuntimeError(err)
-        print("Compiled: %s" % str(obj))
 
 
 class GNUCompiler(Compiler):

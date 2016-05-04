@@ -8,6 +8,7 @@ from ast import parse, FunctionDef, Module
 import inspect
 from copy import deepcopy
 import re
+from hashlib import md5
 
 
 re_indent = re.compile(r"^(\s+)")
@@ -61,15 +62,10 @@ class Kernel(object):
 
         self.name = "%s%s" % (ptype.name, self.funcname)
 
-        cachedir = get_cache_dir()
-        self.src_file = str(path.join(cachedir, "%s.c" % self.name))
-        self.lib_file = str(path.join(cachedir, "%s.so" % self.name))
-        self.log_file = str(path.join(cachedir, "%s.log" % self.name))
-        self._lib = None
-
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
             kernelgen = KernelGenerator(grid, ptype)
+            self.field_args = kernelgen.field_args
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
@@ -78,11 +74,25 @@ class Kernel(object):
                                           self.field_args,
                                           kernel_ccode)
 
+            basename = path.join(get_cache_dir(), self._cache_key)
+            self.src_file = "%s.c" % basename
+            self.lib_file = "%s.so" % basename
+            self.log_file = "%s.log" % basename
+        self._lib = None
+
+    @property
+    def _cache_key(self):
+        field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
+                               for name, field in self.field_args.items()])
+        key = self.name + field_keys
+        return md5(key.encode('utf-8')).hexdigest()
+
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
         with open(self.src_file, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
+        print("Compiled %s ==> %s" % (self.name, self.lib_file))
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
