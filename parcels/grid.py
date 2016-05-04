@@ -1,8 +1,9 @@
 from netCDF4 import Dataset
-from parcels.field import Field
+from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 from parcels.particle import ParticleSet
 from py import path
 from glob import glob
+from collections import defaultdict
 
 
 __all__ = ['Grid']
@@ -30,7 +31,8 @@ class Grid(object):
 
     @classmethod
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
-                  depth, time, field_data={}, transpose=True, **kwargs):
+                  depth, time, field_data={}, transpose=True,
+                  u_units=None, v_units=None, **kwargs):
         """Initialise Grid object from raw data
 
         :param data_u: Zonal velocity data
@@ -44,9 +46,11 @@ class Grid(object):
         """
         # Create velocity fields
         ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
-                       time=time, transpose=transpose, **kwargs)
+                       time=time, transpose=transpose,
+                       units=u_units, **kwargs)
         vfield = Field('V', data_v, lon_v, lat_v, depth=depth,
-                       time=time, transpose=transpose, **kwargs)
+                       time=time, transpose=transpose,
+                       units=v_units, **kwargs)
         # Create additional data fields
         fields = {}
         for name, data in field_data.items():
@@ -55,7 +59,8 @@ class Grid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, **kwargs):
+    def from_netcdf(cls, filenames, variables, dimensions,
+                    units=defaultdict(UnitConverter), **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -75,13 +80,15 @@ class Grid(object):
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
             dimensions['data'] = name
-            fields[var] = Field.from_netcdf(var, dimensions, dsets, **kwargs)
+            fields[var] = Field.from_netcdf(var, dimensions, dsets,
+                                            units=units[var], **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
+                  u_units=GeographicPolar(), v_units=Geographic(),
                   extra_vars={}, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
@@ -93,8 +100,10 @@ class Grid(object):
         extra_vars.update({'U': uvar, 'V': vvar})
         filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
                           for v in extra_vars.keys()])
+        units = defaultdict(UnitConverter)
+        units.update({'U': u_units, 'V': v_units})
         return cls.from_netcdf(filenames, variables=extra_vars,
-                               dimensions=dimensions, **kwargs)
+                               dimensions=dimensions, units=units, **kwargs)
 
     def add_field(self, field):
         self.fields.update({field.name: field})
