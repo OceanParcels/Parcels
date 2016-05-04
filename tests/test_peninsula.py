@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE, Geographic, GeographicPolar
 from argparse import ArgumentParser
 import numpy as np
 import math  # NOQA
@@ -65,8 +65,8 @@ def peninsula_grid(xdim, ydim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
 
-    return Grid.from_data(U, lon, lat, V, lon, lat,
-                          depth, time, field_data={'P': P})
+    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P},
+                          u_units=GeographicPolar(), v_units=Geographic())
 
 
 def UpdateP(particle, grid, time, dt):
