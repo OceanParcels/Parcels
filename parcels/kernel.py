@@ -1,5 +1,6 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
-from py import path
+from parcels.compiler import get_cache_dir
+from os import path
 import math  # NOQA get flake8 to ignore unused import.
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -60,9 +61,10 @@ class Kernel(object):
 
         self.name = "%s%s" % (ptype.name, self.funcname)
 
-        self.src_file = str(path.local("%s.c" % self.name))
-        self.lib_file = str(path.local("%s.so" % self.name))
-        self.log_file = str(path.local("%s.log" % self.name))
+        cachedir = get_cache_dir()
+        self.src_file = str(path.join(cachedir, "%s.c" % self.name))
+        self.lib_file = str(path.join(cachedir, "%s.so" % self.name))
+        self.log_file = str(path.join(cachedir, "%s.log" % self.name))
         self._lib = None
 
         # Generate the kernel function and add the outer loop
