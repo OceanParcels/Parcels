@@ -1,6 +1,7 @@
 from netCDF4 import Dataset
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 from parcels.particle import ParticleSet
+import numpy as np
 from py import path
 from glob import glob
 from collections import defaultdict
@@ -31,7 +32,7 @@ class Grid(object):
 
     @classmethod
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
-                  depth, time, field_data={}, transpose=True,
+                  depth=None, time=None, field_data={}, transpose=True,
                   u_units=None, v_units=None, **kwargs):
         """Initialise Grid object from raw data
 
@@ -44,6 +45,8 @@ class Grid(object):
         :param depth: Depth coordinates of the grid
         :param time: Time coordinates of the grid
         """
+        depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        time = np.zeros(1, dtype=np.float64) if time is None else time
         # Create velocity fields
         ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
                        time=time, transpose=transpose,
