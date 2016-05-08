@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, Geographic, GeographicPolar
+from parcels import Grid, Particle, JITParticle, AdvectionRK4
 import numpy as np
 import pytest
 from datetime import timedelta as delta
@@ -24,8 +24,7 @@ def test_advection_zonal(lon, lat, mode, npart=10):
     """
     U = np.ones((lon.size, lat.size), dtype=np.float32)
     V = np.zeros((lon.size, lat.size), dtype=np.float32)
-    grid = Grid.from_data(U, lon, lat, V, lon, lat,
-                          u_units=GeographicPolar(), v_units=Geographic())
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
 
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.zeros(npart, dtype=np.float32) + 20.,
@@ -41,8 +40,7 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     """
     U = np.zeros((lon.size, lat.size), dtype=np.float32)
     V = np.ones((lon.size, lat.size), dtype=np.float32)
-    grid = Grid.from_data(U, lon, lat, V, lon, lat,
-                          u_units=GeographicPolar(), v_units=Geographic())
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
 
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.linspace(-60, 60, npart, dtype=np.float32),

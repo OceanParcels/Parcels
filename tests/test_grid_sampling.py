@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, Geographic, GeographicPolar
+from parcels import Grid, Particle, JITParticle, Geographic
 import numpy as np
 import pytest
 from math import cos, pi
@@ -16,7 +16,8 @@ def grid(xdim=200, ydim=100):
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
     return Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
-                          np.array(V, dtype=np.float32), lon, lat)
+                          np.array(V, dtype=np.float32), lon, lat,
+                          mesh='flat')
 
 
 @pytest.fixture
@@ -48,9 +49,8 @@ def grid_geometric_polar(xdim=200, ydim=100):
     U *= 1000. * 1.852 * 60.
     V *= 1000. * 1.852 * 60.
     grid = Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
-                          np.array(V, dtype=np.float32), lon, lat)
-    grid.U.units = GeographicPolar()
-    grid.V.units = Geographic()
+                          np.array(V, dtype=np.float32), lon, lat,
+                          mesh='spherical')
     return grid
 
 

@@ -10,6 +10,18 @@ from collections import defaultdict
 __all__ = ['Grid']
 
 
+def unit_converters(mesh):
+    if mesh == 'spherical':
+        u_units = GeographicPolar()
+        v_units = Geographic()
+    elif mesh == 'flat':
+        u_units = None
+        v_units = None
+    else:
+        raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
+    return u_units, v_units
+
+
 class Grid(object):
     """Grid class used to generate and read NEMO output files
 
@@ -33,7 +45,7 @@ class Grid(object):
     @classmethod
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
                   depth=None, time=None, field_data={}, transpose=True,
-                  u_units=None, v_units=None, **kwargs):
+                  mesh='spherical', **kwargs):
         """Initialise Grid object from raw data
 
         :param data_u: Zonal velocity data
@@ -44,9 +56,15 @@ class Grid(object):
         :param lat_v: Latitude coordinates of the V components
         :param depth: Depth coordinates of the grid
         :param time: Time coordinates of the grid
+        :param mesh: String indicating the type of mesh coordinates and
+                     units used during velocity interpolation:
+                       * sperical (default): Lat and lon in degree, with a
+                         correction for zonal velocity U near the poles.
+                       * flat: No conversion, lat/lon are assumed to be in m.
         """
         depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         time = np.zeros(1, dtype=np.float64) if time is None else time
+        u_units, v_units = unit_converters(mesh)
         # Create velocity fields
         ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
                        time=time, transpose=transpose,
@@ -63,7 +81,7 @@ class Grid(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions,
-                    units=defaultdict(UnitConverter), **kwargs):
+                    mesh='spherical', **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -72,7 +90,16 @@ class Grid(object):
         names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
         lat, depth, time, data) to dimensions in the netCF file(s).
+        :param mesh: String indicating the type of mesh coordinates and
+                     units used during velocity interpolation:
+                       * sperical (default): Lat and lon in degree, with a
+                         correction for zonal velocity U near the poles.
+                       * flat: No conversion, lat/lon are assumed to be in m.
         """
+        # Determine unit converters for all fields
+        u_units, v_units = unit_converters(mesh)
+        units = defaultdict(UnitConverter)
+        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
@@ -91,7 +118,6 @@ class Grid(object):
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
-                  u_units=GeographicPolar(), v_units=Geographic(),
                   extra_vars={}, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
@@ -103,10 +129,8 @@ class Grid(object):
         extra_vars.update({'U': uvar, 'V': vvar})
         filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
                           for v in extra_vars.keys()])
-        units = defaultdict(UnitConverter)
-        units.update({'U': u_units, 'V': v_units})
         return cls.from_netcdf(filenames, variables=extra_vars,
-                               dimensions=dimensions, units=units, **kwargs)
+                               dimensions=dimensions, **kwargs)
 
     def add_field(self, field):
         self.fields.update({field.name: field})
