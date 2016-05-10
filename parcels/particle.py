@@ -143,7 +143,7 @@ class ParticleType(object):
         self.uses_jit = issubclass(pclass, JITParticle)
         self.var_types = None
         if self.uses_jit:
-            self.var_types = pclass.base_vars
+            self.var_types = pclass.base_vars.copy()
             self.var_types.update(pclass.user_vars)
 
         self.user_vars = pclass.user_vars
