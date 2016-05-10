@@ -252,7 +252,7 @@ class Field(object):
     def ccode_subscript(self, t, x, y):
         ccode = "%s * temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
                 % (self.units.ccode_to_target(x, y),
-                   y, x, "particle->yi", "particle->xi", t, self.name)
+                   x, y, "particle->xi", "particle->yi", t, self.name)
         return ccode
 
     @property
@@ -269,9 +269,9 @@ class Field(object):
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
-        cstruct = CField(self.lat.size, self.lon.size, self.time.size, 0,
-                         self.lat.ctypes.data_as(POINTER(c_float)),
+        cstruct = CField(self.lon.size, self.lat.size, self.time.size, 0,
                          self.lon.ctypes.data_as(POINTER(c_float)),
+                         self.lat.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
