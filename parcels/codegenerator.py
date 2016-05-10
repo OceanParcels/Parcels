@@ -372,6 +372,14 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_Print(self, node):
+        for n in node.values:
+            self.visit(n)
+        node.ccode = c.Statement('printf(%s)' % ", ".join([n.ccode for n in node.values]))
+
+    def visit_Str(self, node):
+        node.ccode = node.s
+
 
 class LoopGenerator(object):
     """Code generator class that adds type definitions and the outer
