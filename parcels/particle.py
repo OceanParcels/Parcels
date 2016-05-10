@@ -141,6 +141,7 @@ class ParticleType(object):
 
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
+        self.var_types = None
         if self.uses_jit:
             self.var_types = pclass.base_vars
             self.var_types.update(pclass.user_vars)
@@ -148,7 +149,7 @@ class ParticleType(object):
         self.user_vars = pclass.user_vars
 
     def __repr__(self):
-        return "PType<self.name>"
+        return "PType<%s>::%s" % (self.name, str(self.var_types))
 
     @property
     def dtype(self):
