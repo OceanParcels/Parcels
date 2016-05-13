@@ -171,7 +171,10 @@ class Field(object):
         data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, dset in zip(timeslices, datasets):
-            data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
+            if len(dset[dimensions['data']].shape) == 3:
+                data[tidx:, 0, :, :] = dset[dimensions['data']][:, :, :]
+            else:
+                data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
             tidx += tslice.size
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
