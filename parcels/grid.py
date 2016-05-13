@@ -105,6 +105,8 @@ class Grid(object):
             # Resolve all matching paths for the current variable
             basepath = path.local(filenames[var])
             paths = [path.local(fp) for fp in glob(str(basepath))]
+            if len(paths) == 0:
+                raise IOError("Grid files not found: %s" % str(basepath))
             for fp in paths:
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
