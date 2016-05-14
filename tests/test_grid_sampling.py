@@ -172,10 +172,10 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
 
-    assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-7)
-    assert(pset[0].lon - lonstart[0] < 1e-7)
-    assert(pset[1].lat - (latstart[1] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-7)
-    assert(pset[1].lon - lonstart[1] < 1e-7)
+    assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
+    assert(pset[0].lon - lonstart[0] < 1e-4)
+    assert(pset[1].lat - (latstart[1] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
+    assert(pset[1].lon - lonstart[1] < 1e-4)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -202,9 +202,9 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
     pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
 
-    assert(pset[0].lat - latstart[0] < 1e-7)
+    assert(pset[0].lat - latstart[0] < 1e-4)
     assert(pset[0].lon - (lonstart[0] + endtime.total_seconds() * maxvel / 1852 / 60
-                          / cos(latstart[0] * pi / 180)) < 1e-7)
-    assert(pset[1].lat - latstart[1] < 1e-7)
+                          / cos(latstart[0] * pi / 180)) < 1e-4)
+    assert(pset[1].lat - latstart[1] < 1e-4)
     assert(pset[1].lon - (lonstart[1] + endtime.total_seconds() * maxvel / 1852 / 60
-                          / cos(latstart[1] * pi / 180)) < 1e-7)
+                          / cos(latstart[1] * pi / 180)) < 1e-4)
