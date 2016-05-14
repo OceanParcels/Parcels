@@ -1,7 +1,8 @@
-from parcels import Grid, Particle, JITParticle, Geographic
+from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4
 import numpy as np
 import pytest
 from math import cos, pi
+from datetime import timedelta as delta
 
 
 ptype = {'scipy': Particle, 'jit': JITParticle}
@@ -146,3 +147,64 @@ def test_grid_sample_geographic_polar(grid_geometric_polar, mode, samplefunc, np
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
     # large sampling error for the JIT correction.
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-2)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
+    """ Create uniform NORTHWARD flow on sperical earth and advect particles
+
+    As flow is so simple, it can be directly compared to analytical solution
+    """
+
+    maxvel = 1.
+    lon = np.linspace(-180, 180, xdim, dtype=np.float32)
+    lat = np.linspace(-90, 90, ydim, dtype=np.float32)
+    U = np.zeros([xdim, ydim])
+    V = maxvel * np.ones([xdim, ydim])
+
+    grid = Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
+                          np.array(V, dtype=np.float32), lon, lat,
+                          mesh='spherical')
+
+    lonstart = [0, 45]
+    latstart = [0, 45]
+    endtime = delta(hours=24)
+    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
+
+    assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-7)
+    assert(pset[0].lon - lonstart[0] < 1e-7)
+    assert(pset[1].lat - (latstart[1] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-7)
+    assert(pset[1].lon - lonstart[1] < 1e-7)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_zonalflow_sperical(mode, xdim=100, ydim=200):
+    """ Create uniform EASTWARD flow on sperical earth and advect particles
+
+    As flow is so simple, it can be directly compared to analytical solution
+    Note that in this case the cosine conversion is needed
+    """
+
+    maxvel = 1.
+    lon = np.linspace(-180, 180, xdim, dtype=np.float32)
+    lat = np.linspace(-90, 90, ydim, dtype=np.float32)
+    V = np.zeros([xdim, ydim])
+    U = maxvel * np.ones([xdim, ydim])
+
+    grid = Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
+                          np.array(V, dtype=np.float32), lon, lat,
+                          mesh='spherical')
+
+    lonstart = [0, 45]
+    latstart = [0, 45]
+    endtime = delta(hours=24)
+    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
+
+    assert(pset[0].lat - latstart[0] < 1e-7)
+    assert(pset[0].lon - (lonstart[0] + endtime.total_seconds() * maxvel / 1852 / 60
+                          / cos(latstart[0] * pi / 180)) < 1e-7)
+    assert(pset[1].lat - latstart[1] < 1e-7)
+    assert(pset[1].lon - (lonstart[1] + endtime.total_seconds() * maxvel / 1852 / 60
+                          / cos(latstart[1] * pi / 180)) < 1e-7)
