@@ -163,8 +163,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     V = maxvel * np.ones([xdim, ydim])
 
     grid = Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
-                          np.array(V, dtype=np.float32), lon, lat,
-                          mesh='spherical')
+                          np.array(V, dtype=np.float32), lon, lat)
 
     lonstart = [0, 45]
     latstart = [0, 45]
@@ -193,8 +192,7 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
     U = maxvel * np.ones([xdim, ydim])
 
     grid = Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
-                          np.array(V, dtype=np.float32), lon, lat,
-                          mesh='spherical')
+                          np.array(V, dtype=np.float32), lon, lat)
 
     lonstart = [0, 45]
     latstart = [0, 45]
