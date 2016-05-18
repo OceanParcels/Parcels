@@ -152,6 +152,10 @@ class ParticleType(object):
         return "PType<%s>::%s" % (self.name, str(self.var_types))
 
     @property
+    def _cache_key(self):
+        return"-".join(["%s:%s" % v for v in self.var_types.items()])
+
+    @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
         return np.dtype(list(self.var_types.items()))
