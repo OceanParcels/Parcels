@@ -85,6 +85,9 @@ class Particle(object):
         for var in self.user_vars:
             setattr(self, var, 0)
 
+        for var in self.user_vars:
+            setattr(self, var, 0)
+
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
@@ -250,6 +253,26 @@ class ParticleSet(object):
             self._particle_data = np.delete(self._particle_data, indices)
         self.particles = np.delete(self.particles, indices)
         return particles
+
+    def density(self, lon=None, lat=None):
+        if lon is None:
+            lon = self.grid.U.lon
+        if lat is None:
+            lat = self.grid.U.lat
+        Density = np.zeros((lon.size, lat.size), dtype=np.float32)
+        Area = np.zeros(np.shape(Density), dtype=np.float32)
+
+        dx = (lon[1] - lon[0]) * 1852 * 60 * np.cos(lat*math.pi/180)
+        dy = (lat[1] - lat[0]) * 1852 * 60
+        for y in range(len(lat)):
+            Area[0:len(lon), y] = dy * dx[y]
+
+        # For each particle, find closest vertex in x and y
+        for p in self.particles:
+            Density[np.argmin(np.abs(p.lon - lon)), np.argmin(np.abs(p.lat - lat))] += 1
+        # Scale by cell area
+        Density /= Area
+        return Density
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
                 output_file=None, output_interval=-1, show_movie=False):
