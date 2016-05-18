@@ -221,8 +221,8 @@ class Field(object):
             return self.interpolator3D(idx, time, z, y, x)
 
     def ccode_subscript(self, t, x, y, z):
-        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, %s)" \
-                % (z, y, x, "particle->zi", "particle->yi", "particle->xi", t, self.name)
+        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
+                % (y, x, "particle->yi", "particle->xi", t, self.name)
         return ccode
 
     @property
