@@ -5,7 +5,6 @@ import numpy as np
 import netCDF4
 from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
-import math
 from datetime import timedelta as delta
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
@@ -13,27 +12,23 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle',
 
 
 def AdvectionRK4(particle, grid, time, dt):
-    f_lat = dt / 1000. / 1.852 / 60.
-    f_lon = f_lat / math.cos(particle.lat*math.pi/180)
     u1 = grid.U[time, particle.lon, particle.lat]
     v1 = grid.V[time, particle.lon, particle.lat]
-    lon1, lat1 = (particle.lon + u1*.5*f_lon, particle.lat + v1*.5*f_lat)
+    lon1, lat1 = (particle.lon + u1*.5*dt, particle.lat + v1*.5*dt)
     u2, v2 = (grid.U[time + .5 * dt, lon1, lat1], grid.V[time + .5 * dt, lon1, lat1])
-    lon2, lat2 = (particle.lon + u2*.5*f_lon, particle.lat + v2*.5*f_lat)
+    lon2, lat2 = (particle.lon + u2*.5*dt, particle.lat + v2*.5*dt)
     u3, v3 = (grid.U[time + .5 * dt, lon2, lat2], grid.V[time + .5 * dt, lon2, lat2])
-    lon3, lat3 = (particle.lon + u3*f_lon, particle.lat + v3*f_lat)
+    lon3, lat3 = (particle.lon + u3*dt, particle.lat + v3*dt)
     u4, v4 = (grid.U[time + dt, lon3, lat3], grid.V[time + dt, lon3, lat3])
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * f_lon
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * f_lat
+    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
+    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
 
 
 def AdvectionEE(particle, grid, time, dt):
-    f_lat = dt / 1000. / 1.852 / 60.
-    f_lon = f_lat / math.cos(particle.lat*math.pi/180)
     u1 = grid.U[time, particle.lon, particle.lat]
     v1 = grid.V[time, particle.lon, particle.lat]
-    particle.lon += u1 * f_lon
-    particle.lat += v1 * f_lat
+    particle.lon += u1 * dt
+    particle.lat += v1 * dt
 
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
@@ -146,14 +141,19 @@ class ParticleType(object):
 
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
+        self.var_types = None
         if self.uses_jit:
-            self.var_types = pclass.base_vars
+            self.var_types = pclass.base_vars.copy()
             self.var_types.update(pclass.user_vars)
 
         self.user_vars = pclass.user_vars
 
     def __repr__(self):
-        return "PType<self.name>"
+        return "PType<%s>::%s" % (self.name, str(self.var_types))
+
+    @property
+    def _cache_key(self):
+        return"-".join(["%s:%s" % v for v in self.var_types.items()])
 
     @property
     def dtype(self):
@@ -305,7 +305,7 @@ class ParticleSet(object):
         timesteps = int((endtime - starttime) / dt)
 
         # Check if output is required and compute outer leaps
-        if output_interval <= 0:
+        if output_interval <= 0 or output_interval > abs(endtime-starttime):
             output_steps = timesteps
         else:
             output_steps = abs(int(output_interval / dt))

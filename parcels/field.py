@@ -8,9 +8,10 @@ import operator
 import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import num2date
+from math import cos, pi
 
 
-__all__ = ['CentralDifferences', 'Field']
+__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 
 
 def CentralDifferences(field_data, lat, lon):
@@ -42,6 +43,52 @@ def CentralDifferences(field_data, lat, lon):
     return [dVdx, dVdy]
 
 
+class UnitConverter(object):
+    """ Interface class for spatial unit conversion during field sampling
+        that performs no conversion.
+    """
+    source_unit = None
+    target_unit = None
+
+    def to_target(self, value, x, y):
+        return value
+
+    def ccode_to_target(self, x, y):
+        return "1.0"
+
+    def to_source(self, value, x, y):
+        return value
+
+    def ccode_to_source(self, x, y):
+        return "1.0"
+
+
+class Geographic(UnitConverter):
+    """ Unit converter from geometric to geographic coordinates (m to degree) """
+    source_unit = 'm'
+    target_unit = 'degree'
+
+    def to_target(self, value, x, y):
+        return value / 1000. / 1.852 / 60.
+
+    def ccode_to_target(self, x, y):
+        return "(1.0 / (1000.0 * 1.852 * 60.0))"
+
+
+class GeographicPolar(UnitConverter):
+    """ Unit converter from geometric to geographic coordinates (m to degree)
+        with a correction to account for narrower grid cells closer to the poles.
+    """
+    source_unit = 'm'
+    target_unit = 'degree'
+
+    def to_target(self, value, x, y):
+        return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
+
+    def ccode_to_target(self, x, y):
+        return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -53,7 +100,7 @@ class Field(object):
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None, time_origin=0):
+                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None):
         self.name = name
         self.data = data
         self.lon = lon
@@ -61,6 +108,7 @@ class Field(object):
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         self.time_origin = time_origin
+        self.units = units if units is not None else UnitConverter()
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -196,13 +244,15 @@ class Field(object):
     def eval(self, time, x, y):
         idx = self.time_index(time)
         if idx > 0:
-            return self.interpolator1D(idx, time, y, x)
+            value = self.interpolator1D(idx, time, y, x)
         else:
-            return self.interpolator2D(idx).ev(y, x)
+            value = self.interpolator2D(idx).ev(y, x)
+        return self.units.to_target(value, x, y)
 
     def ccode_subscript(self, t, x, y):
-        ccode = "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
-                % (y, x, "particle->yi", "particle->xi", t, self.name)
+        ccode = "%s * temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
+                % (self.units.ccode_to_target(x, y),
+                   x, y, "particle->xi", "particle->yi", t, self.name)
         return ccode
 
     @property
@@ -219,9 +269,9 @@ class Field(object):
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
-        cstruct = CField(self.lat.size, self.lon.size, self.time.size, 0,
-                         self.lat.ctypes.data_as(POINTER(c_float)),
+        cstruct = CField(self.lon.size, self.lat.size, self.time.size, 0,
                          self.lon.ctypes.data_as(POINTER(c_float)),
+                         self.lat.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct

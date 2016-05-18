@@ -1,11 +1,25 @@
 from netCDF4 import Dataset
-from parcels.field import Field
+from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 from parcels.particle import ParticleSet
+import numpy as np
 from py import path
 from glob import glob
+from collections import defaultdict
 
 
 __all__ = ['Grid']
+
+
+def unit_converters(mesh):
+    if mesh == 'spherical':
+        u_units = GeographicPolar()
+        v_units = Geographic()
+    elif mesh == 'flat':
+        u_units = None
+        v_units = None
+    else:
+        raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
+    return u_units, v_units
 
 
 class Grid(object):
@@ -30,7 +44,8 @@ class Grid(object):
 
     @classmethod
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
-                  depth, time, field_data={}, transpose=True, **kwargs):
+                  depth=None, time=None, field_data={}, transpose=True,
+                  mesh='spherical', **kwargs):
         """Initialise Grid object from raw data
 
         :param data_u: Zonal velocity data
@@ -41,12 +56,22 @@ class Grid(object):
         :param lat_v: Latitude coordinates of the V components
         :param depth: Depth coordinates of the grid
         :param time: Time coordinates of the grid
+        :param mesh: String indicating the type of mesh coordinates and
+                     units used during velocity interpolation:
+                       * sperical (default): Lat and lon in degree, with a
+                         correction for zonal velocity U near the poles.
+                       * flat: No conversion, lat/lon are assumed to be in m.
         """
+        depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        time = np.zeros(1, dtype=np.float64) if time is None else time
+        u_units, v_units = unit_converters(mesh)
         # Create velocity fields
         ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
-                       time=time, transpose=transpose, **kwargs)
+                       time=time, transpose=transpose,
+                       units=u_units, **kwargs)
         vfield = Field('V', data_v, lon_v, lat_v, depth=depth,
-                       time=time, transpose=transpose, **kwargs)
+                       time=time, transpose=transpose,
+                       units=v_units, **kwargs)
         # Create additional data fields
         fields = {}
         for name, data in field_data.items():
@@ -55,7 +80,8 @@ class Grid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, **kwargs):
+    def from_netcdf(cls, filenames, variables, dimensions,
+                    mesh='spherical', **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -64,7 +90,16 @@ class Grid(object):
         names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
         lat, depth, time, data) to dimensions in the netCF file(s).
+        :param mesh: String indicating the type of mesh coordinates and
+                     units used during velocity interpolation:
+                       * sperical (default): Lat and lon in degree, with a
+                         correction for zonal velocity U near the poles.
+                       * flat: No conversion, lat/lon are assumed to be in m.
         """
+        # Determine unit converters for all fields
+        u_units, v_units = unit_converters(mesh)
+        units = defaultdict(UnitConverter)
+        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
@@ -75,7 +110,8 @@ class Grid(object):
                     raise IOError("Grid file not found: %s" % str(fp))
             dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
             dimensions['data'] = name
-            fields[var] = Field.from_netcdf(var, dimensions, dsets, **kwargs)
+            fields[var] = Field.from_netcdf(var, dimensions, dsets,
+                                            units=units[var], **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, u.depth, u.time, fields=fields)

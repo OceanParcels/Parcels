@@ -65,8 +65,7 @@ def peninsula_grid(xdim, ydim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
 
-    return Grid.from_data(U, lon, lat, V, lon, lat,
-                          depth, time, field_data={'P': P})
+    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P})
 
 
 def UpdateP(particle, grid, time, dt):
