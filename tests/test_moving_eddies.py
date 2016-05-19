@@ -131,6 +131,23 @@ def test_moving_eddies_grid(mode):
     assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
 
 
+@pytest.fixture(scope='module')
+def gridfile():
+    """Generate grid files for moving_eddies test"""
+    filename = 'moving_eddies'
+    grid = moving_eddies_grid(200, 350)
+    grid.write(filename)
+    return filename
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_moving_eddies_file(gridfile, mode):
+    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'})
+    pset = moving_eddies_example(grid, 2, mode=mode)
+    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
+    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
+
+
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
