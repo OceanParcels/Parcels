@@ -3,11 +3,11 @@ from cachetools import cachedmethod, LRUCache
 from collections import Iterable
 from py import path
 import numpy as np
-from xray import DataArray, Dataset
+import xray
 import operator
 import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
-from netCDF4 import num2date
+from netCDF4 import Dataset, num2date
 from math import cos, pi
 
 
@@ -137,7 +137,7 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, datasets, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
@@ -146,35 +146,29 @@ class Field(object):
         containing field data. If multiple datasets are present they
         will be concatenated along the time axis
         """
-        if not isinstance(datasets, Iterable):
-            datasets = [datasets]
-        lon = datasets[0][dimensions['lon']]
-        lon = lon[0, :] if len(lon.shape) > 1 else lon[:]
-        lat = datasets[0][dimensions['lat']]
-        lat = lat[:, 0] if len(lat.shape) > 1 else lat[:]
+        if not isinstance(filenames, Iterable):
+            filenames = [filenames]
+        with FileBuffer(filenames[0], dimensions) as filebuffer:
+            lon = filebuffer.lon
+            lat = filebuffer.lat
+            # Assign time_origin if the time dimension has units and calendar
+            time_origin = filebuffer.time_origin
         # Default depth to zeros until we implement 3D grids properly
         depth = np.zeros(1, dtype=np.float32)
         # Concatenate time variable to determine overall dimension
         # across multiple files
-        timeslices = [dset[dimensions['time']][:] for dset in datasets]
+        timeslices = []
+        for fname in filenames:
+            with FileBuffer(fname, dimensions) as filebuffer:
+                timeslices.append(filebuffer.time)
         time = np.concatenate(timeslices)
-
-        # assign time_origin if the time dimension has units and calendar
-        try:
-            time_units = datasets[0][dimensions['time']].units
-            calendar = datasets[0][dimensions['time']].calendar
-            time_origin = num2date(0, time_units, calendar)
-        except:
-            time_origin = 0
 
         # Pre-allocate grid data before reading files into buffer
         data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
         tidx = 0
-        for tslice, dset in zip(timeslices, datasets):
-            if len(dset[dimensions['data']].shape) == 3:
-                data[tidx:, 0, :, :] = dset[dimensions['data']][:, :, :]
-            else:
-                data[tidx:, 0, :, :] = dset[dimensions['data']][:, 0, :, :]
+        for tslice, fname in zip(timeslices, filenames):
+            with FileBuffer(fname, dimensions) as filebuffer:
+                data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
             tidx += tslice.size
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
@@ -308,15 +302,62 @@ class Field(object):
         # Create DataArray objects for file I/O
         t, d, x, y = (self.time.size, self.depth.size,
                       self.lon.size, self.lat.size)
-        nav_lon = DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
-                            coords=[('y', self.lat), ('x', self.lon)])
-        nav_lat = DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                            coords=[('y', self.lat), ('x', self.lon)])
-        vardata = DataArray(self.data.reshape((t, d, y, x)),
-                            coords=[('time_counter', self.time),
-                                    (vname_depth, self.depth),
-                                    ('y', self.lat), ('x', self.lon)])
+        nav_lon = xray.DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
+                                 coords=[('y', self.lat), ('x', self.lon)])
+        nav_lat = xray.DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
+                                 coords=[('y', self.lat), ('x', self.lon)])
+        vardata = xray.DataArray(self.data.reshape((t, d, y, x)),
+                                 coords=[('time_counter', self.time),
+                                         (vname_depth, self.depth),
+                                         ('y', self.lat), ('x', self.lon)])
         # Create xray Dataset and output to netCDF format
-        dset = Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
-                                                   'nav_lat': nav_lat})
+        dset = xray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
+                                                        'nav_lat': nav_lat})
         dset.to_netcdf(filepath)
+
+
+class FileBuffer(object):
+    """ Class that encapsulates and manages deferred access to file data. """
+
+    def __init__(self, filename, dimensions):
+        self.filename = filename
+        self.dimensions = dimensions  # Dict with dimension keyes for file data
+        self.dataset = None
+
+    def __enter__(self):
+        self.dataset = Dataset(str(self.filename), 'r', format="NETCDF4")
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.dataset.close()
+
+    @property
+    def lon(self):
+        lon = self.dataset[self.dimensions['lon']]
+        return lon[0, :] if len(lon.shape) > 1 else lon[:]
+
+    @property
+    def lat(self):
+        lat = self.dataset[self.dimensions['lat']]
+        return lat[:, 0] if len(lat.shape) > 1 else lat[:]
+
+    @property
+    def data(self):
+        if len(self.dataset[self.dimensions['data']].shape) == 3:
+            return self.dataset[self.dimensions['data']][:, :, :]
+        else:
+            return self.dataset[self.dimensions['data']][:, 0, :, :]
+
+    @property
+    def time(self):
+        return self.dataset[self.dimensions['time']][:]
+
+    @property
+    def time_origin(self):
+        """ Derive time_origin if the time dimension has units and calendar """
+        try:
+            time_units = self.dataset[self.dimensions['time']].units
+            calendar = self.dataset[self.dimensions['time']].calendar
+            return num2date(0, time_units, calendar)
+        except:
+            return 0
