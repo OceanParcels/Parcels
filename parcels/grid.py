@@ -1,4 +1,3 @@
-from netCDF4 import Dataset
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 from parcels.particle import ParticleSet
 import numpy as np
@@ -105,12 +104,13 @@ class Grid(object):
             # Resolve all matching paths for the current variable
             basepath = path.local(filenames[var])
             paths = [path.local(fp) for fp in glob(str(basepath))]
+            if len(paths) == 0:
+                raise IOError("Grid files not found: %s" % str(basepath))
             for fp in paths:
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
-            dsets = [Dataset(str(fp), 'r', format="NETCDF4") for fp in paths]
             dimensions['data'] = name
-            fields[var] = Field.from_netcdf(var, dimensions, dsets,
+            fields[var] = Field.from_netcdf(var, dimensions, paths,
                                             units=units[var], **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
