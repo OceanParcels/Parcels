@@ -26,13 +26,13 @@ def GradientRK4(particle, grid, time, dt):
     f_lat = dt / 1000. / 1.852 / 60.
     f_lon = f_lat / math.cos(particle.lat*math.pi/180)
     V = RK4(grid.dK_dx, grid.dK_dy, particle.lon, particle.lat, time, dt)
-    particle.lon += V[0] * f_lon
-    particle.lat += V[1] * f_lat
+    particle.lon += V[0] * f_lon * 50000
+    particle.lat += V[1] * f_lat * 50000
 
 
 def CreateForcingFields(xdim=200, ydim=350, time=25):
     depth = np.zeros(1, dtype=np.float32)
-    time = np.arange(1., time, time/2, dtype=np.float64)
+    time = np.arange(0, time+1, time/2, dtype=np.float64)
 
     # Coordinates of the test grid (on A-grid in deg)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
@@ -85,7 +85,6 @@ def CreateDiffusionField(grid, mu=None):
             K[i, j, :] = MVNorm(x, y, mu, sig)
 
     # Boost to provide enough force for our gradient climbers
-    K *= 10000
     K_Field = Field('K', K, lon, lat, depth, time, transpose=True)
 
     return K_Field
@@ -121,7 +120,7 @@ if __name__ == "__main__":
                    help='List of NetCDF files to load')
     args = p.parse_args()
     filename = args.output
-    time = 100
+    time = 100000
 
     # Generate grid files according to given dimensions
     gridx = 5
@@ -141,28 +140,21 @@ if __name__ == "__main__":
 
     climbers = grid.ParticleSet(size=args.particles, pclass=ParticleClass,
                                 start_field=grid.Start)
-    # Calculate the initial particle density and save to grid as a field
-    # (should be fairly homogenous, but with some random structure due to
-    # stochasitic nature of particle start positions!)
-    StartDensity = climbers.density()
 
-    timestep = 10000
-    substeps = timestep
+    dtime = np.arange(grid.U.time[0], grid.U.time[-1]+1, time/2)
+    Densities = np.full((grid.U.lon.size, grid.U.lat.size, dtime.size), -1, dtype=np.float32)
+    grid.add_field(Field('Density', Densities, grid.U.lon, grid.U.lat,
+                   depth=grid.U.depth, time=dtime, transpose=True))
+
+    timestep = 1000
+    substeps = 10000
 
     climb = climbers.Kernel(GradientRK4)
 
-    climbers.execute(climb, endtime=climbers.grid.time[0]+time*timestep, dt=timestep,
+    climbers.execute(climb, endtime=climbers.grid.time[-1], dt=timestep,
                      output_file=climbers.ParticleFile(name=filename+"_particle"),
-                     output_interval=substeps)
-
-    # Calculate final particle density and save to grid
-    # (density should be maximal in the centre! Neat way to test this quantitatively??)
-    EndDensity = climbers.density()
-
-    Densities = np.full((grid.U.lon.size, grid.U.lat.size, grid.U.time.size), -1, dtype=np.float32)
-    Densities[:, :, 0] = StartDensity
-    Densities[:, :, -1] = EndDensity
-    grid.add_field(Field('Density', Densities, grid.U.lon, grid.U.lat,
-                         depth=grid.U.depth, time=grid.U.time, transpose=True))
+                     output_interval=substeps, density_field=grid.Density)
 
     grid.write(args.output)
+    # Final densities should be zero everywhere except central vertex
+    print(grid.Density.data[-1, :, :])

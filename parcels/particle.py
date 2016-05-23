@@ -85,9 +85,6 @@ class Particle(object):
         for var in self.user_vars:
             setattr(self, var, 0)
 
-        for var in self.user_vars:
-            setattr(self, var, 0)
-
     def __repr__(self):
         return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
 
@@ -254,28 +251,18 @@ class ParticleSet(object):
         self.particles = np.delete(self.particles, indices)
         return particles
 
-    def density(self, lon=None, lat=None):
-        if lon is None:
-            lon = self.grid.U.lon
-        if lat is None:
-            lat = self.grid.U.lat
-        Density = np.zeros((lon.size, lat.size), dtype=np.float32)
-        Area = np.zeros(np.shape(Density), dtype=np.float32)
-
-        dx = (lon[1] - lon[0]) * 1852 * 60 * np.cos(lat*math.pi/180)
-        dy = (lat[1] - lat[0]) * 1852 * 60
-        for y in range(len(lat)):
-            Area[0:len(lon), y] = dy * dx[y]
+    def density(self, field):
+        Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
 
         # For each particle, find closest vertex in x and y
         for p in self.particles:
-            Density[np.argmin(np.abs(p.lon - lon)), np.argmin(np.abs(p.lat - lat))] += 1
-        # Scale by cell area
-        Density /= Area
+            Density[np.argmin(np.abs(p.lon - field.lon)), np.argmin(np.abs(p.lat - field.lat))] += 1
+        # Scale by cell area (assumes field has previously had area data calculated)
+        Density /= field.area
         return Density
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                output_file=None, output_interval=-1, show_movie=False):
+                output_file=None, output_interval=-1, density_field=None, show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -286,6 +273,7 @@ class ParticleSet(object):
         :param dt: Timestep interval to be passed to the kernel
         :param output_file: ParticleFile object for particle output
         :param output_interval: Size of output intervals in seconds
+        :param density_field: Optional field for storing particle densities
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -327,21 +315,57 @@ class ParticleSet(object):
             print("negating dt because running in time-forward mode")
         timesteps = int((endtime - starttime) / dt)
 
-        # Check if output is required and compute outer leaps
-        if output_interval <= 0:
-            output_steps = timesteps
-        else:
-            output_steps = abs(int(output_interval / dt))
-        timeleaps = int(timesteps / output_steps)
-        # Execute kernel in sub-stepping intervals (leaps)
-        current = starttime
-        for _ in range(timeleaps):
-            self.kernel.execute(self, int(output_steps), current, dt)
-            current += output_steps * dt
+        # Some simple wrapper functions used to abstract the main execution loop functions
+        def density_wrapper(field, current, output_file, movie_field):
+            field.data[np.where(field.time == current), :, :] = self.density(field)
+
+        def output_wrapper(field, current, output_file, movie_field):
             if output_file:
                 output_file.write(self, current)
-            if show_movie:
-                self.show(field=show_movie, t=current)
+            if movie_field:
+                show(field=movie_field, t=current)
+
+        def empty(field, current, output_file, movie_field):
+            pass
+
+        # Check if output is required
+        if output_interval <= 0:
+            output_interval = timesteps
+
+        # Check if particle densities are required, then compute appropriate inner and outer leaps
+        if density_field is not None:
+            density_interval = density_field.time[1] - density_field.time[0]
+            outer_interval = density_interval if density_interval > output_interval else output_interval
+            outerfunction = density_wrapper if density_interval > output_interval else output_wrapper
+            inner_interval = output_interval if density_interval > output_interval else density_interval
+            innerfunction = output_wrapper if density_interval > output_interval else density_wrapper
+            outerleap = int(abs(endtime-starttime)/outer_interval)
+            innerleap = int(outer_interval/inner_interval)
+            mainleap = abs(int(inner_interval / dt))
+            # Calculate density field areas outside main loop
+            density_field.area = np.zeros(np.shape(density_field.data[0,:,:]), dtype=np.float32)
+            dx = (density_field.lon[1] - density_field.lon[0]) * 1852 * 60 * np.cos(density_field.lat*math.pi/180)
+            dy = (density_field.lat[1] - density_field.lat[0]) * 1852 * 60
+            for y in range(len(density_field.lat)):
+                density_field.area[0:len(density_field.lon), y] = dy * dx[y]
+        else:
+            outerleap = 1
+            outerfunction = empty
+            innerleap = int(abs(endtime-starttime)/output_interval)
+            innerfunction = output_wrapper
+            mainleap = abs(int(output_interval / dt))
+
+        # Execute kernel in outer, inner and main sub-stepping intervals (leaps)
+        current = starttime
+        outerfunction(density_field, current, output_file, show_movie)
+        innerfunction(density_field, current, output_file, show_movie)
+        for _ in range(outerleap):
+            for __ in range(innerleap):
+                self.kernel.execute(self, int(mainleap), current, dt)
+                current += mainleap * dt
+                innerfunction(density_field, current, output_file, show_movie)
+            outerfunction(density_field, current, output_file, show_movie)
+
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
         if len(to_remove) > 0:
             self.remove(to_remove)
