@@ -253,12 +253,11 @@ class ParticleSet(object):
 
     def density(self, field):
         Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
-
         # For each particle, find closest vertex in x and y
         for p in self.particles:
             Density[np.argmin(np.abs(p.lon - field.lon)), np.argmin(np.abs(p.lat - field.lat))] += 1
         # Scale by cell area (assumes field has previously had area data calculated)
-        Density /= field.area
+        Density /= np.transpose(field.area)
         return Density
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
@@ -316,16 +315,17 @@ class ParticleSet(object):
         timesteps = int((endtime - starttime) / dt)
 
         # Some simple wrapper functions used to abstract the main execution loop functions
-        def density_wrapper(field, current, output_file, movie_field):
-            field.data[np.where(field.time == current), :, :] = self.density(field)
+        def density_wrapper(density_field, current, output_file, movie_field):
+            dtime = np.argmin(np.abs(current - density_field.time))
+            density_field.data[dtime, :, :] = np.transpose(self.density(density_field))
 
-        def output_wrapper(field, current, output_file, movie_field):
+        def output_wrapper(density_field, current, output_file, movie_field):
             if output_file:
                 output_file.write(self, current)
             if movie_field:
                 show(field=movie_field, t=current)
 
-        def empty(field, current, output_file, movie_field):
+        def empty(density_field, current, output_file, movie_field):
             pass
 
         # Check if output is required
@@ -347,7 +347,7 @@ class ParticleSet(object):
             dx = (density_field.lon[1] - density_field.lon[0]) * 1852 * 60 * np.cos(density_field.lat*math.pi/180)
             dy = (density_field.lat[1] - density_field.lat[0]) * 1852 * 60
             for y in range(len(density_field.lat)):
-                density_field.area[0:len(density_field.lon), y] = dy * dx[y]
+                density_field.area[y, :] = dy * dx[y]
         else:
             outerleap = 1
             outerfunction = empty
@@ -357,6 +357,9 @@ class ParticleSet(object):
 
         # Execute kernel in outer, inner and main sub-stepping intervals (leaps)
         current = starttime
+        print("Outerleaps = %s" % outerleap)
+        print("Innerleaps = %s" % innerleap)
+        print("Mainleap = %s" % mainleap)
         outerfunction(density_field, current, output_file, show_movie)
         innerfunction(density_field, current, output_file, show_movie)
         for _ in range(outerleap):
@@ -365,6 +368,7 @@ class ParticleSet(object):
                 current += mainleap * dt
                 innerfunction(density_field, current, output_file, show_movie)
             outerfunction(density_field, current, output_file, show_movie)
+        print("Loop finished %s from starttime" % current)
 
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
         if len(to_remove) > 0:
