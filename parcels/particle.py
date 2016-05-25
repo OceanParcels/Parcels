@@ -323,7 +323,7 @@ class ParticleSet(object):
             if output_file:
                 output_file.write(self, current)
             if movie_field:
-                show(field=movie_field, t=current)
+                self.show(field=movie_field, t=current)
 
         def empty(density_field, current, output_file, movie_field):
             pass
@@ -343,7 +343,7 @@ class ParticleSet(object):
             innerleap = int(outer_interval/inner_interval)
             mainleap = abs(int(inner_interval / dt))
             # Calculate density field areas outside main loop
-            density_field.area = np.zeros(np.shape(density_field.data[0,:,:]), dtype=np.float32)
+            density_field.area = np.zeros(np.shape(density_field.data[0, :, :]), dtype=np.float32)
             dx = (density_field.lon[1] - density_field.lon[0]) * 1852 * 60 * np.cos(density_field.lat*np.pi/180)
             dy = (density_field.lat[1] - density_field.lat[0]) * 1852 * 60
             for y in range(len(density_field.lat)):
