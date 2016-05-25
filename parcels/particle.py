@@ -344,15 +344,10 @@ class ParticleSet(object):
             mainleap = abs(int(inner_interval / dt))
             # Calculate density field areas outside main loop
             density_field.area = np.zeros(np.shape(density_field.data[0,:,:]), dtype=np.float32)
-            dx = (density_field.lon[1] - density_field.lon[0]) * 1852 * 60 * np.cos(density_field.lat*math.pi/180)
+            dx = (density_field.lon[1] - density_field.lon[0]) * 1852 * 60 * np.cos(density_field.lat*np.pi/180)
             dy = (density_field.lat[1] - density_field.lat[0]) * 1852 * 60
             for y in range(len(density_field.lat)):
                 density_field.area[y, :] = dy * dx[y]
-=======
-        # Check if output is required and compute outer leaps
-        if output_interval <= 0 or output_interval > abs(endtime-starttime):
-            output_steps = timesteps
->>>>>>> master
         else:
             outerleap = 1
             outerfunction = empty
