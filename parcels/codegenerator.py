@@ -57,10 +57,10 @@ class ParticleAttributeNode(IntrinsicNode):
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
         if self.attr == 'lon':
-            return "search_linear_float(%s, %s, U->xdim, U->lat)" \
+            return "search_linear_float(%s, %s, U->xdim, U->lon)" \
                 % (self.ccode, self.ccode_index_var)
         if self.attr == 'lat':
-            return "search_linear_float(%s, %s, U->ydim, U->lon)" \
+            return "search_linear_float(%s, %s, U->ydim, U->lat)" \
                 % (self.ccode, self.ccode_index_var)
         return ""
 
@@ -371,6 +371,14 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
+
+    def visit_Print(self, node):
+        for n in node.values:
+            self.visit(n)
+        node.ccode = c.Statement('printf(%s)' % ", ".join([n.ccode for n in node.values]))
+
+    def visit_Str(self, node):
+        node.ccode = node.s
 
 
 class LoopGenerator(object):
