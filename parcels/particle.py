@@ -353,15 +353,17 @@ class ParticleSet(object):
             axes.set_xlim([self.grid.U.lon[0], self.grid.U.lon[-1]])
             axes.set_ylim([self.grid.U.lat[0], self.grid.U.lat[-1]])
             namestr = ''
+            time_origin = self.grid.U.time_origin
         else:
             if not isinstance(field, Field):
                 field = getattr(self.grid, field)
             field.show(animation=True, **kwargs)
             namestr = ' on ' + field.name
-        if field.time_origin == 0:
+            time_origin = field.time_origin
+        if time_origin is 0:
             timestr = ' after ' + str(delta(seconds=t)) + ' hours'
         else:
-            timestr = ' on ' + str(field.time_origin + delta(seconds=t))
+            timestr = ' on ' + str(time_origin + delta(seconds=t))
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
         plt.title('Particles' + namestr + timestr)
