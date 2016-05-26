@@ -6,6 +6,7 @@ import netCDF4
 from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 from datetime import timedelta as delta
+from datetime import datetime
 import sys
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
@@ -288,6 +289,10 @@ class ParticleSet(object):
             dt = dt.total_seconds()
         if isinstance(output_interval, delta):
             output_interval = output_interval.total_seconds()
+        if isinstance(starttime, datetime):
+            starttime = (starttime - self.time_origin).total_seconds()
+        if isinstance(endtime, datetime):
+            endtime = (endtime - self.time_origin).total_seconds()
 
         # Check if starttime, endtime, runtime and dt are consistent and compute timesteps
         if runtime is not None and endtime is not None:
