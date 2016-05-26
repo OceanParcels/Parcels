@@ -6,6 +6,7 @@ import netCDF4
 from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 from datetime import timedelta as delta
+import sys
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -252,7 +253,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                output_file=None, output_interval=-1, show_movie=False):
+                runtime=None, output_file=None, output_interval=-1, show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -260,6 +261,7 @@ class ParticleSet(object):
         :param pyfunc: Kernel funtion to execute
         :param starttime: Starting time for the timestepping loop
         :param endtime: End time for the timestepping loop
+        :param runtime: Length of the timestepping loop
         :param dt: Timestep interval to be passed to the kernel
         :param output_file: ParticleFile object for particle output
         :param output_interval: Size of output intervals in seconds
@@ -280,22 +282,32 @@ class ParticleSet(object):
             starttime = starttime.total_seconds()
         if isinstance(endtime, delta):
             endtime = endtime.total_seconds()
+        if isinstance(runtime, delta):
+            runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
         if isinstance(output_interval, delta):
             output_interval = output_interval.total_seconds()
 
-        # Check if starttime, endtime and dt are consistent and compute timesteps
+        # Check if starttime, endtime, runtime and dt are consistent and compute timesteps
+        if runtime is not None and endtime is not None:
+            sys.exit("ERROR: Only one of (endtime, runtime) can be specified")
         if starttime is None:
             if dt > 0:
                 starttime = self.grid.time[0]
             else:
                 starttime = self.grid.time[-1]
-        if endtime is None:
+        if runtime is not None:
             if dt > 0:
-                endtime = self.grid.time[-1]
+                endtime = starttime + runtime
             else:
-                endtime = self.grid.time[0]
+                endtime = starttime - runtime
+        else:
+            if endtime is None:
+                if dt > 0:
+                    endtime = self.grid.time[-1]
+                else:
+                    endtime = self.grid.time[0]
         if endtime < starttime and dt > 0:
             dt = -1. * dt
             print("negating dt because running in time-backward mode")
