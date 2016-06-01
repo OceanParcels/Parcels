@@ -7,7 +7,6 @@ from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 from datetime import timedelta as delta
 from datetime import datetime
-import sys
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -296,7 +295,7 @@ class ParticleSet(object):
 
         # Check if starttime, endtime, runtime and dt are consistent and compute timesteps
         if runtime is not None and endtime is not None:
-            sys.exit("ERROR: Only one of (endtime, runtime) can be specified")
+            raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
             if dt > 0:
                 starttime = self.grid.time[0]
