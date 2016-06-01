@@ -5,11 +5,14 @@ from py import path
 import numpy as np
 import xray
 import operator
-import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -287,6 +290,9 @@ class Field(object):
         return cstruct
 
     def show(self, **kwargs):
+        if plt is None:
+            raise RuntimeError("Visualisation not possible: matplotlib not found!")
+
         t = kwargs.get('t', 0)
         animation = kwargs.get('animation', False)
         idx = self.time_index(t)
