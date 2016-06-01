@@ -5,6 +5,7 @@ numpy>=1.9.1
 scipy>=0.16.0
 cachetools>=1.0.0
 xray>=0.5.1
+pandas>=0.18.1
 pytest>=2.7.0
 pymbolic
 cgen
