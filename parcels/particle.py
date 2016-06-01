@@ -446,7 +446,7 @@ class ParticleSet(object):
         plt.pause(0.0001)
 
     def Kernel(self, pyfunc):
-        return Kernel(self.grid, self.ptype, pyfunc)
+        return Kernel(self.grid, self.ptype, pyfunc=pyfunc)
 
     def ParticleFile(self, *args, **kwargs):
         return ParticleFile(*args, particleset=self, **kwargs)
