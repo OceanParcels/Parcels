@@ -367,7 +367,7 @@ class FileBuffer(object):
             dt = num2date(self.dataset[self.dimensions['time']][:],
                           self.time_units, self.calendar)
             dt -= num2date(0, self.time_units, self.calendar)
-            return map(timedelta.total_seconds, dt)
+            return list(map(timedelta.total_seconds, dt))
         else:
             return self.dataset[self.dimensions['time']][:]
 
