@@ -355,6 +355,10 @@ class ParticleSet(object):
             innerfunction = output_wrapper
             mainleap = abs(int(output_interval / dt))
 
+        # Ensure that loop happens at least once
+        if outerleap == 0:
+            outerleap += 1
+
         # Execute kernel in outer, inner and main sub-stepping intervals (leaps)
         current = starttime
         print("Outerleaps = %s" % outerleap)
