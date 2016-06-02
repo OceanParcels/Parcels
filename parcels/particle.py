@@ -4,9 +4,13 @@ from parcels.compiler import GNUCompiler
 import numpy as np
 import netCDF4
 from collections import OrderedDict, Iterable
-import matplotlib.pyplot as plt
 from datetime import timedelta as delta
 from datetime import datetime
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
+
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
            'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
@@ -340,6 +344,9 @@ class ParticleSet(object):
             self.remove(to_remove)
 
     def show(self, **kwargs):
+        if plt is None:
+            raise RuntimeError("Visualisation not possible: matplotlib not found!")
+
         field = kwargs.get('field', True)
         t = kwargs.get('t', 0)
         lon = [p.lon for p in self]
