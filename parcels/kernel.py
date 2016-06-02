@@ -1,7 +1,6 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from os import path
-import math  # NOQA get flake8 to ignore unused import.
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
 from ast import parse, FunctionDef, Module
@@ -10,6 +9,8 @@ from copy import deepcopy
 import re
 from hashlib import md5
 from enum import Enum
+import math  # NOQA get flake8 to ignore unused import.
+import random  # NOQA get flake8 to ignore unused import.
 
 
 __all__ = ['Kernel', 'KernelOp']
@@ -61,6 +62,7 @@ class Kernel(object):
             try:
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
+                user_ctx['random'] = globals()['random']
             except:
                 print("Warning: Could not access user context when merging kernels")
                 user_ctx = globals()

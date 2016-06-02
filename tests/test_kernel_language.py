@@ -1,6 +1,7 @@
 from parcels import Grid, Particle, JITParticle, Kernel
 import numpy as np
 import pytest
+import random
 
 
 ptype = {'scipy': Particle, 'jit': JITParticle}
@@ -85,3 +86,31 @@ def test_expression_bool(grid, mode, name, expr, result, npart=10):
         assert(np.array([result == (particle.p == 1) for particle in pset]).all())
     else:
         assert(np.array([result == particle.p for particle in pset]).all())
+
+
+def random_series(npart, rngfunc, rngargs):
+    random.seed(1234)
+    series = [rngfunc(*rngargs) for _ in range(npart)]
+    random.seed(1234)  # Reset the RNG seed
+    return series
+
+
+@pytest.mark.xfail(reason="Random numbers not yet implemented for JIT")
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('rngfunc, rngargs', [
+    ('random', []),
+    ('uniform', [0., 20.]),
+    ('randint', [0, 20]),
+])
+def test_random_float(grid, mode, rngfunc, rngargs, npart=10):
+    """ Test basic random number generation """
+    class TestParticle(ptype[mode]):
+        user_vars = {'p': np.int32 if rngfunc == 'randint' else np.float32}
+    pset = grid.ParticleSet(npart, pclass=TestParticle,
+                            lon=np.linspace(0., 1., npart, dtype=np.float32),
+                            lat=np.zeros(npart, dtype=np.float32) + 0.5)
+    series = random_series(npart, getattr(random, rngfunc), rngargs)
+    kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
+                         'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
+    pset.execute(kernel, endtime=1., dt=1.)
+    assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
