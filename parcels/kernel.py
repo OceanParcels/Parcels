@@ -98,33 +98,17 @@ class Kernel(object):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
 
-    def execute(self, pset, timesteps, time, dt):
+    def execute(self, pset, endtime, dt):
         if self.ptype.uses_jit:
             fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
             particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-            self._function(c_int(len(pset)), particle_data, c_int(timesteps),
-                           c_double(time), c_float(dt), *fargs)
+            self._function(c_int(len(pset)), particle_data,
+                           c_double(endtime), c_float(dt), *fargs)
         else:
-            for _ in range(int(timesteps)):
-                for p in pset.particles:
-                    if p.active == 1:
-                        self.pyfunc(p, pset.grid, time, dt)
-                time += dt
-
-    def execute_adaptive(self, pset, tol, output_time=None, end_time=None):
-        for p in pset.particles:
-            if self.ptype.uses_jit:
-                fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-                particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-                self._function(c_int(len(pset)), particle_data, c_int(0),
-                               c_double(p.time), c_float(p.dt),
-                               c_double(output_time), c_float(tol), *fargs)
-            else:
-                if output_time is None:
-                    self.pyfunc(p, pset.grid, end_time, tol)
-                    return
-                while math.ceil(p.time) < math.floor(output_time):
-                    self.pyfunc(p, pset.grid, output_time, tol)
+            for p in pset.particles:
+                while p.time < endtime if dt > 0 else p.time > endtime:
+                    self.pyfunc(p, pset.grid, p.time, p.dt)
+                    p.time += p.dt
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

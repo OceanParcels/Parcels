@@ -323,7 +323,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, output_file=None, output_interval=-1, tol=None,
+                runtime=None, interval=None, output_file=None, tol=None,
                 show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -334,8 +334,9 @@ class ParticleSet(object):
         :param endtime: End time for the timestepping loop
         :param runtime: Length of the timestepping loop
         :param dt: Timestep interval to be passed to the kernel
+        :param interval: Interval for inner sub-timestepping (leap);
+                         it dictates the update frequency of file output and animation.
         :param output_file: ParticleFile object for particle output
-        :param output_interval: Size of output intervals in seconds
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -349,6 +350,7 @@ class ParticleSet(object):
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
 
+        # Convert all time variables to seconds
         if isinstance(starttime, delta):
             starttime = starttime.total_seconds()
         if isinstance(endtime, delta):
@@ -357,65 +359,58 @@ class ParticleSet(object):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
-        if isinstance(output_interval, delta):
-            output_interval = output_interval.total_seconds()
+        if isinstance(interval, delta):
+            interval = interval.total_seconds()
         if isinstance(starttime, datetime):
             starttime = (starttime - self.time_origin).total_seconds()
         if isinstance(endtime, datetime):
             endtime = (endtime - self.time_origin).total_seconds()
 
-        # Check if starttime, endtime, runtime and dt are consistent and compute timesteps
+        # Derive starttime, endtime and interval from arguments or grid defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            if dt > 0:
-                starttime = self.grid.time[0]
-            else:
-                starttime = self.grid.time[-1]
+            starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
         if runtime is not None:
-            if dt > 0:
-                endtime = starttime + runtime
-            else:
-                endtime = starttime - runtime
+            endtime = starttime + runtime if dt > 0 else starttime - runtime
         else:
             if endtime is None:
-                if dt > 0:
-                    endtime = self.grid.time[-1]
-                else:
-                    endtime = self.grid.time[0]
-        if endtime < starttime and dt > 0:
-            dt = -1. * dt
-            print("negating dt because running in time-backward mode")
-        if endtime > starttime and dt < 0:
-            dt = -1. * dt
-            print("negating dt because running in time-forward mode")
-        timesteps = int((endtime - starttime) / dt)
+                endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
+        if interval is None:
+            interval = endtime - starttime
 
-        # Check if output is required and compute outer leaps
-        if output_interval <= 0 or output_interval > abs(endtime-starttime):
-            output_steps = timesteps
-        else:
-            output_steps = abs(int(output_interval / dt))
-        timeleaps = int(timesteps / output_steps)
-        # Execute kernel in sub-stepping intervals (leaps)
-        current = starttime
-        if 'AdvectionRK45' in self.kernel.funcname:
-            end_time = timesteps * self.particles[0].dt
-            for p in self:
-                while p.time <= end_time:
-                    self.kernel.execute_adaptive(p, self.grid, tol)
-                    if output_file:
-                        output_file.write(self, p.time)
+        # Ensure that dt and interval have the correct sign
+        if endtime > starttime:  # Time-forward mode
+            if dt < 0:
+                dt *= -1.
+                print("negating dt because running in time-forward mode")
+            if interval < 0:
+                interval *= -1.
+                print("negating interval because running in time-forward mode")
+        if endtime < starttime:  # Time-backward mode
+            if dt > 0.:
+                dt *= -1.
+                print("negating dt because running in time-backward mode")
+            if interval > 0.:
+                interval *= -1.
+                print("negating interval because running in time-backward mode")
+
+        # Initialise particle timestepping
+        for p in self:
+            p.time = starttime
+            p.dt = dt
+        # Execute time loop in sub-steps (timeleaps)
+        timeleaps = int((endtime - starttime) / interval)
+        assert(timeleaps >= 0)
+        leaptime = starttime
+        for _ in range(timeleaps):
+            leaptime += interval
+            self.kernel.execute(self, endtime=leaptime, dt=dt)
+            if output_file:
+                output_file.write(self, leaptime)
             if show_movie:
-                print("WARNING: Can't currently show movie for RK-4/5 method")
-        else:
-            for _ in range(timeleaps):
-                self.kernel.execute(self, output_steps, current, dt)
-                current += output_steps * dt
-                if output_file:
-                    output_file.write(self, current)
-                if show_movie:
-                    self.show(field=show_movie, t=current)
+                self.show(field=show_movie, t=leaptime)
+        # Remove deactivated particles
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
         if len(to_remove) > 0:
             self.remove(to_remove)

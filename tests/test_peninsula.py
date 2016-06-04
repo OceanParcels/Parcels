@@ -118,21 +118,9 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
     out = pset.ParticleFile(name="MyParticle") if output else None
-    output_interval = delta(hours=1) if output else -1
-    if method == AdvectionRK45:
-        for particle in pset:
-            particle.time = 0.
-            particle.dt = dt.total_seconds()
-        tol = 1e-10
-        print("Peninsula: Advecting %d particles with adaptive timesteps"
-              % (npart))
-        pset.execute(k_adv + k_p, timesteps=int(time / dt), dt=dt,
-                     output_file=out, output_interval=output_interval, tol=tol)
-
-    else:
-        print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
-        pset.execute(k_adv + k_p, endtime=time, dt=delta(minutes=5),
-                     output_file=out, output_interval=delta(hours=1) if output else -1)
+    interval = delta(hours=1) if output else -1
+    print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
+    pset.execute(k_adv + k_p, endtime=time, dt=dt, output_file=out, interval=interval)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
