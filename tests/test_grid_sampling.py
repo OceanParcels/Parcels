@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4_2D
 import numpy as np
 import pytest
 from math import cos, pi
@@ -64,8 +64,8 @@ def pclass(mode):
 @pytest.fixture
 def samplefunc():
     def Sample(particle, grid, time, dt):
-        particle.u = grid.U[0., particle.lon, particle.lat]
-        particle.v = grid.V[0., particle.lon, particle.lat]
+        particle.u = grid.U[0., particle.lon, particle.lat, particle.dep]
+        particle.v = grid.V[0., particle.lon, particle.lat, particle.dep]
     return Sample
 
 
@@ -73,8 +73,8 @@ def test_grid_sample(grid, xdim=120, ydim=80):
     """ Sample the grid using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V[0, x, 70.] for x in lon])
-    u_s = np.array([grid.U[0, -45., y] for y in lat])
+    v_s = np.array([grid.V[0, x, 70., 0.] for x in lon])
+    u_s = np.array([grid.U[0, -45., y, 0.] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-12)
     assert np.allclose(u_s, lat, rtol=1e-12)
 
@@ -83,8 +83,8 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
     """ Sample the grid using the explicit eval function. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V.eval(0, x, 70.) for x in lon])
-    u_s = np.array([grid.U.eval(0, -45., y) for y in lat])
+    v_s = np.array([grid.V.eval(0, x, 70., 0.) for x in lon])
+    u_s = np.array([grid.U.eval(0, -45., y, 0.) for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-12)
     assert np.allclose(u_s, lat, rtol=1e-12)
 
@@ -169,7 +169,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     latstart = [0, 45]
     endtime = delta(hours=24)
     pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
+    pset.execute(pset.Kernel(AdvectionRK4_2D), endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
     assert(pset[0].lon - lonstart[0] < 1e-4)
@@ -178,7 +178,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
 
 
 def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
+    particle.p = grid.P[time, particle.lon, particle.lat, particle.dep]
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -217,7 +217,7 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
     latstart = [0, 45]
     endtime = delta(hours=24)
     pset = grid.ParticleSet(2, pclass=MyParticle, lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4) + pset.Kernel(UpdateP),
+    pset.execute(pset.Kernel(AdvectionRK4_2D) + pset.Kernel(UpdateP),
                  endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - latstart[0] < 1e-4)

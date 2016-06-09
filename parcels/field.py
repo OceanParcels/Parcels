@@ -103,13 +103,13 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     """
 
-    def __init__(self, name, data, lon, lat, depth=None, time=None,
+    def __init__(self, name, data, lon, lat, depth, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None):
         self.name = name
         self.data = data
         self.lon = lon
         self.lat = lat
-        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.depth = depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
@@ -128,7 +128,11 @@ class Field(object):
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        self.data = self.data.reshape((self.time.size, self.lat.size, self.lon.size))
+        if self.depth.size > 1:
+            self.data = self.data.reshape((self.time.size, self.depth.size,
+                                           self.lat.size, self.lon.size))
+        else:
+            self.data = self.data.reshape((self.time.size, self.lat.size, self.lon.size))
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -144,7 +148,7 @@ class Field(object):
         self.ccode_lat = self.name + "_lat"
 
         self.interpolator_cache = LRUCache(maxsize=2)
-        self.time_index_cache = LRUCache(maxsize=2)
+        self.find_higher_index_cache = LRUCache(maxsize=2)
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, **kwargs):
@@ -161,11 +165,10 @@ class Field(object):
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon = filebuffer.lon
             lat = filebuffer.lat
+            depth = filebuffer.dep
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
-        # Default depth to zeros until we implement 3D grids properly
-        depth = np.zeros(1, dtype=np.float32)
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = []
@@ -180,11 +183,15 @@ class Field(object):
             time_origin = num2date(0, time_units, calendar)
 
         # Pre-allocate grid data before reading files into buffer
-        data = np.empty((time.size, 1, lat.size, lon.size), dtype=np.float32)
+        data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
-                data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
+                tmp = filebuffer.data
+                if len(tmp.shape) is 3:
+                    data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
+                else:
+                    data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
             tidx += tslice.size
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
@@ -225,10 +232,23 @@ class Field(object):
         return([Field(name + '_dx', dVdx, lon, lat, self.depth, time),
                 Field(name + '_dy', dVdy, lon, lat, self.depth, time)])
 
+    def interpolator3D(self, idx, time, z, y, x):
+        # First interpolate in the horizontal, then in the vertical
+        zdx = self.find_higher_index('depth', z)
+        f0 = self.interpolator2D(idx, z_idx=zdx-1).ev(y, x)
+        f1 = self.interpolator2D(idx, z_idx=zdx).ev(y, x)
+        z0 = self.depth[zdx-1]
+        z1 = self.depth[zdx]
+        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+
     @cachedmethod(operator.attrgetter('interpolator_cache'))
-    def interpolator2D(self, t_idx):
-        return RectBivariateSpline(self.lat, self.lon,
-                                   self.data[t_idx, :])
+    def interpolator2D(self, t_idx, z_idx=None):
+        if z_idx is None:
+            return RectBivariateSpline(self.lat, self.lon,
+                                       self.data[t_idx, :])
+        else:
+            return RectBivariateSpline(self.lat, self.lon,
+                                       self.data[t_idx, z_idx, :, :])
 
     def interpolator1D(self, idx, time, y, x):
         # Return linearly interpolated field value:
@@ -244,25 +264,28 @@ class Field(object):
             t1 = self.time[idx]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    @cachedmethod(operator.attrgetter('time_index_cache'))
-    def time_index(self, time):
-        time_index = self.time < time
-        if time_index.all():
-            # If given time > last known grid time, use
+    @cachedmethod(operator.attrgetter('find_higher_index_cache'))
+    def find_higher_index(self, field, var):
+        field = getattr(self, field)
+        index = field < var
+        if index.all():
+            # If given var > last known grid index, use
             # the last grid frame without interpolation
             return -1
         else:
-            return time_index.argmin()
+            return index.argmin()
 
-    def eval(self, time, x, y):
-        idx = self.time_index(time)
+    def eval(self, time, x, y, z):
+        idx = self.find_higher_index('time', time)
         if idx > 0:
             value = self.interpolator1D(idx, time, y, x)
-        else:
+        elif self.depth.size == 1:
             value = self.interpolator2D(idx).ev(y, x)
+        else:
+            value = self.interpolator3D(idx, time, z, y, x)
         return self.units.to_target(value, x, y)
 
-    def ccode_subscript(self, t, x, y):
+    def ccode_subscript(self, t, x, y, z):
         ccode = "%s * temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
                 % (self.units.ccode_to_target(x, y),
                    x, y, "particle->xi", "particle->yi", t, self.name)
@@ -295,11 +318,15 @@ class Field(object):
 
         t = kwargs.get('t', 0)
         animation = kwargs.get('animation', False)
-        idx = self.time_index(t)
+        idx = self.find_higher_index('time', t)
         if self.time.size > 1:
             data = np.squeeze(self.interpolator1D(idx, t, None, None))
+        elif self.data.ndim == 3:
+            data = np.squeeze(self.data[0, :, :])
+        elif self.data.ndim == 4:
+            data = np.squeeze(self.data[0, 0, :, :])
         else:
-            data = np.squeeze(self.data)
+            data = self.data
         vmin = kwargs.get('vmin', data.min())
         vmax = kwargs.get('vmax', data.max())
         cs = plt.contourf(self.lon, self.lat, data,
@@ -316,7 +343,7 @@ class Field(object):
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
-        vname_depth = 'depth%s' % self.name.lower()
+        vname_depth = 'depth'
 
         # Create DataArray objects for file I/O
         t, d, x, y = (self.time.size, self.depth.size,
@@ -361,11 +388,19 @@ class FileBuffer(object):
         return lat[:, 0] if len(lat.shape) > 1 else lat[:]
 
     @property
+    def dep(self):
+        try:
+            dep = self.dataset[self.dimensions['depth']]
+            return dep[:, 0] if len(dep.shape) > 1 else dep[:]
+        except:
+            return np.zeros(1)
+
+    @property
     def data(self):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
             return self.dataset[self.dimensions['data']][:, :, :]
         else:
-            return self.dataset[self.dimensions['data']][:, 0, :, :]
+            return self.dataset[self.dimensions['data']][:, :, :, :]
 
     @property
     def time(self):

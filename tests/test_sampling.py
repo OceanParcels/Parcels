@@ -2,7 +2,7 @@ from test_moving_eddies import moving_eddies_grid
 from argparse import ArgumentParser
 from parcels.field import Field
 import numpy as np
-from parcels.particle import Particle, JITParticle, AdvectionRK4
+from parcels.particle import Particle, JITParticle, AdvectionRK4_2D
 
 
 def updateUserVars(particle, grid, time, dt):
@@ -102,6 +102,6 @@ if __name__ == "__main__":
 
     record_user_vars = pset.Kernel(updateUserVars)
 
-    pset.execute(AdvectionRK4 + record_user_vars, endtime=endtime, dt=dt,
+    pset.execute(AdvectionRK4_2D + record_user_vars, endtime=endtime, dt=dt,
                  output_file=pset.ParticleFile(name="SamplerParticle"),
                  output_interval=output_interval)
