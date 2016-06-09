@@ -1,9 +1,17 @@
 import subprocess
-import os
+from os import path, environ, getuid, makedirs
+from tempfile import gettempdir
 
 
 def get_package_dir():
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+    return path.abspath(path.join(path.dirname(__file__), path.pardir))
+
+
+def get_cache_dir():
+    directory = path.join(gettempdir(), "parcels-%s" % getuid())
+    if not path.exists(directory):
+        makedirs(directory)
+    return directory
 
 
 class Compiler(object):
@@ -18,8 +26,8 @@ class Compiler(object):
     :arg ldargs: A list of arguments to the linker (optional)."""
 
     def __init__(self, cc, ld=None, cppargs=[], ldargs=[]):
-        self._cc = os.environ.get('CC', cc)
-        self._ld = os.environ.get('LDSHARED', ld)
+        self._cc = environ.get('CC', cc)
+        self._ld = environ.get('LDSHARED', ld)
         self._cppargs = cppargs
         self._ldargs = ldargs
 
@@ -39,7 +47,6 @@ Compilation command: %s
 Source file: %s
 Log file: %s""" % (" ".join(cc), src, logfile.name)
                 raise RuntimeError(err)
-        print("Compiled: %s" % str(obj))
 
 
 class GNUCompiler(Compiler):

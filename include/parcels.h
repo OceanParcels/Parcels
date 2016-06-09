@@ -26,15 +26,15 @@ static inline int search_linear_double(double t, int i, int size, double *tvals)
 }
 
 /* Bilinear interpolation routine for 2D grid */
-static inline float spatial_interpolation_bilinear(float x, float y, int i, int j, int ydim,
+static inline float spatial_interpolation_bilinear(float x, float y, int i, int j, int xdim,
                                                    float *lon, float *lat, float **f_data)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
-  float (*data)[ydim] = (float (*)[ydim]) f_data;
-  return (data[i][j] * (lon[i+1] - x) * (lat[j+1] - y)
-        + data[i+1][j] * (x - lon[i]) * (lat[j+1] - y)
-        + data[i][j+1] * (lon[i+1] - x) * (y - lat[j])
-        + data[i+1][j+1] * (x - lon[i]) * (y - lat[j]))
+  float (*data)[xdim] = (float (*)[xdim]) f_data;
+  return (data[j][i] * (lon[i+1] - x) * (lat[j+1] - y)
+        + data[j][i+1] * (x - lon[i]) * (lat[j+1] - y)
+        + data[j+1][i] * (lon[i+1] - x) * (y - lat[j])
+        + data[j+1][i+1] * (x - lon[i]) * (y - lat[j]))
         / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
 }
 
@@ -43,7 +43,7 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
                                                   double time, CField *f)
 {
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
-  float (*data)[f->xdim][f->ydim] = (float (*)[f->xdim][f->ydim]) f->data;
+  float (*data)[f->ydim][f->xdim] = (float (*)[f->ydim][f->xdim]) f->data;
   float f0, f1;
   double t0, t1;
   int i = xi, j = yi;
@@ -54,10 +54,10 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
   f->tidx = search_linear_double(time, f->tidx, f->tdim, f->time);
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
-    f0 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx]));
-    f1 = spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx+1]));
+    f0 = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat, (float**)(data[f->tidx]));
+    f1 = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat, (float**)(data[f->tidx+1]));
     return f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
   } else {
-    return spatial_interpolation_bilinear(x, y, i, j, f->ydim, f->lon, f->lat, (float**)(data[f->tidx]));
+    return spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat, (float**)(data[f->tidx]));
   }
 }
