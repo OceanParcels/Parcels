@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4_2D
 import numpy as np
 import pytest
 from math import cos, pi
@@ -105,7 +105,6 @@ def test_grid_sample_particle(grid, mode, samplefunc, npart=120):
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
@@ -171,7 +170,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     latstart = [0, 45]
     endtime = delta(hours=24)
     pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
+    pset.execute(pset.Kernel(AdvectionRK4_2D), endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
     assert(pset[0].lon - lonstart[0] < 1e-4)
@@ -219,7 +218,7 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
     latstart = [0, 45]
     endtime = delta(hours=24)
     pset = grid.ParticleSet(2, pclass=MyParticle, lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4) + pset.Kernel(UpdateP),
+    pset.execute(pset.Kernel(AdvectionRK4_2D) + pset.Kernel(UpdateP),
                  endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - latstart[0] < 1e-4)

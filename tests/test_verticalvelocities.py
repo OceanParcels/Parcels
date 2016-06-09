@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, AdvectionRK4_3D
 from argparse import ArgumentParser
 import numpy as np
 import pytest
@@ -31,7 +31,7 @@ def test_vertvel(mode):
 
     time = delta(days=1)
     dt = delta(minutes=5)
-    k_adv = pset.Kernel(AdvectionRK4)
+    k_adv = pset.Kernel(AdvectionRK4_3D)
     pset.execute(k_adv, endtime=time, dt=dt)
     err_adv = np.array([abs(-p.dep - wvel*time.total_seconds()) for p in pset])
     assert(err_adv <= 1.e-3).all()

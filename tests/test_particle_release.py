@@ -2,7 +2,7 @@ from test_moving_eddies import moving_eddies_grid
 from argparse import ArgumentParser
 from parcels.field import Field
 import numpy as np
-from parcels.particle import Particle, JITParticle, AdvectionRK4
+from parcels.particle import Particle, JITParticle, AdvectionRK4_2D
 from datetime import timedelta as delta
 
 
@@ -52,6 +52,6 @@ if __name__ == "__main__":
                             start_field=grid.Start)
 
     dt = delta(seconds=800)
-    pset.execute(AdvectionRK4, endtime=delta(days=25), dt=dt,
+    pset.execute(AdvectionRK4_2D, endtime=delta(days=25), dt=dt,
                  output_file=pset.ParticleFile(name="ReleaseTestParticle"),
                  output_interval=12 * dt)
