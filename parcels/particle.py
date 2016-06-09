@@ -7,15 +7,8 @@ from collections import OrderedDict, Iterable
 import matplotlib.pyplot as plt
 from datetime import timedelta as delta
 
-__all__ = ['Particle', 'ParticleSet', 'JITParticle',
-           'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
-
-
-def AdvectionRK4(particle, grid, time, dt):
-    if hasattr(grid, 'W'):
-        AdvectionRK4_3D(particle, grid, time, dt)
-    else:
-        AdvectionRK4_2D(particle, grid, time, dt)
+__all__ = ['Particle', 'ParticleSet', 'JITParticle', 'AdvectionRK4_2D', 'AdvectionRK4_3D',
+           'ParticleFile', 'AdvectionEE_2D', 'AdvectionEE_3D']
 
 
 def AdvectionRK4_2D(particle, grid, time, dt):
@@ -300,7 +293,7 @@ class ParticleSet(object):
         self.particles = np.delete(self.particles, indices)
         return particles
 
-    def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
+    def execute(self, pyfunc=AdvectionRK4_2D, starttime=None, endtime=None, dt=1.,
                 output_file=None, output_interval=-1, show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping

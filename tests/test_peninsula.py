@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle, AdvectionRK4_2D, AdvectionRK4_3D, AdvectionEE_2D, AdvectionEE_3D
 from argparse import ArgumentParser
 import numpy as np
 import math  # NOQA
@@ -6,7 +6,8 @@ import pytest
 from datetime import timedelta as delta
 
 
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+method = {'RK4_2D': AdvectionRK4_2D, 'RK4_3D': AdvectionRK4_3D, 
+          'EE_2D': AdvectionEE_2D, 'EE_3D': AdvectionEE_3D}
 
 
 def peninsula_grid(xdim, ydim, zdim):
@@ -37,6 +38,7 @@ def peninsula_grid(xdim, ydim, zdim):
     dy = 50. / ydim / 2.
     La = np.linspace(dx, 100.-dx, xdim, dtype=np.float32)
     Wa = np.linspace(dy, 50.-dy, ydim, dtype=np.float32)
+    Da = np.linspace(0, 500, zdim, dtype=np.float32)
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
@@ -77,7 +79,7 @@ def UpdateP(particle, grid, time, dt):
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
-                       verbose=False, output=True, method=AdvectionRK4):
+                       verbose=False, output=True, method=AdvectionRK4_3D):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input grid file set
@@ -183,8 +185,8 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=3, default=None,
                    help='Generate grid file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
-                   help='Numerical method used for advection')
+    p.add_argument('-m', '--method', choices=('RK4_2D', 'RK4_3D', 'EE_2D', 'EE_3D'),
+                   default='RK4_2D', help='Numerical method used for advection')
     args = p.parse_args()
 
     if args.grid is not None:

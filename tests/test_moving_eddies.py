@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, AdvectionRK4, AdvectionEE
+from parcels import Grid, Particle, JITParticle, AdvectionRK4_2D, AdvectionRK4_3D, AdvectionEE_2D, AdvectionEE_3D
 from argparse import ArgumentParser
 import numpy as np
 import math
@@ -6,7 +6,8 @@ import pytest
 from datetime import timedelta as delta
 
 
-method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
+method = {'RK4_2D': AdvectionRK4_2D, 'RK4_3D': AdvectionRK4_3D, 
+          'EE_2D': AdvectionEE_2D, 'EE_3D': AdvectionEE_3D}
 
 
 def moving_eddies_grid(xdim=200, ydim=350):
@@ -65,7 +66,7 @@ def moving_eddies_grid(xdim=200, ydim=350):
 
 
 def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
-                          method=AdvectionRK4):
+                          method=AdvectionRK4_2D):
     """Configuration of a particle set that follows two moving eddies
 
     :arg grid: :class Grid: that defines the flow field
@@ -95,7 +96,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_fwdbwd(mode, npart=2):
-    method = AdvectionRK4
+    method = AdvectionRK4_2D
     grid = moving_eddies_grid()
 
     # Determine particle class according to mode
@@ -161,8 +162,8 @@ Example of particle advection around an idealised peninsula""")
                    help='Print profiling information after run')
     p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
                    help='Generate grid file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
-                   help='Numerical method used for advection')
+    p.add_argument('-m', '--method', choices=('RK4_2D', 'RK4_3D', 'EE_2D', 'EE_3D'),
+                   default='RK4_2D', help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'moving_eddies'
 
