@@ -73,8 +73,8 @@ def test_grid_sample(grid, xdim=120, ydim=80):
     """ Sample the grid using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V[0, x, 70.] for x in lon])
-    u_s = np.array([grid.U[0, -45., y] for y in lat])
+    v_s = np.array([grid.V[0, x, 70., 0.] for x in lon])
+    u_s = np.array([grid.U[0, -45., y, 0.] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-12)
     assert np.allclose(u_s, lat, rtol=1e-12)
 
@@ -83,8 +83,8 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
     """ Sample the grid using the explicit eval function. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V.eval(0, x, 70.) for x in lon])
-    u_s = np.array([grid.U.eval(0, -45., y) for y in lat])
+    v_s = np.array([grid.V.eval(0, x, 70., 0.) for x in lon])
+    u_s = np.array([grid.U.eval(0, -45., y, 0.) for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-12)
     assert np.allclose(u_s, lat, rtol=1e-12)
 
@@ -105,6 +105,7 @@ def test_grid_sample_particle(grid, mode, samplefunc, npart=120):
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
+
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
@@ -117,13 +118,14 @@ def test_grid_sample_geographic(grid_geometric, mode, samplefunc, npart=120):
     grid = grid_geometric
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
+    dep = np.linspace(0, 0, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon, dep=dep,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat, dep=dep,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)

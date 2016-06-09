@@ -12,23 +12,69 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle',
 
 
 def AdvectionRK4(particle, grid, time, dt):
-    u1 = grid.U[time, particle.lon, particle.lat]
-    v1 = grid.V[time, particle.lon, particle.lat]
+    if hasattr(grid, 'W'):
+        AdvectionRK4_3D(particle, grid, time, dt)
+    else:
+        AdvectionRK4_2D(particle, grid, time, dt)
+
+
+def AdvectionRK4_2D(particle, grid, time, dt):
+    u1 = grid.U[time, particle.lon, particle.lat, particle.dep]
+    v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
     lon1, lat1 = (particle.lon + u1*.5*dt, particle.lat + v1*.5*dt)
-    u2, v2 = (grid.U[time + .5 * dt, lon1, lat1], grid.V[time + .5 * dt, lon1, lat1])
+    u2, v2 = (grid.U[time + .5 * dt, lon1, lat1, particle.dep], grid.V[time + .5 * dt, lon1, lat1, particle.dep])
     lon2, lat2 = (particle.lon + u2*.5*dt, particle.lat + v2*.5*dt)
-    u3, v3 = (grid.U[time + .5 * dt, lon2, lat2], grid.V[time + .5 * dt, lon2, lat2])
+    u3, v3 = (grid.U[time + .5 * dt, lon2, lat2, particle.dep], grid.V[time + .5 * dt, lon2, lat2, particle.dep])
     lon3, lat3 = (particle.lon + u3*dt, particle.lat + v3*dt)
-    u4, v4 = (grid.U[time + dt, lon3, lat3], grid.V[time + dt, lon3, lat3])
+    u4, v4 = (grid.U[time + dt, lon3, lat3, particle.dep], grid.V[time + dt, lon3, lat3, particle.dep])
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
 
 
-def AdvectionEE(particle, grid, time, dt):
-    u1 = grid.U[time, particle.lon, particle.lat]
-    v1 = grid.V[time, particle.lon, particle.lat]
+def AdvectionRK4_3D(particle, grid, time, dt):
+    posvertdir = -1.  # TODO: Decide on direction of positive w
+    u1 = grid.U[time, particle.lon, particle.lat, particle.dep]
+    lon1 = particle.lon + u1*.5*dt
+    v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
+    lat1 = particle.lat + v1*.5*dt
+    w1 = grid.W[time, particle.lon, particle.lat, particle.dep] * posvertdir
+    dep1 = particle.dep + w1*.5*dt
+    u2 = grid.U[time + .5 * dt, lon1, lat1, dep1]
+    lon2 = particle.lon + u2*.5*dt
+    v2 = grid.V[time + .5 * dt, lon1, lat1, dep1]
+    lat2 = particle.lat + v2*.5*dt
+    w2 = grid.W[time + .5 * dt, lon1, lat1, dep1] * posvertdir
+    dep2 = particle.dep + w2*.5*dt
+    u3 = grid.U[time + .5 * dt, lon2, lat2, dep2]
+    lon3 = particle.lon + u3*dt
+    v3 = grid.V[time + .5 * dt, lon2, lat2, dep2]
+    lat3 = particle.lat + v3*dt
+    w3 = grid.W[time + .5 * dt, lon2, lat2, dep2] * posvertdir
+    dep3 = particle.dep + w3*.5*dt
+    u4 = grid.U[time + dt, lon3, lat3, dep3]
+    v4 = grid.V[time + dt, lon3, lat3, dep3]
+    w4 = grid.W[time + dt, lon3, lat3, dep3] * posvertdir
+    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
+    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
+    particle.dep += (w1 + 2*w2 + 2*w3 + w4) / 6. * dt
+
+
+def AdvectionEE_2D(particle, grid, time, dt):
+    posvertdir = -1.  # TODO: Decide on direction of positive w
+    u1 = grid.U[time, particle.lon, particle.lat, particle.dep]
+    v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
     particle.lon += u1 * dt
     particle.lat += v1 * dt
+
+
+def AdvectionEE_3D(particle, grid, time, dt):
+    posvertdir = -1.  # TODO: Decide on direction of positive w
+    u1 = grid.U[time, particle.lon, particle.lat, particle.dep]
+    v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
+    w1 = grid.W[time, particle.lon, particle.lat, particle.dep] * posvertdir
+    particle.lon += u1 * dt
+    particle.lat += v1 * dt
+    particle.dep += w1 * dt
 
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
@@ -70,18 +116,20 @@ class Particle(object):
     """
     user_vars = OrderedDict()
 
-    def __init__(self, lon, lat, grid, cptr=None):
+    def __init__(self, lon, lat, dep, grid, cptr=None):
         self.lon = lon
         self.lat = lat
+        self.dep = dep
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
+        self.zi = np.where(self.dep >= grid.U.depth)[0][-1]
         self.active = 1
 
         for var in self.user_vars:
             setattr(self, var, 0)
 
     def __repr__(self):
-        return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
+        return "P(%f, %f, %f)[%d, %d, %d]" % (self.lon, self.lat, self.dep, self.xi, self.yi, self.zi)
 
     @classmethod
     def getPType(cls):
@@ -101,8 +149,8 @@ class JITParticle(Particle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
-    base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
-                             ('xi', np.int32), ('yi', np.int32),
+    base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32), ('dep', np.float32),
+                             ('xi', np.int32), ('yi', np.int32), ('zi', np.int32),
                              ('active', np.int32)])
     user_vars = OrderedDict()
 
@@ -172,11 +220,12 @@ class ParticleSet(object):
     :param pclass: Optional class object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
+    :param dep: List of initial depth values for particles
     :param time_origin: Time origin of the particles (taken from grid)
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
-                 lon=None, lat=None, start=None, finish=None, start_field=None):
+                 lon=None, lat=None, dep=None, start=None, finish=None, start_field=None):
         self.grid = grid
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = ParticleType(pclass)
@@ -198,6 +247,7 @@ class ParticleSet(object):
             assert(lon is None and lat is None)
             lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
             lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+            dep = np.linspace(start[2], finish[2], size, dtype=np.float32)
 
         if start_field is not None:
             lon, lat = positions_from_density_field(size, start_field)
@@ -207,7 +257,7 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i))
+                self.particles[i] = pclass(lon[i], lat[i], dep[i], grid=grid, cptr=cptr(i))
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
@@ -415,11 +465,11 @@ class ParticleFile(object):
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=np.nan)
-        self.z.long_name = ""
-        self.z.standard_name = "depth"
-        self.z.units = "m"
-        self.z.positive = "down"
+        self.dep = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=np.nan)
+        self.dep.long_name = ""
+        self.dep.standard_name = "depth"
+        self.dep.units = "m"
+        self.dep.positive = "down"
 
         if particleset.ptype.user_vars is not None:
             self.user_vars = particleset.ptype.user_vars.keys()
@@ -444,9 +494,9 @@ class ParticleFile(object):
             # Write multiple particles at once
             pset = data
             self.time[:, self.idx] = time
+            self.dep[:, self.idx] = np.array([p.dep for p in pset])
             self.lat[:, self.idx] = np.array([p.lat for p in pset])
             self.lon[:, self.idx] = np.array([p.lon for p in pset])
-            self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
             for var in self.user_vars:
                 getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
         else:

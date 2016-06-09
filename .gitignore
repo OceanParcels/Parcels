@@ -8,5 +8,6 @@ gh-pages/html
 *.c
 *.pyc
 *.dSYM/*
+*.cache/*
 
 Profile.prof
