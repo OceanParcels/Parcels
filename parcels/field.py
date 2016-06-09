@@ -178,7 +178,11 @@ class Field(object):
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
-                data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
+                tmp = filebuffer.data
+                if len(tmp.shape) is 3:
+                    data[tidx:, 0, :, :] = filebuffer.data[:, :, :]                
+                else:
+                    data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
             tidx += tslice.size
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
@@ -373,8 +377,11 @@ class FileBuffer(object):
 
     @property
     def dep(self):
-        dep = self.dataset[self.dimensions['depth']]
-        return dep[:, 0] if len(dep.shape) > 1 else dep[:]
+        try:
+            dep = self.dataset[self.dimensions['depth']]
+            return dep[:, 0] if len(dep.shape) > 1 else dep[:]
+        except:
+            return np.zeros(1)
 
     @property
     def data(self):
