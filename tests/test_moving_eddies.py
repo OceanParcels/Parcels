@@ -6,7 +6,7 @@ import pytest
 from datetime import timedelta as delta
 
 
-method = {'RK4_2D': AdvectionRK4_2D, 'RK4_3D': AdvectionRK4_3D, 
+method = {'RK4_2D': AdvectionRK4_2D, 'RK4_3D': AdvectionRK4_3D,
           'EE_2D': AdvectionEE_2D, 'EE_3D': AdvectionEE_3D}
 
 

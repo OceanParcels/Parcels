@@ -6,7 +6,7 @@ import pytest
 from datetime import timedelta as delta
 
 
-method = {'RK4_2D': AdvectionRK4_2D, 'RK4_3D': AdvectionRK4_3D, 
+method = {'RK4_2D': AdvectionRK4_2D, 'RK4_3D': AdvectionRK4_3D,
           'EE_2D': AdvectionEE_2D, 'EE_3D': AdvectionEE_3D}
 
 
@@ -54,10 +54,10 @@ def peninsula_grid(xdim, ydim, zdim):
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
     for z in range(zdim):
-        P[:,:,z] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-        U[:,:,z] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-        V[:,:,z] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
-        W[:,:,z] = 1e-4
+        P[:, :, z] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+        U[:, :, z] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+        V[:, :, z] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+        W[:, :, z] = 1e-4
 
     # Set land points to NaN
     I = P >= 0.
@@ -71,7 +71,7 @@ def peninsula_grid(xdim, ydim, zdim):
     depth = Da
 
     return Grid.from_data(U, lon, lat, V, lon, lat,
-                          depth, time, field_data={'P': P, 'W' :W})
+                          depth, time, field_data={'P': P, 'W': W})
 
 
 def UpdateP(particle, grid, time, dt):
@@ -136,7 +136,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_grid(mode):
     """Execute peninsula test from grid generated in memory"""
-    grid = peninsula_grid(100, 50)
+    grid = peninsula_grid(100, 50, 1)
     pset = pensinsula_example(grid, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -150,7 +150,7 @@ def test_peninsula_grid(mode):
 def gridfile():
     """Generate grid files for peninsula test"""
     filename = 'peninsula'
-    grid = peninsula_grid(100, 50)
+    grid = peninsula_grid(100, 50, 1)
     grid.write(filename)
     return filename
 
