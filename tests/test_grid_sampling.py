@@ -64,8 +64,8 @@ def pclass(mode):
 @pytest.fixture
 def samplefunc():
     def Sample(particle, grid, time, dt):
-        particle.u = grid.U[0., particle.lon, particle.lat]
-        particle.v = grid.V[0., particle.lon, particle.lat]
+        particle.u = grid.U[0., particle.lon, particle.lat, particle.dep]
+        particle.v = grid.V[0., particle.lon, particle.lat, particle.dep]
     return Sample
 
 
@@ -117,14 +117,13 @@ def test_grid_sample_geographic(grid_geometric, mode, samplefunc, npart=120):
     grid = grid_geometric
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
-    dep = np.linspace(0, 0, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon, dep=dep,
+    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat, dep=dep,
+    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
@@ -179,7 +178,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
 
 
 def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
+    particle.p = grid.P[time, particle.lon, particle.lat, particle.dep]
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

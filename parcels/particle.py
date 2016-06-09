@@ -248,6 +248,9 @@ class ParticleSet(object):
             # Initialise from lists of lon/lat coordinates
             assert(size == len(lon) and size == len(lat))
 
+            if dep is None:
+                dep = np.zeros(size, np.float32)
+
             for i in range(size):
                 self.particles[i] = pclass(lon[i], lat[i], dep[i], grid=grid, cptr=cptr(i))
         else:
