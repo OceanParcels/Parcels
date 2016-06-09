@@ -180,7 +180,7 @@ class Field(object):
             with FileBuffer(fname, dimensions) as filebuffer:
                 tmp = filebuffer.data
                 if len(tmp.shape) is 3:
-                    data[tidx:, 0, :, :] = filebuffer.data[:, :, :]                
+                    data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
             tidx += tslice.size
