@@ -114,6 +114,12 @@ class Field(object):
         if not self.data.dtype == np.float32:
             print("WARNING: Casting field data to np.float32")
             self.data = self.data.astype(np.float32)
+        if not self.lon.dtype == np.float32:
+            print("WARNING: Casting lon data to np.float32")
+            self.lon = self.lon.astype(np.float32)
+        if not self.lat.dtype == np.float32:
+            print("WARNING: Casting lat data to np.float32")
+            self.lat = self.lat.astype(np.float32)
         if transpose:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
@@ -157,8 +163,8 @@ class Field(object):
             lat = filebuffer.lat
             # Assign time_origin if the time dimension has units and calendar
             time_origin = filebuffer.time_origin
-        # Default depth to zeros until we implement 3D grids properly
-        depth = datasets[0][dimensions['depth']][:]
+            # Default depth to zeros until we implement 3D grids properly
+            depth = filebuffer.dep
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = []
@@ -366,11 +372,16 @@ class FileBuffer(object):
         return lat[:, 0] if len(lat.shape) > 1 else lat[:]
 
     @property
+    def dep(self):
+        dep = self.dataset[self.dimensions['depth']]
+        return dep[:, 0] if len(dep.shape) > 1 else dep[:]
+
+    @property
     def data(self):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
             return self.dataset[self.dimensions['data']][:, :, :]
         else:
-            return self.dataset[self.dimensions['data']][:, 0, :, :]
+            return self.dataset[self.dimensions['data']][:, :, :, :]
 
     @property
     def time(self):

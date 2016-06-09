@@ -9,7 +9,7 @@ from datetime import timedelta as delta
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
 
 
-def peninsula_grid(xdim, ydim):
+def peninsula_grid(xdim, ydim, zdim):
     """Construct a grid encapsulating the flow field around an
     idealised peninsula.
 
@@ -40,10 +40,10 @@ def peninsula_grid(xdim, ydim):
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
-    W = np.zeros((xdim, ydim), dtype=np.float32)
-    P = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((xdim, ydim, zdim), dtype=np.float32)
+    V = np.zeros((xdim, ydim, zdim), dtype=np.float32)
+    W = np.zeros((xdim, ydim, zdim), dtype=np.float32)
+    P = np.zeros((xdim, ydim, zdim), dtype=np.float32)
 
     u0 = 1
     x0 = 50.
@@ -51,9 +51,11 @@ def peninsula_grid(xdim, ydim):
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
-    P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-    U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-    V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+    for z in range(zdim):
+        P[:,:,z] = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+        U[:,:,z] = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+        V[:,:,z] = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+        W[:,:,z] = 1e-4
 
     # Set land points to NaN
     I = P >= 0.
@@ -64,11 +66,10 @@ def peninsula_grid(xdim, ydim):
     # Convert from km to lat/lon
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
-
     depth = Da
 
     return Grid.from_data(U, lon, lat, V, lon, lat,
-                          depth, time, field_data={'P': P})
+                          depth, time, field_data={'P': P, 'W' :W})
 
 
 def UpdateP(particle, grid, time, dt):
@@ -180,7 +181,7 @@ Example of particle advection around an idealised peninsula""")
                    help='Suppress trajectory output')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
-    p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
+    p.add_argument('-g', '--grid', type=int, nargs=3, default=None,
                    help='Generate grid file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE'), default='RK4',
                    help='Numerical method used for advection')
@@ -188,11 +189,11 @@ Example of particle advection around an idealised peninsula""")
 
     if args.grid is not None:
         filename = 'peninsula'
-        grid = peninsula_grid(args.grid[0], args.grid[1])
+        grid = peninsula_grid(args.grid[0], args.grid[1], args.grid[2])
         grid.write(filename)
 
     # Open grid file set
-    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'})
+    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P', 'W': 'W'})
 
     if args.profiling:
         from cProfile import runctx

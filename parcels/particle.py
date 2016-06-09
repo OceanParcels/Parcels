@@ -60,7 +60,6 @@ def AdvectionRK4_3D(particle, grid, time, dt):
 
 
 def AdvectionEE_2D(particle, grid, time, dt):
-    posvertdir = -1.  # TODO: Decide on direction of positive w
     u1 = grid.U[time, particle.lon, particle.lat, particle.dep]
     v1 = grid.V[time, particle.lon, particle.lat, particle.dep]
     particle.lon += u1 * dt
