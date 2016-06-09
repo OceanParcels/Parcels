@@ -5,10 +5,14 @@ from py import path
 import numpy as np
 import xray
 import operator
-import matplotlib.pyplot as plt
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
+from datetime import timedelta
+try:
+    import matplotlib.pyplot as plt
+except:
+    plt = None
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -161,17 +165,22 @@ class Field(object):
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon = filebuffer.lon
             lat = filebuffer.lat
-            # Assign time_origin if the time dimension has units and calendar
-            time_origin = filebuffer.time_origin
-            # Default depth to zeros until we implement 3D grids properly
             depth = filebuffer.dep
+            # Assign time_units if the time dimension has units and calendar
+            time_units = filebuffer.time_units
+            calendar = filebuffer.calendar
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = []
         for fname in filenames:
             with FileBuffer(fname, dimensions) as filebuffer:
                 timeslices.append(filebuffer.time)
+        timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
+        if time_units is None:
+            time_origin = 0
+        else:
+            time_origin = num2date(0, time_units, calendar)
 
         # Pre-allocate grid data before reading files into buffer
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
@@ -304,6 +313,9 @@ class Field(object):
         return cstruct
 
     def show(self, **kwargs):
+        if plt is None:
+            raise RuntimeError("Visualisation not possible: matplotlib not found!")
+
         t = kwargs.get('t', 0)
         animation = kwargs.get('animation', False)
         idx = self.find_higher_index('time', t)
@@ -392,14 +404,29 @@ class FileBuffer(object):
 
     @property
     def time(self):
-        return self.dataset[self.dimensions['time']][:]
+        if self.time_units is not None:
+            dt = num2date(self.dataset[self.dimensions['time']][:],
+                          self.time_units, self.calendar)
+            dt -= num2date(0, self.time_units, self.calendar)
+            return list(map(timedelta.total_seconds, dt))
+        else:
+            return self.dataset[self.dimensions['time']][:]
 
     @property
-    def time_origin(self):
-        """ Derive time_origin if the time dimension has units and calendar """
+    def time_units(self):
+        """ Derive time_units if the time dimension has units """
         try:
-            time_units = self.dataset[self.dimensions['time']].units
-            calendar = self.dataset[self.dimensions['time']].calendar
-            return num2date(0, time_units, calendar)
+            return self.dataset[self.dimensions['time']].units
         except:
-            return 0
+            try:
+                return self.dataset[self.dimensions['time']].Unit
+            except:
+                return None
+
+    @property
+    def calendar(self):
+        """ Derive calendar if the time dimension has calendar """
+        try:
+            return self.dataset[self.dimensions['time']].calendar
+        except:
+            return 'standard'
