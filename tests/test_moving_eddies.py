@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 import numpy as np
 import math
 import pytest
-from datetime import timedelta as delta
 
 
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE}
@@ -13,8 +12,11 @@ def moving_eddies_grid(xdim=200, ydim=350):
     """Generate a grid encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
-    Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
-    artificially with uniform velocities. Velocities are calculated from geostrophy.
+    The original test description can be found in: K. Doos,
+    J. Kjellsson and B. F. Jonsson. 2013 TRACMASS - A Lagrangian
+    Trajectory Model, in Preventive Methods for Coastal Protection,
+    T. Soomere and E. Quak (Eds.),
+    http://www.springer.com/gb/book/9783319004396
     """
     # Set NEMO grid variables
     depth = np.zeros(1, dtype=np.float32)
@@ -39,29 +41,29 @@ def moving_eddies_grid(xdim=200, ydim=350):
     # Some constants
     corio_0 = 1.e-4  # Coriolis parameter
     h0 = 1  # Max eddy height
-    sig = 0.5  # Eddy e-folding decay scale (in degrees)
+    sig = 30  # Eddy e-folding decay scale (in grid points)
     g = 10  # Gravitational constant
     eddyspeed = 0.1  # Translational speed in m/s
     dX = eddyspeed * 86400 / dx  # Grid cell movement of eddy max each day
-    dY = eddyspeed * 86400 / dy  # Grid cell movement of eddy max each day
 
     [x, y] = np.mgrid[:lon.size, :lat.size]
     for t in range(time.size):
-        hymax_1 = lat.size / 7.
-        hxmax_1 = .75 * lon.size - dX * t
-        hymax_2 = 3. * lat.size / 7. + dY * t
-        hxmax_2 = .75 * lon.size - dX * t
+        hymax_1 = int(lat.size / 7)
+        hxmax_1 = int(.75 * lon.size) - dX * (t-2)
+        hymax_2 = int(3 * lat.size / 7) + dX * (t-2)
+        hxmax_2 = int(.75 * lon.size) - dX * (t-2)
 
-        P[:, :, t] = h0 * np.exp(-(x-hxmax_1)**2/(sig*lon.size/4.)**2-(y-hymax_1)**2/(sig*lat.size/7.)**2)
-        P[:, :, t] += h0 * np.exp(-(x-hxmax_2)**2/(sig*lon.size/4.)**2-(y-hymax_2)**2/(sig*lat.size/7.)**2)
+        P[:, :, t] = h0 * np.exp(-((x-hxmax_1)**2+(y-hymax_1)**2)/sig**2)
+        P[:, :, t] += h0 * np.exp(-((x-hxmax_2)**2+(y-hymax_2)**2)/sig**2)
 
         V[:-1, :, t] = -np.diff(P[:, :, t], axis=0) / dx / corio_0 * g
         V[-1, :, t] = V[-2, :, t]  # Fill in the last column
 
         U[:, :-1, t] = np.diff(P[:, :, t], axis=1) / dy / corio_0 * g
-        U[:, -1, t] = U[:, -2, t]  # Fill in the last row
+        V[:, -1, t] = U[:, -2, t]  # Fill in the last row
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P})
+    return Grid.from_data(U, lon, lat, V, lon, lat,
+                          depth, time, field_data={'P': P})
 
 
 def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
@@ -81,11 +83,13 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
         print("Initial particle positions:\n%s" % pset)
 
     # Execte for 25 days, with 5min timesteps and hourly output
-    endtime = delta(days=25)
-    print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
-    pset.execute(method, endtime=endtime, dt=delta(minutes=5),
+    hours = 25*24
+    substeps = 12
+    print("MovingEddies: Advecting %d particles for %d timesteps"
+          % (npart, hours * substeps))
+    pset.execute(method, timesteps=hours*substeps, dt=300.,
                  output_file=pset.ParticleFile(name="EddyParticle"),
-                 output_interval=delta(hours=1), show_movie=False)
+                 output_steps=substeps)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -94,58 +98,11 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_moving_eddies_fwdbwd(mode, npart=2):
-    method = AdvectionRK4
-    grid = moving_eddies_grid()
-
-    # Determine particle class according to mode
-    ParticleClass = JITParticle if mode == 'jit' else Particle
-
-    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
-                            start=(3.3, 46.), finish=(3.3, 47.8))
-
-    # Execte for 14 days, with 30sec timesteps and hourly output
-    endtime = delta(days=14)
-    dt = delta(minutes=5)
-    print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
-    pset.execute(method, starttime=0, endtime=endtime, dt=dt,
-                 output_file=pset.ParticleFile(name="EddyParticlefwd"),
-                 output_interval=delta(hours=1))
-
-    print("Now running in backward time mode")
-    pset.execute(method, starttime=endtime, endtime=0, dt=-dt,
-                 output_file=pset.ParticleFile(name="EddyParticlebwd"),
-                 output_interval=delta(hours=1))
-
-    assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
-    assert(pset[1].lon > 3.2 and 47.7 < pset[1].lat < 47.9)
-
-    return pset
-
-
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_grid(mode):
     grid = moving_eddies_grid()
     pset = moving_eddies_example(grid, 2, mode=mode)
-    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
-    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
-
-
-@pytest.fixture(scope='module')
-def gridfile():
-    """Generate grid files for moving_eddies test"""
-    filename = 'moving_eddies'
-    grid = moving_eddies_grid(200, 350)
-    grid.write(filename)
-    return filename
-
-
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_moving_eddies_file(gridfile, mode):
-    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'})
-    pset = moving_eddies_example(grid, 2, mode=mode)
-    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
-    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
+    assert(pset[0].lon < 0.5 and 45.8 < pset[0].lat < 46.15)
+    assert(pset[1].lon < 0.5 and 50.4 < pset[1].lat < 50.7)
 
 
 if __name__ == "__main__":

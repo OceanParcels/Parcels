@@ -1,26 +1,11 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
-from parcels.compiler import get_cache_dir
-from os import path
+from py import path
 import math  # NOQA get flake8 to ignore unused import.
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
 from ast import parse, FunctionDef, Module
 import inspect
 from copy import deepcopy
-import re
-from hashlib import md5
-
-
-re_indent = re.compile(r"^(\s+)")
-
-
-def fix_indentation(string):
-    """Fix indentation to allow in-lined kernel definitions"""
-    lines = string.split('\n')
-    indent = re_indent.match(lines[0])
-    if indent:
-        lines = [l.replace(indent.groups()[0], '', 1) for l in lines]
-    return "\n".join(lines)
 
 
 class Kernel(object):
@@ -37,8 +22,7 @@ class Kernel(object):
             self.funcname = pyfunc.__name__
             self.funcvars = list(pyfunc.__code__.co_varnames)
             # Parse the Python code into an AST
-            funccode = inspect.getsource(pyfunc.__code__)
-            self.py_ast = parse(fix_indentation(funccode))
+            self.py_ast = parse(inspect.getsource(pyfunc.__code__))
             self.py_ast = self.py_ast.body[0]
             self.pyfunc = pyfunc
         else:
@@ -60,12 +44,16 @@ class Kernel(object):
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
 
-        self.name = "%s%s" % (ptype.name, self.funcname)
+        self.name = "%s%s" % (ptype.name, funcname)
+
+        self.src_file = str(path.local("%s.c" % self.name))
+        self.lib_file = str(path.local("%s.so" % self.name))
+        self.log_file = str(path.local("%s.log" % self.name))
+        self._lib = None
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
             kernelgen = KernelGenerator(grid, ptype)
-            self.field_args = kernelgen.field_args
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
@@ -74,25 +62,11 @@ class Kernel(object):
                                           self.field_args,
                                           kernel_ccode)
 
-            basename = path.join(get_cache_dir(), self._cache_key)
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.so" % basename
-            self.log_file = "%s.log" % basename
-        self._lib = None
-
-    @property
-    def _cache_key(self):
-        field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
-                               for name, field in self.field_args.items()])
-        key = self.name + self.ptype._cache_key + field_keys
-        return md5(key.encode('utf-8')).hexdigest()
-
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
         with open(self.src_file, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
-        print("Compiled %s ==> %s" % (self.name, self.lib_file))
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
@@ -107,8 +81,7 @@ class Kernel(object):
         else:
             for _ in range(timesteps):
                 for p in pset.particles:
-                    if p.active == 1:
-                        self.pyfunc(p, pset.grid, time, dt)
+                    self.pyfunc(p, pset.grid, time, dt)
                 time += dt
 
     def merge(self, kernel):
