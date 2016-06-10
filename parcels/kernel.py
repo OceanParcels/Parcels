@@ -105,10 +105,21 @@ class Kernel(object):
             self._function(c_int(len(pset)), particle_data,
                            c_double(endtime), c_float(dt), *fargs)
         else:
-            for p in pset.particles:
-                while p.time < endtime if dt > 0 else p.time > endtime:
-                    self.pyfunc(p, pset.grid, p.time, p.dt)
-                    p.time += p.dt
+            # We now special-case forward and backward modes to
+            # predict the final time-step size before an interval.
+            if dt > 0:
+                for p in pset.particles:
+                    while min(p.dt, endtime - p.time) > 0:
+                        dt = min(p.dt, endtime - p.time)
+                        self.pyfunc(p, pset.grid, p.time, dt)
+                        p.time += dt
+            else:
+                for p in pset.particles:
+                    while max(p.dt, endtime - p.time) < 0:
+                        dt = max(p.dt, endtime - p.time)
+                        self.pyfunc(p, pset.grid, p.time, dt)
+                        p.time += dt
+
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
