@@ -1,13 +1,14 @@
 from parcels import Grid, Particle, JITParticle
-from parcels import AdvectionEE, AdvectionRK4
+from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45
 import numpy as np
 import pytest
 import math
 from datetime import timedelta as delta
+from argparse import ArgumentParser
 
 
 ptype = {'scipy': Particle, 'jit': JITParticle}
-kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4}
+kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45}
 
 # Some constants
 f = 1.e-4
@@ -82,7 +83,10 @@ def grid_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [('EE', 1e-2), ('RK4', 1e-5)])
+@pytest.mark.parametrize('method, rtol', [
+    ('EE', 1e-2),
+    ('RK4', 1e-5),
+    ('RK45', 1e-5)])
 def test_stationary_eddy(grid_stationary, mode, method, rtol, npart=1):
     grid = grid_stationary
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
@@ -118,7 +122,10 @@ def grid_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [('EE', 1e-2), ('RK4', 1e-5)])
+@pytest.mark.parametrize('method, rtol', [
+    ('EE', 1e-2),
+    ('RK4', 1e-5),
+    ('RK45', 1e-5)])
 def test_moving_eddy(grid_moving, mode, method, rtol, npart=1):
     grid = grid_moving
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
@@ -160,7 +167,10 @@ def grid_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [('EE', 1e-2), ('RK4', 1e-5)])
+@pytest.mark.parametrize('method, rtol', [
+    ('EE', 1e-2),
+    ('RK4', 1e-5),
+    ('RK45', 1e-5)])
 def test_decaying_eddy(grid_decaying, mode, method, rtol, npart=1):
     grid = grid_decaying
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
@@ -172,3 +182,38 @@ def test_decaying_eddy(grid_decaying, mode, method, rtol, npart=1):
     exp_lat = [truth_decaying(x, y, endtime)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
     assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
+
+
+if __name__ == "__main__":
+    p = ArgumentParser(description="""
+Example of particle advection around an idealised peninsula""")
+    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
+                   help='Execution mode for performing computation')
+    p.add_argument('-p', '--particles', type=int, default=1,
+                   help='Number of particles to advect')
+    p.add_argument('-v', '--verbose', action='store_true', default=False,
+                   help='Print particle information before and after execution')
+    p.add_argument('--grid', choices=('stationary', 'moving', 'decaying'),
+                   default='stationary', help='Generate grid file with given dimensions')
+    p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
+                   help='Numerical method used for advection')
+    args = p.parse_args()
+    filename = 'analytical_eddies'
+
+    # Generate grid files according to chosen test setup
+    if args.grid == 'stationary':
+        grid = grid_stationary()
+    elif args.grid == 'moving':
+        grid = grid_moving()
+    elif args.grid == 'decaying':
+        grid = grid_decaying()
+
+    npart = args.particles
+    pset = grid.ParticleSet(size=npart, pclass=ptype[args.mode],
+                            lon=np.linspace(4000, 21000, npart, dtype=np.float32),
+                            lat=np.linspace(12500, 12500, npart, dtype=np.float32))
+    if args.verbose:
+        print("Initial particle positions:\n%s" % pset)
+    pset.execute(kernel[args.method], dt=delta(minutes=3), endtime=delta(hours=6))
+    if args.verbose:
+        print("Final particle positions:\n%s" % pset)
