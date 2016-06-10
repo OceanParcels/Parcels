@@ -1,4 +1,4 @@
-from parcels.kernel import Kernel
+from parcels.kernel import Kernel, KernelOp
 from parcels.field import Field
 from parcels.compiler import GNUCompiler
 import numpy as np
@@ -82,9 +82,10 @@ def AdvectionRK45(particle, grid, time, dt):
         particle.lat = lat_4th
         if kappa <= dt * tol[0] / 10:
             particle.dt *= 2
-        return
+        return KernelOp.SUCCESS
     else:
         particle.dt /= 2
+        return KernelOp.FAILURE
 
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):

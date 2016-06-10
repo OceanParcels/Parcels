@@ -9,9 +9,18 @@ import inspect
 from copy import deepcopy
 import re
 from hashlib import md5
+from enum import Enum
+
+
+__all__ = ['Kernel', 'KernelOp']
 
 
 re_indent = re.compile(r"^(\s+)")
+
+
+class KernelOp(Enum):
+    SUCCESS = 0
+    FAILURE = 1
 
 
 def fix_indentation(string):
@@ -111,15 +120,16 @@ class Kernel(object):
                 for p in pset.particles:
                     while min(p.dt, endtime - p.time) > 0:
                         dt = min(p.dt, endtime - p.time)
-                        self.pyfunc(p, pset.grid, p.time, dt)
-                        p.time += dt
+                        res = self.pyfunc(p, pset.grid, p.time, dt)
+                        if res is None or res == KernelOp.SUCCESS:
+                            p.time += dt
             else:
                 for p in pset.particles:
                     while max(p.dt, endtime - p.time) < 0:
                         dt = max(p.dt, endtime - p.time)
-                        self.pyfunc(p, pset.grid, p.time, dt)
-                        p.time += dt
-
+                        res = self.pyfunc(p, pset.grid, p.time, dt)
+                        if res is None or res == KernelOp.SUCCESS:
+                            p.time += dt
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
