@@ -328,7 +328,13 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Add(self, node):
         node.ccode = "+"
 
+    def visit_UAdd(self, node):
+        node.ccode = "+"
+
     def visit_Sub(self, node):
+        node.ccode = "-"
+
+    def visit_USub(self, node):
         node.ccode = "-"
 
     def visit_Mult(self, node):
