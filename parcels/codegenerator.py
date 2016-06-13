@@ -34,6 +34,18 @@ class MathNode(IntrinsicNode):
                                  % attr)
 
 
+class KernelOpNode(IntrinsicNode):
+    symbol_map = {'SUCCESS': 'SUCCESS', 'FAILURE': 'FAILURE'}
+
+    def __getattr__(self, attr):
+        if attr in self.symbol_map:
+            attr = self.symbol_map[attr]
+            return IntrinsicNode(None, ccode=attr)
+        else:
+            raise AttributeError("""Unknown math function encountered: %s"""
+                                 % attr)
+
+
 class ParticleAttributeNode(IntrinsicNode):
     def __init__(self, obj, attr):
         self.obj = obj
@@ -91,6 +103,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             return GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
             return ParticleNode(self.ptype, ccode='particle')
+        if node.id == 'KernelOp':
+            return KernelOpNode(math, ccode='')
         if node.id == 'math':
             return MathNode(math, ccode='')
         else:
@@ -194,15 +208,16 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(stmt)
 
         # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
+        decl = c.Static(c.DeclSpecifier(c.Value("KernelOp", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field, _ in self.field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
 
         # Create function body as C-code object
-        body = c.Block([stmt.ccode for stmt in node.body])
-        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), body)
+        body = [stmt.ccode for stmt in node.body]
+        body += [c.Statement("return SUCCESS")]
+        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
     def visit_Call(self, node):
         """Generate C code for simple C-style function calls. Please
@@ -371,6 +386,10 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
+
+    def visit_Return(self, node):
+        self.visit(node.value)
+        node.ccode = c.Statement('return %s' % node.value.ccode)
 
     def visit_Print(self, node):
         for n in node.values:

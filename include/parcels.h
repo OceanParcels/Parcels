@@ -1,5 +1,10 @@
 #include <stdio.h>
 
+typedef enum
+  {
+    SUCCESS, FAILURE
+  } KernelOp;
+
 typedef struct
 {
   int xdim, ydim, tdim, tidx;
