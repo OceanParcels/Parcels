@@ -70,6 +70,11 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
 /**************************************************/
 /*   Random number generation (RNG) functions     */
 /**************************************************/
+
+static void parcels_seed(int seed)
+{
+}
+
 static inline float parcels_random()
 {
   return -66.6666;
