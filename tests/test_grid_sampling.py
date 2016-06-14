@@ -75,8 +75,8 @@ def test_grid_sample(grid, xdim=120, ydim=80):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([grid.V[0, x, 70.] for x in lon])
     u_s = np.array([grid.U[0, -45., y] for y in lat])
-    assert np.allclose(v_s, lon, rtol=1e-12)
-    assert np.allclose(u_s, lat, rtol=1e-12)
+    assert np.allclose(v_s, lon, rtol=1e-7)
+    assert np.allclose(u_s, lat, rtol=1e-7)
 
 
 def test_grid_sample_eval(grid, xdim=60, ydim=60):
@@ -85,8 +85,8 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([grid.V.eval(0, x, 70.) for x in lon])
     u_s = np.array([grid.U.eval(0, -45., y) for y in lat])
-    assert np.allclose(v_s, lon, rtol=1e-12)
-    assert np.allclose(u_s, lat, rtol=1e-12)
+    assert np.allclose(v_s, lon, rtol=1e-7)
+    assert np.allclose(u_s, lat, rtol=1e-7)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
