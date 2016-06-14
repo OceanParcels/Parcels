@@ -9,9 +9,18 @@ import inspect
 from copy import deepcopy
 import re
 from hashlib import md5
+from enum import Enum
+
+
+__all__ = ['Kernel', 'KernelOp']
 
 
 re_indent = re.compile(r"^(\s+)")
+
+
+class KernelOp(Enum):
+    SUCCESS = 0
+    FAILURE = 1
 
 
 def fix_indentation(string):
@@ -70,9 +79,9 @@ class Kernel(object):
                                               self.funcvars)
             self.field_args = kernelgen.field_args
             loopgen = LoopGenerator(grid, ptype)
-            self.ccode = loopgen.generate(self.funcname,
-                                          self.field_args,
-                                          kernel_ccode)
+            adaptive = 'AdvectionRK45' in self.funcname
+            self.ccode = loopgen.generate(self.funcname, self.field_args,
+                                          kernel_ccode, adaptive=adaptive)
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
@@ -98,18 +107,29 @@ class Kernel(object):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
 
-    def execute(self, pset, timesteps, time, dt):
+    def execute(self, pset, endtime, dt):
         if self.ptype.uses_jit:
             fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
             particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-            self._function(c_int(len(pset)), particle_data, c_int(timesteps),
-                           c_double(time), c_float(dt), *fargs)
+            self._function(c_int(len(pset)), particle_data,
+                           c_double(endtime), c_float(dt), *fargs)
         else:
-            for _ in range(timesteps):
+            # We now special-case forward and backward modes to
+            # predict the final time-step size before an interval.
+            if dt > 0:
                 for p in pset.particles:
-                    if p.active == 1:
-                        self.pyfunc(p, pset.grid, time, dt)
-                time += dt
+                    while min(p.dt, endtime - p.time) > 0:
+                        dt = min(p.dt, endtime - p.time)
+                        res = self.pyfunc(p, pset.grid, p.time, dt)
+                        if res is None or res == KernelOp.SUCCESS:
+                            p.time += dt
+            else:
+                for p in pset.particles:
+                    while max(p.dt, endtime - p.time) < 0:
+                        dt = max(p.dt, endtime - p.time)
+                        res = self.pyfunc(p, pset.grid, p.time, dt)
+                        if res is None or res == KernelOp.SUCCESS:
+                            p.time += dt
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

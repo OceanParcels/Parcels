@@ -1,4 +1,4 @@
-from parcels.kernel import Kernel
+from parcels.kernel import Kernel, KernelOp
 from parcels.field import Field
 from parcels.compiler import GNUCompiler
 import numpy as np
@@ -6,6 +6,7 @@ import netCDF4
 from collections import OrderedDict, Iterable
 from datetime import timedelta as delta
 from datetime import datetime
+import math
 try:
     import matplotlib.pyplot as plt
 except:
@@ -13,7 +14,7 @@ except:
 
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
-           'ParticleFile', 'AdvectionRK4', 'AdvectionEE']
+           'ParticleFile', 'AdvectionRK4', 'AdvectionEE', 'AdvectionRK45']
 
 
 def AdvectionRK4(particle, grid, time, dt):
@@ -34,6 +35,57 @@ def AdvectionEE(particle, grid, time, dt):
     v1 = grid.V[time, particle.lon, particle.lat]
     particle.lon += u1 * dt
     particle.lat += v1 * dt
+
+
+def AdvectionRK45(particle, grid, time, dt):
+    tol = [1e-9]
+    c = [1./4., 3./8., 12./13., 1., 1./2.]
+    A = [[1./4., 0., 0., 0., 0.],
+         [3./32., 9./32., 0., 0., 0.],
+         [1932./2197., -7200./2197., 7296./2197., 0., 0.],
+         [439./216., -8., 3680./513., -845./4104., 0.],
+         [-8./27., 2., -3544./2565., 1859./4104., -11./40.]]
+    b4 = [25./216., 0., 1408./2565., 2197./4104., -1./5.]
+    b5 = [16./135., 0., 6656./12825., 28561./56430., -9./50., 2./55.]
+
+    u1 = grid.U[time, particle.lon, particle.lat]
+    v1 = grid.V[time, particle.lon, particle.lat]
+    lon1, lat1 = (particle.lon + u1 * A[0][0] * dt,
+                  particle.lat + v1 * A[0][0] * dt)
+    u2, v2 = (grid.U[time + c[0] * dt, lon1, lat1],
+              grid.V[time + c[0] * dt, lon1, lat1])
+    lon2, lat2 = (particle.lon + (u1 * A[1][0] + u2 * A[1][1]) * dt,
+                  particle.lat + (v1 * A[1][0] + v2 * A[1][1]) * dt)
+    u3, v3 = (grid.U[time + c[1] * dt, lon2, lat2],
+              grid.V[time + c[1] * dt, lon2, lat2])
+    lon3, lat3 = (particle.lon + (u1 * A[2][0] + u2 * A[2][1] + u3 * A[2][2]) * dt,
+                  particle.lat + (v1 * A[2][0] + v2 * A[2][1] + v3 * A[2][2]) * dt)
+    u4, v4 = (grid.U[time + c[2] * dt, lon3, lat3],
+              grid.V[time + c[2] * dt, lon3, lat3])
+    lon4, lat4 = (particle.lon + (u1 * A[3][0] + u2 * A[3][1] + u3 * A[3][2] + u4 * A[3][3]) * dt,
+                  particle.lat + (v1 * A[3][0] + v2 * A[3][1] + v3 * A[3][2] + v4 * A[3][3]) * dt)
+    u5, v5 = (grid.U[time + c[3] * dt, lon4, lat4],
+              grid.V[time + c[3] * dt, lon4, lat4])
+    lon5, lat5 = (particle.lon + (u1 * A[4][0] + u2 * A[4][1] + u3 * A[4][2] + u4 * A[4][3] + u5 * A[4][4]) * dt,
+                  particle.lat + (v1 * A[4][0] + v2 * A[4][1] + v3 * A[4][2] + v4 * A[4][3] + v5 * A[4][4]) * dt)
+    u6, v6 = (grid.U[time + c[4] * dt, lon5, lat5],
+              grid.V[time + c[4] * dt, lon5, lat5])
+
+    lon_4th = particle.lon + (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * dt
+    lat_4th = particle.lat + (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * dt
+    lon_5th = particle.lon + (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * dt
+    lat_5th = particle.lat + (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * dt
+
+    kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
+    if kappa <= dt * tol[0]:
+        particle.lon = lon_4th
+        particle.lat = lat_4th
+        if kappa <= dt * tol[0] / 10:
+            particle.dt *= 2
+        return KernelOp.SUCCESS
+    else:
+        particle.dt /= 2
+        return KernelOp.FAILURE
 
 
 def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
@@ -75,9 +127,12 @@ class Particle(object):
     """
     user_vars = OrderedDict()
 
-    def __init__(self, lon, lat, grid, cptr=None):
+    def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         self.lon = lon
         self.lat = lat
+        self.time = time
+        self.dt = dt
+
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
         self.active = 1
@@ -86,7 +141,8 @@ class Particle(object):
             setattr(self, var, 0)
 
     def __repr__(self):
-        return "P(%f, %f)[%d, %d]" % (self.lon, self.lat, self.xi, self.yi)
+        return "P(%f, %f, %f)[%d, %d]" % (self.lon, self.lat, self.time,
+                                          self.xi, self.yi)
 
     @classmethod
     def getPType(cls):
@@ -107,6 +163,7 @@ class JITParticle(Particle):
     """
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
+                             ('time', np.float32), ('dt', np.float32),
                              ('xi', np.int32), ('yi', np.int32),
                              ('active', np.int32)])
     user_vars = OrderedDict()
@@ -177,7 +234,12 @@ class ParticleSet(object):
     :param pclass: Optional class object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
-    :param time_origin: Time origin of the particles (taken from grid)
+    :param start: Optional starting point for initilisation of particles
+                 on a straight line. Use start/finish instead of lat/lon.
+    :param finish: Optional end point for initilisation of particles on a
+                 straight line. Use start/finish instead of lat/lon.
+    :param start_field: Optional field for initialising particles stochastically
+                 according to the presented density field. Use instead of lat/lon.
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
@@ -257,18 +319,21 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, output_file=None, output_interval=-1, show_movie=False):
+                runtime=None, interval=None, output_file=None, tol=None,
+                show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
 
-        :param pyfunc: Kernel funtion to execute
-        :param starttime: Starting time for the timestepping loop
+        :param pyfunc: Kernel funtion to execute. This can be the name of a
+                       defined Python function of a parcels.Kernel.
+        :param starttime: Starting time for the timestepping loop. Defaults to 0.0.
         :param endtime: End time for the timestepping loop
-        :param runtime: Length of the timestepping loop
+        :param runtime: Length of the timestepping loop. Use instead of endtime.
         :param dt: Timestep interval to be passed to the kernel
+        :param interval: Interval for inner sub-timestepping (leap), which dictates
+                         the update frequency of file output and animation.
         :param output_file: ParticleFile object for particle output
-        :param output_interval: Size of output intervals in seconds
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -282,6 +347,7 @@ class ParticleSet(object):
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
 
+        # Convert all time variables to seconds
         if isinstance(starttime, delta):
             starttime = starttime.total_seconds()
         if isinstance(endtime, delta):
@@ -290,55 +356,58 @@ class ParticleSet(object):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
-        if isinstance(output_interval, delta):
-            output_interval = output_interval.total_seconds()
+        if isinstance(interval, delta):
+            interval = interval.total_seconds()
         if isinstance(starttime, datetime):
             starttime = (starttime - self.time_origin).total_seconds()
         if isinstance(endtime, datetime):
             endtime = (endtime - self.time_origin).total_seconds()
 
-        # Check if starttime, endtime, runtime and dt are consistent and compute timesteps
+        # Derive starttime, endtime and interval from arguments or grid defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            if dt > 0:
-                starttime = self.grid.time[0]
-            else:
-                starttime = self.grid.time[-1]
+            starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
         if runtime is not None:
-            if dt > 0:
-                endtime = starttime + runtime
-            else:
-                endtime = starttime - runtime
+            endtime = starttime + runtime if dt > 0 else starttime - runtime
         else:
             if endtime is None:
-                if dt > 0:
-                    endtime = self.grid.time[-1]
-                else:
-                    endtime = self.grid.time[0]
-        if endtime < starttime and dt > 0:
-            dt = -1. * dt
-            print("negating dt because running in time-backward mode")
-        if endtime > starttime and dt < 0:
-            dt = -1. * dt
-            print("negating dt because running in time-forward mode")
-        timesteps = int((endtime - starttime) / dt)
+                endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
+        if interval is None:
+            interval = endtime - starttime
 
-        # Check if output is required and compute outer leaps
-        if output_interval <= 0 or output_interval > abs(endtime-starttime):
-            output_steps = timesteps
-        else:
-            output_steps = abs(int(output_interval / dt))
-        timeleaps = int(timesteps / output_steps)
-        # Execute kernel in sub-stepping intervals (leaps)
-        current = starttime
+        # Ensure that dt and interval have the correct sign
+        if endtime > starttime:  # Time-forward mode
+            if dt < 0:
+                dt *= -1.
+                print("negating dt because running in time-forward mode")
+            if interval < 0:
+                interval *= -1.
+                print("negating interval because running in time-forward mode")
+        if endtime < starttime:  # Time-backward mode
+            if dt > 0.:
+                dt *= -1.
+                print("negating dt because running in time-backward mode")
+            if interval > 0.:
+                interval *= -1.
+                print("negating interval because running in time-backward mode")
+
+        # Initialise particle timestepping
+        for p in self:
+            p.time = starttime
+            p.dt = dt
+        # Execute time loop in sub-steps (timeleaps)
+        timeleaps = int((endtime - starttime) / interval)
+        assert(timeleaps >= 0)
+        leaptime = starttime
         for _ in range(timeleaps):
-            self.kernel.execute(self, int(output_steps), current, dt)
-            current += output_steps * dt
+            leaptime += interval
+            self.kernel.execute(self, endtime=leaptime, dt=dt)
             if output_file:
-                output_file.write(self, current)
+                output_file.write(self, leaptime)
             if show_movie:
-                self.show(field=show_movie, t=current)
+                self.show(field=show_movie, t=leaptime)
+        # Remove deactivated particles
         to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
         if len(to_remove) > 0:
             self.remove(to_remove)

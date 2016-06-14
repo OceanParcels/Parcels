@@ -34,6 +34,18 @@ class MathNode(IntrinsicNode):
                                  % attr)
 
 
+class KernelOpNode(IntrinsicNode):
+    symbol_map = {'SUCCESS': 'SUCCESS', 'FAILURE': 'FAILURE'}
+
+    def __getattr__(self, attr):
+        if attr in self.symbol_map:
+            attr = self.symbol_map[attr]
+            return IntrinsicNode(None, ccode=attr)
+        else:
+            raise AttributeError("""Unknown math function encountered: %s"""
+                                 % attr)
+
+
 class ParticleAttributeNode(IntrinsicNode):
     def __init__(self, obj, attr):
         self.obj = obj
@@ -91,6 +103,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             return GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
             return ParticleNode(self.ptype, ccode='particle')
+        if node.id == 'KernelOp':
+            return KernelOpNode(math, ccode='')
         if node.id == 'math':
             return MathNode(math, ccode='')
         else:
@@ -157,7 +171,7 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'grid', 'time', 'dt']
+    kernel_vars = ['particle', 'grid', 'time', 'dt', 'output_time', 'tol']
     array_vars = []
 
     def __init__(self, grid, ptype):
@@ -194,15 +208,16 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(stmt)
 
         # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("void", node.name), spec='inline'))
+        decl = c.Static(c.DeclSpecifier(c.Value("KernelOp", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field, _ in self.field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
 
         # Create function body as C-code object
-        body = c.Block([stmt.ccode for stmt in node.body])
-        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), body)
+        body = [stmt.ccode for stmt in node.body]
+        body += [c.Statement("return SUCCESS")]
+        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
     def visit_Call(self, node):
         """Generate C code for simple C-style function calls. Please
@@ -313,7 +328,13 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Add(self, node):
         node.ccode = "+"
 
+    def visit_UAdd(self, node):
+        node.ccode = "+"
+
     def visit_Sub(self, node):
+        node.ccode = "-"
+
+    def visit_USub(self, node):
         node.ccode = "-"
 
     def visit_Mult(self, node):
@@ -372,6 +393,10 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_Return(self, node):
+        self.visit(node.value)
+        node.ccode = c.Statement('return %s' % node.value.ccode)
+
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
@@ -389,7 +414,7 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, kernel_ast):
+    def generate(self, funcname, field_args, kernel_ast, adaptive=False):
         ccode = []
 
         # Add include for Parcels and math header
@@ -406,18 +431,28 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
-                c.Value("int", "timesteps"), c.Value("double", "time"),
-                c.Value("float", "dt")]
+                c.Value("double", "endtime"), c.Value("float", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-        fargs_str = ", ".join(['time', 'dt'] + list(field_args.keys()))
-        loop_body = [c.Statement("%s(&(particles[p]), %s)" %
-                                 (funcname, fargs_str))]
-        loop_body = [c.If("particles[p].active", c.Block(loop_body))]
-        ploop = c.For("p = 0", "p < num_particles", "++p", c.Block(loop_body))
-        tloop = c.For("t = 0", "t < timesteps", "++t",
-                      c.Block([ploop, c.Statement("time += (double)dt")]))
-        fbody = c.Block([c.Value("int", "p, t"), tloop])
+        fargs_str = ", ".join(['particles[p].time', 'particles[p].dt'] + list(field_args.keys()))
+        # Inner loop nest for forward runs
+        body_fwd = [c.Statement("__dt = fmin(particles[p].dt, endtime - particles[p].time)"),
+                    c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
+                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt"))]
+        time_fwd = c.While("fmin(particles[p].dt, endtime - particles[p].time) > 0.0",
+                           c.Block(body_fwd))
+        part_fwd = c.For("p = 0", "p < num_particles", "++p", c.Block([time_fwd]))
+        # Inner loop nest for backward runs
+        body_bwd = [c.Statement("__dt = fmax(particles[p].dt, endtime - particles[p].time)"),
+                    c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
+                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt"))]
+        time_bwd = c.While("fmax(particles[p].dt, endtime - particles[p].time) < 0.0",
+                           c.Block(body_bwd))
+        part_bwd = c.For("p = 0", "p < num_particles", "++p", c.Block([time_bwd]))
+
+        time_if = c.If("dt > 0.0", c.Block([part_fwd]), c.Block([part_bwd]))
+        fbody = c.Block([c.Value("int", "p"), c.Value("KernelOp", "res"),
+                         c.Value("double", "__dt"), time_if])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
