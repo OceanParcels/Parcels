@@ -234,7 +234,12 @@ class ParticleSet(object):
     :param pclass: Optional class object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
-    :param time_origin: Time origin of the particles (taken from grid)
+    :param start: Optional starting point for initilisation of particles
+                 on a straight line. Use start/finish instead of lat/lon.
+    :param finish: Optional end point for initilisation of particles on a
+                 straight line. Use start/finish instead of lat/lon.
+    :param start_field: Optional field for initialising particles stochastically
+                 according to the presented density field. Use instead of lat/lon.
     """
 
     def __init__(self, size, grid, pclass=JITParticle,
@@ -320,13 +325,14 @@ class ParticleSet(object):
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
 
-        :param pyfunc: Kernel funtion to execute
-        :param starttime: Starting time for the timestepping loop
+        :param pyfunc: Kernel funtion to execute. This can be the name of a
+                       defined Python function of a parcels.Kernel.
+        :param starttime: Starting time for the timestepping loop. Defaults to 0.0.
         :param endtime: End time for the timestepping loop
-        :param runtime: Length of the timestepping loop
+        :param runtime: Length of the timestepping loop. Use instead of endtime.
         :param dt: Timestep interval to be passed to the kernel
-        :param interval: Interval for inner sub-timestepping (leap);
-                         it dictates the update frequency of file output and animation.
+        :param interval: Interval for inner sub-timestepping (leap), which dictates
+                         the update frequency of file output and animation.
         :param output_file: ParticleFile object for particle output
         :param show_movie: True shows particles; name of field plots that field as background
         """
