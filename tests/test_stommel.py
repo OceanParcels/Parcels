@@ -22,8 +22,8 @@ def ground_truth(lon, lat):
 
 
 def stommel_grid(xdim=200, ydim=200):
-    """Generate a grid encapsulating the flow field consisting of two
-    moving eddies, one moving westward and the other moving northwestward.
+    """Simulate a periodic current along a western boundary, with significantly
+    larger velocities along the western edge than the rest of the region
 
     The original test description can be found in: N. Fabbroni, 2009,
     Numerical Simulation of Passive tracers dispersion in the sea,
