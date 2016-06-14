@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle
+from parcels import Grid, Field, Particle, JITParticle
 import numpy as np
 import pytest
 
@@ -33,6 +33,19 @@ def test_pset_create_line(grid, mode, npart=100):
     pset = grid.ParticleSet(npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode])
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy'])
+def test_pset_create_field(grid, mode, npart=100):
+    np.random.seed(123456)
+    shape = (grid.U.lon.size, grid.U.lat.size)
+    K = Field('K', lon=grid.U.lon, lat=grid.U.lat,
+              data=np.ones(shape, dtype=np.float32))
+    pset = grid.ParticleSet(npart, pclass=ptype[mode], start_field=K)
+    assert (np.array([p.lon for p in pset]) <= 1.).all()
+    assert (np.array([p.lon for p in pset]) >= 0.).all()
+    assert (np.array([p.lat for p in pset]) <= 1.).all()
+    assert (np.array([p.lat for p in pset]) >= 0.).all()
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

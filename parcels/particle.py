@@ -88,31 +88,33 @@ def AdvectionRK45(particle, grid, time, dt):
         return KernelOp.FAILURE
 
 
-def positions_from_density_field(pnum, startfield, mode='monte_carlo'):
-    # initialise particles from a field
-    print("Initialising particles from " + startfield.name + " field")
-    total = np.sum(startfield.data[0, :, :])
-    startfield.data[0, :, :] = startfield.data[0, :, :]/total
-    lonwidth = (startfield.lon[1] - startfield.lon[0])/2
-    latwidth = (startfield.lat[1] - startfield.lat[0])/2
+def positions_from_density_field(pnum, field, mode='monte_carlo'):
+    """Initialise particles from a given density field"""
+    print("Initialising particles from " + field.name + " field")
+    total = np.sum(field.data[0, :, :])
+    field.data[0, :, :] = field.data[0, :, :] / total
+    lonwidth = (field.lon[1] - field.lon[0]) / 2
+    latwidth = (field.lat[1] - field.lat[0]) / 2
 
-    def jitter_pos(pos, width, list=[]):
-        list[-1] = pos + np.random.uniform(-width, width)
-        return list
+    def add_jitter(value, width, min, max):
+        value += np.random.uniform(-lonwidth, lonwidth)
+        while not (min <= value <= max):
+            value += np.random.uniform(-width, width)
+        return value
 
-    if(mode is 'monte_carlo'):
+    if mode == 'monte_carlo':
         probs = np.random.uniform(size=pnum)
         lon = []
         lat = []
         for p in probs:
-            cell = np.unravel_index(np.where([p < i for i in np.cumsum(startfield.data[0, :, :])])[0][0],
-                                    np.shape(startfield.data[0, :, :]))
-            lon.append(None)
-            while np.max(startfield.lon) > jitter_pos(startfield.lon[cell[1]], lonwidth, lon)[-1] < np.min(startfield.lon):
-                pass
-            lat.append(None)
-            while np.max(startfield.lat) > jitter_pos(startfield.lat[cell[0]], latwidth, lat)[-1] < np.min(startfield.lat):
-                pass
+            cell = np.unravel_index(np.where([p < i for i in np.cumsum(field.data[0, :, :])])[0][0],
+                                    np.shape(field.data[0, :, :]))
+            lon.append(add_jitter(field.lon[cell[1]], lonwidth,
+                                  field.lon.min(), field.lon.max()))
+            lat.append(add_jitter(field.lat[cell[0]], latwidth,
+                                  field.lat.min(), field.lat.max()))
+    else:
+        raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
     return lon, lat
 
