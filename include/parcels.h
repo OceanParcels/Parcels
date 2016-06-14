@@ -66,3 +66,21 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
     return spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat, (float**)(data[f->tidx]));
   }
 }
+
+/**************************************************/
+/*   Random number generation (RNG) functions     */
+/**************************************************/
+static inline float parcels_random()
+{
+  return -66.6666;
+}
+
+static inline float parcels_uniform(float low, float high)
+{
+  return -66.6666;
+}
+
+static inline int parcels_randint(int low, int high)
+{
+  return -666;
+}

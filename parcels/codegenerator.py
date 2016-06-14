@@ -2,6 +2,7 @@ import ast
 import cgen as c
 from collections import OrderedDict
 import math
+import random
 
 
 class IntrinsicNode(ast.AST):
@@ -31,6 +32,21 @@ class MathNode(IntrinsicNode):
             return IntrinsicNode(None, ccode=attr)
         else:
             raise AttributeError("""Unknown math function encountered: %s"""
+                                 % attr)
+
+
+class RandomNode(IntrinsicNode):
+    symbol_map = {'random': 'parcels_random',
+                  'uniform': 'parcels_uniform',
+                  'randint': 'parcels_randint'}
+
+    def __getattr__(self, attr):
+        if hasattr(random, attr):
+            if attr in self.symbol_map:
+                attr = self.symbol_map[attr]
+            return IntrinsicNode(None, ccode=attr)
+        else:
+            raise AttributeError("""Unknown random function encountered: %s"""
                                  % attr)
 
 
@@ -107,6 +123,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             return KernelOpNode(math, ccode='')
         if node.id == 'math':
             return MathNode(math, ccode='')
+        if node.id == 'random':
+            return RandomNode(math, ccode='')
         else:
             return node
 
