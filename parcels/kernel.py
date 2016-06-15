@@ -1,7 +1,6 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from os import path
-import math  # NOQA get flake8 to ignore unused import.
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
 from ast import parse, FunctionDef, Module
@@ -10,6 +9,8 @@ from copy import deepcopy
 import re
 from hashlib import md5
 from enum import Enum
+import math  # NOQA get flake8 to ignore unused import.
+import random  # NOQA get flake8 to ignore unused import.
 
 
 __all__ = ['Kernel', 'KernelOp']
@@ -35,30 +36,33 @@ def fix_indentation(string):
 class Kernel(object):
     """Kernel object that encapsulates auto-generated code.
 
-    :arg filename: Basename for kernel files to generate"""
+    :arg grid: Grid object providing the field information
+    :arg ptype: PType object for the kernel particle
+
+    Note: A Kernel is either created from a compiled <function ...> object
+    or the necessary information (funcname, funccode, funcvars) is provided.
+    The py_ast argument may be derived from the code string, but for
+    concatenation, the merged AST plus the new header definition is required.
+    """
 
     def __init__(self, grid, ptype, pyfunc=None, funcname=None,
-                 py_ast=None, funcvars=None):
+                 funccode=None, py_ast=None, funcvars=None):
         self.grid = grid
         self.ptype = ptype
 
-        if pyfunc is not None:
-            self.funcname = pyfunc.__name__
-            self.funcvars = list(pyfunc.__code__.co_varnames)
-            # Parse the Python code into an AST
-            funccode = inspect.getsource(pyfunc.__code__)
-            self.py_ast = parse(fix_indentation(funccode))
-            self.py_ast = self.py_ast.body[0]
-            self.pyfunc = pyfunc
-        else:
-            self.funcname = funcname
-            self.py_ast = py_ast
-            self.funcvars = funcvars
+        # Derive meta information from pyfunc, if not given
+        self.funcname = funcname or pyfunc.__name__
+        self.funcvars = funcvars or list(pyfunc.__code__.co_varnames)
+        self.funccode = funccode or inspect.getsource(pyfunc.__code__)
+        # Parse AST if it is not provided explicitly
+        self.py_ast = py_ast or parse(fix_indentation(self.funccode)).body[0]
+        if pyfunc is None:
             # Extract user context by inspecting the call stack
             stack = inspect.stack()
             try:
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
+                user_ctx['random'] = globals()['random']
             except:
                 print("Warning: Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -68,7 +72,8 @@ class Kernel(object):
             py_mod = Module(body=[self.py_ast])
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
-
+        else:
+            self.pyfunc = pyfunc
         self.name = "%s%s" % (ptype.name, self.funcname)
 
         # Generate the kernel function and add the outer loop
@@ -136,7 +141,8 @@ class Kernel(object):
         func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
                                body=self.py_ast.body + kernel.py_ast.body,
                                decorator_list=[], lineno=1, col_offset=0)
-        return Kernel(self.grid, self.ptype, pyfunc=None, funcname=funcname,
+        return Kernel(self.grid, self.ptype, pyfunc=None,
+                      funcname=funcname, funccode=self.funccode + kernel.funccode,
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
 
     def __add__(self, kernel):

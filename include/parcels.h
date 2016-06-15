@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef enum
   {
@@ -65,4 +66,28 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
   } else {
     return spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat, (float**)(data[f->tidx]));
   }
+}
+
+/**************************************************/
+/*   Random number generation (RNG) functions     */
+/**************************************************/
+
+static void parcels_seed(int seed)
+{
+  srand(seed);
+}
+
+static inline float parcels_random()
+{
+  return (float)rand()/(float)(RAND_MAX);
+}
+
+static inline float parcels_uniform(float low, float high)
+{
+  return (float)rand()/(float)(RAND_MAX / (high-low)) + low;
+}
+
+static inline int parcels_randint(int low, int high)
+{
+  return (rand() % (high-low)) + low;
 }
