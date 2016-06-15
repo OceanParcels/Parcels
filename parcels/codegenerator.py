@@ -255,6 +255,12 @@ class KernelGenerator(ast.NodeVisitor):
             node.id = "0"
         node.ccode = node.id
 
+    def visit_NameConstant(self, node):
+        if node.value is True:
+            node.ccode = "1"
+        if node.value is False:
+            node.ccode = "0"
+
     def visit_Expr(self, node):
         self.visit(node.value)
         node.ccode = c.Statement(node.value.ccode)
