@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef enum
   {
@@ -73,19 +74,20 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
 
 static void parcels_seed(int seed)
 {
+  srand(seed);
 }
 
 static inline float parcels_random()
 {
-  return -66.6666;
+  return (float)rand()/(float)(RAND_MAX);
 }
 
 static inline float parcels_uniform(float low, float high)
 {
-  return -66.6666;
+  return (float)rand()/(float)(RAND_MAX / (high-low)) + low;
 }
 
 static inline int parcels_randint(int low, int high)
 {
-  return -666;
+  return (rand() % (high-low)) + low;
 }
