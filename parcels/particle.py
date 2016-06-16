@@ -163,7 +163,7 @@ class JITParticle(Particle):
     """
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
-                             ('time', np.float32), ('dt', np.float32),
+                             ('time', np.float64), ('dt', np.float32),
                              ('xi', np.int32), ('yi', np.int32),
                              ('active', np.int32)])
     user_vars = OrderedDict()
