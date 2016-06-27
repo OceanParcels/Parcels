@@ -96,10 +96,10 @@ def positions_from_density_field(pnum, field, mode='monte_carlo'):
     lonwidth = (field.lon[1] - field.lon[0]) / 2
     latwidth = (field.lat[1] - field.lat[0]) / 2
 
-    def add_jitter(value, width, min, max):
-        value += np.random.uniform(-lonwidth, lonwidth)
+    def add_jitter(pos, width, min, max):
+        value = pos + np.random.uniform(-width, width)
         while not (min <= value <= max):
-            value += np.random.uniform(-width, width)
+            value = pos + np.random.uniform(-width, width)
         return value
 
     if mode == 'monte_carlo':
