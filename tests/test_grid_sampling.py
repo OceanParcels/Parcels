@@ -75,8 +75,8 @@ def test_grid_sample(grid, xdim=120, ydim=80):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([grid.V[0, x, 70.] for x in lon])
     u_s = np.array([grid.U[0, -45., y] for y in lat])
-    assert np.allclose(v_s, lon, rtol=1e-12)
-    assert np.allclose(u_s, lat, rtol=1e-12)
+    assert np.allclose(v_s, lon, rtol=1e-7)
+    assert np.allclose(u_s, lat, rtol=1e-7)
 
 
 def test_grid_sample_eval(grid, xdim=60, ydim=60):
@@ -85,8 +85,8 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
     v_s = np.array([grid.V.eval(0, x, 70.) for x in lon])
     u_s = np.array([grid.U.eval(0, -45., y) for y in lat])
-    assert np.allclose(v_s, lon, rtol=1e-12)
-    assert np.allclose(u_s, lat, rtol=1e-12)
+    assert np.allclose(v_s, lon, rtol=1e-7)
+    assert np.allclose(u_s, lat, rtol=1e-7)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -228,3 +228,30 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
     assert(pset[1].lon - (lonstart[1] + endtime.total_seconds() * maxvel / 1852 / 60
                           / cos(latstart[1] * pi / 180)) < 1e-4)
     assert(abs(pset[1].p - p_fld) < 1e-4)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_random_field(mode, xdim=20, ydim=20, npart=100):
+    """Sampling test that test for overshoots by sampling a field of
+    random numbers between 0 and 1.
+    """
+    np.random.seed(123456)
+    lon = np.linspace(0., 1., xdim, dtype=np.float32)
+    lat = np.linspace(0., 1., ydim, dtype=np.float32)
+    U = np.zeros((xdim, ydim), dtype=np.float32)
+    V = np.zeros((xdim, ydim), dtype=np.float32)
+    K = np.random.uniform(0, 1., size=(xdim, ydim))
+    S = np.ones((xdim, ydim), dtype=np.float32)
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
+                          field_data={'K': K, 'start': S})
+
+    class SampleParticle(ptype[mode]):
+        user_vars = {'k': np.float32}
+    pset = grid.ParticleSet(size=npart, pclass=SampleParticle,
+                            start_field=grid.start)
+
+    def SampleK(particle, grid, time, dt):
+        particle.k = grid.K[time, particle.lon, particle.lat]
+    pset.execute(SampleK, endtime=1., dt=1.0)
+    sampled = np.array([p.k for p in pset])
+    assert((sampled >= 0.).all())

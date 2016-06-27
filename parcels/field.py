@@ -1,4 +1,4 @@
-from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import RegularGridInterpolator
 from cachetools import cachedmethod, LRUCache
 from collections import Iterable
 from py import path
@@ -227,8 +227,8 @@ class Field(object):
 
     @cachedmethod(operator.attrgetter('interpolator_cache'))
     def interpolator2D(self, t_idx):
-        return RectBivariateSpline(self.lat, self.lon,
-                                   self.data[t_idx, :])
+        return RegularGridInterpolator((self.lat, self.lon),
+                                       self.data[t_idx, :])
 
     def interpolator1D(self, idx, time, y, x):
         # Return linearly interpolated field value:
@@ -238,8 +238,8 @@ class Field(object):
             f0 = self.data[idx-1, :]
             f1 = self.data[idx, :]
         else:
-            f0 = self.interpolator2D(idx-1).ev(y, x)
-            f1 = self.interpolator2D(idx).ev(y, x)
+            f0 = self.interpolator2D(idx-1)((y, x))
+            f1 = self.interpolator2D(idx)((y, x))
             t0 = self.time[idx-1]
             t1 = self.time[idx]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -259,7 +259,7 @@ class Field(object):
         if idx > 0:
             value = self.interpolator1D(idx, time, y, x)
         else:
-            value = self.interpolator2D(idx).ev(y, x)
+            value = self.interpolator2D(idx)((y, x))
         return self.units.to_target(value, x, y)
 
     def ccode_subscript(self, t, x, y):
