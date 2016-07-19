@@ -10,3 +10,4 @@ gh-pages/html
 *.dSYM/*
 
 Profile.prof
+.ipynb_checkpoints/*
