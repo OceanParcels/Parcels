@@ -6,7 +6,8 @@ from argparse import ArgumentParser
 import matplotlib.animation as animation
 
 
-def particleplotting(filename, tracerfile, tracerfilelon, tracerfilelat, tracerfilefield, recordedvar, mode):
+def particleplotting(filename, tracerfile='none', tracerlon='x', tracerlat='y', 
+                     tracerfield='P', recordedvar='none', mode='2d'):
     """Quick and simple plotting of PARCELS trajectories"""
 
     pfile = Dataset(filename, 'r')
@@ -19,9 +20,9 @@ def particleplotting(filename, tracerfile, tracerfilelon, tracerfilelat, tracerf
 
     if tracerfile != 'none':
         tfile = Dataset(tracerfile, 'r')
-        X = tfile.variables[tracerfilelon]
-        Y = tfile.variables[tracerfilelat]
-        P = tfile.variables[tracerfilefield]
+        X = tfile.variables[tracerlon]
+        Y = tfile.variables[tracerlat]
+        P = tfile.variables[tracerfield]
         plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
 
     if mode == '3d':
