@@ -6,7 +6,8 @@ from argparse import ArgumentParser
 import matplotlib.animation as animation
 
 
-def particleplotting(filename, tracerfile, recordedvar, mode):
+def particleplotting(filename, tracerfile='none', tracerlon='x', tracerlat='y', 
+                     tracerfield='P', recordedvar='none', mode='2d'):
     """Quick and simple plotting of PARCELS trajectories"""
 
     pfile = Dataset(filename, 'r')
@@ -19,9 +20,9 @@ def particleplotting(filename, tracerfile, recordedvar, mode):
 
     if tracerfile != 'none':
         tfile = Dataset(tracerfile, 'r')
-        X = tfile.variables['x']
-        Y = tfile.variables['y']
-        P = tfile.variables['P']
+        X = tfile.variables[tracerlon]
+        Y = tfile.variables[tracerlat]
+        P = tfile.variables[tracerfield]
         plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
 
     if mode == '3d':
@@ -61,8 +62,15 @@ if __name__ == "__main__":
                    help='Name of particle file')
     p.add_argument('-f', '--tracerfile', type=str, default='none',
                    help='Name of tracer file to display underneath particle trajectories')
+    p.add_argument('-flon', '--tracerfilelon', type=str, default='x',
+                   help='Name of longitude dimension in tracer file')
+    p.add_argument('-flat', '--tracerfilelat', type=str, default='y',
+                   help='Name of latitude dimension in tracer file')
+    p.add_argument('-ffld', '--tracerfilefield', type=str, default='P',
+                   help='Name of field in tracer file')
     p.add_argument('-r', '--recordedvar', type=str, default='none',
                    help='Name of a variable recorded along trajectory')
     args = p.parse_args()
 
-    particleplotting(args.particlefile, args.tracerfile, args.recordedvar, mode=args.mode)
+    particleplotting(args.particlefile, args.tracerfile, args.tracerfilelon,
+                     args.tracerfilelat, args.tracerfilefield, args.recordedvar, mode=args.mode)
