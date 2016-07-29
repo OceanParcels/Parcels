@@ -238,11 +238,17 @@ class Field(object):
             f0 = self.data[idx-1, :]
             f1 = self.data[idx, :]
         else:
-            f0 = self.interpolator2D(idx-1)((y, x))
-            f1 = self.interpolator2D(idx)((y, x))
-            t0 = self.time[idx-1]
-            t1 = self.time[idx]
-        return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+            try:
+                f0 = self.interpolator2D(idx-1)((y, x))
+                f1 = self.interpolator2D(idx)((y, x))
+                t0 = self.time[idx-1]
+                t1 = self.time[idx]
+            except (IndexError, ValueError):
+                print("Caught outside of bounds error in PARCELS! Returning zero for field value...")
+                val = 0
+            else:
+                val = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+        return val
 
     @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
