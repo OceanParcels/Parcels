@@ -18,16 +18,30 @@ __all__ = ['Particle', 'ParticleSet', 'JITParticle',
 
 
 def AdvectionRK4(particle, grid, time, dt):
-    u1 = grid.U[time, particle.lon, particle.lat]
-    v1 = grid.V[time, particle.lon, particle.lat]
-    lon1, lat1 = (particle.lon + u1*.5*dt, particle.lat + v1*.5*dt)
-    u2, v2 = (grid.U[time + .5 * dt, lon1, lat1], grid.V[time + .5 * dt, lon1, lat1])
-    lon2, lat2 = (particle.lon + u2*.5*dt, particle.lat + v2*.5*dt)
-    u3, v3 = (grid.U[time + .5 * dt, lon2, lat2], grid.V[time + .5 * dt, lon2, lat2])
-    lon3, lat3 = (particle.lon + u3*dt, particle.lat + v3*dt)
-    u4, v4 = (grid.U[time + dt, lon3, lat3], grid.V[time + dt, lon3, lat3])
-    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
-    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
+    if not np.isnan(particle.lon):
+        u1 = grid.U[time, particle.lon, particle.lat]
+        v1 = grid.V[time, particle.lon, particle.lat]
+        lon1, lat1 = (particle.lon + u1*.5*dt, particle.lat + v1*.5*dt)
+        if check_in_domain(grid, lat1, lon1):
+            u2, v2 = (grid.U[time + .5 * dt, lon1, lat1], grid.V[time + .5 * dt, lon1, lat1])
+        else:
+            u2, v2 = (np.nan, np.nan)
+        lon2, lat2 = (particle.lon + u2*.5*dt, particle.lat + v2*.5*dt)
+        if check_in_domain(grid,lat2, lon2):
+            u3, v3 = (grid.U[time + .5 * dt, lon2, lat2], grid.V[time + .5 * dt, lon2, lat2])
+        else:
+            u3, v3 = (np.nan, np.nan)
+        lon3, lat3 = (particle.lon + u3*dt, particle.lat + v3*dt)
+        if check_in_domain(grid, lat3, lon3):
+            u4, v4 = (grid.U[time + dt, lon3, lat3], grid.V[time + dt, lon3, lat3])
+        else:
+            u4, v4 = (np.nan, np.nan)
+        finallon = particle.lon + (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
+        finallat = particle.lat + (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
+        if check_in_domain(grid, finallat, finallon):
+            particle.lon, particle.lat = (finallon, finallat)
+        else:
+            particle.lon, particle.lat = (np.nan, np.nan)
 
 
 def AdvectionEE(particle, grid, time, dt):
@@ -117,6 +131,15 @@ def positions_from_density_field(pnum, field, mode='monte_carlo'):
         raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
     return lon, lat
+
+
+def check_in_domain(grid, lat, lon):
+    ebound = lon <= min(grid.U.lon[-1], grid.V.lon[-1])
+    wbound = lon >= min(grid.U.lon[0], grid.V.lon[0])
+    nbound = lat <= min(grid.U.lat[-1], grid.V.lat[-1])
+    sbound = lat >= min(grid.U.lat[0], grid.V.lat[0])
+
+    return ebound & wbound & nbound & sbound
 
 
 class Particle(object):
