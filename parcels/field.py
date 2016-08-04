@@ -237,6 +237,7 @@ class Field(object):
             t1 = self.time[idx]
             f0 = self.data[idx-1, :]
             f1 = self.data[idx, :]
+            val = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
         else:
             # The below is a temporary hotfix to allow catching of attempts to sample field values
             # out-of-bounds. This is detailed in OceanPARCELS/parcels issues #47 #61 #76 and PR #85
