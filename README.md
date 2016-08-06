@@ -41,7 +41,7 @@ A basic example of particle advection around an idealised peninsula
 Runge-Kutta scheme is provided in the `tests` directory. The necessary
 grid files are generated (using NEMO conventions) with:
 ```
-python tests/test_peninsula.py --grid <xdim> <ydim> -p <npart>
+python examples/test_case_peninsula.py --grid <xdim> <ydim> -p <npart>
 ```
 where `xdim` and `ydim` are the numbers of grid cells in each
 dimension and `npart` is the number of evenly initialised
@@ -53,6 +53,19 @@ python scripts/plotParticles.py 2d -p MyParticle.nc
 An alternative execution mode that utilises SciPy's interpolator
 functions for spatial interpolation can be utilised with:
 ```
-python tests/test_peninsula.py scipy -p <npart> --degree <deg>
+python examples/test_case_peninsula.py scipy -p <npart> --degree <deg>
 ```
 where `deg` is the degree of spatial interpoaltion to use.
+
+Alternatively, there is also the `test_moving-eddies.py` example, in which particles move under the influence of two Gaussian eddies on an idealised grid.
+To run the file, the prerequisite files must be downloaded. This is done automatically be calling the `pull_data.py` file:
+
+```
+python scripts/pull_data.py
+```
+
+Now run the file as above (with default values taken):
+
+```
+python examples/test_case_moving_eddies.py
+```
