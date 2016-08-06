@@ -11,3 +11,4 @@ xray>=0.5.1
 pandas>=0.18.1
 six>=1.10.0
 enum34
+progressbar2
