@@ -8,6 +8,27 @@ from datetime import timedelta as delta
 ptype = {'scipy': Particle, 'jit': JITParticle}
 
 
+def pclass(mode):
+    class SampleParticle(ptype[mode]):
+        user_vars = {'u': np.float32, 'v': np.float32, 'p': np.float32}
+    return SampleParticle
+
+
+@pytest.fixture
+def k_sample_uv():
+    def SampleUV(particle, grid, time, dt):
+        particle.u = grid.U[time, particle.lon, particle.lat]
+        particle.v = grid.V[time, particle.lon, particle.lat]
+    return SampleUV
+
+
+@pytest.fixture
+def k_sample_p():
+    def SampleP(particle, grid, time, dt):
+        particle.p = grid.P[time, particle.lon, particle.lat]
+    return SampleP
+
+
 @pytest.fixture
 def grid(xdim=200, ydim=100):
     """ Standard grid spanning the earth's coordinates with U and V
@@ -55,20 +76,6 @@ def grid_geometric_polar(xdim=200, ydim=100):
     return grid
 
 
-def pclass(mode):
-    class SampleParticle(ptype[mode]):
-        user_vars = {'u': np.float32, 'v': np.float32}
-    return SampleParticle
-
-
-@pytest.fixture
-def samplefunc():
-    def Sample(particle, grid, time, dt):
-        particle.u = grid.U[0., particle.lon, particle.lat]
-        particle.v = grid.V[0., particle.lon, particle.lat]
-    return Sample
-
-
 def test_grid_sample(grid, xdim=120, ydim=80):
     """ Sample the grid using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
@@ -90,7 +97,7 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_grid_sample_particle(grid, mode, samplefunc, npart=120):
+def test_grid_sample_particle(grid, mode, k_sample_uv, npart=120):
     """ Sample the grid using an array of particles.
 
     Note that the low tolerances (1.e-6) are due to the first-order
@@ -102,17 +109,17 @@ def test_grid_sample_particle(grid, mode, samplefunc, npart=120):
 
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
-    pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
+    pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
-    pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
+    pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_grid_sample_geographic(grid_geometric, mode, samplefunc, npart=120):
+def test_grid_sample_geographic(grid_geometric, mode, k_sample_uv, npart=120):
     """ Sample a grid with conversion to geographic units (degrees). """
     grid = grid_geometric
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
@@ -120,17 +127,17 @@ def test_grid_sample_geographic(grid_geometric, mode, samplefunc, npart=120):
 
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
-    pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
+    pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
-    pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
+    pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_grid_sample_geographic_polar(grid_geometric_polar, mode, samplefunc, npart=120):
+def test_grid_sample_geographic_polar(grid_geometric_polar, mode, k_sample_uv, npart=120):
     """ Sample a grid with conversion to geographic units and a pole correction. """
     grid = grid_geometric_polar
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
@@ -138,12 +145,12 @@ def test_grid_sample_geographic_polar(grid_geometric_polar, mode, samplefunc, np
 
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
-    pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
+    pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
     pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
-    pset.execute(pset.Kernel(samplefunc), endtime=1., dt=1.)
+    pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
     # large sampling error for the JIT correction.
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-2)
@@ -177,30 +184,13 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     assert(pset[1].lon - lonstart[1] < 1e-4)
 
 
-def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
-
-
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_zonalflow_sperical(mode, xdim=100, ydim=200):
+def test_zonalflow_sperical(mode, k_sample_p, xdim=100, ydim=200):
     """ Create uniform EASTWARD flow on sperical earth and advect particles
 
     As flow is so simple, it can be directly compared to analytical solution
     Note that in this case the cosine conversion is needed
     """
-
-    ParticleClass = JITParticle if mode == 'jit' else Particle
-
-    class MyParticle(ParticleClass):
-        user_vars = {'p': np.float32}
-
-        def __init__(self, *args, **kwargs):
-            super(MyParticle, self).__init__(*args, **kwargs)
-            self.p = 1.
-
-        def __repr__(self):
-            return "P(%.4f, %.4f)[p=%.5f]" % (self.lon, self.lat, self.p)
-
     maxvel = 1.
     p_fld = 10
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
@@ -216,8 +206,8 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     endtime = delta(hours=24)
-    pset = grid.ParticleSet(2, pclass=MyParticle, lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4) + pset.Kernel(UpdateP),
+    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
                  endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - latstart[0] < 1e-4)
@@ -231,7 +221,7 @@ def test_zonalflow_sperical(mode, xdim=100, ydim=200):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_random_field(mode, xdim=20, ydim=20, npart=100):
+def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
     """Sampling test that test for overshoots by sampling a field of
     random numbers between 0 and 1.
     """
@@ -240,18 +230,12 @@ def test_random_field(mode, xdim=20, ydim=20, npart=100):
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U = np.zeros((xdim, ydim), dtype=np.float32)
     V = np.zeros((xdim, ydim), dtype=np.float32)
-    K = np.random.uniform(0, 1., size=(xdim, ydim))
+    P = np.random.uniform(0, 1., size=(xdim, ydim))
     S = np.ones((xdim, ydim), dtype=np.float32)
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
-                          field_data={'K': K, 'start': S})
-
-    class SampleParticle(ptype[mode]):
-        user_vars = {'k': np.float32}
-    pset = grid.ParticleSet(size=npart, pclass=SampleParticle,
+                          field_data={'P': P, 'start': S})
+    pset = grid.ParticleSet(size=npart, pclass=pclass(mode),
                             start_field=grid.start)
-
-    def SampleK(particle, grid, time, dt):
-        particle.k = grid.K[time, particle.lon, particle.lat]
-    pset.execute(SampleK, endtime=1., dt=1.0)
-    sampled = np.array([p.k for p in pset])
+    pset.execute(k_sample_p, endtime=1., dt=1.0)
+    sampled = np.array([p.p for p in pset])
     assert((sampled >= 0.).all())
