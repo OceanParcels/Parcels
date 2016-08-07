@@ -239,3 +239,27 @@ def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
     pset.execute(k_sample_p, endtime=1., dt=1.0)
     sampled = np.array([p.p for p in pset])
     assert((sampled >= 0.).all())
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_sampling_out_of_bounds_time(mode, k_sample_p, xdim=10, ydim=10, tdim=10):
+    lon = np.linspace(0., 1., xdim, dtype=np.float32)
+    lat = np.linspace(0., 1., ydim, dtype=np.float32)
+    time = np.linspace(0., 1., tdim, dtype=np.float64)
+    U = np.zeros((xdim, ydim, tdim), dtype=np.float32)
+    V = np.zeros((xdim, ydim, tdim), dtype=np.float32)
+    P = np.ones((xdim, ydim, 1), dtype=np.float32) * time
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, time=time,
+                          mesh='flat', field_data={'P': P})
+    pset = grid.ParticleSet(size=1, pclass=pclass(mode),
+                            start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
+    assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
+    pset.execute(k_sample_p, starttime=0.0, endtime=0.1, dt=0.1)
+    assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
+    pset.execute(k_sample_p, starttime=0.5, endtime=0.6, dt=0.1)
+    assert np.allclose(np.array([p.p for p in pset]), 0.5, rtol=1e-5)
+    pset.execute(k_sample_p, starttime=1.0, endtime=1.1, dt=0.1)
+    assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+    pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
+    assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
