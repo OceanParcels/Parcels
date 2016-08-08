@@ -124,6 +124,9 @@ class Field(object):
         if not self.lat.dtype == np.float32:
             print("WARNING: Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
+        if not self.time.dtype == np.float64:
+            print("WARNING: Casting time data to np.float64")
+            self.time = self.time.astype(np.float64)
         if transpose:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
