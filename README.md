@@ -13,6 +13,11 @@ However, we are now facing a situation where our Lagrangian codes severely lag t
 
 In this project, we will scope out and develop a new generic, open-source community prototype code for Lagrangian tracking of water particles through any type of ocean circulation models. 
 
+### Tutorial
+
+For a brief guide to running PARCELS and some sample output, have a look at the interactive tutorial [here](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/examples/PARCELStutorial.ipynb). 
+This covers the basics of a particle simulation within PARCELS and a sample of its key features, including custom kernels.
+
 ### Installation
 
 The latest version of Parcels, including tests adn examples, can be
