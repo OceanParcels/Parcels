@@ -460,23 +460,22 @@ class LoopGenerator(object):
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         fargs_str = ", ".join(['particles[p].time', 'particles[p].dt'] + list(field_args.keys()))
         # Inner loop nest for forward runs
-        body_fwd = [c.Statement("__dt = fmin(particles[p].dt, endtime - particles[p].time)"),
-                    c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
-                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt"))]
-        time_fwd = c.While("fmin(particles[p].dt, endtime - particles[p].time) > 0.0",
-                           c.Block(body_fwd))
-        part_fwd = c.For("p = 0", "p < num_particles", "++p", c.Block([time_fwd]))
+        dt_fwd = c.Statement("__dt = fmin(particles[p].dt, endtime - particles[p].time)")
+        body_fwd = [c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
+                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt")), dt_fwd]
+        time_fwd = c.While("__dt > __tol", c.Block(body_fwd))
+        part_fwd = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_fwd, time_fwd]))
         # Inner loop nest for backward runs
-        body_bwd = [c.Statement("__dt = fmax(particles[p].dt, endtime - particles[p].time)"),
-                    c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
-                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt"))]
-        time_bwd = c.While("fmax(particles[p].dt, endtime - particles[p].time) < 0.0",
-                           c.Block(body_bwd))
-        part_bwd = c.For("p = 0", "p < num_particles", "++p", c.Block([time_bwd]))
+        dt_bwd = c.Statement("__dt = fmax(particles[p].dt, endtime - particles[p].time)")
+        body_bwd = [c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
+                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt")), dt_bwd]
+        time_bwd = c.While("__dt < -1. * __tol", c.Block(body_bwd))
+        part_bwd = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_bwd, time_bwd]))
 
         time_if = c.If("dt > 0.0", c.Block([part_fwd]), c.Block([part_bwd]))
         fbody = c.Block([c.Value("int", "p"), c.Value("KernelOp", "res"),
-                         c.Value("double", "__dt"), time_if])
+                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
+                         time_if])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
