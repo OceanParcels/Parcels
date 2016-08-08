@@ -227,50 +227,62 @@ class Field(object):
 
     @cachedmethod(operator.attrgetter('interpolator_cache'))
     def interpolator2D(self, t_idx):
-        return RegularGridInterpolator((self.lat, self.lon),
-                                       self.data[t_idx, :])
+        """Provide a cached SciPy interpolator for spatial interpolation
 
-    def interpolator1D(self, idx, time, y, x):
-        # Return linearly interpolated field value:
-        if x is None and y is None:
-            t0 = self.time[idx-1]
-            t1 = self.time[idx]
-            f0 = self.data[idx-1, :]
-            f1 = self.data[idx, :]
-            val = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
-        else:
-            # The below is a temporary hotfix to allow catching of attempts to sample field values
-            # out-of-bounds. This is detailed in OceanPARCELS/parcels issues #47 #61 #76 and PR #85
+        Note that the interpolator is configured to return NaN for
+        out-of-bounds coordinates.
+        """
+        return RegularGridInterpolator((self.lat, self.lon), self.data[t_idx, :],
+                                       bounds_error=False, fill_value=np.nan)
+
+    def spatial_interpolation(self, tidx, y, x):
+        """Interpolate horizontal field values using a SciPy interpolator"""
+        val = self.interpolator2D(tidx)((y, x))
+        if np.isnan(val):
+            # Temporary hotfix for out-of-bounds sampling
+            # until we have a graceful kernel recovery system.
+            # This is detailed in OceanPARCELS/parcels issues #47 #61 #76 and PR #85
             # -> https://github.com/OceanPARCELS/parcels/pull/85
-            try:
-                f0 = self.interpolator2D(idx-1)((y, x))
-                f1 = self.interpolator2D(idx)((y, x))
-                t0 = self.time[idx-1]
-                t1 = self.time[idx]
-            except (IndexError, ValueError):
-                print("WARNING! Out-of-bounds field sampling attempted at %s - %s. A zero value was returned..."
-                      % (x, y))
-                val = 0
-            else:
-                val = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
-        return val
+            print("WARNING: Out-of-bounds field sampling at (%s, %s)" % (x, y))
+            val = 0
+        else:
+            return val
 
     @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
+        """Find the next index in the time array for a given time
+
+        Note that we normalize to either the first or the last index
+        if the sampled value is outside the time value range.
+        """
         time_index = self.time < time
         if time_index.all():
             # If given time > last known grid time, use
             # the last grid frame without interpolation
-            return -1
+            return len(self.time) - 1
         else:
             return time_index.argmin()
 
     def eval(self, time, x, y):
-        idx = self.time_index(time)
-        if idx > 0:
-            value = self.interpolator1D(idx, time, y, x)
+        """Interpolate field values in space and time.
+
+        We interpolate linearly in time and apply implicit unit
+        conversion to the result. Note that we defer to
+        scipy.interpolate to perform spatial interpolation.
+        """
+        t_idx = self.time_index(time)
+        if 0 < t_idx < len(self.time) - 1 and self.time[t_idx] != time:
+            f0 = self.spatial_interpolation(t_idx - 1, y, x)
+            f1 = self.spatial_interpolation(t_idx, y, x)
+            t0 = self.time[t_idx-1]
+            t1 = self.time[t_idx]
+            value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
         else:
-            value = self.interpolator2D(idx)((y, x))
+            # Skip temporal interpolation if time is outside
+            # of the defined time range or if we have hit an
+            # excat value in the time array.
+            value = self.spatial_interpolation(t_idx, y, x)
+
         return self.units.to_target(value, x, y)
 
     def ccode_subscript(self, t, x, y):
