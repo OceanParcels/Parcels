@@ -6,7 +6,9 @@ import netCDF4
 from collections import OrderedDict, Iterable
 from datetime import timedelta as delta
 from datetime import datetime
-import math
+import math 
+import bisect 
+from mpl_toolkits.basemap import Basemap
 try:
     import matplotlib.pyplot as plt
 except:
@@ -117,6 +119,17 @@ def positions_from_density_field(pnum, field, mode='monte_carlo'):
         raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
     return lon, lat
+
+def nearest_index(array, value):
+    """returns index of the nearest value in array using O(log n) bisection method"""
+    y = bisect.bisect(array, value)
+    if y == len(array):
+        return y-1
+    elif(abs(array[y-1] - value) < abs(array[y] - value)):
+        return y-1
+    else:
+        return y
+
 
 
 class Particle(object):
@@ -456,6 +469,85 @@ class ParticleSet(object):
         plt.title('Particles' + namestr + timestr)
         plt.show()
         plt.pause(0.0001)
+
+    def show_velocity(self, **kwargs):
+        # time at which to plot velocity
+        t = kwargs.get('t', 0)
+        # flag to drawing land on plot
+        land = kwargs.get('land', False)
+        # plot domain latitude longitude parameters
+        latN = kwargs.get('latN', np.nan)
+        latS = kwargs.get('latS', np.nan)
+        lonE = kwargs.get('lonE', np.nan)
+        lonW = kwargs.get('lonW', np.nan)
+
+        if isinstance(t, datetime):
+            t = (t - self.grid.U.time_origin).total_seconds()
+        if isinstance(t, delta):
+            t = t.total_seconds()
+
+        if not np.isnan(latN):
+            latN = nearest_index(self.grid.U.lat, latN)
+            latS = nearest_index(self.grid.U.lat, latS)
+            lonE = nearest_index(self.grid.U.lon, lonE)
+            lonW = nearest_index(self.grid.U.lon, lonW)
+            lon = self.grid.U.lon[lonW:lonE]
+            lat = self.grid.U.lat[latS:latN]
+        else:
+            lon = self.grid.U.lon
+            lat = self.grid.U.lat
+
+        # time interpolation of velocity field
+        idx = self.grid.U.time_index(t)
+        U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, t))
+        V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, t))
+        if not np.isnan(latN):
+            U = U[latS:latN, lonW:lonE]
+            V = V[latS:latN, lonW:lonE]
+
+        # configuring plot
+        lat_median = np.median(lat)
+        lon_median = np.median(lon)
+        plt.figure()
+        m = Basemap(projection='merc', lat_0=lat_median, lon_0=lon_median,
+                    resolution='l', area_thresh=100,
+                    llcrnrlon=lon[0], llcrnrlat=lat[0],
+                    urcrnrlon=lon[-1], urcrnrlat=lat[-1])
+        if land:
+            m.drawcoastlines()
+            m.fillcontinents(color='burlywood')
+        parallels = np.arange(lat[0], lat[-1], abs(lat[0]-lat[-1])/5)
+        parallels = np.around(parallels, 2)
+        m.drawparallels(parallels, labels=[1, 0, 0, 0])
+        meridians = np.arange(lon[0], lon[-1], abs(lon[0]-lon[-1])/5)
+        meridians = np.around(meridians, 2)
+        m.drawmeridians(meridians, labels=[0, 0, 0, 1])
+
+        # formating velocity data for quiver plotting
+        U = np.array([U[y, x] for x in range(len(lon)) for y in range(len(lat))])
+        V = np.array([V[y, x] for x in range(len(lon)) for y in range(len(lat))])
+        speed = np.sqrt(U**2 + V**2)
+        normU = U/speed
+        normV = V/speed
+        x = np.repeat(lon, len(lat))
+        y = np.tile(lat, len(lon))
+
+        # plotting velocity vector field
+        vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.autumn, scale=50, latlon=True)
+        cb = m.colorbar(vecs, "right", size="5%", pad="2%")
+
+        # formating particle data for plotting
+        plon = [p.lon for p in self]
+        plat = [p.lat for p in self]
+        xs, ys = m(plon, plat)
+        # plotting particle data
+        m.scatter(xs, ys)
+
+        if(self.grid.U.time_origin == 0):
+            plt.title(delta(seconds=t))
+        else:
+            plt.title(netCDF4.num2date(t, 'seconds since '+str(self.grid.U.time_origin)))
+        plt.show()
 
     def Kernel(self, pyfunc):
         return Kernel(self.grid, self.ptype, pyfunc=pyfunc)
