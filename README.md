@@ -13,9 +13,14 @@ However, we are now facing a situation where our Lagrangian codes severely lag t
 
 In this project, we will scope out and develop a new generic, open-source community prototype code for Lagrangian tracking of water particles through any type of ocean circulation models. 
 
+### Tutorial
+
+For a brief guide to running PARCELS and some sample output, have a look at the interactive tutorial [here](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb). 
+This covers the basics of a particle simulation within PARCELS and a sample of its key features, including custom kernels.
+
 ### Installation
 
-The latest version of Parcels, including tests adn examples, can be
+The latest version of Parcels, including tests and examples, can be
 obtained directly from github via:
 ```
 git clone --recursive https://github.com/OceanPARCELS/parcels.git
@@ -38,10 +43,10 @@ In both cases a functional netCDF install is required.
 ### Example
 A basic example of particle advection around an idealised peninsula
 (based on North et al., 2009, section 2.2.2) using 4th order
-Runge-Kutta scheme is provided in the `tests` directory. The necessary
+Runge-Kutta scheme is provided in the `examples` directory. The necessary
 grid files are generated (using NEMO conventions) with:
 ```
-python tests/test_peninsula.py --grid <xdim> <ydim> -p <npart>
+python examples/example_peninsula.py --grid <xdim> <ydim> -p <npart>
 ```
 where `xdim` and `ydim` are the numbers of grid cells in each
 dimension and `npart` is the number of evenly initialised
@@ -53,6 +58,19 @@ python scripts/plotParticles.py 2d -p MyParticle.nc
 An alternative execution mode that utilises SciPy's interpolator
 functions for spatial interpolation can be utilised with:
 ```
-python tests/test_peninsula.py scipy -p <npart> --degree <deg>
+python examples/example_peninsula.py scipy -p <npart> --degree <deg>
 ```
 where `deg` is the degree of spatial interpoaltion to use.
+
+Alternatively, there is also the `example_moving_eddies.py` example, in which particles move under the influence of two Gaussian eddies on an idealised grid.
+To run the file, the prerequisite files must be downloaded. This is done automatically be calling the `pull_data.py` file in the `scripts` directory:
+
+```
+python scripts/pull_data.py
+```
+
+Now run the file as above (with default values taken):
+
+```
+python examples/example_moving_eddies.py
+```

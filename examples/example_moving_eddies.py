@@ -163,7 +163,7 @@ Example of particle advection around an idealised peninsula""")
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
-    filename = 'moving_eddies'
+    filename = 'examples/MovingEddies_data/moving_eddies'
 
     # Generate grid files according to given dimensions
     if args.grid is not None:
@@ -171,7 +171,7 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid files
-    grid = Grid.from_nemo(filename)
+    grid = Grid.from_nemo(filename, extra_vars={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx
