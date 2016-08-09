@@ -22,7 +22,6 @@ def test_globcurrent_grid():
     assert(grid.V.data.shape == (365, 41, 81))
 
 
-@pytest.mark.xfail(run=False, reason="32/64 bit bug in time (github PR #83)")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_globcurrent_particles(mode):
     grid = set_globcurrent_grid()
