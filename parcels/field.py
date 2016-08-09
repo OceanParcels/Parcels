@@ -238,6 +238,13 @@ class Field(object):
         return RegularGridInterpolator((self.lat, self.lon), self.data[t_idx, :],
                                        bounds_error=False, fill_value=np.nan)
 
+    def temporal_interpolate_fullfield(self, tidx, time):
+        t0 = self.time[tidx-1]
+        t1 = self.time[tidx]
+        f0 = self.data[tidx-1, :]
+        f1 = self.data[tidx, :]
+        return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+
     def spatial_interpolation(self, tidx, y, x):
         """Interpolate horizontal field values using a SciPy interpolator"""
         val = self.interpolator2D(tidx)((y, x))
@@ -323,7 +330,7 @@ class Field(object):
         animation = kwargs.get('animation', False)
         idx = self.time_index(t)
         if self.time.size > 1:
-            data = np.squeeze(self.interpolator1D(idx, t, None, None))
+            data = np.squeeze(self.temporal_interpolate_fullfield(idx, t))
         else:
             data = np.squeeze(self.data)
         vmin = kwargs.get('vmin', data.min())
