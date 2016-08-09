@@ -11,6 +11,8 @@ from math import cos, pi
 from datetime import timedelta
 try:
     import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    from matplotlib import rc
 except:
     plt = None
 
@@ -327,22 +329,42 @@ class Field(object):
             raise RuntimeError("Visualisation not possible: matplotlib not found!")
 
         t = kwargs.get('t', 0)
-        animation = kwargs.get('animation', False)
-        idx = self.time_index(t)
-        if self.time.size > 1:
-            data = np.squeeze(self.temporal_interpolate_fullfield(idx, t))
+        with_particles = kwargs.get('with_particles', False)
+        make_animation = kwargs.get('animation', False)
+        if with_particles or (not make_animation):
+            idx = self.time_index(t)
+            if self.time.size > 1:
+                data = np.squeeze(self.temporal_interpolate_fullfield(idx, t))
+            else:
+                data = np.squeeze(self.data)
+
+            vmin = kwargs.get('vmin', data.min())
+            vmax = kwargs.get('vmax', data.max())
+            cs = plt.contourf(self.lon, self.lat, data,
+                              levels=np.linspace(vmin, vmax, 256))
+            cs.cmap.set_over('k')
+            cs.cmap.set_under('w')
+            cs.set_clim(vmin, vmax)
+            plt.colorbar(cs)
+            if not with_particles:
+                plt.show()
         else:
-            data = np.squeeze(self.data)
-        vmin = kwargs.get('vmin', data.min())
-        vmax = kwargs.get('vmax', data.max())
-        cs = plt.contourf(self.lon, self.lat, data,
-                          levels=np.linspace(vmin, vmax, 256))
-        cs.cmap.set_over('k')
-        cs.cmap.set_under('w')
-        cs.set_clim(vmin, vmax)
-        plt.colorbar(cs)
-        if not animation:
-            plt.show()
+            fig = plt.figure()
+            ax = plt.axes(xlim=(self.lon[0], self.lon[-1]), ylim=(self.lat[0], self.lat[-1]))
+
+            def animate(i):
+                data = np.squeeze(self.data[i, :, :])
+                vmin = kwargs.get('vmin', data.min())
+                vmax = kwargs.get('vmax', data.max())
+                cont = ax.contourf(self.lon, self.lat, data,
+                                   levels=np.linspace(vmin, vmax, 256))
+                return cont
+
+            rc('animation', html='html5')
+            anim = animation.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
+                                           interval=100, blit=False)
+            plt.close()
+            return anim
 
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
