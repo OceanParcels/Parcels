@@ -6,8 +6,8 @@ import netCDF4
 from collections import OrderedDict, Iterable
 from datetime import timedelta as delta
 from datetime import datetime
-import math 
-import bisect 
+import math
+import bisect
 from mpl_toolkits.basemap import Basemap
 try:
     import matplotlib.pyplot as plt
