@@ -165,7 +165,7 @@ class JITParticle(Particle):
     """
 
     base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
-                             ('time', np.float32), ('dt', np.float32),
+                             ('time', np.float64), ('dt', np.float32),
                              ('xi', np.int32), ('yi', np.int32),
                              ('active', np.int32)])
     user_vars = OrderedDict()
@@ -222,7 +222,17 @@ class ParticleType(object):
     @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
-        return np.dtype(list(self.var_types.items()))
+        type_list = list(self.var_types.items())
+        if self.size % 8 > 0:
+            # Add padding to be 64-bit aligned
+            type_list += [('pad', np.float32)]
+        return np.dtype(type_list)
+
+    @property
+    def size(self):
+        """Size of the underlying particle struct in bytes"""
+        return sum([8 if vt == np.float64 else 4
+                    for vt in self.var_types.values()])
 
 
 class ParticleSet(object):
