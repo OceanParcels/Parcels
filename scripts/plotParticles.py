@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 import matplotlib.animation as animation
 
 
-def particleplotting(filename, tracerfile='none', tracerlon='x', tracerlat='y', 
+def particleplotting(filename, tracerfile='none', tracerlon='x', tracerlat='y',
                      tracerfield='P', recordedvar='none', mode='2d'):
     """Quick and simple plotting of PARCELS trajectories"""
 
@@ -49,8 +49,8 @@ def particleplotting(filename, tracerfile='none', tracerlon='x', tracerlat='y',
                 scat.set_array(record[:, i])
             return scat,
 
-        anim = animation.FuncAnimation(fig, animate, frames=np.arange(1, lon.shape[1]),
-                                       interval=100, blit=False)
+        animation.FuncAnimation(fig, animate, frames=np.arange(1, lon.shape[1]),
+                                interval=100, blit=False)
 
     plt.show()
 
