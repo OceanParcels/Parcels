@@ -26,7 +26,7 @@ def plotTrajectoriesFile(filename, tracerfile='None', tracerlon='x', tracerlat='
         P = tfile.variables[tracerfield]
         plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
 
-    if mode is '3d':
+    if mode == '3d':
         fig = plt.figure(1)
         ax = fig.gca(projection='3d')
         for p in range(len(lon)):
@@ -34,11 +34,11 @@ def plotTrajectoriesFile(filename, tracerfile='None', tracerlon='x', tracerlat='
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
-    elif mode is '2d':
+    elif mode == '2d':
         plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
-    elif mode is 'movie2d' or 'movie2d_notebook':
+    elif mode == 'movie2d' or 'movie2d_notebook':
 
         fig = plt.figure()
         ax = plt.axes(xlim=(np.amin(lon), np.amax(lon)), ylim=(np.amin(lat), np.amax(lat)))
@@ -53,8 +53,8 @@ def plotTrajectoriesFile(filename, tracerfile='None', tracerlon='x', tracerlat='
         rc('animation', html='html5')
         anim = animation.FuncAnimation(fig, animate, frames=np.arange(1, lon.shape[1]),
                                        interval=100, blit=False)
+    if mode == 'movie2d_notebook':
         plt.close()
-    if mode is 'movie2d_notebook':
         return anim
     else:
         plt.show()
