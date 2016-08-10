@@ -12,3 +12,4 @@ gh-pages/html
 Profile.prof
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
+.cache/*
