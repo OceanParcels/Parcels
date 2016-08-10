@@ -15,13 +15,14 @@ dimensions = {'lat': 'lat',
               'time': 'time'}
 grid = Grid.from_netcdf(filenames, variables, dimensions)
 
-pset = grid.ParticleSet(size=5, pclass=Particle, start=(28, -33), finish=(30, -33))
-pset.show_velocity(t=datetime(2002, 1, 2), land=True)
+pset = grid.ParticleSet(size=10, pclass=Particle, start=(31, -31), finish=(34, -31))
+
+pset.show_velocity(t=datetime(2002, 1, 2), land=True, vmax=2)
 pset.execute(AdvectionRK4, starttime=datetime(2002, 1, 2), runtime=timedelta(days=1),
-             dt=timedelta(minutes=5), interval=timedelta(hours=6)         	)
-pset.show_velocity(t=datetime(2002, 1, 3), land=True, latN=-32, latS=-36, lonE=33, lonW=18)
+             dt=timedelta(minutes=5), interval=timedelta(hours=6))
+pset.show_velocity(land=True, latN=-30, latS=-36, lonE=33, lonW=18, vmax=2)
 
 grid = Grid.from_nemo("examples/MovingEddies_data/moving_eddies*")
 
 pset = grid.ParticleSet(size=2, pclass=Particle, lon=[3.3,  3.3], lat=[46.0, 47.8])
-pset.show_velocity(t=timedelta(days=0), land=False,  lonW=2.5, lonE=3.5, latS=47.5, latN=48.5)
+pset.show_velocity(lonW=2.8, lonE=3.5, latS=47.5, latN=48.3, vmax=3)

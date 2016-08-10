@@ -13,6 +13,10 @@ try:
     import matplotlib.pyplot as plt
 except:
     plt = None
+try:
+    from mpl_toolkits.basemap import Basemap
+except:
+    Basemap = None
 
 
 __all__ = ['Particle', 'ParticleSet', 'JITParticle',
@@ -120,6 +124,7 @@ def positions_from_density_field(pnum, field, mode='monte_carlo'):
 
     return lon, lat
 
+
 def nearest_index(array, value):
     """returns index of the nearest value in array using O(log n) bisection method"""
     y = bisect.bisect(array, value)
@@ -129,7 +134,6 @@ def nearest_index(array, value):
         return y-1
     else:
         return y
-
 
 
 class Particle(object):
@@ -472,7 +476,9 @@ class ParticleSet(object):
 
     def show_velocity(self, **kwargs):
         # time at which to plot velocity
-        t = kwargs.get('t', 0)
+        t = kwargs.get('t', None)
+        if t is None:
+            t = self.particles[0].time
         # flag to drawing land on plot
         land = kwargs.get('land', False)
         # plot domain latitude longitude parameters
@@ -480,6 +486,10 @@ class ParticleSet(object):
         latS = kwargs.get('latS', np.nan)
         lonE = kwargs.get('lonE', np.nan)
         lonW = kwargs.get('lonW', np.nan)
+        # maximum speed for vector coloring
+        vmax = kwargs.get('vmax', None)
+        # filename to saving to
+        savefile = kwargs.get('savefile', None)
 
         if isinstance(t, datetime):
             t = (t - self.grid.U.time_origin).total_seconds()
@@ -510,7 +520,7 @@ class ParticleSet(object):
         lon_median = np.median(lon)
         plt.figure()
         m = Basemap(projection='merc', lat_0=lat_median, lon_0=lon_median,
-                    resolution='l', area_thresh=100,
+                    resolution='h', area_thresh=100,
                     llcrnrlon=lon[0], llcrnrlat=lat[0],
                     urcrnrlon=lon[-1], urcrnrlat=lat[-1])
         if land:
@@ -533,21 +543,24 @@ class ParticleSet(object):
         y = np.tile(lat, len(lon))
 
         # plotting velocity vector field
-        vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.autumn, scale=50, latlon=True)
+        vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[0, vmax], scale=50, latlon=True)
         cb = m.colorbar(vecs, "right", size="5%", pad="2%")
-
-        # formating particle data for plotting
         plon = [p.lon for p in self]
         plat = [p.lat for p in self]
         xs, ys = m(plon, plat)
         # plotting particle data
-        m.scatter(xs, ys)
+        m.scatter(xs, ys, color='black')
 
         if(self.grid.U.time_origin == 0):
             plt.title(delta(seconds=t))
         else:
             plt.title(netCDF4.num2date(t, 'seconds since '+str(self.grid.U.time_origin)))
-        plt.show()
+
+        if savefile is None:
+            plt.show()
+        else:
+            plt.savefig(savefile)
+            plt.close()
 
     def Kernel(self, pyfunc):
         return Kernel(self.grid, self.ptype, pyfunc=pyfunc)
