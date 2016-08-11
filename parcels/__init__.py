@@ -1,5 +1,8 @@
-from parcels.grid import *  # NOQA get flake8 to ignore unused import.
-from parcels.particle import *  # NOQA
-from parcels.field import *  # NOQA
-from parcels.kernel import *  # NOQA
-import parcels.rng as random  # NOQA
+from parcels.grid import *  # noqa
+from parcels.particle import *  # noqa
+from parcels.particleset import *  # noqa
+from parcels.field import *  # noqa
+from parcels.kernel import *  # noqa
+import parcels.rng as random  # noqa
+from parcels.kernels.advection import *  # noqa
+from parcels.particlefile import *  # noqa
