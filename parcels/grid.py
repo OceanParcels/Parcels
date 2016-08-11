@@ -1,5 +1,5 @@
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
-from parcels.particle import ParticleSet
+from parcels.particleset import ParticleSet
 import numpy as np
 from py import path
 from glob import glob
