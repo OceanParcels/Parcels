@@ -2,7 +2,31 @@ from collections import OrderedDict
 import numpy as np
 
 
-__all__ = ['Particle', 'JITParticle']
+__all__ = ['Particle', 'JITParticle', 'Variable']
+
+
+class Variable(object):
+    """Descriptor class that delegates data access to particle data"""
+
+    def __init__(self, name, dtype=np.float32, default=0):
+        self.name = name
+        self.dtype = dtype
+        self.default = self.dtype(default)
+
+    def __get__(self, instance, cls):
+        if issubclass(cls, JITParticle):
+            return instance._cptr.__getitem__(self.name)
+        else:
+            return getattr(instance, "_%s" % self.name, self.default)
+
+    def __set__(self, instance, value):
+        if isinstance(instance, JITParticle):
+            instance._cptr.__setitem__(self.name, value)
+        else:
+            setattr(instance, "_%s" % self.name, value)
+
+    def __repr__(self):
+        return "PVar<%s|%s>" % (self.name, self.dtype)
 
 
 class ParticleType(object):
