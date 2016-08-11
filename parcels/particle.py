@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import numpy as np
 
 
@@ -81,7 +80,12 @@ class Particle(object):
     :param grid: :Class Grid: object to track this particle on
     :param user_vars: Dictionary of any user variables that might be defined in subclasses
     """
-    user_vars = OrderedDict()
+
+    lon = Variable('lon', dtype=np.float32)
+    lat = Variable('lat', dtype=np.float32)
+    time = Variable('time', dtype=np.float64)
+    dt = Variable('dt', dtype=np.float32)
+    active = Variable('active', dtype=np.int32, default=1)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         self.lon = lon
@@ -118,12 +122,6 @@ class JITParticle(Particle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
-    base_vars = OrderedDict([('lon', np.float32), ('lat', np.float32),
-                             ('time', np.float64), ('dt', np.float32),
-                             ('xi', np.int32), ('yi', np.int32),
-                             ('active', np.int32)])
-    user_vars = OrderedDict()
-
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         if self._cptr is None:
@@ -132,14 +130,4 @@ class JITParticle(Particle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-    def __getattr__(self, attr):
-        if attr == "_cptr":
-            return super(JITParticle, self).__getattr__(attr)
-        else:
-            return self._cptr.__getitem__(attr)
 
-    def __setattr__(self, key, value):
-        if key == "_cptr":
-            super(JITParticle, self).__setattr__(key, value)
-        else:
-            self._cptr.__setitem__(key, value)
