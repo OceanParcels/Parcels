@@ -42,24 +42,26 @@ class ParticleType(object):
 
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
-        self.var_types = None
-        if self.uses_jit:
-            self.var_types = pclass.base_vars.copy()
-            self.var_types.update(pclass.user_vars)
-
-        self.user_vars = pclass.user_vars
+        # Pick Variable objects out of __dict__
+        self.variables = [v for v in pclass.__dict__.values()
+                          if isinstance(v, Variable)]
+        for cls in pclass.__bases__:
+            if issubclass(cls, Particle):
+                # Add inherited particle variables
+                ptype = cls.getPType()
+                self.variables = ptype.variables + self.variables
 
     def __repr__(self):
-        return "PType<%s>::%s" % (self.name, str(self.var_types))
+        return "PType<%s>::%s" % (self.name, self.variables)
 
     @property
     def _cache_key(self):
-        return"-".join(["%s:%s" % v for v in self.var_types.items()])
+        return"-".join(["%s:%s" % (v.name, v.dtype) for v in self.variables])
 
     @property
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
-        type_list = list(self.var_types.items())
+        type_list = [(v.name, v.dtype) for v in self.variables]
         if self.size % 8 > 0:
             # Add padding to be 64-bit aligned
             type_list += [('pad', np.float32)]
@@ -68,8 +70,7 @@ class ParticleType(object):
     @property
     def size(self):
         """Size of the underlying particle struct in bytes"""
-        return sum([8 if vt == np.float64 else 4
-                    for vt in self.var_types.values()])
+        return sum([8 if v.dtype == np.float64 else 4 for v in self.variables])
 
 
 class Particle(object):
@@ -124,9 +125,9 @@ class JITParticle(Particle):
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
+        ptype = self.getPType()
         if self._cptr is None:
             # Allocate data for a single particle
-            ptype = super(JITParticle, self).getPType()
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
