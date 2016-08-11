@@ -94,16 +94,8 @@ class Particle(object):
         self.time = time
         self.dt = dt
 
-        self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
-        self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
-        self.active = 1
-
-        for var in self.user_vars:
-            setattr(self, var, 0)
-
     def __repr__(self):
-        return "P(%f, %f, %f)[%d, %d]" % (self.lon, self.lat, self.time,
-                                          self.xi, self.yi)
+        return "P(%f, %f, %f)" % (self.lon, self.lat, self.time)
 
     @classmethod
     def getPType(cls):
@@ -123,12 +115,23 @@ class JITParticle(Particle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
+    xi = Variable('xi', dtype=np.int32)
+    yi = Variable('yi', dtype=np.int32)
+
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         ptype = self.getPType()
         if self._cptr is None:
             # Allocate data for a single particle
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
+        for v in ptype.variables:
+            setattr(self, v.name, v.default)
         super(JITParticle, self).__init__(*args, **kwargs)
 
+        grid = kwargs.get('grid')
+        self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
+        self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
 
+    def __repr__(self):
+        return "P(%f, %f, %f)[%d, %d]" % (self.lon, self.lat, self.time,
+                                          self.xi, self.yi)
