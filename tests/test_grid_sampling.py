@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4
+from parcels import Grid, Particle, JITParticle, Geographic, AdvectionRK4, Variable
 import numpy as np
 import pytest
 from math import cos, pi
@@ -10,7 +10,9 @@ ptype = {'scipy': Particle, 'jit': JITParticle}
 
 def pclass(mode):
     class SampleParticle(ptype[mode]):
-        user_vars = {'u': np.float32, 'v': np.float32, 'p': np.float32}
+        u = Variable('u', dtype=np.float32)
+        v = Variable('v', dtype=np.float32)
+        p = Variable('p', dtype=np.float32)
     return SampleParticle
 
 

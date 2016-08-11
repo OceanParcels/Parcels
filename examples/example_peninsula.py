@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle
+from parcels import Grid, Particle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -88,14 +88,8 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     class MyParticle(ParticleClass):
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
-        user_vars = {'p': np.float32, 'p_start': np.float32}
-
-        def __init__(self, *args, **kwargs):
-            """Custom initialisation function which calls the base
-            initialisation and adds the instance variable p"""
-            super(MyParticle, self).__init__(*args, **kwargs)
-            self.p = 0.
-            self.p_start = 0.
+        p = Variable('p', dtype=np.float32, default=0.)
+        p_start = Variable('p_start', dtype=np.float32, default=0.)
 
         def __repr__(self):
             """Custom print function which overrides the built-in"""
