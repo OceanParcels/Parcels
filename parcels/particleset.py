@@ -344,7 +344,7 @@ class ParticleSet(object):
 
             # plotting velocity vector field
             vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[0, vmax], scale=50, latlon=True)
-            cb = m.colorbar(vecs, "right", size="5%", pad="2%")
+            m.colorbar(vecs, "right", size="5%", pad="2%")
             xs, ys = m(plon, plat)
             # plotting particle data
             m.scatter(xs, ys, color='black')
