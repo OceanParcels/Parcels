@@ -2,7 +2,7 @@ from operator import attrgetter
 import numpy as np
 
 
-__all__ = ['Particle', 'JITParticle', 'Variable']
+__all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 
 class Variable(object):
@@ -38,8 +38,8 @@ class ParticleType(object):
     def __init__(self, pclass):
         if not isinstance(pclass, type):
             raise TypeError("Class object required to derive ParticleType")
-        if not issubclass(pclass, Particle):
-            raise TypeError("Class object does not inherit from parcels.Particle")
+        if not issubclass(pclass, ScipyParticle):
+            raise TypeError("Class object does not inherit from parcels.ScipyParticle")
 
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
@@ -48,7 +48,7 @@ class ParticleType(object):
                                  if isinstance(v, Variable)],
                                 key=attrgetter('name'))
         for cls in pclass.__bases__:
-            if issubclass(cls, Particle):
+            if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
                 self.variables = ptype.variables + self.variables
@@ -75,7 +75,7 @@ class ParticleType(object):
         return sum([8 if v.dtype == np.float64 else 4 for v in self.variables])
 
 
-class Particle(object):
+class ScipyParticle(object):
     """Class encapsualting the basic attributes of a particle
 
     :param lon: Initial longitude of particle
@@ -107,7 +107,7 @@ class Particle(object):
         self.active = 0
 
 
-class JITParticle(Particle):
+class JITParticle(ScipyParticle):
     """Particle class for JIT-based Particle objects
 
     Users should extend this type for custom particles with fast

@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle, Variable
+from parcels import Grid, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -7,6 +7,7 @@ import pytest
 from datetime import timedelta as delta
 
 
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
@@ -80,12 +81,10 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     :arg filename: Basename of the input grid file set
     :arg npart: Number of particles to intialise"""
 
-    # Determine particle class according to mode
-    ParticleClass = JITParticle if mode == 'jit' else Particle
-
     # First, we define a custom Particle class to which we add a
-    # custom variable, the initial stream function value p
-    class MyParticle(ParticleClass):
+    # custom variable, the initial stream function value p.
+    # We determine the particle base class according to mode.
+    class MyParticle(ptype[mode]):
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
         p = Variable('p', dtype=np.float32, default=0.)

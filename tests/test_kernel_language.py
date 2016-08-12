@@ -1,11 +1,11 @@
-from parcels import Grid, Particle, JITParticle, Kernel, Variable
+from parcels import Grid, ScipyParticle, JITParticle, Kernel, Variable
 from parcels import random as parcels_random
 import numpy as np
 import pytest
 import random as py_random
 
 
-ptype = {'scipy': Particle, 'jit': JITParticle}
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def expr_kernel(name, pset, expr):

@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle
+from parcels import Grid, ScipyParticle, JITParticle
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -7,6 +7,7 @@ import pytest
 from datetime import timedelta as delta
 
 
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
@@ -71,8 +72,7 @@ def stommel_example(grid, npart=1, mode='jit', verbose=False,
     :arg npart: Number of particles to intialise"""
 
     # Determine particle class according to mode
-    ParticleClass = JITParticle if mode == 'jit' else Particle
-    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
                             start=(10., 50.), finish=(7., 30.))
 
     if verbose:
