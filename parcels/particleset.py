@@ -1,6 +1,6 @@
 from parcels.kernel import Kernel
 from parcels.field import Field
-from parcels.particle import ParticleType, JITParticle
+from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
@@ -71,7 +71,7 @@ class ParticleSet(object):
                  lon=None, lat=None, start=None, finish=None, start_field=None):
         self.grid = grid
         self.particles = np.empty(size, dtype=pclass)
-        self.ptype = ParticleType(pclass)
+        self.ptype = pclass.getPType()
         self.kernel = None
         self.time_origin = grid.U.time_origin
 

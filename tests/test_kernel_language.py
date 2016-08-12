@@ -1,11 +1,11 @@
-from parcels import Grid, Particle, JITParticle, Kernel
+from parcels import Grid, ScipyParticle, JITParticle, Kernel, Variable
 from parcels import random as parcels_random
 import numpy as np
 import pytest
 import random as py_random
 
 
-ptype = {'scipy': Particle, 'jit': JITParticle}
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def expr_kernel(name, pset, expr):
@@ -37,7 +37,7 @@ def grid(xdim=20, ydim=20):
 def test_expression_int(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
-        user_vars = {'p': np.int32}
+        p = Variable('p', dtype=np.float32)
     pset = grid.ParticleSet(npart, pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
@@ -55,7 +55,7 @@ def test_expression_int(grid, mode, name, expr, result, npart=10):
 def test_expression_float(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
-        user_vars = {'p': np.int32}
+        p = Variable('p', dtype=np.float32)
     pset = grid.ParticleSet(npart, pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
@@ -78,7 +78,7 @@ def test_expression_float(grid, mode, name, expr, result, npart=10):
 def test_expression_bool(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
-        user_vars = {'p': np.int32}
+        p = Variable('p', dtype=np.float32)
     pset = grid.ParticleSet(npart, pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
@@ -107,7 +107,7 @@ def random_series(npart, rngfunc, rngargs, mode):
 def test_random_float(grid, mode, rngfunc, rngargs, npart=10):
     """ Test basic random number generation """
     class TestParticle(ptype[mode]):
-        user_vars = {'p': np.int32 if rngfunc == 'randint' else np.float32}
+        p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
     pset = grid.ParticleSet(npart, pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)

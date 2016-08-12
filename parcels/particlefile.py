@@ -68,15 +68,15 @@ class ParticleFile(object):
         self.z.units = "m"
         self.z.positive = "down"
 
-        if particleset.ptype.user_vars is not None:
-            self.user_vars = particleset.ptype.user_vars.keys()
-            for var in self.user_vars:
-                setattr(self, var, self.dataset.createVariable(var, "f4", ("trajectory", "obs"), fill_value=0.))
-                getattr(self, var).long_name = ""
-                getattr(self, var).standard_name = var
-                getattr(self, var).units = "unknown"
-        else:
-            self.user_vars = {}
+        self.user_vars = []
+        for v in particleset.ptype.variables:
+            if v.name in ['time', 'lat', 'lon', 'z']:
+                continue
+            setattr(self, v.name, self.dataset.createVariable(v.name, "f4", ("trajectory", "obs"), fill_value=0.))
+            getattr(self, v.name).long_name = ""
+            getattr(self, v.name).standard_name = v.name
+            getattr(self, v.name).units = "unknown"
+            self.user_vars += [v.name]
 
         self.idx = 0
 

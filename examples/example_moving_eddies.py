@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle
+from parcels import Grid, ScipyParticle, JITParticle
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -7,6 +7,7 @@ import pytest
 from datetime import timedelta as delta
 
 
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
@@ -73,8 +74,7 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
     :arg npart: Number of particles to intialise"""
 
     # Determine particle class according to mode
-    ParticleClass = JITParticle if mode == 'jit' else Particle
-    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
                             start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
@@ -99,9 +99,7 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
     grid = moving_eddies_grid()
 
     # Determine particle class according to mode
-    ParticleClass = JITParticle if mode == 'jit' else Particle
-
-    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
                             start=(3.3, 46.), finish=(3.3, 47.8))
 
     # Execte for 14 days, with 30sec timesteps and hourly output

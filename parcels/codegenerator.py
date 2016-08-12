@@ -95,7 +95,7 @@ class ParticleAttributeNode(IntrinsicNode):
 
 class ParticleNode(IntrinsicNode):
     def __getattr__(self, attr):
-        if attr in self.obj.var_types:
+        if attr in [v.name for v in self.obj.variables]:
             return ParticleAttributeNode(self, attr)
         elif attr in ['delete']:
             return ParticleAttributeNode(self, 'active')
@@ -446,7 +446,7 @@ class LoopGenerator(object):
         ccode += [str(c.Include("math.h", system=False))]
 
         # Generate type definition for particle type
-        vdecl = [c.POD(dtype, var) for var, dtype in self.ptype.var_types.items()]
+        vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         # Insert kernel code

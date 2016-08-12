@@ -1,9 +1,9 @@
-from parcels import Grid, Field, Particle, JITParticle
+from parcels import Grid, Field, ScipyParticle, JITParticle
 import numpy as np
 import pytest
 
 
-ptype = {'scipy': Particle, 'jit': JITParticle}
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-from parcels import Grid, Particle, JITParticle
+from parcels import Grid, ScipyParticle, JITParticle
 from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45
 import numpy as np
 import pytest
@@ -7,7 +7,7 @@ from datetime import timedelta as delta
 from argparse import ArgumentParser
 
 
-ptype = {'scipy': Particle, 'jit': JITParticle}
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45}
 
 # Some constants
