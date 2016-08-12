@@ -1,3 +1,4 @@
+from operator import attrgetter
 import numpy as np
 
 
@@ -43,8 +44,9 @@ class ParticleType(object):
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
         # Pick Variable objects out of __dict__
-        self.variables = [v for v in pclass.__dict__.values()
-                          if isinstance(v, Variable)]
+        self.variables = sorted([v for v in pclass.__dict__.values()
+                                 if isinstance(v, Variable)],
+                                key=attrgetter('name'))
         for cls in pclass.__bases__:
             if issubclass(cls, Particle):
                 # Add inherited particle variables
@@ -56,7 +58,7 @@ class ParticleType(object):
 
     @property
     def _cache_key(self):
-        return"-".join(["%s:%s" % (v.name, v.dtype) for v in self.variables])
+        return "-".join(["%s:%s" % (v.name, v.dtype) for v in self.variables])
 
     @property
     def dtype(self):
