@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle
+from parcels import Grid, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -9,17 +9,6 @@ from datetime import timedelta as delta
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
-
-
-def ground_truth(lon, lat):
-    day = 11.6
-    r = 1 / (day * 86400)
-    beta = 2e-11
-    a = 2000000
-    e_s = r / (beta * a)
-    psi = (1 - np.exp(-lon * math.pi / 180 / e_s) - lon *
-           math.pi / 180) * math.pi * np.sin(math.pi ** 2 * lat / 180)
-    return psi
 
 
 def stommel_grid(xdim=200, ydim=200):
@@ -35,56 +24,75 @@ def stommel_grid(xdim=200, ydim=200):
     depth = np.zeros(1, dtype=np.float32)
     time = np.linspace(0., 100000. * 86400., 2, dtype=np.float64)
 
+    # Some constants
+    A = 100
+    eps = 0.05
+    a = 10000
+    b = 10000
+
     # Coordinates of the test grid (on A-grid in deg)
-    lon = np.linspace(0, 60, xdim, dtype=np.float32)
-    lat = np.linspace(0, 60, ydim, dtype=np.float32)
+    lon = np.linspace(0, a, xdim, dtype=np.float32)
+    lat = np.linspace(0, b, ydim, dtype=np.float32)
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
     U = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
     V = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-
-    # Some constants
-    day = 11.6
-    r = 1 / (day * 86400)
-    beta = 2e-11
-    a = 2000000
-    e_s = r / (beta * a)
+    P = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
 
     [x, y] = np.mgrid[:lon.size, :lat.size]
+    l1 = (-1 + math.sqrt(1 + 4 * math.pi**2 * eps**2)) / (2 * eps)
+    l2 = (-1 - math.sqrt(1 + 4 * math.pi**2 * eps**2)) / (2 * eps)
+    c1 = (1 - math.exp(l2)) / (math.exp(l2) - math.exp(l1))
+    c2 = -(1 + c1)
     for t in range(time.size):
         for i in range(lon.size):
             for j in range(lat.size):
-                U[i, j, t] = -(1 - math.exp(-lon[i] * math.pi / 180 / e_s) -
-                               lon[i] * math.pi / 180) * math.pi ** 2 *\
-                    math.cos(math.pi ** 2 * lat[j] / 180)
-                V[i, j, t] = (math.exp(-lon[i] * math.pi / 180 / e_s) / e_s -
-                              1) * math.pi * math.sin(math.pi ** 2 * lat[j] / 180)
+                xi = lon[i] / a
+                yi = lat[j] / b
+                P[i, j, t] = A * (c1*math.exp(l1*xi) + c2*math.exp(l2*xi) + 1) * math.sin(math.pi * yi)
+        for i in range(lon.size-2):
+            for j in range(lat.size):
+                V[i+1, j, t] = (P[i+2, j, t] - P[i, j, t]) / (2 * a / xdim)
+        for i in range(lon.size):
+            for j in range(lat.size-2):
+                U[i, j+1, t] = -(P[i, j+2, t] - P[i, j, t]) / (2 * b / ydim)
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time)
+    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P}, mesh='flat')
 
 
-def stommel_example(grid, npart=1, mode='jit', verbose=False,
-                    method=AdvectionRK4):
-    """Configuration of a particle set that follows two moving eddies
+def UpdateP(particle, grid, time, dt):
+    particle.p = grid.P[time, particle.lon, particle.lat]
 
-    :arg grid: :class NEMOGrid: that defines the flow field
-    :arg npart: Number of particles to intialise"""
+
+def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
+
+    grid = stommel_grid()
+    filename = 'stommel'
+    grid.write(filename)
 
     # Determine particle class according to mode
-    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
-                            start=(10., 50.), finish=(7., 30.))
+    ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
+
+    class MyParticle(ParticleClass):
+        p = Variable('p', dtype=np.float32, default=0.)
+        p_start = Variable('p_start', dtype=np.float32, default=0.)
+
+    pset = grid.ParticleSet(size=npart, pclass=MyParticle,
+                            start=(100, 5000), finish=(200, 5000))
+    for particle in pset:
+        particle.p_start = grid.P[0., particle.lon, particle.lat]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
-    # Execute for 25 days, with 5min timesteps and hourly output
-    endtime = delta(days=25)
+    # Execute for 50 days, with 5min timesteps and hourly output
+    endtime = delta(days=50)
     dt = delta(minutes=5)
     interval = delta(hours=12)
     print("Stommel: Advecting %d particles for %s" % (npart, endtime))
-    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="StommelParticle"))
+    pset.execute(method + pset.Kernel(UpdateP), endtime=endtime, dt=dt, interval=interval,
+                 output_file=pset.ParticleFile(name="StommelParticle"), show_movie=False)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -92,14 +100,15 @@ def stommel_example(grid, npart=1, mode='jit', verbose=False,
     return pset
 
 
-@pytest.mark.xfail(reason="Stommel test criteria not yet adjusted")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_stommel_grid(mode):
-    grid = stommel_grid()
-    pset = stommel_example(grid, 3, mode=mode)
-    assert(3. < pset[0].lon < 3.5 and 4.75 < pset[0].lat < 5.25)
-    assert(7.4 < pset[1].lon < 8. and 40. < pset[1].lat < 40.6)
-    assert(4. < pset[2].lon < 4.3 and 26.7 < pset[2].lat < 27.)
+@pytest.mark.parametrize('meth', ['RK4', pytest.mark.xfail(reason="Issue #88")('RK45')])
+def test_stommel_grid(mode, meth):
+    pset = stommel_example(1, mode=mode, method=method[meth])
+    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    assert(err_adv <= 1.e-1).all()
+    # Test grid sampling accuracy by comparing kernel against grid sampling
+    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    assert(err_smpl <= 1.e-1).all()
 
 
 if __name__ == "__main__":
@@ -111,30 +120,9 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Number of particles to advect')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
-    p.add_argument('--profiling', action='store_true', default=False,
-                   help='Print profiling information after run')
-    p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
-                   help='Generate grid file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
-    filename = 'stommel'
 
-    # Generate grid files according to given dimensions
-    if args.grid is not None:
-        grid = stommel_grid(args.grid[0], args.grid[1])
-        grid.write(filename)
-
-    # Open grid files
-    grid = Grid.from_nemo(filename)
-
-    if args.profiling:
-        from cProfile import runctx
-        from pstats import Stats
-        runctx("stommel_example(grid, args.particles, mode=args.mode, \
-                              verbose=args.verbose)",
-               globals(), locals(), "Profile.prof")
-        Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
-    else:
-        stommel_example(grid, args.particles, mode=args.mode,
-                        verbose=args.verbose, method=method[args.method])
+    stommel_example(args.particles, mode=args.mode,
+                    verbose=args.verbose, method=method[args.method])
