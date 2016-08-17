@@ -41,8 +41,18 @@ def test_variable_init_relative(grid, mode, npart=10):
         p_base = Variable('p_base', dtype=np.float32, default=10.)
         p_relative = Variable('p_relative', dtype=np.float32,
                               default=attrgetter('p_base'))
+        p_offset = Variable('p_offset', dtype=np.float32,
+                            default=attrgetter('p_base'))
+
+        def __init__(self, *args, **kwargs):
+            super(TestParticle, self).__init__(*args, **kwargs)
+            self.p_offset += 2.
     pset = grid.ParticleSet(npart, pclass=TestParticle,
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
-    assert np.allclose([p.p_base for p in pset], 10., rtol=1e-12)
+    # Adjust base variable to test for aliasing effects
+    for p in pset:
+        p.p_base += 3.
+    assert np.allclose([p.p_base for p in pset], 13., rtol=1e-12)
     assert np.allclose([p.p_relative for p in pset], 10., rtol=1e-12)
+    assert np.allclose([p.p_offset for p in pset], 12., rtol=1e-12)
