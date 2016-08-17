@@ -11,7 +11,7 @@ class Variable(object):
     def __init__(self, name, dtype=np.float32, default=0):
         self.name = name
         self.dtype = dtype
-        self.default = self.dtype(default)
+        self.default = default
 
     def __get__(self, instance, cls):
         if issubclass(cls, JITParticle):
@@ -75,7 +75,26 @@ class ParticleType(object):
         return sum([8 if v.dtype == np.float64 else 4 for v in self.variables])
 
 
-class ScipyParticle(object):
+class _Particle(object):
+    """Private base class for all particle types"""
+
+    def __init__(self):
+        ptype = self.getPType()
+        # Explicit initialiastion of all particle variables
+        for v in ptype.variables:
+            if isinstance(v.default, attrgetter):
+                initial = v.default(self)
+            else:
+                initial = v.default
+            # Enforce type of initial value
+            setattr(self, v.name, v.dtype(initial))
+
+    @classmethod
+    def getPType(cls):
+        return ParticleType(cls)
+
+
+class ScipyParticle(_Particle):
     """Class encapsualting the basic attributes of a particle
 
     :param lon: Initial longitude of particle
@@ -91,6 +110,7 @@ class ScipyParticle(object):
     active = Variable('active', dtype=np.int32, default=1)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
+        super(ScipyParticle, self).__init__()
         self.lon = lon
         self.lat = lat
         self.time = time
@@ -98,10 +118,6 @@ class ScipyParticle(object):
 
     def __repr__(self):
         return "P(%f, %f, %f)" % (self.lon, self.lat, self.time)
-
-    @classmethod
-    def getPType(cls):
-        return ParticleType(cls)
 
     def delete(self):
         self.active = 0
@@ -126,8 +142,6 @@ class JITParticle(ScipyParticle):
         if self._cptr is None:
             # Allocate data for a single particle
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
-        for v in ptype.variables:
-            setattr(self, v.name, v.default)
         super(JITParticle, self).__init__(*args, **kwargs)
 
         grid = kwargs.get('grid')
