@@ -232,10 +232,10 @@ class ParticleSet(object):
                 output_file.write(self, leaptime)
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
-        # Remove deactivated particles
-        to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
-        if len(to_remove) > 0:
-            self.remove(to_remove)
+            # Remove deactivated particles
+            to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
+            if len(to_remove) > 0:
+                self.remove(to_remove)
 
     def show(self, **kwargs):
         if plt is None:
