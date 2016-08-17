@@ -6,18 +6,22 @@ __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 
 class Variable(object):
-    """Descriptor class that delegates data access to particle data"""
+    """Descriptor class that delegates data access to particle data
 
-    def __init__(self, name, dtype=np.float32, default=0):
+    :param name: Variable name as used within kernels
+    :param dtype: Data type (numpy.dtype) of the variable
+    :param initial: Initial value of the variable
+    """
+    def __init__(self, name, dtype=np.float32, initial=0):
         self.name = name
         self.dtype = dtype
-        self.default = default
+        self.initial = initial
 
     def __get__(self, instance, cls):
         if issubclass(cls, JITParticle):
             return instance._cptr.__getitem__(self.name)
         else:
-            return getattr(instance, "_%s" % self.name, self.default)
+            return getattr(instance, "_%s" % self.name, self.initial)
 
     def __set__(self, instance, value):
         if isinstance(instance, JITParticle):
@@ -82,10 +86,10 @@ class _Particle(object):
         ptype = self.getPType()
         # Explicit initialiastion of all particle variables
         for v in ptype.variables:
-            if isinstance(v.default, attrgetter):
-                initial = v.default(self)
+            if isinstance(v.initial, attrgetter):
+                initial = v.initial(self)
             else:
-                initial = v.default
+                initial = v.initial
             # Enforce type of initial value
             setattr(self, v.name, v.dtype(initial))
 
@@ -107,7 +111,7 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     dt = Variable('dt', dtype=np.float32)
-    active = Variable('active', dtype=np.int32, default=1)
+    active = Variable('active', dtype=np.int32, initial=1)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         super(ScipyParticle, self).__init__()

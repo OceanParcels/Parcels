@@ -87,8 +87,8 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     class MyParticle(ptype[mode]):
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
-        p = Variable('p', dtype=np.float32, default=0.)
-        p_start = Variable('p_start', dtype=np.float32, default=0.)
+        p = Variable('p', dtype=np.float32, initial=0.)
+        p_start = Variable('p_start', dtype=np.float32, initial=0.)
 
         def __repr__(self):
             """Custom print function which overrides the built-in"""

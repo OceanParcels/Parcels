@@ -20,9 +20,9 @@ def grid(xdim=100, ydim=100):
 def test_variable_init(grid, mode, npart=10):
     """Test that checks correct initialisation of custom variables"""
     class TestParticle(ptype[mode]):
-        p_float = Variable('p_float', dtype=np.float32, default=10.)
-        p_double = Variable('p_double', dtype=np.float64, default=11.)
-        p_int = Variable('p_int', dtype=np.int32, default=12.)
+        p_float = Variable('p_float', dtype=np.float32, initial=10.)
+        p_double = Variable('p_double', dtype=np.float64, initial=11.)
+        p_int = Variable('p_int', dtype=np.int32, initial=12.)
     pset = grid.ParticleSet(npart, pclass=TestParticle,
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
@@ -38,11 +38,11 @@ def test_variable_init(grid, mode, npart=10):
 def test_variable_init_relative(grid, mode, npart=10):
     """Test that checks relative initialisation of custom variables"""
     class TestParticle(ptype[mode]):
-        p_base = Variable('p_base', dtype=np.float32, default=10.)
+        p_base = Variable('p_base', dtype=np.float32, initial=10.)
         p_relative = Variable('p_relative', dtype=np.float32,
-                              default=attrgetter('p_base'))
+                              initial=attrgetter('p_base'))
         p_offset = Variable('p_offset', dtype=np.float32,
-                            default=attrgetter('p_base'))
+                            initial=attrgetter('p_base'))
 
         def __init__(self, *args, **kwargs):
             super(TestParticle, self).__init__(*args, **kwargs)
