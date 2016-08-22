@@ -9,7 +9,6 @@ import bisect
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
-from netCDF4 import num2date
 try:
     import matplotlib.pyplot as plt
 except:
@@ -255,8 +254,9 @@ class ParticleSet(object):
 
     def show(self, **kwargs):
         savefile = kwargs.get('savefile', None)
-        vector = kwargs.get('vector', False)
+        field = kwargs.get('field', True)
         domain = kwargs.get('domain', None)
+        particles = kwargs.get('particles', True)
         plon = np.array([p.lon for p in self])
         plat = np.array([p.lat for p in self])
         time = [p.time for p in self]
@@ -271,18 +271,19 @@ class ParticleSet(object):
             lonE = nearest_index(self.grid.U.lon, domain[2])
             lonW = nearest_index(self.grid.U.lon, domain[3])
         else:
-            latN, latS, lonE, lonW = (-1, 0, 0, -1)
-        if not vector:
+            latN, latS, lonE, lonW = (-1, 0, -1, 0)
+        if field is not 'vector':
             t = int(t)
             if plt is None:
                 raise RuntimeError("Visualisation not possible: matplotlib not found!")
             field = kwargs.get('field', True)
             plt.ion()
             plt.clf()
-            plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
+            if particles:
+                plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
             if field is True:
                 axes = plt.gca()
-                axes.set_xlim([self.grid.U.lon[lonE], self.grid.U.lon[lonW]])
+                axes.set_xlim([self.grid.U.lon[lonW], self.grid.U.lon[lonE]])
                 axes.set_ylim([self.grid.U.lat[latS], self.grid.U.lat[latN]])
                 namestr = ''
                 time_origin = self.grid.U.time_origin
@@ -290,7 +291,7 @@ class ParticleSet(object):
                 if not isinstance(field, Field):
                     field = getattr(self.grid, field)
                 field.show(with_particles=True, **dict(kwargs, t=t))
-                namestr = ' on ' + field.name
+                namestr = field.name
                 time_origin = field.time_origin
             if time_origin is 0:
                 timestr = ' after ' + str(delta(seconds=t)) + ' hours'
@@ -298,22 +299,21 @@ class ParticleSet(object):
                 timestr = ' on ' + str(time_origin + delta(seconds=t))
             plt.xlabel('Longitude')
             plt.ylabel('Latitude')
-            plt.title('Particles' + namestr + timestr)
         else:
             if Basemap is None:
                 raise RuntimeError("Visualisation not possible: Basemap module not found!")
             land = kwargs.get('land', False)
             vmax = kwargs.get('vmax', None)
+            time_origin = self.grid.U.time_origin
             idx = self.grid.U.time_index(t)
             U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, t))
             V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, t))
             lon = self.grid.U.lon
             lat = self.grid.U.lat
-            if domain is not None:
-                lon = lon[lonW:lonE]
-                lat = lat[latS:latN]
-                U = U[latS:latN, lonW:lonE]
-                V = V[latS:latN, lonW:lonE]
+            lon = lon[lonW:lonE]
+            lat = lat[latS:latN]
+            U = U[latS:latN, lonW:lonE]
+            V = V[latS:latN, lonW:lonE]
 
             # configuring plot
             lat_median = np.median(lat)
@@ -345,21 +345,35 @@ class ParticleSet(object):
             # plotting velocity vector field
             vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[0, vmax], scale=50, latlon=True)
             m.colorbar(vecs, "right", size="5%", pad="2%")
-            xs, ys = m(plon, plat)
             # plotting particle data
-            m.scatter(xs, ys, color='black')
+            if particles:
+                xs, ys = m(plon, plat)
+                m.scatter(xs, ys, color='black')
 
-            if(self.grid.U.time_origin == 0):
-                plt.title(delta(seconds=t))
+        if time_origin is 0:
+            timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+        else:
+            timestr = ' on ' + str(time_origin + delta(seconds=t))
+
+        if particles:
+            if field:
+                plt.title('Particles' + timestr)
+            elif field is 'vector':
+                plt.title('Particles and velocity field' + timestr)
             else:
-                plt.title(num2date(t, 'seconds since '+str(self.grid.U.time_origin)))
+                plt.title('Particles and '+namestr + timestr)
+        else:
+            if field is 'vector':
+                plt.title('Velocity field' + timestr)
+            else:
+                plt.title(namestr + timestr)
 
         if savefile is None:
             plt.show()
             plt.pause(0.0001)
         else:
             plt.savefig(savefile)
-            print 'Plot saved to '+savefile+'.png'
+            print('Plot saved to '+savefile+'.png')
             plt.close()
 
     def Kernel(self, pyfunc):
