@@ -13,4 +13,3 @@ pandas>=0.18.1
 six>=1.10.0
 enum34
 progressbar2
-basemap
