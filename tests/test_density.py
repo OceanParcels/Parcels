@@ -130,15 +130,21 @@ if __name__ == "__main__":
     # grid.add_field(CreateInitialPositionField(grid))
     ParticleClass = JITParticle if args.mode == 'jit' else ScipyParticle
 
-    climbers = grid.ParticleSet(size=args.particles, pclass=ParticleClass,
+    class DensityP(ParticleClass):
+        weight = Variable('weight', dtype=np.float32)
+
+    climbers = grid.ParticleSet(size=args.particles, pclass=DensityP,
                                 start_field=grid.Start)
+
+    for p in climbers.particles:
+        p.weight = 2
 
     dtime = np.array([grid.U.time[0], grid.U.time[-1]], dtype=np.float32)
     Densities = np.full((grid.U.lon.size, grid.U.lat.size, dtime.size), -1, dtype=np.float32)
     grid.add_field(Field('Density', Densities, grid.U.lon, grid.U.lat,
                    depth=grid.U.depth, time=dtime, transpose=True))
 
-    grid.Density.data[0, :, :] = climbers.density(grid.Density)
+    grid.Density.data[0, :, :] = climbers.density(grid.Density, particle_val="weight")
 
     print("-- Initial Particle Density --")
     print(grid.Density.data[0,:,:])
@@ -152,7 +158,7 @@ if __name__ == "__main__":
                      output_file=climbers.ParticleFile(name=filename+"_particle"),
                      interval=substeps)
 
-    grid.Density.data[-1, :, :] = climbers.density(grid.Density)
+    grid.Density.data[-1, :, :] = climbers.density(grid.Density, particle_val="weight")
 
     # Final densities should be zero everywhere except central vertex
     print("-- Final Particle Density --")
