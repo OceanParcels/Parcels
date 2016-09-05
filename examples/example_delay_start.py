@@ -11,7 +11,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_delay_start_example(mode, npart=10, show_movie=False):
 
-    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'})
+    grid = Grid.from_nemo('examples/Peninsula_data/peninsula', extra_vars={'P': 'P'})
 
     # Initialise particles as in the Peninsula example
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
