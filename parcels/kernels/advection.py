@@ -71,7 +71,6 @@ def AdvectionRK45(particle, grid, time, dt):
         particle.lat = lat_4th
         if kappa <= dt * tol[0] / 10:
             particle.dt *= 2
-        return KernelOp.SUCCESS
     else:
         particle.dt /= 2
         return KernelOp.FAILURE
