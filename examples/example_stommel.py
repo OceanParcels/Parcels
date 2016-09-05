@@ -87,11 +87,11 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
         print("Initial particle positions:\n%s" % pset)
 
     # Execute for 50 days, with 5min timesteps and hourly output
-    endtime = delta(days=50)
+    runtime = delta(days=50)
     dt = delta(minutes=5)
     interval = delta(hours=12)
-    print("Stommel: Advecting %d particles for %s" % (npart, endtime))
-    pset.execute(method + pset.Kernel(UpdateP), endtime=endtime, dt=dt, interval=interval,
+    print("Stommel: Advecting %d particles for %s" % (npart, runtime))
+    pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt, interval=interval,
                  output_file=pset.ParticleFile(name="StommelParticle"), show_movie=False)
 
     if verbose:
@@ -100,14 +100,15 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     return pset
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('meth', ['RK4', pytest.mark.xfail(reason="Issue #88")('RK45')])
-def test_stommel_grid(mode, meth):
-    pset = stommel_example(1, mode=mode, method=method[meth])
-    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_stommel_grid(mode):
+    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'])
+    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'])
+    assert np.allclose([p.lon for p in psetRK4], [p.lon for p in psetRK45], rtol=1e-3)
+    assert np.allclose([p.lat for p in psetRK4], [p.lat for p in psetRK45], rtol=1e-3)
+    err_adv = np.array([abs(p.p_start - p.p) for p in psetRK4])
     assert(err_adv <= 1.e-1).all()
-    # Test grid sampling accuracy by comparing kernel against grid sampling
-    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    err_smpl = np.array([abs(p.p - psetRK4.grid.P[0., p.lon, p.lat]) for p in psetRK4])
     assert(err_smpl <= 1.e-1).all()
 
 
