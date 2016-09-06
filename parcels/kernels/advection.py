@@ -69,7 +69,7 @@ def AdvectionRK45(particle, grid, time, dt):
     if kappa <= math.fabs(dt * tol[0]):
         particle.lon = lon_4th
         particle.lat = lat_4th
-        if kappa <= dt * tol[0] / 10:
+        if kappa <= math.fabs(dt * tol[0] / 10):
             particle.dt *= 2
     else:
         particle.dt /= 2
