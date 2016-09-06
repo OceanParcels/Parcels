@@ -75,8 +75,8 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
 
     class MyParticle(ParticleClass):
-        p = Variable('p', dtype=np.float32, default=0.)
-        p_start = Variable('p_start', dtype=np.float32, default=0.)
+        p = Variable('p', dtype=np.float32, initial=0.)
+        p_start = Variable('p_start', dtype=np.float32, initial=0.)
 
     pset = grid.ParticleSet(size=npart, pclass=MyParticle,
                             start=(100, 5000), finish=(200, 5000))
