@@ -12,10 +12,11 @@ class Variable(object):
     :param dtype: Data type (numpy.dtype) of the variable
     :param initial: Initial value of the variable
     """
-    def __init__(self, name, dtype=np.float32, initial=0):
+    def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name
         self.dtype = dtype
         self.initial = initial
+        self.to_write = to_write
 
     def __get__(self, instance, cls):
         if issubclass(cls, JITParticle):
