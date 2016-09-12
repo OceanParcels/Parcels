@@ -72,11 +72,12 @@ class ParticleFile(object):
         for v in particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'z']:
                 continue
-            setattr(self, v.name, self.dataset.createVariable(v.name, "f4", ("trajectory", "obs"), fill_value=0.))
-            getattr(self, v.name).long_name = ""
-            getattr(self, v.name).standard_name = v.name
-            getattr(self, v.name).units = "unknown"
-            self.user_vars += [v.name]
+            if v.to_write is True:
+                setattr(self, v.name, self.dataset.createVariable(v.name, "f4", ("trajectory", "obs"), fill_value=0.))
+                getattr(self, v.name).long_name = ""
+                getattr(self, v.name).standard_name = v.name
+                getattr(self, v.name).units = "unknown"
+                self.user_vars += [v.name]
 
         self.idx = 0
 
