@@ -215,7 +215,7 @@ class ParticleSet(object):
         if starttime is None:
             starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
         if runtime is not None:
-            endtime = starttime + runtime if dt > 0 else starttime - runtime
+            endtime = starttime + runtime
         else:
             if endtime is None:
                 endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
