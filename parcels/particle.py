@@ -12,10 +12,11 @@ class Variable(object):
     :param dtype: Data type (numpy.dtype) of the variable
     :param initial: Initial value of the variable
     """
-    def __init__(self, name, dtype=np.float32, initial=0):
+    def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name
         self.dtype = dtype
         self.initial = initial
+        self.to_write = to_write
 
     def __get__(self, instance, cls):
         if issubclass(cls, JITParticle):
@@ -110,8 +111,8 @@ class ScipyParticle(_Particle):
     lon = Variable('lon', dtype=np.float32)
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    dt = Variable('dt', dtype=np.float32)
-    active = Variable('active', dtype=np.int32, initial=1)
+    dt = Variable('dt', dtype=np.float32, to_write=False)
+    active = Variable('active', dtype=np.int32, initial=1, to_write=False)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         super(ScipyParticle, self).__init__()
@@ -137,8 +138,8 @@ class JITParticle(ScipyParticle):
     :param user_vars: Class variable that defines additional particle variables
     """
 
-    xi = Variable('xi', dtype=np.int32)
-    yi = Variable('yi', dtype=np.int32)
+    xi = Variable('xi', dtype=np.int32, to_write=False)
+    yi = Variable('yi', dtype=np.int32, to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
