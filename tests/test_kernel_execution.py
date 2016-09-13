@@ -56,3 +56,21 @@ def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
         pset.execute(DoNothing, starttime=start, runtime=t_step, dt=dt)
         start += t_step
     assert np.allclose(np.array([p.time for p in pset]), end)
+
+
+@pytest.mark.parametrize('mode', ['scipy'])
+def test_execution_fail(grid, mode, npart=10):
+    def TimedFail(particle, grid, time, dt):
+        if particle.time >= 10.:
+            return KernelOp.FAILURE
+        else:
+            return KernelOp.SUCCESS
+
+    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+                            lon=np.linspace(0, 1, npart, dtype=np.float32),
+                            lat=np.linspace(1, 0, npart, dtype=np.float32))
+    try:
+        pset.execute(TimedFail, starttime=0., endtime=20., dt=2.)
+    except RuntimeError:
+        pass
+    assert np.allclose(np.array([p.time for p in pset]), 10.)
