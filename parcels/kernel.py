@@ -122,22 +122,16 @@ class Kernel(object):
             self._function(c_int(len(pset)), particle_data,
                            c_double(endtime), c_float(dt), *fargs)
         else:
-            # We now special-case forward and backward modes to
-            # predict the final time-step size before an interval.
-            if dt > 0:
-                for p in pset.particles:
-                    while min(p.dt, endtime - p.time) > 0:
-                        dt = min(p.dt, endtime - p.time)
-                        res = self.pyfunc(p, pset.grid, p.time, dt)
-                        if res is None or res == KernelOp.Success:
-                            p.time += dt
-            else:
-                for p in pset.particles:
-                    while max(p.dt, endtime - p.time) < 0:
-                        dt = max(p.dt, endtime - p.time)
-                        res = self.pyfunc(p, pset.grid, p.time, dt)
-                        if res is None or res == KernelOp.Success:
-                            p.time += dt
+            sign = 1. if dt > 0. else -1.
+            for p in pset.particles:
+                # Compute min/max dt for first timestep
+                dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                while dt_pos > 0:
+                    res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                    if res is None or res == KernelOp.Success:
+                        p.time += sign * dt_pos
+                    # Compute min/max dt for next timestep
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
