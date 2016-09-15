@@ -73,4 +73,4 @@ def AdvectionRK45(particle, grid, time, dt):
             particle.dt *= 2
     else:
         particle.dt /= 2
-        return KernelOp.FAILURE
+        return KernelOp.Repeat

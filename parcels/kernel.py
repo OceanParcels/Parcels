@@ -20,8 +20,10 @@ re_indent = re.compile(r"^(\s+)")
 
 
 class KernelOp(Enum):
-    SUCCESS = 0
-    FAILURE = 1
+    Success = 0
+    Repeat = 1
+    Fail = 2
+    FailOutOfBounds = 3
 
 
 def fix_indentation(string):
@@ -127,14 +129,14 @@ class Kernel(object):
                     while min(p.dt, endtime - p.time) > 0:
                         dt = min(p.dt, endtime - p.time)
                         res = self.pyfunc(p, pset.grid, p.time, dt)
-                        if res is None or res == KernelOp.SUCCESS:
+                        if res is None or res == KernelOp.Success:
                             p.time += dt
             else:
                 for p in pset.particles:
                     while max(p.dt, endtime - p.time) < 0:
                         dt = max(p.dt, endtime - p.time)
                         res = self.pyfunc(p, pset.grid, p.time, dt)
-                        if res is None or res == KernelOp.SUCCESS:
+                        if res is None or res == KernelOp.Success:
                             p.time += dt
 
     def merge(self, kernel):

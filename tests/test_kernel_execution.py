@@ -7,7 +7,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def DoNothing(particle, grid, time, dt):
-    return KernelOp.SUCCESS
+    return KernelOp.Success
 
 
 @pytest.fixture
@@ -59,12 +59,12 @@ def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
-def test_execution_fail(grid, mode, npart=10):
+def test_execution_fail_timed(grid, mode, npart=10):
     def TimedFail(particle, grid, time, dt):
         if particle.time >= 10.:
-            return KernelOp.FAILURE
+            return KernelOp.Fail
         else:
-            return KernelOp.SUCCESS
+            return KernelOp.Success
 
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),

@@ -3,7 +3,7 @@
 
 typedef enum
   {
-    SUCCESS, FAILURE
+    SUCCESS, REPEAT, FAIL, FAIL_OUT_OF_BOUNDS
   } KernelOp;
 
 typedef struct

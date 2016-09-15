@@ -51,7 +51,8 @@ class RandomNode(IntrinsicNode):
 
 
 class KernelOpNode(IntrinsicNode):
-    symbol_map = {'SUCCESS': 'SUCCESS', 'FAILURE': 'FAILURE'}
+    symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT',
+                  'Fail': 'FAIL', 'FailOutOfBounds': 'FAIL_OUT_OF_BOUNDS'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
