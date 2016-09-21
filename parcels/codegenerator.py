@@ -459,7 +459,7 @@ class LoopGenerator(object):
                 c.Value("double", "endtime"), c.Value("float", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-        fargs_str = ", ".join(['particles[p].time', 'particles[p].dt'] + list(field_args.keys()))
+        fargs_str = ", ".join(['particles[p].time', '__dt'] + list(field_args.keys()))
         # Inner loop nest for forward runs
         dt_fwd = c.Statement("__dt = fmin(particles[p].dt, endtime - particles[p].time)")
         body_fwd = [c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
