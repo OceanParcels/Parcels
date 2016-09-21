@@ -19,6 +19,8 @@ class Variable(object):
         self.to_write = to_write
 
     def __get__(self, instance, cls):
+        if instance is None:
+            return self
         if issubclass(cls, JITParticle):
             return instance._cptr.__getitem__(self.name)
         else:
@@ -115,11 +117,12 @@ class ScipyParticle(_Particle):
     active = Variable('active', dtype=np.int32, initial=1, to_write=False)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
+        # Enforce default values through Variable descriptor
+        type(self).lon.initial = lon
+        type(self).lat.initial = lat
+        type(self).time.initial = time
+        type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()
-        self.lon = lon
-        self.lat = lat
-        self.time = time
-        self.dt = dt
 
     def __repr__(self):
         return "P(%f, %f, %f)" % (self.lon, self.lat, self.time)
