@@ -17,16 +17,13 @@ def two_dim_brownian_flat(particle, grid, time, dt):
 
 
 def brownian_grid(xdim=200, ydim=200):     # Define a flat grid of zeros, for simplicity.
-    depth = np.zeros(1, dtype=np.float32)
-    time = np.linspace(0., 100000. * 86400., 2, dtype=np.float64)
-
     lon = np.linspace(0, 600000, xdim, dtype=np.float32)
     lat = np.linspace(0, 600000, ydim, dtype=np.float32)
 
-    U = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
+    U = np.zeros((lon.size, lat.size), dtype=np.float32)
+    V = np.zeros((lon.size, lat.size), dtype=np.float32)
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, mesh='flat')
+    return Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
