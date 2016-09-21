@@ -1,16 +1,19 @@
-from parcels import Grid, ScipyParticle
+from parcels import Grid, ScipyParticle, JITParticle
 import numpy as np
 from datetime import timedelta as delta
 import math
-import random
+from parcels import random
+import pytest
+
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def two_dim_brownian_flat(particle, grid, time, dt):
 
     # random.seed() - should a seed be included for reproducibility/testing purposes?
     # Use equation for particle diffusion.
-    particle.lat += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.K_lat)
-    particle.lon += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.K_lon)
+    particle.lat += random.normal(0, 1)*math.sqrt(2*dt*100.)
+    particle.lon += random.normal(0, 1)*math.sqrt(2*dt*100.)
 
 
 def brownian_grid(xdim=200, ydim=200):     # Define a flat grid of zeros, for simplicity.
@@ -26,14 +29,14 @@ def brownian_grid(xdim=200, ydim=200):     # Define a flat grid of zeros, for si
     return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, mesh='flat')
 
 
-def test_brownian_example(npart=3000):
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_brownian_example(mode, npart=3000):
 
     grid = brownian_grid()
-    grid.K_lat = 100                  # Set diffusion constants.
-    grid.K_lon = 100
-    ParticleClass = ScipyParticle     # Restrict to scipy mode for development.
-    ptcls_start = 300000.             # Start all particles at same location in middle of grid.
-    pset = grid.ParticleSet(size=npart, pclass=ParticleClass,
+
+    # Set diffusion constants.
+    ptcls_start = 300000.  # Start all particles at same location in middle of grid.
+    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
                             start=(ptcls_start, ptcls_start),
                             finish=(ptcls_start, ptcls_start))
 
@@ -49,8 +52,8 @@ def test_brownian_example(npart=3000):
 
     lats = np.array([particle.lat for particle in pset.particles])
     lons = np.array([particle.lon for particle in pset.particles])
-    expected_std_lat = np.sqrt(2*grid.K_lat*endtime.total_seconds())
-    expected_std_lon = np.sqrt(2*grid.K_lon*endtime.total_seconds())
+    expected_std_lat = np.sqrt(2*100.*endtime.total_seconds())
+    expected_std_lon = np.sqrt(2*100.*endtime.total_seconds())
 
     assert np.allclose(np.std(lats), expected_std_lat, rtol=.1)
     assert np.allclose(np.std(lons), expected_std_lon, rtol=.1)
@@ -59,4 +62,4 @@ def test_brownian_example(npart=3000):
 
 
 if __name__ == "__main__":
-    test_brownian_example(npart=2000)
+    test_brownian_example('jit', npart=2000)

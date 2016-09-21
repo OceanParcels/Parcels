@@ -29,8 +29,13 @@ extern int pcls_randint(int low, int high){
   return parcels_randint(low, high);
 }
 """
+    fnct_normal = """
+extern float pcls_normal(float loc, float scale){
+  return parcels_normal(loc, scale);
+}
+"""
     ccode = stmt_import + fnct_seed
-    ccode += fnct_random + fnct_uniform + fnct_randint
+    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normal
     src_file = path.join(get_cache_dir(), "random.c")
     lib_file = path.join(get_cache_dir(), "random.so")
     log_file = path.join(get_cache_dir(), "random.log")
@@ -79,3 +84,11 @@ def randint(low, high):
     rnd.argtype = [c_int, c_int]
     rnd.restype = c_int
     return rnd(c_int(low), c_int(high))
+
+
+def normal(loc, scale):
+    """Returns a random float on normal distribution with mean `loc` and width `scale`"""
+    rnd = parcels_random.lib.pcls_normal
+    rnd.argtype = [c_float, c_float]
+    rnd.restype = c_float
+    return rnd(c_float(loc), c_float(scale))

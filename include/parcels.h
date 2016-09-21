@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef enum
   {
@@ -90,4 +91,21 @@ static inline float parcels_uniform(float low, float high)
 static inline int parcels_randint(int low, int high)
 {
   return (rand() % (high-low)) + low;
+}
+
+static inline float parcels_normal(float loc, float scale)
+{
+  float x1, x2, w, y1;
+  static float y2;
+
+  do {
+    x1 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
+    x2 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
+    w = x1 * x1 + x2 * x2;
+  } while ( w >= 1.0 );
+
+  w = sqrt( (-2.0 * log( w ) ) / w );
+  y1 = x1 * w;
+  y2 = x2 * w;
+  return( loc + y1 * scale );
 }
