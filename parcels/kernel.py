@@ -117,6 +117,7 @@ class Kernel(object):
 
     def execute(self, pset, endtime, dt):
         if self.ptype.uses_jit:
+            # Invoke JIT engine to perform the core update loop
             fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
             particle_data = pset._particle_data.ctypes.data_as(c_void_p)
             self._function(c_int(len(pset)), particle_data,
@@ -128,10 +129,26 @@ class Kernel(object):
                 dt_pos = min(abs(p.dt), abs(endtime - p.time))
                 while dt_pos > 0:
                     res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                    # Update particle state for explicit returns
+                    if res is not None:
+                        p.state = res
+
+                    # Handle particle time and time loop
                     if res is None or res == KernelOp.Success:
                         p.time += sign * dt_pos
                     # Compute min/max dt for next timestep
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
+
+        # Remove all failing particles from the current set
+        fail_indices = [i for i, p in enumerate(pset.particles)
+                        if p.state not in [KernelOp.Success, KernelOp.Repeat]]
+        fail_particles = pset.remove(fail_indices)
+
+        # Deal with failing particles by applying the appropriate
+        # action or recovery kernel
+        for p in fail_particles:
+            if p.state == KernelOp.Delete:
+                pass
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
