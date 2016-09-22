@@ -1,4 +1,4 @@
-from parcels.kernel import Kernel
+from parcels.kernel import Kernel, KernelOp as op
 from parcels.field import Field
 from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
@@ -254,7 +254,7 @@ class ParticleSet(object):
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
         # Remove deactivated particles
-        to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
+        to_remove = [i for i, p in enumerate(self.particles) if p.state == op.Delete]
         if len(to_remove) > 0:
             self.remove(to_remove)
 

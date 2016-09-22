@@ -8,7 +8,7 @@ import inspect
 from copy import deepcopy
 import re
 from hashlib import md5
-from enum import Enum
+from enum import IntEnum
 import math  # noqa
 import random  # noqa
 
@@ -19,11 +19,12 @@ __all__ = ['Kernel', 'KernelOp']
 re_indent = re.compile(r"^(\s+)")
 
 
-class KernelOp(Enum):
+class KernelOp(IntEnum):
     Success = 0
     Repeat = 1
-    Fail = 2
-    FailOutOfBounds = 3
+    Delete = 2
+    Fail = 3
+    FailOutOfBounds = 4
 
 
 def fix_indentation(string):

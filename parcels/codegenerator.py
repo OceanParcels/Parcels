@@ -99,7 +99,7 @@ class ParticleNode(IntrinsicNode):
         if attr in [v.name for v in self.obj.variables]:
             return ParticleAttributeNode(self, attr)
         elif attr in ['delete']:
-            return ParticleAttributeNode(self, 'active')
+            return ParticleAttributeNode(self, 'state')
         else:
             raise AttributeError("""Particle type %s does not define attribute "%s".
 Please add '%s' to %s.users_vars or define an appropriate sub-class."""
@@ -161,8 +161,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.func = self.visit(node.func)
         node.args = [self.visit(a) for a in node.args]
         if isinstance(node.func, ParticleAttributeNode) \
-           and node.func.attr == 'active':
-            node = IntrinsicNode(node, "%s = 0" % node.func.ccode)
+           and node.func.attr == 'state':
+            node = IntrinsicNode(node, "%s = DELETE" % node.func.ccode)
         return node
 
 
