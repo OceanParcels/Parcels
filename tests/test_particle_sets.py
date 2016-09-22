@@ -103,6 +103,19 @@ def test_pset_add_shorthand(grid, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_add_execute(grid, mode, npart=10):
+    def AddLat(particle, grid, time, dt):
+        particle.lat += 0.1
+
+    pset = grid.ParticleSet(0, lon=[], lat=[], pclass=ptype[mode])
+    for i in range(npart):
+        pset += ptype[mode](lon=0.1, lat=0.1, grid=grid)
+    for _ in range(3):
+        pset.execute(pset.Kernel(AddLat), starttime=0., endtime=1., dt=1.0)
+    assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_merge_inplace(grid, mode, npart=100):
     pset1 = grid.ParticleSet(npart, pclass=ptype[mode],
                              lon=np.linspace(0, 1, npart, dtype=np.float32),
@@ -183,7 +196,6 @@ def test_pset_multi_execute(grid, mode, npart=10, n=5):
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
-@pytest.mark.xfail(reason="Multi-execute breaks with particle removal")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute_delete(grid, mode, npart=10, n=5):
     def AddLat(particle, grid, time, dt):
