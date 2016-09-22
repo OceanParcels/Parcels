@@ -63,6 +63,7 @@ class Kernel(object):
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
                 user_ctx['random'] = globals()['random']
+                user_ctx['KernelOp'] = globals()['KernelOp']
             except:
                 print("Warning: Could not access user context when merging kernels")
                 user_ctx = globals()

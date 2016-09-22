@@ -48,3 +48,7 @@ if __name__ == "__main__":
     ExampleData(url="http://oceanparcels.org/examples-data/GlobCurrent_example_data",
                 filenames=globfiles,
                 path="examples/GlobCurrent_example_data").download()
+
+    ExampleData(url="http://oceanparcels.org/examples-data/DecayingMovingEddy_data",
+                filenames=["decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"],
+                path="examples/DecayingMovingEddy_data").download()
