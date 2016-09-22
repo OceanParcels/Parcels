@@ -196,7 +196,6 @@ def test_pset_multi_execute(grid, mode, npart=10, n=5):
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
-@pytest.mark.xfail(reason="Multi-execute breaks with particle removal")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute_delete(grid, mode, npart=10, n=5):
     def AddLat(particle, grid, time, dt):
