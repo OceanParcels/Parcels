@@ -10,6 +10,11 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_delay_start_example(mode, npart=10, show_movie=False):
+    """Example script that shows how to 'delay' the start of particle advection.
+    This is useful for example when particles need to be started at different times
+
+    In this example, we use pset.add statements to add one particle every hour
+    in the peninsula grid. Note that the title in the movie may not show correct time"""
 
     grid = Grid.from_nemo('examples/Peninsula_data/peninsula', extra_vars={'P': 'P'})
 
@@ -22,7 +27,7 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
 
     delaytime = delta(hours=1)  # delay time between particle releases
     for t in range(npart):
-        pset += ptype[mode](lon=x, lat=lat[t], grid=grid)
+        pset.add(ptype[mode](lon=x, lat=lat[t], grid=grid))
         pset.execute(AdvectionRK4, runtime=delaytime, dt=delta(minutes=5),
                      interval=delta(hours=1), show_movie=show_movie)
 
@@ -35,5 +40,4 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
 
 
 if __name__ == "__main__":
-    test_delay_start_example('scipy', show_movie=True)
     test_delay_start_example('jit', show_movie=True)

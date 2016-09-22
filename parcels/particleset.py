@@ -143,6 +143,9 @@ class ParticleSet(object):
             particles = self.particles[indices]
         if self.ptype.uses_jit:
             self._particle_data = np.delete(self._particle_data, indices)
+            # Update C-pointer on particles
+            for p, pdata in zip(self.particles, self._particle_data):
+                p._cptr = pdata
         self.particles = np.delete(self.particles, indices)
         return particles
 
