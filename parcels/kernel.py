@@ -88,9 +88,8 @@ class Kernel(object):
                                               self.funcvars)
             self.field_args = kernelgen.field_args
             loopgen = LoopGenerator(grid, ptype)
-            adaptive = 'AdvectionRK45' in self.funcname
             self.ccode = loopgen.generate(self.funcname, self.field_args,
-                                          kernel_ccode, adaptive=adaptive)
+                                          kernel_ccode)
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename

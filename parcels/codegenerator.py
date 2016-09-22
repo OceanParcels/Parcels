@@ -439,7 +439,7 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, kernel_ast, adaptive=False):
+    def generate(self, funcname, field_args, kernel_ast):
         ccode = []
 
         # Add include for Parcels and math header
