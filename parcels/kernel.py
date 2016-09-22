@@ -136,6 +136,10 @@ class Kernel(object):
                     # Handle particle time and time loop
                     if res is None or res == KernelOp.Success:
                         p.time += sign * dt_pos
+                    elif res == KernelOp.Repeat:
+                        pass  # Try again without time update
+                    else:
+                        break  # Failure - stop time loop
                     # Compute min/max dt for next timestep
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
