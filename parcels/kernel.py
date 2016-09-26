@@ -1,5 +1,6 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
+from parcels.kernels.error import ErrorCode, recovery_map
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -8,23 +9,14 @@ import inspect
 from copy import deepcopy
 import re
 from hashlib import md5
-from enum import IntEnum
 import math  # noqa
 import random  # noqa
 
 
-__all__ = ['Kernel', 'KernelOp']
+__all__ = ['Kernel']
 
 
 re_indent = re.compile(r"^(\s+)")
-
-
-class KernelOp(IntEnum):
-    Success = 0
-    Repeat = 1
-    Delete = 2
-    Fail = 3
-    FailOutOfBounds = 4
 
 
 def fix_indentation(string):
@@ -66,7 +58,7 @@ class Kernel(object):
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
                 user_ctx['random'] = globals()['random']
-                user_ctx['KernelOp'] = globals()['KernelOp']
+                user_ctx['ErrorCode'] = globals()['ErrorCode']
             except:
                 print("Warning: Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -134,9 +126,9 @@ class Kernel(object):
                         p.state = res
 
                     # Handle particle time and time loop
-                    if res is None or res == KernelOp.Success:
+                    if res is None or res == ErrorCode.Success:
                         p.time += sign * dt_pos
-                    elif res == KernelOp.Repeat:
+                    elif res == ErrorCode.Repeat:
                         pass  # Try again without time update
                     else:
                         break  # Failure - stop time loop
@@ -145,14 +137,17 @@ class Kernel(object):
 
         # Remove all failing particles from the current set
         fail_indices = [i for i, p in enumerate(pset.particles)
-                        if p.state not in [KernelOp.Success, KernelOp.Repeat]]
+                        if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
         fail_particles = pset.remove(fail_indices)
 
         # Deal with failing particles by applying the appropriate
         # action or recovery kernel
         for p in fail_particles:
-            if p.state == KernelOp.Delete:
+            if p.state == ErrorCode.Delete:
                 pass
+            else:
+                recovery_kernel = recovery_map[p.state]
+                recovery_kernel(p)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

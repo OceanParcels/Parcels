@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, KernelOp
+from parcels import Grid, ScipyParticle, JITParticle, ErrorCode
 import numpy as np
 import pytest
 
@@ -7,7 +7,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def DoNothing(particle, grid, time, dt):
-    return KernelOp.Success
+    return ErrorCode.Success
 
 
 @pytest.fixture
@@ -62,9 +62,9 @@ def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
 def test_execution_fail_timed(grid, mode, npart=10):
     def TimedFail(particle, grid, time, dt):
         if particle.time >= 10.:
-            return KernelOp.Fail
+            return ErrorCode.Fail
         else:
-            return KernelOp.Success
+            return ErrorCode.Success
 
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),

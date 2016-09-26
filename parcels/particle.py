@@ -1,4 +1,4 @@
-from parcels.kernel import KernelOp as op
+from parcels.kernels.error import ErrorCode
 from operator import attrgetter
 import numpy as np
 
@@ -115,7 +115,7 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     dt = Variable('dt', dtype=np.float32, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=op.Success, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         # Enforce default values through Variable descriptor
@@ -129,7 +129,7 @@ class ScipyParticle(_Particle):
         return "P(%f, %f, %f)" % (self.lon, self.lat, self.time)
 
     def delete(self):
-        self.state = op.Delete
+        self.state = ErrorCode.Delete
 
 
 class JITParticle(ScipyParticle):

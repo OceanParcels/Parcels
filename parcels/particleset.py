@@ -1,4 +1,4 @@
-from parcels.kernel import Kernel, KernelOp as op
+from parcels.kernel import Kernel
 from parcels.field import Field
 from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler

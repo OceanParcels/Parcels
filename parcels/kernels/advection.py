@@ -1,5 +1,5 @@
 """Collection of pre-built advection kernels"""
-from parcels.kernel import KernelOp
+from parcels.kernels.error import ErrorCode
 import math
 
 
@@ -73,4 +73,4 @@ def AdvectionRK45(particle, grid, time, dt):
             particle.dt *= 2
     else:
         particle.dt /= 2
-        return KernelOp.Repeat
+        return ErrorCode.Repeat

@@ -50,8 +50,8 @@ class RandomNode(IntrinsicNode):
                                  % attr)
 
 
-class KernelOpNode(IntrinsicNode):
-    symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT',
+class ErrorCodeNode(IntrinsicNode):
+    symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
                   'Fail': 'FAIL', 'FailOutOfBounds': 'FAIL_OUT_OF_BOUNDS'}
 
     def __getattr__(self, attr):
@@ -120,8 +120,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             return GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
             return ParticleNode(self.ptype, ccode='particle')
-        if node.id == 'KernelOp':
-            return KernelOpNode(math, ccode='')
+        if node.id in ['ErrorCode', 'Error']:
+            return ErrorCodeNode(math, ccode='')
         if node.id == 'math':
             return MathNode(math, ccode='')
         if node.id == 'random':
@@ -227,7 +227,7 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(stmt)
 
         # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("KernelOp", node.name), spec='inline'))
+        decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field, _ in self.field_args.items():
@@ -474,7 +474,7 @@ class LoopGenerator(object):
         part_bwd = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_bwd, time_bwd]))
 
         time_if = c.If("dt > 0.0", c.Block([part_fwd]), c.Block([part_bwd]))
-        fbody = c.Block([c.Value("int", "p"), c.Value("KernelOp", "res"),
+        fbody = c.Block([c.Value("int", "p"), c.Value("ErrorCode", "res"),
                          c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
                          time_if])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
