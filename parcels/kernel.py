@@ -127,13 +127,16 @@ class Kernel(object):
 
                     # Handle particle time and time loop
                     if res is None or res == ErrorCode.Success:
+                        # Update time and repeat
                         p.time += sign * dt_pos
+                        dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                        continue
                     elif res == ErrorCode.Repeat:
-                        pass  # Try again without time update
+                        # Try again without time update
+                        dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                        continue
                     else:
                         break  # Failure - stop time loop
-                    # Compute min/max dt for next timestep
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
         # Remove all failing particles from the current set
         fail_indices = [i for i, p in enumerate(pset.particles)
