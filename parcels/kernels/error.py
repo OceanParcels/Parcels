@@ -9,11 +9,11 @@ class ErrorCode(IntEnum):
     Success = 0
     Repeat = 1
     Delete = 2
-    Fail = 3
-    FailOutOfBounds = 4
+    Error = 3
+    ErrorOutOfBounds = 4
 
 
-def recovery_fail(particle):
+def recovery_error(particle):
     """Default failure kernel that throws exception"""
     raise RuntimeError(
         "\nKernel error during execution: %s\n"
@@ -24,4 +24,4 @@ def recovery_fail(particle):
 
 # Default mapping of failure types (KernelOp)
 # to recovery kernels.
-recovery_map = {ErrorCode.Fail: recovery_fail}
+recovery_map = {ErrorCode.Error: recovery_error}

@@ -62,7 +62,7 @@ def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
 def test_execution_fail_timed(grid, mode, npart=10):
     def TimedFail(particle, grid, time, dt):
         if particle.time >= 10.:
-            return ErrorCode.Fail
+            return ErrorCode.Error
         else:
             return ErrorCode.Success
 

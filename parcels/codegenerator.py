@@ -52,7 +52,7 @@ class RandomNode(IntrinsicNode):
 
 class ErrorCodeNode(IntrinsicNode):
     symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
-                  'Fail': 'FAIL', 'FailOutOfBounds': 'FAIL_OUT_OF_BOUNDS'}
+                  'Error': 'ERROR', 'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
