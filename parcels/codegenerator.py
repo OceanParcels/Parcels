@@ -464,6 +464,7 @@ class LoopGenerator(object):
         sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
         body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
+        body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign * __dt"),
                                                  dt_pos, c.Statement("continue")]))]
         body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
