@@ -1,4 +1,7 @@
-from parcels import Grid, ScipyParticle, JITParticle, ErrorCode
+from parcels import (
+    Grid, ScipyParticle, JITParticle, ErrorCode, KernelError,
+    OutOfBoundsError
+)
 import numpy as np
 import pytest
 
@@ -69,8 +72,51 @@ def test_execution_fail_timed(grid, mode, npart=10):
     pset = grid.ParticleSet(npart, pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
+    error_thrown = False
     try:
         pset.execute(TimedFail, starttime=0., endtime=20., dt=2.)
-    except RuntimeError:
-        pass
+    except KernelError:
+        error_thrown = True
+    assert error_thrown
+    assert len(pset) == npart
     assert np.allclose(np.array([p.time for p in pset]), 10.)
+
+
+@pytest.mark.parametrize('mode', ['scipy'])
+def test_execution_fail_python_exception(grid, mode, npart=10):
+    def PythonFail(particle, grid, time, dt):
+        if particle.time >= 10.:
+            raise RuntimeError("Enough is enough!")
+        else:
+            return ErrorCode.Success
+
+    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+                            lon=np.linspace(0, 1, npart, dtype=np.float32),
+                            lat=np.linspace(1, 0, npart, dtype=np.float32))
+    error_thrown = False
+    try:
+        pset.execute(PythonFail, starttime=0., endtime=20., dt=2.)
+    except KernelError:
+        error_thrown = True
+    assert error_thrown
+    assert len(pset) == npart
+    assert np.allclose(np.array([p.time for p in pset]), 10.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_fail_out_of_bounds(grid, mode, npart=10):
+    def MoveRight(particle, grid, time, dt):
+        grid.U[time, particle.lon + 0.1, particle.lat]
+        particle.lon += 0.1
+
+    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+                            lon=np.linspace(0, 1, npart, dtype=np.float32),
+                            lat=np.linspace(1, 0, npart, dtype=np.float32))
+    error_thrown = False
+    try:
+        pset.execute(MoveRight, starttime=0., endtime=10., dt=1.)
+    except OutOfBoundsError:
+        error_thrown = True
+    assert error_thrown
+    assert len(pset) == npart
+    assert (np.array([p.lon - 1. for p in pset]) > -1.e12).all()
