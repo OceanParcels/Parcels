@@ -1,6 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.kernels.error import ErrorCode, recovery_map
+from parcels.field import FieldSamplingError
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -120,7 +121,14 @@ class Kernel(object):
                 # Compute min/max dt for first timestep
                 dt_pos = min(abs(p.dt), abs(endtime - p.time))
                 while dt_pos > 0:
-                    res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                    try:
+                        res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                    except FieldSamplingError as fse:
+                        res = ErrorCode.ErrorOutOfBounds
+                        p.exception = fse
+                    except Exception as e:
+                        res = ErrorCode.Error
+                        p.exception = e
                     # Update particle state for explicit returns
                     if res is not None:
                         p.state = res

@@ -20,6 +20,19 @@ except:
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 
 
+class FieldSamplingError(RuntimeError):
+    """Utility error class to propagate erroneous field sampling"""
+
+    def __init__(self, x, y, field=None):
+        self.field = field
+        self.x = x
+        self.y = y
+        message = "%s sampled at (%f, %f)" % (
+            field.name if field else "Grid", self.x, self.y
+        )
+        super(FieldSamplingError, self).__init__(message)
+
+
 def CentralDifferences(field_data, lat, lon):
     r = 6.371e6  # radius of the earth
     deg2rd = np.pi / 180
@@ -251,12 +264,8 @@ class Field(object):
         """Interpolate horizontal field values using a SciPy interpolator"""
         val = self.interpolator2D(tidx)((y, x))
         if np.isnan(val):
-            # Temporary hotfix for out-of-bounds sampling
-            # until we have a graceful kernel recovery system.
-            # This is detailed in OceanPARCELS/parcels issues #47 #61 #76 and PR #85
-            # -> https://github.com/OceanPARCELS/parcels/pull/85
-            print("WARNING: Out-of-bounds field sampling at (%s, %s)" % (x, y))
-            val = 0
+            # Detect Out-of-bounds sampling and raise exception
+            raise FieldSamplingError(x, y, field=self)
         else:
             return val
 

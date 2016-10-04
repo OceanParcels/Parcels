@@ -97,6 +97,9 @@ class _Particle(object):
             # Enforce type of initial value
             setattr(self, v.name, v.dtype(initial))
 
+        # Placeholder for explicit error handling
+        self.exception = None
+
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
