@@ -108,57 +108,72 @@ class Kernel(object):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
 
+    def execute_jit(self, pset, endtime, dt):
+        """Invokes JIT engine to perform the core update loop"""
+        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+        particle_data = pset._particle_data.ctypes.data_as(c_void_p)
+        self._function(c_int(len(pset)), particle_data,
+                       c_double(endtime), c_float(dt), *fargs)
+
+    def execute_python(self, pset, endtime, dt):
+        """Performs the core update loop via Python"""
+        sign = 1. if dt > 0. else -1.
+        for p in pset.particles:
+            # Compute min/max dt for first timestep
+            dt_pos = min(abs(p.dt), abs(endtime - p.time))
+            while dt_pos > 0:
+                try:
+                    res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                except FieldSamplingError as fse:
+                    res = ErrorCode.ErrorOutOfBounds
+                    p.exception = fse
+                except Exception as e:
+                    res = ErrorCode.Error
+                    p.exception = e
+
+                # Update particle state for explicit returns
+                if res is not None:
+                    p.state = res
+
+                # Handle particle time and time loop
+                if res is None or res == ErrorCode.Success:
+                    # Update time and repeat
+                    p.time += sign * dt_pos
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    continue
+                elif res == ErrorCode.Repeat:
+                    # Try again without time update
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    continue
+                else:
+                    break  # Failure - stop time loop
+
     def execute(self, pset, endtime, dt):
+        """Execute this Kernel over a ParticleSet for several timesteps"""
         if self.ptype.uses_jit:
-            # Invoke JIT engine to perform the core update loop
-            fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-            particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-            self._function(c_int(len(pset)), particle_data,
-                           c_double(endtime), c_float(dt), *fargs)
+            self.execute_jit(pset, endtime, dt)
         else:
-            sign = 1. if dt > 0. else -1.
-            for p in pset.particles:
-                # Compute min/max dt for first timestep
-                dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                while dt_pos > 0:
-                    try:
-                        res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
-                    except FieldSamplingError as fse:
-                        res = ErrorCode.ErrorOutOfBounds
-                        p.exception = fse
-                    except Exception as e:
-                        res = ErrorCode.Error
-                        p.exception = e
-                    # Update particle state for explicit returns
-                    if res is not None:
-                        p.state = res
+            self.execute_python(pset, endtime, dt)
 
-                    # Handle particle time and time loop
-                    if res is None or res == ErrorCode.Success:
-                        # Update time and repeat
-                        p.time += sign * dt_pos
-                        dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                        continue
-                    elif res == ErrorCode.Repeat:
-                        # Try again without time update
-                        dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                        continue
-                    else:
-                        break  # Failure - stop time loop
+        # Remove all particles that signalled deletion
+        delete_indices = [i for i, p in enumerate(pset.particles)
+                          if p.state in [ErrorCode.Delete]]
+        pset.remove(delete_indices)
 
-        # Remove all failing particles from the current set
-        fail_indices = [i for i, p in enumerate(pset.particles)
-                        if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
-        fail_particles = pset.remove(fail_indices)
-
-        # Deal with failing particles by applying the appropriate
-        # action or recovery kernel
-        for p in fail_particles:
-            if p.state == ErrorCode.Delete:
-                pass
-            else:
+        # Idenitify particles that threw errors
+        error_particles = [p for p in pset.particles
+                           if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
+        while len(error_particles) > 0:
+            # Apply recovery kernel
+            for p in error_particles:
                 recovery_kernel = recovery_map[p.state]
                 recovery_kernel(p)
+
+            # Execute core loop again to continue interrupted particles
+            if self.ptype.uses_jit:
+                self.execute_jit(pset, endtime, dt)
+            else:
+                self.execute_python(pset, endtime, dt)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
