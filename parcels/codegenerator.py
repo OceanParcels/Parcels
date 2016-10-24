@@ -78,7 +78,7 @@ class ParticleAttributeNode(IntrinsicNode):
     @property
     def pyast_index_update(self):
         pyast = ast.Assign()
-        pyast.targets = [IntrinsicNode(None, ccode=self.ccode_index_var)]
+        pyast.targets = [IntrinsicNode(None, ccode='err')]
         pyast.value = IntrinsicNode(None, ccode=self.ccode_index_update)
         return pyast
 
@@ -86,10 +86,10 @@ class ParticleAttributeNode(IntrinsicNode):
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
         if self.attr == 'lon':
-            return "search_linear_float(%s, %s, U->xdim, U->lon)" \
+            return "search_linear_float(%s, U->xdim, U->lon, &%s)" \
                 % (self.ccode, self.ccode_index_var)
         if self.attr == 'lat':
-            return "search_linear_float(%s, %s, U->ydim, U->lat)" \
+            return "search_linear_float(%s, U->ydim, U->lat, &%s)" \
                 % (self.ccode, self.ccode_index_var)
         return ""
 
@@ -216,6 +216,7 @@ class KernelGenerator(ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
+        self.ccode.body.insert(0, c.Value('ErrorCode', 'err'))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
 
