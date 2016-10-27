@@ -5,6 +5,7 @@ from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 import numpy as np
+import bisect
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
@@ -12,7 +13,10 @@ try:
     import matplotlib.pyplot as plt
 except:
     plt = None
-
+try:
+    from mpl_toolkits.basemap import Basemap
+except:
+    Basemap = None
 
 __all__ = ['ParticleSet']
 
@@ -46,6 +50,17 @@ def positions_from_density_field(pnum, field, mode='monte_carlo'):
         raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
     return lon, lat
+
+
+def nearest_index(array, value):
+    """returns index of the nearest value in array using O(log n) bisection method"""
+    y = bisect.bisect(array, value)
+    if y == len(array):
+        return y-1
+    elif(abs(array[y-1] - value) < abs(array[y] - value)):
+        return y-1
+    else:
+        return y
 
 
 class ParticleSet(object):
@@ -99,7 +114,7 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i))
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.time[0])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
@@ -132,6 +147,9 @@ class ParticleSet(object):
         if self.ptype.uses_jit:
             particles_data = [p._cptr for p in particles]
             self._particle_data = np.append(self._particle_data, particles_data)
+            # Update C-pointer on particles
+            for p, pdata in zip(self.particles, self._particle_data):
+                p._cptr = pdata
 
     def remove(self, indices):
         if isinstance(indices, Iterable):
@@ -140,6 +158,9 @@ class ParticleSet(object):
             particles = self.particles[indices]
         if self.ptype.uses_jit:
             self._particle_data = np.delete(self._particle_data, indices)
+            # Update C-pointer on particles
+            for p, pdata in zip(self.particles, self._particle_data):
+                p._cptr = pdata
         self.particles = np.delete(self.particles, indices)
         return particles
 
@@ -238,38 +259,128 @@ class ParticleSet(object):
             self.remove(to_remove)
 
     def show(self, **kwargs):
-        if plt is None:
-            raise RuntimeError("Visualisation not possible: matplotlib not found!")
-
+        savefile = kwargs.get('savefile', None)
         field = kwargs.get('field', True)
-        lon = [p.lon for p in self]
-        lat = [p.lat for p in self]
+        domain = kwargs.get('domain', None)
+        particles = kwargs.get('particles', True)
+        plon = np.array([p.lon for p in self])
+        plat = np.array([p.lat for p in self])
         time = [p.time for p in self]
-        t = int(kwargs.get('t', time[0]))
-        plt.ion()
-        plt.clf()
-        plt.plot(np.transpose(lon), np.transpose(lat), 'ko')
-        if field is True:
-            axes = plt.gca()
-            axes.set_xlim([self.grid.U.lon[0], self.grid.U.lon[-1]])
-            axes.set_ylim([self.grid.U.lat[0], self.grid.U.lat[-1]])
-            namestr = ''
-            time_origin = self.grid.U.time_origin
+        t = kwargs.get('t', time[0])
+        if isinstance(t, datetime):
+            t = (t - self.grid.U.time_origin).total_seconds()
+        if isinstance(t, delta):
+            t = t.total_seconds()
+        if domain is not None:
+            latN = nearest_index(self.grid.U.lat, domain[0])
+            latS = nearest_index(self.grid.U.lat, domain[1])
+            lonE = nearest_index(self.grid.U.lon, domain[2])
+            lonW = nearest_index(self.grid.U.lon, domain[3])
         else:
-            if not isinstance(field, Field):
-                field = getattr(self.grid, field)
-            field.show(with_particles=True, **dict(kwargs, t=t))
-            namestr = ' on ' + field.name
-            time_origin = field.time_origin
+            latN, latS, lonE, lonW = (-1, 0, -1, 0)
+        if field is not 'vector':
+            t = int(t)
+            if plt is None:
+                raise RuntimeError("Visualisation not possible: matplotlib not found!")
+            field = kwargs.get('field', True)
+            plt.ion()
+            plt.clf()
+            if particles:
+                plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
+            if field is True:
+                axes = plt.gca()
+                axes.set_xlim([self.grid.U.lon[lonW], self.grid.U.lon[lonE]])
+                axes.set_ylim([self.grid.U.lat[latS], self.grid.U.lat[latN]])
+                namestr = ''
+                time_origin = self.grid.U.time_origin
+            else:
+                if not isinstance(field, Field):
+                    field = getattr(self.grid, field)
+                field.show(with_particles=True, **dict(kwargs, t=t))
+                namestr = field.name
+                time_origin = field.time_origin
+            if time_origin is 0:
+                timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+            else:
+                timestr = ' on ' + str(time_origin + delta(seconds=t))
+            plt.xlabel('Longitude')
+            plt.ylabel('Latitude')
+        else:
+            if Basemap is None:
+                raise RuntimeError("Visualisation not possible: Basemap module not found!")
+            land = kwargs.get('land', False)
+            vmax = kwargs.get('vmax', None)
+            time_origin = self.grid.U.time_origin
+            idx = self.grid.U.time_index(t)
+            U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, t))
+            V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, t))
+            lon = self.grid.U.lon
+            lat = self.grid.U.lat
+            lon = lon[lonW:lonE]
+            lat = lat[latS:latN]
+            U = U[latS:latN, lonW:lonE]
+            V = V[latS:latN, lonW:lonE]
+
+            # configuring plot
+            lat_median = np.median(lat)
+            lon_median = np.median(lon)
+            plt.figure()
+            m = Basemap(projection='merc', lat_0=lat_median, lon_0=lon_median,
+                        resolution='h', area_thresh=100,
+                        llcrnrlon=lon[0], llcrnrlat=lat[0],
+                        urcrnrlon=lon[-1], urcrnrlat=lat[-1])
+            if land:
+                m.drawcoastlines()
+                m.fillcontinents(color='burlywood')
+            parallels = np.arange(lat[0], lat[-1], abs(lat[0]-lat[-1])/5)
+            parallels = np.around(parallels, 2)
+            m.drawparallels(parallels, labels=[1, 0, 0, 0])
+            meridians = np.arange(lon[0], lon[-1], abs(lon[0]-lon[-1])/5)
+            meridians = np.around(meridians, 2)
+            m.drawmeridians(meridians, labels=[0, 0, 0, 1])
+
+            # formating velocity data for quiver plotting
+            U = np.array([U[y, x] for x in range(len(lon)) for y in range(len(lat))])
+            V = np.array([V[y, x] for x in range(len(lon)) for y in range(len(lat))])
+            speed = np.sqrt(U**2 + V**2)
+            normU = U/speed
+            normV = V/speed
+            x = np.repeat(lon, len(lat))
+            y = np.tile(lat, len(lon))
+
+            # plotting velocity vector field
+            vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[0, vmax], scale=50, latlon=True)
+            m.colorbar(vecs, "right", size="5%", pad="2%")
+            # plotting particle data
+            if particles:
+                xs, ys = m(plon, plat)
+                m.scatter(xs, ys, color='black')
+
         if time_origin is 0:
             timestr = ' after ' + str(delta(seconds=t)) + ' hours'
         else:
             timestr = ' on ' + str(time_origin + delta(seconds=t))
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
-        plt.title('Particles' + namestr + timestr)
-        plt.show()
-        plt.pause(0.0001)
+
+        if particles:
+            if field:
+                plt.title('Particles' + timestr)
+            elif field is 'vector':
+                plt.title('Particles and velocity field' + timestr)
+            else:
+                plt.title('Particles and '+namestr + timestr)
+        else:
+            if field is 'vector':
+                plt.title('Velocity field' + timestr)
+            else:
+                plt.title(namestr + timestr)
+
+        if savefile is None:
+            plt.show()
+            plt.pause(0.0001)
+        else:
+            plt.savefig(savefile)
+            print('Plot saved to '+savefile+'.png')
+            plt.close()
 
     def density(self, field, particle_val=None):
         Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)

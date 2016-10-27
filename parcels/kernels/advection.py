@@ -66,12 +66,11 @@ def AdvectionRK45(particle, grid, time, dt):
     lat_5th = particle.lat + (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * dt
 
     kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
-    if kappa <= dt * tol[0]:
+    if kappa <= math.fabs(dt * tol[0]):
         particle.lon = lon_4th
         particle.lat = lat_4th
-        if kappa <= dt * tol[0] / 10:
+        if kappa <= math.fabs(dt * tol[0] / 10):
             particle.dt *= 2
-        return KernelOp.SUCCESS
     else:
         particle.dt /= 2
         return KernelOp.FAILURE
