@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import numpy as np
 import math
-from parcels import *
+from parcels import Field, Grid, JITParticle, ScipyParticle, Variable
 
 
 def GradientClimber(particle, grid, time, dt):
