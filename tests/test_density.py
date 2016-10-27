@@ -147,7 +147,7 @@ if __name__ == "__main__":
     grid.Density.data[0, :, :] = climbers.density(grid.Density, particle_val="weight")
 
     print("-- Initial Particle Density --")
-    print(grid.Density.data[0,:,:])
+    print(grid.Density.data[0, :, :])
 
     timestep = 1000
     substeps = 10000
@@ -166,5 +166,5 @@ if __name__ == "__main__":
 
     mask = np.ones(np.shape(grid.Density.data), dtype=bool)
     mask[0, :, :] = 0
-    mask[-1,2, 2] = 0
+    mask[-1, 2, 2] = 0
     assert np.all(grid.Density.data[mask] == 0), "Particle density is non-zero away from central vertex"
