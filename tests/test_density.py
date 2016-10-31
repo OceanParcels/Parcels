@@ -95,7 +95,7 @@ def CreateInitialPositionField(grid):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_density_calculation(mode, pnum):
+def test_density_calculation(mode, pnum=100):
     time = 100000
 
     # Generate grid files according to given dimensions
