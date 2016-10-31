@@ -382,43 +382,20 @@ class ParticleSet(object):
             print('Plot saved to '+savefile+'.png')
             plt.close()
 
-    # def density(self, field, particle_val=None):
-    #     Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
-    #     # For each particle, find closest vertex in x and y and add 1 or val to the count
-    #     if particle_val is not None:
-    #         try:
-    #             getattr(self.particles[0], particle_val)
-    #         except NameError:
-    #             print('%s is not a member of particle type:%s' % (particle_val, self.particles[0].ptype))
-    #         for p in self.particles:
-    #             Density[np.argmin(np.abs(p.lon - field.lon)), np.argmin(np.abs(p.lat - field.lat))] \
-    #                 += getattr(p, particle_val)
-    #     else:
-    #         for p in self.particles:
-    #             Density[np.argmin(np.abs(p.lon - field.lon)), np.argmin(np.abs(p.lat - field.lat))] += 1
-    #
-    #     area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
-    #     dx = (field.lon[1] - field.lon[0]) * 1852 * 60 * np.cos(field.lat*np.pi/180)
-    #     dy = (field.lat[1] - field.lat[0]) * 1852 * 60
-    #     for y in range(len(field.lat)):
-    #         area[y, :] = dy * dx[y]
-    #     # Scale by cell area
-    #     Density /= np.transpose(area)
-    #     return Density
-
-    def density(self, field, particle_val=None, relative=False, area_scale=True):
+    def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+        lons = [p.lon for p in self.particles]
+        lats = [p.lat for p in self.particles]
+        if field is not None:
+            # Kick out particles that are not within the limits of our density field
+            half_lon = (field.lon[1] - field.lon[0])/2
+            half_lat = (field.lat[1] - field.lat[0])/2
+            dparticles = (lons > (np.min(field.lon)-half_lon)) * (lons < (np.max(field.lon)+half_lon)) * \
+                         (lats > (np.min(field.lat)-half_lat)) * (lats < (np.max(field.lat)+half_lat))
+            dparticles = np.where(dparticles)[0]
+        else:
+            field = self.grid.U
+            dparticles = range(len(self.particles))
         Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
-        half_lon = (field.lon[1] - field.lon[0])/2
-        half_lat = (field.lat[1] - field.lat[0])/2
-        lons = []
-        lats = []
-        for p in self.particles:
-            lons.append(p.lon)
-            lats.append(p.lat)
-        # Kick out particles that are not within the limits of our density field
-        dparticles = (lons > (np.min(field.lon)-half_lon)) * (lons < (np.max(field.lon)+half_lon)) * \
-                     (lats > (np.min(field.lat)-half_lat)) * (lats < (np.max(field.lat)+half_lat))
-        dparticles = np.where(dparticles)[0]
 
         # For each particle, find closest vertex in x and y and add 1 or val to the count
         if particle_val is not None:
@@ -442,7 +419,6 @@ class ParticleSet(object):
             # Scale by cell area
             Density /= np.transpose(area)
 
-        # print(Density[np.where(Density > 0)])
         return Density
 
     def Kernel(self, pyfunc):

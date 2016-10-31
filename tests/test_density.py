@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import numpy as np
 import math
+import pytest
 from parcels import Field, Grid, JITParticle, ScipyParticle, Variable
 
 
@@ -17,8 +18,8 @@ def GradientClimber(particle, grid, time, dt):
     u4, v4 = (grid.dK_dx[time + dt, lon3, lat3], grid.dK_dy[time + dt, lon3, lat3])
     Vx = (u1 + 2*u2 + 2*u3 + u4) / 6.
     Vy = (v1 + 2*v2 + 2*v3 + v4) / 6.
-    particle.lon += Vx * f_lon * 50000
-    particle.lat += Vy * f_lat * 50000
+    particle.lon += Vx * f_lon
+    particle.lat += Vy * f_lat
 
 
 def CreateForcingFields(xdim=200, ydim=350, time=25):
@@ -76,6 +77,8 @@ def CreateGradientField(grid, mu=None):
             K[i, j, :] = MVNorm(x, y, mu, sig)
 
     # Boost to provide enough force for our gradient climbers
+    boost = 50000
+    K *= boost
     K_Field = Field('K', K, lon, lat, depth, time, transpose=True)
 
     return K_Field
@@ -87,30 +90,12 @@ def CreateInitialPositionField(grid):
     time = grid.U.time
     lon = grid.U.lon
     lat = grid.U.lat
-    Num = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-
-    for i, x in enumerate(lon):
-        for j, y in enumerate(lat):
-            Num[i, j, :] = 1
-
+    Num = np.ones((lon.size, lat.size, time.size), dtype=np.float32)
     return Field('Start', Num, lon, lat, depth, time, transpose=True)
 
 
-if __name__ == "__main__":
-    p = ArgumentParser(description="""
-    Example of underlying habitat field""")
-    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
-                   help='Execution mode for performing RK4 computation')
-    p.add_argument('-p', '--particles', type=int, default=100,
-                   help='Number of particles to advect')
-    p.add_argument('--profiling', action='store_true', default=False,
-                   help='Print profiling information after run')
-    p.add_argument('-g', '--grid', type=int, default=None,
-                   help='Generate grid file with given dimensions')
-    p.add_argument('-o', '--output', default='density_test',
-                   help='List of NetCDF files to load')
-    args = p.parse_args()
-    filename = args.output
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_density_calculation(mode, pnum):
     time = 100000
 
     # Generate grid files according to given dimensions
@@ -128,12 +113,12 @@ if __name__ == "__main__":
     grid.add_field(CreateInitialPositionField(grid))
 
     # grid.add_field(CreateInitialPositionField(grid))
-    ParticleClass = JITParticle if args.mode == 'jit' else ScipyParticle
+    ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
 
     class DensityP(ParticleClass):
         weight = Variable('weight', dtype=np.float32)
 
-    climbers = grid.ParticleSet(size=args.particles, pclass=DensityP,
+    climbers = grid.ParticleSet(size=pnum, pclass=DensityP,
                                 start_field=grid.Start)
 
     for p in climbers.particles:
@@ -144,7 +129,7 @@ if __name__ == "__main__":
     grid.add_field(Field('Density', Densities, grid.U.lon, grid.U.lat,
                    depth=grid.U.depth, time=dtime, transpose=True))
 
-    grid.Density.data[0, :, :] = climbers.density(grid.Density, particle_val="weight")
+    grid.Density.data[0, :, :] = climbers.density(particle_val="weight")
 
     print("-- Initial Particle Density --")
     print(grid.Density.data[0, :, :])
@@ -155,10 +140,10 @@ if __name__ == "__main__":
     climb = climbers.Kernel(GradientClimber)
 
     climbers.execute(climb, endtime=climbers.grid.time[-1], dt=timestep,
-                     output_file=climbers.ParticleFile(name=filename+"_particle"),
+                     output_file=climbers.ParticleFile(name="density_test_particle"),
                      interval=substeps)
 
-    grid.Density.data[-1, :, :] = climbers.density(grid.Density, particle_val="weight")
+    grid.Density.data[-1, :, :] = climbers.density(particle_val="weight")
 
     # Final densities should be zero everywhere except central vertex
     print("-- Final Particle Density --")
@@ -168,3 +153,15 @@ if __name__ == "__main__":
     mask[0, :, :] = 0
     mask[-1, 2, 2] = 0
     assert np.all(grid.Density.data[mask] == 0), "Particle density is non-zero away from central vertex"
+
+
+if __name__ == "__main__":
+    p = ArgumentParser(description="""
+    Example of underlying habitat field""")
+    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
+                   help='Execution mode for performing RK4 computation')
+    p.add_argument('-p', '--particles', type=int, default=100,
+                   help='Number of particles to advect')
+    args = p.parse_args()
+
+    test_density_calculation(args.mode, args.particles)
