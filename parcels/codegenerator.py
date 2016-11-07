@@ -115,19 +115,32 @@ class IntrinsicTransformer(ast.NodeTransformer):
         self.grid = grid
         self.ptype = ptype
 
+        # Counter and variable names for temporaries
+        self._tmp_counter = 0
+        self.tmp_vars = []
+        # A stack of additonal staements to be inserted
+        self.stmt_stack = []
+
+    def get_tmp(self):
+        """Create a new temporary veriable name"""
+        tmp = "tmp%d" % self._tmp_counter
+        self._tmp_counter += 1
+        self.tmp_vars += [tmp]
+        return tmp
+
     def visit_Name(self, node):
+        """Inject IntrinsicNode objects into the tree according to keyword"""
         if node.id == 'grid':
-            return GridNode(self.grid, ccode='grid')
+            node = GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
-            return ParticleNode(self.ptype, ccode='particle')
-        if node.id in ['ErrorCode', 'Error']:
-            return ErrorCodeNode(math, ccode='')
-        if node.id == 'math':
-            return MathNode(math, ccode='')
-        if node.id == 'random':
-            return RandomNode(math, ccode='')
-        else:
-            return node
+            node = ParticleNode(self.ptype, ccode='particle')
+        elif node.id in ['ErrorCode', 'Error']:
+            node = ErrorCodeNode(math, ccode='')
+        elif node.id == 'math':
+            node = MathNode(math, ccode='')
+        elif node.id == 'random':
+            node = RandomNode(math, ccode='')
+        return node
 
     def visit_Attribute(self, node):
         node.value = self.visit(node.value)
@@ -136,26 +149,54 @@ class IntrinsicTransformer(ast.NodeTransformer):
         else:
             raise NotImplementedError("Cannot propagate attribute access to C-code")
 
+    def visit_Subscript(self, node):
+        node.value = self.visit(node.value)
+        node.slice = self.visit(node.slice)
+
+        # If we encounter field evaluation we replace it with a
+        # temporary variable and put the evaluation call on the stack.
+        if isinstance(node.value, FieldNode):
+            tmp = self.get_tmp()
+            self.stmt_stack += [ast.Assign([ast.Name(id=tmp)], node)]
+            return ast.Name(id=tmp)
+        elif isinstance(node.value, IntrinsicNode):
+            raise NotImplementedError("Subscript not implemented for object type %s"
+                                      % type(node.value).__name__)
+        else:
+            return node
+
     def visit_AugAssign(self, node):
         node.target = self.visit(node.target)
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
+        stmts = [node]
 
         # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
         if isinstance(node.target, ParticleAttributeNode) \
            and node.target.ccode_index_var is not None:
-            node = [node, node.target.pyast_index_update]
-        return node
+            stmts += [node.target.pyast_index_update]
+
+        # Inject statements from the stack
+        if len(self.stmt_stack) > 0:
+            stmts = self.stmt_stack + stmts
+            self.stmt_stack = []
+        return stmts
 
     def visit_Assign(self, node):
         node.targets = [self.visit(t) for t in node.targets]
         node.value = self.visit(node.value)
+        stmts = [node]
 
         # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
         if isinstance(node.targets[0], ParticleAttributeNode) \
            and node.targets[0].ccode_index_var is not None:
-            node = [node, node.targets[0].pyast_index_update]
-        return node
+            stmts += [node.targets[0].pyast_index_update]
+
+        # Inject statements from the stack
+        if len(self.stmt_stack) > 0:
+            stmts = self.stmt_stack + stmts
+            self.stmt_stack = []
+        return stmts
 
     def visit_Call(self, node):
         node.func = self.visit(node.func)
@@ -219,6 +260,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode.body.insert(0, c.Value('ErrorCode', 'err'))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
+        if len(transformer.tmp_vars) > 0:
+            self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
 
         return self.ccode
 
