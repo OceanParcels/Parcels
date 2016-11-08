@@ -19,7 +19,14 @@ class GridNode(IntrinsicNode):
 
 class FieldNode(IntrinsicNode):
     def __getitem__(self, attr):
-        return IntrinsicNode(None, ccode=self.obj.ccode_subscript(*attr))
+        return FieldEvalNode(self.obj, attr)
+
+
+class FieldEvalNode(IntrinsicNode):
+    def __init__(self, field, args, var):
+        self.field = field
+        self.args = args
+        self.var = var
 
 
 class MathNode(IntrinsicNode):
@@ -157,7 +164,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # temporary variable and put the evaluation call on the stack.
         if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
-            self.stmt_stack += [ast.Assign([ast.Name(id=tmp)], node)]
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
+            # .. and return the name of the temporary that will be populated
             return ast.Name(id=tmp)
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError("Subscript not implemented for object type %s"
@@ -461,6 +470,14 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
+
+    def visit_FieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+        node.ccode = c.Block([c.Assign("err", ccode_eval),
+                              c.Statement("%s *= %s" % (node.var, ccode_conv))])
 
     def visit_Return(self, node):
         self.visit(node.value)

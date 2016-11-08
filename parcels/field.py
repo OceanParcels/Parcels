@@ -306,11 +306,12 @@ class Field(object):
 
         return self.units.to_target(value, x, y)
 
-    def ccode_subscript(self, t, x, y):
-        ccode = "%s * temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
-                % (self.units.ccode_to_target(x, y),
-                   x, y, "particle->xi", "particle->yi", t, self.name)
-        return ccode
+    def ccode_eval(self, var, t, x, y):
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s)" \
+            % (x, y, "particle->xi", "particle->yi", t, self.name, var)
+
+    def ccode_convert(self, _, x, y):
+        return self.units.ccode_to_target(x, y)
 
     @property
     def ctypes_struct(self):

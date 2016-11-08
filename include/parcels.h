@@ -47,8 +47,8 @@ static inline ErrorCode spatial_interpolation_bilinear(float x, float y, int i, 
 }
 
 /* Linear interpolation along the time axis */
-static inline float temporal_interpolation_linear(float x, float y, int xi, int yi,
-                                                  double time, CField *f)
+static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, int yi,
+                                                      double time, CField *f, float *value)
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
@@ -67,11 +67,12 @@ static inline float temporal_interpolation_linear(float x, float y, int xi, int 
                                         (float**)(data[f->tidx]), &f0);
     err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
                                         (float**)(data[f->tidx+1]), &f1);
-    return f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
+    *value = f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
+    return SUCCESS;
   } else {
     err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                         (float**)(data[f->tidx]), &f0);
-    return f0;
+                                         (float**)(data[f->tidx]), value);
+    return SUCCESS;
   }
 }
 
