@@ -6,6 +6,8 @@ typedef enum
     SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4
   } ErrorCode;
 
+#define CHECKERROR(res) do {if (res != SUCCESS) return res;} while (0)
+
 typedef struct
 {
   int xdim, ydim, tdim, tidx;
@@ -18,6 +20,7 @@ typedef struct
 /* Local linear search to update grid index */
 static inline ErrorCode search_linear_float(float x, int size, float *xvals, int *index)
 {
+  if (x < xvals[0] || xvals[size-1] < x) {return ERROR_OUT_OF_BOUNDS;}
   while (*index < size-1 && x > xvals[*index+1]) ++(*index);
   while (*index > 0 && x < xvals[*index]) --(*index);
   return SUCCESS;
@@ -57,8 +60,8 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
   double t0, t1;
   int i = xi, j = yi;
   /* Identify grid cell to sample through local linear search */
-  err = search_linear_float(x, f->xdim, f->lon, &i);
-  err = search_linear_float(y, f->ydim, f->lat, &j);
+  err = search_linear_float(x, f->xdim, f->lon, &i); CHECKERROR(err);
+  err = search_linear_float(y, f->ydim, f->lat, &j); CHECKERROR(err);
   /* Find time index for temporal interpolation */
   err = search_linear_double(time, f->tdim, f->time, &(f->tidx));
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {

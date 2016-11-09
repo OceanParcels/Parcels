@@ -93,10 +93,10 @@ class ParticleAttributeNode(IntrinsicNode):
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
         if self.attr == 'lon':
-            return "search_linear_float(%s, U->xdim, U->lon, &%s)" \
+            return "search_linear_float(%s, U->xdim, U->lon, &(%s)); CHECKERROR(err)" \
                 % (self.ccode, self.ccode_index_var)
         if self.attr == 'lat':
-            return "search_linear_float(%s, U->ydim, U->lat, &%s)" \
+            return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
                 % (self.ccode, self.ccode_index_var)
         return ""
 
@@ -477,7 +477,8 @@ class KernelGenerator(ast.NodeVisitor):
         ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
         ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
         node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              c.Statement("%s *= %s" % (node.var, ccode_conv))])
+                              c.Statement("%s *= %s" % (node.var, ccode_conv)),
+                              c.Statement("CHECKERROR(err)")])
 
     def visit_Return(self, node):
         self.visit(node.value)

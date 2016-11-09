@@ -34,17 +34,27 @@ def recovery_kernel_error(particle):
 class OutOfBoundsError(KernelError):
     """Particle kernel error for out-of-bounds field sampling"""
 
-    def __init__(self, particle, lon, lat, field=None):
-        message = "%s sampled at (%f, %f)" % (
-            field.name if field else "Grid", lon, lat
-        )
+    def __init__(self, particle, lon=None, lat=None, field=None):
+        if lon and lat:
+            message = "%s sampled at (%f, %f)" % (
+                field.name if field else "Grid", lon, lat
+            )
+        else:
+            message = "Out-of-bounds sampling by particle at (%f, %f)" % (
+                particle.lon, particle.lat
+            )
         super(OutOfBoundsError, self).__init__(particle, msg=message)
 
 
 def recovery_kernel_out_of_bounds(particle):
     """Default sampling error kernel that throws OutOfBoundsError"""
-    error = particle.exception
-    raise OutOfBoundsError(particle, error.x, error.y, error.field)
+    if particle.exception is None:
+        # TODO: JIT does not yet provide the context that created
+        # the exception. We need to pass that info back from C.
+        raise OutOfBoundsError(particle)
+    else:
+        error = particle.exception
+        raise OutOfBoundsError(particle, error.x, error.y, error.field)
 
 
 # Default mapping of failure types (KernelOp)
