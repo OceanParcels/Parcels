@@ -120,3 +120,22 @@ def test_execution_fail_out_of_bounds(grid, mode, npart=10):
     assert error_thrown
     assert len(pset) == npart
     assert (np.array([p.lon - 1. for p in pset]) > -1.e12).all()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_recover_out_of_bounds(grid, mode, npart=2):
+    def MoveRight(particle, grid, time, dt):
+        grid.U[time, particle.lon + 0.1, particle.lat]
+        particle.lon += 0.1
+
+    def MoveLeft(particle):
+        particle.lon -= 1.
+
+    lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    pset = grid.ParticleSet(npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
+                 recovery={ErrorCode.ErrorOutOfBounds: MoveLeft})
+    assert len(pset) == npart
+    assert np.allclose([p.lon for p in pset], lon, rtol=1e-5)
+    assert np.allclose([p.lat for p in pset], lat, rtol=1e-5)

@@ -1,6 +1,6 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
-from parcels.kernels.error import ErrorCode, recovery_map
+from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldSamplingError
 from os import path
 import numpy.ctypeslib as npct
@@ -148,8 +148,15 @@ class Kernel(object):
                 else:
                     break  # Failure - stop time loop
 
-    def execute(self, pset, endtime, dt):
+    def execute(self, pset, endtime, dt, recovery=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
+
+        if recovery is None:
+            recovery = {}
+        recovery_map = recovery_base_map.copy()
+        recovery_map.update(recovery)
+
+        # Execute the kernel over the particle set
         if self.ptype.uses_jit:
             self.execute_jit(pset, endtime, dt)
         else:
@@ -168,12 +175,16 @@ class Kernel(object):
             for p in error_particles:
                 recovery_kernel = recovery_map[p.state]
                 recovery_kernel(p)
+                p.state = ErrorCode.Success
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
                 self.execute_jit(pset, endtime, dt)
             else:
                 self.execute_python(pset, endtime, dt)
+
+            error_particles = [p for p in pset.particles
+                               if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

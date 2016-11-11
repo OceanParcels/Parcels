@@ -165,7 +165,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, interval=None, output_file=None, tol=None,
+                runtime=None, interval=None, recovery=None, output_file=None,
                 show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -180,6 +180,8 @@ class ParticleSet(object):
         :param interval: Interval for inner sub-timestepping (leap), which dictates
                          the update frequency of file output and animation.
         :param output_file: ParticleFile object for particle output
+        :param recovery: Dictionary with additional recovery kernels to allow
+                         custom recovery behaviour in case of kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -248,7 +250,8 @@ class ParticleSet(object):
         leaptime = starttime
         for _ in range(timeleaps):
             leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt)
+            self.kernel.execute(self, endtime=leaptime, dt=dt,
+                                recovery=recovery)
             if output_file:
                 output_file.write(self, leaptime)
             if show_movie:
