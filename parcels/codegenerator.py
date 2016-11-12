@@ -212,7 +212,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.args = [self.visit(a) for a in node.args]
         if isinstance(node.func, ParticleAttributeNode) \
            and node.func.attr == 'state':
-            node = IntrinsicNode(node, "%s = DELETE" % node.func.ccode)
+            node = IntrinsicNode(node, "return DELETE")
         return node
 
 
