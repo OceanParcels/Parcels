@@ -189,8 +189,8 @@ class Field(object):
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
-                data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
-            tidx += tslice.size
+                data[tidx:(tidx+len(tslice)), 0, :, :] = filebuffer.data[:, :, :]
+            tidx += len(tslice)
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
 
