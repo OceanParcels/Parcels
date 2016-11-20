@@ -385,6 +385,9 @@ class ParticleSet(object):
     def density(self, field=None, particle_val=None, relative=False, area_scale=True):
         lons = [p.lon for p in self.particles]
         lats = [p.lat for p in self.particles]
+        # Code for finding nearest vertex for each particle is currently very inefficient
+        # once cell tracking is implemented for SciPy particles, the below use of np.min/max
+        # will be replaced (see PR #111)
         if field is not None:
             # Kick out particles that are not within the limits of our density field
             half_lon = (field.lon[1] - field.lon[0])/2
@@ -412,6 +415,7 @@ class ParticleSet(object):
 
         if area_scale:
             area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
+            # The below conversions will eventually be handled by the internal Converter class (see PR #111)
             dx = (field.lon[1] - field.lon[0]) * 1852 * 60 * np.cos(field.lat*np.pi/180)
             dy = (field.lat[1] - field.lat[0]) * 1852 * 60
             for y in range(len(field.lat)):
