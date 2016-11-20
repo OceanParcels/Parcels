@@ -72,6 +72,7 @@ def test_rotation_example(mode):
     assert(np.allclose(pset[1].lon, vals[0], 1e-5))    # Check advected values against calculated values.
     assert(np.allclose(pset[1].lat, vals[1], 1e-5))
 
+
 if __name__ == "__main__":
     filename = 'radial_rotation'
     grid = radial_rotation_grid()
