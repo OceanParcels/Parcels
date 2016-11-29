@@ -65,7 +65,8 @@ static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i,
 
 /* Linear interpolation along the time axis */
 static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, int yi,
-                                                      double time, CField *f, float *value)
+                                                      double time, CField *f, float *value,
+                                                      int interp_method)
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
@@ -80,15 +81,35 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
   err = search_linear_double(time, f->tdim, f->time, &(f->tidx));
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
-    err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                        (float**)(data[f->tidx]), &f0);
-    err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                        (float**)(data[f->tidx+1]), &f1);
+    if (interp_method==0){
+      err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
+                                          (float**)(data[f->tidx]), &f0);
+      err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
+                                          (float**)(data[f->tidx+1]), &f1);
+    }
+    else if  (interp_method==1){
+      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
+                                           (float**)(data[f->tidx]), &f0);
+      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
+                                           (float**)(data[f->tidx+1]), &f1);
+    }
+    else {
+        return ERROR;
+    }
     *value = f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
     return SUCCESS;
   } else {
-    err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                         (float**)(data[f->tidx]), value);
+    if (interp_method==0){
+      err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
+                                          (float**)(data[f->tidx]), value);
+    }
+    else if (interp_method==1){
+      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
+                                           (float**)(data[f->tidx]), value);
+    }
+    else {
+        return ERROR;    
+    }
     return SUCCESS;
   }
 }
