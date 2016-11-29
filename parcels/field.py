@@ -103,10 +103,12 @@ class Field(object):
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
     :param transpose: Transpose data to required (lon, lat) layout
+    :param interp_method: Method for interpolation
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None, interp_method='linear'):
+                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None, 
+                 interp_method='linear'):
         self.name = name
         self.data = data
         self.lon = lon
