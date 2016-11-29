@@ -103,10 +103,12 @@ class Field(object):
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
     :param transpose: Transpose data to required (lon, lat) layout
+    :param interp_method: Method for interpolation
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None):
+                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
+                 interp_method='linear'):
         self.name = name
         self.data = data
         self.lon = lon
@@ -115,6 +117,7 @@ class Field(object):
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
+        self.interp_method = interp_method
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -238,7 +241,7 @@ class Field(object):
         out-of-bounds coordinates.
         """
         return RegularGridInterpolator((self.lat, self.lon), self.data[t_idx, :],
-                                       bounds_error=False, fill_value=np.nan)
+                                       bounds_error=False, fill_value=np.nan, method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
         t0 = self.time[tidx-1]
