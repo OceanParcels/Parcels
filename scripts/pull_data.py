@@ -38,6 +38,10 @@ if __name__ == "__main__":
                 filenames=["OFAM_simple_U.nc", "OFAM_simple_V.nc"],
                 path="examples/OFAM_example_data").download()
 
+    ExampleData(url="http://oceanparcels.org/examples-data/Peninsula_data",
+                filenames=["peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"],
+                path="examples/Peninsula_data").download()
+
     dates = [datetime(2002, 1, 1) + timedelta(days=x) for x in range(0, 365)]
     globfiles = [x.strftime("%Y%m%d") + "000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc" for x in dates]
 
