@@ -107,7 +107,7 @@ class Field(object):
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None, 
+                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
                  interp_method='linear'):
         self.name = name
         self.data = data
