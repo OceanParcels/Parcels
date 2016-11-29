@@ -24,7 +24,7 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy netcdf4 pandas matplotlib
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy netcdf4 pandas matplotlib basemap
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - git submodule update --init --recursive
