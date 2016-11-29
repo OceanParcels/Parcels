@@ -266,3 +266,20 @@ def test_sampling_out_of_bounds_time(mode, k_sample_p, xdim=10, ydim=10, tdim=10
     assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
     pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nearest_neighbour_interpolation(mode, k_sample_p, xdim=2, ydim=2):
+    lon = np.linspace(0., 1., xdim, dtype=np.float32)
+    lat = np.linspace(0., 1., ydim, dtype=np.float32)
+    U = np.zeros((xdim, ydim), dtype=np.float32)
+    V = np.zeros((xdim, ydim), dtype=np.float32)
+    P = np.zeros((xdim, ydim), dtype=np.float32)
+    P[0, 0] = 1.
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
+                          field_data={'P': np.asarray(P, dtype=np.float32)})
+    grid.P.interp_method = 'nearest'
+    pset = grid.ParticleSet(size=1, pclass=pclass(mode),
+                            start=(0.25, 0.25), finish=(0.25, 0.25))
+    pset.execute(k_sample_p, endtime=1, dt=1)
+    assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
