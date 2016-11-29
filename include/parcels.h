@@ -49,6 +49,20 @@ static inline ErrorCode spatial_interpolation_bilinear(float x, float y, int i, 
   return SUCCESS;
 }
 
+/* Nearest neighbour interpolation routine for 2D grid */
+static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i, int j, int xdim,
+                                                        float *lon, float *lat, float **f_data,
+                                                        float *value)
+{
+  /* Cast data array into data[lat][lon] as per NEMO convention */
+  float (*data)[xdim] = (float (*)[xdim]) f_data;
+  int ii, jj;
+  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
+  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
+  *value = data[jj][ii];
+  return SUCCESS;
+}
+
 /* Linear interpolation along the time axis */
 static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, int yi,
                                                       double time, CField *f, float *value)
