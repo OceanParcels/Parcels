@@ -99,7 +99,7 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation(mode, k_sample_p, xdim=2, ydim=2):
+def test_nearest_neighbour_interpolation(mode, k_sample_p, xdim=2, ydim=2, npart=81):
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U = np.zeros((xdim, ydim), dtype=np.float32)
@@ -109,10 +109,12 @@ def test_nearest_neighbour_interpolation(mode, k_sample_p, xdim=2, ydim=2):
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
                           field_data={'P': np.asarray(P, dtype=np.float32)})
     grid.P.interp_method = 'nearest'
-    pset = grid.ParticleSet(size=1, pclass=pclass(mode),
-                            start=(0.25, 0.25), finish=(0.25, 0.25))
+    xv, yv = np.meshgrid(np.linspace(0.1, 0.9, np.sqrt(npart)), np.linspace(0.1, 0.9, np.sqrt(npart)))
+    pset = grid.ParticleSet(size=np.size(xv), pclass=pclass(mode),
+                            lon=xv.flatten(), lat=yv.flatten())
     pset.execute(k_sample_p, endtime=1, dt=1)
-    assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat < 0.5]), 1.0, rtol=1e-5)
+    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat > 0.5]), 0.0, rtol=1e-5)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
