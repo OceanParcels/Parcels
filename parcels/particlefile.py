@@ -62,15 +62,9 @@ class ParticleFile(object):
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", ("trajectory", "obs"), fill_value=np.nan)
-        self.z.long_name = ""
-        self.z.standard_name = "depth"
-        self.z.units = "m"
-        self.z.positive = "down"
-
         self.user_vars = []
         for v in particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'z']:
+            if v.name in ['time', 'lat', 'lon']:
                 continue
             if v.to_write is True:
                 setattr(self, v.name, self.dataset.createVariable(v.name, "f4", ("trajectory", "obs"), fill_value=0.))
@@ -78,6 +72,10 @@ class ParticleFile(object):
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
                 self.user_vars += [v.name]
+                if v.name in ['z', 'depth']:
+                    getattr(self, v.name).positive = "down"
+                    getattr(self, v.name).units = "m"
+                
 
         self.idx = 0
 
@@ -92,7 +90,6 @@ class ParticleFile(object):
         self.time[:, self.idx] = time
         self.lat[:, self.idx] = np.array([p.lat for p in pset])
         self.lon[:, self.idx] = np.array([p.lon for p in pset])
-        self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
         for var in self.user_vars:
             getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
 
