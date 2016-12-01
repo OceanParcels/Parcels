@@ -139,3 +139,20 @@ def test_execution_recover_out_of_bounds(grid, mode, npart=2):
     assert len(pset) == npart
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-5)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_delete_out_of_bounds(grid, mode, npart=10):
+    def MoveRight(particle, grid, time, dt):
+        grid.U[time, particle.lon + 0.1, particle.lat]
+        particle.lon += 0.1
+
+    def DeleteMe(particle):
+        particle.delete()
+
+    lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    pset = grid.ParticleSet(npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteMe})
+    assert len(pset) == 0
