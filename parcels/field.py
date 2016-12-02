@@ -20,6 +20,19 @@ except:
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 
 
+class FieldSamplingError(RuntimeError):
+    """Utility error class to propagate erroneous field sampling"""
+
+    def __init__(self, x, y, field=None):
+        self.field = field
+        self.x = x
+        self.y = y
+        message = "%s sampled at (%f, %f)" % (
+            field.name if field else "Grid", self.x, self.y
+        )
+        super(FieldSamplingError, self).__init__(message)
+
+
 def CentralDifferences(field_data, lat, lon):
     r = 6.371e6  # radius of the earth
     deg2rd = np.pi / 180
@@ -254,12 +267,8 @@ class Field(object):
         """Interpolate horizontal field values using a SciPy interpolator"""
         val = self.interpolator2D(tidx)((y, x))
         if np.isnan(val):
-            # Temporary hotfix for out-of-bounds sampling
-            # until we have a graceful kernel recovery system.
-            # This is detailed in OceanPARCELS/parcels issues #47 #61 #76 and PR #85
-            # -> https://github.com/OceanPARCELS/parcels/pull/85
-            print("WARNING: Out-of-bounds field sampling at (%s, %s)" % (x, y))
-            val = 0
+            # Detect Out-of-bounds sampling and raise exception
+            raise FieldSamplingError(x, y, field=self)
         else:
             return val
 
@@ -300,11 +309,12 @@ class Field(object):
 
         return self.units.to_target(value, x, y)
 
-    def ccode_subscript(self, t, x, y):
-        ccode = "%s * temporal_interpolation_linear(%s, %s, %s, %s, %s, %s)" \
-                % (self.units.ccode_to_target(x, y),
-                   x, y, "particle->xi", "particle->yi", t, self.name)
-        return ccode
+    def ccode_eval(self, var, t, x, y):
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s)" \
+            % (x, y, "particle->xi", "particle->yi", t, self.name, var)
+
+    def ccode_convert(self, _, x, y):
+        return self.units.ccode_to_target(x, y)
 
     @property
     def ctypes_struct(self):

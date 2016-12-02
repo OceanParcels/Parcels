@@ -235,7 +235,8 @@ def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
     P = np.random.uniform(0, 1., size=(xdim, ydim))
     S = np.ones((xdim, ydim), dtype=np.float32)
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
-                          field_data={'P': P, 'start': S})
+                          field_data={'P': np.asarray(P, dtype=np.float32),
+                                      'start': S})
     pset = grid.ParticleSet(size=npart, pclass=pclass(mode),
                             start_field=grid.start)
     pset.execute(k_sample_p, endtime=1., dt=1.0)
@@ -251,8 +252,8 @@ def test_sampling_out_of_bounds_time(mode, k_sample_p, xdim=10, ydim=10, tdim=10
     U = np.zeros((xdim, ydim, tdim), dtype=np.float32)
     V = np.zeros((xdim, ydim, tdim), dtype=np.float32)
     P = np.ones((xdim, ydim, 1), dtype=np.float32) * time
-    grid = Grid.from_data(U, lon, lat, V, lon, lat, time=time,
-                          mesh='flat', field_data={'P': P})
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat',
+                          field_data={'P': np.asarray(P, dtype=np.float32)})
     pset = grid.ParticleSet(size=1, pclass=pclass(mode),
                             start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
