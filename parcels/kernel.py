@@ -151,6 +151,12 @@ class Kernel(object):
     def execute(self, pset, endtime, dt, recovery=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
 
+        def remove_deleted(pset):
+            """Utility to remove all particles that signalled deletion"""
+            indices = [i for i, p in enumerate(pset.particles)
+                       if p.state in [ErrorCode.Delete]]
+            pset.remove(indices)
+
         if recovery is None:
             recovery = {}
         recovery_map = recovery_base_map.copy()
@@ -163,9 +169,7 @@ class Kernel(object):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        delete_indices = [i for i, p in enumerate(pset.particles)
-                          if p.state in [ErrorCode.Delete]]
-        pset.remove(delete_indices)
+        remove_deleted(pset)
 
         # Idenitify particles that threw errors
         error_particles = [p for p in pset.particles
@@ -174,8 +178,11 @@ class Kernel(object):
             # Apply recovery kernel
             for p in error_particles:
                 recovery_kernel = recovery_map[p.state]
-                recovery_kernel(p)
                 p.state = ErrorCode.Success
+                recovery_kernel(p)
+
+            # Remove all particles that signalled deletion
+            remove_deleted(pset)
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
