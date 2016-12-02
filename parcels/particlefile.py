@@ -75,12 +75,8 @@ class ParticleFile(object):
                 if v.name in ['z', 'depth']:
                     getattr(self, v.name).positive = "down"
                     getattr(self, v.name).units = "m"
-                
 
         self.idx = 0
-
-        if initial_dump:
-            self.write(particleset, 0.)
 
     def __del__(self):
         self.dataset.close()
