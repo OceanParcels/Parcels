@@ -165,7 +165,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, interval=None, output_file=None, tol=None,
+                runtime=None, interval=None, recovery=None, output_file=None,
                 show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -180,6 +180,8 @@ class ParticleSet(object):
         :param interval: Interval for inner sub-timestepping (leap), which dictates
                          the update frequency of file output and animation.
         :param output_file: ParticleFile object for particle output
+        :param recovery: Dictionary with additional recovery kernels to allow
+                         custom recovery behaviour in case of kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -215,7 +217,7 @@ class ParticleSet(object):
         if starttime is None:
             starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
         if runtime is not None:
-            endtime = starttime + runtime if dt > 0 else starttime - runtime
+            endtime = starttime + runtime
         else:
             if endtime is None:
                 endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
@@ -248,15 +250,12 @@ class ParticleSet(object):
         leaptime = starttime
         for _ in range(timeleaps):
             leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt)
+            self.kernel.execute(self, endtime=leaptime, dt=dt,
+                                recovery=recovery)
             if output_file:
                 output_file.write(self, leaptime)
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
-        # Remove deactivated particles
-        to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
-        if len(to_remove) > 0:
-            self.remove(to_remove)
 
     def show(self, **kwargs):
         savefile = kwargs.get('savefile', None)

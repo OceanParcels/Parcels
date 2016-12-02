@@ -19,7 +19,14 @@ class GridNode(IntrinsicNode):
 
 class FieldNode(IntrinsicNode):
     def __getitem__(self, attr):
-        return IntrinsicNode(None, ccode=self.obj.ccode_subscript(*attr))
+        return FieldEvalNode(self.obj, attr)
+
+
+class FieldEvalNode(IntrinsicNode):
+    def __init__(self, field, args, var):
+        self.field = field
+        self.args = args
+        self.var = var
 
 
 class MathNode(IntrinsicNode):
@@ -50,8 +57,9 @@ class RandomNode(IntrinsicNode):
                                  % attr)
 
 
-class KernelOpNode(IntrinsicNode):
-    symbol_map = {'SUCCESS': 'SUCCESS', 'FAILURE': 'FAILURE'}
+class ErrorCodeNode(IntrinsicNode):
+    symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
+                  'Error': 'ERROR', 'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
@@ -77,7 +85,7 @@ class ParticleAttributeNode(IntrinsicNode):
     @property
     def pyast_index_update(self):
         pyast = ast.Assign()
-        pyast.targets = [IntrinsicNode(None, ccode=self.ccode_index_var)]
+        pyast.targets = [IntrinsicNode(None, ccode='err')]
         pyast.value = IntrinsicNode(None, ccode=self.ccode_index_update)
         return pyast
 
@@ -85,10 +93,10 @@ class ParticleAttributeNode(IntrinsicNode):
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
         if self.attr == 'lon':
-            return "search_linear_float(%s, %s, U->xdim, U->lon)" \
+            return "search_linear_float(%s, U->xdim, U->lon, &(%s)); CHECKERROR(err)" \
                 % (self.ccode, self.ccode_index_var)
         if self.attr == 'lat':
-            return "search_linear_float(%s, %s, U->ydim, U->lat)" \
+            return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
                 % (self.ccode, self.ccode_index_var)
         return ""
 
@@ -98,7 +106,7 @@ class ParticleNode(IntrinsicNode):
         if attr in [v.name for v in self.obj.variables]:
             return ParticleAttributeNode(self, attr)
         elif attr in ['delete']:
-            return ParticleAttributeNode(self, 'active')
+            return ParticleAttributeNode(self, 'state')
         else:
             raise AttributeError("""Particle type %s does not define attribute "%s".
 Please add '%s' to %s.users_vars or define an appropriate sub-class."""
@@ -114,19 +122,32 @@ class IntrinsicTransformer(ast.NodeTransformer):
         self.grid = grid
         self.ptype = ptype
 
+        # Counter and variable names for temporaries
+        self._tmp_counter = 0
+        self.tmp_vars = []
+        # A stack of additonal staements to be inserted
+        self.stmt_stack = []
+
+    def get_tmp(self):
+        """Create a new temporary veriable name"""
+        tmp = "tmp%d" % self._tmp_counter
+        self._tmp_counter += 1
+        self.tmp_vars += [tmp]
+        return tmp
+
     def visit_Name(self, node):
+        """Inject IntrinsicNode objects into the tree according to keyword"""
         if node.id == 'grid':
-            return GridNode(self.grid, ccode='grid')
+            node = GridNode(self.grid, ccode='grid')
         elif node.id == 'particle':
-            return ParticleNode(self.ptype, ccode='particle')
-        if node.id == 'KernelOp':
-            return KernelOpNode(math, ccode='')
-        if node.id == 'math':
-            return MathNode(math, ccode='')
-        if node.id == 'random':
-            return RandomNode(math, ccode='')
-        else:
-            return node
+            node = ParticleNode(self.ptype, ccode='particle')
+        elif node.id in ['ErrorCode', 'Error']:
+            node = ErrorCodeNode(math, ccode='')
+        elif node.id == 'math':
+            node = MathNode(math, ccode='')
+        elif node.id == 'random':
+            node = RandomNode(math, ccode='')
+        return node
 
     def visit_Attribute(self, node):
         node.value = self.visit(node.value)
@@ -135,33 +156,63 @@ class IntrinsicTransformer(ast.NodeTransformer):
         else:
             raise NotImplementedError("Cannot propagate attribute access to C-code")
 
+    def visit_Subscript(self, node):
+        node.value = self.visit(node.value)
+        node.slice = self.visit(node.slice)
+
+        # If we encounter field evaluation we replace it with a
+        # temporary variable and put the evaluation call on the stack.
+        if isinstance(node.value, FieldNode):
+            tmp = self.get_tmp()
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
+            # .. and return the name of the temporary that will be populated
+            return ast.Name(id=tmp)
+        elif isinstance(node.value, IntrinsicNode):
+            raise NotImplementedError("Subscript not implemented for object type %s"
+                                      % type(node.value).__name__)
+        else:
+            return node
+
     def visit_AugAssign(self, node):
         node.target = self.visit(node.target)
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
+        stmts = [node]
 
         # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
         if isinstance(node.target, ParticleAttributeNode) \
            and node.target.ccode_index_var is not None:
-            node = [node, node.target.pyast_index_update]
-        return node
+            stmts += [node.target.pyast_index_update]
+
+        # Inject statements from the stack
+        if len(self.stmt_stack) > 0:
+            stmts = self.stmt_stack + stmts
+            self.stmt_stack = []
+        return stmts
 
     def visit_Assign(self, node):
         node.targets = [self.visit(t) for t in node.targets]
         node.value = self.visit(node.value)
+        stmts = [node]
 
         # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
         if isinstance(node.targets[0], ParticleAttributeNode) \
            and node.targets[0].ccode_index_var is not None:
-            node = [node, node.targets[0].pyast_index_update]
-        return node
+            stmts += [node.targets[0].pyast_index_update]
+
+        # Inject statements from the stack
+        if len(self.stmt_stack) > 0:
+            stmts = self.stmt_stack + stmts
+            self.stmt_stack = []
+        return stmts
 
     def visit_Call(self, node):
         node.func = self.visit(node.func)
         node.args = [self.visit(a) for a in node.args]
         if isinstance(node.func, ParticleAttributeNode) \
-           and node.func.attr == 'active':
-            node = IntrinsicNode(node, "%s = 0" % node.func.ccode)
+           and node.func.attr == 'state':
+            node = IntrinsicNode(node, "return DELETE")
         return node
 
 
@@ -215,8 +266,11 @@ class KernelGenerator(ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
+        self.ccode.body.insert(0, c.Value('ErrorCode', 'err'))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
+        if len(transformer.tmp_vars) > 0:
+            self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
 
         return self.ccode
 
@@ -226,7 +280,7 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(stmt)
 
         # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("KernelOp", node.name), spec='inline'))
+        decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field, _ in self.field_args.items():
@@ -417,6 +471,15 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_FieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+        node.ccode = c.Block([c.Assign("err", ccode_eval),
+                              c.Statement("%s *= %s" % (node.var, ccode_conv)),
+                              c.Statement("CHECKERROR(err)")])
+
     def visit_Return(self, node):
         self.visit(node.value)
         node.ccode = c.Statement('return %s' % node.value.ccode)
@@ -438,7 +501,7 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, kernel_ast, adaptive=False):
+    def generate(self, funcname, field_args, kernel_ast):
         ccode = []
 
         # Add include for Parcels and math header
@@ -458,24 +521,22 @@ class LoopGenerator(object):
                 c.Value("double", "endtime"), c.Value("float", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-        fargs_str = ", ".join(['particles[p].time', '__dt'] + list(field_args.keys()))
+        fargs_str = ", ".join(['particles[p].time', 'sign * __dt'] + list(field_args.keys()))
         # Inner loop nest for forward runs
-        dt_fwd = c.Statement("__dt = fmin(particles[p].dt, endtime - particles[p].time)")
-        body_fwd = [c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
-                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt")), dt_fwd]
-        time_fwd = c.While("__dt > __tol", c.Block(body_fwd))
-        part_fwd = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_fwd, time_fwd]))
-        # Inner loop nest for backward runs
-        dt_bwd = c.Statement("__dt = fmax(particles[p].dt, endtime - particles[p].time)")
-        body_bwd = [c.Statement("res = %s(&(particles[p]), %s)" % (funcname, fargs_str)),
-                    c.If("res == SUCCESS", c.Statement("particles[p].time += __dt")), dt_bwd]
-        time_bwd = c.While("__dt < -1. * __tol", c.Block(body_bwd))
-        part_bwd = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_bwd, time_bwd]))
+        sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
+        dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
+        body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
+        body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
+        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign * __dt"),
+                                                 dt_pos, c.Statement("continue")]))]
+        body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
+                      c.Statement("break"))]
 
-        time_if = c.If("dt > 0.0", c.Block([part_fwd]), c.Block([part_bwd]))
-        fbody = c.Block([c.Value("int", "p"), c.Value("KernelOp", "res"),
-                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
-                         time_if])
+        time_loop = c.While("__dt > __tol", c.Block(body))
+        part_loop = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_pos, time_loop]))
+        fbody = c.Block([c.Value("int", "p"), c.Value("ErrorCode", "res"),
+                         c.Value("double", "__dt, __tol, sign"), c.Assign("__tol", "1.e-6"),
+                         sign, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
