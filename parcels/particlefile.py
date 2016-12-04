@@ -37,7 +37,7 @@ class ParticleFile(object):
         self.trajectory = self.dataset.createVariable("trajectory", "i4", ("trajectory",))
         self.trajectory.long_name = "Unique identifier for each particle"
         self.trajectory.cf_role = "trajectory_id"
-        self.trajectory[:] = np.arange(particleset.size, dtype=np.int32)
+        self.trajectory[:] = np.array([p.id for p in particleset])
 
         # Create time, lat, lon and z variables according to CF conventions:
         self.time = self.dataset.createVariable("time", "f8", ("trajectory", "obs"), fill_value=np.nan)
