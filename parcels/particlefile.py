@@ -7,7 +7,7 @@ __all__ = ['ParticleFile']
 
 class ParticleFile(object):
 
-    def __init__(self, name, particleset, initial_dump=True):
+    def __init__(self, name, particleset):
         """Initialise netCDF4.Dataset for trajectory output.
 
         The output follows the format outlined in the Discrete
@@ -23,7 +23,6 @@ class ParticleFile(object):
 
         :param name: Basename of the output file
         :param particlset: ParticleSet to output
-        :param initial_dump: Perform initial output at time 0.
         :param user_vars: A list of additional user defined particle variables to write
         """
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
