@@ -79,7 +79,9 @@ def grid_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
     U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time)
     V = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)
-    return Grid.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat')
+    return Grid.from_data(np.asarray(U, np.float32), lon, lat,
+                          np.asarray(V, np.float32), lon, lat,
+                          time=time, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -118,7 +120,9 @@ def grid_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
     U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time)
     V = np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)
-    return Grid.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat')
+    return Grid.from_data(np.asarray(U, np.float32), lon, lat,
+                          np.asarray(V, np.float32), lon, lat,
+                          time=time, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -163,7 +167,9 @@ def grid_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
         np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time)
     V = np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) *\
         np.exp(-gamma * time) * np.sin(f * time)
-    return Grid.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat')
+    return Grid.from_data(np.asarray(U, np.float32), lon, lat,
+                          np.asarray(V, np.float32), lon, lat,
+                          time=time, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
