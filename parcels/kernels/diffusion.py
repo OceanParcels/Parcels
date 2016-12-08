@@ -1,4 +1,4 @@
-from parcels import random
+from parcels.rng import random
 import math
 
 
