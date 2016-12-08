@@ -26,14 +26,20 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
     pset = grid.ParticleSet(0, lon=[], lat=[], pclass=ptype[mode])
 
     delaytime = delta(hours=1)  # delay time between particle releases
+    
+    # Since we are going to add particles during runtime, we need "indexed" NetCDF file
+    output_file = pset.ParticleFile(name="DelayParticle", type="indexed")
+
     for t in range(npart):
         pset.add(ptype[mode](lon=x, lat=lat[t], grid=grid))
         pset.execute(AdvectionRK4, runtime=delaytime, dt=delta(minutes=5),
-                     interval=delta(hours=1), show_movie=show_movie)
+                     interval=delta(hours=1), show_movie=show_movie,
+                     starttime=delaytime*t, output_file=output_file)
 
     # Note that time on the movie is not parsed correctly
     pset.execute(AdvectionRK4, runtime=delta(hours=24)-npart*delaytime,
-                 dt=delta(minutes=5), interval=delta(hours=1), show_movie=show_movie)
+                 starttime=delaytime*npart, dt=delta(minutes=5), interval=delta(hours=1),
+                 show_movie=show_movie, output_file=output_file)
 
     londist = np.array([(p.lon - x) for p in pset])
     assert(londist > 0.1).all()
