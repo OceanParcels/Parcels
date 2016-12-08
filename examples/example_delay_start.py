@@ -26,7 +26,7 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
     pset = grid.ParticleSet(0, lon=[], lat=[], pclass=ptype[mode])
 
     delaytime = delta(hours=1)  # delay time between particle releases
-    
+
     # Since we are going to add particles during runtime, we need "indexed" NetCDF file
     output_file = pset.ParticleFile(name="DelayParticle", type="indexed")
 
