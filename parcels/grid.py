@@ -29,6 +29,7 @@ class Grid(object):
     :param depth: Depth coordinates of the grid
     :param time: Time coordinates of the grid
     :param fields: Dictionary of additional fields
+    :param lasttrajecory: ID number of the last assigned trajectory; needed for pset.add()
     """
     def __init__(self, U, V, depth, time, fields={}):
         self.U = U
@@ -36,6 +37,7 @@ class Grid(object):
         self.depth = depth
         self.time = time
         self.fields = fields
+        self.lasttrajectory = 0
 
         # Add additional fields as attributes
         for name, field in fields.items():

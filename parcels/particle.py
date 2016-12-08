@@ -121,12 +121,13 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, grid, trajectory=trajectory, dt=3600., time=0., cptr=None):
+    def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).time.initial = time
-        type(self).trajectory.initial = trajectory
+        type(self).trajectory.initial = grid.lasttrajectory
+        grid.lasttrajectory += 1
         type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()
 

@@ -114,7 +114,7 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], trajectory=i, grid=grid, cptr=cptr(i), time=grid.time[0])
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.time[0])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
