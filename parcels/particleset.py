@@ -415,11 +415,12 @@ class ParticleSet(object):
 
         if area_scale:
             area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
-            # The below conversions will eventually be handled by the internal Converter class (see PR #111)
-            dx = (field.lon[1] - field.lon[0]) * 1852 * 60 * np.cos(field.lat*np.pi/180)
-            dy = (field.lat[1] - field.lat[0]) * 1852 * 60
-            for y in range(len(field.lat)):
-                area[y, :] = dy * dx[y]
+            U = self.grid.U
+            V = self.grid.V
+            dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0])
+            for y in range(len(U.lat)):
+                dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y])
+                area[y, :] = dy * dx
             # Scale by cell area
             Density /= np.transpose(area)
 
