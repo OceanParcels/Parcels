@@ -101,6 +101,8 @@ class ParticleFile(object):
     def write(self, pset, time):
         """Write particle set data to file"""
         if self.type is 'array':
+            if len(pset) is not self.lon.shape[0]:
+                raise RuntimeError("Number of particles appears to change. Use type='indexed' for ParticleFile")
             self.time[:, self.idx] = time
             self.lat[:, self.idx] = np.array([p.lat for p in pset])
             self.lon[:, self.idx] = np.array([p.lon for p in pset])
