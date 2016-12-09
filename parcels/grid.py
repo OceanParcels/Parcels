@@ -35,7 +35,6 @@ class Grid(object):
         self.V = V
         self.depth = depth
         self.time = time
-        self.fields = fields
 
         # Add additional fields as attributes
         for name, field in fields.items():
@@ -153,6 +152,6 @@ class Grid(object):
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
 
-        for f in self.fields:
-            field = getattr(self, f)
-            field.write(filename)
+        for attr, value in self.__dict__.iteritems():
+            if isinstance(value, Field) and (attr is not 'U') and (attr is not 'V'):
+                value.write(filename)
