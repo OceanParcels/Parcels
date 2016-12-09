@@ -60,8 +60,9 @@ def test_grid_gradient():
         x = 4
         y = 6
         time = np.linspace(0, 2, 3)
-        field = Field("Test", data=createSimpleGrid(x, y, time), time=time, lon=np.linspace(0, x-1, x),
-                      lat=np.linspace(-y/2, y/2-1, y))
+        field = Field("Test", data=createSimpleGrid(x, y, time), time=time,
+                      lon=np.linspace(0, x-1, x, dtype=np.float32),
+                      lat=np.linspace(-y/2, y/2-1, y, dtype=np.float32))
 
         # Calculate field gradients for testing against numpy gradients.
         grad_fields = field.gradient()

@@ -1,3 +1,4 @@
+from parcels.kernels.error import ErrorCode
 from operator import attrgetter
 import numpy as np
 
@@ -96,6 +97,9 @@ class _Particle(object):
             # Enforce type of initial value
             setattr(self, v.name, v.dtype(initial))
 
+        # Placeholder for explicit error handling
+        self.exception = None
+
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
@@ -114,7 +118,7 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     dt = Variable('dt', dtype=np.float32, to_write=False)
-    active = Variable('active', dtype=np.int32, initial=1, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
     def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
         # Enforce default values through Variable descriptor
@@ -128,7 +132,7 @@ class ScipyParticle(_Particle):
         return "P(%f, %f, %f)" % (self.lon, self.lat, self.time)
 
     def delete(self):
-        self.active = 0
+        self.state = ErrorCode.Delete
 
 
 class JITParticle(ScipyParticle):
