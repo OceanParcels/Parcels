@@ -7,7 +7,7 @@ __all__ = ['ParticleFile']
 
 class ParticleFile(object):
 
-    def __init__(self, name, particleset, initial_dump=True, type='array'):
+    def __init__(self, name, particleset, type='array'):
         """Initialise netCDF4.Dataset for trajectory output.
 
         The output follows the format outlined in the Discrete
@@ -28,7 +28,6 @@ class ParticleFile(object):
 
         :param name: Basename of the output file
         :param particlset: ParticleSet to output
-        :param initial_dump: Perform initial output at time 0.
         :param user_vars: A list of additional user defined particle variables to write
         :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
         """
@@ -95,9 +94,6 @@ class ParticleFile(object):
                 self.user_vars += [v.name]
 
         self.idx = 0
-
-        if initial_dump:
-            self.write(particleset, 0.)
 
     def __del__(self):
         self.dataset.close()
