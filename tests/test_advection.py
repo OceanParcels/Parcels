@@ -71,14 +71,8 @@ def periodicgrid(xdim, ydim, uvel, vvel):
 
 
 def periodicBC(particle, grid, time, dt):
-    if particle.lon > 1.:
-        particle.lon = particle.lon - 1.
-    if particle.lon < 0.:
-        particle.lon = particle.lon + 1.
-    if particle.lat > 1.:
-        particle.lat = particle.lat - 1.
-    if particle.lat < 0.:
-        particle.lat = particle.lat + 1.
+    particle.lon = math.fmod(particle.lon, 1)
+    particle.lat = math.fmod(particle.lat, 1)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
