@@ -46,6 +46,16 @@ def test_grid_from_nemo(xdim, ydim, tmpdir, filename='test_nemo'):
     assert np.allclose(grid.V.data[0, :], v_t, rtol=1e-12)
 
 
+@pytest.mark.parametrize('xdim', [100, 200])
+@pytest.mark.parametrize('ydim', [100, 200])
+def test_add_field(xdim, ydim):
+    u, v, lon, lat, depth, time = generate_grid(xdim, ydim)
+    grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
+    field = Field('newfld', grid.U.data, grid.U.lon, grid.U.lat)
+    grid.add_field(field)
+    assert grid.newfld.data.shape == grid.U.data.shape
+
+
 def createSimpleGrid(x, y, time):
     field = np.zeros((time.size, x, y), dtype=np.float32)
     ltri = np.triu_indices(n=x, m=y)
