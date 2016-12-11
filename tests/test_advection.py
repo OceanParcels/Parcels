@@ -61,6 +61,61 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
 
 
+def periodicgrid(xdim, ydim, uvel, vvel):
+    lon = np.linspace(0., 1., xdim+1, dtype=np.float32)[1:]  # don't include both 0 and 1, for periodic b.c.
+    lat = np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]
+
+    U = uvel * np.ones((xdim, ydim), dtype=np.float32)
+    V = vvel * np.ones((xdim, ydim), dtype=np.float32)
+    return Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+
+
+def periodicBC(particle, grid, time, dt):
+    if particle.lon > 1.:
+        particle.lon = particle.lon - 1.
+    if particle.lon < 0.:
+        particle.lon = particle.lon + 1.
+    if particle.lat > 1.:
+        particle.lat = particle.lat - 1.
+    if particle.lat < 0.:
+        particle.lat = particle.lat + 1.
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
+    grid = periodicgrid(xdim, ydim, uvel=1., vvel=0.)
+    grid.add_periodic_halo(zonal=True, halosize=halosize)
+    assert(len(grid.U.lon) == xdim + 2 * halosize)
+
+    pset = grid.ParticleSet(1, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    assert abs(pset[0].lon - 0.15) < 0.1
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_periodic_meridional(mode, xdim=100, ydim=100, halosize=3):
+    grid = periodicgrid(xdim, ydim, uvel=0., vvel=1.)
+    grid.add_periodic_halo(meridional=True)
+    assert(len(grid.U.lat) == 1.06 * ydim)  # default halo size is 3%
+
+    pset = grid.ParticleSet(1, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    assert abs(pset[0].lat - 0.15) < 0.1
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100, halosize=3):
+    grid = periodicgrid(xdim, ydim, uvel=1., vvel=1.)
+    grid.add_periodic_halo(zonal=True, meridional=True)
+    assert(len(grid.U.lat) == 1.06 * ydim)  # default halo size is 3%
+    assert(len(grid.U.lon) == xdim + 2 * halosize)  # default halo size is 3%
+
+    pset = grid.ParticleSet(1, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    assert abs(pset[0].lon - 0.05) < 0.1
+    assert abs(pset[0].lat - 0.15) < 0.1
+
+
 def truth_stationary(x_0, y_0, t):
     lat = y_0 - u_0 / f * (1 - math.cos(f * t))
     lon = x_0 + u_0 / f * math.sin(f * t)
