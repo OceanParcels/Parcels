@@ -132,7 +132,6 @@ class Grid(object):
                                dimensions=dimensions, **kwargs)
 
     def add_field(self, field):
-        self.fields.update({field.name: field})
         setattr(self, field.name, field)
 
     def ParticleSet(self, *args, **kwargs):
