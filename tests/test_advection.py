@@ -103,6 +103,8 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100, halosize=
     grid.add_periodic_halo(zonal=True, meridional=True)
     assert(len(grid.U.lat) == 1.06 * ydim)  # default halo size is 3%
     assert(len(grid.U.lon) == xdim + 2 * halosize)  # default halo size is 3%
+    assert np.allclose(np.diff(grid.U.lat), grid.U.lat[1]-grid.U.lat[0], rtol=0.001)
+    assert np.allclose(np.diff(grid.U.lon), grid.U.lon[1]-grid.U.lon[0], rtol=0.001)
 
     pset = grid.ParticleSet(1, pclass=ptype[mode], lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
