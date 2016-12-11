@@ -209,3 +209,16 @@ def test_pset_multi_execute_delete(grid, mode, npart=10, n=5):
         pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
         pset.remove(-1)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_density(grid, mode, npart=10):
+    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+                            lon=np.linspace(0, 1, npart, dtype=np.float32),
+                            lat=0.5*np.ones(npart, dtype=np.float32))
+    arr = pset.density(area_scale=False)
+    assert(np.sum(arr) == npart)  # check conservation of particles
+    inds = zip(*np.where(arr))
+    for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
+        assert np.allclose(grid.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
+        assert np.allclose(grid.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)
