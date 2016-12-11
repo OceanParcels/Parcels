@@ -139,6 +139,11 @@ class Grid(object):
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)
 
+    def add_periodic_halo(self, zonal=False, meridional=False, halosize=None):
+        for attr, value in self.__dict__.iteritems():
+            if isinstance(value, Field):
+                value.add_periodic_halo(zonal, meridional, halosize)
+
     def eval(self, x, y):
         u = self.U.eval(x, y)
         v = self.V.eval(x, y)

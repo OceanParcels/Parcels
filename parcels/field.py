@@ -379,6 +379,20 @@ class Field(object):
             plt.close()
             return anim
 
+    def add_periodic_halo(self, zonal, meridional, halosize=None):
+        if zonal:
+            halosize = int(len(self.lon) / 30) if halosize is None else halosize
+            self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
+                                        self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
+            self.lon = np.concatenate((self.lon[-halosize:] - self.lon[-1],
+                                       self.lon, self.lon[0:halosize] + self.lon[-1]))
+        if meridional:
+            halosize = int(len(self.lat) / 30) if halosize is None else halosize
+            self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
+                                        self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
+            self.lat = np.concatenate((self.lat[-halosize:] - self.lat[-1],
+                                       self.lat, self.lat[0:halosize] + self.lat[-1]))
+
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
