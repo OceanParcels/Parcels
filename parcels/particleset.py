@@ -381,6 +381,50 @@ class ParticleSet(object):
             print('Plot saved to '+savefile+'.png')
             plt.close()
 
+    def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+        lons = [p.lon for p in self.particles]
+        lats = [p.lat for p in self.particles]
+        # Code for finding nearest vertex for each particle is currently very inefficient
+        # once cell tracking is implemented for SciPy particles, the below use of np.min/max
+        # will be replaced (see PR #111)
+        if field is not None:
+            # Kick out particles that are not within the limits of our density field
+            half_lon = (field.lon[1] - field.lon[0])/2
+            half_lat = (field.lat[1] - field.lat[0])/2
+            dparticles = (lons > (np.min(field.lon)-half_lon)) * (lons < (np.max(field.lon)+half_lon)) * \
+                         (lats > (np.min(field.lat)-half_lat)) * (lats < (np.max(field.lat)+half_lat))
+            dparticles = np.where(dparticles)[0]
+        else:
+            field = self.grid.U
+            dparticles = range(len(self.particles))
+        Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
+
+        # For each particle, find closest vertex in x and y and add 1 or val to the count
+        if particle_val is not None:
+            for p in dparticles:
+                Density[np.argmin(np.abs(lons[p] - field.lon)), np.argmin(np.abs(lats[p] - field.lat))] \
+                    += getattr(self.particles[p], particle_val)
+        else:
+            for p in dparticles:
+                nearest_lon = np.argmin(np.abs(lons[p] - field.lon))
+                nearest_lat = np.argmin(np.abs(lats[p] - field.lat))
+                Density[nearest_lon, nearest_lat] += 1
+            if relative:
+                Density /= len(dparticles)
+
+        if area_scale:
+            area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
+            U = self.grid.U
+            V = self.grid.V
+            dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0])
+            for y in range(len(U.lat)):
+                dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y])
+                area[y, :] = dy * dx
+            # Scale by cell area
+            Density /= np.transpose(area)
+
+        return Density
+
     def Kernel(self, pyfunc):
         return Kernel(self.grid, self.ptype, pyfunc=pyfunc)
 
