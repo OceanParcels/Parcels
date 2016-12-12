@@ -136,6 +136,9 @@ class Grid(object):
         self.fields.update({field.name: field})
         setattr(self, field.name, field)
 
+    def add_constant(self, constant):
+        setattr(self, constant.name, constant)
+
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)
 
