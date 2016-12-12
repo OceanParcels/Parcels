@@ -380,6 +380,13 @@ class Field(object):
             return anim
 
     def add_periodic_halo(self, zonal, meridional, halosize=None):
+        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
+        by copying a small portion of the field on one side of the domain to the other.
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 3%
+        """
         if zonal:
             halosize = int(len(self.lon) / 30) if halosize is None else halosize
             lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
