@@ -1,7 +1,10 @@
-from parcels import Grid
-from parcels.field import Field
+from parcels import Grid, ScipyParticle, JITParticle
+from parcels.field import Field, Constant
 import numpy as np
 import pytest
+
+
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def generate_grid(xdim, ydim, zdim=1, tdim=1):
@@ -75,3 +78,23 @@ def test_grid_gradient():
         # Arbitrarily set relative tolerance to 1%.
         assert np.allclose(grad_fields[0].data[0, :, :], np.array(np.transpose(numpy_grad_fields[0])), rtol=1e-2)  # Field gradient dx.
         assert np.allclose(grad_fields[1].data[0, :, :], np.array(np.transpose(numpy_grad_fields[1])), rtol=1e-2)  # Field gradient dy.
+
+
+@pytest.fixture
+def addConst(particle, grid, time, dt):
+    particle.lon = particle.lon + grid.movewest
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_grid_constant(mode):
+    u, v, lon, lat, depth, time = generate_grid(100, 100)
+    grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
+    constval = 0.2
+    const = Constant('movewest', constval)
+    grid.add_constant(const)
+    assert grid.movewest.data == constval
+
+    pset = grid.ParticleSet(size=1, pclass=ptype[mode],
+                            start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
+    assert pset[0].lon == 0.5 + constval
