@@ -475,3 +475,6 @@ class Constant(object):
     def __init__(self, name, data):
         self.name = name
         self.data = data
+
+    def __getitem__(self, key):
+        return self.data[key]
