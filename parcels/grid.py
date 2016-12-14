@@ -142,13 +142,13 @@ class Grid(object):
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)
 
-    def add_periodic_halo(self, zonal=False, meridional=False, halosize=None):
+    def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
         """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
 
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
-        :param halosize: size of the halo (in grid points)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
         for attr, value in self.__dict__.iteritems():
             if isinstance(value, Field):

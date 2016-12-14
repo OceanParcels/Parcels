@@ -87,10 +87,10 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_periodic_meridional(mode, xdim=100, ydim=100, halosize=3):
+def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
     grid = periodicgrid(xdim, ydim, uvel=0., vvel=1.)
     grid.add_periodic_halo(meridional=True)
-    assert(len(grid.U.lat) == 1.06 * ydim)  # default halo size is 3%
+    assert(len(grid.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
     pset = grid.ParticleSet(1, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
@@ -98,11 +98,11 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100, halosize=3):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100, halosize=3):
+def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     grid = periodicgrid(xdim, ydim, uvel=1., vvel=1.)
     grid.add_periodic_halo(zonal=True, meridional=True)
-    assert(len(grid.U.lat) == 1.06 * ydim)  # default halo size is 3%
-    assert(len(grid.U.lon) == xdim + 2 * halosize)  # default halo size is 3%
+    assert(len(grid.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert(len(grid.U.lon) == xdim + 10)  # default halo size is 5 grid points
     assert np.allclose(np.diff(grid.U.lat), grid.U.lat[1]-grid.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(grid.U.lon), grid.U.lon[1]-grid.U.lon[0], rtol=0.001)
 
