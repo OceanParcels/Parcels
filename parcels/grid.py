@@ -131,6 +131,11 @@ class Grid(object):
         return cls.from_netcdf(filenames, variables=extra_vars,
                                dimensions=dimensions, **kwargs)
 
+    @property
+    def fields(self):
+        """List of fields associated with this grid"""
+        return [v for v in self.__dict__.values() if isinstance(v, Field)]
+
     def add_field(self, field):
         setattr(self, field.name, field)
 
@@ -151,6 +156,6 @@ class Grid(object):
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
 
-        for attr, value in self.__dict__.iteritems():
-            if isinstance(value, Field) and (attr is not 'U') and (attr is not 'V'):
-                value.write(filename)
+        for v in self.fields:
+            if (v.name is not 'U') and (v.name is not 'V'):
+                v.write(filename)

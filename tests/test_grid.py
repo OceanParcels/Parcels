@@ -48,12 +48,14 @@ def test_grid_from_nemo(xdim, ydim, tmpdir, filename='test_nemo'):
 
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
-def test_add_field(xdim, ydim):
+def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
+    filepath = tmpdir.join(filename)
     u, v, lon, lat, depth, time = generate_grid(xdim, ydim)
     grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
     field = Field('newfld', grid.U.data, grid.U.lon, grid.U.lat)
     grid.add_field(field)
     assert grid.newfld.data.shape == grid.U.data.shape
+    grid.write(filepath)
 
 
 def createSimpleGrid(x, y, time):
