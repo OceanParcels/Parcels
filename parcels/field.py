@@ -17,7 +17,7 @@ except:
     plt = None
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar', 'Constant']
+__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 
 
 class FieldSamplingError(RuntimeError):
@@ -463,18 +463,3 @@ class FileBuffer(object):
             return self.dataset[self.dimensions['time']].calendar
         except:
             return 'standard'
-
-
-class Constant(object):
-    """Class that holds constants used in kernels.
-
-    :param name: Name of the constant
-    :param data: float64 data
-    """
-
-    def __init__(self, name, data):
-        self.name = name
-        self.data = data
-
-    def __getitem__(self, key):
-        return self.data[key]
