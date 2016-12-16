@@ -83,7 +83,8 @@ class Grid(object):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
-        filepath may contain wildcards to indicate multiple files.
+        filepath may contain wildcards to indicate multiple files,
+        or be a list of file.
         :param variabels: Dictionary mapping variables to variable
         names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
@@ -101,8 +102,11 @@ class Grid(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            basepath = path.local(filenames[var])
-            paths = [path.local(fp) for fp in glob(str(basepath))]
+            if isinstance(filenames[var], list):
+                paths = filenames[var]
+            else:
+                basepath = path.local(filenames[var])
+                paths = [path.local(fp) for fp in glob(str(basepath))]
             if len(paths) == 0:
                 raise IOError("Grid files not found: %s" % str(basepath))
             for fp in paths:
