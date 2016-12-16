@@ -159,3 +159,17 @@ class Grid(object):
         for v in self.fields:
             if (v.name is not 'U') and (v.name is not 'V'):
                 v.write(filename)
+
+    def advancetime(self, gridnew):
+        """Replace oldest time on grid with newgrid
+
+        :param gridnew: Grid snapshot with which the oldest time has to be replaced"""
+
+        if len(gridnew.time) is not 1:
+            raise RuntimeError('New grid needs to have only one snapshot')
+
+        for v in self.fields:
+            v.data = np.concatenate((v.data[1:, :, :], getattr(gridnew, v.name).data[:, :, :]), 0)
+            v.time = np.concatenate((v.time[1:], getattr(gridnew, v.name).time))
+
+        self.time = np.concatenate((self.time[1:], gridnew.time))

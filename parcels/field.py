@@ -272,7 +272,6 @@ class Field(object):
         else:
             return val
 
-    @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
         """Find the next index in the time array for a given time
 
