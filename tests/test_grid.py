@@ -87,7 +87,6 @@ def test_grid_gradient():
     deg2rd = np.pi / 180.
     numpy_grad_fields = np.gradient(np.transpose(field.data[0, :, :]), (r * np.diff(field.lat) * deg2rd)[0])
 
-
     # Arbitrarily set relative tolerance to 1%.
     assert np.allclose(grad_fields[0].data[0, :, :], np.array(np.transpose(numpy_grad_fields[0])),
                        rtol=1e-2)  # Field gradient dx.
