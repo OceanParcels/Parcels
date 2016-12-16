@@ -81,7 +81,7 @@ def test_grid_gradient():
 
 
 def addConst(particle, grid, time, dt):
-    particle.lon = particle.lon + grid.movewest
+    particle.lon = particle.lon + grid.movewest + grid.moveeast
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -89,10 +89,12 @@ def test_grid_constant(mode):
     u, v, lon, lat, depth, time = generate_grid(100, 100)
     grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
     westval = -0.2
+    eastval = 0.3
     grid.add_constant('movewest', westval)
+    grid.add_constant('moveeast', eastval)
     assert grid.movewest == westval
 
     pset = grid.ParticleSet(size=1, pclass=ptype[mode],
                             start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
-    assert abs(pset[0].lon - (0.5 + westval)) < 1e-4
+    assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
