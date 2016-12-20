@@ -168,11 +168,12 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, indices, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
+        :param indices: indices for each dimension to read from file
         :param dataset: Single or multiple netcdf.Dataset object(s)
         containing field data. If multiple datasets are present they
         will be concatenated along the time axis
@@ -181,7 +182,11 @@ class Field(object):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon = filebuffer.lon
+            indslon = indices['lon'] if 'lon' in indices else range(lon.size)
+            lon = lon[indslon]
             lat = filebuffer.lat
+            indslat = indices['lat'] if 'lat' in indices else range(lat.size)
+            lat = lat[indslat]
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
@@ -205,6 +210,8 @@ class Field(object):
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
+                filebuffer.indslat = indslat
+                filebuffer.indslon = indslon
                 data[tidx:(tidx+len(tslice)), 0, :, :] = filebuffer.data[:, :, :]
             tidx += len(tslice)
         return cls(name, data, lon, lat, depth=depth, time=time,
@@ -431,9 +438,9 @@ class FileBuffer(object):
     @property
     def data(self):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
-            return self.dataset[self.dimensions['data']][:, :, :]
+            return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, 0, :, :]
+            return self.dataset[self.dimensions['data']][:, 0, self.indslat, self.indslon]
 
     @property
     def time(self):
