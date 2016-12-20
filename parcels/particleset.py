@@ -114,7 +114,7 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.time[0])
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.U.time[0])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
@@ -215,12 +215,12 @@ class ParticleSet(object):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
+            starttime = self.grid.U.time[0] if dt > 0 else self.grid.U.time[-1]
         if runtime is not None:
             endtime = starttime + runtime
         else:
             if endtime is None:
-                endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
+                endtime = self.grid.U.time[-1] if dt > 0 else self.grid.U.time[0]
         if interval is None:
             interval = endtime - starttime
 
