@@ -66,6 +66,14 @@ def test_grid_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets
     assert np.allclose(gridsub.V.data, gridfull.V.data[ixgrid])
 
 
+@pytest.mark.parametrize('indstime', [range(10, 20), [4]])
+def test_moving_eddies_file_subsettime(indstime, gridfile='examples/MovingEddies_data/moving_eddies'):
+    gridfull = Grid.from_nemo(gridfile, extra_vars={'P': 'P'})
+    gridsub = Grid.from_nemo(gridfile, extra_vars={'P': 'P'}, indices={'time': indstime})
+    assert np.allclose(gridsub.P.time, gridfull.P.time[indstime])
+    assert np.allclose(gridsub.P.data, gridfull.P.data[indstime, :, :])
+
+
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):

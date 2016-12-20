@@ -210,6 +210,10 @@ class Field(object):
                 filebuffer.indslon = indslon
                 data[tidx:(tidx+len(tslice)), 0, :, :] = filebuffer.data[:, :, :]
             tidx += len(tslice)
+        # Time indexing after the fact only
+        if 'time' in indices:
+            time = time[indices['time']]
+            data = data[indices['time'], :, :, :]
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
 
