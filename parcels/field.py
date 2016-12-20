@@ -424,6 +424,8 @@ class FileBuffer(object):
     def read_dimension(self, dimname, indices):
         dim = getattr(self, dimname)
         inds = indices[dimname] if dimname in indices else range(dim.size)
+        if not isinstance(inds, list):
+            raise RuntimeError('Index for '+dimname+' needs to be a list')
         return dim[inds], inds
 
     @property
