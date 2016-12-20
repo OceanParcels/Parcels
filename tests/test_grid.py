@@ -46,6 +46,26 @@ def test_grid_from_nemo(xdim, ydim, tmpdir, filename='test_nemo'):
     assert np.allclose(grid.V.data[0, :], v_t, rtol=1e-12)
 
 
+@pytest.mark.parametrize('indslon', [range(10, 20), [1]])
+@pytest.mark.parametrize('indslat', [range(30, 60), [22]])
+def test_grid_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
+    """ Test for subsetting grid from file using indices dict. """
+    u, v, lon, lat, depth, time = generate_grid(100, 100)
+    filepath = tmpdir.join(filename)
+    gridfull = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
+    gridfull.write(filepath)
+    indices = {'lon': indslon, 'lat': indslat}
+    gridsub = Grid.from_nemo(filepath, indices=indices)
+    assert np.allclose(gridsub.U.lon, gridfull.U.lon[indices['lon']])
+    assert np.allclose(gridsub.U.lat, gridfull.U.lat[indices['lat']])
+    assert np.allclose(gridsub.V.lon, gridfull.V.lon[indices['lon']])
+    assert np.allclose(gridsub.V.lat, gridfull.V.lat[indices['lat']])
+
+    ixgrid = np.ix_([0], indices['lat'], indices['lon'])
+    assert np.allclose(gridsub.U.data, gridfull.U.data[ixgrid])
+    assert np.allclose(gridsub.V.data, gridfull.V.data[ixgrid])
+
+
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
