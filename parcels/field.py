@@ -181,12 +181,8 @@ class Field(object):
         if not isinstance(filenames, Iterable):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon = filebuffer.lon
-            indslon = indices['lon'] if 'lon' in indices else range(lon.size)
-            lon = lon[indslon]
-            lat = filebuffer.lat
-            indslat = indices['lat'] if 'lat' in indices else range(lat.size)
-            lat = lat[indslat]
+            lon, indslon = filebuffer.read_dimension('lon', indices)
+            lat, indslat = filebuffer.read_dimension('lat', indices)
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
@@ -424,6 +420,11 @@ class FileBuffer(object):
 
     def __exit__(self, type, value, traceback):
         self.dataset.close()
+
+    def read_dimension(self, dimname, indices):
+        dim = getattr(self, dimname)
+        inds = indices[dimname] if dimname in indices else range(dim.size)
+        return dim[inds], inds
 
     @property
     def lon(self):
