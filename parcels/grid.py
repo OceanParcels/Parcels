@@ -173,7 +173,17 @@ class Grid(object):
             raise RuntimeError('New grid needs to have only one snapshot')
 
         for v in self.fields:
-            v.data = np.concatenate((v.data[1:, :, :], getattr(gridnew, v.name).data[:, :, :]), 0)
-            v.time = np.concatenate((v.time[1:], getattr(gridnew, v.name).time))
+            vnew = getattr(gridnew, v.name)
+            if vnew.time > v.time[-1]:  # forward in time, so appending at end
+                v.data = np.concatenate((v.data[1:, :, :], vnew.data[:, :, :]), 0)
+                v.time = np.concatenate((v.time[1:], vnew.time))
+            elif vnew.time < v.time[0]:  # backward in time, so prepending at start
+                v.data = np.concatenate((vnew.data[:, :, :], v.data[:-1, :, :]), 0)
+                v.time = np.concatenate((vnew.time, v.time[:-1]))
+            else:
+                raise RuntimeError("Time of gridnew in grid.advancetime() overlaps with times in old grid")
 
-        self.time = np.concatenate((self.time[1:], gridnew.time))
+        if gridnew.time > self.time[0]:
+            self.time = np.concatenate((self.time[1:], gridnew.time))
+        else:
+            self.time = np.concatenate((gridnew.time, self.time[:-1]))
