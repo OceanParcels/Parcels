@@ -168,7 +168,7 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, indices, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
