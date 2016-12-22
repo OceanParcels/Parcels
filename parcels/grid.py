@@ -197,7 +197,7 @@ class Grid(object):
 
         :param gridnew: Grid snapshot with which the oldest time has to be replaced"""
 
-        if len(gridnew.time) is not 1:
+        if len(gridnew.U.time) is not 1:
             raise RuntimeError('New grid needs to have only one snapshot')
 
         for v in self.fields:
@@ -210,8 +210,3 @@ class Grid(object):
                 v.time = np.concatenate((vnew.time, v.time[:-1]))
             else:
                 raise RuntimeError("Time of gridnew in grid.advancetime() overlaps with times in old grid")
-
-        if gridnew.time > self.time[0]:
-            self.time = np.concatenate((self.time[1:], gridnew.time))
-        else:
-            self.time = np.concatenate((gridnew.time, self.time[:-1]))
