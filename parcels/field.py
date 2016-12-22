@@ -168,11 +168,12 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
+        :param indices: indices for each dimension to read from file
         :param dataset: Single or multiple netcdf.Dataset object(s)
         containing field data. If multiple datasets are present they
         will be concatenated along the time axis
@@ -180,8 +181,8 @@ class Field(object):
         if not isinstance(filenames, Iterable):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon = filebuffer.lon
-            lat = filebuffer.lat
+            lon, indslon = filebuffer.read_dimension('lon', indices)
+            lat, indslat = filebuffer.read_dimension('lat', indices)
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
@@ -205,8 +206,14 @@ class Field(object):
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
+                filebuffer.indslat = indslat
+                filebuffer.indslon = indslon
                 data[tidx:(tidx+len(tslice)), 0, :, :] = filebuffer.data[:, :, :]
             tidx += len(tslice)
+        # Time indexing after the fact only
+        if 'time' in indices:
+            time = time[indices['time']]
+            data = data[indices['time'], :, :, :]
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
 
@@ -254,7 +261,8 @@ class Field(object):
         out-of-bounds coordinates.
         """
         return RegularGridInterpolator((self.lat, self.lon), self.data[t_idx, :],
-                                       bounds_error=False, fill_value=np.nan, method=self.interp_method)
+                                       bounds_error=False, fill_value=np.nan,
+                                       method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
         t0 = self.time[tidx-1]
@@ -309,8 +317,10 @@ class Field(object):
         return self.units.to_target(value, x, y)
 
     def ccode_eval(self, var, t, x, y):
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s)" \
-            % (x, y, "particle->xi", "particle->yi", t, self.name, var)
+        # Casting interp_methd to int as easier to pass on in C-code
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, "particle->xi", "particle->yi", t, self.name, var,
+               self.interp_method.upper())
 
     def ccode_convert(self, _, x, y):
         return self.units.ccode_to_target(x, y)
@@ -378,6 +388,27 @@ class Field(object):
             plt.close()
             return anim
 
+    def add_periodic_halo(self, zonal, meridional, halosize=5):
+        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
+        by copying a small portion of the field on one side of the domain to the other.
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+        if zonal:
+            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
+                                        self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
+            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
+                                       self.lon, self.lon[0:halosize] + lonshift))
+        if meridional:
+            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
+            self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
+                                        self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
+            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
+                                       self.lat, self.lat[0:halosize] + latshift))
+
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
@@ -417,6 +448,13 @@ class FileBuffer(object):
     def __exit__(self, type, value, traceback):
         self.dataset.close()
 
+    def read_dimension(self, dimname, indices):
+        dim = getattr(self, dimname)
+        inds = indices[dimname] if dimname in indices else range(dim.size)
+        if not isinstance(inds, list):
+            raise RuntimeError('Index for '+dimname+' needs to be a list')
+        return dim[inds], inds
+
     @property
     def lon(self):
         lon = self.dataset[self.dimensions['lon']]
@@ -430,9 +468,9 @@ class FileBuffer(object):
     @property
     def data(self):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
-            return self.dataset[self.dimensions['data']][:, :, :]
+            return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, 0, :, :]
+            return self.dataset[self.dimensions['data']][:, 0, self.indslat, self.indslon]
 
     @property
     def time(self):
