@@ -6,6 +6,11 @@ typedef enum
     SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4
   } ErrorCode;
 
+typedef enum
+  {
+    LINEAR=0, NEAREST=1
+  } InterpCode;
+
 #define CHECKERROR(res) do {if (res != SUCCESS) return res;} while (0)
 
 typedef struct
@@ -81,13 +86,13 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
   err = search_linear_double(time, f->tdim, f->time, &(f->tidx));
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
-    if (interp_method==0){
+    if (interp_method == LINEAR){
       err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
                                           (float**)(data[f->tidx]), &f0);
       err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
                                           (float**)(data[f->tidx+1]), &f1);
     }
-    else if  (interp_method==1){
+    else if  (interp_method == NEAREST){
       err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
                                            (float**)(data[f->tidx]), &f0);
       err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
@@ -99,11 +104,11 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
     *value = f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
     return SUCCESS;
   } else {
-    if (interp_method==0){
+    if (interp_method == LINEAR){
       err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
                                           (float**)(data[f->tidx]), value);
     }
-    else if (interp_method==1){
+    else if (interp_method == NEAREST){
       err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
                                            (float**)(data[f->tidx]), value);
     }

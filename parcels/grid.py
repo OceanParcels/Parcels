@@ -36,8 +36,8 @@ class Grid(object):
         self.V = V
         self.depth = depth
         self.time = time
-        self.fields = fields
         self.lasttrajectory = 0
+
 
         # Add additional fields as attributes
         for name, field in fields.items():
@@ -134,8 +134,12 @@ class Grid(object):
         return cls.from_netcdf(filenames, variables=extra_vars,
                                dimensions=dimensions, **kwargs)
 
+    @property
+    def fields(self):
+        """List of fields associated with this grid"""
+        return [v for v in self.__dict__.values() if isinstance(v, Field)]
+
     def add_field(self, field):
-        self.fields.update({field.name: field})
         setattr(self, field.name, field)
 
     def ParticleSet(self, *args, **kwargs):
@@ -155,6 +159,6 @@ class Grid(object):
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
 
-        for f in self.fields:
-            field = getattr(self, f)
-            field.write(filename)
+        for v in self.fields:
+            if (v.name is not 'U') and (v.name is not 'V'):
+                v.write(filename)

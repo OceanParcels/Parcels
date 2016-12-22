@@ -99,12 +99,13 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation(mode, k_sample_p, xdim=2, ydim=2, npart=81):
-    lon = np.linspace(0., 1., xdim, dtype=np.float32)
-    lat = np.linspace(0., 1., ydim, dtype=np.float32)
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
-    P = np.zeros((xdim, ydim), dtype=np.float32)
+def test_nearest_neighbour_interpolation(mode, k_sample_p, npart=81):
+    dims = (2, 2)
+    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
+    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
+    U = np.zeros(dims, dtype=np.float32)
+    V = np.zeros(dims, dtype=np.float32)
+    P = np.zeros(dims, dtype=np.float32)
     P[0, 0] = 1.
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
                           field_data={'P': np.asarray(P, dtype=np.float32)})
