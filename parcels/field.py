@@ -389,6 +389,27 @@ class Field(object):
             plt.close()
             return anim
 
+    def add_periodic_halo(self, zonal, meridional, halosize=5):
+        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
+        by copying a small portion of the field on one side of the domain to the other.
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+        if zonal:
+            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
+                                        self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
+            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
+                                       self.lon, self.lon[0:halosize] + lonshift))
+        if meridional:
+            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
+            self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
+                                        self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
+            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
+                                       self.lat, self.lat[0:halosize] + latshift))
+
     def write(self, filename, varname=None):
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:

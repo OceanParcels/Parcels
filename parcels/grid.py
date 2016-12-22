@@ -149,6 +149,27 @@ class Grid(object):
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)
 
+    def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
+        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
+        by copying a small portion of the field on one side of the domain to the other.
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+
+        # setting grid constants for use in PeriodicBC kernel. Note using U-Field values
+        if zonal:
+            self.add_constant('halo_west', self.U.lon[0])
+            self.add_constant('halo_east', self.U.lon[-1])
+        if meridional:
+            self.add_constant('halo_south', self.U.lat[0])
+            self.add_constant('halo_north', self.U.lat[-1])
+
+        for attr, value in self.__dict__.iteritems():
+            if isinstance(value, Field):
+                value.add_periodic_halo(zonal, meridional, halosize)
+
     def eval(self, x, y):
         u = self.U.eval(x, y)
         v = self.V.eval(x, y)
