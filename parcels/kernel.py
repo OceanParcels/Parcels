@@ -80,8 +80,9 @@ class Kernel(object):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
+            self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(grid, ptype)
-            self.ccode = loopgen.generate(self.funcname, self.field_args,
+            self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode)
 
             basename = path.join(get_cache_dir(), self._cache_key)
@@ -111,6 +112,7 @@ class Kernel(object):
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+        fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
         self._function(c_int(len(pset)), particle_data,
                        c_double(endtime), c_float(dt), *fargs)
