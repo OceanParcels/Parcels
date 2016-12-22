@@ -34,12 +34,9 @@ class Grid(object):
     def __init__(self, U, V, depth, time, fields={}):
         self.U = U
         self.V = V
-<<<<<<< HEAD
         self.depth = depth
         self.time = time
         self.lasttrajectory = 0
-=======
->>>>>>> master
 
         # Add additional fields as attributes
         for name, field in fields.items():
