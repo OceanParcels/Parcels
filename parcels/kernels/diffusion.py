@@ -2,10 +2,10 @@ from parcels.rng import random
 import math
 
 
-__all__ = ['LagrangianDiffusion']
+__all__ = ['SaptiallyVaryingDiffusion2D']
 
 
-def LagrangianDiffusion(particle, grid, time, dt):
+def SaptiallyVaryingDiffusion2D(particle, grid, time, dt):
     # Diffusion equations for particles in non-uniform diffusivity fields
     # from Ross &  Sharples 2004 and Spagnol et al. 2002
     to_lat = 1 / 1000. / 1.852 / 60.
