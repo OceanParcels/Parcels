@@ -38,7 +38,6 @@ class Grid(object):
         self.time = time
         self.lasttrajectory = 0
 
-
         # Add additional fields as attributes
         for name, field in fields.items():
             setattr(self, name, field)
