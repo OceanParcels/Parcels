@@ -254,7 +254,8 @@ class Field(object):
         out-of-bounds coordinates.
         """
         return RegularGridInterpolator((self.lat, self.lon), self.data[t_idx, :],
-                                       bounds_error=False, fill_value=np.nan, method=self.interp_method)
+                                       bounds_error=False, fill_value=np.nan,
+                                       method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
         t0 = self.time[tidx-1]
@@ -310,8 +311,10 @@ class Field(object):
         return self.units.to_target(value, x, y)
 
     def ccode_eval(self, var, t, x, y):
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s)" \
-            % (x, y, "particle->xi", "particle->yi", t, self.name, var)
+        # Casting interp_methd to int as easier to pass on in C-code
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, "particle->xi", "particle->yi", t, self.name, var,
+               self.interp_method.upper())
 
     def ccode_convert(self, _, x, y):
         return self.units.ccode_to_target(x, y)
