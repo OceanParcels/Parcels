@@ -33,8 +33,6 @@ class Grid(object):
     def __init__(self, U, V, depth, time, fields={}):
         self.U = U
         self.V = V
-        self.depth = depth
-        self.time = time
 
         # Add additional fields as attributes
         for name, field in fields.items():
