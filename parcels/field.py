@@ -168,11 +168,12 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
+        :param indices: indices for each dimension to read from file
         :param dataset: Single or multiple netcdf.Dataset object(s)
         containing field data. If multiple datasets are present they
         will be concatenated along the time axis
@@ -180,8 +181,8 @@ class Field(object):
         if not isinstance(filenames, Iterable):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon = filebuffer.lon
-            lat = filebuffer.lat
+            lon, indslon = filebuffer.read_dimension('lon', indices)
+            lat, indslat = filebuffer.read_dimension('lat', indices)
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
@@ -205,8 +206,14 @@ class Field(object):
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
+                filebuffer.indslat = indslat
+                filebuffer.indslon = indslon
                 data[tidx:(tidx+len(tslice)), 0, :, :] = filebuffer.data[:, :, :]
             tidx += len(tslice)
+        # Time indexing after the fact only
+        if 'time' in indices:
+            time = time[indices['time']]
+            data = data[indices['time'], :, :, :]
         return cls(name, data, lon, lat, depth=depth, time=time,
                    time_origin=time_origin, **kwargs)
 
@@ -421,6 +428,13 @@ class FileBuffer(object):
     def __exit__(self, type, value, traceback):
         self.dataset.close()
 
+    def read_dimension(self, dimname, indices):
+        dim = getattr(self, dimname)
+        inds = indices[dimname] if dimname in indices else range(dim.size)
+        if not isinstance(inds, list):
+            raise RuntimeError('Index for '+dimname+' needs to be a list')
+        return dim[inds], inds
+
     @property
     def lon(self):
         lon = self.dataset[self.dimensions['lon']]
@@ -434,9 +448,9 @@ class FileBuffer(object):
     @property
     def data(self):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
-            return self.dataset[self.dimensions['data']][:, :, :]
+            return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, 0, :, :]
+            return self.dataset[self.dimensions['data']][:, 0, self.indslat, self.indslon]
 
     @property
     def time(self):
