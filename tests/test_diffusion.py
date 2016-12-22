@@ -1,4 +1,5 @@
-from parcels import Field, Grid, JITParticle, ScipyParticle, Variable, LagrangianDiffusion, random, ErrorCode
+from parcels import Field, Grid, JITParticle, ScipyParticle, Variable, SaptiallyVaryingDiffusion2D, random, ErrorCode
+from operator import attrgetter
 import numpy as np
 import math
 from argparse import ArgumentParser
@@ -6,7 +7,7 @@ import pytest
 
 
 def CreateDiffusionField(grid, mu=None):
-    """Generates a non-uniform diffusivity field
+    """Generates a non-uniform diffusivity field using a multivariate normal distribution
     """
     depth = grid.U.depth
     time = grid.U.time
@@ -15,9 +16,7 @@ def CreateDiffusionField(grid, mu=None):
 
     K = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
 
-    if mu is None:
-        mu = [np.mean(lon), np.mean(lat)]
-
+    # Simple multivariate normal pdf function
     def MVNorm(x, y, mu=[0, 0], sigma=[[100, 0], [0, 100]]):
         mu_x = mu[0]
         mu_y = mu[1]
@@ -33,7 +32,9 @@ def CreateDiffusionField(grid, mu=None):
                         ((2 * sig_xy * (x - mu_x) * (y - mu_y)) / (sig_x * sig_y))))
 
         return pd
-
+    # Define multivariate mean (mu) and covariance matrix (sig) parameters
+    if mu is None:
+        mu = [np.mean(lon), np.mean(lat)]
     sig = [[0.01, 0], [0, 0.01]]
     for i, x in enumerate(lon):
         for j, y in enumerate(lat):
@@ -94,18 +95,15 @@ def UpdatePosition(particle, grid, time, dt):
 # Recovery Kernal for particles that diffuse outside boundary
 def Send2PreviousPoint(particle):
     # print("Recovery triggered at %s | %s!" % (particle.lon, particle.lat))
-    # print("Moving particle back to %s | %s" % (particle.prev_lat, particle.prev_lat))
+    # print("Moving particle back to %s | %s" % (particle.prev_lon, particle.prev_lat))
     particle.lon = particle.prev_lon
     particle.lat = particle.prev_lat
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def diffusion_test(mode, type='true_diffusion', particles=1000, timesteps=1000, output_file='diffusion_test'):
-    # Generate grid files according to given dimensions
-    gridx = 100
-    gridy = 100
     # Generating grid with zero horizontal velocities
-    forcing_fields = CreateDummyUV(gridx, gridy)
+    forcing_fields = CreateDummyUV(100, 100)
     grid = Grid(forcing_fields['U'], forcing_fields['V'], forcing_fields['U'].depth,
                 forcing_fields['U'].time, fields=forcing_fields)
     # Create a non-uniform field of diffusivity
@@ -122,9 +120,6 @@ def diffusion_test(mode, type='true_diffusion', particles=1000, timesteps=1000, 
     Start_Field = Field('Start', CreateStartField(grid.U.lon, grid.U.lat),
                         grid.U.lon, grid.U.lat, depth=grid.U.depth, time=grid.U.time, transpose=True)
 
-    # Calculate appropriate timestep
-    min_timestep = np.floor(np.min([np.min(1/np.abs(grid.d2K_dx.data)), np.min(1/np.abs(grid.d2K_dy.data))]))
-    print('Timestep should be < %s' % min_timestep)
     timestep = 500
 
     steps = timesteps
@@ -133,15 +128,10 @@ def diffusion_test(mode, type='true_diffusion', particles=1000, timesteps=1000, 
 
     # Simply particle superclass that remembers previous positions for kernel error recovery
     class Diffuser(ParticleClass):
-        prev_lon = Variable("prev_lon", to_write=False)
-        prev_lat = Variable("prev_lat", to_write=False)
-        new_lon = Variable("new_lon", to_write=False)
-        new_lat = Variable("new_lat", to_write=False)
-
-        def __init__(self, *args, **kwargs):
-            super(Diffuser, self).__init__(*args, **kwargs)
-            self.prev_lon = 0.05
-            self.prev_lat = 0.05
+        prev_lon = Variable("prev_lon", to_write=False, initial=attrgetter('lon'))
+        prev_lat = Variable("prev_lat", to_write=False, initial=attrgetter('lat'))
+        new_lon = Variable("new_lon", to_write=False, initial=attrgetter('lon'))
+        new_lat = Variable("new_lat", to_write=False, initial=attrgetter('lat'))
 
     diffusers = grid.ParticleSet(size=particles, pclass=Diffuser, start_field=Start_Field)
 
@@ -154,7 +144,7 @@ def diffusion_test(mode, type='true_diffusion', particles=1000, timesteps=1000, 
                          DensityField.lon,
                          DensityField.lat))
 
-    diffuse = diffusers.Kernel(LagrangianDiffusion) if type == 'true_diffusion' else diffusers.Kernel(LagrangianDiffusionNoCorrection)
+    diffuse = diffusers.Kernel(SaptiallyVaryingDiffusion2D) if type == 'true_diffusion' else diffusers.Kernel(LagrangianDiffusionNoCorrection)
 
     diffusers.execute(diffusers.Kernel(UpdatePosition) + diffuse, endtime=grid.U.time[0]+timestep*steps, dt=timestep,
                       output_file=diffusers.ParticleFile(name=args.output+type),
@@ -194,6 +184,5 @@ if __name__ == "__main__":
         'Variance in diffuser particle density across cells is significantly different from start to end of simulation!'
 
     densities2 = diffusion_test(args.mode, 'brownian_motion', args.particles, args.timesteps, args.output)
-    print(np.abs(np.var(densities2[0]) - np.var(densities2[1])))
     assert np.abs(np.var(densities2[0]) - np.var(densities2[1])) > tol, \
         'Variance in brownian motion particle density across cells is not significantly different from start to end of simulation!'
