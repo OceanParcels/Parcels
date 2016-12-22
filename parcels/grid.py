@@ -137,6 +137,9 @@ class Grid(object):
     def add_field(self, field):
         setattr(self, field.name, field)
 
+    def add_constant(self, name, value):
+        setattr(self, name, value)
+
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)
 
