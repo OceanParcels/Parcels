@@ -153,6 +153,15 @@ class Grid(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
+
+        # setting grid constants for use in PeriodicBC kernel. Note using U-Field values
+        if zonal:
+            self.add_constant('halo_west', self.U.lon[0])
+            self.add_constant('halo_east', self.U.lon[-1])
+        if meridional:
+            self.add_constant('halo_south', self.U.lat[0])
+            self.add_constant('halo_north', self.U.lat[-1])
+
         for attr, value in self.__dict__.iteritems():
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
