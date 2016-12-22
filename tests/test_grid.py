@@ -1,7 +1,10 @@
-from parcels import Grid
+from parcels import Grid, ScipyParticle, JITParticle
 from parcels.field import Field
 import numpy as np
 import pytest
+
+
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def generate_grid(xdim, ydim, zdim=1, tdim=1):
@@ -46,6 +49,18 @@ def test_grid_from_nemo(xdim, ydim, tmpdir, filename='test_nemo'):
     assert np.allclose(grid.V.data[0, :], v_t, rtol=1e-12)
 
 
+@pytest.mark.parametrize('xdim', [100, 200])
+@pytest.mark.parametrize('ydim', [100, 200])
+def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
+    filepath = tmpdir.join(filename)
+    u, v, lon, lat, depth, time = generate_grid(xdim, ydim)
+    grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
+    field = Field('newfld', grid.U.data, grid.U.lon, grid.U.lat)
+    grid.add_field(field)
+    assert grid.newfld.data.shape == grid.U.data.shape
+    grid.write(filepath)
+
+
 def createSimpleGrid(x, y, time):
     field = np.zeros((time.size, x, y), dtype=np.float32)
     ltri = np.triu_indices(n=x, m=y)
@@ -57,20 +72,43 @@ def createSimpleGrid(x, y, time):
 
 
 def test_grid_gradient():
-        x = 4
-        y = 6
-        time = np.linspace(0, 2, 3)
-        field = Field("Test", data=createSimpleGrid(x, y, time), time=time, lon=np.linspace(0, x-1, x),
-                      lat=np.linspace(-y/2, y/2-1, y))
+    x = 4
+    y = 6
+    time = np.linspace(0, 2, 3)
+    field = Field("Test", data=createSimpleGrid(x, y, time), time=time,
+                  lon=np.linspace(0, x-1, x, dtype=np.float32),
+                  lat=np.linspace(-y/2, y/2-1, y, dtype=np.float32))
 
-        # Calculate field gradients for testing against numpy gradients.
-        grad_fields = field.gradient()
+    # Calculate field gradients for testing against numpy gradients.
+    grad_fields = field.gradient()
 
-        # Create numpy fields.
-        r = 6.371e6
-        deg2rd = np.pi / 180.
-        numpy_grad_fields = np.gradient(np.transpose(field.data[0, :, :]), (r * np.diff(field.lat) * deg2rd)[0])
+    # Create numpy fields.
+    r = 6.371e6
+    deg2rd = np.pi / 180.
+    numpy_grad_fields = np.gradient(np.transpose(field.data[0, :, :]), (r * np.diff(field.lat) * deg2rd)[0])
 
-        # Arbitrarily set relative tolerance to 1%.
-        assert np.allclose(grad_fields[0].data[0, :, :], np.array(np.transpose(numpy_grad_fields[0])), rtol=1e-2)  # Field gradient dx.
-        assert np.allclose(grad_fields[1].data[0, :, :], np.array(np.transpose(numpy_grad_fields[1])), rtol=1e-2)  # Field gradient dy.
+    # Arbitrarily set relative tolerance to 1%.
+    assert np.allclose(grad_fields[0].data[0, :, :], np.array(np.transpose(numpy_grad_fields[0])),
+                       rtol=1e-2)  # Field gradient dx.
+    assert np.allclose(grad_fields[1].data[0, :, :], np.array(np.transpose(numpy_grad_fields[1])),
+                       rtol=1e-2)  # Field gradient dy.
+
+
+def addConst(particle, grid, time, dt):
+    particle.lon = particle.lon + grid.movewest + grid.moveeast
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_grid_constant(mode):
+    u, v, lon, lat, depth, time = generate_grid(100, 100)
+    grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
+    westval = -0.2
+    eastval = 0.3
+    grid.add_constant('movewest', westval)
+    grid.add_constant('moveeast', eastval)
+    assert grid.movewest == westval
+
+    pset = grid.ParticleSet(size=1, pclass=ptype[mode],
+                            start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
+    assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4

@@ -165,7 +165,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, interval=None, output_file=None, tol=None,
+                runtime=None, interval=None, recovery=None, output_file=None,
                 show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -180,6 +180,8 @@ class ParticleSet(object):
         :param interval: Interval for inner sub-timestepping (leap), which dictates
                          the update frequency of file output and animation.
         :param output_file: ParticleFile object for particle output
+        :param recovery: Dictionary with additional recovery kernels to allow
+                         custom recovery behaviour in case of kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -215,7 +217,7 @@ class ParticleSet(object):
         if starttime is None:
             starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
         if runtime is not None:
-            endtime = starttime + runtime if dt > 0 else starttime - runtime
+            endtime = starttime + runtime
         else:
             if endtime is None:
                 endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
@@ -248,15 +250,12 @@ class ParticleSet(object):
         leaptime = starttime
         for _ in range(timeleaps):
             leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt)
+            self.kernel.execute(self, endtime=leaptime, dt=dt,
+                                recovery=recovery)
             if output_file:
                 output_file.write(self, leaptime)
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
-        # Remove deactivated particles
-        to_remove = [i for i, p in enumerate(self.particles) if p.active == 0]
-        if len(to_remove) > 0:
-            self.remove(to_remove)
 
     def show(self, **kwargs):
         savefile = kwargs.get('savefile', None)
@@ -381,6 +380,50 @@ class ParticleSet(object):
             plt.savefig(savefile)
             print('Plot saved to '+savefile+'.png')
             plt.close()
+
+    def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+        lons = [p.lon for p in self.particles]
+        lats = [p.lat for p in self.particles]
+        # Code for finding nearest vertex for each particle is currently very inefficient
+        # once cell tracking is implemented for SciPy particles, the below use of np.min/max
+        # will be replaced (see PR #111)
+        if field is not None:
+            # Kick out particles that are not within the limits of our density field
+            half_lon = (field.lon[1] - field.lon[0])/2
+            half_lat = (field.lat[1] - field.lat[0])/2
+            dparticles = (lons > (np.min(field.lon)-half_lon)) * (lons < (np.max(field.lon)+half_lon)) * \
+                         (lats > (np.min(field.lat)-half_lat)) * (lats < (np.max(field.lat)+half_lat))
+            dparticles = np.where(dparticles)[0]
+        else:
+            field = self.grid.U
+            dparticles = range(len(self.particles))
+        Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
+
+        # For each particle, find closest vertex in x and y and add 1 or val to the count
+        if particle_val is not None:
+            for p in dparticles:
+                Density[np.argmin(np.abs(lons[p] - field.lon)), np.argmin(np.abs(lats[p] - field.lat))] \
+                    += getattr(self.particles[p], particle_val)
+        else:
+            for p in dparticles:
+                nearest_lon = np.argmin(np.abs(lons[p] - field.lon))
+                nearest_lat = np.argmin(np.abs(lats[p] - field.lat))
+                Density[nearest_lon, nearest_lat] += 1
+            if relative:
+                Density /= len(dparticles)
+
+        if area_scale:
+            area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
+            U = self.grid.U
+            V = self.grid.V
+            dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0])
+            for y in range(len(U.lat)):
+                dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y])
+                area[y, :] = dy * dx
+            # Scale by cell area
+            Density /= np.transpose(area)
+
+        return Density
 
     def Kernel(self, pyfunc):
         return Kernel(self.grid, self.ptype, pyfunc=pyfunc)

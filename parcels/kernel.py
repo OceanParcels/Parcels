@@ -1,5 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
+from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
+from parcels.field import FieldSamplingError
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -8,20 +10,14 @@ import inspect
 from copy import deepcopy
 import re
 from hashlib import md5
-from enum import Enum
 import math  # noqa
 import random  # noqa
 
 
-__all__ = ['Kernel', 'KernelOp']
+__all__ = ['Kernel']
 
 
 re_indent = re.compile(r"^(\s+)")
-
-
-class KernelOp(Enum):
-    SUCCESS = 0
-    FAILURE = 1
 
 
 def fix_indentation(string):
@@ -63,7 +59,7 @@ class Kernel(object):
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
                 user_ctx['random'] = globals()['random']
-                user_ctx['KernelOp'] = globals()['KernelOp']
+                user_ctx['ErrorCode'] = globals()['ErrorCode']
             except:
                 print("Warning: Could not access user context when merging kernels")
                 user_ctx = globals()
@@ -84,10 +80,10 @@ class Kernel(object):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
+            self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(grid, ptype)
-            adaptive = 'AdvectionRK45' in self.funcname
-            self.ccode = loopgen.generate(self.funcname, self.field_args,
-                                          kernel_ccode, adaptive=adaptive)
+            self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
+                                          kernel_ccode)
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
@@ -113,29 +109,91 @@ class Kernel(object):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
 
-    def execute(self, pset, endtime, dt):
+    def execute_jit(self, pset, endtime, dt):
+        """Invokes JIT engine to perform the core update loop"""
+        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+        fargs += [c_float(f) for f in self.const_args.values()]
+        particle_data = pset._particle_data.ctypes.data_as(c_void_p)
+        self._function(c_int(len(pset)), particle_data,
+                       c_double(endtime), c_float(dt), *fargs)
+
+    def execute_python(self, pset, endtime, dt):
+        """Performs the core update loop via Python"""
+        sign = 1. if dt > 0. else -1.
+        for p in pset.particles:
+            # Compute min/max dt for first timestep
+            dt_pos = min(abs(p.dt), abs(endtime - p.time))
+            while dt_pos > 0:
+                try:
+                    res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                except FieldSamplingError as fse:
+                    res = ErrorCode.ErrorOutOfBounds
+                    p.exception = fse
+                except Exception as e:
+                    res = ErrorCode.Error
+                    p.exception = e
+
+                # Update particle state for explicit returns
+                if res is not None:
+                    p.state = res
+
+                # Handle particle time and time loop
+                if res is None or res == ErrorCode.Success:
+                    # Update time and repeat
+                    p.time += sign * dt_pos
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    continue
+                elif res == ErrorCode.Repeat:
+                    # Try again without time update
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    continue
+                else:
+                    break  # Failure - stop time loop
+
+    def execute(self, pset, endtime, dt, recovery=None):
+        """Execute this Kernel over a ParticleSet for several timesteps"""
+
+        def remove_deleted(pset):
+            """Utility to remove all particles that signalled deletion"""
+            indices = [i for i, p in enumerate(pset.particles)
+                       if p.state in [ErrorCode.Delete]]
+            pset.remove(indices)
+
+        if recovery is None:
+            recovery = {}
+        recovery_map = recovery_base_map.copy()
+        recovery_map.update(recovery)
+
+        # Execute the kernel over the particle set
         if self.ptype.uses_jit:
-            fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-            particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-            self._function(c_int(len(pset)), particle_data,
-                           c_double(endtime), c_float(dt), *fargs)
+            self.execute_jit(pset, endtime, dt)
         else:
-            # We now special-case forward and backward modes to
-            # predict the final time-step size before an interval.
-            if dt > 0:
-                for p in pset.particles:
-                    while min(p.dt, endtime - p.time) > 0:
-                        dt = min(p.dt, endtime - p.time)
-                        res = self.pyfunc(p, pset.grid, p.time, dt)
-                        if res is None or res == KernelOp.SUCCESS:
-                            p.time += dt
+            self.execute_python(pset, endtime, dt)
+
+        # Remove all particles that signalled deletion
+        remove_deleted(pset)
+
+        # Idenitify particles that threw errors
+        error_particles = [p for p in pset.particles
+                           if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
+        while len(error_particles) > 0:
+            # Apply recovery kernel
+            for p in error_particles:
+                recovery_kernel = recovery_map[p.state]
+                p.state = ErrorCode.Success
+                recovery_kernel(p)
+
+            # Remove all particles that signalled deletion
+            remove_deleted(pset)
+
+            # Execute core loop again to continue interrupted particles
+            if self.ptype.uses_jit:
+                self.execute_jit(pset, endtime, dt)
             else:
-                for p in pset.particles:
-                    while max(p.dt, endtime - p.time) < 0:
-                        dt = max(p.dt, endtime - p.time)
-                        res = self.pyfunc(p, pset.grid, p.time, dt)
-                        if res is None or res == KernelOp.SUCCESS:
-                            p.time += dt
+                self.execute_python(pset, endtime, dt)
+
+            error_particles = [p for p in pset.particles
+                               if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

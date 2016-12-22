@@ -99,6 +99,26 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nearest_neighbour_interpolation(mode, k_sample_p, npart=81):
+    dims = (2, 2)
+    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
+    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
+    U = np.zeros(dims, dtype=np.float32)
+    V = np.zeros(dims, dtype=np.float32)
+    P = np.zeros(dims, dtype=np.float32)
+    P[0, 0] = 1.
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
+                          field_data={'P': np.asarray(P, dtype=np.float32)})
+    grid.P.interp_method = 'nearest'
+    xv, yv = np.meshgrid(np.linspace(0.1, 0.9, np.sqrt(npart)), np.linspace(0.1, 0.9, np.sqrt(npart)))
+    pset = grid.ParticleSet(size=np.size(xv), pclass=pclass(mode),
+                            lon=xv.flatten(), lat=yv.flatten())
+    pset.execute(k_sample_p, endtime=1, dt=1)
+    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat < 0.5]), 1.0, rtol=1e-5)
+    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat > 0.5]), 0.0, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_grid_sample_particle(grid, mode, k_sample_uv, npart=120):
     """ Sample the grid using an array of particles.
 
@@ -235,7 +255,8 @@ def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
     P = np.random.uniform(0, 1., size=(xdim, ydim))
     S = np.ones((xdim, ydim), dtype=np.float32)
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
-                          field_data={'P': P, 'start': S})
+                          field_data={'P': np.asarray(P, dtype=np.float32),
+                                      'start': S})
     pset = grid.ParticleSet(size=npart, pclass=pclass(mode),
                             start_field=grid.start)
     pset.execute(k_sample_p, endtime=1., dt=1.0)
@@ -251,8 +272,8 @@ def test_sampling_out_of_bounds_time(mode, k_sample_p, xdim=10, ydim=10, tdim=10
     U = np.zeros((xdim, ydim, tdim), dtype=np.float32)
     V = np.zeros((xdim, ydim, tdim), dtype=np.float32)
     P = np.ones((xdim, ydim, 1), dtype=np.float32) * time
-    grid = Grid.from_data(U, lon, lat, V, lon, lat, time=time,
-                          mesh='flat', field_data={'P': P})
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat',
+                          field_data={'P': np.asarray(P, dtype=np.float32)})
     pset = grid.ParticleSet(size=1, pclass=pclass(mode),
                             start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
