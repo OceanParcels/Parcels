@@ -12,8 +12,8 @@ def two_dim_brownian_flat(particle, grid, time, dt):
 
     # random.seed() - should a seed be included for reproducibility/testing purposes?
     # Use equation for particle diffusion.
-    particle.lat += random.normal(0, 1)*math.sqrt(2*dt*100.)
-    particle.lon += random.normal(0, 1)*math.sqrt(2*dt*100.)
+    particle.lat += random.normal(0, 1)*math.sqrt(2*dt*grid.Kh_meridional)
+    particle.lon += random.normal(0, 1)*math.sqrt(2*dt*grid.Kh_zonal)
 
 
 def brownian_grid(xdim=200, ydim=200):     # Define a flat grid of zeros, for simplicity.
@@ -32,6 +32,9 @@ def test_brownian_example(mode, npart=3000):
     grid = brownian_grid()
 
     # Set diffusion constants.
+    grid.Kh_meridional = 100.
+    grid.Kh_zonal = 100.
+
     ptcls_start = 300000.  # Start all particles at same location in middle of grid.
     pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
                             start=(ptcls_start, ptcls_start),
@@ -49,8 +52,8 @@ def test_brownian_example(mode, npart=3000):
 
     lats = np.array([particle.lat for particle in pset.particles])
     lons = np.array([particle.lon for particle in pset.particles])
-    expected_std_lat = np.sqrt(2*100.*endtime.total_seconds())
-    expected_std_lon = np.sqrt(2*100.*endtime.total_seconds())
+    expected_std_lat = np.sqrt(2*grid.Kh_meridional*endtime.total_seconds())
+    expected_std_lon = np.sqrt(2*grid.Kh_zonal*endtime.total_seconds())
 
     assert np.allclose(np.std(lats), expected_std_lat, rtol=.1)
     assert np.allclose(np.std(lons), expected_std_lon, rtol=.1)
