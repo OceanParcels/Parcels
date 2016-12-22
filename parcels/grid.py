@@ -80,7 +80,7 @@ class Grid(object):
         return cls(ufield, vfield, depth, time, fields=fields)
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions,
+    def from_netcdf(cls, filenames, variables, dimensions, indices={},
                     mesh='spherical', **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
@@ -90,6 +90,9 @@ class Grid(object):
         names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
         lat, depth, time, data) to dimensions in the netCF file(s).
+        :param indices: Optional dictionary of indices for each dimension
+        to read from file(s), to allow for reading of subset of data.
+        Default is to read the full extent of each dimension.
         :param mesh: String indicating the type of mesh coordinates and
                      units used during velocity interpolation:
                        * sperical (default): Lat and lon in degree, with a
@@ -111,7 +114,7 @@ class Grid(object):
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dimensions['data'] = name
-            fields[var] = Field.from_netcdf(var, dimensions, paths,
+            fields[var] = Field.from_netcdf(var, dimensions, paths, indices,
                                             units=units[var], **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
@@ -119,18 +122,21 @@ class Grid(object):
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
-                  extra_vars={}, **kwargs):
+                  indices={}, extra_vars={}, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
         wildcards to indicate multiple files.
+        :param indices: Optional dictionary of indices for each dimension
+        to read from file(s), to allow for reading of subset of data.
+        Default is to read the full extent of each dimension.
         """
         dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
                       'depth': 'depth', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
         filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
                           for v in extra_vars.keys()])
-        return cls.from_netcdf(filenames, variables=extra_vars,
+        return cls.from_netcdf(filenames, indices=indices, variables=extra_vars,
                                dimensions=dimensions, **kwargs)
 
     @property
@@ -146,6 +152,27 @@ class Grid(object):
 
     def ParticleSet(self, *args, **kwargs):
         return ParticleSet(*args, grid=self, **kwargs)
+
+    def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
+        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
+        by copying a small portion of the field on one side of the domain to the other.
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+
+        # setting grid constants for use in PeriodicBC kernel. Note using U-Field values
+        if zonal:
+            self.add_constant('halo_west', self.U.lon[0])
+            self.add_constant('halo_east', self.U.lon[-1])
+        if meridional:
+            self.add_constant('halo_south', self.U.lat[0])
+            self.add_constant('halo_north', self.U.lat[-1])
+
+        for attr, value in self.__dict__.iteritems():
+            if isinstance(value, Field):
+                value.add_periodic_halo(zonal, meridional, halosize)
 
     def eval(self, x, y):
         u = self.U.eval(x, y)
