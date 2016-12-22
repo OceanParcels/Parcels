@@ -9,6 +9,7 @@ gh-pages/html
 *.pyc
 *.dSYM/*
 
+.idea/*
 Profile.prof
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
