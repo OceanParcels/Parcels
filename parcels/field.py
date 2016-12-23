@@ -117,11 +117,12 @@ class Field(object):
     :param lat: Latitude coordinates of the field
     :param transpose: Transpose data to required (lon, lat) layout
     :param interp_method: Method for interpolation
+    :param allow_time_extrapolation: boolean whether to allow for extrapolation
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
-                 interp_method='linear'):
+                 interp_method='linear', allow_time_extrapolation=None):
         self.name = name
         self.data = data
         self.lon = lon
@@ -131,6 +132,10 @@ class Field(object):
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
+        if allow_time_extrapolation is None:
+            self.allow_time_extrapolation = True if time is None else False
+        else:
+            self.allow_time_extrapolation = allow_time_extrapolation
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -168,12 +173,14 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, indices={},
+                    allow_time_extrapolation=False, **kwargs):
         """Create field from netCDF file using NEMO conventions
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
         :param indices: indices for each dimension to read from file
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
         :param dataset: Single or multiple netcdf.Dataset object(s)
         containing field data. If multiple datasets are present they
         will be concatenated along the time axis
@@ -215,7 +222,7 @@ class Field(object):
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
         return cls(name, data, lon, lat, depth=depth, time=time,
-                   time_origin=time_origin, **kwargs)
+                   time_origin=time_origin, allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)
@@ -287,6 +294,9 @@ class Field(object):
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
+        if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
+            raise RuntimeError('Sampling outside time domain. ' +
+                               'Try setting allow_time_extrapolation to True')
         time_index = self.time < time
         if time_index.all():
             # If given time > last known grid time, use
