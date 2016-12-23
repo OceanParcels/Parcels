@@ -286,7 +286,7 @@ class Field(object):
             # the last grid frame without interpolation
             return len(self.time) - 1
         else:
-            return time_index.argmin() -1 if time_index.any() else 0
+            return time_index.argmin() - 1 if time_index.any() else 0
 
     def eval(self, time, x, y):
         """Interpolate field values in space and time.
