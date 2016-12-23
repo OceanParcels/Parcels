@@ -35,17 +35,18 @@ def test_globcurrent_grid():
     assert np.allclose(gridsub.V.lat, grid.V.lat[indices['lat']])
 
 
-def test_globcurrent_grid_advancetime():
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_globcurrent_grid_advancetime(mode):
     basepath = path.local("examples/GlobCurrent_example_data/20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc")
     files = [path.local(fp) for fp in glob(str(basepath))]
 
-    gridsub = set_globcurrent_grid(files[0:4])
-    psetsub = gridsub.ParticleSet(1, pclass=ScipyParticle, lon=[25], lat=[-35])
+    gridsub = set_globcurrent_grid(files[0:3])
+    psetsub = gridsub.ParticleSet(1, pclass=ptype[mode], lon=[25], lat=[-35])
 
     gridall = set_globcurrent_grid(files[0:10])
-    psetall = gridall.ParticleSet(1, pclass=ScipyParticle, lon=[25], lat=[-35])
+    psetall = gridall.ParticleSet(1, pclass=ptype[mode], lon=[25], lat=[-35])
 
-    for i in range(4, 9, 1):
+    for i in range(3, 9, 1):
         psetsub.execute(AdvectionRK4, starttime=psetsub[0].time, runtime=delta(days=1), dt=delta(minutes=5))
         gridsub.advancetime(set_globcurrent_grid(files[i]))
 
