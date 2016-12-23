@@ -12,7 +12,7 @@ def set_ofam_grid():
     variables = {'U': 'u', 'V': 'v'}
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}
-    return Grid.from_netcdf(filenames, variables, dimensions)
+    return Grid.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True)
 
 
 def test_ofam_grid():
