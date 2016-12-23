@@ -345,12 +345,15 @@ class Field(object):
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int),
                         ('tdim', c_int), ('tidx', c_int),
+                        ('allow_time_extrapolation', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
+        allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         cstruct = CField(self.lon.size, self.lat.size, self.time.size, 0,
+                         allow_time_extrapolation,
                          self.lon.ctypes.data_as(POINTER(c_float)),
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
