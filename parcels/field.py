@@ -33,6 +33,19 @@ class FieldSamplingError(RuntimeError):
         super(FieldSamplingError, self).__init__(message)
 
 
+class TimeExtrapolationError(RuntimeError):
+    """Utility error class to propagate erroneous time extrapolation sampling"""
+
+    def __init__(self, time, field=None):
+        self.field = field
+        self.time = time
+        message = "%s sampled outside time domain at time %f." % (
+            field.name if field else "Grid", self.time
+        )
+        message += " Try setting allow_time_extrapolation to True"
+        super(TimeExtrapolationError, self).__init__(message)
+
+
 def CentralDifferences(field_data, lat, lon):
     r = 6.371e6  # radius of the earth
     deg2rd = np.pi / 180
@@ -295,8 +308,7 @@ class Field(object):
         if the sampled value is outside the time value range.
         """
         if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
-            raise RuntimeError('Sampling outside time domain. ' +
-                               'Try setting allow_time_extrapolation to True')
+            raise TimeExtrapolationError(time, field=self)
         time_index = self.time < time
         if time_index.all():
             # If given time > last known grid time, use

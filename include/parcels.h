@@ -3,7 +3,7 @@
 
 typedef enum
   {
-    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4
+    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4, ERROR_TIME_EXTRAPOLATION =5
   } ErrorCode;
 
 typedef enum
@@ -84,7 +84,7 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
   err = search_linear_float(y, f->ydim, f->lat, &j); CHECKERROR(err);
   /* Find time index for temporal interpolation */
   if (f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
-    CHECKERROR(ERROR);
+    CHECKERROR(ERROR_TIME_EXTRAPOLATION);
   }
   err = search_linear_double(time, f->tdim, f->time, &(f->tidx));
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
