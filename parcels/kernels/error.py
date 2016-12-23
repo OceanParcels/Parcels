@@ -48,18 +48,13 @@ class OutOfBoundsError(KernelError):
 
 
 class TimeExtrapolationError(KernelError):
-    """Particle kernel error for out-of-bounds field sampling"""
+    """Particle kernel error for time extrapolation field sampling"""
 
-    def __init__(self, particle, lon=None, lat=None, field=None):
-        if lon and lat:
-            message = "%s sampled at (%f, %f)" % (
-                field.name if field else "Grid", lon, lat
-            )
-        else:
-            message = "Grid sampled outside time domain at time %f." % (
-                particle.time
-            )
-            message += " Try setting allow_time_extrapolation to True"
+    def __init__(self, particle):
+        message = "Grid sampled outside time domain at time %f." % (
+            particle.time
+        )
+        message += " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(particle, msg=message)
 
 
@@ -76,13 +71,7 @@ def recovery_kernel_out_of_bounds(particle):
 
 def recovery_kernel_time_extrapolation(particle):
     """Default sampling error kernel that throws TimeExtrapolationError"""
-    if particle.exception is None:
-        # TODO: JIT does not yet provide the context that created
-        # the exception. We need to pass that info back from C.
-        raise TimeExtrapolationError(particle)
-    else:
-        error = particle.exception
-        raise TimeExtrapolationError(particle, error.x, error.y, error.field)
+    raise TimeExtrapolationError(particle)
 
 
 # Default mapping of failure types (KernelOp)
