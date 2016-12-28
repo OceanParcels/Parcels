@@ -9,14 +9,6 @@ import bisect
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
-try:
-    import matplotlib.pyplot as plt
-except:
-    plt = None
-try:
-    from mpl_toolkits.basemap import Basemap
-except:
-    Basemap = None
 
 __all__ = ['ParticleSet']
 
@@ -258,6 +250,14 @@ class ParticleSet(object):
                 self.show(field=show_movie, t=leaptime)
 
     def show(self, **kwargs):
+        try:
+            import matplotlib.pyplot as plt
+        except:
+            plt = None
+        try:
+            from mpl_toolkits.basemap import Basemap
+        except:
+            Basemap = None
         savefile = kwargs.get('savefile', None)
         field = kwargs.get('field', True)
         domain = kwargs.get('domain', None)
