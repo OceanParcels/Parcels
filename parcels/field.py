@@ -287,7 +287,7 @@ class Field(object):
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
-        time_index = self.time < time
+        time_index = self.time <= time
         if time_index.all():
             # If given time > last known grid time, use
             # the last grid frame without interpolation
