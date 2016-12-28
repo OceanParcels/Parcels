@@ -293,7 +293,7 @@ class Field(object):
             # the last grid frame without interpolation
             return len(self.time) - 1
         else:
-            return time_index.argmin()
+            return time_index.argmin() - 1 if time_index.any() else 0
 
     def eval(self, time, x, y):
         """Interpolate field values in space and time.
@@ -303,11 +303,11 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         t_idx = self.time_index(time)
-        if 0 < t_idx < len(self.time) - 1 and self.time[t_idx] != time:
-            f0 = self.spatial_interpolation(t_idx - 1, y, x)
-            f1 = self.spatial_interpolation(t_idx, y, x)
-            t0 = self.time[t_idx-1]
-            t1 = self.time[t_idx]
+        if t_idx < len(self.time)-1 and time > self.time[t_idx]:
+            f0 = self.spatial_interpolation(t_idx, y, x)
+            f1 = self.spatial_interpolation(t_idx + 1, y, x)
+            t0 = self.time[t_idx]
+            t1 = self.time[t_idx + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
         else:
             # Skip temporal interpolation if time is outside
