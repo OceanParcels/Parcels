@@ -38,7 +38,7 @@ def test_expression_int(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
+    pset = grid.ParticleSet(pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
@@ -56,7 +56,7 @@ def test_expression_float(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
+    pset = grid.ParticleSet(pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
@@ -79,7 +79,7 @@ def test_expression_bool(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
+    pset = grid.ParticleSet(pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
@@ -108,7 +108,7 @@ def test_random_float(grid, mode, rngfunc, rngargs, npart=10):
     """ Test basic random number generation """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
+    pset = grid.ParticleSet(pclass=TestParticle,
                             lon=np.linspace(0., 1., npart, dtype=np.float32),
                             lat=np.zeros(npart, dtype=np.float32) + 0.5)
     series = random_series(npart, rngfunc, rngargs, mode)
