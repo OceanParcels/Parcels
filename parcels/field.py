@@ -341,26 +341,31 @@ class Field(object):
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
 
-    def show(self, **kwargs):
+    def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):
+        """Method to 'show' a Parcels Field
+
+        :param with_particles: Boolean whether particles are also plotted on Field
+        :param animation: Boolean whether result is a single plot, or an animation
+        :param show_time: Time at which to show the Field (only in single-plot mode)
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        """
         try:
             import matplotlib.pyplot as plt
-            import matplotlib.animation as animation
+            import matplotlib.animation as animation_plt
             from matplotlib import rc
         except:
             raise RuntimeError("Visualisation not possible: matplotlib not found!")
 
-        t = kwargs.get('t', 0)
-        with_particles = kwargs.get('with_particles', False)
-        make_animation = kwargs.get('animation', False)
-        if with_particles or (not make_animation):
-            idx = self.time_index(t)
+        if with_particles or (not animation):
+            idx = self.time_index(show_time)
             if self.time.size > 1:
-                data = np.squeeze(self.temporal_interpolate_fullfield(idx, t))
+                data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
             else:
                 data = np.squeeze(self.data)
 
-            vmin = kwargs.get('vmin', data.min())
-            vmax = kwargs.get('vmax', data.max())
+            vmin = data.min() if vmin is None else vmin
+            vmax = data.max() if vmax is None else vmax
             cs = plt.contourf(self.lon, self.lat, data,
                               levels=np.linspace(vmin, vmax, 256))
             cs.cmap.set_over('k')
@@ -375,14 +380,12 @@ class Field(object):
 
             def animate(i):
                 data = np.squeeze(self.data[i, :, :])
-                vmin = kwargs.get('vmin', data.min())
-                vmax = kwargs.get('vmax', data.max())
                 cont = ax.contourf(self.lon, self.lat, data,
-                                   levels=np.linspace(vmin, vmax, 256))
+                                   levels=np.linspace(data.min(), data.max(), 256))
                 return cont
 
             rc('animation', html='html5')
-            anim = animation.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
+            anim = animation_plt.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
                                            interval=100, blit=False)
             plt.close()
             return anim

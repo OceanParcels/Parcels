@@ -249,7 +249,19 @@ class ParticleSet(object):
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
 
-    def show(self, **kwargs):
+    def show(self, particles=True, show_time=None, field=True, domain=None,
+             land=False, vmin=None, vmax=None, savefile=None):
+        """Method to 'show' a Parcels ParticleSet
+
+        :param particles: Boolean whether to show particles
+        :param show_time: Time at which to show the ParticleSet
+        :param field: Field to plot under particles (either True, a Field object, or 'vector')
+        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param land: Boolean whether to show land (in field='vector' mode only)
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        :param savefile: Name of a file to save the plot to
+        """
         try:
             import matplotlib.pyplot as plt
         except:
@@ -258,18 +270,13 @@ class ParticleSet(object):
             from mpl_toolkits.basemap import Basemap
         except:
             Basemap = None
-        savefile = kwargs.get('savefile', None)
-        field = kwargs.get('field', True)
-        domain = kwargs.get('domain', None)
-        particles = kwargs.get('particles', True)
         plon = np.array([p.lon for p in self])
         plat = np.array([p.lat for p in self])
-        time = [p.time for p in self]
-        t = kwargs.get('t', time[0])
-        if isinstance(t, datetime):
-            t = (t - self.grid.U.time_origin).total_seconds()
-        if isinstance(t, delta):
-            t = t.total_seconds()
+        show_time = self[0].time if show_time is None else show_time
+        if isinstance(show_time, datetime):
+            show_time = (show_time - self.grid.U.time_origin).total_seconds()
+        if isinstance(show_time, delta):
+            show_time = show_time.total_seconds()
         if domain is not None:
             latN = nearest_index(self.grid.U.lat, domain[0])
             latS = nearest_index(self.grid.U.lat, domain[1])
@@ -278,10 +285,8 @@ class ParticleSet(object):
         else:
             latN, latS, lonE, lonW = (-1, 0, -1, 0)
         if field is not 'vector':
-            t = int(t)
             if plt is None:
                 raise RuntimeError("Visualisation not possible: matplotlib not found!")
-            field = kwargs.get('field', True)
             plt.ion()
             plt.clf()
             if particles:
@@ -295,13 +300,13 @@ class ParticleSet(object):
             else:
                 if not isinstance(field, Field):
                     field = getattr(self.grid, field)
-                field.show(with_particles=True, **dict(kwargs, t=t))
+                field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
                 time_origin = field.time_origin
             if time_origin is 0:
-                timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+                timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
             else:
-                timestr = ' on ' + str(time_origin + delta(seconds=t))
+                timestr = ' on ' + str(time_origin + delta(seconds=show_time))
             xlbl = 'Zonal distance [m]' if type(self.grid.U.units) is UnitConverter else 'Longitude [degrees]'
             ylbl = 'Meridional distance [m]' if type(self.grid.U.units) is UnitConverter else 'Latitude [degrees]'
             plt.xlabel(xlbl)
@@ -309,12 +314,10 @@ class ParticleSet(object):
         else:
             if Basemap is None:
                 raise RuntimeError("Visualisation not possible: Basemap module not found!")
-            land = kwargs.get('land', False)
-            vmax = kwargs.get('vmax', None)
             time_origin = self.grid.U.time_origin
-            idx = self.grid.U.time_index(t)
-            U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, t))
-            V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, t))
+            idx = self.grid.U.time_index(show_time)
+            U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, show_time))
+            V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, show_time))
             lon = self.grid.U.lon
             lat = self.grid.U.lat
             lon = lon[lonW:lonE]
@@ -350,7 +353,7 @@ class ParticleSet(object):
             y = np.tile(lat, len(lon))
 
             # plotting velocity vector field
-            vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[0, vmax], scale=50, latlon=True)
+            vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, latlon=True)
             m.colorbar(vecs, "right", size="5%", pad="2%")
             # plotting particle data
             if particles:
@@ -358,9 +361,9 @@ class ParticleSet(object):
                 m.scatter(xs, ys, color='black')
 
         if time_origin is 0:
-            timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+            timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
         else:
-            timestr = ' on ' + str(time_origin + delta(seconds=t))
+            timestr = ' on ' + str(time_origin + delta(seconds=show_time))
 
         if particles:
             if field:
