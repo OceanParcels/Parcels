@@ -386,7 +386,7 @@ class Field(object):
 
             rc('animation', html='html5')
             anim = animation_plt.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
-                                           interval=100, blit=False)
+                                               interval=100, blit=False)
             plt.close()
             return anim
 
