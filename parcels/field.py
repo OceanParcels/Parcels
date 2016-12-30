@@ -265,10 +265,10 @@ class Field(object):
                                        method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
-        t0 = self.time[tidx-1]
-        t1 = self.time[tidx]
-        f0 = self.data[tidx-1, :]
-        f1 = self.data[tidx, :]
+        t0 = self.time[tidx]
+        t1 = self.time[tidx+1]
+        f0 = self.data[tidx, :]
+        f1 = self.data[tidx+1, :]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, tidx, y, x):
