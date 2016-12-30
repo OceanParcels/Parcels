@@ -146,8 +146,8 @@ class Grid(object):
     def add_constant(self, name, value):
         setattr(self, name, value)
 
-    def ParticleSet(self, *args, **kwargs):
-        return ParticleSet(*args, grid=self, **kwargs)
+    def ParticleSet(self, **kwargs):
+        return ParticleSet(grid=self, **kwargs)
 
     def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
         """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)

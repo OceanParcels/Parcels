@@ -34,7 +34,7 @@ def grid(xdim=20, ydim=20):
     (20., -10., 7, -2.),
 ])
 def test_execution_endtime(grid, mode, start, end, substeps, dt, npart=10):
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+    pset = grid.ParticleSet(pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     pset.execute(DoNothing, starttime=start, endtime=end, dt=dt)
@@ -51,7 +51,7 @@ def test_execution_endtime(grid, mode, start, end, substeps, dt, npart=10):
     (20., -10., 7, -2.),
 ])
 def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+    pset = grid.ParticleSet(pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     t_step = (end - start) / substeps
@@ -69,7 +69,7 @@ def test_execution_fail_timed(grid, mode, npart=10):
         else:
             return ErrorCode.Success
 
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+    pset = grid.ParticleSet(pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     error_thrown = False
@@ -90,7 +90,7 @@ def test_execution_fail_python_exception(grid, mode, npart=10):
         else:
             return ErrorCode.Success
 
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+    pset = grid.ParticleSet(pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     error_thrown = False
@@ -109,7 +109,7 @@ def test_execution_fail_out_of_bounds(grid, mode, npart=10):
         grid.U[time, particle.lon + 0.1, particle.lat]
         particle.lon += 0.1
 
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
+    pset = grid.ParticleSet(pclass=ptype[mode],
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     error_thrown = False
@@ -133,7 +133,7 @@ def test_execution_recover_out_of_bounds(grid, mode, npart=2):
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = grid.ParticleSet(pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: MoveLeft})
     assert len(pset) == npart
@@ -152,7 +152,7 @@ def test_execution_delete_out_of_bounds(grid, mode, npart=10):
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = grid.ParticleSet(pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteMe})
     assert len(pset) == 0
