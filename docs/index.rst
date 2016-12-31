@@ -27,11 +27,11 @@ on the `Github Development Timeline page
 **Currently implemented**
 
 * Advection of particles using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward (see :mod:`parcels.kernels.advection`)
-* Ability to define and execute custom kernels
-* Ability to add custom Variables to Particles
+* Ability to define and execute custom kernels (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
+* Ability to add custom Variables to Particles (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb#A-second-example-kernel:-calculating-distance-travelled>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
 * Ability to run in both SciPy and JIT (Just-In-Time compilation) mode. The former is easier to debug, but the latter can be a factor 1,000 faster
-* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.grid.Grid.from_netcdf`)
+* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.grid.Grid.from_netcdf` and `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_plotting.ipynb>`_)
 
