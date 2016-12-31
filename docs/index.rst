@@ -6,7 +6,7 @@
 Welcome to Parcels
 ===================================
 
-Parcels (**P**\ robably **A** **R**\ eally **C**\ omputationally **E**\ fficient **L**\ agrangian **S**\ imulator) is an experimental prototype code aimed at exploring novel approaches for Lagrangian tracking of virtual ocean particles in the petascale age. 
+**Parcels** (**P**\ robably **A** **R**\ eally **C**\ omputationally **E**\ fficient **L**\ agrangian **S**\ imulator) is an experimental prototype code aimed at exploring novel approaches for Lagrangian tracking of virtual ocean particles in the petascale age. 
 
 Its code is licensed under an `open source MIT license <https://github.com/OceanPARCELS/parcels/blob/master/LICENSE.md>`_ and can be downloaded from https://github.com/OceanPARCELS/parcels.
 
@@ -18,28 +18,33 @@ Its code is licensed under an `open source MIT license <https://github.com/Ocean
 Parcels development status
 ===================================
 
-Parcels is currently close to what we will release at version 0.9. This v0.9 will be a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye on the `Github Development Timeline page <https://github.com/OceanPARCELS/parcels/projects/1>`_
+Parcels is currently close to what we will release at version 0.9. 
+This v0.9 will be a fully-functional, feature-complete code for offline 
+Lagrangian ocean analysis. See below for a list of features, or keep an eye 
+on the `Github Development Timeline page
+<https://github.com/OceanPARCELS/parcels/projects/1>`_
 
 **Currently implemented**
 
-* Advection of particles using inbuilt-kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward (see :mod:`parcels.kernels.advection`)
+* Advection of particles using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward (see :mod:`parcels.kernels.advection`)
 * Ability to define and execute custom kernels
 * Ability to add custom Variables to Particles
-* Ability to add and remove Particles 
+* Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
 * Ability to run in both SciPy and JIT (Just-In-Time compilation) mode. The former is easier to debug, but the latter can be a factor 1,000 faster
-* Ability to read in any type of hydrodynamic field in NetCDF format, as long as grid is rectangular (i.e. grid axes are aligned with longitude and latitude)
-* Output particles in NetCDF format
-* Basic plotting of particles, both on the fly and from netcdf output files
+* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.grid.Grid.from_netcdf`)
+* Output particles in NetCDF format (see :mod:`parcels.particlefile`)
+* Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_plotting.ipynb>`_)
 
 **Will be implemented for v0.9**
 
 * Three-dimensional particles, which can change depth and be advected with vertical velocities
+* Diffusion of particles using suite of inbuilt kernels
 
 **Major developed goals beyond v0.9**
 
-* Support for non-rectangular grids
-* Implementation of parallel execution
-* Faster and more efficient execution
+* Support for non-rectangular grids, including unstructured meshes
+* Implementation of parallel execution using tiling of the domain
+* Faster and more efficient code
 * Advanced control of particles near land boundaries
 
 
@@ -73,6 +78,18 @@ which can be achieved with::
     pip install -r requirements.txt
 
 In both cases a functional NetCDF install is required.
+
+Getting involved
+===================================
+
+Parcels development is supported by Imperial College London, with contributions 
+from the people listed on the `Contributors page 
+<https://github.com/OceanPARCELS/parcels/graphs/contributors>`_. 
+
+If you want to help out with developing, testing or get involved in another way, 
+please join the `mailing list 
+<https://mailman.ic.ac.uk/mailman/listinfo/oceanparcels>`_.
+
 
 Python code documentation
 ===================================

@@ -1,5 +1,5 @@
 Parcels documentation
-===============
+===================================
 
 parcels.particleset module
 --------------------------
@@ -68,12 +68,12 @@ parcels.particlefile module
 ---------------------------
 
 .. automodule:: parcels.particlefile
-    :members:
-    :show-inheritance:
+    :members: ParticleFile, write
+    :undoc-members:
 
 parcels.rng module
 ------------------
 
 .. automodule:: parcels.rng
     :members:
-    :show-inheritance:
+    :undoc-members:
