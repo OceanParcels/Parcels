@@ -71,23 +71,13 @@ class ParticleSet(object):
 
     :param grid: Grid object from which to sample velocity
     :param pclass: Optional class object that defines custom particle
-    :param lon: Optional list of initial longitude values for particles
-    :param lat: Optional list of initial latitude values for particles
-    :param start: Optional starting point for initilisation of particles
-                 on a straight line. Use start/finish instead of lat/lon.
-    :param finish: Optional end point for initilisation of particles on a
-                 straight line. Use start/finish instead of lat/lon.
-    :param start_field: Optional field for initialising particles stochastically
-                 according to the presented density field. Use instead of lat/lon.
-    :param size: Optional initial size of particle set, only required when using
-                 start/finish or start_field arguments
+    :param lon: List of initial longitude values for particles
+    :param lat: List of initial latitude values for particles
     """
 
-    def __init__(self, grid, pclass=JITParticle, lon=None, lat=None,
-                 start=None, finish=None, start_field=None, size=None):
+    def __init__(self, grid, pclass=JITParticle, lon=None, lat=None):
+        size = len(lon)
         self.grid = grid
-        size = len(lon) if size is None else size
-
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
@@ -103,16 +93,6 @@ class ParticleSet(object):
             def cptr(i):
                 return None
 
-        if start is not None and finish is not None:
-            # Initialise from start/finish coordinates with equidistant spacing
-            assert(lon is None and lat is None and size is not None)
-            lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
-            lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
-
-        if start_field is not None:
-            assert(size is not None)
-            lon, lat = positions_from_density_field(size, start_field)
-
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
             assert(size == len(lon) and size == len(lat))
@@ -121,6 +101,35 @@ class ParticleSet(object):
                 self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.U.time[0])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
+
+    @classmethod
+    def from_line(cls, grid, pclass, start, finish, size):
+        """Initialise the ParticleSet from start/finish coordinates
+        with equidistant spacing
+
+        :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start: Starting point for initialisation of particles on a straight line.
+        :param finish: End point for initialisation of particles on a straight line.
+        :param size: Initial size of particle set
+        """
+        lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
+        lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+
+    @classmethod
+    def from_field(cls, grid, pclass, start_field, size):
+        """Initialise the ParticleSet randomly drawn according to distribution from a field
+
+        :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start_field: Field for initialising particles stochastically according to the presented density field.
+        :param size: Initial size of particle set
+        """
+        lon, lat = positions_from_density_field(size, start_field)
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
 
     @property
     def size(self):
