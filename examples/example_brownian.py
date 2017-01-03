@@ -12,8 +12,8 @@ def two_dim_brownian_flat(particle, grid, time, dt):
 
     # random.seed() - should a seed be included for reproducibility/testing purposes?
     # Use equation for particle diffusion.
-    particle.lat += random.normal(0, 1)*math.sqrt(2*dt*grid.Kh_meridional)
-    particle.lon += random.normal(0, 1)*math.sqrt(2*dt*grid.Kh_zonal)
+    particle.lat += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.Kh_meridional)
+    particle.lon += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.Kh_zonal)
 
 
 def brownian_grid(xdim=200, ydim=200):     # Define a flat grid of zeros, for simplicity.

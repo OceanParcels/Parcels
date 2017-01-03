@@ -56,10 +56,10 @@ class RandomNode(IntrinsicNode):
     symbol_map = {'random': 'parcels_random',
                   'uniform': 'parcels_uniform',
                   'randint': 'parcels_randint',
-                  'normal': 'parcels_normal'}
+                  'normalvariate': 'parcels_normalvariate'}
 
     def __getattr__(self, attr):
-        if hasattr(random, attr) or attr is 'normal':
+        if hasattr(random, attr):
             if attr in self.symbol_map:
                 attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)

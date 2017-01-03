@@ -144,7 +144,7 @@ static inline int parcels_randint(int low, int high)
   return (rand() % (high-low)) + low;
 }
 
-static inline float parcels_normal(float loc, float scale)
+static inline float parcels_normalvariate(float loc, float scale)
 {
   float x1, x2, w, y1;
   static float y2;
