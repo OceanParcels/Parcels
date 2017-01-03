@@ -14,7 +14,6 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
     pfile = Dataset(filename, 'r')
     lon = pfile.variables['lon']
     lat = pfile.variables['lat']
-    z = pfile.variables['z']
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
@@ -27,6 +26,7 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
         plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
 
     if mode == '3d':
+        z = pfile.variables['z']
         fig = plt.figure(1)
         ax = fig.gca(projection='3d')
         for p in range(len(lon)):

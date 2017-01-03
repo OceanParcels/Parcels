@@ -248,6 +248,11 @@ class ParticleSet(object):
         for p in self:
             p.time = starttime
             p.dt = dt
+
+        # Write initial data to file
+        if output_file:
+            output_file.write(self, starttime)
+
         # Execute time loop in sub-steps (timeleaps)
         timeleaps = int((endtime - starttime) / interval)
         assert(timeleaps >= 0)
