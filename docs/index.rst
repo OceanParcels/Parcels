@@ -94,6 +94,12 @@ please join the `mailing list
 Python code documentation
 ===================================
 
+.. figure:: ParcelsDesign.png
+   :align: center
+   
+   *The figure above gives a brief overview of how the most important classes and methods in Parcels are related.*
+
+
 See below for links to the full documentation of the python code for Parcels
 
 .. toctree::
