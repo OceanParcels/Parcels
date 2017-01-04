@@ -103,6 +103,17 @@ class ParticleSet(object):
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
+    def from_list(cls, grid, pclass, lon, lat):
+        """Initialise the ParticleSet from start/finish coordinates
+        with equidistant spacing
+
+        :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        """
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+
+    @classmethod
     def from_line(cls, grid, pclass, start, finish, size):
         """Initialise the ParticleSet from start/finish coordinates
         with equidistant spacing
