@@ -206,9 +206,6 @@ class Field(object):
         :param filenames: Filenames of the field
         :param indices: indices for each dimension to read from file
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
-        :param dataset: Single or multiple netcdf.Dataset object(s)
-        containing field data. If multiple datasets are present they
-        will be concatenated along the time axis
         """
 
         if not isinstance(filenames, Iterable):
