@@ -129,12 +129,12 @@ def test_grid_sample_particle(grid, mode, k_sample_uv, npart=120):
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
@@ -147,12 +147,12 @@ def test_grid_sample_geographic(grid_geometric, mode, k_sample_uv, npart=120):
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
@@ -165,12 +165,12 @@ def test_grid_sample_geographic_polar(grid_geometric_polar, mode, k_sample_uv, n
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
@@ -197,7 +197,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     endtime = delta(hours=24)
-    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
@@ -228,7 +228,7 @@ def test_zonalflow_sperical(mode, k_sample_p, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     endtime = delta(hours=24)
-    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
                  endtime=endtime, dt=delta(hours=1))
 
@@ -265,7 +265,9 @@ def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_sampling_out_of_bounds_time(mode, k_sample_p, xdim=10, ydim=10, tdim=10):
+@pytest.mark.parametrize('allow_time_extrapolation', [True, False])
+def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
+                                     xdim=10, ydim=10, tdim=10):
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     time = np.linspace(0., 1., tdim, dtype=np.float64)
@@ -273,16 +275,25 @@ def test_sampling_out_of_bounds_time(mode, k_sample_p, xdim=10, ydim=10, tdim=10
     V = np.zeros((xdim, ydim, tdim), dtype=np.float32)
     P = np.ones((xdim, ydim, 1), dtype=np.float32) * time
     grid = Grid.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat',
-                          field_data={'P': np.asarray(P, dtype=np.float32)})
+                          field_data={'P': np.asarray(P, dtype=np.float32)},
+                          allow_time_extrapolation=allow_time_extrapolation)
     pset = grid.ParticleSet(size=1, pclass=pclass(mode),
                             start=(0.5, 0.5), finish=(0.5, 0.5))
-    pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
-    assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
+    if allow_time_extrapolation:
+        pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
+        assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
+    else:
+        with pytest.raises(RuntimeError):
+            pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
     pset.execute(k_sample_p, starttime=0.0, endtime=0.1, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
     pset.execute(k_sample_p, starttime=0.5, endtime=0.6, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 0.5, rtol=1e-5)
     pset.execute(k_sample_p, starttime=1.0, endtime=1.1, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
-    pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
-    assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+    if allow_time_extrapolation:
+        pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
+        assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+    else:
+        with pytest.raises(RuntimeError):
+            pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)

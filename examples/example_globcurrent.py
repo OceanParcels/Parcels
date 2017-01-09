@@ -40,7 +40,7 @@ def test_globcurrent_particles(mode):
     lonstart = [25]
     latstart = [-35]
 
-    pset = grid.ParticleSet(len(lonstart), pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = grid.ParticleSet(pclass=ptype[mode], lon=lonstart, lat=latstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5),
                  interval=delta(hours=1))

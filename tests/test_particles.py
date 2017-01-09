@@ -23,7 +23,7 @@ def test_variable_init(grid, mode, npart=10):
         p_float = Variable('p_float', dtype=np.float32, initial=10.)
         p_double = Variable('p_double', dtype=np.float64, initial=11.)
         p_int = Variable('p_int', dtype=np.int32, initial=12.)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
+    pset = grid.ParticleSet(pclass=TestParticle,
                             lon=np.linspace(0, 1, npart, dtype=np.float32),
                             lat=np.linspace(1, 0, npart, dtype=np.float32))
     assert np.array([isinstance(p.p_float, np.float32) for p in pset]).all()
@@ -53,7 +53,7 @@ def test_variable_init_relative(grid, mode, npart=10):
             self.p_offset += 2.
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle, lon=lon, lat=lat)
+    pset = grid.ParticleSet(pclass=TestParticle, lon=lon, lat=lat)
     # Adjust base variable to test for aliasing effects
     for p in pset:
         p.p_base += 3.

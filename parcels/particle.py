@@ -12,6 +12,7 @@ class Variable(object):
     :param name: Variable name as used within kernels
     :param dtype: Data type (numpy.dtype) of the variable
     :param initial: Initial value of the variable
+    :param to_write: Boolean to control whether Variable is written to NetCDF file
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name
@@ -106,12 +107,16 @@ class _Particle(object):
 
 
 class ScipyParticle(_Particle):
-    """Class encapsualting the basic attributes of a particle
+    """Class encapsulating the basic attributes of a particle,
+    to be executed in SciPy mode
 
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle
-    :param grid: :Class Grid: object to track this particle on
-    :param user_vars: Dictionary of any user variables that might be defined in subclasses
+    :param grid: :mod:`parcels.grid.Grid` object to track this particle on
+    :param dt: Execution timestep for this particle
+    :param time: Current time of the particle
+
+    Additional Variables can be added via the :Class Variable: objects
     """
 
     lon = Variable('lon', dtype=np.float32)
@@ -121,7 +126,7 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, grid, dt=3600., time=0., cptr=None):
+    def __init__(self, lon, lat, grid, dt=1., time=0., cptr=None):
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
@@ -139,13 +144,18 @@ class ScipyParticle(_Particle):
 
 
 class JITParticle(ScipyParticle):
-    """Particle class for JIT-based Particle objects
+    """Particle class for JIT-based (Just-In-Time) Particle objects
 
-    Users should extend this type for custom particles with fast
-    advection computation. Additional variables need to be defined
-    via the :user_vars: list of (name, dtype) tuples.
+    :param lon: Initial longitude of particle
+    :param lat: Initial latitude of particle
+    :param grid: :mod:`parcels.grid.Grid` object to track this particle on
+    :param dt: Execution timestep for this particle
+    :param time: Current time of the particle
 
-    :param user_vars: Class variable that defines additional particle variables
+    Additional Variables can be added via the :Class Variable: objects
+
+    Users should use JITParticles for faster advection computation.
+
     """
 
     xi = Variable('xi', dtype=np.int32, to_write=False)

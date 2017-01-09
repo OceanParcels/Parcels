@@ -7,6 +7,9 @@ __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45']
 
 
 def AdvectionRK4(particle, grid, time, dt):
+    """Advection of particles using fourth-order Runge-Kutta integration.
+
+    Function needs to be converted to Kernel object before execution"""
     u1 = grid.U[time, particle.lon, particle.lat]
     v1 = grid.V[time, particle.lon, particle.lat]
     lon1, lat1 = (particle.lon + u1*.5*dt, particle.lat + v1*.5*dt)
@@ -20,6 +23,9 @@ def AdvectionRK4(particle, grid, time, dt):
 
 
 def AdvectionEE(particle, grid, time, dt):
+    """Advection of particles using Explicit Euler (aka Euler Forward) integration.
+
+    Function needs to be converted to Kernel object before execution"""
     u1 = grid.U[time, particle.lon, particle.lat]
     v1 = grid.V[time, particle.lon, particle.lat]
     particle.lon += u1 * dt
@@ -27,6 +33,11 @@ def AdvectionEE(particle, grid, time, dt):
 
 
 def AdvectionRK45(particle, grid, time, dt):
+    """Advection of particles using adadptive Runge-Kutta 4/5 integration.
+
+    Times-step dt is halved if error is larger than tolerance, and doubled
+    if error is smaller than 1/10th of tolerance, with tolerance set to
+    1e-9 * dt by default."""
     tol = [1e-9]
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
