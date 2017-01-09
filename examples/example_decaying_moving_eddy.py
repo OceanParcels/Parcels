@@ -49,7 +49,7 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
 
 
 def decaying_moving_example(grid, mode='scipy', method=AdvectionRK4):
-    pset = grid.ParticleSet(size=1, pclass=ptype[mode], lon=start_lon, lat=start_lat)
+    pset = grid.ParticleSet(pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
     endtime = delta(days=2)
     dt = delta(minutes=5)

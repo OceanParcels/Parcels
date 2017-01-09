@@ -10,6 +10,10 @@ __all__ = ['Grid']
 
 
 def unit_converters(mesh):
+    """Helper function that assigns :class:`UnitConverter` objects to
+    :class:`Field` objects on :class:`Grid`
+
+    :param mesh: mesh type (either `spherical` or `flat`)"""
     if mesh == 'spherical':
         u_units = GeographicPolar()
         v_units = Geographic()
@@ -22,13 +26,13 @@ def unit_converters(mesh):
 
 
 class Grid(object):
-    """Grid class used to generate and read NEMO output files
+    """Grid class that holds hydrodynamic data needed to execute particles
 
-    :param U: :class:`Field` for zonal velocity component
-    :param V: :class:`Field` for meridional velocity component
+    :param U: :class:`parcels.field.Field` object for zonal velocity component
+    :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param depth: Depth coordinates of the grid
     :param time: Time coordinates of the grid
-    :param fields: Dictionary of additional fields
+    :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, depth, time, fields={}):
         self.U = U
@@ -44,20 +48,24 @@ class Grid(object):
                   mesh='spherical', **kwargs):
         """Initialise Grid object from raw data
 
-        :param data_u: Zonal velocity data
-        :param lon_u: Longitude coordinates of the U components
-        :param lat_u: Latitude coordinates of the U components
-        :param data_v: Meridional velocity data
-        :param lon_v: Longitude coordinates of the V components
-        :param lat_v: Latitude coordinates of the V components
-        :param depth: Depth coordinates of the grid
-        :param time: Time coordinates of the grid
+        :param data_u: Zonal (U) velocity data
+        :param lon_u: Longitude coordinates of the U data
+        :param lat_u: Latitude coordinates of the U data
+        :param data_v: Meridional (V) velocity data
+        :param lon_v: Longitude coordinates of the V data
+        :param lat_v: Latitude coordinates of the V data
+        :param depth: Depth coordinates of all :class:`Field` objects on the grid
+        :param time: Time coordinates of all :class:`Field` objects on the grid
+        :param field_data: Dictionary of extra fields (name, data)
+        :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
-                     units used during velocity interpolation:
-                       * sperical (default): Lat and lon in degree, with a
-                         correction for zonal velocity U near the poles.
-                       * flat: No conversion, lat/lon are assumed to be in m.
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
         """
+
         depth = np.zeros(1, dtype=np.float32) if depth is None else depth
         time = np.zeros(1, dtype=np.float64) if time is None else time
         u_units, v_units = unit_converters(mesh)
@@ -81,20 +89,22 @@ class Grid(object):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
-        filepath may contain wildcards to indicate multiple files.
-        :param variabels: Dictionary mapping variables to variable
-        names in the netCDF file(s).
+               filepath may contain wildcards to indicate multiple files.
+        :param variables: Dictionary mapping variables to variable
+               names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
-        lat, depth, time, data) to dimensions in the netCF file(s).
+               lat, depth, time, data) to dimensions in the netCF file(s).
         :param indices: Optional dictionary of indices for each dimension
-        to read from file(s), to allow for reading of subset of data.
-        Default is to read the full extent of each dimension.
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
         :param mesh: String indicating the type of mesh coordinates and
-                     units used during velocity interpolation:
-                       * sperical (default): Lat and lon in degree, with a
-                         correction for zonal velocity U near the poles.
-                       * flat: No conversion, lat/lon are assumed to be in m.
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
         """
+
         # Determine unit converters for all fields
         u_units, v_units = unit_converters(mesh)
         units = defaultdict(UnitConverter)
@@ -122,11 +132,13 @@ class Grid(object):
         """Initialises grid data from files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
-        wildcards to indicate multiple files.
+               wildcards to indicate multiple files.
+        :param extra_vars: Extra fields to read beyond U and V
         :param indices: Optional dictionary of indices for each dimension
-        to read from file(s), to allow for reading of subset of data.
-        Default is to read the full extent of each dimension.
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
         """
+
         dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
                       'depth': 'depth', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
@@ -137,21 +149,35 @@ class Grid(object):
 
     @property
     def fields(self):
-        """List of fields associated with this grid"""
+        """Returns a list of all the :class:`parcels.field.Field` objects
+        associated with this grid"""
         return [v for v in self.__dict__.values() if isinstance(v, Field)]
 
     def add_field(self, field):
+        """Add a :class:`parcels.field.Field` object to the grid
+
+        :param field: :class:`parcels.field.Field` object to be added
+        """
         setattr(self, field.name, field)
 
     def add_constant(self, name, value):
+        """Add a constant to the grid. Note that all constants are
+        stored as 32-bit floats. While constants can be updated during
+        execution in SciPy mode, they can not be updated in JIT mode.
+
+        :param name: Name of the constant
+        :param value: Value of the constant (stored as 32-bit float)
+        """
         setattr(self, name, value)
 
-    def ParticleSet(self, *args, **kwargs):
-        return ParticleSet(*args, grid=self, **kwargs)
+    def ParticleSet(self, **kwargs):
+        """Wrapper method to define a :class:`parcels.particleset.ParticleSet` on this grid."""
+        return ParticleSet(grid=self, **kwargs)
 
     def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
-        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
-        by copying a small portion of the field on one side of the domain to the other.
+        """Add a 'halo' to all :class:`parcels.field.Field` objects on a grid,
+        through extending the Field (and lon/lat) by copying a small portion
+        of the field on one side of the domain to the other.
 
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
@@ -171,12 +197,19 @@ class Grid(object):
                 value.add_periodic_halo(zonal, meridional, halosize)
 
     def eval(self, x, y):
+        """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
+
+        :param x: zonal point to evaluate
+        :param y: meridional point to evaluate
+
+        :return u, v: zonal and meridional velocities at point"""
+
         u = self.U.eval(x, y)
         v = self.V.eval(x, y)
         return u, v
 
     def write(self, filename):
-        """Write flow field to NetCDF file using NEMO convention
+        """Write grid to NetCDF file using NEMO convention
 
         :param filename: Basename of the output fileset"""
         print("Generating NEMO grid output with basename: %s" % filename)

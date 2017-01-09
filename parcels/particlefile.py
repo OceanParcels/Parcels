@@ -1,3 +1,4 @@
+"""Module controlling the writing of ParticleSets to NetCDF file"""
 import numpy as np
 import netCDF4
 
@@ -6,26 +7,26 @@ __all__ = ['ParticleFile']
 
 
 class ParticleFile(object):
+    """Initialise netCDF4.Dataset for trajectory output.
+
+    The output follows the format outlined in the Discrete
+    Sampling Geometries section of the CF-conventions:
+    http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#discrete-sampling-geometries
+
+    The current implementation is based on the NCEI template:
+    http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
+
+    Developer note: We cannot use xray.Dataset here, since it does
+    not yet allow incremental writes to disk:
+    https://github.com/xray/xray/issues/199
+
+    :param name: Basename of the output file
+    :param particleset: ParticleSet to output
+    :param initial_dump: Perform initial output at time 0.
+    :param user_vars: A list of additional user defined particle variables to write
+    """
 
     def __init__(self, name, particleset, initial_dump=True):
-        """Initialise netCDF4.Dataset for trajectory output.
-
-        The output follows the format outlined in the Discrete
-        Sampling Geometries section of the CF-conventions:
-        http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#discrete-sampling-geometries
-
-        The current implementation is based on the NCEI template:
-        http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
-
-        Developer note: We cannot use xray.Dataset here, since it does
-        not yet allow incremental writes to disk:
-        https://github.com/xray/xray/issues/199
-
-        :param name: Basename of the output file
-        :param particlset: ParticleSet to output
-        :param initial_dump: Perform initial output at time 0.
-        :param user_vars: A list of additional user defined particle variables to write
-        """
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
         self.dataset.createDimension("trajectory", particleset.size)
@@ -88,7 +89,7 @@ class ParticleFile(object):
         self.dataset.close()
 
     def write(self, pset, time):
-        """Write particle set data to file"""
+        """Write :class:`parcels.particleset.ParticleSet` data to file"""
         self.time[:, self.idx] = time
         self.lat[:, self.idx] = np.array([p.lat for p in pset])
         self.lon[:, self.idx] = np.array([p.lon for p in pset])
