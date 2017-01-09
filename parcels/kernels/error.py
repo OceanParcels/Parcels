@@ -47,7 +47,7 @@ class OutOfBoundsError(KernelError):
         super(OutOfBoundsError, self).__init__(particle, msg=message)
 
 
-class TimeExtrapolationError(KernelError):
+class OutOfTimeError(KernelError):
     """Particle kernel error for time extrapolation field sampling"""
 
     def __init__(self, particle):
@@ -55,7 +55,7 @@ class TimeExtrapolationError(KernelError):
             particle.time
         )
         message += " Try setting allow_time_extrapolation to True"
-        super(TimeExtrapolationError, self).__init__(particle, msg=message)
+        super(OutOfTimeError, self).__init__(particle, msg=message)
 
 
 def recovery_kernel_out_of_bounds(particle):
@@ -70,8 +70,8 @@ def recovery_kernel_out_of_bounds(particle):
 
 
 def recovery_kernel_time_extrapolation(particle):
-    """Default sampling error kernel that throws TimeExtrapolationError"""
-    raise TimeExtrapolationError(particle)
+    """Default sampling error kernel that throws OutOfTimeError"""
+    raise OutOfTimeError(particle)
 
 
 # Default mapping of failure types (KernelOp)
