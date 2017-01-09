@@ -34,6 +34,15 @@ class FieldSamplingError(RuntimeError):
 
 
 def CentralDifferences(field_data, lat, lon):
+    """Function to calculate gradients in two dimensions
+    using central differences on field
+
+    :param field_data: data to take the gradients of
+    :param lat: latitude vector
+    :param lon: longitude vector
+
+    :rtype: gradient of data in zonal and meridional direction
+    """
     r = 6.371e6  # radius of the earth
     deg2rd = np.pi / 180
     dy = r * np.diff(lat) * deg2rd
@@ -115,7 +124,15 @@ class Field(object):
     :param data: 2D array of field data
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
+    :param depth: Depth coordinates of the field
+    :param time: Time coordinates of the field
     :param transpose: Transpose data to required (lon, lat) layout
+    :param vmin: Minimum allowed value on the field.
+           Data below this value are set to zero
+    :param vmax: Maximum allowed value on the field
+           Data above this value are set to zero
+    :param time_origin: Time origin of the time axis
+    :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
     """
 
@@ -169,15 +186,14 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
-        """Create field from netCDF file using NEMO conventions
+        """Create field from netCDF file
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
+        :param filenames: Filenames of the field
         :param indices: indices for each dimension to read from file
-        :param dataset: Single or multiple netcdf.Dataset object(s)
-        containing field data. If multiple datasets are present they
-        will be concatenated along the time axis
         """
+
         if not isinstance(filenames, Iterable):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
@@ -221,6 +237,7 @@ class Field(object):
         return self.eval(*key)
 
     def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
+        """Method to create gradients of Field"""
         if name is None:
             name = 'd' + self.name
 
@@ -265,6 +282,13 @@ class Field(object):
                                        method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
+        """Calculate the data of a field between two snapshots,
+        using linear interpolation
+
+        :param tidx: Index in time array associated with time (via :func:`time_index`)
+        :param time: Time to interpolate to
+
+        :rtype: Linearly interpolated field"""
         t0 = self.time[tidx-1]
         t1 = self.time[tidx]
         f0 = self.data[tidx-1, :]
@@ -282,7 +306,7 @@ class Field(object):
 
     @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
-        """Find the next index in the time array for a given time
+        """Find the index in the time array associated with a given time
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
@@ -328,7 +352,7 @@ class Field(object):
 
     @property
     def ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevnt
+        """Returns a ctypes struct object containing all relevant
         pointers and sizes for this field."""
 
         # Ctypes struct corresponding to the type definition in parcels.h
@@ -348,6 +372,7 @@ class Field(object):
         return cstruct
 
     def show(self, **kwargs):
+        """Method to show a :class:`Field` using matplotlib"""
         if plt is None:
             raise RuntimeError("Visualisation not possible: matplotlib not found!")
 
@@ -411,6 +436,10 @@ class Field(object):
                                        self.lat, self.lat[0:halosize] + latshift))
 
     def write(self, filename, varname=None):
+        """Write a :class:`Field` to a netcdf file
+
+        :param filename: Basename of the file
+        :param varname: Name of the field, to be appended to the filename"""
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
