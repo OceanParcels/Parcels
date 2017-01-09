@@ -23,7 +23,7 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
 
     lat = np.linspace(y[0], y[1], npart, dtype=np.float32)
-    pset = grid.ParticleSet(0, lon=[], lat=[], pclass=ptype[mode])
+    pset = grid.ParticleSet(lon=[], lat=[], pclass=ptype[mode])
 
     delaytime = delta(hours=1)  # delay time between particle releases
     for t in range(npart):

@@ -58,25 +58,26 @@ def nearest_index(array, value):
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
-    Please note that this currently only supports fixed size particle
-    sets.
-
-    :param size: Initial size of particle set
-    :param grid: Grid object from which to sample velocity
-    :param pclass: Optional class object that defines custom particle
-    :param lon: List of initial longitude values for particles
-    :param lat: List of initial latitude values for particles
+    :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+    :param pclass: Optional :mod:`parcels.particle.JITParticle` or
+                 :mod:`parcels.particle.ScipyParticle` object that defines custom particle
+    :param lon: Optional list of initial longitude values for particles
+    :param lat: Optional list of initial latitude values for particles
     :param start: Optional starting point for initilisation of particles
                  on a straight line. Use start/finish instead of lat/lon.
     :param finish: Optional end point for initilisation of particles on a
                  straight line. Use start/finish instead of lat/lon.
     :param start_field: Optional field for initialising particles stochastically
                  according to the presented density field. Use instead of lat/lon.
+    :param size: Optional initial size of particle set, only required when using
+                 start/finish or start_field arguments
     """
 
-    def __init__(self, size, grid, pclass=JITParticle,
-                 lon=None, lat=None, start=None, finish=None, start_field=None):
+    def __init__(self, grid, pclass=JITParticle, lon=None, lat=None,
+                 start=None, finish=None, start_field=None, size=None):
         self.grid = grid
+        size = len(lon) if size is None else size
+
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
@@ -94,11 +95,12 @@ class ParticleSet(object):
 
         if start is not None and finish is not None:
             # Initialise from start/finish coordinates with equidistant spacing
-            assert(lon is None and lat is None)
+            assert(lon is None and lat is None and size is not None)
             lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
             lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
 
         if start_field is not None:
+            assert(size is not None)
             lon, lat = positions_from_density_field(size, start_field)
 
         if lon is not None and lat is not None:
@@ -131,6 +133,7 @@ class ParticleSet(object):
         return self
 
     def add(self, particles):
+        """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
         if not isinstance(particles, Iterable):
@@ -144,6 +147,7 @@ class ParticleSet(object):
                 p._cptr = pdata
 
     def remove(self, indices):
+        """Method to remove particles from the ParticleSet, based on their `indices`"""
         if isinstance(indices, Iterable):
             particles = [self.particles[i] for i in indices]
         else:
@@ -163,17 +167,19 @@ class ParticleSet(object):
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
 
-        :param pyfunc: Kernel funtion to execute. This can be the name of a
-                       defined Python function of a parcels.Kernel.
+        :param pyfunc: Kernel function to execute. This can be the name of a
+                       defined Python function or a :class:`parcels.kernel.Kernel` object.
+                       Kernels can be concatenated using the + operator
         :param starttime: Starting time for the timestepping loop. Defaults to 0.0.
         :param endtime: End time for the timestepping loop
         :param runtime: Length of the timestepping loop. Use instead of endtime.
         :param dt: Timestep interval to be passed to the kernel
         :param interval: Interval for inner sub-timestepping (leap), which dictates
                          the update frequency of file output and animation.
-        :param output_file: ParticleFile object for particle output
-        :param recovery: Dictionary with additional recovery kernels to allow
-                         custom recovery behaviour in case of kernel errors.
+        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
+        :param recovery: Dictionary with additional `:mod:parcels.kernels.error`
+                         recovery kernels to allow custom recovery behaviour in case of
+                         kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -387,6 +393,16 @@ class ParticleSet(object):
             plt.close()
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+        """Method to calculate the density of particles in a ParticleSet from their locations,
+        through a 2D histogram
+
+        :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
+                    on. Default is `grid.U`
+        :param particle_val: Optional list of values to weigh each particlewith
+        :param relative: Boolean to control whether the density is scaled by the total
+                    number of particles
+        :param area_scale: Boolean to control whether the density is scaled by the area
+                    (in m^2) of each grid cell"""
         lons = [p.lon for p in self.particles]
         lats = [p.lat for p in self.particles]
         # Code for finding nearest vertex for each particle is currently very inefficient
@@ -431,7 +447,11 @@ class ParticleSet(object):
         return Density
 
     def Kernel(self, pyfunc):
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
+        based on `grid` and `ptype` of the ParticleSet"""
         return Kernel(self.grid, self.ptype, pyfunc=pyfunc)
 
     def ParticleFile(self, *args, **kwargs):
+        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
+        object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)

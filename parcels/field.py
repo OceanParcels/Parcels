@@ -28,6 +28,15 @@ class FieldSamplingError(RuntimeError):
 
 
 def CentralDifferences(field_data, lat, lon):
+    """Function to calculate gradients in two dimensions
+    using central differences on field
+
+    :param field_data: data to take the gradients of
+    :param lat: latitude vector
+    :param lon: longitude vector
+
+    :rtype: gradient of data in zonal and meridional direction
+    """
     r = 6.371e6  # radius of the earth
     deg2rd = np.pi / 180
     dy = r * np.diff(lat) * deg2rd
@@ -109,7 +118,15 @@ class Field(object):
     :param data: 2D array of field data
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
+    :param depth: Depth coordinates of the field
+    :param time: Time coordinates of the field
     :param transpose: Transpose data to required (lon, lat) layout
+    :param vmin: Minimum allowed value on the field.
+           Data below this value are set to zero
+    :param vmax: Maximum allowed value on the field
+           Data above this value are set to zero
+    :param time_origin: Time origin of the time axis
+    :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
     """
 
@@ -163,15 +180,14 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
-        """Create field from netCDF file using NEMO conventions
+        """Create field from netCDF file
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
+        :param filenames: Filenames of the field
         :param indices: indices for each dimension to read from file
-        :param dataset: Single or multiple netcdf.Dataset object(s)
-        containing field data. If multiple datasets are present they
-        will be concatenated along the time axis
         """
+
         if not isinstance(filenames, Iterable):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
@@ -215,6 +231,7 @@ class Field(object):
         return self.eval(*key)
 
     def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
+        """Method to create gradients of Field"""
         if name is None:
             name = 'd' + self.name
 
@@ -259,10 +276,17 @@ class Field(object):
                                        method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
-        t0 = self.time[tidx-1]
-        t1 = self.time[tidx]
-        f0 = self.data[tidx-1, :]
-        f1 = self.data[tidx, :]
+        """Calculate the data of a field between two snapshots,
+        using linear interpolation
+
+        :param tidx: Index in time array associated with time (via :func:`time_index`)
+        :param time: Time to interpolate to
+
+        :rtype: Linearly interpolated field"""
+        t0 = self.time[tidx]
+        t1 = self.time[tidx+1]
+        f0 = self.data[tidx, :]
+        f1 = self.data[tidx+1, :]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, tidx, y, x):
@@ -276,18 +300,18 @@ class Field(object):
 
     @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
-        """Find the next index in the time array for a given time
+        """Find the index in the time array associated with a given time
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
-        time_index = self.time < time
+        time_index = self.time <= time
         if time_index.all():
             # If given time > last known grid time, use
             # the last grid frame without interpolation
             return len(self.time) - 1
         else:
-            return time_index.argmin()
+            return time_index.argmin() - 1 if time_index.any() else 0
 
     def eval(self, time, x, y):
         """Interpolate field values in space and time.
@@ -297,11 +321,11 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         t_idx = self.time_index(time)
-        if 0 < t_idx < len(self.time) - 1 and self.time[t_idx] != time:
-            f0 = self.spatial_interpolation(t_idx - 1, y, x)
-            f1 = self.spatial_interpolation(t_idx, y, x)
-            t0 = self.time[t_idx-1]
-            t1 = self.time[t_idx]
+        if t_idx < len(self.time)-1 and time > self.time[t_idx]:
+            f0 = self.spatial_interpolation(t_idx, y, x)
+            f1 = self.spatial_interpolation(t_idx + 1, y, x)
+            t0 = self.time[t_idx]
+            t1 = self.time[t_idx + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
         else:
             # Skip temporal interpolation if time is outside
@@ -322,7 +346,7 @@ class Field(object):
 
     @property
     def ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevnt
+        """Returns a ctypes struct object containing all relevant
         pointers and sizes for this field."""
 
         # Ctypes struct corresponding to the type definition in parcels.h
@@ -342,7 +366,7 @@ class Field(object):
         return cstruct
 
     def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):
-        """Method to 'show' a Parcels Field
+        """Method to 'show' a :class:`Field` using matplotlib
 
         :param with_particles: Boolean whether particles are also plotted on Field
         :param animation: Boolean whether result is a single plot, or an animation
@@ -412,6 +436,10 @@ class Field(object):
                                        self.lat, self.lat[0:halosize] + latshift))
 
     def write(self, filename, varname=None):
+        """Write a :class:`Field` to a netcdf file
+
+        :param filename: Basename of the file
+        :param varname: Name of the field, to be appended to the filename"""
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
