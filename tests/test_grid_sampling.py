@@ -129,12 +129,12 @@ def test_grid_sample_particle(grid, mode, k_sample_uv, npart=120):
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
@@ -147,12 +147,12 @@ def test_grid_sample_geographic(grid_geometric, mode, k_sample_uv, npart=120):
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
@@ -165,12 +165,12 @@ def test_grid_sample_geographic_polar(grid_geometric_polar, mode, k_sample_uv, n
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lon=lon,
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lon,
                             lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = grid.ParticleSet(npart, pclass=pclass(mode), lat=lat,
+    pset = grid.ParticleSet(pclass=pclass(mode), lat=lat,
                             lon=np.zeros(npart, dtype=np.float32) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
@@ -197,7 +197,7 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     endtime = delta(hours=24)
-    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
 
     assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
@@ -228,7 +228,7 @@ def test_zonalflow_sperical(mode, k_sample_p, xdim=100, ydim=200):
     lonstart = [0, 45]
     latstart = [0, 45]
     endtime = delta(hours=24)
-    pset = grid.ParticleSet(2, pclass=pclass(mode), lon=lonstart, lat=latstart)
+    pset = grid.ParticleSet(pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
                  endtime=endtime, dt=delta(hours=1))
 

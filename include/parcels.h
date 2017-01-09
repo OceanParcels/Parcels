@@ -34,7 +34,7 @@ static inline ErrorCode search_linear_float(float x, int size, float *xvals, int
 /* Local linear search to update time index */
 static inline ErrorCode search_linear_double(double t, int size, double *tvals, int *index)
 {
-  while (*index < size-1 && t > tvals[*index+1]) ++(*index);
+  while (*index < size-1 && t >= tvals[*index+1]) ++(*index);
   while (*index > 0 && t < tvals[*index]) --(*index);
   return SUCCESS;
 }

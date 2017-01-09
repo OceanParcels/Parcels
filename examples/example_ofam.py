@@ -32,7 +32,7 @@ def test_ofam_particles(mode):
     lonstart = [180]
     latstart = [10]
 
-    pset = grid.ParticleSet(len(lonstart), pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = grid.ParticleSet(pclass=ptype[mode], lon=lonstart, lat=latstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5),
                  interval=delta(hours=6))
