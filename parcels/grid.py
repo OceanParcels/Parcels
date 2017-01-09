@@ -30,11 +30,9 @@ class Grid(object):
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
-    :param depth: Depth coordinates of the grid
-    :param time: Time coordinates of the grid
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, depth, time, fields={}):
+    def __init__(self, U, V, fields={}):
         self.U = U
         self.V = V
 
@@ -81,7 +79,7 @@ class Grid(object):
         for name, data in field_data.items():
             fields[name] = Field(name, data, lon_v, lat_u, depth=depth,
                                  time=time, transpose=transpose, **kwargs)
-        return cls(ufield, vfield, depth, time, fields=fields)
+        return cls(ufield, vfield, fields=fields)
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
@@ -124,7 +122,7 @@ class Grid(object):
                                             units=units[var], **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
-        return cls(u, v, u.depth, u.time, fields=fields)
+        return cls(u, v, fields=fields)
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
