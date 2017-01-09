@@ -30,9 +30,10 @@ class Grid(object):
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
+    :param allow_time_extrapolation: boolean whether to allow for extrapolation
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, fields={}):
+    def __init__(self, U, V, allow_time_extrapolation=False, fields={}):
         self.U = U
         self.V = V
 
@@ -43,7 +44,7 @@ class Grid(object):
     @classmethod
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
                   depth=None, time=None, field_data={}, transpose=True,
-                  mesh='spherical', **kwargs):
+                  mesh='spherical', allow_time_extrapolation=True, **kwargs):
         """Initialise Grid object from raw data
 
         :param data_u: Zonal (U) velocity data
@@ -62,6 +63,7 @@ class Grid(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
         depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -69,21 +71,22 @@ class Grid(object):
         u_units, v_units = unit_converters(mesh)
         # Create velocity fields
         ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
-                       time=time, transpose=transpose,
-                       units=u_units, **kwargs)
+                       time=time, transpose=transpose, units=u_units,
+                       allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         vfield = Field('V', data_v, lon_v, lat_v, depth=depth,
-                       time=time, transpose=transpose,
-                       units=v_units, **kwargs)
+                       time=time, transpose=transpose, units=v_units,
+                       allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         # Create additional data fields
         fields = {}
         for name, data in field_data.items():
             fields[name] = Field(name, data, lon_v, lat_u, depth=depth,
-                                 time=time, transpose=transpose, **kwargs)
+                                 time=time, transpose=transpose,
+                                 allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         return cls(ufield, vfield, fields=fields)
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
-                    mesh='spherical', **kwargs):
+                    mesh='spherical', allow_time_extrapolation=False, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -101,6 +104,7 @@ class Grid(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
         # Determine unit converters for all fields
@@ -118,15 +122,15 @@ class Grid(object):
                 if not fp.exists():
                     raise IOError("Grid file not found: %s" % str(fp))
             dimensions['data'] = name
-            fields[var] = Field.from_netcdf(var, dimensions, paths, indices,
-                                            units=units[var], **kwargs)
+            fields[var] = Field.from_netcdf(var, dimensions, paths, indices, units=units[var],
+                                            allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, fields=fields)
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
-                  indices={}, extra_vars={}, **kwargs):
+                  indices={}, extra_vars={}, allow_time_extrapolation=False, **kwargs):
         """Initialises grid data from files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -143,7 +147,8 @@ class Grid(object):
         filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
                           for v in extra_vars.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_vars,
-                               dimensions=dimensions, **kwargs)
+                               dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
+                               **kwargs)
 
     @property
     def fields(self):

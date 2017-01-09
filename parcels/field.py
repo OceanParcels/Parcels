@@ -27,6 +27,19 @@ class FieldSamplingError(RuntimeError):
         super(FieldSamplingError, self).__init__(message)
 
 
+class TimeExtrapolationError(RuntimeError):
+    """Utility error class to propagate erroneous time extrapolation sampling"""
+
+    def __init__(self, time, field=None):
+        self.field = field
+        self.time = time
+        message = "%s sampled outside time domain at time %f." % (
+            field.name if field else "Grid", self.time
+        )
+        message += " Try setting allow_time_extrapolation to True"
+        super(TimeExtrapolationError, self).__init__(message)
+
+
 def CentralDifferences(field_data, lat, lon):
     """Function to calculate gradients in two dimensions
     using central differences on field
@@ -128,11 +141,12 @@ class Field(object):
     :param time_origin: Time origin of the time axis
     :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
+    :param allow_time_extrapolation: boolean whether to allow for extrapolation
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
-                 interp_method='linear'):
+                 interp_method='linear', allow_time_extrapolation=None):
         self.name = name
         self.data = data
         self.lon = lon
@@ -142,6 +156,10 @@ class Field(object):
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
+        if allow_time_extrapolation is None:
+            self.allow_time_extrapolation = True if time is None else False
+        else:
+            self.allow_time_extrapolation = allow_time_extrapolation
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -179,13 +197,15 @@ class Field(object):
         self.time_index_cache = LRUCache(maxsize=2)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
+    def from_netcdf(cls, name, dimensions, filenames, indices={},
+                    allow_time_extrapolation=False, **kwargs):
         """Create field from netCDF file
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
         :param filenames: Filenames of the field
         :param indices: indices for each dimension to read from file
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
         if not isinstance(filenames, Iterable):
@@ -225,7 +245,7 @@ class Field(object):
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
         return cls(name, data, lon, lat, depth=depth, time=time,
-                   time_origin=time_origin, **kwargs)
+                   time_origin=time_origin, allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)
@@ -305,6 +325,8 @@ class Field(object):
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
+        if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
+            raise TimeExtrapolationError(time, field=self)
         time_index = self.time <= time
         if time_index.all():
             # If given time > last known grid time, use
@@ -353,12 +375,15 @@ class Field(object):
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int),
                         ('tdim', c_int), ('tidx', c_int),
+                        ('allow_time_extrapolation', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
+        allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         cstruct = CField(self.lon.size, self.lat.size, self.time.size, 0,
+                         allow_time_extrapolation,
                          self.lon.ctypes.data_as(POINTER(c_float)),
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
