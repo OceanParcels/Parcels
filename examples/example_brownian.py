@@ -9,9 +9,12 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def two_dim_brownian_flat(particle, grid, time, dt):
+    # Kernel for simple Brownian particle diffusion in zonal and meridional direction.
+    # Seed is called on first call only, when time is zero
 
-    # random.seed() - should a seed be included for reproducibility/testing purposes?
-    # Use equation for particle diffusion.
+    if time == 0:
+        random.seed(grid.seedval)
+
     particle.lat += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.Kh_meridional)
     particle.lon += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.Kh_zonal)
 
@@ -34,6 +37,9 @@ def test_brownian_example(mode, npart=3000):
     # Set diffusion constants.
     grid.Kh_meridional = 100.
     grid.Kh_zonal = 100.
+
+    # Set random seed as grid constant
+    grid.seedval = 123456
 
     ptcls_start = 300000.  # Start all particles at same location in middle of grid.
     pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
