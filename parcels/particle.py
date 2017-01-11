@@ -122,7 +122,7 @@ class ScipyParticle(_Particle):
     lon = Variable('lon', dtype=np.float32)
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    trajectory = Variable('trajectory', dtype=np.int32)
+    id = Variable('xid', dtype=np.int32)  # TODO change to 'id', but fix cptr misalignment bug
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
@@ -131,7 +131,7 @@ class ScipyParticle(_Particle):
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).time.initial = time
-        type(self).trajectory.initial = grid.lasttrajectory
+        type(self).id.initial = grid.lasttrajectory
         grid.lasttrajectory += 1
         type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()

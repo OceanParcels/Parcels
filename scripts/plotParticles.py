@@ -17,7 +17,7 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
     z = pfile.variables['z']
     if len(lon.shape) == 1:
         type = 'indexed'
-        trajectory = pfile.variables['trajectory'][:]
+        id = pfile.variables['xid'][:]
         time = pfile.variables['time'][:]
     else:
         type = 'array'
@@ -40,9 +40,9 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
             for p in range(len(lon)):
                 ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         elif type == 'indexed':
-            for t in range(max(trajectory)+1):
-                ax.plot(lon[trajectory == t], lat[trajectory == t],
-                        z[trajectory == t], '.-')
+            for t in range(max(id)+1):
+                ax.plot(lon[id == t], lat[id == t],
+                        z[id == t], '.-')
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
@@ -50,8 +50,8 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
         if type == 'array':
             plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         elif type == 'indexed':
-            for t in range(max(trajectory)+1):
-                plt.plot(lon[trajectory == t], lat[trajectory == t], '.-')
+            for t in range(max(id)+1):
+                plt.plot(lon[id == t], lat[id == t], '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
     elif mode == 'movie2d' or 'movie2d_notebook':
