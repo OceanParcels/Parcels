@@ -21,37 +21,6 @@ except:
 __all__ = ['ParticleSet']
 
 
-def positions_from_density_field(pnum, field, mode='monte_carlo'):
-    """Initialise particles from a given density field"""
-    print("Initialising particles from " + field.name + " field")
-    total = np.sum(field.data[0, :, :])
-    field.data[0, :, :] = field.data[0, :, :] / total
-    lonwidth = (field.lon[1] - field.lon[0]) / 2
-    latwidth = (field.lat[1] - field.lat[0]) / 2
-
-    def add_jitter(pos, width, min, max):
-        value = pos + np.random.uniform(-width, width)
-        while not (min <= value <= max):
-            value = pos + np.random.uniform(-width, width)
-        return value
-
-    if mode == 'monte_carlo':
-        probs = np.random.uniform(size=pnum)
-        lon = []
-        lat = []
-        for p in probs:
-            cell = np.unravel_index(np.where([p < i for i in np.cumsum(field.data[0, :, :])])[0][0],
-                                    np.shape(field.data[0, :, :]))
-            lon.append(add_jitter(field.lon[cell[1]], lonwidth,
-                                  field.lon.min(), field.lon.max()))
-            lat.append(add_jitter(field.lat[cell[0]], latwidth,
-                                  field.lat.min(), field.lat.max()))
-    else:
-        raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
-
-    return lon, lat
-
-
 def nearest_index(array, value):
     """returns index of the nearest value in array using O(log n) bisection method"""
     y = bisect.bisect(array, value)
@@ -108,8 +77,7 @@ class ParticleSet(object):
 
     @classmethod
     def from_list(cls, grid, pclass, lon, lat):
-        """Initialise the ParticleSet from start/finish coordinates
-        with equidistant spacing
+        """Initialise the ParticleSet from lists of lon and lat
 
         :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -119,8 +87,9 @@ class ParticleSet(object):
 
     @classmethod
     def from_line(cls, grid, pclass, start, finish, size):
-        """Initialise the ParticleSet from start/finish coordinates
-        with equidistant spacing
+        """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
+        Note that this method uses simple numpy.linspace calls and does not take into account
+        great circles, so may not be a exact on a globe
 
         :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -134,7 +103,7 @@ class ParticleSet(object):
         return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
 
     @classmethod
-    def from_field(cls, grid, pclass, start_field, size):
+    def from_field(cls, grid, pclass, start_field, size, mode='monte_carlo'):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
 
         :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
@@ -142,8 +111,33 @@ class ParticleSet(object):
                  object that defines custom particle
         :param start_field: Field for initialising particles stochastically according to the presented density field.
         :param size: Initial size of particle set
+        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
         """
-        lon, lat = positions_from_density_field(size, start_field)
+        total = np.sum(start_field.data[0, :, :])
+        start_field.data[0, :, :] = start_field.data[0, :, :] / total
+        lonwidth = (start_field.lon[1] - start_field.lon[0]) / 2
+        latwidth = (start_field.lat[1] - start_field.lat[0]) / 2
+
+        def add_jitter(pos, width, min, max):
+            value = pos + np.random.uniform(-width, width)
+            while not (min <= value <= max):
+                value = pos + np.random.uniform(-width, width)
+            return value
+
+        if mode == 'monte_carlo':
+            probs = np.random.uniform(size=size)
+            lon = []
+            lat = []
+            for p in probs:
+                cell = np.unravel_index(np.where([p < i for i in np.cumsum(start_field.data[0, :, :])])[0][0],
+                                        np.shape(start_field.data[0, :, :]))
+                lon.append(add_jitter(start_field.lon[cell[1]], lonwidth,
+                                      start_field.lon.min(), start_field.lon.max()))
+                lat.append(add_jitter(start_field.lat[cell[0]], latwidth,
+                                      start_field.lat.min(), start_field.lat.max()))
+        else:
+            raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
+
         return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
 
     @property
