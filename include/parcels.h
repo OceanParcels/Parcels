@@ -148,6 +148,10 @@ static inline int parcels_randint(int low, int high)
 }
 
 static inline float parcels_normalvariate(float loc, float scale)
+/* Function to create a Gaussian random variable with mean loc and standard deviation scale */
+/* Uses Box-Muller transform, adapted from ftp://ftp.taygeta.com/pub/c/boxmuller.c          */
+/*     (c) Copyright 1994, Everett F. Carter Jr. Permission is granted by the author to use */
+/*     this software for any application provided this copyright notice is preserved.       */
 {
   float x1, x2, w, y1;
   static float y2;
