@@ -32,12 +32,10 @@ class Grid(object):
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param allow_time_extrapolation: boolean whether to allow for extrapolation
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
-    :param lasttrajecory: ID number of the last assigned trajectory; needed for pset.add()
     """
     def __init__(self, U, V, allow_time_extrapolation=False, fields={}):
         self.U = U
         self.V = V
-        self.lasttrajectory = 0
 
         # Add additional fields as attributes
         for name, field in fields.items():

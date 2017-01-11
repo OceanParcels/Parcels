@@ -6,6 +6,9 @@ import numpy as np
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 
+lastID = 0  # module-level variable keeping track of last Particle ID used
+
+
 class Variable(object):
     """Descriptor class that delegates data access to particle data
 
@@ -127,12 +130,14 @@ class ScipyParticle(_Particle):
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
     def __init__(self, lon, lat, grid, dt=1., time=0., cptr=None):
+        global lastID
+
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).time.initial = time
-        type(self).id.initial = grid.lasttrajectory
-        grid.lasttrajectory += 1
+        type(self).id.initial = lastID
+        lastID += 1
         type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()
 
