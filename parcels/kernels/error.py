@@ -11,6 +11,7 @@ class ErrorCode(IntEnum):
     Delete = 2
     Error = 3
     ErrorOutOfBounds = 4
+    ErrorTimeExtrapolation = 5
 
 
 class KernelError(RuntimeError):
@@ -46,6 +47,17 @@ class OutOfBoundsError(KernelError):
         super(OutOfBoundsError, self).__init__(particle, msg=message)
 
 
+class OutOfTimeError(KernelError):
+    """Particle kernel error for time extrapolation field sampling"""
+
+    def __init__(self, particle):
+        message = "Grid sampled outside time domain at time %f." % (
+            particle.time
+        )
+        message += " Try setting allow_time_extrapolation to True"
+        super(OutOfTimeError, self).__init__(particle, msg=message)
+
+
 def recovery_kernel_out_of_bounds(particle):
     """Default sampling error kernel that throws OutOfBoundsError"""
     if particle.exception is None:
@@ -57,7 +69,13 @@ def recovery_kernel_out_of_bounds(particle):
         raise OutOfBoundsError(particle, error.x, error.y, error.field)
 
 
+def recovery_kernel_time_extrapolation(particle):
+    """Default sampling error kernel that throws OutOfTimeError"""
+    raise OutOfTimeError(particle)
+
+
 # Default mapping of failure types (KernelOp)
 # to recovery kernels.
 recovery_map = {ErrorCode.Error: recovery_kernel_error,
-                ErrorCode.ErrorOutOfBounds: recovery_kernel_out_of_bounds}
+                ErrorCode.ErrorOutOfBounds: recovery_kernel_out_of_bounds,
+                ErrorCode.ErrorTimeExtrapolation: recovery_kernel_time_extrapolation}
