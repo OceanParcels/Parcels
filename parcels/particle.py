@@ -6,6 +6,9 @@ import numpy as np
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 
+lastID = 0  # module-level variable keeping track of last Particle ID used
+
+
 class Variable(object):
     """Descriptor class that delegates data access to particle data
 
@@ -37,6 +40,10 @@ class Variable(object):
     def __repr__(self):
         return "PVar<%s|%s>" % (self.name, self.dtype)
 
+    def is64bit(self):
+        """Check whether variable is 64-bit"""
+        return True if self.dtype == np.float64 or self.dtype == np.int64 else False
+
 
 class ParticleType(object):
     """Class encapsulating the type information for custom particles
@@ -52,10 +59,10 @@ class ParticleType(object):
 
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
-        # Pick Variable objects out of __dict__
-        self.variables = sorted([v for v in pclass.__dict__.values()
-                                 if isinstance(v, Variable)],
-                                key=attrgetter('name'))
+        # Pick Variable objects out of __dict__. First pick all the 64-bit ones so that
+        # they are aligned for the JIT cptr
+        self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable) and v.is64bit()] + \
+                         [v for v in pclass.__dict__.values() if isinstance(v, Variable) and not v.is64bit()]
         for cls in pclass.__bases__:
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
@@ -81,7 +88,7 @@ class ParticleType(object):
     @property
     def size(self):
         """Size of the underlying particle struct in bytes"""
-        return sum([8 if v.dtype == np.float64 else 4 for v in self.variables])
+        return sum([8 if v.is64bit() else 4 for v in self.variables])
 
 
 class _Particle(object):
@@ -122,14 +129,19 @@ class ScipyParticle(_Particle):
     lon = Variable('lon', dtype=np.float32)
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
+    id = Variable('id', dtype=np.int32)
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
     def __init__(self, lon, lat, grid, dt=1., time=0., cptr=None):
+        global lastID
+
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).time.initial = time
+        type(self).id.initial = lastID
+        lastID += 1
         type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()
 

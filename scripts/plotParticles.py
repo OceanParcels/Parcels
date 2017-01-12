@@ -15,6 +15,12 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
     lon = pfile.variables['lon']
     lat = pfile.variables['lat']
     z = pfile.variables['z']
+    if len(lon.shape) == 1:
+        type = 'indexed'
+        id = pfile.variables['trajectory'][:]
+        time = pfile.variables['time'][:]
+    else:
+        type = 'array'
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
@@ -27,31 +33,51 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
         plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
 
     if mode == '3d':
+        from mpl_toolkits.mplot3d import Axes3D  # noqa
         fig = plt.figure(1)
         ax = fig.gca(projection='3d')
-        for p in range(len(lon)):
-            ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
+        if type == 'array':
+            for p in range(len(lon)):
+                ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
+        elif type == 'indexed':
+            for t in range(max(id)+1):
+                ax.plot(lon[id == t], lat[id == t],
+                        z[id == t], '.-')
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
     elif mode == '2d':
-        plt.plot(np.transpose(lon), np.transpose(lat), '.-')
+        if type == 'array':
+            plt.plot(np.transpose(lon), np.transpose(lat), '.-')
+        elif type == 'indexed':
+            for t in range(max(id)+1):
+                plt.plot(lon[id == t], lat[id == t], '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
     elif mode == 'movie2d' or 'movie2d_notebook':
 
         fig = plt.figure()
         ax = plt.axes(xlim=(np.amin(lon), np.amax(lon)), ylim=(np.amin(lat), np.amax(lat)))
-        scat = ax.scatter(lon[:, 0], lat[:, 0], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
+        if type == 'array':
+            scat = ax.scatter(lon[:, 0], lat[:, 0], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
+            frames = np.arange(1, lon.shape[1])
+        elif type == 'indexed':
+            mintime = min(time)
+            scat = ax.scatter(lon[time == mintime], lat[time == mintime],
+                              s=60, cmap=plt.get_cmap('autumn'))
+            frames = np.unique(time)
 
-        def animate(i):
-            scat.set_offsets(np.matrix((lon[:, i], lat[:, i])).transpose())
+        def animate(t):
+            if type == 'array':
+                scat.set_offsets(np.matrix((lon[:, t], lat[:, t])).transpose())
+            elif type == 'indexed':
+                scat.set_offsets(np.matrix((lon[time == t], lat[time == t])).transpose())
             if recordedvar is not None:
-                scat.set_array(record[:, i])
+                scat.set_array(record[:, t])
             return scat,
 
         rc('animation', html='html5')
-        anim = animation.FuncAnimation(fig, animate, frames=np.arange(1, lon.shape[1]),
+        anim = animation.FuncAnimation(fig, animate, frames=frames,
                                        interval=100, blit=False)
     if mode == 'movie2d_notebook':
         plt.close()
