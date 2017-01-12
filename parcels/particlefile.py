@@ -106,7 +106,7 @@ class ParticleFile(object):
         if isinstance(time, delta):
             time = time.total_seconds()
         if self.type is 'array':
-            if len(pset) is not self.lon.shape[0]:
+            if len(pset) != self.lon.shape[0]:
                 raise RuntimeError("Number of particles appears to change. Use type='indexed' for ParticleFile")
             self.time[:, self.idx] = time
             self.lat[:, self.idx] = np.array([p.lat for p in pset])
