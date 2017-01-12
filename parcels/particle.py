@@ -129,7 +129,7 @@ class ScipyParticle(_Particle):
     lon = Variable('lon', dtype=np.float32)
     lat = Variable('lat', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    id = Variable('id', dtype=np.int32)  # TODO change to 'id', but fix cptr misalignment bug
+    id = Variable('id', dtype=np.int32)
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
