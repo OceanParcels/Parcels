@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
 import numpy as np
 from datetime import timedelta as delta
 import math
@@ -42,9 +42,9 @@ def test_brownian_example(mode, npart=3000):
     grid.seedval = 123456
 
     ptcls_start = 300000.  # Start all particles at same location in middle of grid.
-    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
-                            start=(ptcls_start, ptcls_start),
-                            finish=(ptcls_start, ptcls_start))
+    pset = ParticleSet.from_line(grid=grid, size=npart, pclass=ptype[mode],
+                                 start=(ptcls_start, ptcls_start),
+                                 finish=(ptcls_start, ptcls_start))
 
     endtime = delta(days=1)
     dt = delta(minutes=5)

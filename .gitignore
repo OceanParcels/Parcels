@@ -14,3 +14,4 @@ Profile.prof
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
 .cache/*
+examples/particle*.png

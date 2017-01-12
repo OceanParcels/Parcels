@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
 from parcels import AdvectionRK4
 import numpy as np
 from datetime import timedelta as delta
@@ -49,9 +49,9 @@ def true_values(age):  # Calculate the expected values for particle 2 at the end
 def rotation_example(grid, mode='jit', method=AdvectionRK4):
 
     npart = 2          # Test two particles on the rotating grid.
-    pset = grid.ParticleSet(size=npart, pclass=ptype[mode],
-                            start=(30., 30.),
-                            finish=(30., 50.))  # One particle in centre, one on periphery of grid.
+    pset = ParticleSet.from_line(grid, size=npart, pclass=ptype[mode],
+                                 start=(30., 30.),
+                                 finish=(30., 50.))  # One particle in centre, one on periphery of grid.
 
     endtime = delta(hours=17)
     dt = delta(minutes=5)
