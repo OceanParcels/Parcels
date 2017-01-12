@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, AdvectionRK4
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
 import pytest
 
@@ -12,7 +12,7 @@ def set_ofam_grid():
     variables = {'U': 'u', 'V': 'v'}
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}
-    return Grid.from_netcdf(filenames, variables, dimensions)
+    return Grid.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True)
 
 
 def test_ofam_grid():
@@ -32,7 +32,7 @@ def test_ofam_particles(mode):
     lonstart = [180]
     latstart = [10]
 
-    pset = grid.ParticleSet(len(lonstart), pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5),
                  interval=delta(hours=6))

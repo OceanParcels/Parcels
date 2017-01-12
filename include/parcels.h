@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef enum
   {
-    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4
+    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4, ERROR_TIME_EXTRAPOLATION =5
   } ErrorCode;
 
 typedef enum
@@ -15,7 +16,7 @@ typedef enum
 
 typedef struct
 {
-  int xdim, ydim, tdim, tidx;
+  int xdim, ydim, tdim, tidx, allow_time_extrapolation;
   float *lon, *lat;
   double *time;
   float ***data;
@@ -34,7 +35,7 @@ static inline ErrorCode search_linear_float(float x, int size, float *xvals, int
 /* Local linear search to update time index */
 static inline ErrorCode search_linear_double(double t, int size, double *tvals, int *index)
 {
-  while (*index < size-1 && t > tvals[*index+1]) ++(*index);
+  while (*index < size-1 && t >= tvals[*index+1]) ++(*index);
   while (*index > 0 && t < tvals[*index]) --(*index);
   return SUCCESS;
 }
@@ -83,6 +84,9 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
   err = search_linear_float(x, f->xdim, f->lon, &i); CHECKERROR(err);
   err = search_linear_float(y, f->ydim, f->lat, &j); CHECKERROR(err);
   /* Find time index for temporal interpolation */
+  if (f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
+    return ERROR_TIME_EXTRAPOLATION;
+  }
   err = search_linear_double(time, f->tdim, f->time, &(f->tidx));
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
@@ -141,4 +145,25 @@ static inline float parcels_uniform(float low, float high)
 static inline int parcels_randint(int low, int high)
 {
   return (rand() % (high-low)) + low;
+}
+
+static inline float parcels_normalvariate(float loc, float scale)
+/* Function to create a Gaussian random variable with mean loc and standard deviation scale */
+/* Uses Box-Muller transform, adapted from ftp://ftp.taygeta.com/pub/c/boxmuller.c          */
+/*     (c) Copyright 1994, Everett F. Carter Jr. Permission is granted by the author to use */
+/*     this software for any application provided this copyright notice is preserved.       */
+{
+  float x1, x2, w, y1;
+  static float y2;
+
+  do {
+    x1 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
+    x2 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
+    w = x1 * x1 + x2 * x2;
+  } while ( w >= 1.0 );
+
+  w = sqrt( (-2.0 * log( w ) ) / w );
+  y1 = x1 * w;
+  y2 = x2 * w;
+  return( loc + y1 * scale );
 }

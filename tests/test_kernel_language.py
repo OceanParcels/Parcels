@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, Kernel, Variable
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable
 from parcels import random as parcels_random
 import numpy as np
 import pytest
@@ -38,9 +38,9 @@ def test_expression_int(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
-                            lon=np.linspace(0., 1., npart, dtype=np.float32),
-                            lat=np.zeros(npart, dtype=np.float32) + 0.5)
+    pset = ParticleSet(grid, pclass=TestParticle,
+                       lon=np.linspace(0., 1., npart, dtype=np.float32),
+                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     assert(np.array([result == particle.p for particle in pset]).all())
 
@@ -56,9 +56,9 @@ def test_expression_float(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
-                            lon=np.linspace(0., 1., npart, dtype=np.float32),
-                            lat=np.zeros(npart, dtype=np.float32) + 0.5)
+    pset = ParticleSet(grid, pclass=TestParticle,
+                       lon=np.linspace(0., 1., npart, dtype=np.float32),
+                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     assert(np.array([result == particle.p for particle in pset]).all())
 
@@ -79,9 +79,9 @@ def test_expression_bool(grid, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
-                            lon=np.linspace(0., 1., npart, dtype=np.float32),
-                            lat=np.zeros(npart, dtype=np.float32) + 0.5)
+    pset = ParticleSet(grid, pclass=TestParticle,
+                       lon=np.linspace(0., 1., npart, dtype=np.float32),
+                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     if mode == 'jit':
         assert(np.array([result == (particle.p == 1) for particle in pset]).all())
@@ -108,9 +108,9 @@ def test_random_float(grid, mode, rngfunc, rngargs, npart=10):
     """ Test basic random number generation """
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
-    pset = grid.ParticleSet(npart, pclass=TestParticle,
-                            lon=np.linspace(0., 1., npart, dtype=np.float32),
-                            lat=np.zeros(npart, dtype=np.float32) + 0.5)
+    pset = ParticleSet(grid, pclass=TestParticle,
+                       lon=np.linspace(0., 1., npart, dtype=np.float32),
+                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
     series = random_series(npart, rngfunc, rngargs, mode)
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))

@@ -55,7 +55,9 @@ class MathNode(IntrinsicNode):
 class RandomNode(IntrinsicNode):
     symbol_map = {'random': 'parcels_random',
                   'uniform': 'parcels_uniform',
-                  'randint': 'parcels_randint'}
+                  'randint': 'parcels_randint',
+                  'normalvariate': 'parcels_normalvariate',
+                  'seed': 'parcels_seed'}
 
     def __getattr__(self, attr):
         if hasattr(random, attr):
@@ -288,7 +290,8 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         # Generate "ccode" attribute by traversing the Python AST
         for stmt in node.body:
-            self.visit(stmt)
+            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
+                self.visit(stmt)
 
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
@@ -300,7 +303,7 @@ class KernelGenerator(ast.NodeVisitor):
             args += [c.Value("float", const)]
 
         # Create function body as C-code object
-        body = [stmt.ccode for stmt in node.body]
+        body = [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 

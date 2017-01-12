@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, AdvectionRK4
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
 from py import path
 from glob import glob
@@ -41,10 +41,10 @@ def test_globcurrent_grid_advancetime(mode):
     files = [path.local(fp) for fp in glob(str(basepath))]
 
     gridsub = set_globcurrent_grid(files[0:3])
-    psetsub = gridsub.ParticleSet(1, pclass=ptype[mode], lon=[25], lat=[-35])
+    psetsub = ParticleSet.from_list(grid=gridsub, pclass=ptype[mode], lon=[25], lat=[-35])
 
     gridall = set_globcurrent_grid(files[0:10])
-    psetall = gridall.ParticleSet(1, pclass=ptype[mode], lon=[25], lat=[-35])
+    psetall = ParticleSet.from_list(grid=gridall, pclass=ptype[mode], lon=[25], lat=[-35])
 
     for i in range(3, 9, 1):
         psetsub.execute(AdvectionRK4, starttime=psetsub[0].time, runtime=delta(days=1), dt=delta(minutes=5))
@@ -62,7 +62,7 @@ def test_globcurrent_particles(mode):
     lonstart = [25]
     latstart = [-35]
 
-    pset = grid.ParticleSet(len(lonstart), pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5),
                  interval=delta(hours=1))

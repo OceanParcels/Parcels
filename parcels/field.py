@@ -7,12 +7,6 @@ from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta
-try:
-    import matplotlib.pyplot as plt
-    import matplotlib.animation as animation
-    from matplotlib import rc
-except:
-    plt = None
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -31,7 +25,29 @@ class FieldSamplingError(RuntimeError):
         super(FieldSamplingError, self).__init__(message)
 
 
+class TimeExtrapolationError(RuntimeError):
+    """Utility error class to propagate erroneous time extrapolation sampling"""
+
+    def __init__(self, time, field=None):
+        self.field = field
+        self.time = time
+        message = "%s sampled outside time domain at time %f." % (
+            field.name if field else "Grid", self.time
+        )
+        message += " Try setting allow_time_extrapolation to True"
+        super(TimeExtrapolationError, self).__init__(message)
+
+
 def CentralDifferences(field_data, lat, lon):
+    """Function to calculate gradients in two dimensions
+    using central differences on field
+
+    :param field_data: data to take the gradients of
+    :param lat: latitude vector
+    :param lon: longitude vector
+
+    :rtype: gradient of data in zonal and meridional direction
+    """
     r = 6.371e6  # radius of the earth
     deg2rd = np.pi / 180
     dy = r * np.diff(lat) * deg2rd
@@ -113,13 +129,22 @@ class Field(object):
     :param data: 2D array of field data
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
+    :param depth: Depth coordinates of the field
+    :param time: Time coordinates of the field
     :param transpose: Transpose data to required (lon, lat) layout
+    :param vmin: Minimum allowed value on the field.
+           Data below this value are set to zero
+    :param vmax: Maximum allowed value on the field
+           Data above this value are set to zero
+    :param time_origin: Time origin of the time axis
+    :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
+    :param allow_time_extrapolation: boolean whether to allow for extrapolation
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
-                 interp_method='linear'):
+                 interp_method='linear', allow_time_extrapolation=None):
         self.name = name
         self.data = data
         self.lon = lon
@@ -129,6 +154,10 @@ class Field(object):
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
+        if allow_time_extrapolation is None:
+            self.allow_time_extrapolation = True if time is None else False
+        else:
+            self.allow_time_extrapolation = allow_time_extrapolation
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -163,16 +192,17 @@ class Field(object):
         self.ccode_lat = self.name + "_lat"
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, indices={}, **kwargs):
-        """Create field from netCDF file using NEMO conventions
+    def from_netcdf(cls, name, dimensions, filenames, indices={},
+                    allow_time_extrapolation=False, **kwargs):
+        """Create field from netCDF file
 
         :param name: Name of the field to create
         :param dimensions: Variable names for the relevant dimensions
+        :param filenames: Filenames of the field
         :param indices: indices for each dimension to read from file
-        :param dataset: Single or multiple netcdf.Dataset object(s)
-        containing field data. If multiple datasets are present they
-        will be concatenated along the time axis
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
+
         if not isinstance(filenames, Iterable):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
@@ -210,12 +240,13 @@ class Field(object):
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
         return cls(name, data, lon, lat, depth=depth, time=time,
-                   time_origin=time_origin, **kwargs)
+                   time_origin=time_origin, allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)
 
     def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
+        """Method to create gradients of Field"""
         if name is None:
             name = 'd' + self.name
 
@@ -259,10 +290,17 @@ class Field(object):
                                        method=self.interp_method)
 
     def temporal_interpolate_fullfield(self, tidx, time):
-        t0 = self.time[tidx-1]
-        t1 = self.time[tidx]
-        f0 = self.data[tidx-1, :]
-        f1 = self.data[tidx, :]
+        """Calculate the data of a field between two snapshots,
+        using linear interpolation
+
+        :param tidx: Index in time array associated with time (via :func:`time_index`)
+        :param time: Time to interpolate to
+
+        :rtype: Linearly interpolated field"""
+        t0 = self.time[tidx]
+        t1 = self.time[tidx+1]
+        f0 = self.data[tidx, :]
+        f1 = self.data[tidx+1, :]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, tidx, y, x):
@@ -275,12 +313,14 @@ class Field(object):
             return val
 
     def time_index(self, time):
-        """Find the next index in the time array for a given time
+        """Find the index in the time array associated with a given time
 
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
-        time_index = self.time < time
+        if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
+            raise TimeExtrapolationError(time, field=self)
+        time_index = self.time <= time
         if time_index.all():
             # If given time > last known grid time, use
             # the last grid frame without interpolation
@@ -321,41 +361,53 @@ class Field(object):
 
     @property
     def ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevnt
+        """Returns a ctypes struct object containing all relevant
         pointers and sizes for this field."""
 
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int),
                         ('tdim', c_int), ('tidx', c_int),
+                        ('allow_time_extrapolation', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
+        allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         cstruct = CField(self.lon.size, self.lat.size, self.time.size, 0,
+                         allow_time_extrapolation,
                          self.lon.ctypes.data_as(POINTER(c_float)),
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
 
-    def show(self, **kwargs):
-        if plt is None:
+    def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):
+        """Method to 'show' a :class:`Field` using matplotlib
+
+        :param with_particles: Boolean whether particles are also plotted on Field
+        :param animation: Boolean whether result is a single plot, or an animation
+        :param show_time: Time at which to show the Field (only in single-plot mode)
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        """
+        try:
+            import matplotlib.pyplot as plt
+            import matplotlib.animation as animation_plt
+            from matplotlib import rc
+        except:
             raise RuntimeError("Visualisation not possible: matplotlib not found!")
 
-        t = kwargs.get('t', 0)
-        with_particles = kwargs.get('with_particles', False)
-        make_animation = kwargs.get('animation', False)
-        if with_particles or (not make_animation):
-            idx = self.time_index(t)
+        if with_particles or (not animation):
+            idx = self.time_index(show_time)
             if self.time.size > 1:
-                data = np.squeeze(self.temporal_interpolate_fullfield(idx, t))
+                data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
             else:
                 data = np.squeeze(self.data)
 
-            vmin = kwargs.get('vmin', data.min())
-            vmax = kwargs.get('vmax', data.max())
+            vmin = data.min() if vmin is None else vmin
+            vmax = data.max() if vmax is None else vmax
             cs = plt.contourf(self.lon, self.lat, data,
                               levels=np.linspace(vmin, vmax, 256))
             cs.cmap.set_over('k')
@@ -370,15 +422,13 @@ class Field(object):
 
             def animate(i):
                 data = np.squeeze(self.data[i, :, :])
-                vmin = kwargs.get('vmin', data.min())
-                vmax = kwargs.get('vmax', data.max())
                 cont = ax.contourf(self.lon, self.lat, data,
-                                   levels=np.linspace(vmin, vmax, 256))
+                                   levels=np.linspace(data.min(), data.max(), 256))
                 return cont
 
             rc('animation', html='html5')
-            anim = animation.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
-                                           interval=100, blit=False)
+            anim = animation_plt.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
+                                               interval=100, blit=False)
             plt.close()
             return anim
 
@@ -404,6 +454,10 @@ class Field(object):
                                        self.lat, self.lat[0:halosize] + latshift))
 
     def write(self, filename, varname=None):
+        """Write a :class:`Field` to a netcdf file
+
+        :param filename: Basename of the file
+        :param varname: Name of the field, to be appended to the filename"""
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name

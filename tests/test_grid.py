@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
 from parcels.field import Field
 import numpy as np
 import pytest
@@ -136,7 +136,7 @@ def test_grid_constant(mode):
     grid.add_constant('moveeast', eastval)
     assert grid.movewest == westval
 
-    pset = grid.ParticleSet(size=1, pclass=ptype[mode],
-                            start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet.from_line(grid, size=1, pclass=ptype[mode],
+                                 start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4

@@ -4,7 +4,7 @@ import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
 
 
-__all__ = ['seed']
+__all__ = ['seed', 'random', 'uniform', 'randint']
 
 
 class Random(object):
@@ -29,8 +29,13 @@ extern int pcls_randint(int low, int high){
   return parcels_randint(low, high);
 }
 """
+    fnct_normalvariate = """
+extern float pcls_normalvariate(float loc, float scale){
+  return parcels_normalvariate(loc, scale);
+}
+"""
     ccode = stmt_import + fnct_seed
-    ccode += fnct_random + fnct_uniform + fnct_randint
+    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate
     src_file = path.join(get_cache_dir(), "random.c")
     lib_file = path.join(get_cache_dir(), "random.so")
     log_file = path.join(get_cache_dir(), "random.log")
@@ -79,3 +84,11 @@ def randint(low, high):
     rnd.argtype = [c_int, c_int]
     rnd.restype = c_int
     return rnd(c_int(low), c_int(high))
+
+
+def normalvariate(loc, scale):
+    """Returns a random float on normal distribution with mean `loc` and width `scale`"""
+    rnd = parcels_random.lib.pcls_normalvariate
+    rnd.argtype = [c_float, c_float]
+    rnd.restype = c_float
+    return rnd(c_float(loc), c_float(scale))
