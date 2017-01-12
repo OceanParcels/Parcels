@@ -3,6 +3,7 @@ from parcels import AdvectionRK4
 import numpy as np
 from datetime import timedelta as delta
 import pytest
+from netCDF4 import Dataset
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -44,6 +45,13 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
 
     londist = np.array([(p.lon - x) for p in pset])
     assert(londist > 0.1).all()
+
+    # Test whether time was written away correctly in file
+    pfile = Dataset("DelayParticle.nc", 'r')
+    id = pfile.variables['trajectory'][:]
+    time = pfile.variables['time'][id == id[0]]
+    assert all(time[1:] - time[0:-1] == time[1] - time[0])
+    pfile.close()
 
 
 if __name__ == "__main__":

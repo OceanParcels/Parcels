@@ -35,6 +35,7 @@ class ParticleFile(object):
     def __init__(self, name, particleset, type='array'):
 
         self.type = type
+        self.lasttime_written = None  # variable to check if time has been written already
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
         if self.type is 'array':
@@ -105,25 +106,27 @@ class ParticleFile(object):
         """Write :class:`parcels.particleset.ParticleSet` data to file"""
         if isinstance(time, delta):
             time = time.total_seconds()
-        if self.type is 'array':
-            if len(pset) != self.lon.shape[0]:
-                raise RuntimeError("Number of particles appears to change. Use type='indexed' for ParticleFile")
-            self.time[:, self.idx] = time
-            self.lat[:, self.idx] = np.array([p.lat for p in pset])
-            self.lon[:, self.idx] = np.array([p.lon for p in pset])
-            self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
-            for var in self.user_vars:
-                getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
+        if self.lasttime_written != time:  # only write if 'time' hasn't been written yet
+            self.lasttime_written = time
+            if self.type is 'array':
+                if len(pset) != self.lon.shape[0]:
+                    raise RuntimeError("Number of particles appears to change. Use type='indexed' for ParticleFile")
+                self.time[:, self.idx] = time
+                self.lat[:, self.idx] = np.array([p.lat for p in pset])
+                self.lon[:, self.idx] = np.array([p.lon for p in pset])
+                self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
+                for var in self.user_vars:
+                    getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
 
-            self.idx += 1
-        elif self.type is 'indexed':
-            ind = np.arange(pset.size) + self.idx
-            self.id[ind] = np.array([p.xid for p in pset])
-            self.time[ind] = time
-            self.lat[ind] = np.array([p.lat for p in pset])
-            self.lon[ind] = np.array([p.lon for p in pset])
-            self.z[ind] = np.zeros(pset.size, dtype=np.float32)
-            for var in self.user_vars:
-                getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
+                self.idx += 1
+            elif self.type is 'indexed':
+                ind = np.arange(pset.size) + self.idx
+                self.id[ind] = np.array([p.xid for p in pset])
+                self.time[ind] = time
+                self.lat[ind] = np.array([p.lat for p in pset])
+                self.lon[ind] = np.array([p.lon for p in pset])
+                self.z[ind] = np.zeros(pset.size, dtype=np.float32)
+                for var in self.user_vars:
+                    getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
 
-            self.idx += pset.size
+                self.idx += pset.size

@@ -275,6 +275,9 @@ class ParticleSet(object):
             leaptime += interval
             self.kernel.execute(self, endtime=leaptime, dt=dt,
                                 recovery=recovery)
+        # Write out a final output_file
+        if output_file:
+            output_file.write(self, leaptime)
 
     def show(self, particles=True, show_time=None, field=True, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
