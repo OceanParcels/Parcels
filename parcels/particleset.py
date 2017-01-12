@@ -267,13 +267,17 @@ class ParticleSet(object):
         assert(timeleaps >= 0)
         leaptime = starttime
         for _ in range(timeleaps):
-            leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt,
-                                recovery=recovery)
+            # First write output_file, because particles could have been added
             if output_file:
                 output_file.write(self, leaptime)
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
+            leaptime += interval
+            self.kernel.execute(self, endtime=leaptime, dt=dt,
+                                recovery=recovery)
+        # Write out a final output_file
+        if output_file:
+            output_file.write(self, leaptime)
 
     def show(self, particles=True, show_time=None, field=True, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
