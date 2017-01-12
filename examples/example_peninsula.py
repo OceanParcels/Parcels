@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, Variable
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -98,7 +98,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
-    pset = grid.ParticleSet(npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
+    pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
         particle.p_start = grid.P[0., particle.lon, particle.lat]
 
@@ -146,7 +146,7 @@ def gridfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(gridfile, mode):
     """Open grid files and execute"""
-    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'})
+    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(grid, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -183,7 +183,7 @@ Example of particle advection around an idealised peninsula""")
         grid.write(filename)
 
     # Open grid file set
-    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'})
+    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'}, allow_time_extrapolation=True)
 
     if args.profiling:
         from cProfile import runctx

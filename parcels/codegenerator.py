@@ -1,3 +1,4 @@
+from parcels.field import Field
 import ast
 import cgen as c
 from collections import OrderedDict
@@ -13,8 +14,12 @@ class IntrinsicNode(ast.AST):
 
 class GridNode(IntrinsicNode):
     def __getattr__(self, attr):
-        return FieldNode(getattr(self.obj, attr),
-                         ccode="%s->%s" % (self.ccode, attr))
+        if isinstance(getattr(self.obj, attr), Field):
+            return FieldNode(getattr(self.obj, attr),
+                             ccode="%s->%s" % (self.ccode, attr))
+        else:
+            return ConstNode(getattr(self.obj, attr),
+                             ccode="%s" % (attr))
 
 
 class FieldNode(IntrinsicNode):
@@ -27,6 +32,11 @@ class FieldEvalNode(IntrinsicNode):
         self.field = field
         self.args = args
         self.var = var
+
+
+class ConstNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return attr
 
 
 class MathNode(IntrinsicNode):
@@ -45,7 +55,9 @@ class MathNode(IntrinsicNode):
 class RandomNode(IntrinsicNode):
     symbol_map = {'random': 'parcels_random',
                   'uniform': 'parcels_uniform',
-                  'randint': 'parcels_randint'}
+                  'randint': 'parcels_randint',
+                  'normalvariate': 'parcels_normalvariate',
+                  'seed': 'parcels_seed'}
 
     def __getattr__(self, attr):
         if hasattr(random, attr):
@@ -249,6 +261,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.field_args = OrderedDict()
         # Hack alert: JIT requires U field to update grid indexes
         self.field_args['U'] = grid.U
+        self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
         # Untangle Pythonic tuple-assignment statements
@@ -277,7 +290,8 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         # Generate "ccode" attribute by traversing the Python AST
         for stmt in node.body:
-            self.visit(stmt)
+            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
+                self.visit(stmt)
 
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
@@ -285,9 +299,11 @@ class KernelGenerator(ast.NodeVisitor):
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field, _ in self.field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
+        for const, _ in self.const_args.items():
+            args += [c.Value("float", const)]
 
         # Create function body as C-code object
-        body = [stmt.ccode for stmt in node.body]
+        body = [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
         body += [c.Statement("return SUCCESS")]
         node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
 
@@ -471,6 +487,9 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_ConstNode(self, node):
+        self.const_args[node.ccode] = node.obj
+
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
@@ -501,7 +520,7 @@ class LoopGenerator(object):
         self.grid = grid
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, kernel_ast):
+    def generate(self, funcname, field_args, const_args, kernel_ast):
         ccode = []
 
         # Add include for Parcels and math header
@@ -521,7 +540,9 @@ class LoopGenerator(object):
                 c.Value("double", "endtime"), c.Value("float", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-        fargs_str = ", ".join(['particles[p].time', 'sign * __dt'] + list(field_args.keys()))
+        for const, _ in const_args.items():
+            args += [c.Value("float", const)]
+        fargs_str = ", ".join(['particles[p].time', 'sign * __dt'] + list(field_args.keys()) + list(const_args.keys()))
         # Inner loop nest for forward runs
         sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")

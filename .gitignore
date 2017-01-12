@@ -1,6 +1,6 @@
 build/*
 docs/_build/*
-gh-pages/html
+gh-pages/*
 
 *.so
 *.log
@@ -14,3 +14,4 @@ Profile.prof
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
 .cache/*
+examples/particle*.png

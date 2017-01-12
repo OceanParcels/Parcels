@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
 from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45
 import numpy as np
 import pytest
@@ -37,9 +37,9 @@ def test_advection_zonal(lon, lat, mode, npart=10):
     V = np.zeros((lon.size, lat.size), dtype=np.float32)
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
 
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
-                            lon=np.zeros(npart, dtype=np.float32) + 20.,
-                            lat=np.linspace(0, 80, npart, dtype=np.float32))
+    pset = ParticleSet(grid, pclass=ptype[mode],
+                       lon=np.zeros(npart, dtype=np.float32) + 20.,
+                       lat=np.linspace(0, 80, npart, dtype=np.float32))
     pset.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset])) > 1.e-4).all()
 
@@ -53,12 +53,63 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     V = np.ones((lon.size, lat.size), dtype=np.float32)
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
 
-    pset = grid.ParticleSet(npart, pclass=ptype[mode],
-                            lon=np.linspace(-60, 60, npart, dtype=np.float32),
-                            lat=np.linspace(0, 30, npart, dtype=np.float32))
+    pset = ParticleSet(grid, pclass=ptype[mode],
+                       lon=np.linspace(-60, 60, npart, dtype=np.float32),
+                       lat=np.linspace(0, 30, npart, dtype=np.float32))
     delta_lat = np.diff(np.array([p.lat for p in pset]))
     pset.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
+
+
+def periodicgrid(xdim, ydim, uvel, vvel):
+    lon = np.linspace(0., 1., xdim+1, dtype=np.float32)[1:]  # don't include both 0 and 1, for periodic b.c.
+    lat = np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]
+
+    U = uvel * np.ones((xdim, ydim), dtype=np.float32)
+    V = vvel * np.ones((xdim, ydim), dtype=np.float32)
+    return Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+
+
+def periodicBC(particle, grid, time, dt):
+    particle.lon = math.fmod(particle.lon, 1)
+    particle.lat = math.fmod(particle.lat, 1)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
+    grid = periodicgrid(xdim, ydim, uvel=1., vvel=0.)
+    grid.add_periodic_halo(zonal=True, halosize=halosize)
+    assert(len(grid.U.lon) == xdim + 2 * halosize)
+
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    assert abs(pset[0].lon - 0.15) < 0.1
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
+    grid = periodicgrid(xdim, ydim, uvel=0., vvel=1.)
+    grid.add_periodic_halo(meridional=True)
+    assert(len(grid.U.lat) == ydim + 10)  # default halo size is 5 grid points
+
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    assert abs(pset[0].lat - 0.15) < 0.1
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
+    grid = periodicgrid(xdim, ydim, uvel=1., vvel=1.)
+    grid.add_periodic_halo(zonal=True, meridional=True)
+    assert(len(grid.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert(len(grid.U.lon) == xdim + 10)  # default halo size is 5 grid points
+    assert np.allclose(np.diff(grid.U.lat), grid.U.lat[1]-grid.U.lat[0], rtol=0.001)
+    assert np.allclose(np.diff(grid.U.lon), grid.U.lon[1]-grid.U.lon[0], rtol=0.001)
+
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    assert abs(pset[0].lon - 0.05) < 0.1
+    assert abs(pset[0].lat - 0.15) < 0.1
 
 
 def truth_stationary(x_0, y_0, t):
@@ -93,7 +144,7 @@ def test_stationary_eddy(grid_stationary, mode, method, rtol, npart=1):
     grid = grid_stationary
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
     lat = np.linspace(12500, 12500, npart, dtype=np.float32)
-    pset = grid.ParticleSet(size=npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, y, endtime)[0] for x, y, in zip(lon, lat)]
@@ -134,7 +185,7 @@ def test_moving_eddy(grid_moving, mode, method, rtol, npart=1):
     grid = grid_moving
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
     lat = np.linspace(12500, 12500, npart, dtype=np.float32)
-    pset = grid.ParticleSet(size=npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_moving(x, y, endtime)[0] for x, y, in zip(lon, lat)]
@@ -181,7 +232,7 @@ def test_decaying_eddy(grid_decaying, mode, method, rtol, npart=1):
     grid = grid_decaying
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
     lat = np.linspace(12500, 12500, npart, dtype=np.float32)
-    pset = grid.ParticleSet(size=npart, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_decaying(x, y, endtime)[0] for x, y, in zip(lon, lat)]
@@ -215,9 +266,9 @@ Example of particle advection around an idealised peninsula""")
         grid = grid_decaying()
 
     npart = args.particles
-    pset = grid.ParticleSet(size=npart, pclass=ptype[args.mode],
-                            lon=np.linspace(4000, 21000, npart, dtype=np.float32),
-                            lat=np.linspace(12500, 12500, npart, dtype=np.float32))
+    pset = ParticleSet(grid, pclass=ptype[args.mode],
+                       lon=np.linspace(4000, 21000, npart, dtype=np.float32),
+                       lat=np.linspace(12500, 12500, npart, dtype=np.float32))
     if args.verbose:
         print("Initial particle positions:\n%s" % pset)
     pset.execute(kernel[args.method], dt=delta(minutes=3), endtime=delta(hours=6))

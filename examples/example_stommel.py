@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, Variable
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -78,8 +78,8 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
         p = Variable('p', dtype=np.float32, initial=0.)
         p_start = Variable('p_start', dtype=np.float32, initial=0.)
 
-    pset = grid.ParticleSet(size=npart, pclass=MyParticle,
-                            start=(100, 5000), finish=(200, 5000))
+    pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle,
+                                 start=(100, 5000), finish=(200, 5000))
     for particle in pset:
         particle.p_start = grid.P[0., particle.lon, particle.lat]
 

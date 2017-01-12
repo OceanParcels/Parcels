@@ -1,5 +1,5 @@
 from parcels.kernel import Kernel
-from parcels.field import Field
+from parcels.field import Field, UnitConverter
 from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
@@ -9,47 +9,8 @@ import bisect
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
-try:
-    import matplotlib.pyplot as plt
-except:
-    plt = None
-try:
-    from mpl_toolkits.basemap import Basemap
-except:
-    Basemap = None
 
 __all__ = ['ParticleSet']
-
-
-def positions_from_density_field(pnum, field, mode='monte_carlo'):
-    """Initialise particles from a given density field"""
-    print("Initialising particles from " + field.name + " field")
-    total = np.sum(field.data[0, :, :])
-    field.data[0, :, :] = field.data[0, :, :] / total
-    lonwidth = (field.lon[1] - field.lon[0]) / 2
-    latwidth = (field.lat[1] - field.lat[0]) / 2
-
-    def add_jitter(pos, width, min, max):
-        value = pos + np.random.uniform(-width, width)
-        while not (min <= value <= max):
-            value = pos + np.random.uniform(-width, width)
-        return value
-
-    if mode == 'monte_carlo':
-        probs = np.random.uniform(size=pnum)
-        lon = []
-        lat = []
-        for p in probs:
-            cell = np.unravel_index(np.where([p < i for i in np.cumsum(field.data[0, :, :])])[0][0],
-                                    np.shape(field.data[0, :, :]))
-            lon.append(add_jitter(field.lon[cell[1]], lonwidth,
-                                  field.lon.min(), field.lon.max()))
-            lat.append(add_jitter(field.lat[cell[0]], latwidth,
-                                  field.lat.min(), field.lat.max()))
-    else:
-        raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
-
-    return lon, lat
 
 
 def nearest_index(array, value):
@@ -66,24 +27,21 @@ def nearest_index(array, value):
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
-    Please note that this currently only supports fixed size particle
-    sets.
+    Please note that this currently only supports fixed size particle sets.
 
-    :param size: Initial size of particle set
-    :param grid: Grid object from which to sample velocity
-    :param pclass: Optional class object that defines custom particle
+    :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+    :param pclass: Optional :mod:`parcels.particle.JITParticle` or
+                 :mod:`parcels.particle.ScipyParticle` object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
-    :param start: Optional starting point for initilisation of particles
-                 on a straight line. Use start/finish instead of lat/lon.
-    :param finish: Optional end point for initilisation of particles on a
-                 straight line. Use start/finish instead of lat/lon.
-    :param start_field: Optional field for initialising particles stochastically
-                 according to the presented density field. Use instead of lat/lon.
     """
 
-    def __init__(self, size, grid, pclass=JITParticle,
-                 lon=None, lat=None, start=None, finish=None, start_field=None):
+    def __init__(self, grid, pclass=JITParticle, lon=None, lat=None):
+        # Convert numpy arrays to one-dimensional lists
+        lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
+        lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
+        assert len(lon) == len(lat)
+        size = len(lon)
         self.grid = grid
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
@@ -100,23 +58,79 @@ class ParticleSet(object):
             def cptr(i):
                 return None
 
-        if start is not None and finish is not None:
-            # Initialise from start/finish coordinates with equidistant spacing
-            assert(lon is None and lat is None)
-            lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
-            lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
-
-        if start_field is not None:
-            lon, lat = positions_from_density_field(size, start_field)
-
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.time[0])
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.U.time[0])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
+
+    @classmethod
+    def from_list(cls, grid, pclass, lon, lat):
+        """Initialise the ParticleSet from lists of lon and lat
+
+        :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        """
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+
+    @classmethod
+    def from_line(cls, grid, pclass, start, finish, size):
+        """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
+        Note that this method uses simple numpy.linspace calls and does not take into account
+        great circles, so may not be a exact on a globe
+
+        :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start: Starting point for initialisation of particles on a straight line.
+        :param finish: End point for initialisation of particles on a straight line.
+        :param size: Initial size of particle set
+        """
+        lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
+        lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+
+    @classmethod
+    def from_field(cls, grid, pclass, start_field, size, mode='monte_carlo'):
+        """Initialise the ParticleSet randomly drawn according to distribution from a field
+
+        :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start_field: Field for initialising particles stochastically according to the presented density field.
+        :param size: Initial size of particle set
+        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
+        """
+        total = np.sum(start_field.data[0, :, :])
+        start_field.data[0, :, :] = start_field.data[0, :, :] / total
+        lonwidth = (start_field.lon[1] - start_field.lon[0]) / 2
+        latwidth = (start_field.lat[1] - start_field.lat[0]) / 2
+
+        def add_jitter(pos, width, min, max):
+            value = pos + np.random.uniform(-width, width)
+            while not (min <= value <= max):
+                value = pos + np.random.uniform(-width, width)
+            return value
+
+        if mode == 'monte_carlo':
+            probs = np.random.uniform(size=size)
+            lon = []
+            lat = []
+            for p in probs:
+                cell = np.unravel_index(np.where([p < i for i in np.cumsum(start_field.data[0, :, :])])[0][0],
+                                        np.shape(start_field.data[0, :, :]))
+                lon.append(add_jitter(start_field.lon[cell[1]], lonwidth,
+                                      start_field.lon.min(), start_field.lon.max()))
+                lat.append(add_jitter(start_field.lat[cell[0]], latwidth,
+                                      start_field.lat.min(), start_field.lat.max()))
+        else:
+            raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
+
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
 
     @property
     def size(self):
@@ -139,6 +153,7 @@ class ParticleSet(object):
         return self
 
     def add(self, particles):
+        """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
         if not isinstance(particles, Iterable):
@@ -152,6 +167,7 @@ class ParticleSet(object):
                 p._cptr = pdata
 
     def remove(self, indices):
+        """Method to remove particles from the ParticleSet, based on their `indices`"""
         if isinstance(indices, Iterable):
             particles = [self.particles[i] for i in indices]
         else:
@@ -171,17 +187,19 @@ class ParticleSet(object):
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
 
-        :param pyfunc: Kernel funtion to execute. This can be the name of a
-                       defined Python function of a parcels.Kernel.
+        :param pyfunc: Kernel function to execute. This can be the name of a
+                       defined Python function or a :class:`parcels.kernel.Kernel` object.
+                       Kernels can be concatenated using the + operator
         :param starttime: Starting time for the timestepping loop. Defaults to 0.0.
         :param endtime: End time for the timestepping loop
         :param runtime: Length of the timestepping loop. Use instead of endtime.
         :param dt: Timestep interval to be passed to the kernel
         :param interval: Interval for inner sub-timestepping (leap), which dictates
                          the update frequency of file output and animation.
-        :param output_file: ParticleFile object for particle output
-        :param recovery: Dictionary with additional recovery kernels to allow
-                         custom recovery behaviour in case of kernel errors.
+        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
+        :param recovery: Dictionary with additional `:mod:parcels.kernels.error`
+                         recovery kernels to allow custom recovery behaviour in case of
+                         kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
         if self.kernel is None:
@@ -215,12 +233,12 @@ class ParticleSet(object):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            starttime = self.grid.time[0] if dt > 0 else self.grid.time[-1]
+            starttime = self.grid.U.time[0] if dt > 0 else self.grid.U.time[-1]
         if runtime is not None:
             endtime = starttime + runtime
         else:
             if endtime is None:
-                endtime = self.grid.time[-1] if dt > 0 else self.grid.time[0]
+                endtime = self.grid.U.time[-1] if dt > 0 else self.grid.U.time[0]
         if interval is None:
             interval = endtime - starttime
 
@@ -257,19 +275,34 @@ class ParticleSet(object):
             if show_movie:
                 self.show(field=show_movie, t=leaptime)
 
-    def show(self, **kwargs):
-        savefile = kwargs.get('savefile', None)
-        field = kwargs.get('field', True)
-        domain = kwargs.get('domain', None)
-        particles = kwargs.get('particles', True)
+    def show(self, particles=True, show_time=None, field=True, domain=None,
+             land=False, vmin=None, vmax=None, savefile=None):
+        """Method to 'show' a Parcels ParticleSet
+
+        :param particles: Boolean whether to show particles
+        :param show_time: Time at which to show the ParticleSet
+        :param field: Field to plot under particles (either True, a Field object, or 'vector')
+        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param land: Boolean whether to show land (in field='vector' mode only)
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        :param savefile: Name of a file to save the plot to
+        """
+        try:
+            import matplotlib.pyplot as plt
+        except:
+            plt = None
+        try:
+            from mpl_toolkits.basemap import Basemap
+        except:
+            Basemap = None
         plon = np.array([p.lon for p in self])
         plat = np.array([p.lat for p in self])
-        time = [p.time for p in self]
-        t = kwargs.get('t', time[0])
-        if isinstance(t, datetime):
-            t = (t - self.grid.U.time_origin).total_seconds()
-        if isinstance(t, delta):
-            t = t.total_seconds()
+        show_time = self[0].time if show_time is None else show_time
+        if isinstance(show_time, datetime):
+            show_time = (show_time - self.grid.U.time_origin).total_seconds()
+        if isinstance(show_time, delta):
+            show_time = show_time.total_seconds()
         if domain is not None:
             latN = nearest_index(self.grid.U.lat, domain[0])
             latS = nearest_index(self.grid.U.lat, domain[1])
@@ -278,10 +311,8 @@ class ParticleSet(object):
         else:
             latN, latS, lonE, lonW = (-1, 0, -1, 0)
         if field is not 'vector':
-            t = int(t)
             if plt is None:
                 raise RuntimeError("Visualisation not possible: matplotlib not found!")
-            field = kwargs.get('field', True)
             plt.ion()
             plt.clf()
             if particles:
@@ -295,24 +326,24 @@ class ParticleSet(object):
             else:
                 if not isinstance(field, Field):
                     field = getattr(self.grid, field)
-                field.show(with_particles=True, **dict(kwargs, t=t))
+                field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
                 time_origin = field.time_origin
             if time_origin is 0:
-                timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+                timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
             else:
-                timestr = ' on ' + str(time_origin + delta(seconds=t))
-            plt.xlabel('Longitude')
-            plt.ylabel('Latitude')
+                timestr = ' on ' + str(time_origin + delta(seconds=show_time))
+            xlbl = 'Zonal distance [m]' if type(self.grid.U.units) is UnitConverter else 'Longitude [degrees]'
+            ylbl = 'Meridional distance [m]' if type(self.grid.U.units) is UnitConverter else 'Latitude [degrees]'
+            plt.xlabel(xlbl)
+            plt.ylabel(ylbl)
         else:
             if Basemap is None:
                 raise RuntimeError("Visualisation not possible: Basemap module not found!")
-            land = kwargs.get('land', False)
-            vmax = kwargs.get('vmax', None)
             time_origin = self.grid.U.time_origin
-            idx = self.grid.U.time_index(t)
-            U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, t))
-            V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, t))
+            idx = self.grid.U.time_index(show_time)
+            U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, show_time))
+            V = np.array(self.grid.V.temporal_interpolate_fullfield(idx, show_time))
             lon = self.grid.U.lon
             lat = self.grid.U.lat
             lon = lon[lonW:lonE]
@@ -348,7 +379,7 @@ class ParticleSet(object):
             y = np.tile(lat, len(lon))
 
             # plotting velocity vector field
-            vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[0, vmax], scale=50, latlon=True)
+            vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, latlon=True)
             m.colorbar(vecs, "right", size="5%", pad="2%")
             # plotting particle data
             if particles:
@@ -356,9 +387,9 @@ class ParticleSet(object):
                 m.scatter(xs, ys, color='black')
 
         if time_origin is 0:
-            timestr = ' after ' + str(delta(seconds=t)) + ' hours'
+            timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
         else:
-            timestr = ' on ' + str(time_origin + delta(seconds=t))
+            timestr = ' on ' + str(time_origin + delta(seconds=show_time))
 
         if particles:
             if field:
@@ -382,6 +413,16 @@ class ParticleSet(object):
             plt.close()
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+        """Method to calculate the density of particles in a ParticleSet from their locations,
+        through a 2D histogram
+
+        :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
+                    on. Default is `grid.U`
+        :param particle_val: Optional list of values to weigh each particlewith
+        :param relative: Boolean to control whether the density is scaled by the total
+                    number of particles
+        :param area_scale: Boolean to control whether the density is scaled by the area
+                    (in m^2) of each grid cell"""
         lons = [p.lon for p in self.particles]
         lats = [p.lat for p in self.particles]
         # Code for finding nearest vertex for each particle is currently very inefficient
@@ -426,7 +467,11 @@ class ParticleSet(object):
         return Density
 
     def Kernel(self, pyfunc):
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
+        based on `grid` and `ptype` of the ParticleSet"""
         return Kernel(self.grid, self.ptype, pyfunc=pyfunc)
 
     def ParticleFile(self, *args, **kwargs):
+        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
+        object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
