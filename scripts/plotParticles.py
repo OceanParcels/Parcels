@@ -17,7 +17,7 @@ def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y'
     z = pfile.variables['z']
     if len(lon.shape) == 1:
         type = 'indexed'
-        id = pfile.variables['xid'][:]
+        id = pfile.variables['trajectory'][:]
         time = pfile.variables['time'][:]
     else:
         type = 'array'
