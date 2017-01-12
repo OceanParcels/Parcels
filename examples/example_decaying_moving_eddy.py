@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
 from parcels import AdvectionRK4
 import numpy as np
 from datetime import timedelta as delta
@@ -49,7 +49,7 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
 
 
 def decaying_moving_example(grid, mode='scipy', method=AdvectionRK4):
-    pset = grid.ParticleSet(pclass=ptype[mode], lon=start_lon, lat=start_lat)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
     endtime = delta(days=2)
     dt = delta(minutes=5)

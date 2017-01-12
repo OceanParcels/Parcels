@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, Variable
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -98,7 +98,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
-    pset = grid.ParticleSet(size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
+    pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
         particle.p_start = grid.P[0., particle.lon, particle.lat]
 

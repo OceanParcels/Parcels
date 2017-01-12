@@ -1,5 +1,4 @@
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
-from parcels.particleset import ParticleSet
 import numpy as np
 from py import path
 from glob import glob
@@ -172,10 +171,6 @@ class Grid(object):
         :param value: Value of the constant (stored as 32-bit float)
         """
         setattr(self, name, value)
-
-    def ParticleSet(self, **kwargs):
-        """Wrapper method to define a :class:`parcels.particleset.ParticleSet` on this grid."""
-        return ParticleSet(grid=self, **kwargs)
 
     def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
         """Add a 'halo' to all :class:`parcels.field.Field` objects on a grid,

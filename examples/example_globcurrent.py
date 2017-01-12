@@ -1,4 +1,4 @@
-from parcels import Grid, ScipyParticle, JITParticle, AdvectionRK4
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
 import numpy as np
 import pytest
@@ -40,7 +40,7 @@ def test_globcurrent_particles(mode):
     lonstart = [25]
     latstart = [-35]
 
-    pset = grid.ParticleSet(pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5),
                  interval=delta(hours=1))
