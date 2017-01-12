@@ -52,7 +52,7 @@ class ParticleFile(object):
             self.id = self.dataset.createVariable("trajectory", "i4", ("trajectory",))
             self.id.long_name = "Unique identifier for each particle"
             self.id.cf_role = "trajectory_id"
-            self.id[:] = np.array([p.xid for p in particleset])
+            self.id[:] = np.array([p.id for p in particleset])
         elif self.type is 'indexed':
             self.id = self.dataset.createVariable("trajectory", "i4", ("obs",))
             self.id.long_name = "index of trajectory this obs belongs to"
@@ -88,7 +88,7 @@ class ParticleFile(object):
 
         self.user_vars = []
         for v in particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'z', 'xid']:
+            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
                 continue
             if v.to_write is True:
                 setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=0.))
@@ -121,7 +121,7 @@ class ParticleFile(object):
                 self.idx += 1
             elif self.type is 'indexed':
                 ind = np.arange(pset.size) + self.idx
-                self.id[ind] = np.array([p.xid for p in pset])
+                self.id[ind] = np.array([p.id for p in pset])
                 self.time[ind] = time
                 self.lat[ind] = np.array([p.lat for p in pset])
                 self.lon[ind] = np.array([p.lon for p in pset])
