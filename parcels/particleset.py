@@ -271,7 +271,7 @@ class ParticleSet(object):
             if output_file:
                 output_file.write(self, leaptime)
             if show_movie:
-                self.show(field=show_movie, t=leaptime)
+                self.show(field=show_movie, show_time=leaptime)
             leaptime += interval
             self.kernel.execute(self, endtime=leaptime, dt=dt,
                                 recovery=recovery)
