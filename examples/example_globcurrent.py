@@ -36,21 +36,28 @@ def test_globcurrent_grid():
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_globcurrent_grid_advancetime(mode):
+@pytest.mark.parametrize('dt, substart, subend, lonstart, latstart, irange', [
+    (300., 0, 3, 25, -35, range(3, 9, 1)),
+    (-300., 8, 10, 20, -39, range(7, 2, -1))
+])
+def test_globcurrent_grid_advancetime(mode, dt, substart, subend, lonstart, latstart, irange):
     basepath = path.local("examples/GlobCurrent_example_data/20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc")
     files = [path.local(fp) for fp in glob(str(basepath))]
 
-    gridsub = set_globcurrent_grid(files[0:3])
-    psetsub = ParticleSet.from_list(grid=gridsub, pclass=ptype[mode], lon=[25], lat=[-35])
+    gridsub = set_globcurrent_grid(files[substart:subend])
+    psetsub = ParticleSet.from_list(grid=gridsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
 
     gridall = set_globcurrent_grid(files[0:10])
-    psetall = ParticleSet.from_list(grid=gridall, pclass=ptype[mode], lon=[25], lat=[-35])
+    psetall = ParticleSet.from_list(grid=gridall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
+    if dt < 0:
+        psetsub[0].time = gridsub.U.time[-1]
+        psetall[0].time = gridall.U.time[-1]
 
-    for i in range(3, 9, 1):
-        psetsub.execute(AdvectionRK4, starttime=psetsub[0].time, runtime=delta(days=1), dt=delta(minutes=5))
+    for i in irange:
+        psetsub.execute(AdvectionRK4, starttime=psetsub[0].time, runtime=delta(days=1), dt=dt)
         gridsub.advancetime(set_globcurrent_grid(files[i]))
 
-        psetall.execute(AdvectionRK4, starttime=psetall[0].time, runtime=delta(days=1), dt=delta(minutes=5))
+        psetall.execute(AdvectionRK4, starttime=psetall[0].time, runtime=delta(days=1), dt=dt)
 
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
 
