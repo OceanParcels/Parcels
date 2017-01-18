@@ -488,6 +488,7 @@ class FileBuffer(object):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keyes for file data
         self.dataset = None
+        self.calendar_warning_given = False
 
     def __enter__(self):
         self.dataset = Dataset(str(self.filename), 'r', format="NETCDF4")
@@ -545,6 +546,12 @@ class FileBuffer(object):
     def calendar(self):
         """ Derive calendar if the time dimension has calendar """
         try:
-            return self.dataset[self.dimensions['time']].calendar
+            calendar = self.dataset[self.dimensions['time']].calendar
+            if calendar is ('proleptic_gregorian' or 'standard' or 'gregorian'):
+                return calendar
+            else:
+                # Other calendars means the time can't be converted to datetime object
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                return 'standard'
         except:
             return 'standard'
