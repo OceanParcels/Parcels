@@ -2,17 +2,18 @@ from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
 import numpy as np
 import pytest
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def set_globcurrent_grid(indices={}):
-    filenames = {'U': "examples/GlobCurrent_example_data/20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc",
-                 'V': "examples/GlobCurrent_example_data/20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc"}
+    fname = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
+                      '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    filenames = {'U': fname, 'V': fname}
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
-    dimensions = {'lat': 'lat', 'lon': 'lon',
-                  'time': 'time'}
+    dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     return Grid.from_netcdf(filenames, variables, dimensions, indices)
 
 
