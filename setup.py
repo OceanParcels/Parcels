@@ -9,5 +9,5 @@ setup(name='parcels',
       description="""Framework for Lagrangian tracking of virtual
       ocean particles in the petascale age.""",
       author="Imperial College London",
-      packages=['parcels'],
+      packages=find_packages(exclude=['docs', 'examples', 'indlude', 'scripts', 'tests']),
 )
