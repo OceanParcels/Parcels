@@ -1,14 +1,15 @@
 from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
 import pytest
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def set_ofam_grid():
-    filenames = {'U': "examples/OFAM_example_data/OFAM_simple_U.nc",
-                 'V': "examples/OFAM_example_data/OFAM_simple_V.nc"}
+    filenames = {'U': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_U.nc'),
+                 'V': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_V.nc')}
     variables = {'U': 'u', 'V': 'v'}
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}
