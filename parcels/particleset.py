@@ -295,11 +295,13 @@ class ParticleSet(object):
         try:
             import matplotlib.pyplot as plt
         except:
-            plt = None
+            print("Visualisation is not possible. Matplotlib not found.")
+            return
         try:
             from mpl_toolkits.basemap import Basemap
         except:
             Basemap = None
+
         plon = np.array([p.lon for p in self])
         plat = np.array([p.lat for p in self])
         show_time = self[0].time if show_time is None else show_time
@@ -315,8 +317,6 @@ class ParticleSet(object):
         else:
             latN, latS, lonE, lonW = (-1, 0, -1, 0)
         if field is not 'vector':
-            if plt is None:
-                raise RuntimeError("Visualisation not possible: matplotlib not found!")
             plt.ion()
             plt.clf()
             if particles:
@@ -341,9 +341,9 @@ class ParticleSet(object):
             ylbl = 'Meridional distance [m]' if type(self.grid.U.units) is UnitConverter else 'Latitude [degrees]'
             plt.xlabel(xlbl)
             plt.ylabel(ylbl)
+        elif Basemap is None:
+            print("Visualisation is not possible. Basemap not found.")
         else:
-            if Basemap is None:
-                raise RuntimeError("Visualisation not possible: Basemap module not found!")
             time_origin = self.grid.U.time_origin
             idx = self.grid.U.time_index(show_time)
             U = np.array(self.grid.U.temporal_interpolate_fullfield(idx, show_time))
