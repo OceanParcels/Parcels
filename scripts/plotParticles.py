@@ -1,15 +1,22 @@
 #!/usr/bin/env python
 from netCDF4 import Dataset
 import numpy as np
-import matplotlib.pyplot as plt
 from argparse import ArgumentParser
-import matplotlib.animation as animation
-from matplotlib import rc
+try:
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    from matplotlib import rc
+except:
+    plt = None
 
 
 def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y',
                          tracerfield='P', recordedvar=None, mode='2d'):
     """Quick and simple plotting of PARCELS trajectories"""
+
+    if plt is None:
+        print("Visualisation is not possible. Matplotlib not found.")
+        return
 
     pfile = Dataset(filename, 'r')
     lon = pfile.variables['lon']

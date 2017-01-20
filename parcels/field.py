@@ -404,7 +404,8 @@ class Field(object):
             import matplotlib.animation as animation_plt
             from matplotlib import rc
         except:
-            raise RuntimeError("Visualisation not possible: matplotlib not found!")
+            print("Visualisation is not possible. Matplotlib not found.")
+            return
 
         if with_particles or (not animation):
             idx = self.time_index(show_time)
@@ -495,7 +496,6 @@ class FileBuffer(object):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keyes for file data
         self.dataset = None
-        self.calendar_warning_given = False
 
     def __enter__(self):
         self.dataset = Dataset(str(self.filename), 'r', format="NETCDF4")
