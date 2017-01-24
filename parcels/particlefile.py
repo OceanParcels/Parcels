@@ -91,7 +91,7 @@ class ParticleFile(object):
             if v.name in ['time', 'lat', 'lon', 'z', 'id']:
                 continue
             if v.to_write is True:
-                setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=0.))
+                setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
