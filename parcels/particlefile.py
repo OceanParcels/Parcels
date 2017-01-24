@@ -102,6 +102,9 @@ class ParticleFile(object):
     def __del__(self):
         self.dataset.close()
 
+    def sync(self):
+        self.dataset.sync()
+
     def write(self, pset, time):
         """Write :class:`parcels.particleset.ParticleSet` data to file"""
         if isinstance(time, delta):
