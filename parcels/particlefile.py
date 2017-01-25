@@ -105,6 +105,7 @@ class ParticleFile(object):
         self.dataset.close()
 
     def sync(self):
+        """Write all buffered data to disk"""
         self.dataset.sync()
 
     def write(self, pset, time):
