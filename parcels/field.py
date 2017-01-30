@@ -11,7 +11,7 @@ from math import cos, pi
 from datetime import timedelta
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
+__all__ = ['CentralDifferences', 'AbstractField', 'Field', 'FiredrakeField', 'Geographic', 'GeographicPolar']
 
 
 class FieldSamplingError(RuntimeError):
@@ -124,7 +124,16 @@ class GeographicPolar(UnitConverter):
         return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
 
 
-class Field(object):
+class AbstractField(object):
+    """Parent for classes that encapsulate access to field data."""
+
+    def eval(self, time, x, y):
+        """Interpolate field values in space and time.
+        """
+
+        raise NotImplementedError
+
+class Field(AbstractField):
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
@@ -487,6 +496,18 @@ class Field(object):
         dset = xray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                         'nav_lat': nav_lat})
         dset.to_netcdf(filepath)
+
+
+class FiredrakeField(AbstractField):
+
+    def __init__(self, func):
+        self.func = func
+        self.name = func.name()
+
+    def eval(self, time, x, y):
+        """Evaluate the 'field' at the time and coords given."""
+
+        return self.func.at((x,y))
 
 
 class FileBuffer(object):

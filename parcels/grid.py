@@ -1,11 +1,11 @@
-from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
+from parcels.field import Field, FiredrakeField, UnitConverter, Geographic, GeographicPolar
 import numpy as np
 from py import path
 from glob import glob
 from collections import defaultdict
 
 
-__all__ = ['Grid']
+__all__ = ['AbstractGrid', 'Grid', 'FiredrakeGrid']
 
 
 def unit_converters(mesh):
@@ -24,7 +24,27 @@ def unit_converters(mesh):
     return u_units, v_units
 
 
-class Grid(object):
+class AbstractGrid(object):
+    """Parent for classes that hold the Eulerian field data."""
+
+    @property
+    def fields(self):
+        """Returns a list of all the :class:`parcels.field.Field` objects
+        associated with this grid"""
+        return [v for v in self.__dict__.values() if isinstance(v, Field)]
+
+    def eval(self, x, y):
+        """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
+
+        :param x: zonal point to evaluate
+        :param y: meridional point to evaluate
+
+        :return u, v: zonal and meridional velocities at point"""
+
+        raise NotImplementedError
+
+
+class Grid(AbstractGrid):
     """Grid class that holds hydrodynamic data needed to execute particles
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
@@ -149,12 +169,6 @@ class Grid(object):
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                **kwargs)
 
-    @property
-    def fields(self):
-        """Returns a list of all the :class:`parcels.field.Field` objects
-        associated with this grid"""
-        return [v for v in self.__dict__.values() if isinstance(v, Field)]
-
     def add_field(self, field):
         """Add a :class:`parcels.field.Field` object to the grid
 
@@ -218,3 +232,23 @@ class Grid(object):
         for v in self.fields:
             if (v.name is not 'U') and (v.name is not 'V'):
                 v.write(filename)
+
+
+class FiredrakeGrid(AbstractGrid):
+
+    def __init__(self, u, allow_time_extrapolation=False, fields=[]):
+        self.u = u
+        self.mesh = u.ufl_domain()
+
+        # Add additional fields as attributes
+        for field in fields:
+            setattr(self, field.name(), FiredrakeField(field))
+
+    def eval(self, x, y):
+        """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
+
+        :param x: zonal point to evaluate
+        :param y: meridional point to evaluate
+        :return u, v: zonal and meridional velocities at point"""
+
+        return self.u.at((x, y))
