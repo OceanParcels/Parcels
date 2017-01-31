@@ -156,3 +156,18 @@ def test_execution_delete_out_of_bounds(grid, mode, npart=10):
     pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteMe})
     assert len(pset) == 0
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_kernel_add_no_new_variables(grid, mode):
+    def MoveEast(particle, grid, time, dt):
+        particle.lon += 0.1
+
+    def MoveNorth(particle, grid, time, dt):
+        particle.lat += 0.1
+
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth),
+                 starttime=0., endtime=1., dt=1.)
+    assert np.allclose([p.lon for p in pset], 0.6, rtol=1e-5)
+    assert np.allclose([p.lat for p in pset], 0.6, rtol=1e-5)
