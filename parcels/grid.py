@@ -236,13 +236,13 @@ class Grid(AbstractGrid):
 
 class FiredrakeGrid(AbstractGrid):
 
-    def __init__(self, u, allow_time_extrapolation=False, fields=[]):
-        self.u = u
+    def __init__(self, u, lon, lat, allow_time_extrapolation=False, fields=[]):
+        self.U = FiredrakeField(u, lon, lat)
         self.mesh = u.ufl_domain()
 
         # Add additional fields as attributes
         for field in fields:
-            setattr(self, field.name(), FiredrakeField(field))
+            setattr(self, field.name(), FiredrakeField(field, lon, lat))
 
     def eval(self, x, y):
         """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)

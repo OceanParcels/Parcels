@@ -133,6 +133,13 @@ class AbstractField(object):
 
         raise NotImplementedError
 
+    def time_index(self, time):
+        """Find the index in the time array associated with a given time
+        """
+
+        raise NotImplementedError
+
+
 class Field(AbstractField):
     """Class that encapsulates access to field data.
 
@@ -500,14 +507,34 @@ class Field(AbstractField):
 
 class FiredrakeField(AbstractField):
 
-    def __init__(self, func):
+    def __init__(self, func, lon, lat, time_origin=0, time=None, units=None):
         self.func = func
         self.name = func.name()
+        self.lon = lon
+        self.lat = lat
+        self.time_origin = time_origin
+        self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        self.units = units if units is not None else UnitConverter()
 
     def eval(self, time, x, y):
         """Evaluate the 'field' at the time and coords given."""
-
         return self.func.at((x,y))
+
+    def time_index(self, time):
+        """Find the index in the time array associated with a given time
+
+        Note that we normalize to either the first or the last index
+        if the sampled value is outside the time value range.
+        """
+        if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
+            raise TimeExtrapolationError(time, field=self)
+        time_index = self.time <= time
+        if time_index.all():
+            # If given time > last known grid time, use
+            # the last grid frame without interpolation
+            return len(self.time) - 1
+        else:
+            return time_index.argmin() - 1 if time_index.any() else 0
 
 
 class FileBuffer(object):
