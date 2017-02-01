@@ -281,8 +281,10 @@ class Field(object):
             dVdx[t, :, :] = np.array(np.transpose(grad[0]))
             dVdy[t, :, :] = np.array(np.transpose(grad[1]))
 
-        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time),
-                Field(name + '_dy', dVdy, lon, lat, self.depth, time)])
+        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time,
+                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
+                Field(name + '_dy', dVdy, lon, lat, self.depth, time,
+                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
     @cachedmethod(operator.attrgetter('interpolator_cache'))
     def interpolator2D(self, t_idx):
