@@ -24,8 +24,12 @@ obtained directly from github via:
 ```
 git clone https://github.com/OceanPARCELS/parcels.git
 cd parcels; pip install -r requirements.txt
+python scripts/pull_data.py
 export PYTHONPATH="$PYTHONPATH:$PWD"
 ```
+In order for PARCELS to work from any directory, add the line 
+`export PYTHONPATH="$PYTHONPATH:$PWD"` to your `~/.bash_profile`
+
 As an alternative, PARCELS can also be installed directly via pip:
 ```
 pip install git+https://github.com/OceanPARCELS/parcels.git
