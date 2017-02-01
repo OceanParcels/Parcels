@@ -7,7 +7,7 @@ tracking of virtual ocean particles in the petascale age.
 
 ![AgulhasParticles](http://oceanparcels.org/animated-gifs/globcurrent_fullyseeded.gif)
 
-*Animation of virtual particles carried by ocean surface flow in the [Agulhas Current](https://en.wikipedia.org/wiki/Agulhas_Current) off South Africa. The particles are advected with [PARCELS](http://oceanparcels.org/) in data from the [GlobCurrent Project](http://globcurrent.ifremer.fr/products-data/products-overview).*
+*Animation of virtual particles carried by ocean surface flow in the [Agulhas Current](https://en.wikipedia.org/wiki/Agulhas_Current) off South Africa. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [GlobCurrent Project](http://globcurrent.ifremer.fr/products-data/products-overview).*
 
 ### Motivation
 
@@ -19,30 +19,30 @@ In this project, we will scope out and develop a new generic, open-source commun
 
 ### Installation
 
-The latest version of PARCELS, including tests and examples, can be
+The latest version of Parcels, including tests and examples, can be
 obtained directly from github via:
 ```
-git clone https://github.com/OceanPARCELS/parcels.git
+git clone https://github.com/OceanParcels/parcels.git
 cd parcels; pip install -r requirements.txt
 python scripts/pull_data.py
 export PYTHONPATH="$PYTHONPATH:$PWD"
 ```
-In order for PARCELS to work from any directory, add the line 
+In order for Parcels to work from any directory, add the line 
 `export PYTHONPATH="$PYTHONPATH:$PWD"` to your `~/.bash_profile`
 
 Note that a functional NetCDF install is required.
 
 ### Tutorial
 
-For a brief guide to running PARCELS and some sample output, have a look at the [interactive tutorial](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb).
+For a brief guide to running Parcels and some sample output, have a look at the [interactive tutorial](http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/Parcelstutorial.ipynb).
 
-[This tutorial](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb) covers the basics of a particle simulation within PARCELS and a sample of its key features, including custom kernels.
+[This tutorial](http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/Parcelstutorial.ipynb) covers the basics of a particle simulation within Parcels and a sample of its key features, including custom kernels.
 
 There are also a number of worked-out examples in the `examples/` directory. Run these with e.g.
 ```
 python examples/example_peninsula.py --grid 100 50 -p 10
 ```
-And then plot the resulting particles using PARCELS simple plotting script
+And then plot the resulting particles using Parcels simple plotting script
 ```
 python scripts/plotParticles.py 2d -p MyParticle.nc
 ```
