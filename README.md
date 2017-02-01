@@ -34,9 +34,9 @@ Note that a functional NetCDF install is required.
 
 ### Tutorial
 
-For a brief guide to running Parcels and some sample output, have a look at the [interactive tutorial](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/Parcelstutorial.ipynb).
+For a brief guide to running Parcels and some sample output, have a look at the [interactive tutorial](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb).
 
-[This tutorial](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/Parcelstutorial.ipynb) covers the basics of a particle simulation within Parcels and a sample of its key features, including custom kernels.
+[This tutorial](http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb) covers the basics of a particle simulation within Parcels and a sample of its key features, including custom kernels.
 
 There are also a number of worked-out examples in the `examples/` directory. Run these with e.g.
 ```
