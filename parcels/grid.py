@@ -1,6 +1,6 @@
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 import numpy as np
-from py import path
+from os import path
 from glob import glob
 from collections import defaultdict
 
@@ -117,12 +117,11 @@ class Grid(object):
             if isinstance(filenames[var], list):
                 paths = filenames[var]
             else:
-                basepath = path.local(filenames[var])
-                paths = [path.local(fp) for fp in glob(str(basepath))]
+                paths = glob(str(filenames[var]))
             if len(paths) == 0:
-                raise IOError("Grid files not found: %s" % str(basepath))
+                raise IOError("Grid files not found: %s" % str(filenames[var]))
             for fp in paths:
-                if not fp.exists():
+                if not path.exists(fp):
                     raise IOError("Grid file not found: %s" % str(fp))
             dimensions['data'] = name
             fields[var] = Field.from_netcdf(var, dimensions, paths, indices, units=units[var],
@@ -147,7 +146,7 @@ class Grid(object):
         dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
                       'depth': 'depth', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
-        filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
+        filenames = dict([(v, str("%s%s.nc" % (basename, v)))
                           for v in extra_vars.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_vars,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,

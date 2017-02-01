@@ -276,8 +276,10 @@ class Field(object):
             dVdx[t, :, :] = np.array(np.transpose(grad[0]))
             dVdy[t, :, :] = np.array(np.transpose(grad[1]))
 
-        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time),
-                Field(name + '_dy', dVdy, lon, lat, self.depth, time)])
+        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time,
+                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
+                Field(name + '_dy', dVdy, lon, lat, self.depth, time,
+                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
     def interpolator2D(self, t_idx):
         """Provide a SciPy interpolator for spatial interpolation
@@ -397,7 +399,8 @@ class Field(object):
             import matplotlib.animation as animation_plt
             from matplotlib import rc
         except:
-            raise RuntimeError("Visualisation not possible: matplotlib not found!")
+            print("Visualisation is not possible. Matplotlib not found.")
+            return
 
         if with_particles or (not animation):
             idx = self.time_index(show_time)
@@ -488,7 +491,6 @@ class FileBuffer(object):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keyes for file data
         self.dataset = None
-        self.calendar_warning_given = False
 
     def __enter__(self):
         self.dataset = Dataset(str(self.filename), 'r', format="NETCDF4")

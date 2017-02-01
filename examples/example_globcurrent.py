@@ -1,6 +1,6 @@
 from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
-from py import path
+from os import path
 from glob import glob
 import numpy as np
 import pytest
@@ -9,12 +9,13 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_grid(filename="examples/GlobCurrent_example_data/20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc", indices={}):
-    filenames = {'U': filename,
-                 'V': filename}
+def set_globcurrent_grid(filename=None, indices={}):
+    if filename is None:
+        filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
+                             '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    filenames = {'U': filename, 'V': filename}
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
-    dimensions = {'lat': 'lat', 'lon': 'lon',
-                  'time': 'time'}
+    dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     return Grid.from_netcdf(filenames, variables, dimensions, indices)
 
 
@@ -41,8 +42,9 @@ def test_globcurrent_grid():
     (-300., 8, 10, 20, -39, range(7, 2, -1))
 ])
 def test_globcurrent_grid_advancetime(mode, dt, substart, subend, lonstart, latstart, irange):
-    basepath = path.local("examples/GlobCurrent_example_data/20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc")
-    files = [path.local(fp) for fp in glob(str(basepath))]
+    basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
+                         '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    files = glob(str(basepath))
 
     gridsub = set_globcurrent_grid(files[substart:subend])
     psetsub = ParticleSet.from_list(grid=gridsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
