@@ -75,16 +75,7 @@ In order for Parcels to work from any directory, add the following line to
 your ~/.bash_profile::
     export PYTHONPATH="$PYTHONPATH:$PWD"
 
-As an alternative, Parcels can also be installed 
-directly via pip::
-    pip install git+https://github.com/OceanPARCELS/parcels.git
-
-The above assumes that all dependencies are met, 
-which can be achieved with::
-    curl -O https://raw.githubusercontent.com/OceanPARCELS/parcels/master/requirements.txt
-    pip install -r requirements.txt
-
-In both cases a functional NetCDF install is required.
+Note that a functional NetCDF install is required.
 
 Getting involved
 ===================================
