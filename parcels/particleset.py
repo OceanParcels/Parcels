@@ -247,7 +247,10 @@ class ParticleSet(object):
         if starttime is None:
             starttime = self.grid.U.time[0] if dt > 0 else self.grid.U.time[-1]
         if runtime is not None:
-            endtime = starttime + runtime
+            if runtime < 0:
+                runtime = np.abs(runtime)
+                print("negating runtime  as it has to be positive")
+            endtime = starttime + runtime * np.sign(dt)
         else:
             if endtime is None:
                 endtime = self.grid.U.time[-1] if dt > 0 else self.grid.U.time[0]
