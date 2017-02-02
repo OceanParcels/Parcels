@@ -29,17 +29,14 @@ class AbstractGrid(object):
 
     @property
     def fields(self):
-        """Returns a list of all the :class:`parcels.field.Field` objects
-        associated with this grid"""
-        return [v for v in self.__dict__.values() if isinstance(v, Field)]
+        """Returns a list of all the :class:`parcels.field.Field` or
+        `FiredrakeField` objects associated with this grid"""
+
+        raise NotImplementedError
 
     def eval(self, x, y):
         """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
-
-        :param x: zonal point to evaluate
-        :param y: meridional point to evaluate
-
-        :return u, v: zonal and meridional velocities at point"""
+        """
 
         raise NotImplementedError
 
@@ -169,6 +166,12 @@ class Grid(AbstractGrid):
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                **kwargs)
 
+    @property
+    def fields(self):
+        """Returns a list of all the :class:`parcels.field.Field` objects
+        associated with this grid"""
+        return [v for v in self.__dict__.values() if isinstance(v, Field)]
+
     def add_field(self, field):
         """Add a :class:`parcels.field.Field` object to the grid
 
@@ -243,6 +246,12 @@ class FiredrakeGrid(AbstractGrid):
         # Add additional fields as attributes
         for field in fields:
             setattr(self, field.name(), FiredrakeField(field, lon, lat))
+
+    @property
+    def fields(self):
+        """Returns a list of all the :class:`parcels.field.FiredrakeField`
+        objects associated with this grid"""
+        return [v for v in self.__dict__.values() if isinstance(v, FiredrakeField)]
 
     def eval(self, x, y):
         """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
