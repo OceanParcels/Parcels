@@ -4,6 +4,7 @@ from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
+from parcels.loggers import logger
 import numpy as np
 import bisect
 from collections import Iterable
@@ -246,17 +247,17 @@ class ParticleSet(object):
         if endtime > starttime:  # Time-forward mode
             if dt < 0:
                 dt *= -1.
-                print("negating dt because running in time-forward mode")
+                logger.warning("Negating dt because running in time-forward mode")
             if interval < 0:
                 interval *= -1.
-                print("negating interval because running in time-forward mode")
+                logger.warning("Negating interval because running in time-forward mode")
         if endtime < starttime:  # Time-backward mode
             if dt > 0.:
                 dt *= -1.
-                print("negating dt because running in time-backward mode")
+                logger.warning("Negating dt because running in time-backward mode")
             if interval > 0.:
                 interval *= -1.
-                print("negating interval because running in time-backward mode")
+                logger.warning("Negating interval because running in time-backward mode")
 
         # Initialise particle timestepping
         for p in self:
@@ -295,7 +296,7 @@ class ParticleSet(object):
         try:
             import matplotlib.pyplot as plt
         except:
-            print("Visualisation is not possible. Matplotlib not found.")
+            logger.info("Visualisation is not possible. Matplotlib not found.")
             return
         try:
             from mpl_toolkits.basemap import Basemap
@@ -342,7 +343,7 @@ class ParticleSet(object):
             plt.xlabel(xlbl)
             plt.ylabel(ylbl)
         elif Basemap is None:
-            print("Visualisation is not possible. Basemap not found.")
+            logger.info("Visualisation is not possible. Basemap not found.")
         else:
             time_origin = self.grid.U.time_origin
             idx = self.grid.U.time_index(show_time)
@@ -413,7 +414,7 @@ class ParticleSet(object):
             plt.pause(0.0001)
         else:
             plt.savefig(savefile)
-            print('Plot saved to '+savefile+'.png')
+            logger.info('Plot saved to '+savefile+'.png')
             plt.close()
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=True):

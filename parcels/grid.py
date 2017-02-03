@@ -1,4 +1,5 @@
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
+from parcels.loggers import logger
 import numpy as np
 from py import path
 from glob import glob
@@ -210,7 +211,7 @@ class Grid(object):
         """Write grid to NetCDF file using NEMO convention
 
         :param filename: Basename of the output fileset"""
-        print("Generating NEMO grid output with basename: %s" % filename)
+        logger.info("Generating NEMO grid output with basename: %s" % filename)
 
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
