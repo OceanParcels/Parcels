@@ -1,4 +1,4 @@
-from parcels.field import Field
+from parcels.field import AbstractField
 import ast
 import cgen as c
 from collections import OrderedDict
@@ -14,7 +14,7 @@ class IntrinsicNode(ast.AST):
 
 class GridNode(IntrinsicNode):
     def __getattr__(self, attr):
-        if isinstance(getattr(self.obj, attr), Field):
+        if isinstance(getattr(self.obj, attr), AbstractField):
             return FieldNode(getattr(self.obj, attr),
                              ccode="%s->%s" % (self.ccode, attr))
         else:

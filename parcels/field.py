@@ -536,6 +536,9 @@ class FiredrakeField(AbstractField):
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
 
+    def __getitem__(self, key):
+        return self.eval(*key)
+
 
 class FileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """

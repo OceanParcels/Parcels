@@ -1,5 +1,5 @@
 from parcels.kernel import Kernel
-from parcels.field import Field, UnitConverter
+from parcels.field import AbstractField, UnitConverter
 from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
@@ -328,7 +328,7 @@ class ParticleSet(object):
                 namestr = ''
                 time_origin = self.grid.U.time_origin
             else:
-                if not isinstance(field, Field):
+                if not isinstance(field, AbstractField):
                     field = getattr(self.grid, field)
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name

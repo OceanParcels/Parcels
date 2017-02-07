@@ -260,4 +260,4 @@ class FiredrakeGrid(AbstractGrid):
         :param y: meridional point to evaluate
         :return u, v: zonal and meridional velocities at point"""
 
-        return self.u.at((x, y))
+        return self.U.at((x, y))
