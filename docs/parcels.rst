@@ -77,3 +77,10 @@ parcels.rng module
 .. automodule:: parcels.rng
     :members:
     :undoc-members:
+
+parcels.loggers module
+------------------
+
+.. automodule:: parcels.loggers
+    :members:
+    :undoc-members:
