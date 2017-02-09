@@ -1,5 +1,6 @@
 """Collection of pre-built advection kernels"""
 from parcels.kernels.error import ErrorCode
+from parcels.grid import FiredrakeGrid
 import math
 
 
@@ -11,7 +12,7 @@ def AdvectionRK4(particle, grid, time, dt):
 
     Function needs to be converted to Kernel object before execution"""
 
-    # See if our grid is an FiredrakeGrid
+    # See if our grid is a FiredrakeGrid
     if isinstance(grid, FiredrakeGrid):
         u1, v1 = grid.U.eval(time, particle.lon, particle.lat)
         lon1, lat1 = (particle.lon + u1*.5*dt, particle.lat + v1*.5*dt)
