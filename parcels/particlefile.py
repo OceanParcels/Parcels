@@ -43,6 +43,8 @@ class ParticleFile(object):
             coords = ("trajectory", "obs")
         elif self.type is 'indexed':
             coords = ("obs")
+        else:
+            raise RuntimeError("ParticleFile type must be either 'array' or 'indexed'")
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
@@ -91,7 +93,7 @@ class ParticleFile(object):
             if v.name in ['time', 'lat', 'lon', 'z', 'id']:
                 continue
             if v.to_write is True:
-                setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=0.))
+                setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
@@ -101,6 +103,10 @@ class ParticleFile(object):
 
     def __del__(self):
         self.dataset.close()
+
+    def sync(self):
+        """Write all buffered data to disk"""
+        self.dataset.sync()
 
     def write(self, pset, time):
         """Write :class:`parcels.particleset.ParticleSet` data to file"""

@@ -49,7 +49,12 @@ class Kernel(object):
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
-        self.funcvars = funcvars or list(pyfunc.__code__.co_varnames)
+        if funcvars is not None:
+            self.funcvars = funcvars
+        elif hasattr(pyfunc, '__code__'):
+            self.funcvars = list(pyfunc.__code__.co_varnames)
+        else:
+            self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
         # Parse AST if it is not provided explicitly
         self.py_ast = py_ast or parse(fix_indentation(self.funccode)).body[0]

@@ -1,7 +1,7 @@
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 from parcels.loggers import logger
 import numpy as np
-from py import path
+from os import path
 from glob import glob
 from collections import defaultdict
 
@@ -90,7 +90,8 @@ class Grid(object):
         """Initialises grid data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files.
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file.
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
@@ -114,12 +115,14 @@ class Grid(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            basepath = path.local(filenames[var])
-            paths = [path.local(fp) for fp in glob(str(basepath))]
+            if isinstance(filenames[var], list):
+                paths = filenames[var]
+            else:
+                paths = glob(str(filenames[var]))
             if len(paths) == 0:
-                raise IOError("Grid files not found: %s" % str(basepath))
+                raise IOError("Grid files not found: %s" % str(filenames[var]))
             for fp in paths:
-                if not fp.exists():
+                if not path.exists(fp):
                     raise IOError("Grid file not found: %s" % str(fp))
             dimensions['data'] = name
             fields[var] = Field.from_netcdf(var, dimensions, paths, indices, units=units[var],
@@ -144,7 +147,7 @@ class Grid(object):
         dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
                       'depth': 'depth', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
-        filenames = dict([(v, str(path.local("%s%s.nc" % (basename, v))))
+        filenames = dict([(v, str("%s%s.nc" % (basename, v)))
                           for v in extra_vars.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_vars,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
@@ -219,3 +222,22 @@ class Grid(object):
         for v in self.fields:
             if (v.name is not 'U') and (v.name is not 'V'):
                 v.write(filename)
+
+    def advancetime(self, gridnew):
+        """Replace oldest time on grid with newgrid
+
+        :param gridnew: Grid snapshot with which the oldest time has to be replaced"""
+
+        if len(gridnew.U.time) is not 1:
+            raise RuntimeError('New grid needs to have only one snapshot')
+
+        for v in self.fields:
+            vnew = getattr(gridnew, v.name)
+            if vnew.time > v.time[-1]:  # forward in time, so appending at end
+                v.data = np.concatenate((v.data[1:, :, :], vnew.data[:, :, :]), 0)
+                v.time = np.concatenate((v.time[1:], vnew.time))
+            elif vnew.time < v.time[0]:  # backward in time, so prepending at start
+                v.data = np.concatenate((vnew.data[:, :, :], v.data[:-1, :, :]), 0)
+                v.time = np.concatenate((vnew.time, v.time[:-1]))
+            else:
+                raise RuntimeError("Time of gridnew in grid.advancetime() overlaps with times in old grid")

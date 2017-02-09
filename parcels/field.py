@@ -1,11 +1,9 @@
 from parcels.loggers import logger
 from scipy.interpolate import RegularGridInterpolator
-from cachetools import cachedmethod, LRUCache
 from collections import Iterable
 from py import path
 import numpy as np
 import xray
-import operator
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
@@ -194,9 +192,6 @@ class Field(object):
         self.ccode_lon = self.name + "_lon"
         self.ccode_lat = self.name + "_lat"
 
-        self.interpolator_cache = LRUCache(maxsize=2)
-        self.time_index_cache = LRUCache(maxsize=2)
-
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
                     allow_time_extrapolation=False, **kwargs):
@@ -282,12 +277,13 @@ class Field(object):
             dVdx[t, :, :] = np.array(np.transpose(grad[0]))
             dVdy[t, :, :] = np.array(np.transpose(grad[1]))
 
-        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time),
-                Field(name + '_dy', dVdy, lon, lat, self.depth, time)])
+        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time,
+                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
+                Field(name + '_dy', dVdy, lon, lat, self.depth, time,
+                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
-    @cachedmethod(operator.attrgetter('interpolator_cache'))
     def interpolator2D(self, t_idx):
-        """Provide a cached SciPy interpolator for spatial interpolation
+        """Provide a SciPy interpolator for spatial interpolation
 
         Note that the interpolator is configured to return NaN for
         out-of-bounds coordinates.
@@ -319,7 +315,6 @@ class Field(object):
         else:
             return val
 
-    @cachedmethod(operator.attrgetter('time_index_cache'))
     def time_index(self, time):
         """Find the index in the time array associated with a given time
 

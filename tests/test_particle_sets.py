@@ -49,6 +49,21 @@ def test_pset_create_field(grid, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_create_with_time(grid, mode, npart=100):
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    time = 5.
+    pset = ParticleSet(grid, lon=lon, lat=lat, pclass=ptype[mode], time=time)
+    assert np.allclose([p.time for p in pset], time, rtol=1e-12)
+    pset = ParticleSet.from_list(grid, lon=lon, lat=lat, pclass=ptype[mode],
+                                 time=[time]*npart)
+    assert np.allclose([p.time for p in pset], time, rtol=1e-12)
+    pset = ParticleSet.from_line(grid, size=npart, start=(0, 1), finish=(1, 0),
+                                 pclass=ptype[mode], time=time)
+    assert np.allclose([p.time for p in pset], time, rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(grid, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)

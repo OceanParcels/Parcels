@@ -35,13 +35,20 @@ class ParticleSet(object):
                  :mod:`parcels.particle.ScipyParticle` object that defines custom particle
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
+    :param time: Optional list of initial time values for particles. Default is grid.U.time[0]
     """
 
-    def __init__(self, grid, pclass=JITParticle, lon=None, lat=None):
+    def __init__(self, grid, pclass=JITParticle, lon=None, lat=None, time=None):
         # Convert numpy arrays to one-dimensional lists
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
         assert len(lon) == len(lat)
+
+        time = grid.U.time[0] if time is None else time
+        time = time.flatten() if isinstance(time, np.ndarray) else time
+        time = [time] * len(lat) if not isinstance(time, list) else time
+        assert len(lon) == len(time)
+
         size = len(lon)
         self.grid = grid
         self.particles = np.empty(size, dtype=pclass)
@@ -64,22 +71,25 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=grid.U.time[0])
+                self.particles[i] = pclass(lon[i], lat[i], grid=grid, cptr=cptr(i), time=time[i])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
-    def from_list(cls, grid, pclass, lon, lat):
+    def from_list(cls, grid, pclass, lon, lat, time=None):
         """Initialise the ParticleSet from lists of lon and lat
 
         :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
                  object that defines custom particle
-        """
-        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+        :param lon: List of initial longitude values for particles
+        :param lat: List of initial latitude values for particles
+        :param time: Optional list of start time values for particles. Default is grid.U.time[0]
+       """
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat, time=time)
 
     @classmethod
-    def from_line(cls, grid, pclass, start, finish, size):
+    def from_line(cls, grid, pclass, start, finish, size, time=None):
         """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
         Note that this method uses simple numpy.linspace calls and does not take into account
         great circles, so may not be a exact on a globe
@@ -90,13 +100,14 @@ class ParticleSet(object):
         :param start: Starting point for initialisation of particles on a straight line.
         :param finish: End point for initialisation of particles on a straight line.
         :param size: Initial size of particle set
+        :param time: Optional start time value for particles. Default is grid.U.time[0]
         """
         lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
         lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
-        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat, time=time)
 
     @classmethod
-    def from_field(cls, grid, pclass, start_field, size, mode='monte_carlo'):
+    def from_field(cls, grid, pclass, start_field, size, mode='monte_carlo', time=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
 
         :param grid: :mod:`parcels.grid.Grid` object from which to sample velocity
@@ -105,6 +116,7 @@ class ParticleSet(object):
         :param start_field: Field for initialising particles stochastically according to the presented density field.
         :param size: Initial size of particle set
         :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
+        :param time: Optional start time value for particles. Default is grid.U.time[0]
         """
         total = np.sum(start_field.data[0, :, :])
         start_field.data[0, :, :] = start_field.data[0, :, :] / total
@@ -131,7 +143,7 @@ class ParticleSet(object):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
-        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat)
+        return cls(grid=grid, pclass=pclass, lon=lon, lat=lat, time=time)
 
     @property
     def size(self):
@@ -236,7 +248,10 @@ class ParticleSet(object):
         if starttime is None:
             starttime = self.grid.U.time[0] if dt > 0 else self.grid.U.time[-1]
         if runtime is not None:
-            endtime = starttime + runtime
+            if runtime < 0:
+                runtime = np.abs(runtime)
+                print("negating runtime  as it has to be positive")
+            endtime = starttime + runtime * np.sign(dt)
         else:
             if endtime is None:
                 endtime = self.grid.U.time[-1] if dt > 0 else self.grid.U.time[0]
