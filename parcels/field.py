@@ -164,16 +164,16 @@ class Field(object):
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
-            logger.warning("Casting field data to np.float32")
+            logger.warning_once("Casting field data to np.float32")
             self.data = self.data.astype(np.float32)
         if not self.lon.dtype == np.float32:
-            logger.warning("Casting lon data to np.float32")
+            logger.warning_once("Casting lon data to np.float32")
             self.lon = self.lon.astype(np.float32)
         if not self.lat.dtype == np.float32:
-            logger.warning("Casting lat data to np.float32")
+            logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.time.dtype == np.float64:
-            logger.warning("Casting time data to np.float64")
+            logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         if transpose:
             # Make a copy of the transposed array to enforce
