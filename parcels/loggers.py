@@ -20,6 +20,7 @@ def warning_once(self, message, *args, **kws):
     if self.isEnabledFor(warning_once_level):
         self._log(warning_once_level, message, args, **kws)
 
+
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter(fmt="%(levelname)s: %(message)s"))
