@@ -53,13 +53,17 @@ Parcels Tutorials
 
 The best way to get started with Parcels is to have a look at the Jupyter notebooks below:
 
-* `Parcels tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb>`_ for a general overview
+* `Parcels tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb>`_ for a general introduction and overview into the main features of Parcels
 
-* `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
+* `Periodic boundaries tutorial <https://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_periodic_boundaries.ipynb>`_ for a tutorial on how to implement periodic boundary conditions
 
-* `Periodic boundaries tutorial <https://github.com/OceanPARCELS/parcels/blob/master/examples/tutorial_periodic_boundaries.ipynb>`_ for a tutorial on how to implement periodic boundary conditions
+* `Grid.advancetime() tutorial <https://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_advancetime.ipynb>`_ for a tutorial on how to use Parcels with datasets that have a large number of time snapshots.
+
+* `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_jit_vs_scipy.ipynb>`_ for a tutorial showing how JIT  and Scipy mode compare.
 
 * `Animated Gif tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_Agulhasparticles.ipynb>`_ for a  tutorial on how to created the Agulhas region animated gif on the top of this page. This tutorial also features a brief explanation of how to handle `OutOfBounds` errors.
+
+* `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
 
 Installing Parcels
 ===================================
@@ -89,7 +93,7 @@ please join the `mailing list
 <https://mailman.ic.ac.uk/mailman/listinfo/oceanparcels>`_.
 
 
-Python code documentation
+Python design overview
 ===================================
 
 .. figure:: ParcelsDesign.png
@@ -100,8 +104,11 @@ Python code documentation
 
 See below for links to the full documentation of the python code for Parcels
 
+
+Parcels documentation
+===================================
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 0
 
    parcels
 
