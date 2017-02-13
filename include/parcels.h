@@ -16,8 +16,8 @@ typedef enum
 
 typedef struct
 {
-  int xdim, ydim, tdim, tidx, allow_time_extrapolation;
-  float *lon, *lat;
+  int xdim, ydim, zdim, tdim, tidx, allow_time_extrapolation;
+  float *lon, *lat, *depth;
   double *time;
   float ***data;
 } CField;
@@ -70,19 +70,21 @@ static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i,
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, int yi,
-                                                      double time, CField *f, float *value,
-                                                      int interp_method)
+static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, int xi,
+                                                      int yi, int zi, double time, CField *f,
+                                                      float *value, int interp_method)
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
   float (*data)[f->ydim][f->xdim] = (float (*)[f->ydim][f->xdim]) f->data;
   float f0, f1;
   double t0, t1;
-  int i = xi, j = yi;
+  int i = xi, j = yi, k = zi;
   /* Identify grid cell to sample through local linear search */
   err = search_linear_float(x, f->xdim, f->lon, &i); CHECKERROR(err);
   err = search_linear_float(y, f->ydim, f->lat, &j); CHECKERROR(err);
+  if (f->zdim > 1){
+    err = search_linear_float(z, f->zdim, f->depth, &k); CHECKERROR(err);}
   /* Find time index for temporal interpolation */
   if (f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;

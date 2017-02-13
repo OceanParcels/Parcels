@@ -2,6 +2,7 @@ from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
 import numpy as np
 from os import path
 from glob import glob
+from copy import deepcopy
 from collections import defaultdict
 
 
@@ -95,6 +96,9 @@ class Grid(object):
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -123,8 +127,9 @@ class Grid(object):
             for fp in paths:
                 if not path.exists(fp):
                     raise IOError("Grid file not found: %s" % str(fp))
-            dimensions['data'] = name
-            fields[var] = Field.from_netcdf(var, dimensions, paths, indices, units=units[var],
+            dims = dimensions[var] if var in dimensions else dimensions
+            dims['data'] = name
+            fields[var] = Field.from_netcdf(var, dims, paths, indices, units=units[var],
                                             allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
@@ -143,9 +148,13 @@ class Grid(object):
                Default is to read the full extent of each dimension.
         """
 
-        dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat',
-                      'depth': 'depth', 'time': 'time_counter'}
+        dimensions = {}
+        default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
+                        'depth': 'depth', 'time': 'time_counter'}
         extra_vars.update({'U': uvar, 'V': vvar})
+        for vars in extra_vars:
+            dimensions[vars] = deepcopy(default_dims)
+            dimensions[vars]['depth'] = 'depth%s' % vars.lower()
         filenames = dict([(v, str("%s%s.nc" % (basename, v)))
                           for v in extra_vars.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_vars,

@@ -71,7 +71,7 @@ def peninsula_grid(xdim, ydim):
 
 
 def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
+    particle.p = grid.P[time, particle.lon, particle.lat, particle.depth]
 
 
 def pensinsula_example(grid, npart, mode='jit', degree=1,
@@ -100,7 +100,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
     pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
     for particle in pset:
-        particle.p_start = grid.P[0., particle.lon, particle.lat]
+        particle.p_start = grid.P[0., particle.lon, particle.lat, particle.depth]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
@@ -130,7 +130,7 @@ def test_peninsula_grid(mode):
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
     # Test grid sampling accuracy by comparing kernel against grid sampling
-    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat, p.depth]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
 
 
@@ -152,7 +152,7 @@ def test_peninsula_file(gridfile, mode):
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
     # Test grid sampling accuracy by comparing kernel against grid sampling
-    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat, p.depth]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
 
 

@@ -120,7 +120,7 @@ class ParticleFile(object):
                 self.time[:, self.idx] = time
                 self.lat[:, self.idx] = np.array([p.lat for p in pset])
                 self.lon[:, self.idx] = np.array([p.lon for p in pset])
-                self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
+                self.z[:, self.idx] = np.array([p.depth for p in pset])
                 for var in self.user_vars:
                     getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
 
@@ -131,7 +131,7 @@ class ParticleFile(object):
                 self.time[ind] = time
                 self.lat[ind] = np.array([p.lat for p in pset])
                 self.lon[ind] = np.array([p.lon for p in pset])
-                self.z[ind] = np.zeros(pset.size, dtype=np.float32)
+                self.z[ind] = np.array([p.depth for p in pset])
                 for var in self.user_vars:
                     getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
 

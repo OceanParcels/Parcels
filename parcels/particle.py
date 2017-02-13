@@ -119,6 +119,7 @@ class ScipyParticle(_Particle):
 
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle
+    :param depth: Initial depth of particle
     :param grid: :mod:`parcels.grid.Grid` object to track this particle on
     :param dt: Execution timestep for this particle
     :param time: Current time of the particle
@@ -128,17 +129,19 @@ class ScipyParticle(_Particle):
 
     lon = Variable('lon', dtype=np.float32)
     lat = Variable('lat', dtype=np.float32)
+    depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, grid, dt=1., time=0., cptr=None):
+    def __init__(self, lon, lat, grid, depth=0., dt=1., time=0., cptr=None):
         global lastID
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
+        type(self).depth.initial = depth
         type(self).time.initial = time
         type(self).id.initial = lastID
         lastID += 1
@@ -146,7 +149,7 @@ class ScipyParticle(_Particle):
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
-        return "P(%f, %f, %f)" % (self.lon, self.lat, self.time)
+        return "P(%f, %f, %f, %f)" % (self.lon, self.lat, self.depth, self.time)
 
     def delete(self):
         self.state = ErrorCode.Delete
@@ -169,6 +172,7 @@ class JITParticle(ScipyParticle):
 
     xi = Variable('xi', dtype=np.int32, to_write=False)
     yi = Variable('yi', dtype=np.int32, to_write=False)
+    zi = Variable('zi', dtype=np.int32, to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -181,7 +185,8 @@ class JITParticle(ScipyParticle):
         grid = kwargs.get('grid')
         self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
         self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
+        self.zi = np.where(self.depth >= grid.U.depth)[0][-1]
 
     def __repr__(self):
-        return "P(%f, %f, %f)[%d, %d]" % (self.lon, self.lat, self.time,
-                                          self.xi, self.yi)
+        return "P(%f, %f, %f, %f)[%d, %d, %d]" % (self.lon, self.lat, self.depth,
+                                                  self.time, self.xi, self.yi, self.zi)

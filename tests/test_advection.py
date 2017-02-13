@@ -61,6 +61,27 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advection_zonal3D(mode, npart=11):
+    """ 2D flow that changes linearly with depth
+    """
+    lon = np.linspace(0., 1e4, 2, dtype=np.float32)
+    lat = np.linspace(0., 1e4, 2, dtype=np.float32)
+    depth = np.linspace(0., 1., 2, dtype=np.float32)
+    U = np.ones((lon.size, lat.size, 2), dtype=np.float32)
+    U[:, :, 0] = 0.
+    V = np.zeros((lon.size, lat.size, 2), dtype=np.float32)
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='flat')
+
+    pset = ParticleSet(grid, pclass=ptype[mode],
+                       lon=np.zeros(npart, dtype=np.float32),
+                       lat=np.zeros(npart, dtype=np.float32) + 1e2,
+                       depth=np.linspace(0, 1, npart, dtype=np.float32))
+    time = delta(hours=2).total_seconds()
+    pset.execute(AdvectionRK4, endtime=time, dt=delta(seconds=30))
+    assert np.allclose([p.lon - p.depth*time for p in pset], 0., atol=1e-2)
+
+
 def periodicgrid(xdim, ydim, uvel, vvel):
     lon = np.linspace(0., 1., xdim+1, dtype=np.float32)[1:]  # don't include both 0 and 1, for periodic b.c.
     lat = np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]

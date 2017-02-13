@@ -19,15 +19,15 @@ def pclass(mode):
 @pytest.fixture
 def k_sample_uv():
     def SampleUV(particle, grid, time, dt):
-        particle.u = grid.U[time, particle.lon, particle.lat]
-        particle.v = grid.V[time, particle.lon, particle.lat]
+        particle.u = grid.U[time, particle.lon, particle.lat, particle.depth]
+        particle.v = grid.V[time, particle.lon, particle.lat, particle.depth]
     return SampleUV
 
 
 @pytest.fixture
 def k_sample_p():
     def SampleP(particle, grid, time, dt):
-        particle.p = grid.P[time, particle.lon, particle.lat]
+        particle.p = grid.P[time, particle.lon, particle.lat, particle.depth]
     return SampleP
 
 
@@ -82,8 +82,8 @@ def test_grid_sample(grid, xdim=120, ydim=80):
     """ Sample the grid using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V[0, x, 70.] for x in lon])
-    u_s = np.array([grid.U[0, -45., y] for y in lat])
+    v_s = np.array([grid.V[0, x, 70., 0.] for x in lon])
+    u_s = np.array([grid.U[0, -45., y, 0.] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
@@ -92,8 +92,8 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
     """ Sample the grid using the explicit eval function. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V.eval(0, x, 70.) for x in lon])
-    u_s = np.array([grid.U.eval(0, -45., y) for y in lat])
+    v_s = np.array([grid.V.eval(0, x, 70., 0.) for x in lon])
+    u_s = np.array([grid.U.eval(0, -45., y, 0.) for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
