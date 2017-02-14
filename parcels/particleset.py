@@ -42,7 +42,7 @@ class ParticleSet(object):
         # Convert numpy arrays to one-dimensional lists
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
-        depth = np.ones(len(lon)) if depth is None else depth
+        depth = np.ones(len(lon)) * grid.U.depth[0] if depth is None else depth
         depth = depth.flatten() if isinstance(depth, np.ndarray) else depth
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
