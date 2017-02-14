@@ -90,7 +90,7 @@ class ParticleFile(object):
 
         self.user_vars = []
         for v in particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
+            if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
             if v.to_write is True:
                 setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
