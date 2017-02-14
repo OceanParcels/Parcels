@@ -1,4 +1,5 @@
 from parcels.kernels.error import ErrorCode
+from parcels.field import Field
 from operator import attrgetter
 import numpy as np
 
@@ -96,12 +97,22 @@ class _Particle(object):
 
     def __init__(self):
         ptype = self.getPType()
-        # Explicit initialiastion of all particle variables
+        # Explicit initialisation of all particle variables
+        lon = lat = time = None
         for v in ptype.variables:
             if isinstance(v.initial, attrgetter):
                 initial = v.initial(self)
+            elif isinstance(v.initial, Field):
+                initial = v.initial[time, lon, lat]
             else:
                 initial = v.initial
+            # store lon, lat and time for if we need to eval field
+            if v.name is 'lon':
+                lon = v.initial
+            if v.name is 'lat':
+                lat = v.initial
+            if v.name is 'time':
+                time = v.initial
             # Enforce type of initial value
             setattr(self, v.name, v.dtype(initial))
 
