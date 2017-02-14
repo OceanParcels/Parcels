@@ -79,16 +79,31 @@ static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float 
 }
 
 /* Nearest neighbour interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i, int j, int xdim,
+static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i, int j, int xdim, int ydim,
                                                         float *lon, float *lat, float **f_data,
                                                         float *value)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
   int ii, jj;
-  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
-  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
+  if ((x == xdim - 1) || (x - lon[i] < lon[i+1] - x)) {ii = i;} else {ii = i + 1;}
+  if ((y == ydim - 1) || (y - lat[j] < lat[j+1] - y)) {jj = j;} else {jj = j + 1;}
   *value = data[jj][ii];
+  return SUCCESS;
+}
+
+/* Nearest neighbour interpolation routine for 3D grid */
+static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float z, int i, int j, int k,
+                                                        int xdim, int ydim, int zdim, float *lon, float *lat,
+                                                        float *depth, float **f_data, float *value)
+{
+  /* Cast data array into data[lat][lon] as per NEMO convention */
+  float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
+  int ii, jj, kk;
+  if ((x == xdim - 1) || (x - lon[i] < lon[i+1] - x)) {ii = i;} else {ii = i + 1;}
+  if ((y == ydim - 1) || (y - lat[j] < lat[j+1] - y)) {jj = j;} else {jj = j + 1;}
+  if ((k == zdim - 1) || (z - depth[k] < depth[k+1] - z)) {kk = k;} else {kk = k + 1;}
+  *value = data[kk][jj][ii];
   return SUCCESS;
 }
 
@@ -131,10 +146,19 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
       }
     }
     else if  (interp_method == NEAREST){
-      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
-                                           (float**)(data[f->tidx]), &f0);
-      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
-                                           (float**)(data[f->tidx+1]), &f1);
+      if (f->zdim==1){
+        err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->ydim, f->lon,
+                                              f->lat, (float**)(data[f->tidx]), &f0);
+        err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->ydim, f->lon,
+                                              f->lat, (float**)(data[f->tidx+1]), &f1);
+      } else {
+        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->zdim, f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx]), &f0);
+        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->zdim, f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx+1]), &f1);
+      }
     }
     else {
         return ERROR;
@@ -153,8 +177,14 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
       }
     }
     else if (interp_method == NEAREST){
-      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
-                                           (float**)(data[f->tidx]), value);
+      if (f->zdim==1){
+        err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->ydim, f->lon,
+                                              f->lat, (float**)(data[f->tidx]), value);
+      } else {
+        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->zdim, f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx]), value);
+      }
     }
     else {
         return ERROR;    
