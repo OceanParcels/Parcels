@@ -169,6 +169,9 @@ class Field(object):
         if not self.lat.dtype == np.float32:
             print("WARNING: Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
+        if not self.depth.dtype == np.float32:
+            print("WARNING: Casting depth data to np.float32")
+            self.depth = self.depth.astype(np.float32)
         if not self.time.dtype == np.float64:
             print("WARNING: Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
@@ -484,14 +487,22 @@ class Field(object):
         """
         if zonal:
             lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
-            self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
-                                        self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
+            if len(self.data.shape) is 3:
+                self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
+                                            self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
+            else:
+                self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
+                                            self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
             self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
                                        self.lon, self.lon[0:halosize] + lonshift))
         if meridional:
             latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
-            self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
-                                        self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
+            if len(self.data.shape) is 3:
+                self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
+                                            self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
+            else:
+                self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
+                                            self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
             self.lat = np.concatenate((self.lat[-halosize:] - latshift,
                                        self.lat, self.lat[0:halosize] + latshift))
 
@@ -569,7 +580,7 @@ class FileBuffer(object):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
             return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, :, self.indslat, self.indslon]
+            return self.dataset[self.dimensions['data']][:, self.indsdepth, self.indslat, self.indslon]
 
     @property
     def time(self):
