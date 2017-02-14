@@ -127,9 +127,13 @@ class Grid(object):
             for fp in paths:
                 if not path.exists(fp):
                     raise IOError("Grid file not found: %s" % str(fp))
+
+            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             dims['data'] = name
-            fields[var] = Field.from_netcdf(var, dims, paths, indices, units=units[var],
+            inds = indices[var] if var in indices else indices
+
+            fields[var] = Field.from_netcdf(var, dims, paths, inds, units=units[var],
                                             allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
