@@ -15,7 +15,8 @@ class Variable(object):
 
     :param name: Variable name as used within kernels
     :param dtype: Data type (numpy.dtype) of the variable
-    :param initial: Initial value of the variable
+    :param initial: Initial value of the variable. Note that this can also be a Field object,
+             which will then be sampled at the location of the particle
     :param to_write: Boolean to control whether Variable is written to NetCDF file
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
@@ -98,21 +99,16 @@ class _Particle(object):
     def __init__(self):
         ptype = self.getPType()
         # Explicit initialisation of all particle variables
-        lon = lat = time = None
         for v in ptype.variables:
             if isinstance(v.initial, attrgetter):
                 initial = v.initial(self)
             elif isinstance(v.initial, Field):
+                lon = self.getInitialValue(ptype, name='lon')
+                lat = self.getInitialValue(ptype, name='lat')
+                time = self.getInitialValue(ptype, name='time')
                 initial = v.initial[time, lon, lat]
             else:
                 initial = v.initial
-            # store lon, lat and time for if we need to eval field
-            if v.name is 'lon':
-                lon = v.initial
-            if v.name is 'lat':
-                lat = v.initial
-            if v.name is 'time':
-                time = v.initial
             # Enforce type of initial value
             setattr(self, v.name, v.dtype(initial))
 
@@ -122,6 +118,10 @@ class _Particle(object):
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
+
+    @classmethod
+    def getInitialValue(cls, ptype, name):
+        return next((v.initial for v in ptype.variables if v.name is name), None)
 
 
 class ScipyParticle(_Particle):
