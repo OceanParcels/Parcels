@@ -40,8 +40,13 @@ def AdvectionEE(particle, grid, time, dt):
     """Advection of particles using Explicit Euler (aka Euler Forward) integration.
 
     Function needs to be converted to Kernel object before execution"""
-    u1 = grid.U[time, particle.lon, particle.lat]
-    v1 = grid.V[time, particle.lon, particle.lat]
+
+    # See if our grid is a FiredrakeGrid
+    if isinstance(grid, FiredrakeGrid):
+        u1, v1 = grid.U.eval(time, particle.lon, particle.lat)
+    else:
+        u1 = grid.U[time, particle.lon, particle.lat]
+        v1 = grid.V[time, particle.lon, particle.lat]
     particle.lon += u1 * dt
     particle.lat += v1 * dt
 
