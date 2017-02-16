@@ -17,6 +17,7 @@ class ExampleData():
         self.path = path
 
     def download(self):
+        """Function used to download example data from http://oceanparcels.org/examples-data"""
         if not os.path.exists(self.path):
                 os.makedirs(self.path)
 
