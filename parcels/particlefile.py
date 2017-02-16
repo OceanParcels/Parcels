@@ -107,8 +107,14 @@ class ParticleFile(object):
         """Write all buffered data to disk"""
         self.dataset.sync()
 
-    def write(self, pset, time):
-        """Write :class:`parcels.particleset.ParticleSet` data to file"""
+    def write(self, pset, time, sync=True):
+        """Write :class:`parcels.particleset.ParticleSet` data to file
+
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param sync: Optional argument whether to write data to disk immediately. Default is True
+
+        """
         if isinstance(time, delta):
             time = time.total_seconds()
         if self.lasttime_written != time:  # only write if 'time' hasn't been written yet
@@ -144,3 +150,6 @@ class ParticleFile(object):
                     getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
 
                 self.idx += pset.size
+
+        if sync:
+            self.sync()
