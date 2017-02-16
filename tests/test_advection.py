@@ -79,7 +79,7 @@ def test_advection_zonal3D(mode, npart=11):
                        depth=np.linspace(0, 1, npart, dtype=np.float32))
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, endtime=time, dt=delta(seconds=30))
-    assert np.allclose([p.lon - p.depth*time for p in pset], 0., atol=1e-2)
+    assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], rtol=1.e-2)
 
 
 def periodicgrid(xdim, ydim, uvel, vvel):
