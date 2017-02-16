@@ -10,9 +10,21 @@ except:
     plt = None
 
 
-def plotTrajectoriesFile(filename, tracerfile=None, tracerlon='x', tracerlat='y',
-                         tracerfield='P', recordedvar=None, mode='2d'):
-    """Quick and simple plotting of PARCELS trajectories"""
+def plotTrajectoriesFile(filename, mode='2d', recordedvar=None, tracerfile=None,
+                         tracerfield='P', tracerlon='x', tracerlat='y'):
+    """Quick and simple plotting of Parcels trajectories
+
+    :param filename: Name of Parcels-generated NetCDF file with particle positions
+    :param mode: Type of plot to show. Supported are '2d', '3d'
+                'movie2d' and 'movie2d_notebook'. The latter two give animations,
+                with 'movie2d_notebook' specifically designed for jupyter notebooks
+    :param recordedvar: Name of variable used to color particles in scatter-plot.
+                Only works in 'movie2d' or 'movie2d_notebook' mode.
+    :param tracerfile: Name of NetCDF file to show as background
+    :param tracerfield: Name of variable to show as background
+    :param tracerlon: Name of longitude dimension of variable to show as background
+    :param tracerlat: Name of latitude dimension of variable to show as background
+    """
 
     if plt is None:
         print("Visualisation is not possible. Matplotlib not found.")

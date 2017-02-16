@@ -77,3 +77,17 @@ parcels.rng module
 .. automodule:: parcels.rng
     :members:
     :undoc-members:
+
+scripts.plotParticles module
+------------------
+
+.. automodule:: scripts.plotParticles
+    :members:
+    :undoc-members:
+
+scripts.pull_data module
+------------------
+
+.. automodule:: scripts.pull_data
+    :members:
+    :undoc-members:
