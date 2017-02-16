@@ -171,3 +171,21 @@ def test_kernel_add_no_new_variables(grid, mode):
                  starttime=0., endtime=1., dt=1.)
     assert np.allclose([p.lon for p in pset], 0.6, rtol=1e-5)
     assert np.allclose([p.lat for p in pset], 0.6, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_multi_kernel_duplicate_varnames(grid, mode):
+    # Testing for merging of two Kernels with the same variable declared
+    # Should throw a warning, but go ahead regardless
+    def MoveEast(particle, grid, time, dt):
+        add_lon = 0.1
+        particle.lon += add_lon
+
+    def MoveWest(particle, grid, time, dt):
+        add_lon = -0.3
+        particle.lon += add_lon
+
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveWest),
+                 starttime=0., endtime=1., dt=1.)
+    assert np.allclose([p.lon for p in pset], 0.3, rtol=1e-5)
