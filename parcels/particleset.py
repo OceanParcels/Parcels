@@ -250,7 +250,7 @@ class ParticleSet(object):
         if runtime is not None:
             if runtime < 0:
                 runtime = np.abs(runtime)
-                print("negating runtime  as it has to be positive")
+                logger.warning("Negating runtime because it has to be positive")
             endtime = starttime + runtime * np.sign(dt)
         else:
             if endtime is None:
