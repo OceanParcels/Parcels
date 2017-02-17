@@ -10,21 +10,20 @@ __all__ = ['ParticleFile']
 class ParticleFile(object):
     """Initialise netCDF4.Dataset for trajectory output.
 
-    The output follows the format outlined in the Discrete
-    Sampling Geometries section of the CF-conventions:
+    The output follows the format outlined in the Discrete Sampling Geometries
+    section of the CF-conventions:
     http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#discrete-sampling-geometries
 
     The current implementation is based on the NCEI template:
     http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
 
-    Both 'Orthogonal multidimensional array' and 'Indexed ragged array' represenation
+    Both 'Orthogonal multidimensional array' and 'Indexed ragged array' representation
     are implemented. The former is simpler to post-process, but the latter is required
-    when particles will be added and deleted during the .execute (i.e. the number of
-    particles in the pset is not fixed).
+    when particles will be added during the .execute (i.e. the number of particles in
+    the pset increases).
 
-    Developer note: We cannot use xarray.Dataset here, since it does
-    not yet allow incremental writes to disk:
-    https://github.com/pydata/xarray/issues/199
+    Developer note: We cannot use xray.Dataset here, since it does not yet allow
+    incremental writes to disk: https://github.com/pydata/xarray/issues/199
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
@@ -108,21 +107,36 @@ class ParticleFile(object):
         """Write all buffered data to disk"""
         self.dataset.sync()
 
-    def write(self, pset, time):
-        """Write :class:`parcels.particleset.ParticleSet` data to file"""
+    def write(self, pset, time, sync=True):
+        """Write :class:`parcels.particleset.ParticleSet` data to file
+
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param sync: Optional argument whether to write data to disk immediately. Default is True
+
+        """
         if isinstance(time, delta):
             time = time.total_seconds()
         if self.lasttime_written != time:  # only write if 'time' hasn't been written yet
             self.lasttime_written = time
             if self.type is 'array':
-                if len(pset) != self.lon.shape[0]:
-                    raise RuntimeError("Number of particles appears to change. Use type='indexed' for ParticleFile")
-                self.time[:, self.idx] = time
-                self.lat[:, self.idx] = np.array([p.lat for p in pset])
-                self.lon[:, self.idx] = np.array([p.lon for p in pset])
-                self.z[:, self.idx] = np.zeros(pset.size, dtype=np.float32)
+                # Check if largest particle ID is smaller than the last ID in ParticleFile.
+                # Otherwise, new particles have been added and netcdf will fail
+                if max([p.id for p in pset]) > self.id[-1]:
+                    raise RuntimeError("Number of particles appears to increase. Use type='indexed' for ParticleFile")
+
+                # Finds the indices (inds) of the particle IDs in the ParticleFile,
+                # because particles can have been deleted
+                pids = [p.id for p in pset]
+                inds = np.in1d(self.id[:], pids, assume_unique=True)
+                inds = np.arange(len(self.id[:]))[inds]
+
+                self.time[inds, self.idx] = time
+                self.lat[inds, self.idx] = np.array([p.lat for p in pset])
+                self.lon[inds, self.idx] = np.array([p.lon for p in pset])
+                self.z[inds, self.idx] = np.zeros(pset.size, dtype=np.float32)
                 for var in self.user_vars:
-                    getattr(self, var)[:, self.idx] = np.array([getattr(p, var) for p in pset])
+                    getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
 
                 self.idx += 1
             elif self.type is 'indexed':
@@ -136,3 +150,6 @@ class ParticleFile(object):
                     getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
 
                 self.idx += pset.size
+
+        if sync:
+            self.sync()
