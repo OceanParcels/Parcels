@@ -28,20 +28,33 @@ def lat(ydim=100):
     return np.linspace(-80, 80, ydim, dtype=np.float32)
 
 
+@pytest.fixture
+def depth(zdim=2):
+    return np.linspace(0, 30, zdim, dtype=np.float32)
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_zonal(lon, lat, mode, npart=10):
+def test_advection_zonal(lon, lat, depth, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
-    U = np.ones((lon.size, lat.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size), dtype=np.float32)
-    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+    U = np.ones((lon.size, lat.size, depth.size), dtype=np.float32)
+    V = np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)
+    grid2D = Grid.from_data(U[:, :, 0], lon, lat, V[:, :, 0], lon, lat, mesh='spherical')
 
-    pset = ParticleSet(grid, pclass=ptype[mode],
-                       lon=np.zeros(npart, dtype=np.float32) + 20.,
-                       lat=np.linspace(0, 80, npart, dtype=np.float32))
-    pset.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
-    assert (np.diff(np.array([p.lon for p in pset])) > 1.e-4).all()
+    pset2D = ParticleSet(grid2D, pclass=ptype[mode],
+                         lon=np.zeros(npart, dtype=np.float32) + 20.,
+                         lat=np.linspace(0, 80, npart, dtype=np.float32))
+    pset2D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
+
+    grid3D = Grid.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='spherical')
+    pset3D = ParticleSet(grid3D, pclass=ptype[mode],
+                         lon=np.zeros(npart, dtype=np.float32) + 20.,
+                         lat=np.linspace(0, 80, npart, dtype=np.float32),
+                         depth=np.zeros(npart, dtype=np.float32) + 10.)
+    pset3D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    assert (np.diff(np.array([p.lon for p in pset3D])) > 1.e-4).all()
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -62,8 +75,8 @@ def test_advection_meridional(lon, lat, mode, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_zonal3D(mode, npart=11):
-    """ 2D flow that changes linearly with depth
+def test_advection_3D(mode, npart=11):
+    """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
     """
     lon = np.linspace(0., 1e4, 2, dtype=np.float32)
     lat = np.linspace(0., 1e4, 2, dtype=np.float32)
