@@ -23,7 +23,7 @@ class ParticleFile(object):
     the pset increases).
 
     Developer note: We cannot use xray.Dataset here, since it does not yet allow
-    incremental writes to disk: https://github.com/xray/xray/issues/199
+    incremental writes to disk: https://github.com/pydata/xarray/issues/199
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output

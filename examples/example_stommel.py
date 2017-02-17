@@ -76,12 +76,10 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
 
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=0.)
+        p_start = Variable('p_start', dtype=np.float32, initial=grid.P)
 
     pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle,
                                  start=(100, 5000), finish=(200, 5000))
-    for particle in pset:
-        particle.p_start = grid.P[0., particle.lon, particle.lat]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
