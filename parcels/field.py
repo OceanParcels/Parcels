@@ -3,7 +3,7 @@ from scipy.interpolate import RegularGridInterpolator
 from collections import Iterable
 from py import path
 import numpy as np
-import xray
+import xarray
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
@@ -471,17 +471,17 @@ class Field(object):
         # Create DataArray objects for file I/O
         t, d, x, y = (self.time.size, self.depth.size,
                       self.lon.size, self.lat.size)
-        nav_lon = xray.DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
-                                 coords=[('y', self.lat), ('x', self.lon)])
-        nav_lat = xray.DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                                 coords=[('y', self.lat), ('x', self.lon)])
-        vardata = xray.DataArray(self.data.reshape((t, d, y, x)),
-                                 coords=[('time_counter', self.time),
-                                         (vname_depth, self.depth),
-                                         ('y', self.lat), ('x', self.lon)])
-        # Create xray Dataset and output to netCDF format
-        dset = xray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
-                                                        'nav_lat': nav_lat})
+        nav_lon = xarray.DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
+                                   coords=[('y', self.lat), ('x', self.lon)])
+        nav_lat = xarray.DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
+                                   coords=[('y', self.lat), ('x', self.lon)])
+        vardata = xarray.DataArray(self.data.reshape((t, d, y, x)),
+                                   coords=[('time_counter', self.time),
+                                           (vname_depth, self.depth),
+                                           ('y', self.lat), ('x', self.lon)])
+        # Create xarray Dataset and output to netCDF format
+        dset = xarray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
+                                                          'nav_lat': nav_lat})
         dset.to_netcdf(filepath)
 
 

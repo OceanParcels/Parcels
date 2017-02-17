@@ -8,7 +8,7 @@ py>=1.4.27
 pymbolic
 cgen
 cachetools>=1.0.0
-xray>=0.5.1
+xarray>=0.5.1
 six>=1.10.0
 enum34
 progressbar2
