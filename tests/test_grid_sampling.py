@@ -116,7 +116,7 @@ def test_variable_init_from_field(mode, npart=9):
 
     pset = ParticleSet(grid, pclass=VarParticle,
                        lon=xv.flatten(), lat=yv.flatten())
-    assert np.all([abs(p.a - grid.P[p.time, p.lat, p.lon]) < 1e-6 for p in pset])
+    assert np.all([abs(p.a - grid.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

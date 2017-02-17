@@ -105,8 +105,9 @@ class _Particle(object):
             elif isinstance(v.initial, Field):
                 lon = self.getInitialValue(ptype, name='lon')
                 lat = self.getInitialValue(ptype, name='lat')
+                depth = self.getInitialValue(ptype, name='depth')
                 time = self.getInitialValue(ptype, name='time')
-                initial = v.initial[time, lon, lat]
+                initial = v.initial[time, lon, lat, depth]
             else:
                 initial = v.initial
             # Enforce type of initial value
