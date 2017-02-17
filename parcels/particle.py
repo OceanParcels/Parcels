@@ -161,7 +161,8 @@ class ScipyParticle(_Particle):
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
-        return "P(%f, %f, %f, %f)" % (self.lon, self.lat, self.depth, self.time)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
+                                                             self.depth, self.time)
 
     def delete(self):
         self.state = ErrorCode.Delete
@@ -200,5 +201,6 @@ class JITParticle(ScipyParticle):
         self.zi = np.where(self.depth >= grid.U.depth)[0][-1]
 
     def __repr__(self):
-        return "P(%f, %f, %f, %f)[%d, %d, %d]" % (self.lon, self.lat, self.depth,
-                                                  self.time, self.xi, self.yi, self.zi)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)[xi=%d, yi=%d]" % (self.id, self.lon, self.lat,
+                                                                           self.depth, self.time,
+                                                                           self.xi, self.yi)

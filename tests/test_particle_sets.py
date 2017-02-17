@@ -237,3 +237,15 @@ def test_density(grid, mode, npart=10):
     for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
         assert np.allclose(grid.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
         assert np.allclose(grid.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pfile_array_remove_particles(grid, mode, tmpdir, npart=10):
+    filepath = tmpdir.join("pfile_array_remove_particles")
+    pset = ParticleSet(grid, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart, dtype=np.float32),
+                       lat=0.5*np.ones(npart, dtype=np.float32))
+    pfile = pset.ParticleFile(filepath)
+    pfile.write(pset, 0)
+    pset.remove(3)
+    pfile.write(pset, 1)
