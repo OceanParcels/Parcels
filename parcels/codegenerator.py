@@ -279,6 +279,15 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode = py_ast.ccode
 
         # Insert variable declarations for non-instrinsics
+        # Make sure that repeated variables are not declared more than
+        # once. If variables occur in multiple Kernels, give a warning
+        used_vars = []
+        for kvar in funcvars:
+            if kvar in used_vars:
+                print("WARNING: "+kvar+" declared in multiple Kernels")
+                funcvars.remove(kvar)
+            else:
+                used_vars.append(kvar)
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)

@@ -99,6 +99,27 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_variable_init_from_field(mode, npart=9):
+    dims = (2, 2)
+    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
+    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
+    U = np.zeros(dims, dtype=np.float32)
+    V = np.zeros(dims, dtype=np.float32)
+    P = np.zeros(dims, dtype=np.float32)
+    P[0, 0] = 1.
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
+                          field_data={'P': np.asarray(P, dtype=np.float32)})
+    xv, yv = np.meshgrid(np.linspace(0, 1, np.sqrt(npart)), np.linspace(0, 1, np.sqrt(npart)))
+
+    class VarParticle(pclass(mode)):
+        a = Variable('a', dtype=np.float32, initial=grid.P)
+
+    pset = ParticleSet(grid, pclass=VarParticle,
+                       lon=xv.flatten(), lat=yv.flatten())
+    assert np.all([abs(p.a - grid.P[p.time, p.lat, p.lon]) < 1e-6 for p in pset])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
     dims = (2, 2)
     lon = np.linspace(0., 1., dims[0], dtype=np.float32)

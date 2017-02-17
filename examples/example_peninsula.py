@@ -88,7 +88,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=0.)
+        p_start = Variable('p_start', dtype=np.float32, initial=grid.P)
 
         def __repr__(self):
             """Custom print function which overrides the built-in"""
@@ -99,8 +99,6 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
     pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
-    for particle in pset:
-        particle.p_start = grid.P[0., particle.lon, particle.lat, particle.depth]
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
