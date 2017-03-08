@@ -78,6 +78,13 @@ parcels.rng module
     :members:
     :undoc-members:
 
+parcels.loggers module
+------------------
+
+.. automodule:: parcels.loggers
+    :members:
+    :undoc-members:
+
 scripts.plotParticles module
 ------------------
 

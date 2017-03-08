@@ -1,4 +1,5 @@
 from parcels.field import Field
+from parcels.loggers import logger
 import ast
 import cgen as c
 from collections import OrderedDict
@@ -284,7 +285,7 @@ class KernelGenerator(ast.NodeVisitor):
         used_vars = []
         for kvar in funcvars:
             if kvar in used_vars:
-                print("WARNING: "+kvar+" declared in multiple Kernels")
+                logger.warning(kvar+" declared in multiple Kernels")
                 funcvars.remove(kvar)
             else:
                 used_vars.append(kvar)
