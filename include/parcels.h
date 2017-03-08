@@ -16,8 +16,8 @@ typedef enum
 
 typedef struct
 {
-  int xdim, ydim, tdim, tidx, allow_time_extrapolation;
-  float *lon, *lat;
+  int xdim, ydim, zdim, tdim, tidx, allow_time_extrapolation;
+  float *lon, *lat, *depth;
   double *time;
   float ***data;
 } CField;
@@ -55,34 +55,74 @@ static inline ErrorCode spatial_interpolation_bilinear(float x, float y, int i, 
   return SUCCESS;
 }
 
+/* Trilinear interpolation routine for 3D grid */
+static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float z, int i, int j, int k,
+                                                        int xdim, int ydim, float *lon, float *lat,
+                                                        float *depth, float **f_data, float *value)
+{
+  /* Cast data array into data[lat][lon] as per NEMO convention */
+  float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
+  float f0, f1, z0, z1;
+  z0 = depth[k]; z1 = depth[k+1];
+  f0 = (data[k][j][i] * (lon[i+1] - x) * (lat[j+1] - y)
+        + data[k][j][i+1] * (x - lon[i]) * (lat[j+1] - y)
+        + data[k][j+1][i] * (lon[i+1] - x) * (y - lat[j])
+        + data[k][j+1][i+1] * (x - lon[i]) * (y - lat[j]))
+        / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
+  f1 = (data[k+1][j][i] * (lon[i+1] - x) * (lat[j+1] - y)
+        + data[k+1][j][i+1] * (x - lon[i]) * (lat[j+1] - y)
+        + data[k+1][j+1][i] * (lon[i+1] - x) * (y - lat[j])
+        + data[k+1][j+1][i+1] * (x - lon[i]) * (y - lat[j]))
+        / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
+  *value = f0 + (f1 - f0) * (float)((z - z0) / (z1 - z0));
+  return SUCCESS;
+}
+
 /* Nearest neighbour interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i, int j, int xdim,
+static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i, int j, int xdim, int ydim,
                                                         float *lon, float *lat, float **f_data,
                                                         float *value)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
   int ii, jj;
-  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
-  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
+  if ((x == xdim - 1) || (x - lon[i] < lon[i+1] - x)) {ii = i;} else {ii = i + 1;}
+  if ((y == ydim - 1) || (y - lat[j] < lat[j+1] - y)) {jj = j;} else {jj = j + 1;}
   *value = data[jj][ii];
   return SUCCESS;
 }
 
+/* Nearest neighbour interpolation routine for 3D grid */
+static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float z, int i, int j, int k,
+                                                        int xdim, int ydim, int zdim, float *lon, float *lat,
+                                                        float *depth, float **f_data, float *value)
+{
+  /* Cast data array into data[lat][lon] as per NEMO convention */
+  float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
+  int ii, jj, kk;
+  if ((x == xdim - 1) || (x - lon[i] < lon[i+1] - x)) {ii = i;} else {ii = i + 1;}
+  if ((y == ydim - 1) || (y - lat[j] < lat[j+1] - y)) {jj = j;} else {jj = j + 1;}
+  if ((k == zdim - 1) || (z - depth[k] < depth[k+1] - z)) {kk = k;} else {kk = k + 1;}
+  *value = data[kk][jj][ii];
+  return SUCCESS;
+}
+
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, int yi,
-                                                      double time, CField *f, float *value,
-                                                      int interp_method)
+static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, int xi,
+                                                      int yi, int zi, double time, CField *f,
+                                                      float *value, int interp_method)
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
-  float (*data)[f->ydim][f->xdim] = (float (*)[f->ydim][f->xdim]) f->data;
+  float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
   float f0, f1;
   double t0, t1;
-  int i = xi, j = yi;
+  int i = xi, j = yi, k = zi;
   /* Identify grid cell to sample through local linear search */
   err = search_linear_float(x, f->xdim, f->lon, &i); CHECKERROR(err);
   err = search_linear_float(y, f->ydim, f->lat, &j); CHECKERROR(err);
+  if (f->zdim > 1){
+    err = search_linear_float(z, f->zdim, f->depth, &k); CHECKERROR(err);}
   /* Find time index for temporal interpolation */
   if (f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
@@ -91,16 +131,34 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
     if (interp_method == LINEAR){
-      err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                          (float**)(data[f->tidx]), &f0);
-      err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                          (float**)(data[f->tidx+1]), &f1);
+      if (f->zdim==1){
+        err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
+                                             (float**)(data[f->tidx]), &f0);
+        err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
+                                             (float**)(data[f->tidx+1]), &f1);
+      } else {
+        err = spatial_interpolation_trilinear(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx]), &f0);
+        err = spatial_interpolation_trilinear(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx+1]), &f1);
+      }
     }
     else if  (interp_method == NEAREST){
-      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
-                                           (float**)(data[f->tidx]), &f0);
-      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
-                                           (float**)(data[f->tidx+1]), &f1);
+      if (f->zdim==1){
+        err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->ydim, f->lon,
+                                              f->lat, (float**)(data[f->tidx]), &f0);
+        err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->ydim, f->lon,
+                                              f->lat, (float**)(data[f->tidx+1]), &f1);
+      } else {
+        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->zdim, f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx]), &f0);
+        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->zdim, f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx+1]), &f1);
+      }
     }
     else {
         return ERROR;
@@ -109,12 +167,24 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, int xi, 
     return SUCCESS;
   } else {
     if (interp_method == LINEAR){
-      err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
-                                          (float**)(data[f->tidx]), value);
+      if (f->zdim==1){
+        err = spatial_interpolation_bilinear(x, y, i, j, f->xdim, f->lon, f->lat,
+                                             (float**)(data[f->tidx]), value);
+      } else {
+        err = spatial_interpolation_trilinear(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx]), value);
+      }
     }
     else if (interp_method == NEAREST){
-      err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->lon, f->lat,
-                                           (float**)(data[f->tidx]), value);
+      if (f->zdim==1){
+        err = spatial_interpolation_nearest2D(x, y, i, j, f->xdim, f->ydim, f->lon,
+                                              f->lat, (float**)(data[f->tidx]), value);
+      } else {
+        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, f->xdim, f->ydim,
+                                              f->zdim, f->lon, f->lat, f->depth,
+                                              (float**)(data[f->tidx]), value);
+      }
     }
     else {
         return ERROR;    

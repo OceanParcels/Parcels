@@ -106,7 +106,7 @@ def test_execution_fail_python_exception(grid, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_out_of_bounds(grid, mode, npart=10):
     def MoveRight(particle, grid, time, dt):
-        grid.U[time, particle.lon + 0.1, particle.lat]
+        grid.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
     pset = ParticleSet(grid, pclass=ptype[mode],
@@ -125,7 +125,7 @@ def test_execution_fail_out_of_bounds(grid, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_recover_out_of_bounds(grid, mode, npart=2):
     def MoveRight(particle, grid, time, dt):
-        grid.U[time, particle.lon + 0.1, particle.lat]
+        grid.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
     def MoveLeft(particle):
@@ -144,7 +144,7 @@ def test_execution_recover_out_of_bounds(grid, mode, npart=2):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_delete_out_of_bounds(grid, mode, npart=10):
     def MoveRight(particle, grid, time, dt):
-        grid.U[time, particle.lon + 0.1, particle.lat]
+        grid.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
     def DeleteMe(particle):

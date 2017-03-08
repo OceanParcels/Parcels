@@ -32,8 +32,9 @@ def test_ofam_particles(mode):
 
     lonstart = [180]
     latstart = [10]
+    depstart = [2.5]  # the depth of the first layer in OFAM
 
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=lonstart, lat=latstart)
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lonstart, lat=latstart, depth=depstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5),
                  interval=delta(hours=6))

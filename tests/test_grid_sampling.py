@@ -19,15 +19,15 @@ def pclass(mode):
 @pytest.fixture
 def k_sample_uv():
     def SampleUV(particle, grid, time, dt):
-        particle.u = grid.U[time, particle.lon, particle.lat]
-        particle.v = grid.V[time, particle.lon, particle.lat]
+        particle.u = grid.U[time, particle.lon, particle.lat, particle.depth]
+        particle.v = grid.V[time, particle.lon, particle.lat, particle.depth]
     return SampleUV
 
 
 @pytest.fixture
 def k_sample_p():
     def SampleP(particle, grid, time, dt):
-        particle.p = grid.P[time, particle.lon, particle.lat]
+        particle.p = grid.P[time, particle.lon, particle.lat, particle.depth]
     return SampleP
 
 
@@ -82,8 +82,8 @@ def test_grid_sample(grid, xdim=120, ydim=80):
     """ Sample the grid using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V[0, x, 70.] for x in lon])
-    u_s = np.array([grid.U[0, -45., y] for y in lat])
+    v_s = np.array([grid.V[0, x, 70., 0.] for x in lon])
+    u_s = np.array([grid.U[0, -45., y, 0.] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
@@ -92,8 +92,8 @@ def test_grid_sample_eval(grid, xdim=60, ydim=60):
     """ Sample the grid using the explicit eval function. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([grid.V.eval(0, x, 70.) for x in lon])
-    u_s = np.array([grid.U.eval(0, -45., y) for y in lat])
+    v_s = np.array([grid.V.eval(0, x, 70., 0.) for x in lon])
+    u_s = np.array([grid.U.eval(0, -45., y, 0.) for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
@@ -116,27 +116,51 @@ def test_variable_init_from_field(mode, npart=9):
 
     pset = ParticleSet(grid, pclass=VarParticle,
                        lon=xv.flatten(), lat=yv.flatten())
-    assert np.all([abs(p.a - grid.P[p.time, p.lat, p.lon]) < 1e-6 for p in pset])
+    assert np.all([abs(p.a - grid.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_nearest_neighbour_interpolation(mode, k_sample_p, npart=81):
+def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
     dims = (2, 2)
     lon = np.linspace(0., 1., dims[0], dtype=np.float32)
     lat = np.linspace(0., 1., dims[1], dtype=np.float32)
     U = np.zeros(dims, dtype=np.float32)
     V = np.zeros(dims, dtype=np.float32)
     P = np.zeros(dims, dtype=np.float32)
-    P[0, 0] = 1.
+    P[0, 1] = 1.
     grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat',
                           field_data={'P': np.asarray(P, dtype=np.float32)})
     grid.P.interp_method = 'nearest'
-    xv, yv = np.meshgrid(np.linspace(0.1, 0.9, np.sqrt(npart)), np.linspace(0.1, 0.9, np.sqrt(npart)))
+    xv, yv = np.meshgrid(np.linspace(0., 1.0, np.sqrt(npart)), np.linspace(0., 1.0, np.sqrt(npart)))
     pset = ParticleSet(grid, pclass=pclass(mode),
                        lon=xv.flatten(), lat=yv.flatten())
     pset.execute(k_sample_p, endtime=1, dt=1)
-    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat < 0.5]), 1.0, rtol=1e-5)
-    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat > 0.5]), 0.0, rtol=1e-5)
+    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat > 0.5]), 1.0, rtol=1e-5)
+    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat < 0.5]), 0.0, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
+    dims = (2, 2, 2)
+    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
+    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
+    depth = np.linspace(0., 1., dims[2], dtype=np.float32)
+    U = np.zeros(dims, dtype=np.float32)
+    V = np.zeros(dims, dtype=np.float32)
+    P = np.zeros(dims, dtype=np.float32)
+    P[0, 1, 1] = 1.
+    grid = Grid.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='flat',
+                          field_data={'P': np.asarray(P, dtype=np.float32)})
+    grid.P.interp_method = 'nearest'
+    xv, yv = np.meshgrid(np.linspace(0, 1.0, np.sqrt(npart)), np.linspace(0, 1.0, np.sqrt(npart)))
+    # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
+    pset = ParticleSet(grid, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.zeros(npart))
+    pset2 = ParticleSet(grid, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.ones(npart))
+    pset.add(pset2)
+
+    pset.execute(k_sample_p, endtime=1, dt=1)
+    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat > 0.5 and p.depth > 0.5]), 1.0, rtol=1e-5)
+    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat < 0.5 and p.depth < 0.5]), 0.0, rtol=1e-5)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

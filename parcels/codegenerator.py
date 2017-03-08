@@ -111,6 +111,9 @@ class ParticleAttributeNode(IntrinsicNode):
         if self.attr == 'lat':
             return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
                 % (self.ccode, self.ccode_index_var)
+        if self.attr == 'depth':
+            return "search_linear_float(%s, U->zdim, U->depth, &(%s)); CHECKERROR(err)" \
+                % (self.ccode, self.ccode_index_var)
         return ""
 
 
