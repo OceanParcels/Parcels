@@ -171,7 +171,7 @@ class Field(object):
             logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.depth.dtype == np.float32:
-            print("WARNING: Casting depth data to np.float32")
+            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
         if not self.time.dtype == np.float64:
             logger.warning_once("Casting time data to np.float64")
