@@ -2,6 +2,7 @@ from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldSamplingError
+from parcels.loggers import logger
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -66,7 +67,7 @@ class Kernel(object):
                 user_ctx['random'] = globals()['random']
                 user_ctx['ErrorCode'] = globals()['ErrorCode']
             except:
-                print("Warning: Could not access user context when merging kernels")
+                logger.warning("Could not access user context when merging kernels")
                 user_ctx = globals()
             finally:
                 del stack  # Remove cyclic references
@@ -108,7 +109,7 @@ class Kernel(object):
         with open(self.src_file, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
-        print("Compiled %s ==> %s" % (self.name, self.lib_file))
+        logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
