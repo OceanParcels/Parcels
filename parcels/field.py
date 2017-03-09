@@ -21,7 +21,7 @@ class FieldSamplingError(RuntimeError):
         self.x = x
         self.y = y
         message = "%s sampled at (%f, %f)" % (
-            field.name if field else "Grid", self.x, self.y
+            field.name if field else "Field", self.x, self.y
         )
         super(FieldSamplingError, self).__init__(message)
 
@@ -33,7 +33,7 @@ class TimeExtrapolationError(RuntimeError):
         self.field = field
         self.time = time
         message = "%s sampled outside time domain at time %f." % (
-            field.name if field else "Grid", self.time
+            field.name if field else "Field", self.time
         )
         message += " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(message)
@@ -232,7 +232,7 @@ class Field(object):
         else:
             time_origin = num2date(0, time_units, calendar)
 
-        # Pre-allocate grid data before reading files into buffer
+        # Pre-allocate data before reading files into buffer
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
@@ -352,8 +352,8 @@ class Field(object):
             raise TimeExtrapolationError(time, field=self)
         time_index = self.time <= time
         if time_index.all():
-            # If given time > last known grid time, use
-            # the last grid frame without interpolation
+            # If given time > last known field time, use
+            # the last field frame without interpolation
             return len(self.time) - 1
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
@@ -366,8 +366,8 @@ class Field(object):
         """
         depth_index = self.depth <= depth
         if depth_index.all():
-            # If given depth > last known grid depth, use
-            # the last grid depth
+            # If given depth > last known field depth, use
+            # the last field depth
             return len(self.depth) - 1
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
@@ -479,7 +479,7 @@ class Field(object):
             return anim
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
-        """Add a 'halo' to all Fields in a grid, through extending the Field (and lon/lat)
+        """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
 
         :param zonal: Create a halo in zonal direction (boolean)
