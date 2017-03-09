@@ -7,12 +7,12 @@ from copy import deepcopy
 from collections import defaultdict
 
 
-__all__ = ['Grid']
+__all__ = ['FieldSet']
 
 
 def unit_converters(mesh):
     """Helper function that assigns :class:`UnitConverter` objects to
-    :class:`Field` objects on :class:`Grid`
+    :class:`Field` objects on :class:`FieldSet`
 
     :param mesh: mesh type (either `spherical` or `flat`)"""
     if mesh == 'spherical':
@@ -26,8 +26,8 @@ def unit_converters(mesh):
     return u_units, v_units
 
 
-class Grid(object):
-    """Grid class that holds hydrodynamic data needed to execute particles
+class FieldSet(object):
+    """FieldSet class that holds hydrodynamic data needed to execute particles
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
@@ -46,7 +46,7 @@ class Grid(object):
     def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
                   depth=None, time=None, field_data={}, transpose=True,
                   mesh='spherical', allow_time_extrapolation=True, **kwargs):
-        """Initialise Grid object from raw data
+        """Initialise FieldSet object from raw data
 
         :param data_u: Zonal (U) velocity data
         :param lon_u: Longitude coordinates of the U data
@@ -54,8 +54,8 @@ class Grid(object):
         :param data_v: Meridional (V) velocity data
         :param lon_v: Longitude coordinates of the V data
         :param lat_v: Latitude coordinates of the V data
-        :param depth: Depth coordinates of all :class:`Field` objects on the grid
-        :param time: Time coordinates of all :class:`Field` objects on the grid
+        :param depth: Depth coordinates of all :class:`Field` objects on the :class:`FieldSet`
+        :param time: Time coordinates of all :class:`Field` objects on the :class:`FieldSet`
         :param field_data: Dictionary of extra fields (name, data)
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
@@ -88,7 +88,7 @@ class Grid(object):
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
                     mesh='spherical', allow_time_extrapolation=False, **kwargs):
-        """Initialises grid data from files using NEMO conventions.
+        """Initialises FieldSet data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
@@ -124,10 +124,10 @@ class Grid(object):
             else:
                 paths = glob(str(filenames[var]))
             if len(paths) == 0:
-                raise IOError("Grid files not found: %s" % str(filenames[var]))
+                raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
                 if not path.exists(fp):
-                    raise IOError("Grid file not found: %s" % str(fp))
+                    raise IOError("FieldSet file not found: %s" % str(fp))
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
@@ -143,7 +143,7 @@ class Grid(object):
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
                   indices={}, extra_vars={}, allow_time_extrapolation=False, **kwargs):
-        """Initialises grid data from files using NEMO conventions.
+        """Initialises FieldSet data from files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
                wildcards to indicate multiple files.
@@ -169,18 +169,18 @@ class Grid(object):
     @property
     def fields(self):
         """Returns a list of all the :class:`parcels.field.Field` objects
-        associated with this grid"""
+        associated with this FieldSet"""
         return [v for v in self.__dict__.values() if isinstance(v, Field)]
 
     def add_field(self, field):
-        """Add a :class:`parcels.field.Field` object to the grid
+        """Add a :class:`parcels.field.Field` object to the FieldSet
 
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
 
     def add_constant(self, name, value):
-        """Add a constant to the grid. Note that all constants are
+        """Add a constant to the FieldSet. Note that all constants are
         stored as 32-bit floats. While constants can be updated during
         execution in SciPy mode, they can not be updated in JIT mode.
 
@@ -190,7 +190,7 @@ class Grid(object):
         setattr(self, name, value)
 
     def add_periodic_halo(self, zonal=False, meridional=False, halosize=5):
-        """Add a 'halo' to all :class:`parcels.field.Field` objects on a grid,
+        """Add a 'halo' to all :class:`parcels.field.Field` objects in a FieldSet,
         through extending the Field (and lon/lat) by copying a small portion
         of the field on one side of the domain to the other.
 
@@ -199,7 +199,7 @@ class Grid(object):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
 
-        # setting grid constants for use in PeriodicBC kernel. Note using U-Field values
+        # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
         if zonal:
             self.add_constant('halo_west', self.U.lon[0])
             self.add_constant('halo_east', self.U.lon[-1])
@@ -224,10 +224,10 @@ class Grid(object):
         return u, v
 
     def write(self, filename):
-        """Write grid to NetCDF file using NEMO convention
+        """Write FieldSet to NetCDF file using NEMO convention
 
         :param filename: Basename of the output fileset"""
-        logger.info("Generating NEMO grid output with basename: %s" % filename)
+        logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
         self.U.write(filename, varname='vozocrtx')
         self.V.write(filename, varname='vomecrty')
@@ -236,16 +236,16 @@ class Grid(object):
             if (v.name is not 'U') and (v.name is not 'V'):
                 v.write(filename)
 
-    def advancetime(self, gridnew):
-        """Replace oldest time on grid with newgrid
+    def advancetime(self, fieldset_new):
+        """Replace oldest time on FieldSet with new FieldSet
 
-        :param gridnew: Grid snapshot with which the oldest time has to be replaced"""
+        :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
-        if len(gridnew.U.time) is not 1:
-            raise RuntimeError('New grid needs to have only one snapshot')
+        if len(fieldset_new.U.time) is not 1:
+            raise RuntimeError('New FieldSet needs to have only one snapshot')
 
         for v in self.fields:
-            vnew = getattr(gridnew, v.name)
+            vnew = getattr(fieldset_new, v.name)
             if vnew.time > v.time[-1]:  # forward in time, so appending at end
                 v.data = np.concatenate((v.data[1:, :, :], vnew.data[:, :, :]), 0)
                 v.time = np.concatenate((v.time[1:], vnew.time))
@@ -253,4 +253,4 @@ class Grid(object):
                 v.data = np.concatenate((vnew.data[:, :, :], v.data[:-1, :, :]), 0)
                 v.time = np.concatenate((vnew.time, v.time[:-1]))
             else:
-                raise RuntimeError("Time of gridnew in grid.advancetime() overlaps with times in old grid")
+                raise RuntimeError("Time of fieldset_new in FieldSet.advancetime() overlaps with times in old FieldSet")
