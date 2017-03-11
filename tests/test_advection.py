@@ -1,5 +1,5 @@
 from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
-from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45
+from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D
 import numpy as np
 import pytest
 import math
@@ -74,7 +74,7 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_advection_3D(mode, npart=11):
     """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
     """
@@ -185,6 +185,47 @@ def test_stationary_eddy(grid_stationary, mode, method, rtol, npart=1):
     exp_lat = [truth_stationary(x, y, endtime)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
     assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_stationary_eddy_vertical(mode, npart=1):
+    lon = np.linspace(12000, 21000, npart, dtype=np.float32)
+    lat = np.linspace(10000, 20000, npart, dtype=np.float32)
+    depth = np.linspace(12500, 12500, npart, dtype=np.float32)
+    endtime = delta(hours=6).total_seconds()
+
+    xdim = ydim = 100
+    lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
+    lat_data = np.linspace(0, 25000, ydim, dtype=np.float32)
+    time_data = np.arange(0., 6*3600, 60., dtype=np.float64)
+    fld1 = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time_data)
+    fld2 = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time_data)
+    fldzero = np.zeros((xdim, ydim, 1), dtype=np.float32) * time_data
+
+    grid = Grid.from_data(fld1, lon_data, lat_data, fldzero, lon_data,
+                          lat_data, time=time_data, mesh='flat',
+                          field_data={'W': fld2})
+
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon,
+                       lat=lat, depth=depth)
+    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
+    exp_lon = [truth_stationary(x, z, endtime)[0] for x, z, in zip(lon, depth)]
+    exp_depth = [truth_stationary(x, z, endtime)[1] for x, z, in zip(lon, depth)]
+    assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=1e-5)
+    assert np.allclose(np.array([p.lat for p in pset]), lat, rtol=1e-5)
+    assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
+
+    grid = Grid.from_data(fldzero, lon_data, lat_data, fld2, lon_data,
+                          lat_data, time=time_data, mesh='flat',
+                          field_data={'W': fld1})
+    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon,
+                       lat=lat, depth=depth)
+    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
+    exp_depth = [truth_stationary(z, y, endtime)[0] for z, y, in zip(depth, lat)]
+    exp_lat = [truth_stationary(z, y, endtime)[1] for z, y, in zip(depth, lat)]
+    assert np.allclose(np.array([p.lon for p in pset]), lon, rtol=1e-5)
+    assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=1e-5)
+    assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
 
 
 def truth_moving(x_0, y_0, t):
