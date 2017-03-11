@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
+from parcels import Grid, FieldSet, ParticleSet, ScipyParticle, JITParticle
 from parcels.field import Field
 import numpy as np
 import pytest
@@ -142,3 +142,19 @@ def test_fieldset_constant(mode):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
+
+
+def test_grid_backward_compatibility():
+    u, v, lon, lat, depth, time = generate_fieldset(100, 100)
+    fieldset = FieldSet.from_data(u, lon, lat, v, lon, lat, depth, time)
+    grid = Grid.from_data(u, lon, lat, v, lon, lat, depth, time)
+    assert np.allclose(grid.U.data, fieldset.U.data)
+
+    filenemo = path.join(path.dirname(__file__), pardir, 'examples', 'MovingEddies_data', 'moving_eddies')
+    fieldset = FieldSet.from_nemo(filenemo, extra_vars={'P': 'P'})
+    grid = Grid.from_nemo(filenemo, extra_vars={'P': 'P'})
+    assert np.allclose(grid.U.data, fieldset.U.data)
+
+    grid.add_constant('test', 1.0)
+    fieldset.add_constant('test', 1.0)
+    assert grid.test == fieldset.test

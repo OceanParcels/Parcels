@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
 from parcels import AdvectionRK4
 import numpy as np
 from datetime import timedelta as delta
@@ -16,7 +16,7 @@ start_lon = [10000.]  # Define the start longitude and latitude for the particle
 start_lat = [10000.]
 
 
-def decaying_moving_eddy_grid(xdim=2, ydim=2):  # Define 2D flat, square grid for testing purposes.
+def decaying_moving_eddy_fieldset(xdim=2, ydim=2):  # Define 2D flat, square fieldset for testing purposes.
     """Simulate an ocean that accelerates subject to Coriolis force
     and dissipative effects, upon which a geostrophic current is
     superimposed.
@@ -38,7 +38,7 @@ def decaying_moving_eddy_grid(xdim=2, ydim=2):  # Define 2D flat, square grid fo
         U[:, :, t] = u_g*np.exp(-gamma_g*time[t]) + (u_0-u_g)*np.exp(-gamma*time[t])*np.cos(f*time[t])
         V[:, :, t] = -(u_0-u_g)*np.exp(-gamma*time[t])*np.sin(f*time[t])
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, mesh='flat')
+    return FieldSet.from_data(U, lon, lat, V, lon, lat, depth, time, mesh='flat')
 
 
 def true_values(t, x_0, y_0):  # Calculate the expected values for particles at the endtime, given their start location.
@@ -48,8 +48,8 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
     return np.array([x, y])
 
 
-def decaying_moving_example(grid, mode='scipy', method=AdvectionRK4):
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=start_lon, lat=start_lat)
+def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
     endtime = delta(days=2)
     dt = delta(minutes=5)
@@ -63,15 +63,15 @@ def decaying_moving_example(grid, mode='scipy', method=AdvectionRK4):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_rotation_example(mode):
-    grid = decaying_moving_eddy_grid()
-    pset = decaying_moving_example(grid, mode=mode)
+    fieldset = decaying_moving_eddy_fieldset()
+    pset = decaying_moving_example(fieldset, mode=mode)
     vals = true_values(pset[0].time, start_lon, start_lat)  # Calculate values for the particle.
     assert(np.allclose(np.array([[pset[0].lon], [pset[0].lat]]), vals, 1e-2))   # Check advected values against calculated values.
 
 
 if __name__ == "__main__":
     filename = 'decaying_moving_eddy'
-    grid = decaying_moving_eddy_grid()
-    grid.write(filename)
+    fieldset = decaying_moving_eddy_fieldset()
+    fieldset.write(filename)
 
-    pset = decaying_moving_example(grid)
+    pset = decaying_moving_example(fieldset)

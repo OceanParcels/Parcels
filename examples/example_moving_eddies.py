@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -12,18 +12,18 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def moving_eddies_grid(xdim=200, ydim=350):
-    """Generate a grid encapsulating the flow field consisting of two
+def moving_eddies_fieldset(xdim=200, ydim=350):
+    """Generate a fieldset encapsulating the flow field consisting of two
     moving eddies, one moving westward and the other moving northwestward.
 
     Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
     artificially with uniform velocities. Velocities are calculated from geostrophy.
     """
-    # Set NEMO grid variables
+    # Set NEMO fieldset variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.arange(0., 25. * 86400., 86400., dtype=np.float64)
 
-    # Coordinates of the test grid (on A-grid in deg)
+    # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(0, 4, xdim, dtype=np.float32)
     lat = np.linspace(45, 52, ydim, dtype=np.float32)
 
@@ -64,18 +64,18 @@ def moving_eddies_grid(xdim=200, ydim=350):
         U[:, :-1, t] = np.diff(P[:, :, t], axis=1) / dy / corio_0 * g
         U[:, -1, t] = U[:, -2, t]  # Fill in the last row
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P})
+    return FieldSet.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P})
 
 
-def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
+def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
                           method=AdvectionRK4):
     """Configuration of a particle set that follows two moving eddies
 
-    :arg grid: :class Grid: that defines the flow field
-    :arg npart: Number of particles to intialise"""
+    :arg fieldset: :class FieldSet: that defines the flow field
+    :arg npart: Number of particles to initialise"""
 
     # Determine particle class according to mode
-    pset = ParticleSet.from_line(grid=grid, size=npart, pclass=ptype[mode],
+    pset = ParticleSet.from_line(fieldset=fieldset, size=npart, pclass=ptype[mode],
                                  start=(3.3, 46.), finish=(3.3, 47.8))
 
     if verbose:
@@ -97,10 +97,10 @@ def moving_eddies_example(grid, npart=2, mode='jit', verbose=False,
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_fwdbwd(mode, npart=2):
     method = AdvectionRK4
-    grid = moving_eddies_grid()
+    fieldset = moving_eddies_fieldset()
 
     # Determine particle class according to mode
-    pset = ParticleSet.from_line(grid=grid, size=npart, pclass=ptype[mode],
+    pset = ParticleSet.from_line(fieldset=fieldset, size=npart, pclass=ptype[mode],
                                  start=(3.3, 46.), finish=(3.3, 47.8))
 
     # Execte for 14 days, with 30sec timesteps and hourly output
@@ -122,26 +122,26 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_moving_eddies_grid(mode):
-    grid = moving_eddies_grid()
-    pset = moving_eddies_example(grid, 2, mode=mode)
+def test_moving_eddies_fieldset(mode):
+    fieldset = moving_eddies_fieldset()
+    pset = moving_eddies_example(fieldset, 2, mode=mode)
     assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
     assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
 
 
 @pytest.fixture(scope='module')
-def gridfile():
-    """Generate grid files for moving_eddies test"""
+def fieldsetfile():
+    """Generate fieldset files for moving_eddies test"""
     filename = 'moving_eddies'
-    grid = moving_eddies_grid(200, 350)
-    grid.write(filename)
+    fieldset = moving_eddies_fieldset(200, 350)
+    fieldset.write(filename)
     return filename
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_moving_eddies_file(gridfile, mode):
-    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'})
-    pset = moving_eddies_example(grid, 2, mode=mode)
+def test_moving_eddies_file(fieldsetfile, mode):
+    fieldset = FieldSet.from_nemo(fieldsetfile, extra_vars={'P': 'P'})
+    pset = moving_eddies_example(fieldset, 2, mode=mode)
     assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
     assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
 
@@ -157,28 +157,28 @@ Example of particle advection around an idealised peninsula""")
                    help='Print particle information before and after execution')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
-    p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
-                   help='Generate grid file with given dimensions')
+    p.add_argument('-f', '--fieldset', type=int, nargs=2, default=None,
+                   help='Generate fieldset file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
     filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
 
-    # Generate grid files according to given dimensions
-    if args.grid is not None:
-        grid = moving_eddies_grid(args.grid[0], args.grid[1])
-        grid.write(filename)
+    # Generate fieldset files according to given dimensions
+    if args.fieldset is not None:
+        fieldset = moving_eddies_fieldset(args.fieldset[0], args.fieldset[1])
+        fieldset.write(filename)
 
-    # Open grid files
-    grid = Grid.from_nemo(filename, extra_vars={'P': 'P'})
+    # Open fieldset files
+    fieldset = FieldSet.from_nemo(filename, extra_vars={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("moving_eddies_example(grid, args.particles, mode=args.mode, \
+        runctx("moving_eddies_example(fieldset, args.particles, mode=args.mode, \
                               verbose=args.verbose, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        moving_eddies_example(grid, args.particles, mode=args.mode,
+        moving_eddies_example(fieldset, args.particles, mode=args.mode,
                               verbose=args.verbose, method=method[args.method])

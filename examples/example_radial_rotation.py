@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
 from parcels import AdvectionRK4
 import numpy as np
 from datetime import timedelta as delta
@@ -8,12 +8,12 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def radial_rotation_grid(xdim=200, ydim=200):  # Define 2D flat, square grid for testing purposes.
+def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fieldset for testing purposes.
 
     lon = np.linspace(0, 60, xdim, dtype=np.float32)
     lat = np.linspace(0, 60, ydim, dtype=np.float32)
 
-    x0 = 30.                                   # Define the origin to be the centre of the grid.
+    x0 = 30.                                   # Define the origin to be the centre of the Field.
     y0 = 30.
 
     U = np.zeros((xdim, ydim), dtype=np.float32)
@@ -35,7 +35,7 @@ def radial_rotation_grid(xdim=200, ydim=200):  # Define 2D flat, square grid for
             U[i, j] = r * math.sin(theta) * omega
             V[i, j] = -r * math.cos(theta) * omega
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat')
+    return FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat')
 
 
 def true_values(age):  # Calculate the expected values for particle 2 at the endtime.
@@ -46,12 +46,12 @@ def true_values(age):  # Calculate the expected values for particle 2 at the end
     return [x, y]
 
 
-def rotation_example(grid, mode='jit', method=AdvectionRK4):
+def rotation_example(fieldset, mode='jit', method=AdvectionRK4):
 
-    npart = 2          # Test two particles on the rotating grid.
-    pset = ParticleSet.from_line(grid, size=npart, pclass=ptype[mode],
+    npart = 2          # Test two particles on the rotating fieldset.
+    pset = ParticleSet.from_line(fieldset, size=npart, pclass=ptype[mode],
                                  start=(30., 30.),
-                                 finish=(30., 50.))  # One particle in centre, one on periphery of grid.
+                                 finish=(30., 50.))  # One particle in centre, one on periphery of Field.
 
     endtime = delta(hours=17)
     dt = delta(minutes=5)
@@ -65,9 +65,9 @@ def rotation_example(grid, mode='jit', method=AdvectionRK4):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_rotation_example(mode):
-    grid = radial_rotation_grid()
-    pset = rotation_example(grid, mode=mode)
-    assert(pset[0].lon == 30. and pset[0].lat == 30.)  # Particle at centre of grid remains stationary.
+    fieldset = radial_rotation_fieldset()
+    pset = rotation_example(fieldset, mode=mode)
+    assert(pset[0].lon == 30. and pset[0].lat == 30.)  # Particle at centre of Field remains stationary.
     vals = true_values(pset[1].time)
     assert(np.allclose(pset[1].lon, vals[0], 1e-5))    # Check advected values against calculated values.
     assert(np.allclose(pset[1].lat, vals[1], 1e-5))
@@ -75,7 +75,7 @@ def test_rotation_example(mode):
 
 if __name__ == "__main__":
     filename = 'radial_rotation'
-    grid = radial_rotation_grid()
-    grid.write(filename)
+    fieldset = radial_rotation_fieldset()
+    fieldset.write(filename)
 
-    rotation_example(grid)
+    rotation_example(fieldset)
