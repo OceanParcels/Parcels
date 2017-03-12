@@ -6,3 +6,6 @@ from parcels.kernel import *  # noqa
 import parcels.rng as random  # noqa
 from parcels.particlefile import *  # noqa
 from parcels.kernels import *  # noqa
+
+# Only for backward compatibility
+from parcels.grid import *  # noqa
