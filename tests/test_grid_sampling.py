@@ -39,9 +39,10 @@ def fieldset(xdim=200, ydim=100):
     lon = np.linspace(-180, 180, xdim, dtype=np.float32)
     lat = np.linspace(-90, 90, ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
-    return FieldSet.from_data(np.array(U, dtype=np.float32), lon, lat,
-                              np.array(V, dtype=np.float32), lon, lat,
-                              mesh='flat')
+    data = {'U': U, 'V': V}
+    dimensions = {'lon': lon, 'lat': lat}
+
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.fixture
@@ -52,8 +53,9 @@ def fieldset_geometric(xdim=200, ydim=100):
     U, V = np.meshgrid(lat, lon)
     U *= 1000. * 1.852 * 60.
     V *= 1000. * 1.852 * 60.
-    fieldset = FieldSet.from_data(np.array(U, dtype=np.float32), lon, lat,
-                                  np.array(V, dtype=np.float32), lon, lat)
+    data = {'U': U, 'V': V}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset = FieldSet.from_data(data, dimensions)
     fieldset.U.units = Geographic()
     fieldset.V.units = Geographic()
     return fieldset
@@ -72,10 +74,9 @@ def fieldset_geometric_polar(xdim=200, ydim=100):
         U[:, i] *= cos(y * pi / 180)
     U *= 1000. * 1.852 * 60.
     V *= 1000. * 1.852 * 60.
-    fieldset = FieldSet.from_data(np.array(U, dtype=np.float32), lon, lat,
-                                  np.array(V, dtype=np.float32), lon, lat,
-                                  mesh='spherical')
-    return fieldset
+    data = {'U': U, 'V': V}
+    dimensions = {'lon': lon, 'lat': lat}
+    return FieldSet.from_data(data, dimensions, mesh='spherical')
 
 
 def test_fieldset_sample(fieldset, xdim=120, ydim=80):
@@ -101,14 +102,13 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_from_field(mode, npart=9):
     dims = (2, 2)
-    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
-    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
-    U = np.zeros(dims, dtype=np.float32)
-    V = np.zeros(dims, dtype=np.float32)
-    P = np.zeros(dims, dtype=np.float32)
-    P[0, 0] = 1.
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat',
-                                  field_data={'P': np.asarray(P, dtype=np.float32)})
+    dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32)}
+    data = {'U': np.zeros(dims, dtype=np.float32),
+            'V': np.zeros(dims, dtype=np.float32),
+            'P': np.zeros(dims, dtype=np.float32)}
+    data['P'][0, 0] = 1.
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     xv, yv = np.meshgrid(np.linspace(0, 1, np.sqrt(npart)), np.linspace(0, 1, np.sqrt(npart)))
 
     class VarParticle(pclass(mode)):
@@ -122,14 +122,13 @@ def test_variable_init_from_field(mode, npart=9):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
     dims = (2, 2)
-    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
-    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
-    U = np.zeros(dims, dtype=np.float32)
-    V = np.zeros(dims, dtype=np.float32)
-    P = np.zeros(dims, dtype=np.float32)
-    P[0, 1] = 1.
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat',
-                                  field_data={'P': np.asarray(P, dtype=np.float32)})
+    dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32)}
+    data = {'U': np.zeros(dims, dtype=np.float32),
+            'V': np.zeros(dims, dtype=np.float32),
+            'P': np.zeros(dims, dtype=np.float32)}
+    data['P'][0, 1] = 1.
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     fieldset.P.interp_method = 'nearest'
     xv, yv = np.meshgrid(np.linspace(0., 1.0, np.sqrt(npart)), np.linspace(0., 1.0, np.sqrt(npart)))
     pset = ParticleSet(fieldset, pclass=pclass(mode),
@@ -142,15 +141,14 @@ def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
     dims = (2, 2, 2)
-    lon = np.linspace(0., 1., dims[0], dtype=np.float32)
-    lat = np.linspace(0., 1., dims[1], dtype=np.float32)
-    depth = np.linspace(0., 1., dims[2], dtype=np.float32)
-    U = np.zeros(dims, dtype=np.float32)
-    V = np.zeros(dims, dtype=np.float32)
-    P = np.zeros(dims, dtype=np.float32)
-    P[0, 1, 1] = 1.
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='flat',
-                                  field_data={'P': np.asarray(P, dtype=np.float32)})
+    dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
+                  'depth': np.linspace(0., 1., dims[2], dtype=np.float32)}
+    data = {'U': np.zeros(dims, dtype=np.float32),
+            'V': np.zeros(dims, dtype=np.float32),
+            'P': np.zeros(dims, dtype=np.float32)}
+    data['P'][0, 1, 1] = 1.
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     fieldset.P.interp_method = 'nearest'
     xv, yv = np.meshgrid(np.linspace(0, 1.0, np.sqrt(npart)), np.linspace(0, 1.0, np.sqrt(npart)))
     # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
@@ -218,20 +216,19 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode, k_samp
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
-    """ Create uniform NORTHWARD flow on sperical earth and advect particles
+def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
+    """ Create uniform NORTHWARD flow on spherical earth and advect particles
 
     As flow is so simple, it can be directly compared to analytical solution
     """
 
     maxvel = 1.
-    lon = np.linspace(-180, 180, xdim, dtype=np.float32)
-    lat = np.linspace(-90, 90, ydim, dtype=np.float32)
-    U = np.zeros([xdim, ydim])
-    V = maxvel * np.ones([xdim, ydim])
+    dimensions = {'lon': np.linspace(-180, 180, xdim, dtype=np.float32),
+                  'lat': np.linspace(-90, 90, ydim, dtype=np.float32)}
+    data = {'U': np.zeros([xdim, ydim]),
+            'V': maxvel * np.ones([xdim, ydim])}
 
-    fieldset = FieldSet.from_data(np.array(U, dtype=np.float32), lon, lat,
-                                  np.array(V, dtype=np.float32), lon, lat)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
 
     lonstart = [0, 45]
     latstart = [0, 45]
@@ -246,23 +243,21 @@ def test_meridionalflow_sperical(mode, xdim=100, ydim=200):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_zonalflow_sperical(mode, k_sample_p, xdim=100, ydim=200):
-    """ Create uniform EASTWARD flow on sperical earth and advect particles
+def test_zonalflow_spherical(mode, k_sample_p, xdim=100, ydim=200):
+    """ Create uniform EASTWARD flow on spherical earth and advect particles
 
     As flow is so simple, it can be directly compared to analytical solution
     Note that in this case the cosine conversion is needed
     """
     maxvel = 1.
     p_fld = 10
-    lon = np.linspace(-180, 180, xdim, dtype=np.float32)
-    lat = np.linspace(-90, 90, ydim, dtype=np.float32)
-    V = np.zeros([xdim, ydim])
-    U = maxvel * np.ones([xdim, ydim])
-    P = p_fld * np.ones([xdim, ydim])
+    dimensions = {'lon': np.linspace(-180, 180, xdim, dtype=np.float32),
+                  'lat': np.linspace(-90, 90, ydim, dtype=np.float32)}
+    data = {'U': maxvel * np.ones([xdim, ydim]),
+            'V': np.zeros([xdim, ydim]),
+            'P': p_fld * np.ones([xdim, ydim])}
 
-    fieldset = FieldSet.from_data(np.array(U, dtype=np.float32), lon, lat,
-                                  np.array(V, dtype=np.float32), lon, lat,
-                                  field_data={'P': np.array(P, dtype=np.float32)})
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
 
     lonstart = [0, 45]
     latstart = [0, 45]
@@ -283,19 +278,18 @@ def test_zonalflow_sperical(mode, k_sample_p, xdim=100, ydim=200):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
-    """Sampling test that test for overshoots by sampling a field of
+    """Sampling test that tests for overshoots by sampling a field of
     random numbers between 0 and 1.
     """
     np.random.seed(123456)
-    lon = np.linspace(0., 1., xdim, dtype=np.float32)
-    lat = np.linspace(0., 1., ydim, dtype=np.float32)
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
-    P = np.random.uniform(0, 1., size=(xdim, ydim))
-    S = np.ones((xdim, ydim), dtype=np.float32)
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat',
-                                  field_data={'P': np.asarray(P, dtype=np.float32),
-                                              'start': S})
+    dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
+    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim), dtype=np.float32),
+            'P': np.random.uniform(0, 1., size=(xdim, ydim)),
+            'start': np.ones((xdim, ydim), dtype=np.float32)}
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
                                   start_field=fieldset.start)
     pset.execute(k_sample_p, endtime=1., dt=1.0)
@@ -307,14 +301,14 @@ def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
 @pytest.mark.parametrize('allow_time_extrapolation', [True, False])
 def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
                                      xdim=10, ydim=10, tdim=10):
-    lon = np.linspace(0., 1., xdim, dtype=np.float32)
-    lat = np.linspace(0., 1., ydim, dtype=np.float32)
-    time = np.linspace(0., 1., tdim, dtype=np.float64)
-    U = np.zeros((xdim, ydim, tdim), dtype=np.float32)
-    V = np.zeros((xdim, ydim, tdim), dtype=np.float32)
-    P = np.ones((xdim, ydim, 1), dtype=np.float32) * time
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, time=time, mesh='flat',
-                                  field_data={'P': np.asarray(P, dtype=np.float32)},
+    dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1., ydim, dtype=np.float32),
+                  'time': np.linspace(0., 1., tdim, dtype=np.float64)}
+    data = {'U': np.zeros((xdim, ydim, tdim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim, tdim), dtype=np.float32),
+            'P': np.ones((xdim, ydim, 1), dtype=np.float32) * dimensions['time']}
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat',
                                   allow_time_extrapolation=allow_time_extrapolation)
     pset = ParticleSet.from_line(fieldset, size=1, pclass=pclass(mode),
                                  start=(0.5, 0.5), finish=(0.5, 0.5))

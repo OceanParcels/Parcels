@@ -38,9 +38,12 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
-    U = np.ones((lon.size, lat.size, depth.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)
-    fieldset2D = FieldSet.from_data(U[:, :, 0], lon, lat, V[:, :, 0], lon, lat, mesh='spherical')
+    data2D = {'U': np.ones((lon.size, lat.size), dtype=np.float32),
+              'V': np.zeros((lon.size, lat.size), dtype=np.float32)}
+    data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
+              'V': np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical')
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
@@ -48,7 +51,8 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     pset2D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
 
-    fieldset3D = FieldSet.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='spherical')
+    dimensions['depth'] = depth
+    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical')
     pset3D = ParticleSet(fieldset3D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32),
@@ -62,9 +66,10 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
-    U = np.zeros((lon.size, lat.size), dtype=np.float32)
-    V = np.ones((lon.size, lat.size), dtype=np.float32)
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+    data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
+            'V': np.ones((lon.size, lat.size), dtype=np.float32)}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(-60, 60, npart, dtype=np.float32),
@@ -78,13 +83,14 @@ def test_advection_meridional(lon, lat, mode, npart=10):
 def test_advection_3D(mode, npart=11):
     """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
     """
-    lon = np.linspace(0., 1e4, 2, dtype=np.float32)
-    lat = np.linspace(0., 1e4, 2, dtype=np.float32)
-    depth = np.linspace(0., 1., 2, dtype=np.float32)
-    U = np.ones((lon.size, lat.size, 2), dtype=np.float32)
-    U[:, :, 0] = 0.
-    V = np.zeros((lon.size, lat.size, 2), dtype=np.float32)
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='flat')
+    xdim = ydim = zdim = 2
+    dimensions = {'lon': np.linspace(0., 1e4, xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1e4, ydim, dtype=np.float32),
+                  'depth': np.linspace(0., 1., zdim, dtype=np.float32)}
+    data = {'U': np.ones((xdim, ydim, zdim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim, zdim), dtype=np.float32)}
+    data['U'][:, :, 0] = 0.
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart, dtype=np.float32),
@@ -96,12 +102,12 @@ def test_advection_3D(mode, npart=11):
 
 
 def periodicfields(xdim, ydim, uvel, vvel):
-    lon = np.linspace(0., 1., xdim+1, dtype=np.float32)[1:]  # don't include both 0 and 1, for periodic b.c.
-    lat = np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]
+    dimensions = {'lon': np.linspace(0., 1., xdim+1, dtype=np.float32)[1:],  # don't include both 0 and 1, for periodic b.c.
+                  'lat': np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]}
 
-    U = uvel * np.ones((xdim, ydim), dtype=np.float32)
-    V = vvel * np.ones((xdim, ydim), dtype=np.float32)
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+    data = {'U': uvel * np.ones((xdim, ydim), dtype=np.float32),
+            'V': vvel * np.ones((xdim, ydim), dtype=np.float32)}
+    return FieldSet.from_data(data, dimensions, mesh='spherical')
 
 
 def periodicBC(particle, fieldset, time, dt):
@@ -159,14 +165,13 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
-    U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time)
-    V = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)
-    return FieldSet.from_data(np.asarray(U, np.float32), lon, lat,
-                              np.asarray(V, np.float32), lon, lat,
-                              time=time, mesh='flat')
+    dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
+                  'time': time}
+    data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
+            'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -200,14 +205,13 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
-    U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time)
-    V = np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)
-    return FieldSet.from_data(np.asarray(U, np.float32), lon, lat,
-                              np.asarray(V, np.float32), lon, lat,
-                              time=time, mesh='flat')
+    dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
+                  'time': time}
+    data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time),
+            'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -245,16 +249,13 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
-    U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_g *\
-        np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time)
-    V = np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) *\
-        np.exp(-gamma * time) * np.sin(f * time)
-    return FieldSet.from_data(np.asarray(U, np.float32), lon, lat,
-                              np.asarray(V, np.float32), lon, lat,
-                              time=time, mesh='flat')
+    dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
+                  'time': time}
+    data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time),
+            'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time)}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

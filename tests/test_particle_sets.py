@@ -14,7 +14,9 @@ def fieldset(xdim=100, ydim=100):
     lat = np.linspace(0, 1, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, depth, time)
+    data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+    dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+    return FieldSet.from_data(data, dimensions)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

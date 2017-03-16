@@ -22,9 +22,9 @@ def fieldset(xdim=20, ydim=20):
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
-    return FieldSet.from_data(np.array(U, dtype=np.float32), lon, lat,
-                              np.array(V, dtype=np.float32), lon, lat,
-                              mesh='flat')
+    data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+    dimensions = {'lat': lat, 'lon': lon}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
