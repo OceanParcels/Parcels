@@ -34,6 +34,34 @@ def test_fieldset_from_data(xdim, ydim):
 
 
 @pytest.mark.parametrize('xdim', [100, 200])
+@pytest.mark.parametrize('ydim', [100, 50])
+def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
+    """ Test for fieldset initialisation from data using
+    dict-of-dict for dimensions. """
+
+    lon = np.linspace(0., 1., xdim, dtype=np.float32)
+    lat = np.linspace(0., 1., ydim, dtype=np.float32)
+    depth = np.zeros(zdim, dtype=np.float32)
+    time = np.zeros(tdim, dtype=np.float64)
+    U = np.zeros((xdim, ydim), dtype=np.float32)
+    V = np.ones((xdim, ydim), dtype=np.float32)
+    P = 2 * np.ones((xdim/2, ydim/2, zdim, tdim), dtype=np.float32)
+    data = {'U': U, 'V': V, 'P': P}
+    dimensions = {'U': {'lat': lat, 'lon': lon},
+                  'V': {'lat': lat, 'lon': lon},
+                  'P': {'lat': lat[0::2], 'lon': lon[0::2], 'depth': depth, 'time': time}}
+
+    fieldset = FieldSet.from_data(data, dimensions)
+    assert len(fieldset.U.data.shape) == 3
+    assert len(fieldset.V.data.shape) == 3
+    assert len(fieldset.P.data.shape) == 4
+    assert fieldset.P.data.shape == (tdim, zdim, ydim/2, xdim/2)
+    assert np.allclose(fieldset.U.data, 0., rtol=1e-12)
+    assert np.allclose(fieldset.V.data, 1., rtol=1e-12)
+    assert np.allclose(fieldset.P.data, 2., rtol=1e-12)
+
+
+@pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_fieldset_from_nemo(xdim, ydim, tmpdir, filename='test_nemo'):
     """ Simple test for fieldset initialisation from NEMO file format. """
