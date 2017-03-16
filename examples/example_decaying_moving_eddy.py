@@ -38,7 +38,9 @@ def decaying_moving_eddy_fieldset(xdim=2, ydim=2):  # Define 2D flat, square fie
         U[:, :, t] = u_g*np.exp(-gamma_g*time[t]) + (u_0-u_g)*np.exp(-gamma*time[t])*np.cos(f*time[t])
         V[:, :, t] = -(u_0-u_g)*np.exp(-gamma*time[t])*np.sin(f*time[t])
 
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, depth, time, mesh='flat')
+    data = {'U': U, 'V': V}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 def true_values(t, x_0, y_0):  # Calculate the expected values for particles at the endtime, given their start location.

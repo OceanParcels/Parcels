@@ -22,11 +22,11 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     from e.g. land. Note however that current under-the-hood
     implementation is not extremely efficient, so code could be slow."""
 
-    lon = np.linspace(0., 1., xdim, dtype=np.float32)
-    lat = np.linspace(0., 1., ydim, dtype=np.float32)
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
-    fieldset = FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat')
+    dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
+    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim), dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     # Set minimum value for valid longitudes (i.e. all longitudes < minlon are 'land')
     fieldset.add_constant('minlon', 0.7)

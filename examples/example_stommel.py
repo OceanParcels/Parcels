@@ -58,7 +58,9 @@ def stommel_fieldset(xdim=200, ydim=200):
             for j in range(lat.size-2):
                 U[i, j+1, t] = -(P[i, j+2, t] - P[i, j, t]) / (2 * b / ydim)
 
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P}, mesh='flat')
+    data = {'U': U, 'V': V, 'P': P}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 def UpdateP(particle, fieldset, time, dt):

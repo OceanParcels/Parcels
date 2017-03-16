@@ -20,13 +20,13 @@ def two_dim_brownian_flat(particle, fieldset, time, dt):
 
 
 def brownian_fieldset(xdim=200, ydim=200):     # Define a flat fieldset of zeros, for simplicity.
-    lon = np.linspace(0, 600000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 600000, ydim, dtype=np.float32)
+    dimensions = {'lon': np.linspace(0, 600000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 600000, ydim, dtype=np.float32)}
 
-    U = np.zeros((lon.size, lat.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size), dtype=np.float32)
+    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim), dtype=np.float32)}
 
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

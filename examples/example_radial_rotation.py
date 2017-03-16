@@ -35,7 +35,9 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
             U[i, j] = r * math.sin(theta) * omega
             V[i, j] = -r * math.cos(theta) * omega
 
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, mesh='flat')
+    data = {'U': U, 'V': V}
+    dimensions = {'lon': lon, 'lat': lat}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 def true_values(age):  # Calculate the expected values for particle 2 at the endtime.

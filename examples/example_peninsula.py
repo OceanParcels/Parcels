@@ -67,7 +67,9 @@ def peninsula_fieldset(xdim, ydim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
 
-    return FieldSet.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P})
+    data = {'U': U, 'V': V, 'P': P}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    return FieldSet.from_data(data, dimensions)
 
 
 def UpdateP(particle, fieldset, time, dt):
