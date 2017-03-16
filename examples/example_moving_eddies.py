@@ -142,7 +142,7 @@ def fieldsetfile():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_file(fieldsetfile, mode):
-    fieldset = FieldSet.from_nemo(fieldsetfile, extra_vars={'P': 'P'})
+    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
     assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
     assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
@@ -172,7 +172,7 @@ Example of particle advection around an idealised peninsula""")
         fieldset.write(filename)
 
     # Open fieldset files
-    fieldset = FieldSet.from_nemo(filename, extra_vars={'P': 'P'})
+    fieldset = FieldSet.from_nemo(filename, extra_fields={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx

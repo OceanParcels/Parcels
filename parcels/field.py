@@ -127,7 +127,7 @@ class Field(object):
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
-    :param data: 2D array of field data
+    :param data: 2D, 3D or 4D array of field data
     :param lon: Longitude coordinates of the field
     :param lat: Latitude coordinates of the field
     :param depth: Depth coordinates of the field

@@ -19,7 +19,7 @@ def test_delay_start_example(mode, npart=10, show_movie=False):
     in the peninsula fieldset. Note that the title in the movie may not show correct time"""
 
     fieldset = FieldSet.from_nemo(path.join(path.dirname(__file__), 'Peninsula_data', 'peninsula'),
-                                  extra_vars={'P': 'P'}, allow_time_extrapolation=True)
+                                  extra_fields={'P': 'P'}, allow_time_extrapolation=True)
 
     # Initialise particles as in the Peninsula example
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary

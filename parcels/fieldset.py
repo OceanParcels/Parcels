@@ -48,6 +48,7 @@ class FieldSet(object):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
+               Note that at least a 'U' and 'V' numpy array need to be given
         :param dimensions: Dictionary mapping field dimensions (lon,
                lat, depth, time) to numpy arrays.
                Note that dimensions can also be a dictionary of dictionaries if
@@ -140,12 +141,12 @@ class FieldSet(object):
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
-                  indices={}, extra_vars={}, allow_time_extrapolation=False, **kwargs):
+                  indices={}, extra_fields={}, allow_time_extrapolation=False, **kwargs):
         """Initialises FieldSet data from files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
                wildcards to indicate multiple files.
-        :param extra_vars: Extra fields to read beyond U and V
+        :param extra_fields: Extra fields to read beyond U and V
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -154,13 +155,13 @@ class FieldSet(object):
         dimensions = {}
         default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
                         'depth': 'depth', 'time': 'time_counter'}
-        extra_vars.update({'U': uvar, 'V': vvar})
-        for vars in extra_vars:
+        extra_fields.update({'U': uvar, 'V': vvar})
+        for vars in extra_fields:
             dimensions[vars] = deepcopy(default_dims)
             dimensions[vars]['depth'] = 'depth%s' % vars.lower()
         filenames = dict([(v, str("%s%s.nc" % (basename, v)))
-                          for v in extra_vars.keys()])
-        return cls.from_netcdf(filenames, indices=indices, variables=extra_vars,
+                          for v in extra_fields.keys()])
+        return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                **kwargs)
 

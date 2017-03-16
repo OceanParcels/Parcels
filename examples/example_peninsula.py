@@ -146,7 +146,7 @@ def fieldsetfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(fieldsetfile, mode):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_nemo(fieldsetfile, extra_vars={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -183,7 +183,7 @@ Example of particle advection around an idealised peninsula""")
         fieldset.write(filename)
 
     # Open fieldset file set
-    fieldset = FieldSet.from_nemo('peninsula', extra_vars={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_nemo('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
 
     if args.profiling:
         from cProfile import runctx
