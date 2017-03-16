@@ -43,20 +43,16 @@ class FieldSet(object):
             setattr(self, name, field)
 
     @classmethod
-    def from_data(cls, data_u, lon_u, lat_u, data_v, lon_v, lat_v,
-                  depth=None, time=None, field_data={}, transpose=True,
-                  mesh='spherical', allow_time_extrapolation=True, **kwargs):
+    def from_data(cls, data, dimensions, transpose=True, mesh='spherical',
+                  allow_time_extrapolation=True, **kwargs):
         """Initialise FieldSet object from raw data
 
-        :param data_u: Zonal (U) velocity data
-        :param lon_u: Longitude coordinates of the U data
-        :param lat_u: Latitude coordinates of the U data
-        :param data_v: Meridional (V) velocity data
-        :param lon_v: Longitude coordinates of the V data
-        :param lat_v: Latitude coordinates of the V data
-        :param depth: Depth coordinates of all :class:`Field` objects on the :class:`FieldSet`
-        :param time: Time coordinates of all :class:`Field` objects on the :class:`FieldSet`
-        :param field_data: Dictionary of extra fields (name, data)
+        :param data: Dictionary mapping field names to numpy arrays.
+        :param dimensions: Dictionary mapping field dimensions (lon,
+               lat, depth, time) to numpy arrays.
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
@@ -67,23 +63,25 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
-        depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-        time = np.zeros(1, dtype=np.float64) if time is None else time
         u_units, v_units = unit_converters(mesh)
-        # Create velocity fields
-        ufield = Field('U', data_u, lon_u, lat_u, depth=depth,
-                       time=time, transpose=transpose, units=u_units,
-                       allow_time_extrapolation=allow_time_extrapolation, **kwargs)
-        vfield = Field('V', data_v, lon_v, lat_v, depth=depth,
-                       time=time, transpose=transpose, units=v_units,
-                       allow_time_extrapolation=allow_time_extrapolation, **kwargs)
-        # Create additional data fields
+        units = defaultdict(UnitConverter)
+        units.update({'U': u_units, 'V': v_units})
         fields = {}
-        for name, data in field_data.items():
-            fields[name] = Field(name, data, lon_v, lat_u, depth=depth,
-                                 time=time, transpose=transpose,
+        for name, datafld in data.items():
+            # Use dimensions[name] if dimensions is a dict of dicts
+            dims = dimensions[name] if name in dimensions else dimensions
+
+            lon = dims['lon']
+            lat = dims['lat']
+            depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
+            time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+
+            fields[name] = Field(name, datafld, lon, lat, depth=depth,
+                                 time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)
-        return cls(ufield, vfield, fields=fields)
+        u = fields.pop('U')
+        v = fields.pop('V')
+        return cls(u, v, fields=fields)
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
