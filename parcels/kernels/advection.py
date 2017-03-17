@@ -3,7 +3,7 @@ from parcels.kernels.error import ErrorCode
 import math
 
 
-__all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45']
+__all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D']
 
 
 def AdvectionRK4(particle, fieldset, time, dt):
@@ -20,6 +20,36 @@ def AdvectionRK4(particle, fieldset, time, dt):
     u4, v4 = (fieldset.U[time + dt, lon3, lat3, particle.depth], fieldset.V[time + dt, lon3, lat3, particle.depth])
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
+
+
+def AdvectionRK4_3D(particle, fieldset, time, dt):
+    """Advection of particles using fourth-order Runge-Kutta integration including vertical velocity.
+
+    Function needs to be converted to Kernel object before execution"""
+    u1 = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+    v1 = fieldset.V[time, particle.lon, particle.lat, particle.depth]
+    w1 = fieldset.W[time, particle.lon, particle.lat, particle.depth]
+    lon1 = particle.lon + u1*.5*dt
+    lat1 = particle.lat + v1*.5*dt
+    dep1 = particle.depth + w1*.5*dt
+    u2 = fieldset.U[time + .5 * dt, lon1, lat1, dep1]
+    v2 = fieldset.V[time + .5 * dt, lon1, lat1, dep1]
+    w2 = fieldset.W[time + .5 * dt, lon1, lat1, dep1]
+    lon2 = particle.lon + u2*.5*dt
+    lat2 = particle.lat + v2*.5*dt
+    dep2 = particle.depth + w2*.5*dt
+    u3 = fieldset.U[time + .5 * dt, lon2, lat2, dep2]
+    v3 = fieldset.V[time + .5 * dt, lon2, lat2, dep2]
+    w3 = fieldset.W[time + .5 * dt, lon2, lat2, dep2]
+    lon3 = particle.lon + u3*dt
+    lat3 = particle.lat + v3*dt
+    dep3 = particle.depth + w3*dt
+    u4 = fieldset.U[time + dt, lon3, lat3, dep3]
+    v4 = fieldset.V[time + dt, lon3, lat3, dep3]
+    w4 = fieldset.W[time + dt, lon3, lat3, dep3]
+    particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * dt
+    particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * dt
+    particle.depth += (w1 + 2*w2 + 2*w3 + w4) / 6. * dt
 
 
 def AdvectionEE(particle, fieldset, time, dt):
