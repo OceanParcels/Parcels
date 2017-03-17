@@ -1,4 +1,4 @@
-from parcels.grid import *  # noqa
+from parcels.fieldset import *  # noqa
 from parcels.particle import *  # noqa
 from parcels.particleset import *  # noqa
 from parcels.field import *  # noqa
