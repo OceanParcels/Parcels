@@ -26,7 +26,7 @@ on the `Github Development Timeline page
 
 **Currently implemented**
 
-* Advection of particles using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward (see :mod:`parcels.kernels.advection`)
+* Advection of particles in 2D using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward and in 3D using the inbuilt kernel for Runge-Kutta4_3D (see :mod:`parcels.kernels.advection`)
 * Ability to define and execute custom kernels (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
 * Ability to add custom Variables to Particles (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb#A-second-example-kernel:-calculating-distance-travelled>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
@@ -35,13 +35,9 @@ on the `Github Development Timeline page
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_plotting.ipynb>`_)
 
-**Will be implemented for v0.9**
-
-* Three-dimensional particles, which can change depth and be advected with vertical velocities
-* Diffusion of particles using suite of inbuilt kernels
-
 **Major developed goals beyond v0.9**
 
+* Diffusion of particles using suite of inbuilt kernels
 * Support for non-rectangular grids, including unstructured meshes
 * Implementation of parallel execution using tiling of the domain
 * Faster and more efficient code
@@ -58,6 +54,8 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 * `Periodic boundaries tutorial <https://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_periodic_boundaries.ipynb>`_ for a tutorial on how to implement periodic boundary conditions
 
 * `FieldSet.advancetime() tutorial <https://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_advancetime.ipynb>`_ for a tutorial on how to use Parcels with datasets that have a large number of time snapshots.
+
+* `Delayed start of particles tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_delaystart.ipynb>`_ for a tutorial on how to add particles to a ParticleSet during runtime, so that not all particles are released on the start of the run.
 
 * `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/tutorial_jit_vs_scipy.ipynb>`_ for a tutorial showing how JIT  and Scipy mode compare.
 
