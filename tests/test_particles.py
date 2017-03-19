@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable
+from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4
 import numpy as np
 import pytest
 from operator import attrgetter
@@ -22,19 +22,17 @@ def test_variable_init(grid, mode, npart=10):
     class TestParticle(ptype[mode]):
         p_float = Variable('p_float', dtype=np.float32, initial=10.)
         p_double = Variable('p_double', dtype=np.float64, initial=11.)
-        p_int8 = Variable('p_int8', dtype=np.int8, initial=12.)
-        p_int = Variable('p_int', dtype=np.int32, initial=13.)
+        p_int = Variable('p_int', dtype=np.int32, initial=12.)
     pset = ParticleSet(grid, pclass=TestParticle,
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
+    pset.execute(AdvectionRK4, runtime=1., dt=1.)
     assert np.array([isinstance(p.p_float, np.float32) for p in pset]).all()
     assert np.allclose([p.p_float for p in pset], 10., rtol=1e-12)
     assert np.array([isinstance(p.p_double, np.float64) for p in pset]).all()
     assert np.allclose([p.p_double for p in pset], 11., rtol=1e-12)
-    assert np.array([isinstance(p.p_int8, np.int8) for p in pset]).all()
-    assert np.allclose([p.p_int8 for p in pset], 12, rtol=1e-12)
     assert np.array([isinstance(p.p_int, np.int32) for p in pset]).all()
-    assert np.allclose([p.p_int for p in pset], 13, rtol=1e-12)
+    assert np.allclose([p.p_int for p in pset], 12, rtol=1e-12)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
