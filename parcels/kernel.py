@@ -3,6 +3,7 @@ from parcels.compiler import get_cache_dir
 from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldSamplingError
 from parcels.loggers import logger
+from parcels.kernels.advection import AdvectionRK4_3D
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -33,7 +34,7 @@ def fix_indentation(string):
 class Kernel(object):
     """Kernel object that encapsulates auto-generated code.
 
-    :arg grid: Grid object providing the field information
+    :arg fieldset: FieldSet object providing the field information
     :arg ptype: PType object for the kernel particle
 
     Note: A Kernel is either created from a compiled <function ...> object
@@ -42,13 +43,15 @@ class Kernel(object):
     concatenation, the merged AST plus the new header definition is required.
     """
 
-    def __init__(self, grid, ptype, pyfunc=None, funcname=None,
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None):
-        self.grid = grid
+        self.fieldset = fieldset
         self.ptype = ptype
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
+        if pyfunc is AdvectionRK4_3D:
+            logger.info('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -81,13 +84,13 @@ class Kernel(object):
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            kernelgen = KernelGenerator(grid, ptype)
+            kernelgen = KernelGenerator(fieldset, ptype)
             self.field_args = kernelgen.field_args
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
             self.const_args = kernelgen.const_args
-            loopgen = LoopGenerator(grid, ptype)
+            loopgen = LoopGenerator(fieldset, ptype)
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode)
 
@@ -131,7 +134,7 @@ class Kernel(object):
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
             while dt_pos > 0:
                 try:
-                    res = self.pyfunc(p, pset.grid, p.time, sign * dt_pos)
+                    res = self.pyfunc(p, pset.fieldset, p.time, sign * dt_pos)
                 except FieldSamplingError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
@@ -206,16 +209,16 @@ class Kernel(object):
         func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
                                body=self.py_ast.body + kernel.py_ast.body,
                                decorator_list=[], lineno=1, col_offset=0)
-        return Kernel(self.grid, self.ptype, pyfunc=None,
+        return Kernel(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
 
     def __add__(self, kernel):
         if not isinstance(kernel, Kernel):
-            kernel = Kernel(self.grid, self.ptype, pyfunc=kernel)
+            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
         return self.merge(kernel)
 
     def __radd__(self, kernel):
         if not isinstance(kernel, Kernel):
-            kernel = Kernel(self.grid, self.ptype, pyfunc=kernel)
+            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self)

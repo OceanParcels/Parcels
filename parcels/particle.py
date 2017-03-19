@@ -132,7 +132,7 @@ class ScipyParticle(_Particle):
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle
     :param depth: Initial depth of particle
-    :param grid: :mod:`parcels.grid.Grid` object to track this particle on
+    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
     :param dt: Execution timestep for this particle
     :param time: Current time of the particle
 
@@ -147,7 +147,7 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, grid, depth=0., dt=1., time=0., cptr=None):
+    def __init__(self, lon, lat, fieldset, depth=0., dt=1., time=0., cptr=None):
         global lastID
 
         # Enforce default values through Variable descriptor
@@ -173,7 +173,7 @@ class JITParticle(ScipyParticle):
 
     :param lon: Initial longitude of particle
     :param lat: Initial latitude of particle
-    :param grid: :mod:`parcels.grid.Grid` object to track this particle on
+    :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
     :param dt: Execution timestep for this particle
     :param time: Current time of the particle
 
@@ -195,10 +195,10 @@ class JITParticle(ScipyParticle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-        grid = kwargs.get('grid')
-        self.xi = np.where(self.lon >= grid.U.lon)[0][-1]
-        self.yi = np.where(self.lat >= grid.U.lat)[0][-1]
-        self.zi = np.where(self.depth >= grid.U.depth)[0][-1]
+        fieldset = kwargs.get('fieldset')
+        self.xi = np.where(self.lon >= fieldset.U.lon)[0][-1]
+        self.yi = np.where(self.lat >= fieldset.U.lat)[0][-1]
+        self.zi = np.where(self.depth >= fieldset.U.depth)[0][-1]
 
     def __repr__(self):
         return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)[xi=%d, yi=%d, zi=%d]" % (self.id, self.lon, self.lat,
