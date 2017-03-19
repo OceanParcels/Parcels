@@ -132,7 +132,7 @@ def test_execution_recover_out_of_bounds(grid, mode, npart=2):
         particle.lon -= 1.
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    lat = np.linspace(0.9, 0, npart, dtype=np.float32)
     pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: MoveLeft})
