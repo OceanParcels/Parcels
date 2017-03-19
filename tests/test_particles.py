@@ -35,6 +35,20 @@ def test_variable_init(grid, mode, npart=10):
     assert np.allclose([p.p_int for p in pset], 12, rtol=1e-12)
 
 
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('type', ['np.int8', 'mp.float', 'np.int16'])
+def test_variable_unsupported_dtypes(grid, mode, type):
+    """Test that checks errors thrown for unsupported dtypes in JIT mode"""
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=type, initial=10.)
+    error_thrown = False
+    try:
+        ParticleSet(grid, pclass=TestParticle, lon=[0], lat=[0])
+    except RuntimeError:
+        error_thrown = True
+    assert error_thrown
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_relative(grid, mode, npart=10):
     """Test that checks relative initialisation of custom variables"""
