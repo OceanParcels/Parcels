@@ -13,7 +13,7 @@ class IntrinsicNode(ast.AST):
         self.ccode = ccode
 
 
-class GridNode(IntrinsicNode):
+class FieldSetNode(IntrinsicNode):
     def __getattr__(self, attr):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
@@ -131,11 +131,11 @@ Please add '%s' to %s.users_vars or define an appropriate sub-class."""
 
 class IntrinsicTransformer(ast.NodeTransformer):
     """AST transformer that catches any mention of intrinsic variable
-    names, such as 'particle' or 'grid', inserts placeholder objects
+    names, such as 'particle' or 'fieldset', inserts placeholder objects
     and propagates attribute access."""
 
-    def __init__(self, grid, ptype):
-        self.grid = grid
+    def __init__(self, fieldset, ptype):
+        self.fieldset = fieldset
         self.ptype = ptype
 
         # Counter and variable names for temporaries
@@ -153,8 +153,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         """Inject IntrinsicNode objects into the tree according to keyword"""
-        if node.id == 'grid':
-            node = GridNode(self.grid, ccode='grid')
+        if node.id == 'fieldset':
+            node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype, ccode='particle')
         elif node.id in ['ErrorCode', 'Error']:
@@ -256,15 +256,15 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'grid', 'time', 'dt', 'output_time', 'tol']
+    kernel_vars = ['particle', 'fieldset', 'time', 'dt', 'output_time', 'tol']
     array_vars = []
 
-    def __init__(self, grid, ptype):
-        self.grid = grid
+    def __init__(self, fieldset, ptype):
+        self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = OrderedDict()
-        # Hack alert: JIT requires U field to update grid indexes
-        self.field_args['U'] = grid.U
+        # Hack alert: JIT requires U field to update fieldset indexes
+        self.field_args['U'] = fieldset.U
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
@@ -272,7 +272,7 @@ class KernelGenerator(ast.NodeVisitor):
         py_ast = TupleSplitter().visit(py_ast)
 
         # Replace occurences of intrinsic objects in Python AST
-        transformer = IntrinsicTransformer(self.grid, self.ptype)
+        transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
 
         # Generate C-code for all nodes in the Python AST
@@ -331,7 +331,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
-        'particle' or 'grid' and inserts our placeholder objects"""
+        'particle' or 'fieldset' and inserts our placeholder objects"""
         if node.id == 'True':
             node.id = "1"
         if node.id == 'False':
@@ -529,8 +529,8 @@ class LoopGenerator(object):
     """Code generator class that adds type definitions and the outer
     loop around kernel functions to generate compilable C code."""
 
-    def __init__(self, grid, ptype=None):
-        self.grid = grid
+    def __init__(self, fieldset, ptype=None):
+        self.fieldset = fieldset
         self.ptype = ptype
 
     def generate(self, funcname, field_args, const_args, kernel_ast):

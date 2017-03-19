@@ -8,10 +8,10 @@ parcels.particleset module
     :members:
     :show-inheritance:
 
-parcels.grid module
+parcels.fieldset module
 -------------------
 
-.. automodule:: parcels.grid
+.. automodule:: parcels.fieldset
     :members:
     :show-inheritance:
 

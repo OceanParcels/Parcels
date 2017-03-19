@@ -1,5 +1,5 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
-from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
+from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D
 import numpy as np
 import pytest
 import math
@@ -38,18 +38,22 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
-    U = np.ones((lon.size, lat.size, depth.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)
-    grid2D = Grid.from_data(U[:, :, 0], lon, lat, V[:, :, 0], lon, lat, mesh='spherical')
+    data2D = {'U': np.ones((lon.size, lat.size), dtype=np.float32),
+              'V': np.zeros((lon.size, lat.size), dtype=np.float32)}
+    data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
+              'V': np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical')
 
-    pset2D = ParticleSet(grid2D, pclass=ptype[mode],
+    pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32))
     pset2D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
 
-    grid3D = Grid.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='spherical')
-    pset3D = ParticleSet(grid3D, pclass=ptype[mode],
+    dimensions['depth'] = depth
+    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical')
+    pset3D = ParticleSet(fieldset3D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32),
                          depth=np.zeros(npart, dtype=np.float32) + 10.)
@@ -62,11 +66,12 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
-    U = np.zeros((lon.size, lat.size), dtype=np.float32)
-    V = np.ones((lon.size, lat.size), dtype=np.float32)
-    grid = Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+    data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
+            'V': np.ones((lon.size, lat.size), dtype=np.float32)}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
 
-    pset = ParticleSet(grid, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(-60, 60, npart, dtype=np.float32),
                        lat=np.linspace(0, 30, npart, dtype=np.float32))
     delta_lat = np.diff(np.array([p.lat for p in pset]))
@@ -74,73 +79,74 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_advection_3D(mode, npart=11):
     """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
     """
-    lon = np.linspace(0., 1e4, 2, dtype=np.float32)
-    lat = np.linspace(0., 1e4, 2, dtype=np.float32)
-    depth = np.linspace(0., 1., 2, dtype=np.float32)
-    U = np.ones((lon.size, lat.size, 2), dtype=np.float32)
-    U[:, :, 0] = 0.
-    V = np.zeros((lon.size, lat.size, 2), dtype=np.float32)
-    grid = Grid.from_data(U, lon, lat, V, lon, lat, depth=depth, mesh='flat')
+    xdim = ydim = zdim = 2
+    dimensions = {'lon': np.linspace(0., 1e4, xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1e4, ydim, dtype=np.float32),
+                  'depth': np.linspace(0., 1., zdim, dtype=np.float32)}
+    data = {'U': np.ones((xdim, ydim, zdim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim, zdim), dtype=np.float32)}
+    data['U'][:, :, 0] = 0.
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
-    pset = ParticleSet(grid, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart, dtype=np.float32),
                        lat=np.zeros(npart, dtype=np.float32) + 1e2,
                        depth=np.linspace(0, 1, npart, dtype=np.float32))
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, endtime=time, dt=delta(seconds=30))
-    assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], rtol=1.e-2)
+    assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], atol=1.e-1)
 
 
-def periodicgrid(xdim, ydim, uvel, vvel):
-    lon = np.linspace(0., 1., xdim+1, dtype=np.float32)[1:]  # don't include both 0 and 1, for periodic b.c.
-    lat = np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]
+def periodicfields(xdim, ydim, uvel, vvel):
+    dimensions = {'lon': np.linspace(0., 1., xdim+1, dtype=np.float32)[1:],  # don't include both 0 and 1, for periodic b.c.
+                  'lat': np.linspace(0., 1., ydim+1, dtype=np.float32)[1:]}
 
-    U = uvel * np.ones((xdim, ydim), dtype=np.float32)
-    V = vvel * np.ones((xdim, ydim), dtype=np.float32)
-    return Grid.from_data(U, lon, lat, V, lon, lat, mesh='spherical')
+    data = {'U': uvel * np.ones((xdim, ydim), dtype=np.float32),
+            'V': vvel * np.ones((xdim, ydim), dtype=np.float32)}
+    return FieldSet.from_data(data, dimensions, mesh='spherical')
 
 
-def periodicBC(particle, grid, time, dt):
+def periodicBC(particle, fieldset, time, dt):
     particle.lon = math.fmod(particle.lon, 1)
     particle.lat = math.fmod(particle.lat, 1)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
-    grid = periodicgrid(xdim, ydim, uvel=1., vvel=0.)
-    grid.add_periodic_halo(zonal=True, halosize=halosize)
-    assert(len(grid.U.lon) == xdim + 2 * halosize)
+    fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
+    fieldset.add_periodic_halo(zonal=True, halosize=halosize)
+    assert(len(fieldset.U.lon) == xdim + 2 * halosize)
 
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lon - 0.15) < 0.1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
-    grid = periodicgrid(xdim, ydim, uvel=0., vvel=1.)
-    grid.add_periodic_halo(meridional=True)
-    assert(len(grid.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
+    fieldset.add_periodic_halo(meridional=True)
+    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lat - 0.15) < 0.1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
-    grid = periodicgrid(xdim, ydim, uvel=1., vvel=1.)
-    grid.add_periodic_halo(zonal=True, meridional=True)
-    assert(len(grid.U.lat) == ydim + 10)  # default halo size is 5 grid points
-    assert(len(grid.U.lon) == xdim + 10)  # default halo size is 5 grid points
-    assert np.allclose(np.diff(grid.U.lat), grid.U.lat[1]-grid.U.lat[0], rtol=0.001)
-    assert np.allclose(np.diff(grid.U.lon), grid.U.lon[1]-grid.U.lon[0], rtol=0.001)
+    fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
+    fieldset.add_periodic_halo(zonal=True, meridional=True)
+    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert(len(fieldset.U.lon) == xdim + 10)  # default halo size is 5 grid points
+    assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1]-fieldset.U.lat[0], rtol=0.001)
+    assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lon - 0.05) < 0.1
     assert abs(pset[0].lat - 0.15) < 0.1
@@ -153,20 +159,19 @@ def truth_stationary(x_0, y_0, t):
 
 
 @pytest.fixture
-def grid_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
-    """Generate a grid encapsulating the flow field of a stationary eddy.
+def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
+    """Generate a FieldSet encapsulating the flow field of a stationary eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
-    U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time)
-    V = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)
-    return Grid.from_data(np.asarray(U, np.float32), lon, lat,
-                          np.asarray(V, np.float32), lon, lat,
-                          time=time, mesh='flat')
+    dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
+                  'time': time}
+    data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
+            'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -174,17 +179,58 @@ def grid_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('EE', 1e-2),
     ('RK4', 1e-5),
     ('RK45', 1e-5)])
-def test_stationary_eddy(grid_stationary, mode, method, rtol, npart=1):
-    grid = grid_stationary
+def test_stationary_eddy(fieldset_stationary, mode, method, rtol, npart=1):
+    fieldset = fieldset_stationary
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
     lat = np.linspace(12500, 12500, npart, dtype=np.float32)
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, y, endtime)[0] for x, y, in zip(lon, lat)]
     exp_lat = [truth_stationary(x, y, endtime)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
     assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_stationary_eddy_vertical(mode, npart=1):
+    lon = np.linspace(12000, 21000, npart, dtype=np.float32)
+    lat = np.linspace(10000, 20000, npart, dtype=np.float32)
+    depth = np.linspace(12500, 12500, npart, dtype=np.float32)
+    endtime = delta(hours=6).total_seconds()
+
+    xdim = ydim = 100
+    lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
+    lat_data = np.linspace(0, 25000, ydim, dtype=np.float32)
+    time_data = np.arange(0., 6*3600, 60., dtype=np.float64)
+    fld1 = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time_data)
+    fld2 = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time_data)
+    fldzero = np.zeros((xdim, ydim, 1), dtype=np.float32) * time_data
+
+    dimensions = {'lon': lon_data, 'lat': lat_data, 'time': time_data}
+    data = {'U': fld1, 'V': fldzero, 'W': fld2}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon,
+                       lat=lat, depth=depth)
+    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
+    exp_lon = [truth_stationary(x, z, endtime)[0] for x, z, in zip(lon, depth)]
+    exp_depth = [truth_stationary(x, z, endtime)[1] for x, z, in zip(lon, depth)]
+    assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=1e-5)
+    assert np.allclose(np.array([p.lat for p in pset]), lat, rtol=1e-5)
+    assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
+
+    data = {'U': fldzero, 'V': fld2, 'W': fld1}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon,
+                       lat=lat, depth=depth)
+    pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
+    exp_depth = [truth_stationary(z, y, endtime)[0] for z, y, in zip(depth, lat)]
+    exp_lat = [truth_stationary(z, y, endtime)[1] for z, y, in zip(depth, lat)]
+    assert np.allclose(np.array([p.lon for p in pset]), lon, rtol=1e-5)
+    assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=1e-5)
+    assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
 
 
 def truth_moving(x_0, y_0, t):
@@ -194,20 +240,19 @@ def truth_moving(x_0, y_0, t):
 
 
 @pytest.fixture
-def grid_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
-    """Generate a grid encapsulating the flow field of a moving eddy.
+def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
+    """Generate a FieldSet encapsulating the flow field of a moving eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
-    U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time)
-    V = np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)
-    return Grid.from_data(np.asarray(U, np.float32), lon, lat,
-                          np.asarray(V, np.float32), lon, lat,
-                          time=time, mesh='flat')
+    dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
+                  'time': time}
+    data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time),
+            'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -215,11 +260,11 @@ def grid_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('EE', 1e-2),
     ('RK4', 1e-5),
     ('RK45', 1e-5)])
-def test_moving_eddy(grid_moving, mode, method, rtol, npart=1):
-    grid = grid_moving
+def test_moving_eddy(fieldset_moving, mode, method, rtol, npart=1):
+    fieldset = fieldset_moving
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
     lat = np.linspace(12500, 12500, npart, dtype=np.float32)
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_moving(x, y, endtime)[0] for x, y, in zip(lon, lat)]
@@ -239,22 +284,19 @@ def truth_decaying(x_0, y_0, t):
 
 
 @pytest.fixture
-def grid_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
-    """Generate a grid encapsulating the flow field of a decaying eddy.
+def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
+    """Generate a FieldSet encapsulating the flow field of a decaying eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    lon = np.linspace(0, 25000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 25000, ydim, dtype=np.float32)
     time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
-    U = np.ones((xdim, ydim, 1), dtype=np.float32) * u_g *\
-        np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time)
-    V = np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) *\
-        np.exp(-gamma * time) * np.sin(f * time)
-    return Grid.from_data(np.asarray(U, np.float32), lon, lat,
-                          np.asarray(V, np.float32), lon, lat,
-                          time=time, mesh='flat')
+    dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
+                  'time': time}
+    data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time),
+            'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time)}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -262,11 +304,11 @@ def grid_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('EE', 1e-2),
     ('RK4', 1e-5),
     ('RK45', 1e-5)])
-def test_decaying_eddy(grid_decaying, mode, method, rtol, npart=1):
-    grid = grid_decaying
+def test_decaying_eddy(fieldset_decaying, mode, method, rtol, npart=1):
+    fieldset = fieldset_decaying
     lon = np.linspace(12000, 21000, npart, dtype=np.float32)
     lat = np.linspace(12500, 12500, npart, dtype=np.float32)
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     endtime = delta(hours=6).total_seconds()
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_decaying(x, y, endtime)[0] for x, y, in zip(lon, lat)]
@@ -284,23 +326,23 @@ Example of particle advection around an idealised peninsula""")
                    help='Number of particles to advect')
     p.add_argument('-v', '--verbose', action='store_true', default=False,
                    help='Print particle information before and after execution')
-    p.add_argument('--grid', choices=('stationary', 'moving', 'decaying'),
-                   default='stationary', help='Generate grid file with given dimensions')
+    p.add_argument('--fieldset', choices=('stationary', 'moving', 'decaying'),
+                   default='stationary', help='Generate fieldset file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
     filename = 'analytical_eddies'
 
-    # Generate grid files according to chosen test setup
-    if args.grid == 'stationary':
-        grid = grid_stationary()
-    elif args.grid == 'moving':
-        grid = grid_moving()
-    elif args.grid == 'decaying':
-        grid = grid_decaying()
+    # Generate fieldset files according to chosen test setup
+    if args.fieldset == 'stationary':
+        fieldset = fieldset_stationary()
+    elif args.fieldset == 'moving':
+        fieldset = fieldset_moving()
+    elif args.fieldset == 'decaying':
+        fieldset = fieldset_decaying()
 
     npart = args.particles
-    pset = ParticleSet(grid, pclass=ptype[args.mode],
+    pset = ParticleSet(fieldset, pclass=ptype[args.mode],
                        lon=np.linspace(4000, 21000, npart, dtype=np.float32),
                        lat=np.linspace(12500, 12500, npart, dtype=np.float32))
     if args.verbose:

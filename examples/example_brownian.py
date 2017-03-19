@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
 import numpy as np
 from datetime import timedelta as delta
 import math
@@ -8,41 +8,40 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def two_dim_brownian_flat(particle, grid, time, dt):
+def two_dim_brownian_flat(particle, fieldset, time, dt):
     # Kernel for simple Brownian particle diffusion in zonal and meridional direction.
     # Seed is called on first call only, when time is zero
 
     if time == 0:
-        random.seed(grid.seedval)
+        random.seed(fieldset.seedval)
 
-    particle.lat += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.Kh_meridional)
-    particle.lon += random.normalvariate(0, 1)*math.sqrt(2*dt*grid.Kh_zonal)
+    particle.lat += random.normalvariate(0, 1)*math.sqrt(2*dt*fieldset.Kh_meridional)
+    particle.lon += random.normalvariate(0, 1)*math.sqrt(2*dt*fieldset.Kh_zonal)
 
 
-def brownian_grid(xdim=200, ydim=200):     # Define a flat grid of zeros, for simplicity.
-    lon = np.linspace(0, 600000, xdim, dtype=np.float32)
-    lat = np.linspace(0, 600000, ydim, dtype=np.float32)
+def brownian_fieldset(xdim=200, ydim=200):     # Define a flat fieldset of zeros, for simplicity.
+    dimensions = {'lon': np.linspace(0, 600000, xdim, dtype=np.float32),
+                  'lat': np.linspace(0, 600000, ydim, dtype=np.float32)}
 
-    U = np.zeros((lon.size, lat.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size), dtype=np.float32)
+    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim), dtype=np.float32)}
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_brownian_example(mode, npart=3000):
-
-    grid = brownian_grid()
+    fieldset = brownian_fieldset()
 
     # Set diffusion constants.
-    grid.Kh_meridional = 100.
-    grid.Kh_zonal = 100.
+    fieldset.Kh_meridional = 100.
+    fieldset.Kh_zonal = 100.
 
-    # Set random seed as grid constant
-    grid.seedval = 123456
+    # Set random seed as fieldset constant
+    fieldset.seedval = 123456
 
     ptcls_start = 300000.  # Start all particles at same location in middle of grid.
-    pset = ParticleSet.from_line(grid=grid, size=npart, pclass=ptype[mode],
+    pset = ParticleSet.from_line(fieldset=fieldset, size=npart, pclass=ptype[mode],
                                  start=(ptcls_start, ptcls_start),
                                  finish=(ptcls_start, ptcls_start))
 
@@ -58,8 +57,8 @@ def test_brownian_example(mode, npart=3000):
 
     lats = np.array([particle.lat for particle in pset.particles])
     lons = np.array([particle.lon for particle in pset.particles])
-    expected_std_lat = np.sqrt(2*grid.Kh_meridional*endtime.total_seconds())
-    expected_std_lon = np.sqrt(2*grid.Kh_zonal*endtime.total_seconds())
+    expected_std_lat = np.sqrt(2*fieldset.Kh_meridional*endtime.total_seconds())
+    expected_std_lon = np.sqrt(2*fieldset.Kh_zonal*endtime.total_seconds())
 
     assert np.allclose(np.std(lats), expected_std_lat, rtol=.1)
     assert np.allclose(np.std(lons), expected_std_lon, rtol=.1)
