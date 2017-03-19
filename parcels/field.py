@@ -297,11 +297,18 @@ class Field(object):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
         zdx = self.depth_index(z)
-        f0 = self.interpolator2D(idx, z_idx=zdx - 1)((y, x))
-        f1 = self.interpolator2D(idx, z_idx=zdx)((y, x))
-        z0 = self.depth[zdx - 1]
-        z1 = self.depth[zdx]
-        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
+        f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
+        z0 = self.depth[zdx]
+        z1 = self.depth[zdx + 1]
+        if z < z0 or z > z1:
+            raise FieldSamplingError(x, y, z, field=self)
+        if self.interp_method is 'nearest':
+            return f0 if z - z0 < z1 - z else f1
+        elif self.interp_method is 'linear':
+            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
