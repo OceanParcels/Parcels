@@ -201,6 +201,6 @@ class JITParticle(ScipyParticle):
         self.zi = np.where(self.depth >= grid.U.depth)[0][-1]
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)[xi=%d, yi=%d]" % (self.id, self.lon, self.lat,
-                                                                           self.depth, self.time,
-                                                                           self.xi, self.yi)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)[xi=%d, yi=%d, zi=%d]" % (self.id, self.lon, self.lat,
+                                                                                  self.depth, self.time,
+                                                                                  self.xi, self.yi, self.zi)

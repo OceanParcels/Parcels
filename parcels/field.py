@@ -16,12 +16,13 @@ __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling"""
 
-    def __init__(self, x, y, field=None):
+    def __init__(self, x, y, z, field=None):
         self.field = field
         self.x = x
         self.y = y
-        message = "%s sampled at (%f, %f)" % (
-            field.name if field else "Grid", self.x, self.y
+        self.z = z
+        message = "%s sampled at (%f, %f, %f)" % (
+            field.name if field else "Grid", self.x, self.y, self.z
         )
         super(FieldSamplingError, self).__init__(message)
 
@@ -338,7 +339,7 @@ class Field(object):
             val = self.interpolator3D(tidx, z, y, x)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
-            raise FieldSamplingError(x, y, field=self)
+            raise FieldSamplingError(x, y, z, field=self)
         else:
             return val
 
