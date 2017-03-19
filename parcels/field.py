@@ -360,16 +360,11 @@ class Field(object):
             return time_index.argmin() - 1 if time_index.any() else 0
 
     def depth_index(self, depth):
-        """Find the index in the depth array associated with a given depth
-
-        Note that we normalize to either the first or the last index
-        if the sampled value is outside the depth value range.
-        """
+        """Find the index in the depth array associated with a given depth"""
         depth_index = self.depth <= depth
         if depth_index.all():
-            # If given depth > last known grid depth, use
-            # the last grid depth
-            return len(self.depth) - 1
+            # If given depth > largest grid depth throw an error
+            raise FieldSamplingError(self.lon, self.lat, self.depth, field=self)
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 

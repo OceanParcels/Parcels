@@ -26,7 +26,9 @@ typedef struct
 /* Local linear search to update grid index */
 static inline ErrorCode search_linear_float(float x, int size, float *xvals, int *index)
 {
-  if (x < xvals[0] || xvals[size-1] < x) {return ERROR_OUT_OF_BOUNDS;}
+  /* Using "xvals[size-1] <= x" in out-of-bounds check below as requiring x+1
+  in interpolation scheme below */
+  if (x < xvals[0] || xvals[size-1] <= x) {return ERROR_OUT_OF_BOUNDS;}
   while (*index < size-1 && x > xvals[*index+1]) ++(*index);
   while (*index > 0 && x < xvals[*index]) --(*index);
   return SUCCESS;
