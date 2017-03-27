@@ -82,6 +82,9 @@ class ParticleType(object):
     def dtype(self):
         """Numpy.dtype object that defines the C struct"""
         type_list = [(v.name, v.dtype) for v in self.variables]
+        for v in self.variables:
+            if v.dtype not in self.supported_dtypes:
+                raise RuntimeError(str(v.dtype) + " variables are not implemented in JIT mode")
         if self.size % 8 > 0:
             # Add padding to be 64-bit aligned
             type_list += [('pad', np.float32)]
@@ -91,6 +94,15 @@ class ParticleType(object):
     def size(self):
         """Size of the underlying particle struct in bytes"""
         return sum([8 if v.is64bit() else 4 for v in self.variables])
+
+    @property
+    def supported_dtypes(self):
+        """List of all supported numpy dtypes. All others are not supported"""
+
+        # Developer note: other dtypes (mostly 2-byte ones) are not supported now
+        # because implementing and aligning them in cgen.GenerableStruct is a
+        # major headache. Perhaps in a later stage
+        return [np.int32, np.int64, np.float32, np.double, np.float64]
 
 
 class _Particle(object):
