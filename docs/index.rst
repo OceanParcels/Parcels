@@ -103,8 +103,38 @@ Python design overview
 See below for links to the full documentation of the python code for Parcels
 
 
+Writing Parcels Kernels
+===================================
+
+One of the most powerful features of Parcels is the ability to write custom Kernels (see e.g. `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanPARCELS/parcels/blob/master/examples/PARCELStutorial.ipynb#Adding-a-custom-behaviour-kernel>`_). These Kernels are little snippets of code that get executed by Parcels, giving the ability to add 'behaviour' to particles. 
+
+However, there are some key limitations to the Kernels that everyone who wants to write their own should be aware of:
+
+* Every Kernel must be a function with the following (and only those) arguments: ``(particle, fieldset, time, dt)``
+
+* In order to run successfully in JIT mode, Kernel definitions can only contain the following types of commands:
+
+  * Basic arithmetical operators (``+``, ``-``, ``*``, ``/``) and assignments (``=``).
+
+  * Basic logical operators (``<``, ``==``, ``>``, ``&``, ``|``)
+
+  * ``if`` and ``while`` loops, as well as ``break`` statements. Note that ``for``-loops are not supported in JIT mode
+    
+  * Interpolation of a ``Field`` from the ``fieldset`` at a (time, lon, lat, depth) point, using using square brackets notation. For example, to interpolate the zonal velocity (`U`) field at the particle location, use the following statement::
+
+      value = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+
+  * Functions from the ``maths`` standard library and from the custom ``random`` library at :mod:`parcels.rng`
+  
+  * ``print`` statements. Note however that in JIT mode these only work well for variables that are either floats or any of the inbuilt Particle properties
+
+All other functions and methods are not supported yet in Parcels Kernels. If there is a functionality that can not be programmed with this limited set of commands, please create an `Issue ticket <https://github.com/OceanPARCELS/parcels/issues>`_.
+
 Parcels documentation
 ===================================
+
+See below for the technical documentation on the different Parcels modules
+
 .. toctree::
    :maxdepth: 0
 
