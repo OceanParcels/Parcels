@@ -519,7 +519,10 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
-        node.ccode = c.Statement('printf(%s)' % ", ".join([n.ccode for n in node.values]))
+        vars = ', '.join([n.ccode for n in node.values])
+        int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
+        stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
+        node.ccode = c.Statement('printf("%s\\n", %s)' % (stat, vars))
 
     def visit_Str(self, node):
         node.ccode = node.s
