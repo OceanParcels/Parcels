@@ -327,7 +327,10 @@ class KernelGenerator(ast.NodeVisitor):
         for a in node.args:
             self.visit(a)
         ccode_args = ", ".join([a.ccode for a in node.args])
-        node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+        try:
+            node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+        except:
+            raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
@@ -492,6 +495,9 @@ class KernelGenerator(ast.NodeVisitor):
             raise RuntimeError("Else clause in while clauses cannot be translated to C")
         body = c.Block([b.ccode for b in node.body])
         node.ccode = c.DoWhile(node.test.ccode, body)
+
+    def visit_For(self, node):
+        raise RuntimeError("For loops cannot be translated to C")
 
     def visit_Break(self, node):
         node.ccode = c.Statement("break")
