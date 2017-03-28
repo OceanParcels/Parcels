@@ -107,6 +107,7 @@ def test_while_if_break(fieldset, mode):
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
 
 
+@pytest.mark.xfail(reason="JIT stdout printing not accesible to py.test")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
