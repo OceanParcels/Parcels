@@ -89,6 +89,42 @@ def test_expression_bool(fieldset, mode, name, expr, result, npart=10):
         assert(np.array([result == particle.p for particle in pset]).all())
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_while_if_break(fieldset, mode):
+    """Test while, if and break commands"""
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0.)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
+
+    def kernel(particle, fieldset, time, dt):
+        while particle.p < 30:
+            if particle.p > 9:
+                break
+            particle.p += 1
+        if particle.p > 5:
+            particle.p *= 2.
+    pset.execute(kernel, endtime=1., dt=1.)
+    assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
+
+
+@pytest.mark.xfail(reason="JIT stdout printing not accesible to py.test")
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_print(fieldset, mode, capfd):
+    """Test print statements"""
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0.)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
+
+    def kernel(particle, fieldset, time, dt):
+        val = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        particle.p = val
+        print particle.id, val
+    pset.execute(kernel, endtime=1., dt=1.)
+    out, err = capfd.readouterr()
+    lst = out.split(' ')
+    assert float(lst[0]) == pset[0].id and float(lst[1]) == pset[0].p
+
+
 def random_series(npart, rngfunc, rngargs, mode):
     random = parcels_random if mode == 'jit' else py_random
     random.seed(1234)

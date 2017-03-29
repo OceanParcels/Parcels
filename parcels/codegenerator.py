@@ -327,7 +327,10 @@ class KernelGenerator(ast.NodeVisitor):
         for a in node.args:
             self.visit(a)
         ccode_args = ", ".join([a.ccode for a in node.args])
-        node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+        try:
+            node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+        except:
+            raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
@@ -493,6 +496,9 @@ class KernelGenerator(ast.NodeVisitor):
         body = c.Block([b.ccode for b in node.body])
         node.ccode = c.DoWhile(node.test.ccode, body)
 
+    def visit_For(self, node):
+        raise RuntimeError("For loops cannot be translated to C")
+
     def visit_Break(self, node):
         node.ccode = c.Statement("break")
 
@@ -519,7 +525,10 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
-        node.ccode = c.Statement('printf(%s)' % ", ".join([n.ccode for n in node.values]))
+        vars = ', '.join([n.ccode for n in node.values])
+        int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
+        stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
+        node.ccode = c.Statement('printf("%s\\n", %s)' % (stat, vars))
 
     def visit_Str(self, node):
         node.ccode = node.s
