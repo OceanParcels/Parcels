@@ -5,7 +5,7 @@ import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
 
 
-__all__ = ['seed', 'random', 'uniform', 'randint']
+__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate']
 
 
 class Random(object):
