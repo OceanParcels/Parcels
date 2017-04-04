@@ -9,6 +9,7 @@ from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta
+from firedrake import *
 
 
 __all__ = ['CentralDifferences', 'AbstractField', 'Field', 'FiredrakeField', 'Geographic', 'GeographicPolar']
@@ -406,10 +407,11 @@ class Field(AbstractField):
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))))
         return cstruct
 
-    def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):
+    def show(self, with_particles=False, axes=None, animation=False, show_time=0, vmin=None, vmax=None):
         """Method to 'show' a :class:`Field` using matplotlib
 
         :param with_particles: Boolean whether particles are also plotted on Field
+        :param axes: The axes (if any) to plot on. If None, axes are created.
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -423,7 +425,7 @@ class Field(AbstractField):
             print("Visualisation is not possible. Matplotlib not found.")
             return
 
-        if with_particles or (not animation):
+        if (axes is not None) or (not animation):
             idx = self.time_index(show_time)
             if self.time.size > 1:
                 data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
@@ -535,6 +537,29 @@ class FiredrakeField(AbstractField):
             return len(self.time) - 1
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
+
+    def show(self, with_particles=False, axes=None, animation=False, show_time=0, vmin=None, vmax=None):
+        """Method to 'show' a :class:`FiredrakeField` using matplotlib
+
+        :param with_particles: Boolean whether particles are also plotted on Field
+        :param axes: The axes (if any) to plot on. If None, axes are created.
+        :param animation: Boolean whether result is a single plot, or an animation
+        :param show_time: Time at which to show the Field (only in single-plot mode)
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        """
+        try:
+            import matplotlib.pyplot as plt
+        except:
+            warning("Matplotlib not imported")
+            return
+        try:
+            plot(self.func, axes=axes)
+            if not with_particles:
+                plt.show()
+        except Exception as e:
+            warning("Cannot plot figure. Error msg: '%s'" % e.message)
+            return
 
     def __getitem__(self, key):
         return self.eval(*key)

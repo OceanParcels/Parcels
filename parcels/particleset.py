@@ -321,16 +321,15 @@ class ParticleSet(object):
             plt.clf()
             if particles:
                 plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
-            if field is True:
-                axes = plt.gca()
-                axes.set_xlim([self.grid.U.lon[lonW], self.grid.U.lon[lonE]])
-                axes.set_ylim([self.grid.U.lat[latS], self.grid.U.lat[latN]])
-                namestr = ''
-                time_origin = self.grid.U.time_origin
-            else:
+            axes = plt.gca()
+            axes.set_xlim([self.grid.U.lon[lonW], self.grid.U.lon[lonE]])
+            axes.set_ylim([self.grid.U.lat[latS], self.grid.U.lat[latN]])
+            namestr = ''
+            time_origin = self.grid.U.time_origin
+            if field is not True:
                 if not isinstance(field, AbstractField):
                     field = getattr(self.grid, field)
-                field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
+                field.show(with_particles=True, axes=axes, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
                 time_origin = field.time_origin
             if time_origin is 0:
