@@ -10,20 +10,20 @@ except:
     plt = None
 
 
-def plotTrajectoriesFile(filename, mode='2d', recordedvar=None, tracerfile=None,
-                         tracerfield='P', tracerlon='x', tracerlat='y'):
+def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
+                         tracerlon='x', tracerlat='y', recordedvar=None):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
     :param mode: Type of plot to show. Supported are '2d', '3d'
                 'movie2d' and 'movie2d_notebook'. The latter two give animations,
                 with 'movie2d_notebook' specifically designed for jupyter notebooks
-    :param recordedvar: Name of variable used to color particles in scatter-plot.
-                Only works in 'movie2d' or 'movie2d_notebook' mode.
     :param tracerfile: Name of NetCDF file to show as background
     :param tracerfield: Name of variable to show as background
     :param tracerlon: Name of longitude dimension of variable to show as background
     :param tracerlat: Name of latitude dimension of variable to show as background
+    :param recordedvar: Name of variable used to color particles in scatter-plot.
+                Only works in 'movie2d' or 'movie2d_notebook' mode.
     """
 
     if plt is None:
@@ -123,5 +123,6 @@ if __name__ == "__main__":
                    help='Name of a variable recorded along trajectory')
     args = p.parse_args()
 
-    plotTrajectoriesFile(args.particlefile, args.tracerfile, args.tracerfilelon,
-                         args.tracerfilelat, args.tracerfilefield, args.recordedvar, mode=args.mode)
+    plotTrajectoriesFile(args.particlefile, mode=args.mode, tracerfile=args.tracerfile,
+                         tracerfield=args.tracerfilefield, tracerlon=args.tracerfilelon,
+                         tracerlat=args.tracerfilelat, recordedvar=args.recordedvar)
