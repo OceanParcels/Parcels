@@ -130,6 +130,22 @@ However, there are some key limitations to the Kernels that everyone who wants t
 
 All other functions and methods are not supported yet in Parcels Kernels. If there is a functionality that can not be programmed with this limited set of commands, please create an `Issue ticket <https://github.com/OceanPARCELS/parcels/issues>`_.
 
+Parcels funding and support
+===================================
+
+Parcels development has been supported by the following organisations: 
+
+.. figure:: funderlogos.png
+   :align: center
+
+* The `European Research Council under the H2020 Starting Grant <https://erc.europa.eu/sites/default/files/press_release/files/erc_press_release_stg2016_results.pdf>`_ `TOPIOS (grant agreement No 715386) <http://erik.vansebille.com/science/topios.html>`_.
+
+* `Imperial College London <https://www.imperial.ac.uk/>`_ and specifically the `Grantham Institute <https://www.imperial.ac.uk/grantham/>`_.
+
+* `Utrecht University <https://www.uu.nl/>`_ and specifically the `Institute for Marine and Atmospheric Research <https://www.uu.nl/en/research/institute-for-marine-and-atmospheric-research-imau>`_.
+
+* The `EPSRC <https://www.epsrc.ac.uk/>`_ through an Institutional Sponsorship grant to Erik van Sebille under reference number EP/N50869X/1.
+
 Parcels documentation
 ===================================
 
