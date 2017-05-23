@@ -251,3 +251,19 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
     pfile.write(pset, 0)
     pset.remove(3)
     pfile.write(pset, 1)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('pfile_type', ['array', 'indexed'])
+def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, npart=10):
+
+    filepath = tmpdir.join("pfile_array_remove_particles")
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart, dtype=np.float32),
+                       lat=0.5*np.ones(npart, dtype=np.float32))
+    pfile = pset.ParticleFile(filepath, type=pfile_type)
+    pfile.write(pset, 0)
+    for _ in range(npart):
+        pset.remove(-1)
+    pfile.write(pset, 1)
+    pfile.write(pset, 2)
