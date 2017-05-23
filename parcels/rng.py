@@ -1,10 +1,11 @@
 from parcels.compiler import get_cache_dir, GNUCompiler
+from parcels.loggers import logger
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
 
 
-__all__ = ['seed', 'random', 'uniform', 'randint']
+__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate']
 
 
 class Random(object):
@@ -49,7 +50,7 @@ extern float pcls_normalvariate(float loc, float scale){
             with open(self.src_file, 'w') as f:
                 f.write(self.ccode)
             compiler.compile(self.src_file, self.lib_file, self.log_file)
-            print("Compiled %s ==> %s" % ("random", self.lib_file))
+            logger.info("Compiled %s ==> %s" % ("random", self.lib_file))
             self._lib = npct.load_library(self.lib_file, '.')
         return self._lib
 

@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -11,7 +11,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def stommel_grid(xdim=200, ydim=200):
+def stommel_fieldset(xdim=200, ydim=200):
     """Simulate a periodic current along a western boundary, with significantly
     larger velocities along the western edge than the rest of the region
 
@@ -20,7 +20,7 @@ def stommel_grid(xdim=200, ydim=200):
     Ph.D. dissertation, University of Bologna
     http://amsdottorato.unibo.it/1733/1/Fabbroni_Nicoletta_Tesi.pdf
     """
-    # Set NEMO grid variables
+    # Set NEMO fieldset variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.linspace(0., 100000. * 86400., 2, dtype=np.float64)
 
@@ -30,7 +30,7 @@ def stommel_grid(xdim=200, ydim=200):
     a = 10000
     b = 10000
 
-    # Coordinates of the test grid (on A-grid in deg)
+    # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(0, a, xdim, dtype=np.float32)
     lat = np.linspace(0, b, ydim, dtype=np.float32)
 
@@ -58,27 +58,28 @@ def stommel_grid(xdim=200, ydim=200):
             for j in range(lat.size-2):
                 U[i, j+1, t] = -(P[i, j+2, t] - P[i, j, t]) / (2 * b / ydim)
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P}, mesh='flat')
+    data = {'U': U, 'V': V, 'P': P}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
-def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
+def UpdateP(particle, fieldset, time, dt):
+    particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
-
-    grid = stommel_grid()
+    fieldset = stommel_fieldset()
     filename = 'stommel'
-    grid.write(filename)
+    fieldset.write(filename)
 
     # Determine particle class according to mode
     ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
 
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=grid.P)
+        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
 
-    pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle,
+    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
                                  start=(100, 5000), finish=(200, 5000))
 
     if verbose:
@@ -99,14 +100,14 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_stommel_grid(mode):
+def test_stommel_fieldset(mode):
     psetRK4 = stommel_example(1, mode=mode, method=method['RK4'])
     psetRK45 = stommel_example(1, mode=mode, method=method['RK45'])
     assert np.allclose([p.lon for p in psetRK4], [p.lon for p in psetRK45], rtol=1e-3)
     assert np.allclose([p.lat for p in psetRK4], [p.lat for p in psetRK45], rtol=1e-3)
     err_adv = np.array([abs(p.p_start - p.p) for p in psetRK4])
     assert(err_adv <= 1.e-1).all()
-    err_smpl = np.array([abs(p.p - psetRK4.grid.P[0., p.lon, p.lat]) for p in psetRK4])
+    err_smpl = np.array([abs(p.p - psetRK4.fieldset.P[0., p.lon, p.lat, p.depth]) for p in psetRK4])
     assert(err_smpl <= 1.e-1).all()
 
 

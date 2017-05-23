@@ -89,7 +89,7 @@ class ParticleFile(object):
 
         self.user_vars = []
         for v in particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
+            if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
             if v.to_write is True:
                 setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
@@ -134,7 +134,7 @@ class ParticleFile(object):
                 self.time[inds, self.idx] = time
                 self.lat[inds, self.idx] = np.array([p.lat for p in pset])
                 self.lon[inds, self.idx] = np.array([p.lon for p in pset])
-                self.z[inds, self.idx] = np.zeros(pset.size, dtype=np.float32)
+                self.z[inds, self.idx] = np.array([p.depth for p in pset])
                 for var in self.user_vars:
                     getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
 
@@ -145,7 +145,7 @@ class ParticleFile(object):
                 self.time[ind] = time
                 self.lat[ind] = np.array([p.lat for p in pset])
                 self.lon[ind] = np.array([p.lon for p in pset])
-                self.z[ind] = np.zeros(pset.size, dtype=np.float32)
+                self.z[ind] = np.array([p.depth for p in pset])
                 for var in self.user_vars:
                     getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
 

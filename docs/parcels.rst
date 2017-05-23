@@ -8,10 +8,10 @@ parcels.particleset module
     :members:
     :show-inheritance:
 
-parcels.grid module
+parcels.fieldset module
 -------------------
 
-.. automodule:: parcels.grid
+.. automodule:: parcels.fieldset
     :members:
     :show-inheritance:
 
@@ -75,6 +75,13 @@ parcels.rng module
 ------------------
 
 .. automodule:: parcels.rng
+    :members:
+    :undoc-members:
+
+parcels.loggers module
+------------------
+
+.. automodule:: parcels.loggers
     :members:
     :undoc-members:
 

@@ -40,7 +40,7 @@ For a brief guide to running Parcels and some sample output, have a look at the 
 
 There are also a number of worked-out examples in the `examples/` directory. Run these with e.g.
 ```
-python examples/example_peninsula.py --grid 100 50 -p 10
+python examples/example_peninsula.py --fieldset 100 50 -p 10
 ```
 And then plot the resulting particles using Parcels simple plotting script
 ```
