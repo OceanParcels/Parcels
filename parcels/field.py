@@ -240,8 +240,7 @@ class Field(object):
                 filebuffer.indslat = indslat
                 filebuffer.indslon = indslon
                 filebuffer.indsdepth = indsdepth
-                tmp = filebuffer.data
-                if len(tmp.shape) is 3:
+                if len(filebuffer.dataset[filebuffer.dimensions['data']].shape) is 3:
                     data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
