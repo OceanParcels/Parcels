@@ -7,7 +7,8 @@ import xarray
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
-from datetime import timedelta
+from datetime import timedelta, datetime
+from dateutil.parser import parse
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -231,6 +232,11 @@ class Field(object):
             time_origin = 0
         else:
             time_origin = num2date(0, time_units, calendar)
+            if type(time_origin) is not datetime:
+                # num2date in some cases returns a 'phony' datetime. In that case,
+                # parse it as a string.
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                time_origin = parse(str(time_origin))
 
         # Pre-allocate data before reading files into buffer
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
@@ -591,7 +597,14 @@ class FileBuffer(object):
         if self.time_units is not None:
             dt = num2date(self.dataset[self.dimensions['time']][:],
                           self.time_units, self.calendar)
-            dt -= num2date(0, self.time_units, self.calendar)
+            offset = num2date(0, self.time_units, self.calendar)
+            if type(offset) is datetime:
+                dt -= offset
+            else:
+                # num2date in some cases returns a 'phony' datetime. In that case,
+                # parse it as a string.
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                dt -= parse(str(offset))
             return list(map(timedelta.total_seconds, dt))
         else:
             return self.dataset[self.dimensions['time']][:]

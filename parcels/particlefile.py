@@ -2,6 +2,7 @@
 import numpy as np
 import netCDF4
 from datetime import timedelta as delta
+from parcels.loggers import logger
 
 
 __all__ = ['ParticleFile']
@@ -122,21 +123,24 @@ class ParticleFile(object):
             if self.type is 'array':
                 # Check if largest particle ID is smaller than the last ID in ParticleFile.
                 # Otherwise, new particles have been added and netcdf will fail
-                if max([p.id for p in pset]) > self.id[-1]:
-                    raise RuntimeError("Number of particles appears to increase. Use type='indexed' for ParticleFile")
+                if pset.size > 0:
+                    if max([p.id for p in pset]) > self.id[-1]:
+                        logger.error("Number of particles appears to increase. Use type='indexed' for ParticleFile")
 
-                # Finds the indices (inds) of the particle IDs in the ParticleFile,
-                # because particles can have been deleted
-                pids = [p.id for p in pset]
-                inds = np.in1d(self.id[:], pids, assume_unique=True)
-                inds = np.arange(len(self.id[:]))[inds]
+                    # Finds the indices (inds) of the particle IDs in the ParticleFile,
+                    # because particles can have been deleted
+                    pids = [p.id for p in pset]
+                    inds = np.in1d(self.id[:], pids, assume_unique=True)
+                    inds = np.arange(len(self.id[:]))[inds]
 
-                self.time[inds, self.idx] = time
-                self.lat[inds, self.idx] = np.array([p.lat for p in pset])
-                self.lon[inds, self.idx] = np.array([p.lon for p in pset])
-                self.z[inds, self.idx] = np.array([p.depth for p in pset])
-                for var in self.user_vars:
-                    getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
+                    self.time[inds, self.idx] = time
+                    self.lat[inds, self.idx] = np.array([p.lat for p in pset])
+                    self.lon[inds, self.idx] = np.array([p.lon for p in pset])
+                    self.z[inds, self.idx] = np.array([p.depth for p in pset])
+                    for var in self.user_vars:
+                        getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
+                else:
+                    logger.warning("ParticleSet is empty on writing as array")
 
                 self.idx += 1
             elif self.type is 'indexed':
