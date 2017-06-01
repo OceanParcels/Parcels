@@ -246,8 +246,7 @@ class Field(object):
                 filebuffer.indslat = indslat
                 filebuffer.indslon = indslon
                 filebuffer.indsdepth = indsdepth
-                tmp = filebuffer.data
-                if len(tmp.shape) is 3:
+                if len(filebuffer.dataset[filebuffer.dimensions['data']].shape) is 3:
                     data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
@@ -585,9 +584,13 @@ class FileBuffer(object):
     @property
     def data(self):
         if len(self.dataset[self.dimensions['data']].shape) == 3:
-            return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
+            data = self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, self.indsdepth, self.indslat, self.indslon]
+            data = self.dataset[self.dimensions['data']][:, self.indsdepth, self.indslat, self.indslon]
+
+        if np.ma.is_masked(data):  # convert masked array to ndarray
+            data = np.ma.filled(data, np.nan)
+        return data
 
     @property
     def time(self):
