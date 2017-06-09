@@ -243,8 +243,8 @@ class FieldSet(object):
         if len(fieldset_new.U.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
 
-        for v in self.fields:
-            vnew = getattr(fieldset_new, v.name)
+        for vnew in fieldset_new.fields:
+            v = getattr(self, vnew.name)
             if vnew.time > v.time[-1]:  # forward in time, so appending at end
                 v.data = np.concatenate((v.data[1:, :, :], vnew.data[:, :, :]), 0)
                 v.time = np.concatenate((v.time[1:], vnew.time))
