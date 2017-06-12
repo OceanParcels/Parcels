@@ -211,10 +211,6 @@ class Field(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
-        if not 'data' in dimensions:
-            # If Field.from_netcdf is called directly, it may not have a 'data dimension
-            # In that case, assume that 'name' is the data dimension
-            dimensions['data'] = name
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
@@ -250,7 +246,14 @@ class Field(object):
                 filebuffer.indslat = indslat
                 filebuffer.indslon = indslon
                 filebuffer.indsdepth = indsdepth
-                if len(filebuffer.dataset[filebuffer.dimensions['data']].shape) is 3:
+                if 'data' in dimensions:
+                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+                    # In that case, assume that 'name' is the data dimension
+                    filebuffer.name = dimensions['data']
+                else:
+                    filebuffer.name = name
+
+                if len(filebuffer.dataset[filebuffer.name].shape) is 3:
                     data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
@@ -587,10 +590,10 @@ class FileBuffer(object):
 
     @property
     def data(self):
-        if len(self.dataset[self.dimensions['data']].shape) == 3:
-            data = self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
+        if len(self.dataset[self.name].shape) == 3:
+            data = self.dataset[self.name][:, self.indslat, self.indslon]
         else:
-            data = self.dataset[self.dimensions['data']][:, self.indsdepth, self.indslat, self.indslon]
+            data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
