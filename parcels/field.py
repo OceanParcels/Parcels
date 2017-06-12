@@ -211,6 +211,10 @@ class Field(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
+        if not 'data' in dimensions:
+            # If Field.from_netcdf is called directly, it may not have a 'data dimension
+            # In that case, assume that 'name' is the data dimension
+            dimensions['data'] = name
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
