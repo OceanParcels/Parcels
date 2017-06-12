@@ -211,7 +211,7 @@ class Field(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
-        if not isinstance(filenames, Iterable):
+        if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon, indslon = filebuffer.read_dimension('lon', indices)
