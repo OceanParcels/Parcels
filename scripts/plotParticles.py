@@ -60,7 +60,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             for p in range(len(lon)):
                 ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         elif type == 'indexed':
-            for t in range(max(id)+1):
+            for t in np.unique(id):
                 ax.plot(lon[id == t], lat[id == t],
                         z[id == t], '.-')
         ax.set_xlabel('Longitude')
@@ -70,7 +70,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         if type == 'array':
             plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         elif type == 'indexed':
-            for t in range(max(id)+1):
+            for t in np.unique(id):
                 plt.plot(lon[id == t], lat[id == t], '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
