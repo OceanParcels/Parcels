@@ -34,10 +34,10 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     lon = pfile.variables['lon']
     lat = pfile.variables['lat']
     z = pfile.variables['z']
+    time = pfile.variables['time'][:]
     if len(lon.shape) == 1:
         type = 'indexed'
         id = pfile.variables['trajectory'][:]
-        time = pfile.variables['time'][:]
     else:
         type = 'array'
 
@@ -74,6 +74,13 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
     elif mode == 'movie2d' or 'movie2d_notebook':
+        if type == 'array' and any(time[:, 0] != time[0, 0]):
+            # since particles don't start at the same time, treat as indexed
+            type = 'indexed'
+            id = pfile.variables['trajectory'][:].flatten()
+            lon = lon[:].flatten()
+            lat = lat[:].flatten()
+            time = time.flatten()
 
         fig = plt.figure()
         ax = plt.axes(xlim=(np.amin(lon), np.amax(lon)), ylim=(np.amin(lat), np.amax(lat)))
@@ -84,7 +91,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             mintime = min(time)
             scat = ax.scatter(lon[time == mintime], lat[time == mintime],
                               s=60, cmap=plt.get_cmap('autumn'))
-            frames = np.unique(time)
+            frames = np.unique(time[~np.isnan(time)])
 
         def animate(t):
             if type == 'array':
