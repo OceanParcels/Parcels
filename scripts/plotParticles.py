@@ -11,7 +11,7 @@ except:
 
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
-                         tracerlon='x', tracerlat='y', recordedvar=None):
+                         tracerlon='x', tracerlat='y', recordedvar=None, show_plt=True):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
@@ -24,6 +24,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param tracerlat: Name of latitude dimension of variable to show as background
     :param recordedvar: Name of variable used to color particles in scatter-plot.
                 Only works in 'movie2d' or 'movie2d_notebook' mode.
+    :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
     if plt is None:
@@ -109,7 +110,9 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         plt.close()
         return anim
     else:
-        plt.show()
+        if show_plt:
+            plt.show()
+        return plt
 
 
 if __name__ == "__main__":
@@ -132,4 +135,5 @@ if __name__ == "__main__":
 
     plotTrajectoriesFile(args.particlefile, mode=args.mode, tracerfile=args.tracerfile,
                          tracerfield=args.tracerfilefield, tracerlon=args.tracerfilelon,
-                         tracerlat=args.tracerfilelat, recordedvar=args.recordedvar)
+                         tracerlat=args.tracerfilelat, recordedvar=args.recordedvar,
+                         show_plt=True)
