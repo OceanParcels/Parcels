@@ -31,7 +31,7 @@ on the `Github Development Timeline page
 * Ability to add custom Variables to Particles (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/PARCELStutorial.ipynb#A-second-example-kernel:-calculating-distance-travelled>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
 * Ability to run in both Scipy and JIT (Just-In-Time compilation) mode. The former is easier to debug, but the latter can be a factor 1,000 faster (see the `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_jit_vs_scipy.ipynb>`_)
-* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.fieldset.FieldSet.from_netcdf` and `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/PARCELStutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
+* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.fieldset.FieldSet.from_netcdf` and `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcelstutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_plotting.ipynb>`_)
 
@@ -49,7 +49,7 @@ Parcels Tutorials
 
 The best way to get started with Parcels is to have a look at the Jupyter notebooks below:
 
-* `Parcels tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/PARCELStutorial.ipynb>`_ for a general introduction and overview into the main features of Parcels
+* `Parcels tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcelstutorial.ipynb>`_ for a general introduction and overview into the main features of Parcels
 
 * `Periodic boundaries tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_periodic_boundaries.ipynb>`_ for a tutorial on how to implement periodic boundary conditions
 
