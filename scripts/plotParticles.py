@@ -106,7 +106,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
 
 if __name__ == "__main__":
-    p = ArgumentParser(description="""Quick and simple plotting of PARCELS trajectories""")
+    p = ArgumentParser(description="""Quick and simple plotting of Parcels trajectories""")
     p.add_argument('mode', choices=('2d', '3d', 'movie2d', 'movie2d_notebook'), nargs='?',
                    default='movie2d', help='Type of display')
     p.add_argument('-p', '--particlefile', type=str, default='MyParticle.nc',
