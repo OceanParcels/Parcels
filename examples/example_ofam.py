@@ -26,6 +26,12 @@ def test_ofam_fieldset():
     assert(fieldset.V.data.shape == (4, 601, 2001))
 
 
+def test_ofam_fieldset_fillvalues():
+    fieldset = set_ofam_fieldset()
+    # V.data[0, 0, 150] is a landpoint, that makes NetCDF4 generate a masked array, instead of an ndarray
+    assert(fieldset.V.data[0, 0, 150] == 0)
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_ofam_particles(mode):
     fieldset = set_ofam_fieldset()

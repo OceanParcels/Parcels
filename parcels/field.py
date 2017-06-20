@@ -7,7 +7,8 @@ import xarray
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
-from datetime import timedelta
+from datetime import timedelta, datetime
+from dateutil.parser import parse
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -211,7 +212,7 @@ class Field(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
-        if not isinstance(filenames, Iterable):
+        if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon, indslon = filebuffer.read_dimension('lon', indices)
@@ -232,6 +233,11 @@ class Field(object):
             time_origin = 0
         else:
             time_origin = num2date(0, time_units, calendar)
+            if type(time_origin) is not datetime:
+                # num2date in some cases returns a 'phony' datetime. In that case,
+                # parse it as a string.
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                time_origin = parse(str(time_origin))
 
         # Pre-allocate data before reading files into buffer
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
@@ -241,8 +247,14 @@ class Field(object):
                 filebuffer.indslat = indslat
                 filebuffer.indslon = indslon
                 filebuffer.indsdepth = indsdepth
-                tmp = filebuffer.data
-                if len(tmp.shape) is 3:
+                if 'data' in dimensions:
+                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+                    # In that case, assume that 'name' is the data dimension
+                    filebuffer.name = dimensions['data']
+                else:
+                    filebuffer.name = name
+
+                if len(filebuffer.dataset[filebuffer.name].shape) is 3:
                     data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
@@ -581,17 +593,28 @@ class FileBuffer(object):
 
     @property
     def data(self):
-        if len(self.dataset[self.dimensions['data']].shape) == 3:
-            return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
+        if len(self.dataset[self.name].shape) == 3:
+            data = self.dataset[self.name][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, self.indsdepth, self.indslat, self.indslon]
+            data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
+
+        if np.ma.is_masked(data):  # convert masked array to ndarray
+            data = np.ma.filled(data, np.nan)
+        return data
 
     @property
     def time(self):
         if self.time_units is not None:
             dt = num2date(self.dataset[self.dimensions['time']][:],
                           self.time_units, self.calendar)
-            dt -= num2date(0, self.time_units, self.calendar)
+            offset = num2date(0, self.time_units, self.calendar)
+            if type(offset) is datetime:
+                dt -= offset
+            else:
+                # num2date in some cases returns a 'phony' datetime. In that case,
+                # parse it as a string.
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                dt -= parse(str(offset))
             return list(map(timedelta.total_seconds, dt))
         else:
             return self.dataset[self.dimensions['time']][:]
