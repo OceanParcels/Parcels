@@ -47,7 +47,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
-                         lat=np.linspace(0, 79, npart, dtype=np.float32))
+                         lat=np.linspace(0, 80, npart, dtype=np.float32))
     pset2D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
 
@@ -55,7 +55,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical')
     pset3D = ParticleSet(fieldset3D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
-                         lat=np.linspace(0, 79, npart, dtype=np.float32),
+                         lat=np.linspace(0, 80, npart, dtype=np.float32),
                          depth=np.zeros(npart, dtype=np.float32) + 10.)
     pset3D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset3D])) > 1.e-4).all()
@@ -95,7 +95,7 @@ def test_advection_3D(mode, npart=11):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart, dtype=np.float32),
                        lat=np.zeros(npart, dtype=np.float32) + 1e2,
-                       depth=np.linspace(0, 0.9, npart, dtype=np.float32))
+                       depth=np.linspace(0, 1, npart, dtype=np.float32))
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, endtime=time, dt=delta(seconds=30))
     assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], atol=1.e-1)
