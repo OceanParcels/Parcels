@@ -308,7 +308,7 @@ class Field(object):
     def interpolator3D(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
-        zdx = self.depth_index(z)
+        zdx = self.depth_index(z, y, x)
         f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
         f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
         z0 = self.depth[zdx]
@@ -378,12 +378,15 @@ class Field(object):
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
 
-    def depth_index(self, depth):
+    def depth_index(self, depth, lat, lon):
         """Find the index in the depth array associated with a given depth"""
+        if depth > self.depth[-1]:
+            raise FieldSamplingError(lon, lat, depth, field=self)
         depth_index = self.depth <= depth
         if depth_index.all():
-            # If given depth > largest field depth throw an error
-            raise FieldSamplingError(self.lon, self.lat, self.depth, field=self)
+            # If given depth == largest field depth, use the second-last
+            # field depth (as zidx+1 needed in interpolation)
+            return len(self.depth) - 2
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
