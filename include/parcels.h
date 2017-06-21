@@ -90,8 +90,8 @@ static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i,
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
   int ii, jj;
-  if ((x == xdim - 1) || (x - lon[i] < lon[i+1] - x)) {ii = i;} else {ii = i + 1;}
-  if ((y == ydim - 1) || (y - lat[j] < lat[j+1] - y)) {jj = j;} else {jj = j + 1;}
+  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
+  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
   *value = data[jj][ii];
   return SUCCESS;
 }
@@ -104,9 +104,9 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   int ii, jj, kk;
-  if ((x == xdim - 1) || (x - lon[i] < lon[i+1] - x)) {ii = i;} else {ii = i + 1;}
-  if ((y == ydim - 1) || (y - lat[j] < lat[j+1] - y)) {jj = j;} else {jj = j + 1;}
-  if ((k == zdim - 1) || (z - depth[k] < depth[k+1] - z)) {kk = k;} else {kk = k + 1;}
+  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
+  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
+  if (z - depth[k] < depth[k+1] - z) {kk = k;} else {kk = k + 1;}
   *value = data[kk][jj][ii];
   return SUCCESS;
 }
