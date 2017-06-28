@@ -17,12 +17,13 @@ __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling"""
 
-    def __init__(self, x, y, field=None):
+    def __init__(self, x, y, z, field=None):
         self.field = field
         self.x = x
         self.y = y
-        message = "%s sampled at (%f, %f)" % (
-            field.name if field else "Field", self.x, self.y
+        self.z = z
+        message = "%s sampled at (%f, %f, %f)" % (
+            field.name if field else "Field", self.x, self.y, self.z
         )
         super(FieldSamplingError, self).__init__(message)
 
@@ -307,12 +308,19 @@ class Field(object):
     def interpolator3D(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
-        zdx = self.depth_index(z)
-        f0 = self.interpolator2D(idx, z_idx=zdx - 1)((y, x))
-        f1 = self.interpolator2D(idx, z_idx=zdx)((y, x))
-        z0 = self.depth[zdx - 1]
-        z1 = self.depth[zdx]
-        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        zdx = self.depth_index(z, y, x)
+        f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
+        f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
+        z0 = self.depth[zdx]
+        z1 = self.depth[zdx + 1]
+        if z < z0 or z > z1:
+            raise FieldSamplingError(x, y, z, field=self)
+        if self.interp_method is 'nearest':
+            return f0 if z - z0 < z1 - z else f1
+        elif self.interp_method is 'linear':
+            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
@@ -350,7 +358,7 @@ class Field(object):
             val = self.interpolator3D(tidx, z, y, x)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
-            raise FieldSamplingError(x, y, field=self)
+            raise FieldSamplingError(x, y, z, field=self)
         else:
             return val
 
@@ -370,17 +378,15 @@ class Field(object):
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
 
-    def depth_index(self, depth):
-        """Find the index in the depth array associated with a given depth
-
-        Note that we normalize to either the first or the last index
-        if the sampled value is outside the depth value range.
-        """
+    def depth_index(self, depth, lat, lon):
+        """Find the index in the depth array associated with a given depth"""
+        if depth > self.depth[-1]:
+            raise FieldSamplingError(lon, lat, depth, field=self)
         depth_index = self.depth <= depth
         if depth_index.all():
-            # If given depth > last known field depth, use
-            # the last field depth
-            return len(self.depth) - 1
+            # If given depth == largest field depth, use the second-last
+            # field depth (as zidx+1 needed in interpolation)
+            return len(self.depth) - 2
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
