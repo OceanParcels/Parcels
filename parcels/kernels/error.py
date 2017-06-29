@@ -18,7 +18,7 @@ class ErrorCode(IntEnum):
 class KernelError(RuntimeError):
     """General particle kernel error with optional custom message"""
 
-    def __init__(self, particle, field, msg=None):
+    def __init__(self, particle, field=None, msg=None):
         message = ("%s\nParticle %s\nTime: %s,\ttimestep dt: %f\n") % (
             particle.state, particle, parse_particletime(particle.time, field),
             particle.dt
