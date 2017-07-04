@@ -7,7 +7,8 @@ import xarray
 from ctypes import Structure, c_int, c_float, c_double, POINTER
 from netCDF4 import Dataset, num2date
 from math import cos, pi
-from datetime import timedelta
+from datetime import timedelta, datetime
+from dateutil.parser import parse
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -16,12 +17,13 @@ __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling"""
 
-    def __init__(self, x, y, field=None):
+    def __init__(self, x, y, z, field=None):
         self.field = field
         self.x = x
         self.y = y
-        message = "%s sampled at (%f, %f)" % (
-            field.name if field else "Field", self.x, self.y
+        self.z = z
+        message = "%s sampled at (%f, %f, %f)" % (
+            field.name if field else "Field", self.x, self.y, self.z
         )
         super(FieldSamplingError, self).__init__(message)
 
@@ -210,7 +212,7 @@ class Field(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
-        if not isinstance(filenames, Iterable):
+        if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon, indslon = filebuffer.read_dimension('lon', indices)
@@ -231,6 +233,11 @@ class Field(object):
             time_origin = 0
         else:
             time_origin = num2date(0, time_units, calendar)
+            if type(time_origin) is not datetime:
+                # num2date in some cases returns a 'phony' datetime. In that case,
+                # parse it as a string.
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                time_origin = parse(str(time_origin))
 
         # Pre-allocate data before reading files into buffer
         data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
@@ -240,8 +247,14 @@ class Field(object):
                 filebuffer.indslat = indslat
                 filebuffer.indslon = indslon
                 filebuffer.indsdepth = indsdepth
-                tmp = filebuffer.data
-                if len(tmp.shape) is 3:
+                if 'data' in dimensions:
+                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+                    # In that case, assume that 'name' is the data dimension
+                    filebuffer.name = dimensions['data']
+                else:
+                    filebuffer.name = name
+
+                if len(filebuffer.dataset[filebuffer.name].shape) is 3:
                     data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
@@ -295,12 +308,19 @@ class Field(object):
     def interpolator3D(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
-        zdx = self.depth_index(z)
-        f0 = self.interpolator2D(idx, z_idx=zdx - 1)((y, x))
-        f1 = self.interpolator2D(idx, z_idx=zdx)((y, x))
-        z0 = self.depth[zdx - 1]
-        z1 = self.depth[zdx]
-        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        zdx = self.depth_index(z, y, x)
+        f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
+        f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
+        z0 = self.depth[zdx]
+        z1 = self.depth[zdx + 1]
+        if z < z0 or z > z1:
+            raise FieldSamplingError(x, y, z, field=self)
+        if self.interp_method is 'nearest':
+            return f0 if z - z0 < z1 - z else f1
+        elif self.interp_method is 'linear':
+            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
@@ -338,7 +358,7 @@ class Field(object):
             val = self.interpolator3D(tidx, z, y, x)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
-            raise FieldSamplingError(x, y, field=self)
+            raise FieldSamplingError(x, y, z, field=self)
         else:
             return val
 
@@ -358,17 +378,15 @@ class Field(object):
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
 
-    def depth_index(self, depth):
-        """Find the index in the depth array associated with a given depth
-
-        Note that we normalize to either the first or the last index
-        if the sampled value is outside the depth value range.
-        """
+    def depth_index(self, depth, lat, lon):
+        """Find the index in the depth array associated with a given depth"""
+        if depth > self.depth[-1]:
+            raise FieldSamplingError(lon, lat, depth, field=self)
         depth_index = self.depth <= depth
         if depth_index.all():
-            # If given depth > last known field depth, use
-            # the last field depth
-            return len(self.depth) - 1
+            # If given depth == largest field depth, use the second-last
+            # field depth (as zidx+1 needed in interpolation)
+            return len(self.depth) - 2
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
@@ -578,17 +596,28 @@ class FileBuffer(object):
 
     @property
     def data(self):
-        if len(self.dataset[self.dimensions['data']].shape) == 3:
-            return self.dataset[self.dimensions['data']][:, self.indslat, self.indslon]
+        if len(self.dataset[self.name].shape) == 3:
+            data = self.dataset[self.name][:, self.indslat, self.indslon]
         else:
-            return self.dataset[self.dimensions['data']][:, self.indsdepth, self.indslat, self.indslon]
+            data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
+
+        if np.ma.is_masked(data):  # convert masked array to ndarray
+            data = np.ma.filled(data, np.nan)
+        return data
 
     @property
     def time(self):
         if self.time_units is not None:
             dt = num2date(self.dataset[self.dimensions['time']][:],
                           self.time_units, self.calendar)
-            dt -= num2date(0, self.time_units, self.calendar)
+            offset = num2date(0, self.time_units, self.calendar)
+            if type(offset) is datetime:
+                dt -= offset
+            else:
+                # num2date in some cases returns a 'phony' datetime. In that case,
+                # parse it as a string.
+                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+                dt -= parse(str(offset))
             return list(map(timedelta.total_seconds, dt))
         else:
             return self.dataset[self.dimensions['time']][:]
