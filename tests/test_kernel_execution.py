@@ -128,7 +128,7 @@ def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
         fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
-    def MoveLeft(particle, field):
+    def MoveLeft(particle, fieldset, time, dt):
         particle.lon -= 1.
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
@@ -147,7 +147,7 @@ def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
         fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
-    def DeleteMe(particle, field):
+    def DeleteMe(particle, fieldset, time, dt):
         particle.delete()
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
