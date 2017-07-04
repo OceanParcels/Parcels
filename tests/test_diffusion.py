@@ -1,4 +1,4 @@
-from parcels import Field, Grid, JITParticle, ScipyParticle, Variable, SaptiallyVaryingDiffusion2D, random, ErrorCode
+from parcels import Field, FieldSet, JITParticle, ScipyParticle, Variable, SaptiallyVaryingDiffusion2D, random, ErrorCode
 from operator import attrgetter
 import numpy as np
 import math
@@ -6,13 +6,13 @@ from argparse import ArgumentParser
 import pytest
 
 
-def CreateDiffusionField(grid, mu=None):
+def CreateDiffusionField(fieldset, mu=None):
     """Generates a non-uniform diffusivity field using a multivariate normal distribution
     """
-    depth = grid.U.depth
-    time = grid.U.time
-    lon = grid.U.lon
-    lat = grid.U.lat
+    depth = fieldset.U.depth
+    time = fieldset.U.time
+    lon = fieldset.U.lon
+    lat = fieldset.U.lat
 
     K = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
 
@@ -71,21 +71,21 @@ def CreateStartField(lon, lat):
     return data
 
 
-def LagrangianDiffusionNoCorrection(particle, grid, time, dt):
+def LagrangianDiffusionNoCorrection(particle, fieldset, time, dt):
     # Version of diffusion equation with no determenistic term i.e. brownian motion
     to_lat = 1 / 1000. / 1.852 / 60.
     to_lon = to_lat / math.cos(particle.lat*math.pi/180)
     r_var = 1/3.
     Rx = random.uniform(-1., 1.)
     Ry = random.uniform(-1., 1.)
-    Kfield = grid.K[time, particle.lon, particle.lat]
+    Kfield = fieldset.K[time, particle.lon, particle.lat]
     Rx_component = Rx * math.sqrt(2 * Kfield * dt / r_var) * to_lon
     Ry_component = Ry * math.sqrt(2 * Kfield * dt / r_var) * to_lat
     particle.lon += Rx_component
     particle.lat += Ry_component
 
 
-def UpdatePosition(particle, grid, time, dt):
+def UpdatePosition(particle, fieldset, time, dt):
     particle.prev_lon = particle.new_lon
     particle.new_lon = particle.lon
     particle.prev_lat = particle.new_lat
@@ -102,23 +102,23 @@ def Send2PreviousPoint(particle):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def diffusion_test(mode, type='true_diffusion', particles=1000, timesteps=1000, output_file='diffusion_test'):
-    # Generating grid with zero horizontal velocities
+    # Generating fieldset with zero horizontal velocities
     forcing_fields = CreateDummyUV(100, 100)
-    grid = Grid(forcing_fields['U'], forcing_fields['V'], forcing_fields['U'].depth,
-                forcing_fields['U'].time, fields=forcing_fields)
+    fieldset = FieldSet(forcing_fields['U'], forcing_fields['V'], forcing_fields['U'].depth,
+                        forcing_fields['U'].time, fields=forcing_fields)
     # Create a non-uniform field of diffusivity
-    grid.add_field(CreateDiffusionField(grid))
+    fieldset.add_field(CreateDiffusionField(fieldset))
     # Calculate first differential of diffusivity field (needed for diffusion)
-    divK = grid.K.gradient()
-    grid.add_field(divK[0])
-    grid.add_field(divK[1])
+    divK = fieldset.K.gradient()
+    fieldset.add_field(divK[0])
+    fieldset.add_field(divK[1])
     # Calculate second differential (needed to estimate the appropriate minimum timestep to approximate Eulerian diffusion)
-    grid.add_field(grid.dK_dx.gradient(name="d2K")[0])
-    grid.add_field(grid.dK_dy.gradient(name="d2K")[1])
+    fieldset.add_field(fieldset.dK_dx.gradient(name="d2K")[0])
+    fieldset.add_field(fieldset.dK_dy.gradient(name="d2K")[1])
 
     # Evenly spread starting distribution
-    Start_Field = Field('Start', CreateStartField(grid.U.lon, grid.U.lat),
-                        grid.U.lon, grid.U.lat, depth=grid.U.depth, time=grid.U.time, transpose=True)
+    Start_Field = Field('Start', CreateStartField(fieldset.U.lon, fieldset.U.lat),
+                        fieldset.U.lon, fieldset.U.lat, depth=fieldset.U.depth, time=fieldset.U.time, transpose=True)
 
     timestep = 500
 
@@ -133,28 +133,28 @@ def diffusion_test(mode, type='true_diffusion', particles=1000, timesteps=1000, 
         new_lon = Variable("new_lon", to_write=False, initial=attrgetter('lon'))
         new_lat = Variable("new_lat", to_write=False, initial=attrgetter('lat'))
 
-    diffusers = grid.ParticleSet(size=particles, pclass=Diffuser, start_field=Start_Field)
+    diffusers = fieldset.ParticleSet(size=particles, pclass=Diffuser, start_field=Start_Field)
 
     # Particle density at simulation start should be more or less uniform
     DensityField = Field('temp', np.zeros((5, 5), dtype=np.float32),
-                         np.linspace(np.min(grid.U.lon), np.max(grid.U.lon), 5, dtype=np.float32),
-                         np.linspace(np.min(grid.U.lat), np.max(grid.U.lat), 5, dtype=np.float32))
+                         np.linspace(np.min(fieldset.U.lon), np.max(fieldset.U.lon), 5, dtype=np.float32),
+                         np.linspace(np.min(fieldset.U.lat), np.max(fieldset.U.lat), 5, dtype=np.float32))
     StartDensity = diffusers.density(DensityField, area_scale=False, relative=True)
-    grid.add_field(Field(type + 'StartDensity', StartDensity,
-                         DensityField.lon,
-                         DensityField.lat))
+    fieldset.add_field(Field(type + 'StartDensity', StartDensity,
+                             DensityField.lon,
+                             DensityField.lat))
 
     diffuse = diffusers.Kernel(SaptiallyVaryingDiffusion2D) if type == 'true_diffusion' else diffusers.Kernel(LagrangianDiffusionNoCorrection)
 
-    diffusers.execute(diffusers.Kernel(UpdatePosition) + diffuse, endtime=grid.U.time[0]+timestep*steps, dt=timestep,
+    diffusers.execute(diffusers.Kernel(UpdatePosition) + diffuse, endtime=fieldset.U.time[0]+timestep*steps, dt=timestep,
                       output_file=diffusers.ParticleFile(name=args.output+type),
                       interval=timestep, recovery={ErrorCode.ErrorOutOfBounds: Send2PreviousPoint})
 
     EndDensity = diffusers.density(DensityField, area_scale=False, relative=True)
-    grid.add_field(Field(type+'FinalDensity', EndDensity,
-                         DensityField.lon,
-                         DensityField.lat))
-    grid.write(output_file)
+    fieldset.add_field(Field(type+'FinalDensity', EndDensity,
+                             DensityField.lon,
+                             DensityField.lat))
+    fieldset.write(output_file)
 
     print(type + ' start variation = %s' % np.var(StartDensity))
     print(type + ' end variation = %s' % np.var(EndDensity))
