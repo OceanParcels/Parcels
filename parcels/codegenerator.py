@@ -1,4 +1,5 @@
 from parcels.field import Field
+from parcels.loggers import logger
 import ast
 import cgen as c
 from collections import OrderedDict
@@ -12,7 +13,7 @@ class IntrinsicNode(ast.AST):
         self.ccode = ccode
 
 
-class GridNode(IntrinsicNode):
+class FieldSetNode(IntrinsicNode):
     def __getattr__(self, attr):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
@@ -110,6 +111,9 @@ class ParticleAttributeNode(IntrinsicNode):
         if self.attr == 'lat':
             return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
                 % (self.ccode, self.ccode_index_var)
+        if self.attr == 'depth':
+            return "search_linear_float(%s, U->zdim, U->depth, &(%s)); CHECKERROR(err)" \
+                % (self.ccode, self.ccode_index_var)
         return ""
 
 
@@ -127,11 +131,11 @@ Please add '%s' to %s.users_vars or define an appropriate sub-class."""
 
 class IntrinsicTransformer(ast.NodeTransformer):
     """AST transformer that catches any mention of intrinsic variable
-    names, such as 'particle' or 'grid', inserts placeholder objects
+    names, such as 'particle' or 'fieldset', inserts placeholder objects
     and propagates attribute access."""
 
-    def __init__(self, grid, ptype):
-        self.grid = grid
+    def __init__(self, fieldset, ptype):
+        self.fieldset = fieldset
         self.ptype = ptype
 
         # Counter and variable names for temporaries
@@ -149,8 +153,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         """Inject IntrinsicNode objects into the tree according to keyword"""
-        if node.id == 'grid':
-            node = GridNode(self.grid, ccode='grid')
+        if node.id == 'fieldset':
+            node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype, ccode='particle')
         elif node.id in ['ErrorCode', 'Error']:
@@ -252,15 +256,15 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'grid', 'time', 'dt', 'output_time', 'tol']
+    kernel_vars = ['particle', 'fieldset', 'time', 'dt', 'output_time', 'tol']
     array_vars = []
 
-    def __init__(self, grid, ptype):
-        self.grid = grid
+    def __init__(self, fieldset, ptype):
+        self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = OrderedDict()
-        # Hack alert: JIT requires U field to update grid indexes
-        self.field_args['U'] = grid.U
+        # Hack alert: JIT requires U field to update fieldset indexes
+        self.field_args['U'] = fieldset.U
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
@@ -268,7 +272,7 @@ class KernelGenerator(ast.NodeVisitor):
         py_ast = TupleSplitter().visit(py_ast)
 
         # Replace occurences of intrinsic objects in Python AST
-        transformer = IntrinsicTransformer(self.grid, self.ptype)
+        transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
 
         # Generate C-code for all nodes in the Python AST
@@ -276,6 +280,15 @@ class KernelGenerator(ast.NodeVisitor):
         self.ccode = py_ast.ccode
 
         # Insert variable declarations for non-instrinsics
+        # Make sure that repeated variables are not declared more than
+        # once. If variables occur in multiple Kernels, give a warning
+        used_vars = []
+        for kvar in funcvars:
+            if kvar in used_vars:
+                logger.warning(kvar+" declared in multiple Kernels")
+                funcvars.remove(kvar)
+            else:
+                used_vars.append(kvar)
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
@@ -314,11 +327,14 @@ class KernelGenerator(ast.NodeVisitor):
         for a in node.args:
             self.visit(a)
         ccode_args = ", ".join([a.ccode for a in node.args])
-        node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+        try:
+            node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+        except:
+            raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
-        'particle' or 'grid' and inserts our placeholder objects"""
+        'particle' or 'fieldset' and inserts our placeholder objects"""
         if node.id == 'True':
             node.id = "1"
         if node.id == 'False':
@@ -480,6 +496,9 @@ class KernelGenerator(ast.NodeVisitor):
         body = c.Block([b.ccode for b in node.body])
         node.ccode = c.DoWhile(node.test.ccode, body)
 
+    def visit_For(self, node):
+        raise RuntimeError("For loops cannot be translated to C")
+
     def visit_Break(self, node):
         node.ccode = c.Statement("break")
 
@@ -506,7 +525,10 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
-        node.ccode = c.Statement('printf(%s)' % ", ".join([n.ccode for n in node.values]))
+        vars = ', '.join([n.ccode for n in node.values])
+        int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
+        stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
+        node.ccode = c.Statement('printf("%s\\n", %s)' % (stat, vars))
 
     def visit_Str(self, node):
         node.ccode = node.s
@@ -516,8 +538,8 @@ class LoopGenerator(object):
     """Code generator class that adds type definitions and the outer
     loop around kernel functions to generate compilable C code."""
 
-    def __init__(self, grid, ptype=None):
-        self.grid = grid
+    def __init__(self, fieldset, ptype=None):
+        self.fieldset = fieldset
         self.ptype = ptype
 
     def generate(self, funcname, field_args, const_args, kernel_ast):

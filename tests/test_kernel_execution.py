@@ -1,5 +1,5 @@
 from parcels import (
-    Grid, ParticleSet, ScipyParticle, JITParticle, ErrorCode, KernelError,
+    FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode, KernelError,
     OutOfBoundsError
 )
 import numpy as np
@@ -9,19 +9,19 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def DoNothing(particle, grid, time, dt):
+def DoNothing(particle, fieldset, time, dt):
     return ErrorCode.Success
 
 
 @pytest.fixture
-def grid(xdim=20, ydim=20):
-    """ Standard unit mesh grid """
+def fieldset(xdim=20, ydim=20):
+    """ Standard unit mesh fieldset """
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
     lat = np.linspace(0., 1., ydim, dtype=np.float32)
     U, V = np.meshgrid(lat, lon)
-    return Grid.from_data(np.array(U, dtype=np.float32), lon, lat,
-                          np.array(V, dtype=np.float32), lon, lat,
-                          mesh='flat')
+    data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+    dimensions = {'lat': lat, 'lon': lon}
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -33,8 +33,8 @@ def grid(xdim=20, ydim=20):
     (20., 10., 4, -1.),
     (20., -10., 7, -2.),
 ])
-def test_execution_endtime(grid, mode, start, end, substeps, dt, npart=10):
-    pset = ParticleSet(grid, pclass=ptype[mode],
+def test_execution_endtime(fieldset, mode, start, end, substeps, dt, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     pset.execute(DoNothing, starttime=start, endtime=end, dt=dt)
@@ -50,8 +50,8 @@ def test_execution_endtime(grid, mode, start, end, substeps, dt, npart=10):
     (20., 10., 4, -1.),
     (20., -10., 7, -2.),
 ])
-def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
-    pset = ParticleSet(grid, pclass=ptype[mode],
+def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     t_step = (end - start) / substeps
@@ -62,14 +62,14 @@ def test_execution_runtime(grid, mode, start, end, substeps, dt, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_fail_timed(grid, mode, npart=10):
-    def TimedFail(particle, grid, time, dt):
+def test_execution_fail_timed(fieldset, mode, npart=10):
+    def TimedFail(particle, fieldset, time, dt):
         if particle.time >= 10.:
             return ErrorCode.Error
         else:
             return ErrorCode.Success
 
-    pset = ParticleSet(grid, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     error_thrown = False
@@ -83,14 +83,14 @@ def test_execution_fail_timed(grid, mode, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
-def test_execution_fail_python_exception(grid, mode, npart=10):
-    def PythonFail(particle, grid, time, dt):
+def test_execution_fail_python_exception(fieldset, mode, npart=10):
+    def PythonFail(particle, fieldset, time, dt):
         if particle.time >= 10.:
             raise RuntimeError("Enough is enough!")
         else:
             return ErrorCode.Success
 
-    pset = ParticleSet(grid, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     error_thrown = False
@@ -104,12 +104,12 @@ def test_execution_fail_python_exception(grid, mode, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_fail_out_of_bounds(grid, mode, npart=10):
-    def MoveRight(particle, grid, time, dt):
-        grid.U[time, particle.lon + 0.1, particle.lat]
+def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
+    def MoveRight(particle, fieldset, time, dt):
+        fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
-    pset = ParticleSet(grid, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     error_thrown = False
@@ -123,9 +123,9 @@ def test_execution_fail_out_of_bounds(grid, mode, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_recover_out_of_bounds(grid, mode, npart=2):
-    def MoveRight(particle, grid, time, dt):
-        grid.U[time, particle.lon + 0.1, particle.lat]
+def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
+    def MoveRight(particle, fieldset, time, dt):
+        fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
     def MoveLeft(particle):
@@ -133,7 +133,7 @@ def test_execution_recover_out_of_bounds(grid, mode, npart=2):
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: MoveLeft})
     assert len(pset) == npart
@@ -142,9 +142,9 @@ def test_execution_recover_out_of_bounds(grid, mode, npart=2):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_delete_out_of_bounds(grid, mode, npart=10):
-    def MoveRight(particle, grid, time, dt):
-        grid.U[time, particle.lon + 0.1, particle.lat]
+def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
+    def MoveRight(particle, fieldset, time, dt):
+        fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
     def DeleteMe(particle):
@@ -152,7 +152,40 @@ def test_execution_delete_out_of_bounds(grid, mode, npart=10):
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(grid, pclass=ptype[mode], lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, starttime=0., endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteMe})
     assert len(pset) == 0
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_kernel_add_no_new_variables(fieldset, mode):
+    def MoveEast(particle, fieldset, time, dt):
+        particle.lon += 0.1
+
+    def MoveNorth(particle, fieldset, time, dt):
+        particle.lat += 0.1
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveNorth),
+                 starttime=0., endtime=1., dt=1.)
+    assert np.allclose([p.lon for p in pset], 0.6, rtol=1e-5)
+    assert np.allclose([p.lat for p in pset], 0.6, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_multi_kernel_duplicate_varnames(fieldset, mode):
+    # Testing for merging of two Kernels with the same variable declared
+    # Should throw a warning, but go ahead regardless
+    def MoveEast(particle, fieldset, time, dt):
+        add_lon = 0.1
+        particle.lon += add_lon
+
+    def MoveWest(particle, fieldset, time, dt):
+        add_lon = -0.3
+        particle.lon += add_lon
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveWest),
+                 starttime=0., endtime=1., dt=1.)
+    assert np.allclose([p.lon for p in pset], 0.3, rtol=1e-5)

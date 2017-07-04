@@ -1,4 +1,4 @@
-from parcels import Grid, ParticleSet, ScipyParticle, JITParticle, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
 from argparse import ArgumentParser
 import numpy as np
@@ -11,12 +11,12 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_grid(xdim, ydim):
-    """Construct a grid encapsulating the flow field around an
+def peninsula_fieldset(xdim, ydim):
+    """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
-    :param xdim: Horizontal dimension of the generated grid
-    :param xdim: Vertical dimension of the generated grid
+    :param xdim: Horizontal dimension of the generated fieldset
+    :param xdim: Vertical dimension of the generated fieldset
 
     The original test description can be found in Fig. 2.2.3 in:
     North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
@@ -30,7 +30,7 @@ def peninsula_grid(xdim, ydim):
     problems with interpolation from A-grid to C-grid, we
     return NetCDF files that are on an A-grid.
     """
-    # Set NEMO grid variables
+    # Set NEMO fieldset variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
 
@@ -67,18 +67,20 @@ def peninsula_grid(xdim, ydim):
     lon = La / 1.852 / 60.
     lat = Wa / 1.852 / 60.
 
-    return Grid.from_data(U, lon, lat, V, lon, lat, depth, time, field_data={'P': P})
+    data = {'U': U, 'V': V, 'P': P}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    return FieldSet.from_data(data, dimensions)
 
 
-def UpdateP(particle, grid, time, dt):
-    particle.p = grid.P[time, particle.lon, particle.lat]
+def UpdateP(particle, fieldset, time, dt):
+    particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
 
 
-def pensinsula_example(grid, npart, mode='jit', degree=1,
+def pensinsula_example(fieldset, npart, mode='jit', degree=1,
                        verbose=False, output=True, method=AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
-    :arg filename: Basename of the input grid file set
+    :arg filename: Basename of the input fieldset
     :arg npart: Number of particles to intialise"""
 
     # First, we define a custom Particle class to which we add a
@@ -88,7 +90,7 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
         # JIT compilation requires a-priori knowledge of the particle
         # data structure, so we define additional variables here.
         p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=0.)
+        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
 
         def __repr__(self):
             """Custom print function which overrides the built-in"""
@@ -97,10 +99,8 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
 
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
-    y = (grid.U.lat[0] + x, grid.U.lat[-1] - x)  # latitude range, including offsets
-    pset = ParticleSet.from_line(grid, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
-    for particle in pset:
-        particle.p_start = grid.P[0., particle.lon, particle.lat]
+    y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)  # latitude range, including offsets
+    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
@@ -122,37 +122,37 @@ def pensinsula_example(grid, npart, mode='jit', degree=1,
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_grid(mode):
-    """Execute peninsula test from grid generated in memory"""
-    grid = peninsula_grid(100, 50)
-    pset = pensinsula_example(grid, 100, mode=mode, degree=1)
+def test_peninsula_fieldset(mode):
+    """Execute peninsula test from fieldset generated in memory"""
+    fieldset = peninsula_fieldset(100, 50)
+    pset = pensinsula_example(fieldset, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
-    # Test grid sampling accuracy by comparing kernel against grid sampling
-    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    # Test Field sampling accuracy by comparing kernel against Field sampling
+    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
 
 
 @pytest.fixture(scope='module')
-def gridfile():
-    """Generate grid files for peninsula test"""
+def fieldsetfile():
+    """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
-    grid = peninsula_grid(100, 50)
-    grid.write(filename)
+    fieldset = peninsula_fieldset(100, 50)
+    fieldset.write(filename)
     return filename
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_file(gridfile, mode):
-    """Open grid files and execute"""
-    grid = Grid.from_nemo(gridfile, extra_vars={'P': 'P'}, allow_time_extrapolation=True)
-    pset = pensinsula_example(grid, 100, mode=mode, degree=1)
+def test_peninsula_file(fieldsetfile, mode):
+    """Open fieldset files and execute"""
+    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    pset = pensinsula_example(fieldset, 100, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
-    # Test grid sampling accuracy by comparing kernel against grid sampling
-    err_smpl = np.array([abs(p.p - pset.grid.P[0., p.lon, p.lat]) for p in pset])
+    # Test Field sampling accuracy by comparing kernel against Field sampling
+    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
 
 
@@ -171,29 +171,29 @@ Example of particle advection around an idealised peninsula""")
                    help='Suppress trajectory output')
     p.add_argument('--profiling', action='store_true', default=False,
                    help='Print profiling information after run')
-    p.add_argument('-g', '--grid', type=int, nargs=2, default=None,
-                   help='Generate grid file with given dimensions')
+    p.add_argument('-f', '--fieldset', type=int, nargs=2, default=None,
+                   help='Generate fieldset file with given dimensions')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
     args = p.parse_args()
 
-    if args.grid is not None:
+    if args.fieldset is not None:
         filename = 'peninsula'
-        grid = peninsula_grid(args.grid[0], args.grid[1])
-        grid.write(filename)
+        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1])
+        fieldset.write(filename)
 
-    # Open grid file set
-    grid = Grid.from_nemo('peninsula', extra_vars={'P': 'P'}, allow_time_extrapolation=True)
+    # Open fieldset file set
+    fieldset = FieldSet.from_nemo('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
 
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("pensinsula_example(grid, args.particles, mode=args.mode,\
+        runctx("pensinsula_example(fieldset, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
                                    output=not args.nooutput, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        pensinsula_example(grid, args.particles, mode=args.mode,
+        pensinsula_example(fieldset, args.particles, mode=args.mode,
                            degree=args.degree, verbose=args.verbose,
                            output=not args.nooutput, method=method[args.method])

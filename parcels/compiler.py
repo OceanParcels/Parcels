@@ -1,6 +1,12 @@
 import subprocess
-from os import path, environ, getuid, makedirs
+from os import path, environ, makedirs
 from tempfile import gettempdir
+try:
+    from os import getuid
+except:
+    # Windows does not have getuid(), so define to simply return 'tmp'
+    def getuid():
+        return 'tmp'
 
 
 def get_package_dir():

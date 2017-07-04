@@ -35,14 +35,14 @@ def recovery_kernel_error(particle):
 class OutOfBoundsError(KernelError):
     """Particle kernel error for out-of-bounds field sampling"""
 
-    def __init__(self, particle, lon=None, lat=None, field=None):
+    def __init__(self, particle, lon=None, lat=None, depth=None, field=None):
         if lon and lat:
-            message = "%s sampled at (%f, %f)" % (
-                field.name if field else "Grid", lon, lat
+            message = "%s sampled at (%f, %f, %f)" % (
+                field.name if field else "Field", lon, lat, depth
             )
         else:
-            message = "Out-of-bounds sampling by particle at (%f, %f)" % (
-                particle.lon, particle.lat
+            message = "Out-of-bounds sampling by particle at (%f, %f, %f)" % (
+                particle.lon, particle.lat, particle.depth
             )
         super(OutOfBoundsError, self).__init__(particle, msg=message)
 
@@ -51,7 +51,7 @@ class OutOfTimeError(KernelError):
     """Particle kernel error for time extrapolation field sampling"""
 
     def __init__(self, particle):
-        message = "Grid sampled outside time domain at time %f." % (
+        message = "Field sampled outside time domain at time %f." % (
             particle.time
         )
         message += " Try setting allow_time_extrapolation to True"
@@ -66,7 +66,7 @@ def recovery_kernel_out_of_bounds(particle):
         raise OutOfBoundsError(particle)
     else:
         error = particle.exception
-        raise OutOfBoundsError(particle, error.x, error.y, error.field)
+        raise OutOfBoundsError(particle, error.x, error.y, error.z, error.field)
 
 
 def recovery_kernel_time_extrapolation(particle):
