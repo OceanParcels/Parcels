@@ -1,5 +1,5 @@
-from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4
-from scripts import plotTrajectoriesFile, convert_IndexedOutputToArray
+from parcels import (FieldSet, ParticleSet, JITParticle, AdvectionRK4,
+                     plotTrajectoriesFile, convert_IndexedOutputToArray)
 from datetime import timedelta as delta
 import numpy as np
 import pytest
