@@ -11,7 +11,7 @@ except:
 
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
-                         tracerlon='x', tracerlat='y', recordedvar=None):
+                         tracerlon='x', tracerlat='y', recordedvar=None, show_plt=True):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
@@ -24,6 +24,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param tracerlat: Name of latitude dimension of variable to show as background
     :param recordedvar: Name of variable used to color particles in scatter-plot.
                 Only works in 'movie2d' or 'movie2d_notebook' mode.
+    :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
     if plt is None:
@@ -34,10 +35,10 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     lon = pfile.variables['lon']
     lat = pfile.variables['lat']
     z = pfile.variables['z']
+    time = pfile.variables['time'][:]
     if len(lon.shape) == 1:
         type = 'indexed'
         id = pfile.variables['trajectory'][:]
-        time = pfile.variables['time'][:]
     else:
         type = 'array'
 
@@ -59,7 +60,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             for p in range(len(lon)):
                 ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         elif type == 'indexed':
-            for t in range(max(id)+1):
+            for t in np.unique(id):
                 ax.plot(lon[id == t], lat[id == t],
                         z[id == t], '.-')
         ax.set_xlabel('Longitude')
@@ -69,11 +70,18 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         if type == 'array':
             plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         elif type == 'indexed':
-            for t in range(max(id)+1):
+            for t in np.unique(id):
                 plt.plot(lon[id == t], lat[id == t], '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
     elif mode == 'movie2d' or 'movie2d_notebook':
+        if type == 'array' and any(time[:, 0] != time[0, 0]):
+            # since particles don't start at the same time, treat as indexed
+            type = 'indexed'
+            id = pfile.variables['trajectory'][:].flatten()
+            lon = lon[:].flatten()
+            lat = lat[:].flatten()
+            time = time.flatten()
 
         fig = plt.figure()
         ax = plt.axes(xlim=(np.amin(lon), np.amax(lon)), ylim=(np.amin(lat), np.amax(lat)))
@@ -84,7 +92,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             mintime = min(time)
             scat = ax.scatter(lon[time == mintime], lat[time == mintime],
                               s=60, cmap=plt.get_cmap('autumn'))
-            frames = np.unique(time)
+            frames = np.unique(time[~np.isnan(time)])
 
         def animate(t):
             if type == 'array':
@@ -102,7 +110,9 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         plt.close()
         return anim
     else:
-        plt.show()
+        if show_plt:
+            plt.show()
+        return plt
 
 
 if __name__ == "__main__":
@@ -125,4 +135,5 @@ if __name__ == "__main__":
 
     plotTrajectoriesFile(args.particlefile, mode=args.mode, tracerfile=args.tracerfile,
                          tracerfield=args.tracerfilefield, tracerlon=args.tracerfilelon,
-                         tracerlat=args.tracerfilelat, recordedvar=args.recordedvar)
+                         tracerlat=args.tracerfilelat, recordedvar=args.recordedvar,
+                         show_plt=True)
