@@ -78,3 +78,15 @@ def test_globcurrent_particles(mode):
 
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
+
+
+@pytest.mark.xfail(reason="Time extrapolation error expected to be thrown")
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_globcurrent_time_extrapolation_error(mode):
+    fieldset = set_globcurrent_fieldset()
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35])
+    starttime = fieldset.U.time[0]-delta(days=1).total_seconds()
+
+    pset.execute(AdvectionRK4, starttime=starttime, runtime=delta(days=1),
+                 dt=delta(minutes=5), interval=delta(hours=1))

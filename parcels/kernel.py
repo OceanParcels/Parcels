@@ -190,7 +190,7 @@ class Kernel(object):
             for p in error_particles:
                 recovery_kernel = recovery_map[p.state]
                 p.state = ErrorCode.Success
-                recovery_kernel(p)
+                recovery_kernel(p, self.fieldset, p.time, dt)
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
