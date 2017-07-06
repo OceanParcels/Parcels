@@ -128,7 +128,7 @@ def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
         fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
-    def MoveLeft(particle):
+    def MoveLeft(particle, fieldset, time, dt):
         particle.lon -= 1.
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
@@ -147,7 +147,7 @@ def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
         fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
         particle.lon += 0.1
 
-    def DeleteMe(particle):
+    def DeleteMe(particle, fieldset, time, dt):
         particle.delete()
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
@@ -189,3 +189,23 @@ def test_multi_kernel_duplicate_varnames(fieldset, mode):
     pset.execute(pset.Kernel(MoveEast) + pset.Kernel(MoveWest),
                  starttime=0., endtime=1., dt=1.)
     assert np.allclose([p.lon for p in pset], 0.3, rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_update_kernel_in_script(fieldset, mode):
+    # Testing what happens when kernels are updated during runtime of a script
+    # Should throw a warning, but go ahead regardless
+    def MoveEast(particle, fieldset, time, dt):
+        add_lon = 0.1
+        particle.lon += add_lon
+
+    def MoveWest(particle, fieldset, time, dt):
+        add_lon = -0.3
+        particle.lon += add_lon
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(MoveEast),
+                 starttime=0., endtime=1., dt=1.)
+    pset.execute(pset.Kernel(MoveWest),
+                 starttime=1., endtime=2., dt=1.)
+    assert np.allclose([p.lon for p in pset], 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3

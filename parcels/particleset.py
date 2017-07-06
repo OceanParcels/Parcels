@@ -221,7 +221,7 @@ class ParticleSet(object):
                          kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
-        if self.kernel is None:
+        if self.kernel is None or self.kernel.pyfunc is not pyfunc:
             # Generate and store Kernel
             if isinstance(pyfunc, Kernel):
                 self.kernel = pyfunc

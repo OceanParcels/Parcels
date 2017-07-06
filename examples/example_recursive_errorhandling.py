@@ -41,7 +41,7 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
         if particle.lon <= fieldset.minlon:
             return ErrorCode.Error
 
-    def Error_RandomiseLon(particle):
+    def Error_RandomiseLon(particle, fieldset, time, dt):
         """Error handling kernel that draws a new longitude.
         Note that this new longitude can be smaller than fieldset.minlon"""
         particle.lon = random.uniform(0., 1.)
