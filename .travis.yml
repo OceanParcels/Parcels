@@ -34,7 +34,6 @@ script:
     - flake8 parcels
     - flake8 tests
     - flake8 examples
-    - flake8 scripts
-    - python scripts/pull_data.py
+    - python parcels/scripts/pull_data.py
     - py.test -v -s tests/
     - py.test -v -s examples/

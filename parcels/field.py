@@ -32,11 +32,10 @@ class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling"""
 
     def __init__(self, time, field=None):
-        self.field = field
-        self.time = time
-        message = "%s sampled outside time domain at time %f." % (
-            field.name if field else "Field", self.time
-        )
+        if field is not None and field.time_origin != 0:
+            time = field.time_origin + timedelta(seconds=time)
+        message = "%s sampled outside time domain at time %s." % (
+            field.name if field else "Field", time)
         message += " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(message)
 
