@@ -11,7 +11,7 @@ def fieldset(xdim=100, ydim=100):
     U = np.zeros((xdim, ydim), dtype=np.float32)
     V = np.zeros((xdim, ydim), dtype=np.float32)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
-    lat = np.linspace(0, 1, ydim, dtype=np.float32)
+    lat = np.linspace(-60, 60, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
@@ -229,18 +229,29 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_density(fieldset, mode, npart=10):
+def test_density(fieldset, mode):
+    lons, lats = np.meshgrid(fieldset.U.lon[0], fieldset.U.lat)
     pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=0.5*np.ones(npart, dtype=np.float32))
-    arr = pset.density(area_scale=False)
-    assert(np.sum(arr) == npart)  # check conservation of particles
+                       lon=lons,
+                       lat=lats)
+    arr = pset.density(area_scale=False) # Not scaling by area
+    assert(np.sum(arr) == fieldset.U.lat.size)  # check conservation of particles
     inds = zip(*np.where(arr))
     for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
         assert np.allclose(fieldset.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
         assert np.allclose(fieldset.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)
+    arr = pset.density(area_scale=True) # Scaling by area
+    area = np.zeros(np.shape(fieldset.U.data[0, :, 0]), dtype=np.float32)
+    U = fieldset.U
+    V = fieldset.V
+    dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0], V.depth[0])
+    for y in range(len(U.lat)):
+        dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y], V.depth[0])
+        area[y] = dy * dx
+    assert ((arr[0,:] - (1/area)) == 0).all() # check that density equals 1/area
 
 
+test_density(fieldset(), 'jit')
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_array_remove_particles")
