@@ -251,7 +251,6 @@ def test_density(fieldset, mode):
     assert ((arr[0,:] - (1/area)) == 0).all() # check that density equals 1/area
 
 
-test_density(fieldset(), 'jit')
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_array_remove_particles")
