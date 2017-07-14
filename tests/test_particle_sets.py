@@ -44,10 +44,10 @@ def test_pset_create_field(fieldset, mode, npart=100):
     K = Field('K', lon=fieldset.U.lon, lat=fieldset.U.lat,
               data=np.ones(shape, dtype=np.float32))
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode], start_field=K)
-    assert (np.array([p.lon for p in pset]) <= 1.).all()
-    assert (np.array([p.lon for p in pset]) >= 0.).all()
-    assert (np.array([p.lat for p in pset]) <= 1.).all()
-    assert (np.array([p.lat for p in pset]) >= 0.).all()
+    assert (np.array([p.lon for p in pset]) <= K.lon[-1]).all()
+    assert (np.array([p.lon for p in pset]) >= K.lon[0]).all()
+    assert (np.array([p.lat for p in pset]) <= K.lat[-1]).all()
+    assert (np.array([p.lat for p in pset]) >= K.lat[0]).all()
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -234,13 +234,13 @@ def test_density(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=lons,
                        lat=lats)
-    arr = pset.density(area_scale=False) # Not scaling by area
+    arr = pset.density(area_scale=False)  # Not scaling by area
     assert(np.sum(arr) == fieldset.U.lat.size)  # check conservation of particles
     inds = zip(*np.where(arr))
     for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
         assert np.allclose(fieldset.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
         assert np.allclose(fieldset.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)
-    arr = pset.density(area_scale=True) # Scaling by area
+    arr = pset.density(area_scale=True)  # Scaling by area
     area = np.zeros(np.shape(fieldset.U.data[0, :, 0]), dtype=np.float32)
     U = fieldset.U
     V = fieldset.V
@@ -248,7 +248,7 @@ def test_density(fieldset, mode):
     for y in range(len(U.lat)):
         dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y], V.depth[0])
         area[y] = dy * dx
-    assert ((arr[0,:] - (1/area)) == 0).all() # check that density equals 1/area
+    assert ((arr[0, :] - (1/area)) == 0).all()  # check that density equals 1/area
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
