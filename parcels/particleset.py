@@ -221,7 +221,9 @@ class ParticleSet(object):
                          kernel errors.
         :param show_movie: True shows particles; name of field plots that field as background
         """
-        if self.kernel is None or self.kernel.pyfunc is not pyfunc:
+
+        # check if pyfunc has changed since last compile. If so, recompile
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
             # Generate and store Kernel
             if isinstance(pyfunc, Kernel):
                 self.kernel = pyfunc
@@ -483,9 +485,9 @@ class ParticleSet(object):
             area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
             U = self.fieldset.U
             V = self.fieldset.V
-            dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0])
+            dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0], V.depth[0])
             for y in range(len(U.lat)):
-                dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y])
+                dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y], V.depth[0])
                 area[y, :] = dy * dx
             # Scale by cell area
             Density /= np.transpose(area)
