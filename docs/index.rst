@@ -15,16 +15,22 @@ Its code is licensed under an `open source MIT license <https://github.com/Ocean
    
    *Animation of virtual particles carried by ocean surface flow in the* `Agulhas Current <https://en.wikipedia.org/wiki/Agulhas_Current>`_ *off South Africa. The particles are advected with* `Parcels <http://oceanparcels.org/>`_ *in data from the* `GlobCurrent Project <http://globcurrent.ifremer.fr/products-data/products-overview>`_. *See* `this tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_Agulhasparticles.ipynb>`_ *for the Parcels code behind this animated gif.*
 
+Parcels v0.9 manuscript and code
+===================================
+The manuscript detailing this first release of Parcels, version 0.9, is currently under discussion at `Geoscientific Model Development <https://doi.org/10.5194/gmd-2017-167>`_ and can be cited as 
+
+*Lange, M. and van Sebille, E.: Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age, Geosci. Model Dev. Discuss., https://doi.org/10.5194/gmd-2017-167, in review, 2017.*
+
+The code is available at https://github.com/OceanParcels/parcels. Anyone is welcome to comment on the manuscript through the Geoscientific Model Development portal.
+
 Parcels development status
 ===================================
 
-Parcels is currently close to what we will release at version 0.9. 
-This v0.9 will be a fully-functional, feature-complete code for offline 
-Lagrangian ocean analysis. See below for a list of features, or keep an eye 
+The current release of Parcels, version 0.9, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye 
 on the `Github Development Timeline page
 <https://github.com/OceanParcels/parcels/projects/1>`_
 
-**Currently implemented**
+**Currently implemented in v0.9**
 
 * Advection of particles in 2D using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward and in 3D using the inbuilt kernel for Runge-Kutta4_3D (see :mod:`parcels.kernels.advection`)
 * Ability to define and execute custom kernels (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
