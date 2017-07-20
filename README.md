@@ -2,48 +2,19 @@
 
 **Parcels** (**P**robably **A** **R**eally **C**omputationally
 **E**fficient **L**agrangian **S**imulator) is an experimental
-prototype code aimed at exploring novel approaches for Lagrangian
+prototype framework aimed at exploring novel approaches for Lagrangian
 tracking of virtual ocean particles in the petascale age.
 
 ![AgulhasParticles](http://oceanparcels.org/animated-gifs/globcurrent_fullyseeded.gif)
 
 *Animation of virtual particles carried by ocean surface flow in the [Agulhas Current](https://en.wikipedia.org/wiki/Agulhas_Current) off South Africa. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [GlobCurrent Project](http://globcurrent.ifremer.fr/products-data/products-overview).*
 
-### Motivation
+### Parcels v0.9 manuscript and code
 
-In the last two decades, Lagrangian tracking of virtual particles in Ocean General Circulation Models has vastly increased our understanding of ocean dynamics and how currents move stuff around.
+The manuscript detailing the first release of Parcels, version 0.9, is currently under discussion at [Geoscientific Model Development](https://doi.org/10.5194/gmd-2017-167>) and can be cited as 
 
-However, we are now facing a situation where our Lagrangian codes severely lag the next generation of these ocean circulation models. These ocean models are so big and massively parallel, and they produce so much data, that in a few years we may face a situation where many of the Lagrangian frameworks cannot be used on the latest data anymore.
+*Lange, M. and van Sebille, E.: Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age, Geosci. Model Dev. Discuss., https://doi.org/10.5194/gmd-2017-167, in review, 2017.*
 
-In this project, we will scope out and develop a new generic, open-source community prototype code for Lagrangian tracking of water particles through any type of ocean circulation models. 
+### Further information
 
-### Installation
-
-The latest version of Parcels, including tests and examples, can be
-obtained directly from github via:
-```
-git clone https://github.com/OceanParcels/parcels.git
-cd parcels; pip install -r requirements.txt
-python scripts/pull_data.py
-export PYTHONPATH="$PYTHONPATH:$PWD"
-```
-In order for Parcels to work from any directory, add the line 
-`export PYTHONPATH="$PYTHONPATH:$PWD"` to your `~/.bash_profile`
-
-Note that a functional NetCDF install is required.
-
-### Tutorial
-
-For a brief guide to running Parcels and some sample output, have a look at the [interactive tutorial](http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels-tutorial.ipynb).
-
-[This tutorial](http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels-tutorial.ipynb) covers the basics of a particle simulation within Parcels and a sample of its key features, including custom kernels.
-
-There are also a number of worked-out examples in the `examples/` directory. Run these with e.g.
-```
-python examples/example_peninsula.py --fieldset 100 50 -p 10
-```
-And then plot the resulting particles using Parcels simple plotting script
-```
-python scripts/plotParticles.py 2d -p MyParticle.nc
-```
-Showing the trajectories of 10 particles around an idealised peninsula (see also page 18 of the report [here](http://archimer.ifremer.fr/doc/00157/26792/24888.pdf)).
+See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing-parcels) and [running](http://oceanparcels.org/#parcels-tutorials) the Parcels code, as well as extended [documentation](http://oceanparcels.org/parcels.html) of the methods and classes.
