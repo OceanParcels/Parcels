@@ -26,13 +26,15 @@ def test_variable_init(fieldset, mode, npart=10):
     pset = ParticleSet(fieldset, pclass=TestParticle,
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
-    pset.execute(AdvectionRK4, runtime=1., dt=1.)
-    assert np.array([isinstance(p.p_float, np.float32) for p in pset]).all()
-    assert np.allclose([p.p_float for p in pset], 10., rtol=1e-12)
-    assert np.array([isinstance(p.p_double, np.float64) for p in pset]).all()
-    assert np.allclose([p.p_double for p in pset], 11., rtol=1e-12)
-    assert np.array([isinstance(p.p_int, np.int32) for p in pset]).all()
-    assert np.allclose([p.p_int for p in pset], 12, rtol=1e-12)
+
+    def addOne(particle, fieldset, time, dt):
+        particle.p_float += 1.
+        particle.p_double += 1.
+        particle.p_int += 1
+    pset.execute(pset.Kernel(AdvectionRK4)+addOne, runtime=1., dt=1.)
+    assert np.allclose([p.p_float for p in pset], 11., rtol=1e-12)
+    assert np.allclose([p.p_double for p in pset], 12., rtol=1e-12)
+    assert np.allclose([p.p_int for p in pset], 13, rtol=1e-12)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
