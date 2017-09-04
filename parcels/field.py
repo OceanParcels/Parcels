@@ -631,7 +631,10 @@ class FileBuffer(object):
                 dt -= parse(str(offset))
             return list(map(timedelta.total_seconds, dt))
         else:
-            return self.dataset[self.dimensions['time']][:]
+            try:
+                return self.dataset[self.dimensions['time']][:]
+            except:
+                return [None]
 
     @property
     def time_units(self):
