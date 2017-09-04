@@ -240,16 +240,6 @@ class FieldSet(object):
 
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
-        if len(fieldset_new.U.time) is not 1:
-            raise RuntimeError('New FieldSet needs to have only one snapshot')
-
         for vnew in fieldset_new.fields:
             v = getattr(self, vnew.name)
-            if vnew.time > v.time[-1]:  # forward in time, so appending at end
-                v.data = np.concatenate((v.data[1:, :, :], vnew.data[:, :, :]), 0)
-                v.time = np.concatenate((v.time[1:], vnew.time))
-            elif vnew.time < v.time[0]:  # backward in time, so prepending at start
-                v.data = np.concatenate((vnew.data[:, :, :], v.data[:-1, :, :]), 0)
-                v.time = np.concatenate((vnew.time, v.time[:-1]))
-            else:
-                raise RuntimeError("Time of fieldset_new in FieldSet.advancetime() overlaps with times in old FieldSet")
+            v.advancetime(vnew)
