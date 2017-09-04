@@ -60,6 +60,7 @@ def convert_IndexedOutputToArray(file_in, file_out):
             var[v][i, 0:trajs.lengths[i]] = pfile_in.variables[v][ii]
 
     pfile_out.sync()
+    pfile_out.close()
 
 
 if __name__ == "__main__":
