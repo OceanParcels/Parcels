@@ -254,9 +254,9 @@ class Field(object):
                     filebuffer.name = name
 
                 if len(filebuffer.dataset[filebuffer.name].shape) is 3:
-                    data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
+                    data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
-                    data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
+                    data[tidx:tidx+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
             tidx += len(tslice)
         # Time indexing after the fact only
         if 'time' in indices:
