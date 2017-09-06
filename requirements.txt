@@ -13,3 +13,4 @@ six>=1.10.0
 enum34
 progressbar2
 python-dateutil
+setuptools_scm
