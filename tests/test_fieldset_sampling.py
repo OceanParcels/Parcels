@@ -1,5 +1,5 @@
 from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle,
-                     Geographic, AdvectionRK4, Variable, ErrorCode)
+                     Geographic, AdvectionRK4, Variable)
 import numpy as np
 import pytest
 from math import cos, pi
