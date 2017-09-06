@@ -1,4 +1,5 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Geographic, AdvectionRK4, Variable
+from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle,
+                     Geographic, AdvectionRK4, Variable, ErrorCode)
 import numpy as np
 import pytest
 from math import cos, pi
@@ -330,3 +331,27 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
     else:
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_sampling_multiple_grid_sizes(mode):
+    """Sampling test that tests for FieldSet with different grid sizes
+
+    While this currently works fine in Scipy mode, it fails in JIT mode with
+    an out_of_bounds_error because there is only one (xi, yi, zi) for each particle
+    A solution would be to define xi, yi, zi for each field separately
+    """
+    xdim = 10
+    ydim = 20
+    gf = 10  # factor by which the resolution of U is higher than of V
+    U = Field('U', np.zeros((xdim*gf, ydim*gf), dtype=np.float32),
+              np.linspace(0., 1., xdim*gf, dtype=np.float32),
+              np.linspace(0., 1., ydim*gf, dtype=np.float32))
+    V = Field('V', np.zeros((xdim, ydim), dtype=np.float32),
+              np.linspace(0., 1., xdim, dtype=np.float32),
+              np.linspace(0., 1., ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
+
+    pset.execute(AdvectionRK4, runtime=10, dt=1)
+    assert np.isclose(pset[0].lon, 0.8)
