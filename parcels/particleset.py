@@ -367,6 +367,7 @@ class ParticleSet(object):
             plt.ylabel(ylbl)
         elif Basemap is None:
             logger.info("Visualisation is not possible. Basemap not found.")
+            time_origin = self.fieldset.U.time_origin
         else:
             time_origin = self.fieldset.U.time_origin
             idx = self.fieldset.U.time_index(show_time)
