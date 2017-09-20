@@ -254,9 +254,9 @@ class Field(object):
                     filebuffer.name = name
 
                 if len(filebuffer.dataset[filebuffer.name].shape) is 3:
-                    data[tidx:, 0, :, :] = filebuffer.data[:, :, :]
+                    data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
-                    data[tidx:, :, :, :] = filebuffer.data[:, :, :, :]
+                    data[tidx:tidx+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
             tidx += len(tslice)
         # Time indexing after the fact only
         if 'time' in indices:
@@ -552,6 +552,18 @@ class Field(object):
                                                           vname_depth: self.depth})
         dset.to_netcdf(filepath)
 
+    def advancetime(self, field_new):
+        if len(field_new.time) is not 1:
+            raise RuntimeError('New FieldSet needs to have only one snapshot')
+        if field_new.time > self.time[-1]:  # forward in time, so appending at end
+            self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
+            self.time = np.concatenate((self.time[1:], field_new.time))
+        elif field_new.time < self.time[0]:  # backward in time, so prepending at start
+            self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
+            self.time = np.concatenate((field_new.time, self.time[:-1]))
+        else:
+            raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
+
 
 class FileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
@@ -619,7 +631,10 @@ class FileBuffer(object):
                 dt -= parse(str(offset))
             return list(map(timedelta.total_seconds, dt))
         else:
-            return self.dataset[self.dimensions['time']][:]
+            try:
+                return self.dataset[self.dimensions['time']][:]
+            except:
+                return [None]
 
     @property
     def time_units(self):

@@ -35,6 +35,7 @@ class ParticleFile(object):
     def __init__(self, name, particleset, type='array'):
 
         self.type = type
+        self.name = name
         self.lasttime_written = None  # variable to check if time has been written already
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
