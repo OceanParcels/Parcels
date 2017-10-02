@@ -1,1 +1,1 @@
-import timer #noqa
+import timer  # noqa

@@ -1,6 +1,7 @@
 from __future__ import print_function
 import time
 
+
 class Timer():
     def __init__(self, name, parent=None, start=True):
         self._start = -1
@@ -13,18 +14,17 @@ class Timer():
             self._parent._children.append(self)
         if start:
             self.start()
-    
+
     def start(self):
         if self._parent:
-          assert(self._parent._start > 0), ("Timer '%s' cannot be started. Its parent timer does not run" % self._name)
+            assert(self._parent._start > 0), ("Timer '%s' cannot be started. Its parent timer does not run" % self._name)
         self._start = time.time()
 
-    
     def stop(self):
         assert(self._start > 0), ("Timer '%s' was stopped before being started" % self._name)
         self._t += time.time() - self._start
         self._start = -1
-    
+
     def print_local(self):
         if self._start > 0:
             print("Timer '%s': %g s (process running)" % (self._name, self._t + time.time() - self._start))
@@ -41,14 +41,13 @@ class Timer():
         time = self.local_time()
         if step == 0:
             root_time = time
-        print(('(%3d%%)' % round(time/root_time*100)),end='')
-        for i in range(step+1) : print('  ', end='') 
+        print(('(%3d%%)' % round(time/root_time*100)), end='')
+        for i in range(step+1):
+            print('  ', end='')
         print("Timer '%s': %1.1e s" % (self._name, time), end='')
         if step == 0:
             print('')
         else:
             print(('  (%3d%%)' % round(time/parent_time*100)))
         for child in self._children:
-            child.print_tree(step+1, root_time,time)
-
-
+            child.print_tree(step+1, root_time, time)
