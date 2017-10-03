@@ -2,24 +2,16 @@ from __future__ import print_function
 import time
 
 
-global_timers = {}
-
-
 class Timer():
-    def __init__(self, name, parent='', start=True):
+    def __init__(self, name, parent=None, start=True):
         self._start = -1
         self._end = -1
         self._t = 0
         self._name = name
-        assert(name not in global_timers), ("Name '%s' is already defined for another timer" % name)
-        global_timers[name] = self
         self._children = []
-        if parent:
-            assert(parent in global_timers), ("Parent '%s' is not defined" % parent)
-            self._parent = global_timers[parent]
+        self._parent = parent
+        if self._parent:
             self._parent._children.append(self)
-        else:
-            self._parent = None
         if start:
             self.start()
 
