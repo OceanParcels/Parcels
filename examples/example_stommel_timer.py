@@ -69,15 +69,15 @@ def UpdateP(particle, fieldset, time, dt):
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
-    fieldset_timer = timer.Timer('FieldSet', parent='Stommel')
+    timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset()
     filename = 'stommel'
     fieldset.write(filename)
-    fieldset_timer.stop()
+    timer.fieldset.stop()
 
     # Determine particle class according to mode
-    pset_timer = timer.Timer('Pset', parent='Stommel')
-    psetinit_timer = timer.Timer('Pset_init', parent='Pset')
+    timer.pset = timer.Timer('Pset', parent=timer.stommel)
+    timer.psetinit = timer.Timer('Pset_init', parent=timer.pset)
     ParticleClass = JITParticle if mode == 'jit' else ScipyParticle
 
     class MyParticle(ParticleClass):
@@ -95,21 +95,23 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     dt = delta(minutes=5)
     interval = delta(hours=12)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
-    psetinit_timer.stop()
-    psetrun_timer = timer.Timer('Pset_run', parent='Pset')
+    timer.psetinit.stop()
+    timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
     pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt, interval=interval,
                  output_file=pset.ParticleFile(name="StommelParticle"), show_movie=False)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
-    psetrun_timer.stop()
-    pset_timer.stop()
+    timer.psetrun.stop()
+    timer.pset.stop()
 
     return pset
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_stommel_fieldset(mode):
+    timer.root = timer.Timer('Main')
+    timer.stommel = timer.Timer('Stommel', parent=timer.root)
     psetRK4 = stommel_example(1, mode=mode, method=method['RK4'])
     psetRK45 = stommel_example(1, mode=mode, method=method['RK45'])
     assert np.allclose([p.lon for p in psetRK4], [p.lon for p in psetRK45], rtol=1e-3)
@@ -118,11 +120,14 @@ def test_stommel_fieldset(mode):
     assert(err_adv <= 1.e-1).all()
     err_smpl = np.array([abs(p.p - psetRK4.fieldset.P[0., p.lon, p.lat, p.depth]) for p in psetRK4])
     assert(err_smpl <= 1.e-1).all()
+    timer.stommel.stop()
+    timer.root.stop()
+    timer.root.print_tree()
 
 
 if __name__ == "__main__":
-    root_timer = timer.Timer('Main')
-    args_timer = timer.Timer('Args', parent='Main')
+    timer.root = timer.Timer('Main')
+    timer.args = timer.Timer('Args', parent=timer.root)
     p = ArgumentParser(description="""
 Example of particle advection in the steady-state solution of the Stommel equation""")
     p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
@@ -135,10 +140,10 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Numerical method used for advection')
     args = p.parse_args()
 
-    args_timer.stop()
-    stommel_timer = timer.Timer('Stommel', parent='Main')
+    timer.args.stop()
+    timer.stommel = timer.Timer('Stommel', parent=timer.root)
     stommel_example(args.particles, mode=args.mode,
                     verbose=args.verbose, method=method[args.method])
-    stommel_timer.stop()
-    root_timer.stop()
-    root_timer.print_tree()
+    timer.stommel.stop()
+    timer.root.stop()
+    timer.root.print_tree()
