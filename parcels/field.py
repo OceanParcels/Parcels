@@ -4,12 +4,13 @@ from collections import Iterable
 from py import path
 import numpy as np
 import xarray
-from ctypes import Structure, c_int, c_float, c_double, POINTER
+from ctypes import Structure, c_int, c_float, c_double, POINTER, pointer  
 from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
 import math
+from grid import CGrid
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -147,15 +148,22 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, lon, lat, depth=None, time=None,
+    def __init__(self, name, data, lon=None, lat=None, grid=None, depth=None, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
         self.data = data
-        self.lon = lon
-        self.lat = lat
-        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-        self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        if grid:
+            self.grid = grid
+            self.lon = grid.lon
+            self.lat = grid.lat
+            self.depth = np.zeros(1, dtype=np.float32) if grid.depth is None else grid.depth
+            self.time = grid.time
+        else:
+            self.lon = lon
+            self.lat = lat
+            self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+            self.time = np.zeros(1, dtype=np.float64) if time is None else time
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
@@ -451,7 +459,8 @@ class Field(object):
                         ('time_periodic', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double)),
-                        ('data', POINTER(POINTER(c_float)))]
+                        ('data', POINTER(POINTER(c_float))),
+                        ('grid', POINTER(CGrid))]
 
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
@@ -462,7 +471,8 @@ class Field(object):
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.depth.ctypes.data_as(POINTER(c_float)),
                          self.time.ctypes.data_as(POINTER(c_double)),
-                         self.data.ctypes.data_as(POINTER(POINTER(c_float))))
+                         self.data.ctypes.data_as(POINTER(POINTER(c_float))),
+                         pointer(self.grid.ctypes_struct))
         return cstruct
 
     def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):

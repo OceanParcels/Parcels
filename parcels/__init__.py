@@ -7,3 +7,5 @@ import parcels.rng as random  # noqa
 from parcels.particlefile import *  # noqa
 from parcels.kernels import *  # noqa
 from parcels.scripts import *  # noqa
+from parcels.gridset import *  # noqa
+from parcels.grid import *  # noqa

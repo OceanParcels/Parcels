@@ -149,7 +149,13 @@ class Kernel(object):
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+        #fargs += [byref(f.grid.ctypes_struct) for f in self.field_args.values()]
+        print(self.field_args.values()[0].name)
+        print(self.field_args.values()[0].lon[4])
+        print(self.field_args.values()[0].grid.name)
+        print(self.field_args.values()[0].grid.lon[4])
         fargs += [c_float(f) for f in self.const_args.values()]
+        print fargs
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
         self._function(c_int(len(pset)), particle_data,
                        c_double(endtime), c_float(dt), *fargs)

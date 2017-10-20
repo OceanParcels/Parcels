@@ -82,9 +82,59 @@ class FieldSet(object):
             fields[name] = Field(name, datafld, lon, lat, depth=depth,
                                  time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
-        u = fields.pop('U')
-        v = fields.pop('V')
+        u = fields.pop('U',None)
+        v = fields.pop('V',None)
         return cls(u, v, fields=fields)
+
+    def add_data(self, data, dimensions, transpose=True, mesh='spherical',
+                  allow_time_extrapolation=True, **kwargs):
+        """Initialise FieldSet object from raw data
+
+        :param data: Dictionary mapping field names to numpy arrays.
+               Note that at least a 'U' and 'V' numpy array need to be given
+        :param dimensions: Dictionary mapping field dimensions (lon,
+               lat, depth, time) to numpy arrays.
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
+        :param transpose: Boolean whether to transpose data on read-in
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        """
+
+        u_units, v_units = unit_converters(mesh)
+        units = defaultdict(UnitConverter)
+        units.update({'U': u_units, 'V': v_units})
+        fields = {}
+        for name, datafld in data.items():
+            # Use dimensions[name] if dimensions is a dict of dicts
+            dims = dimensions[name] if name in dimensions else dimensions
+
+            lon = dims['lon']
+            lat = dims['lat']
+            depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
+            time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+
+            fields[name] = Field(name, datafld, lon, lat, depth=depth,
+                                 time=time, transpose=transpose, units=units[name],
+                                 allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+        u = fields.pop('U',None)
+        if u :
+            self.U = u
+        v = fields.pop('V',None)
+        if v :
+            self.V = v
+        for f in fields:
+            add_field(f)
+
+    def check_complete(self):
+        assert(self.U), ('U field is not defined')
+        assert(self.V), ('V field is not defined')
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
