@@ -16,23 +16,52 @@ typedef enum
 
 typedef struct
 {
+  int xdim, ydim, zdim, tdim, tidx;
+  float *lon, *lat, *depth;
+  double *time;
+} CGrid;
+
+typedef struct
+{
   int xdim, ydim, zdim, tdim, tidx, allow_time_extrapolation;
   float *lon, *lat, *depth;
   double *time;
   float ***data;
+  CGrid *grid;
 } CField;
 
 
 /* Local linear search to update grid index */
-static inline ErrorCode search_linear_float(float x, int size, float *xvals, int *index)
+static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX, int sizeY, int sizeZ,
+                                            float *xvals, float *yvals, float *zvals,
+                                            int *i, int *j, int *k)
 {
-  if (x < xvals[0] || x > xvals[size-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*index < size-1 && x > xvals[*index+1]) ++(*index);
-  while (*index > 0 && x < xvals[*index]) --(*index);
+  if (x < xvals[0] || x > xvals[sizeX-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*i < sizeX-1 && x > xvals[*i+1]) ++(*i);
+  while (*i > 0 && x < xvals[*i]) --(*i);
 
   /* Lowering index by 1 if last index, to avoid out-of-array sampling
   for index+1 in spatial-interpolation*/
-  if (*index == size-1) {--*index;}
+  if (*i == sizeX-1) {--*i;}
+
+  if (x < xvals[0] || x > xvals[sizeY-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*j < sizeY-1 && x > xvals[*j+1]) ++(*j);
+  while (*j > 0 && x < xvals[*j]) --(*j);
+
+  /* Lowering index by 1 if last index, to avoid out-of-array sampling
+  for index+1 in spatial-interpolation*/
+  if (*j == sizeY-1) {--*j;}
+
+  if (sizeZ > 1)
+  {
+    if (x < xvals[0] || x > xvals[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*k < sizeZ-1 && x > xvals[*k+1]) ++(*k);
+    while (*k > 0 && x < xvals[*k]) --(*k);
+
+    /* Lowering index by 1 if last index, to avoid out-of-array sampling
+       for index+1 in spatial-interpolation*/
+    if (*k == sizeZ-1) {--*k;}
+  }
   return SUCCESS;
 }
 
@@ -123,10 +152,7 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
   double t0, t1;
   int i = xi, j = yi, k = zi;
   /* Identify grid cell to sample through local linear search */
-  err = search_linear_float(x, f->xdim, f->lon, &i); CHECKERROR(err);
-  err = search_linear_float(y, f->ydim, f->lat, &j); CHECKERROR(err);
-  if (f->zdim > 1){
-    err = search_linear_float(z, f->zdim, f->depth, &k); CHECKERROR(err);}
+  err = search_linear_float(x, y, z, f->xdim, f->ydim, f->zdim, f->lon, f->lat, f->depth, &i, &j, &k); CHECKERROR(err);
   /* Find time index for temporal interpolation */
   if (f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
