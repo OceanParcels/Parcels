@@ -41,4 +41,4 @@ script:
     - flake8 examples
     - python parcels/scripts/pull_data.py
     - py.test -v -s tests/
-    - py.test -v -s examples/
+    - py.test -v -s --nbval-lax examples/
