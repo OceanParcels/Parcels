@@ -4,6 +4,7 @@ netcdf4>=1.1.9
 flake8>=2.1.0
 pytest>=2.7.0
 nbval
+ffmpeg
 py>=1.4.27
 pymbolic
 cgen
