@@ -1,0 +1,25 @@
+name: py2_parcels
+channels:
+  - https://conda.anaconda.org/conda-forge
+  - https://repo.continuum.io/pkgs/free
+dependencies:
+  - python=2.7
+  - cachetools>=1.0.0
+  - cgen
+  - enum34
+  - flake8>=2.1.0
+  - jupyter
+  - matplotlib
+  - netcdf4>=1.1.9
+  - numpy>=1.9.1
+  - progressbar2
+  - py>=1.4.27
+  - pymbolic
+  - python-dateutil
+  - scipy>=0.16.0
+  - six>=1.10.0
+  - xarray>=0.5.1
+  - pip:
+      - pytest-ipynb
+      - pytest>=2.7.0
+      - "git+https://github.com/OceanParcels/parcels.git@v0.9"
