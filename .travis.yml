@@ -26,6 +26,7 @@ before_install:
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy hdf4 netcdf4 matplotlib basemap
     - conda env create --file environment.yml
+    - source activate py2_parcels
     - pip install -e .
 
 before_script: # configure a headless display to test plot generation

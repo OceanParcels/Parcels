@@ -7,9 +7,11 @@ dependencies:
   - cachetools>=1.0.0
   - cgen
   - enum34
+  - ffmpeg
   - flake8>=2.1.0
+  - gcc
   - jupyter
-  - matplotlib
+  - matplotlib=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
   - progressbar2
@@ -22,4 +24,4 @@ dependencies:
   - pip:
       - pytest-ipynb
       - pytest>=2.7.0
-      - "git+https://github.com/OceanParcels/parcels.git@v0.9"
+      - "git+https://github.com/OceanParcels/parcels.git@master"
