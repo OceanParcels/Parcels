@@ -91,7 +91,8 @@ Installing Parcels and all dependencies with Anaconda and Conda-Forge
 Installing Anaconda’s Miniconda
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-(If you already have a working Anaconda installation, skip this step.)
+(If you already have a working Anaconda installation, skip to “Creating an
+environment with Parcels”.)
 
 Download Anaconda’s Miniconda for Linux::
 
