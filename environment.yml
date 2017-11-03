@@ -24,4 +24,3 @@ dependencies:
   - pip:
       - pytest>=2.7.0
       - nbval
-      - "git+https://github.com/OceanParcels/parcels.git@master"
