@@ -152,6 +152,7 @@ Using the Parcels environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To start working with Parcels, activate the environment with::
+
     source $HOME/miniconda/bin/activate py2_parcels
 
 
