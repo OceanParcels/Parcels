@@ -84,9 +84,9 @@ different ways:
    the Python part of the dependencies.  This may be a suitable solution for
    more experienced users who want to control the details.
 
+
 Installing Parcels and all dependencies with Anaconda and Conda-Forge
 ---------------------------------------------------------------------
-
 
 Installing Anaconda’s Miniconda
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -94,21 +94,29 @@ Installing Anaconda’s Miniconda
 (If you already have a working Anaconda installation, skip this step.)
 
 Download Anaconda’s Miniconda for Linux::
+
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh \
         -O miniconda.sh
 
 or for MacOSX::
+
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh \
         -O miniconda.sh
 
 and install with::
+
     bash miniconda.sh -b -p $HOME/miniconda
 
 
 Creating an environment with Parcels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With a file `environment.yml`::
+With a file
+
+.. code-block:: yaml
+    :caption: environment.yml
+    :name: environment
+
     name: py2_parcels
     channels:
       - https://conda.anaconda.org/conda-forge
@@ -139,12 +147,13 @@ With a file `environment.yml`::
           - "git+https://github.com/OceanParcels/parcels.git@master"
 
 run::
+
     source $HOME/miniconda/bin/activate root
     conda env create -f environment.yml
 
 
 Using the Parcels environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To start working with Parcels, activate the environment with::
     source $HOME/miniconda/bin/activate py2_parcels
@@ -155,6 +164,7 @@ Just installing the python requirements
 
 The latest version of Parcels, including tests and examples,
 can be obtained directly from github via::
+
     git clone https://github.com/OceanParcels/parcels.git
     cd parcels
     git checkout master
