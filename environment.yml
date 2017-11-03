@@ -22,6 +22,6 @@ dependencies:
   - six>=1.10.0
   - xarray>=0.5.1
   - pip:
-      - pytest-ipynb
       - pytest>=2.7.0
+      - nbval
       - "git+https://github.com/OceanParcels/parcels.git@master"
