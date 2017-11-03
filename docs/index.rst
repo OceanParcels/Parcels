@@ -111,11 +111,7 @@ and install with::
 Creating an environment with Parcels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With a file
-
-.. code-block:: yaml
-    :caption: environment.yml
-    :name: environment
+With a file `environment.yml`::
 
     name: py2_parcels
     channels:
