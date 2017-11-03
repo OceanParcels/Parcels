@@ -73,7 +73,7 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 Installing Parcels
 ===================================
 
-Parcels requires a working Python installation, a netCDF installation, a C
+Parcels depends on a working Python installation, a netCDF installation, a C
 compiler, and various Python packages.  These requirements can be met in
 different ways:
 
@@ -87,9 +87,68 @@ different ways:
 Installing Parcels and all dependencies with Anaconda and Conda-Forge
 ---------------------------------------------------------------------
 
-Download and install Anaconda’s Miniconda.
 
-Create a Conda environment meeting all the dependencies and providing Parcels.
+Installing Anaconda’s Miniconda
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+(If you already have a working Anaconda installation, skip this step.)
+
+Download Anaconda’s Miniconda for Linux::
+    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh \
+        -O miniconda.sh
+
+or for MacOSX::
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh \
+        -O miniconda.sh
+
+and install with::
+    bash miniconda.sh -b -p $HOME/miniconda
+
+
+Creating an environment with Parcels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With a file `environment.yml`::
+    name: py2_parcels
+    channels:
+      - https://conda.anaconda.org/conda-forge
+      - https://repo.continuum.io/pkgs/free
+    dependencies:
+      - python=2.7
+      - basemap
+      - cachetools>=1.0.0
+      - cgen
+      - enum34
+      - ffmpeg
+      - flake8>=2.1.0
+      - gcc
+      - jupyter
+      - matplotlib=2.0.2
+      - netcdf4>=1.1.9
+      - numpy>=1.9.1
+      - progressbar2
+      - py>=1.4.27
+      - pymbolic
+      - python-dateutil
+      - scipy>=0.16.0
+      - six>=1.10.0
+      - xarray>=0.5.1
+      - pip:
+          - pytest>=2.7.0
+          - nbval
+          - "git+https://github.com/OceanParcels/parcels.git@master"
+
+run::
+    source $HOME/miniconda/bin/activate root
+    conda env create -f environment.yml
+
+
+Using the Parcels environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To start working with Parcels, activate the environment with::
+    source $HOME/miniconda/bin/activate py2_parcels
+
 
 Just installing the python requirements
 ---------------------------------------
@@ -97,15 +156,13 @@ Just installing the python requirements
 The latest version of Parcels, including tests and examples,
 can be obtained directly from github via::
     git clone https://github.com/OceanParcels/parcels.git
-    cd parcels; pip install -r requirements.txt
-    python scripts/pull_data.py
-    export PYTHONPATH="$PYTHONPATH:$PWD"
+    cd parcels
+    git checkout master
+    pip install -r requirements.txt
+    pip install -e .
 
-In order for Parcels to work from any directory, add the following line to
-your ~/.bash_profile::
-    export PYTHONPATH="$PYTHONPATH:$PWD"
+Note that a functional NetCDF installation and a working C compiler is required.
 
-Note that a functional NetCDF install is required.
 
 Getting involved
 ===================================
