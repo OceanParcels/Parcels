@@ -72,18 +72,31 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 Installing Parcels
 ===================================
 
-The latest version of Parcels, including tests and examples, 
-can be obtained directly from github via::
-    git clone https://github.com/OceanParcels/parcels.git
-    cd parcels; pip install -r requirements.txt
-    python scripts/pull_data.py
-    export PYTHONPATH="$PYTHONPATH:$PWD"
+Parcels depends on a working Python installation, a netCDF installation, a C
+compiler, and various Python packages.  These requirements can be met in
+different ways:
 
-In order for Parcels to work from any directory, add the following line to 
-your ~/.bash_profile::
-    export PYTHONPATH="$PYTHONPATH:$PWD"
+1. Use Anaconda and Conda-Forge for all requirements.  This is the
+   “batteries-included” solution probably suitable for most users.
 
-Note that a functional NetCDF install is required.
+2. Use an existing netCDF installation and an existing C compiler and just get
+   the Python part of the dependencies.  This may be a suitable solution for
+   more experienced users who want to control the details.
+
+Installing Parcels and all dependencies with Anaconda and Conda-Forge
+-----------------------------------
+
+Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/
+
+Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and place it in the directory where you want to install Parcels. Then, run::
+
+    source $HOME/miniconda/bin/activate root
+    conda env create -f environment.yml
+
+To start working with Parcels, activate the environment with::
+
+    source $HOME/miniconda/bin/activate py2_parcels
+
 
 Getting involved
 ===================================
