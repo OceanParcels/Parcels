@@ -1,7 +1,6 @@
 name: py2_parcels
 channels:
-  - https://conda.anaconda.org/conda-forge
-  - https://repo.continuum.io/pkgs/free
+  - conda-forge
 dependencies:
   - python=2.7
   - cachetools>=1.0.0

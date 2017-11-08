@@ -88,10 +88,11 @@ Installing Parcels and all dependencies with Anaconda and Conda-Forge
 
 Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/
 
-Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and place it in the directory where you want to install Parcels. Then, run::
+Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
 
     source $HOME/miniconda/bin/activate root
-    conda env create -f environment.yml
+    conda env create -f environment.yml -n py2_parcels
+    pip install git+https://github.com/OceanParcels/parcels.git@master
 
 To start working with Parcels, activate the environment with::
 
