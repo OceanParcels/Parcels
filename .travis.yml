@@ -34,3 +34,4 @@ script:
     - python parcels/scripts/pull_data.py
     - py.test -v -s tests/
     - py.test -v -s --nbval-lax examples/
+    - make linkcheck -C docs
