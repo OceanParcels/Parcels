@@ -73,31 +73,27 @@ Installing Parcels
 ===================================
 
 Parcels depends on a working Python installation, a netCDF installation, a C
-compiler, and various Python packages.  These requirements can be met in
-different ways:
+compiler, and various Python packages. 
 
-1. Use Anaconda and Conda-Forge for all requirements.  This is the
-   “batteries-included” solution probably suitable for most users.
+The simplest way to install Parcels is to use Anaconda and Conda-Forge for all 
+requirements. This is the “batteries-included” solution probably suitable for most users.
 
-2. Use an existing netCDF installation and an existing C compiler and just get
-   the Python part of the dependencies.  This may be a suitable solution for
-   more experienced users who want to control the details.
+1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/
 
-Installing Parcels and all dependencies with Anaconda and Conda-Forge
------------------------------------
+2. Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
 
-Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/
-
-Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
-
-    source $HOME/miniconda/bin/activate root
+    source $HOME/miniconda2/bin/activate root
     conda env create -f environment.yml -n py2_parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
 
-To start working with Parcels, activate the environment with::
+3. To start working with Parcels, activate the environment with::
 
-    source $HOME/miniconda/bin/activate py2_parcels
+    source $HOME/miniconda2/bin/activate py2_parcels
 
+An alternative, more advanced option is to use an existing netCDF installation and 
+C compiler, ``git clone`` the `master branch of Parcels 
+<https://github.com/OceanParcels/parcels>`_ 
+and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file.
 
 Getting involved
 ===================================
