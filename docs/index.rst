@@ -69,7 +69,7 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 
 * `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
 
-Installing Parcels
+Installing Parcels on Linux and macOS
 ===================================
 
 Parcels depends on a working Python installation, a netCDF installation, a C
@@ -78,7 +78,7 @@ compiler, and various Python packages.
 The simplest way to install Parcels is to use Anaconda and Conda-Forge for all 
 requirements. This is the “batteries-included” solution probably suitable for most users.
 
-1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/
+1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. Be sure to download the Python 2.7 version.
 
 2. Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
 
