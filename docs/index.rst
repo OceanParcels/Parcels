@@ -70,7 +70,7 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 * `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
 
 Installing Parcels on Linux and macOS
-===================================
+=====================================
 
 Parcels depends on a working Python installation, a netCDF installation, a C
 compiler, and various Python packages. 
@@ -80,18 +80,22 @@ requirements. This is the “batteries-included” solution probably suitable fo
 
 1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. Be sure to download the Python 2.7 version.
 
-2. Download the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
+2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
 
     source $HOME/miniconda2/bin/activate root
     conda env create -f environment.yml -n py2_parcels
     source $HOME/miniconda2/bin/activate py2_parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
 
-3. Validate that the installation has been succesful by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/examples/example_peninsula.py>`_ file and then run::
+3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/examples/example_peninsula.py>`_ file and then run::
 
     python example_peninsula.py --fieldset 100 100
 
-4. The next time you log in to your machine and want to work with Parcels, activate the environment with::
+4. Optionally, if you want to run all the examples and tutorials, you may want to download the example hydrodynamic fields by downloading the `pull_data.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/scripts/pull_data.py>`_ file and then run::
+
+    python pull_data.py
+
+5. The next time you log in to your machine and want to work with Parcels, activate the environment with::
 
     source $HOME/miniconda2/bin/activate py2_parcels
 
