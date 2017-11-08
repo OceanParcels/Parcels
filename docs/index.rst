@@ -84,9 +84,14 @@ requirements. This is the “batteries-included” solution probably suitable fo
 
     source $HOME/miniconda2/bin/activate root
     conda env create -f environment.yml -n py2_parcels
+    source $HOME/miniconda2/bin/activate py2_parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
 
-3. To start working with Parcels, activate the environment with::
+3. Validate that the installation has been succesful by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/examples/example_peninsula.py>`_ file and then run::
+
+    python example_peninsula.py --fieldset 100 100
+
+4. The next time you log in to your machine and want to work with Parcels, activate the environment with::
 
     source $HOME/miniconda2/bin/activate py2_parcels
 
@@ -98,7 +103,7 @@ and ``pip install`` the dependencies in the `environment.yml <https://raw.github
 Getting involved
 ===================================
 
-Parcels development is supported by Imperial College London, with contributions 
+Parcels development is supported by Utrecht University and Imperial College London, with contributions 
 from the people listed on the `Contributors page 
 <https://github.com/OceanParcels/parcels/graphs/contributors>`_. 
 
