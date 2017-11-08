@@ -9,6 +9,7 @@ from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
+import math
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -146,7 +147,7 @@ class Field(object):
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
-                 interp_method='linear', allow_time_extrapolation=None):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
         self.data = data
         self.lon = lon
@@ -160,6 +161,12 @@ class Field(object):
             self.allow_time_extrapolation = True if time is None else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
+
+        self.time_periodic = time_periodic
+        if self.time_periodic and self.allow_time_extrapolation:
+            logger.warning_once("allow_time_extrapolation and time_periodic cannot be used together.\n \
+                                 allow_time_extrapolation is set to False")
+            self.allow_time_extrapolation = False
 
         # Ensure that field data is the right data type
         if not self.data.dtype == np.float32:
@@ -367,15 +374,23 @@ class Field(object):
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
-        if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
+        if not self.time_periodic and not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
             raise TimeExtrapolationError(time, field=self)
         time_index = self.time <= time
+        if self.time_periodic:
+            if time_index.all() or np.logical_not(time_index).all():
+                periods = math.floor((time-self.time[0])/(self.time[-1]-self.time[0]))
+                time -= periods*(self.time[-1]-self.time[0])
+                time_index = self.time <= time
+                ti =  time_index.argmin() - 1 if time_index.any() else 0
+                return (ti, periods)
+            return (time_index.argmin() - 1 if time_index.any() else 0, 0)
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
-            return len(self.time) - 1
+            return (len(self.time) - 1, 0)
         else:
-            return time_index.argmin() - 1 if time_index.any() else 0
+            return (time_index.argmin() - 1 if time_index.any() else 0,0)
 
     def depth_index(self, depth, lat, lon):
         """Find the index in the depth array associated with a given depth"""
@@ -396,7 +411,8 @@ class Field(object):
         conversion to the result. Note that we defer to
         scipy.interpolate to perform spatial interpolation.
         """
-        t_idx = self.time_index(time)
+        (t_idx, periods) = self.time_index(time)
+        time -= periods*self.time[-1]-self.time[0]
         if t_idx < len(self.time)-1 and time > self.time[t_idx]:
             f0 = self.spatial_interpolation(t_idx, z, y, x)
             f1 = self.spatial_interpolation(t_idx + 1, z, y, x)
@@ -430,14 +446,16 @@ class Field(object):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('tidx', c_int),
                         ('allow_time_extrapolation', c_int),
+                        ('time_periodic', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float)))]
 
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
+        time_periodic = 1 if self.time_periodic else 0
         cstruct = CField(self.lon.size, self.lat.size, self.depth.size,
-                         self.time.size, 0, allow_time_extrapolation,
+                         self.time.size, 0, allow_time_extrapolation, time_periodic,
                          self.lon.ctypes.data_as(POINTER(c_float)),
                          self.lat.ctypes.data_as(POINTER(c_float)),
                          self.depth.ctypes.data_as(POINTER(c_float)),
@@ -463,7 +481,8 @@ class Field(object):
             return
 
         if with_particles or (not animation):
-            idx = self.time_index(show_time)
+            (idx, periods) = self.time_index(show_time)
+            show_time -= periods*self.time[-1]-self.time[0]
             if self.time.size > 1:
                 data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
             else:

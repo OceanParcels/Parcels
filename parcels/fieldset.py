@@ -44,7 +44,7 @@ class FieldSet(object):
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=True, mesh='spherical',
-                  allow_time_extrapolation=True, **kwargs):
+                  allow_time_extrapolation=True, time_periodic=False, **kwargs):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
@@ -79,7 +79,7 @@ class FieldSet(object):
 
             fields[name] = Field(name, datafld, lon, lat, depth=depth,
                                  time=time, transpose=transpose, units=units[name],
-                                 allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+                                 allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, fields=fields)
