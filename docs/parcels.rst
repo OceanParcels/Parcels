@@ -9,7 +9,7 @@ parcels.particleset module
     :show-inheritance:
 
 parcels.fieldset module
--------------------
+-----------------------
 
 .. automodule:: parcels.fieldset
     :members:
@@ -68,7 +68,7 @@ parcels.particlefile module
 ---------------------------
 
 .. automodule:: parcels.particlefile
-    :members: ParticleFile, write
+    :members: ParticleFile
     :undoc-members:
 
 parcels.rng module
@@ -79,21 +79,21 @@ parcels.rng module
     :undoc-members:
 
 parcels.loggers module
-------------------
+----------------------
 
 .. automodule:: parcels.loggers
     :members:
     :undoc-members:
 
 scripts.plotParticles module
-------------------
+----------------------------
 
 .. automodule:: scripts.plotParticles
     :members:
     :undoc-members:
 
 scripts.pull_data module
-------------------
+------------------------
 
 .. automodule:: scripts.pull_data
     :members:

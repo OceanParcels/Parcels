@@ -33,11 +33,11 @@ on the `Github Development Timeline page
 **Currently implemented in v0.9**
 
 * Advection of particles in 2D using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward and in 3D using the inbuilt kernel for Runge-Kutta4_3D (see :mod:`parcels.kernels.advection`)
-* Ability to define and execute custom kernels (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
-* Ability to add custom Variables to Particles (see `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Sampling-a-Field-with-Particles>`_)
+* Ability to define and execute custom kernels (see `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
+* Ability to add custom Variables to Particles (see `the Sampling-a-Field-with-Particles part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Sampling-a-Field-with-Particles>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
 * Ability to run in both Scipy and JIT (Just-In-Time compilation) mode. The former is easier to debug, but the latter can be a factor 1,000 faster (see the `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_jit_vs_scipy.ipynb>`_)
-* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.fieldset.FieldSet.from_netcdf` and `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
+* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.fieldset.FieldSet.from_netcdf` and `the Reading-in-data-from-arbritrary-NetCDF-files part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_plotting.ipynb>`_)
 
@@ -69,26 +69,45 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 
 * `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
 
-Installing Parcels
-===================================
+Installing Parcels on Linux and macOS
+=====================================
 
-The latest version of Parcels, including tests and examples, 
-can be obtained directly from github via::
-    git clone https://github.com/OceanParcels/parcels.git
-    cd parcels; pip install -r requirements.txt
-    python scripts/pull_data.py
-    export PYTHONPATH="$PYTHONPATH:$PWD"
+Parcels depends on a working Python installation, a netCDF installation, a C
+compiler, and various Python packages. 
 
-In order for Parcels to work from any directory, add the following line to 
-your ~/.bash_profile::
-    export PYTHONPATH="$PYTHONPATH:$PWD"
+The simplest way to install Parcels is to use Anaconda and Conda-Forge for all 
+requirements. This is the “batteries-included” solution probably suitable for most users.
 
-Note that a functional NetCDF install is required.
+1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
+
+2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file and run::
+
+    source $HOME/miniconda2/bin/activate root
+    conda env create -f environment.yml -n py2_parcels
+    source $HOME/miniconda2/bin/activate py2_parcels
+    pip install git+https://github.com/OceanParcels/parcels.git@master
+
+3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/examples/example_peninsula.py>`_ file and then run::
+
+    python example_peninsula.py --fieldset 100 100
+
+4. Optionally, if you want to run all the examples and tutorials, you may want to download the example hydrodynamic fields by downloading the `pull_data.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/scripts/pull_data.py>`_ file and then run::
+
+    python pull_data.py
+
+5. The next time you log in to your machine and want to work with Parcels, activate the environment with::
+
+    source $HOME/miniconda2/bin/activate py2_parcels
+
+An alternative, more advanced option is to use an existing netCDF installation and 
+C compiler, ``git clone`` the `master branch of Parcels 
+<https://github.com/OceanParcels/parcels>`_ 
+and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
 Getting involved
 ===================================
 
-Parcels development is supported by Imperial College London, with contributions 
+Parcels development is supported by Utrecht University and Imperial College London, with contributions 
 from the people listed on the `Contributors page 
 <https://github.com/OceanParcels/parcels/graphs/contributors>`_. 
 
@@ -112,7 +131,7 @@ See below for links to the full documentation of the python code for Parcels
 Writing Parcels Kernels
 ===================================
 
-One of the most powerful features of Parcels is the ability to write custom Kernels (see e.g. `this part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_). These Kernels are little snippets of code that get executed by Parcels, giving the ability to add 'behaviour' to particles. 
+One of the most powerful features of Parcels is the ability to write custom Kernels (see e.g. `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_). These Kernels are little snippets of code that get executed by Parcels, giving the ability to add 'behaviour' to particles. 
 
 However, there are some key limitations to the Kernels that everyone who wants to write their own should be aware of:
 
