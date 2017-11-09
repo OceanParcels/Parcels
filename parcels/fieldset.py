@@ -34,7 +34,7 @@ class FieldSet(object):
     :param allow_time_extrapolation: boolean whether to allow for extrapolation
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, allow_time_extrapolation=False, fields={}):
+    def __init__(self, U, V, fields={}):
         self.U = U
         self.V = V
 
@@ -62,6 +62,8 @@ class FieldSet(object):
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        :param time_periodic: boolean whether to loop periodically over the time component of the dataset
+               This flags put automatically allow_time_extrapolation to False
         """
 
         u_units, v_units = unit_converters(mesh)
@@ -86,7 +88,7 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
-                    mesh='spherical', allow_time_extrapolation=False, **kwargs):
+                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, **kwargs):
         """Initialises FieldSet data from files using NEMO conventions.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -109,6 +111,8 @@ class FieldSet(object):
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        :param time_periodic: boolean whether to loop periodically over the time component of the dataset
+               This flags put automatically allow_time_extrapolation to False
         """
 
         # Determine unit converters for all fields
@@ -134,14 +138,16 @@ class FieldSet(object):
             inds = indices[var] if var in indices else indices
 
             fields[var] = Field.from_netcdf(var, dims, paths, inds, units=units[var],
-                                            allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+                                            allow_time_extrapolation=allow_time_extrapolation,
+                                            time_periodic=time_periodic, **kwargs)
         u = fields.pop('U')
         v = fields.pop('V')
         return cls(u, v, fields=fields)
 
     @classmethod
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
-                  indices={}, extra_fields={}, allow_time_extrapolation=False, **kwargs):
+                  indices={}, extra_fields={}, allow_time_extrapolation=False,
+                  time_periodic=False, **kwargs):
         """Initialises FieldSet data from files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -150,6 +156,9 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        :param time_periodic: boolean whether to loop periodically over the time component of the dataset
+               This flags put automatically allow_time_extrapolation to False
         """
 
         dimensions = {}
@@ -163,7 +172,7 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               **kwargs)
+                               time_periodic=time_periodic, **kwargs)
 
     @property
     def fields(self):

@@ -1,5 +1,6 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D
 from parcels.field import Field
+from datetime import timedelta as delta
 import numpy as np
 import pytest
 from os import path, pardir
@@ -170,3 +171,47 @@ def test_fieldset_constant(mode):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('time_periodic', [True, False])
+@pytest.mark.parametrize('dt_sign', [-1, 1])
+def test_periodic(mode, time_periodic, dt_sign):
+    lon = np.array([0, 1], dtype=np.float32)
+    lat = np.array([0, 1], dtype=np.float32)
+    depth = np.array([0, 1], dtype=np.float32)
+    tsize = 24*60+1
+    period = 86400
+    time = np.linspace(0, period, tsize, dtype=np.float64)
+    Tvec = 20 + 2 * np.sin(time*2*np.pi/period)
+
+    U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    V = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    T = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    T[:, :, :, :] = Tvec
+
+    data = {'U': U, 'V': V, 'W': W, 'T': T}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic)
+
+    def updateTemp(particle, fieldset, time, dt):
+        particle.T = fieldset.T[time+dt, particle.lon, particle.lat, particle.depth]
+
+    class MyParticle(ptype[mode]):
+        T = Variable('T', dtype=np.float32, initial=20.)
+
+    dt_sign = -1
+    pset = ParticleSet.from_list(fieldset, pclass=MyParticle,
+                                 lon=[0.5], lat=[0.5], depth=[0.5])
+    pset.execute(AdvectionRK4_3D + pset.Kernel(updateTemp),
+                 runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
+
+    if time_periodic:
+        t = pset.particles[0].time
+        T_theo = 20 + 2 * np.sin(t*2*np.pi/period)
+    elif dt_sign == 1:
+        T_theo = Tvec[-1]
+    elif dt_sign == -1:
+        T_theo = Tvec[0]
+    assert np.allclose(T_theo, pset.particles[0].T, atol=1e-5)

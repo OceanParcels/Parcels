@@ -143,6 +143,8 @@ class Field(object):
     :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
     :param allow_time_extrapolation: boolean whether to allow for extrapolation
+    :param time_periodic: boolean whether to loop periodically over the time component of the dataset
+           This flags put automatically allow_time_extrapolation to False
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
@@ -382,7 +384,7 @@ class Field(object):
                 periods = math.floor((time-self.time[0])/(self.time[-1]-self.time[0]))
                 time -= periods*(self.time[-1]-self.time[0])
                 time_index = self.time <= time
-                ti =  time_index.argmin() - 1 if time_index.any() else 0
+                ti = time_index.argmin() - 1 if time_index.any() else 0
                 return (ti, periods)
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
         if time_index.all():
@@ -390,7 +392,7 @@ class Field(object):
             # the last field frame without interpolation
             return (len(self.time) - 1, 0)
         else:
-            return (time_index.argmin() - 1 if time_index.any() else 0,0)
+            return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
     def depth_index(self, depth, lat, lon):
         """Find the index in the depth array associated with a given depth"""
