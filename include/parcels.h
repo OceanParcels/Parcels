@@ -82,9 +82,6 @@ static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float 
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   float f0, f1, z0, z1;
   z0 = depth[k]; z1 = depth[k+1];
-  //printf("here\n");
-  //printf("", data[k][j][i])
-
   f0 = (data[k][j][i] * (lon[i+1] - x) * (lat[j+1] - y)
         + data[k][j][i+1] * (x - lon[i]) * (lat[j+1] - y)
         + data[k][j+1][i] * (lon[i+1] - x) * (y - lat[j])
@@ -145,7 +142,6 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
   if (f->zdim > 1){
     err = search_linear_float(z, f->zdim, f->depth, &k); CHECKERROR(err);}
   /* Find time index for temporal interpolation */
-  if (f->time_periodic)
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }

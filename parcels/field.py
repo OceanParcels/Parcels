@@ -414,7 +414,7 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         (t_idx, periods) = self.time_index(time)
-        time -= periods*self.time[-1]-self.time[0]
+        time -= periods*(self.time[-1]-self.time[0])
         if t_idx < len(self.time)-1 and time > self.time[t_idx]:
             f0 = self.spatial_interpolation(t_idx, z, y, x)
             f1 = self.spatial_interpolation(t_idx + 1, z, y, x)
@@ -484,8 +484,9 @@ class Field(object):
 
         if with_particles or (not animation):
             (idx, periods) = self.time_index(show_time)
-            show_time -= periods*self.time[-1]-self.time[0]
+            show_time -= periods*(self.time[-1]-self.time[0])
             if self.time.size > 1:
+                print idx
                 data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
             else:
                 data = np.squeeze(self.data)
