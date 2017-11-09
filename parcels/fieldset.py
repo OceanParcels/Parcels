@@ -62,8 +62,8 @@ class FieldSet(object):
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
-        :param time_periodic: boolean whether to loop periodically over the time component of the dataset
-               This flags put automatically allow_time_extrapolation to False
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
         """
 
         u_units, v_units = unit_converters(mesh)
@@ -111,8 +111,8 @@ class FieldSet(object):
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
-        :param time_periodic: boolean whether to loop periodically over the time component of the dataset
-               This flags put automatically allow_time_extrapolation to False
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
         """
 
         # Determine unit converters for all fields
@@ -157,8 +157,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
-        :param time_periodic: boolean whether to loop periodically over the time component of the dataset
-               This flags put automatically allow_time_extrapolation to False
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
         """
 
         dimensions = {}

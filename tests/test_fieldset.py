@@ -183,35 +183,39 @@ def test_periodic(mode, time_periodic, dt_sign):
     tsize = 24*60+1
     period = 86400
     time = np.linspace(0, period, tsize, dtype=np.float64)
-    Tvec = 20 + 2 * np.sin(time*2*np.pi/period)
+    temp_func = lambda time: 20 + 2 * np.sin(time*2*np.pi/period)
+    temp_vec = temp_func(time)
 
     U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     V = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
-    T = np.zeros((2, 2, 2, tsize), dtype=np.float32)
-    T[:, :, :, :] = Tvec
+    temp = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    temp[:, :, :, :] = temp_vec
 
-    data = {'U': U, 'V': V, 'W': W, 'T': T}
+    data = {'U': U, 'V': V, 'W': W, 'temp': temp}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic)
 
-    def updateTemp(particle, fieldset, time, dt):
-        particle.T = fieldset.T[time+dt, particle.lon, particle.lat, particle.depth]
+    def sampleTemp(particle, fieldset, time, dt):
+        # Note that fieldset.temp is interpolated at time=time+dt.
+        # Indeed, sampleTemp is called at time=time, but the result is written
+        # at time=time+dt, after the Kernel update
+        particle.temp = fieldset.temp[time+dt, particle.lon, particle.lat, particle.depth]
 
     class MyParticle(ptype[mode]):
-        T = Variable('T', dtype=np.float32, initial=20.)
+        temp = Variable('temp', dtype=np.float32, initial=20.)
 
     dt_sign = -1
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle,
                                  lon=[0.5], lat=[0.5], depth=[0.5])
-    pset.execute(AdvectionRK4_3D + pset.Kernel(updateTemp),
+    pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp),
                  runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
 
     if time_periodic:
         t = pset.particles[0].time
-        T_theo = 20 + 2 * np.sin(t*2*np.pi/period)
+        temp_theo = temp_func(t)
     elif dt_sign == 1:
-        T_theo = Tvec[-1]
+        temp_theo = temp_vec[-1]
     elif dt_sign == -1:
-        T_theo = Tvec[0]
-    assert np.allclose(T_theo, pset.particles[0].T, atol=1e-5)
+        temp_theo = temp_vec[0]
+    assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)

@@ -143,8 +143,8 @@ class Field(object):
     :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
     :param allow_time_extrapolation: boolean whether to allow for extrapolation
-    :param time_periodic: boolean whether to loop periodically over the time component of the dataset
-           This flags put automatically allow_time_extrapolation to False
+    :param time_periodic: boolean whether to loop periodically over the time component of the Field
+           This flag overrides the allow_time_interpolation and sets it to False
     """
 
     def __init__(self, name, data, lon, lat, depth=None, time=None,
@@ -486,7 +486,6 @@ class Field(object):
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.time[-1]-self.time[0])
             if self.time.size > 1:
-                print idx
                 data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
             else:
                 data = np.squeeze(self.data)
