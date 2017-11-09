@@ -78,7 +78,7 @@ compiler, and various Python packages.
 The simplest way to install Parcels is to use Anaconda and Conda-Forge for all 
 requirements. This is the “batteries-included” solution probably suitable for most users.
 
-1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. Be sure to download the Python 2.7 version.
+1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
 
 2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
 
