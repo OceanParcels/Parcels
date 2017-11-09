@@ -111,7 +111,7 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
-            map(remove, [self.src_file, self.lib_file]) if path.isfile(src.lib_file) else None #We'll keep the logs.
+            map(remove, [self.src_file, self.lib_file]) if path.isfile(self.lib_file) else None #We'll keep the logs.
 
 
     @property
