@@ -231,6 +231,7 @@ class ParticleSet(object):
                 self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
+                self.kernel.remove_lib()
                 self.kernel.compile(compiler=GNUCompiler())
                 self.kernel.load_lib()
 
