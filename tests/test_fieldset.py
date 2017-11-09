@@ -183,7 +183,9 @@ def test_periodic(mode, time_periodic, dt_sign):
     tsize = 24*60+1
     period = 86400
     time = np.linspace(0, period, tsize, dtype=np.float64)
-    temp_func = lambda time: 20 + 2 * np.sin(time*2*np.pi/period)
+
+    def temp_func(time):
+        return 20 + 2 * np.sin(time*2*np.pi/period)
     temp_vec = temp_func(time)
 
     U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
