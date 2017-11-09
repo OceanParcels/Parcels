@@ -1,7 +1,7 @@
 """Script to create a `logger` for Parcels"""
 import logging
 
-__all__ = ('logger')
+__all__ = ['logger']
 
 warning_once_level = 25
 

@@ -58,10 +58,10 @@ def peninsula_fieldset(xdim, ydim):
     V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
 
     # Set land points to NaN
-    I = P >= 0.
-    U[I] = np.nan
-    V[I] = np.nan
-    W[I] = np.nan
+    landpoints = P >= 0.
+    U[landpoints] = np.nan
+    V[landpoints] = np.nan
+    W[landpoints] = np.nan
 
     # Convert from km to lat/lon
     lon = La / 1.852 / 60.
