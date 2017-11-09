@@ -80,7 +80,7 @@ requirements. This is the “batteries-included” solution probably suitable fo
 
 1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
 
-2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file and run::
+2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file and run::
 
     source $HOME/miniconda2/bin/activate root
     conda env create -f environment.yml -n py2_parcels
@@ -102,7 +102,7 @@ requirements. This is the “batteries-included” solution probably suitable fo
 An alternative, more advanced option is to use an existing netCDF installation and 
 C compiler, ``git clone`` the `master branch of Parcels 
 <https://github.com/OceanParcels/parcels>`_ 
-and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/install_via_conda/environment.yml>`_ file.
+and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
 Getting involved
 ===================================
