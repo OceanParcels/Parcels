@@ -17,4 +17,4 @@ The manuscript detailing the first release of Parcels, version 0.9, is currently
 
 ### Further information
 
-See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing-parcels) and [running](http://oceanparcels.org/#parcels-tutorials) the Parcels code, as well as extended [documentation](http://oceanparcels.org/parcels.html) of the methods and classes.
+See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing-parcels-on-linux-and-macos) and [running](http://oceanparcels.org/#parcels-tutorials) the Parcels code, as well as extended [documentation](http://oceanparcels.org/parcels.html) of the methods and classes.

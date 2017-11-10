@@ -8,13 +8,6 @@ python:
 
 sudo: false
 
-addons:
-  apt:
-    packages:
-      - libhdf5-serial-dev
-      - netcdf-bin
-      - libnetcdf-dev
-
 before_install:
     # Setup anaconda
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
@@ -24,10 +17,10 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy hdf4 netcdf4 matplotlib basemap
-    - pip install --upgrade pip
-    - pip install -r requirements.txt
-    - git submodule update --init --recursive
+    - conda env create --file environment.yml
+    - source activate py2_parcels
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION sphinx
+    - pip install -e .
 
 before_script: # configure a headless display to test plot generation
     - "export DISPLAY=:99.0"
@@ -35,10 +28,10 @@ before_script: # configure a headless display to test plot generation
     - sleep 3 # give xvfb some time to start
 
 script:
-    - export PYTHONPATH=`pwd`:$PYTHONPATH
     - flake8 parcels
     - flake8 tests
     - flake8 examples
     - python parcels/scripts/pull_data.py
     - py.test -v -s tests/
-    - py.test -v -s examples/
+    - py.test -v -s --nbval-lax examples/
+    - make linkcheck -C docs
