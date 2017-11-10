@@ -4,9 +4,12 @@ from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldSamplingError
 from parcels.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
-from os import path
+from os import path, remove
 import numpy.ctypeslib as npct
+import time
 from ctypes import c_int, c_float, c_double, c_void_p, byref
+import _ctypes
+from sys import platform
 from ast import parse, FunctionDef, Module
 import inspect
 from copy import deepcopy
@@ -96,16 +99,41 @@ class Kernel(object):
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
-            self.lib_file = "%s.so" % basename
+            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
         self._lib = None
+
+    def __del__(self):
+        # Clean-up the in-memory dynamic linked libraries.
+        # This is not really necessary, as these programs are not that large, but with the new random
+        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
+        if self._lib is not None:
+            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            del self._lib
+            self._lib = None
+            map(remove, [self.src_file, self.lib_file, self.log_file]) if path.isfile(self.lib_file) else None
 
     @property
     def _cache_key(self):
         field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
                                for name, field in self.field_args.items()])
-        key = self.name + self.ptype._cache_key + field_keys
+        key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % time.time())
         return md5(key.encode('utf-8')).hexdigest()
+
+    def remove_lib(self):
+        # Unload the currently loaded dynamic linked library to be secure
+        if self._lib is not None:
+            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            del self._lib
+            self._lib = None
+        # If file already exists, pull new names. This is necessary on a Windows machine, because
+        # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
+        if path.isfile(self.lib_file):
+            map(remove, [self.src_file, self.lib_file, self.log_file])
+            basename = path.join(get_cache_dir(), self._cache_key)
+            self.src_file = "%s.c" % basename
+            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
+            self.log_file = "%s.log" % basename
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""

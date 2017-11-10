@@ -1,3 +1,9 @@
+#ifndef _PARCELS_H
+#define _PARCELS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -255,3 +261,7 @@ static inline float parcels_normalvariate(float loc, float scale)
   y2 = x2 * w;
   return( loc + y1 * scale );
 }
+#ifdef __cplusplus
+}
+#endif
+#endif
