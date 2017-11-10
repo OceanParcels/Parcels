@@ -85,6 +85,19 @@ your ~/.bash_profile::
 
 Note that a functional NetCDF install is required.
 
+**Windows specific installation instructions**
+To enable Parcels to run on a Windows machine, some extra steps have to be taken to install the necessary prerequisite files. Windows must have the following software before it is able to run Parcels:
+* A working distribution of gcc must be installed. With working is meant that gcc an be accessed from the commandline. We suggest Windows users to install the [MinGW Package](www.mingw.org). Do note that to access the gcc compiler which MinGW provides, the user must most likely add the directory path to the `MinGW\bin` folder where gcc resides.
+* A version of python with a working copy of Numpy and SciPy. We recommend you to install a Python superpackage, like [anaconda](https://anaconda.org/anaconda/python), which provides the easier way to install Numpy and SciPy. However, it is also possible to use a version of Python distributed by the Python organisation (make sure you grab the version 2 branch of Python). After installing Python you can install the packages manually by downloading the appropiate versions of these packages from this repository of [pre-built Windows installers](https://www.lfd.uci.edu/~gohlke/pythonlibs/). Use the command `python -m pip install 'package'` to install these modules.
+
+To grab the latest version of Parcels with tests and examples, you can follow these steps::
+    git clone https://github.com/OceanParcels/parcels.git
+    cd parcels && pip install -r requirements.txt
+    python scripts/pull_data.py
+    set "PYTHONPATH=%PYTHONPATH%;%cd%"
+
+Python, however, cannot yet access Parcels in each session. To add the directory where Parcels resides as a permanent module directory to Python, add or set the `PYTHONPATH` variable in your system's environmental variables. 
+
 Getting involved
 ===================================
 
