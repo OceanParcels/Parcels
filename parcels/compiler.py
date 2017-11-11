@@ -1,6 +1,7 @@
 import subprocess
 from os import path, environ, makedirs
 from tempfile import gettempdir
+from struct import calcsize
 try:
     from os import getuid
 except:
@@ -37,6 +38,10 @@ class Compiler(object):
         self._cppargs = cppargs
         self._ldargs = ldargs
 
+    @property
+    def gcc_architecture_flags(self):
+        return ['-m64'] if calcsize("P") is 8 else ['-m32']
+
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
         with open(log, 'w') as logfile:
@@ -64,5 +69,6 @@ class GNUCompiler(Compiler):
     def __init__(self, cppargs=[], ldargs=[]):
         opt_flags = ['-g', '-O3']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
-        ldargs = ['-shared'] + ldargs
+        cppargs = cppargs + self.gcc_architecture_flags
+        ldargs = ['-shared'] + ldargs + self.gcc_architecture_flags
         super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
