@@ -1,3 +1,5 @@
+"""Install Parcels and dependencies."""
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -10,6 +12,6 @@ setup(name='parcels',
       author="Imperial College London",
       use_scm_version=True,
       setup_requires=['setuptools_scm'],
-      packages=find_packages(exclude=['docs', 'examples', 'scripts', 'tests']) + ['include'],
+      packages=find_packages(exclude=['docs', 'tests']) + ['include'],
       include_package_data=True,
       )
