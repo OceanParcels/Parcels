@@ -1,7 +1,7 @@
 """Install Parcels and dependencies."""
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
@@ -12,6 +12,7 @@ setup(name='parcels',
       author="Imperial College London",
       use_scm_version=True,
       setup_requires=['setuptools_scm'],
-      packages=find_packages(exclude=['docs', 'tests']) + ['include'],
-      include_package_data=True,
-      )
+      packages=['parcels'],
+      package_data={'parcels': ['parcels/include/*',
+                                'parcels/examples/*']},
+      include_package_data=True)
