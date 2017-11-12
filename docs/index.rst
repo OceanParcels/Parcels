@@ -107,9 +107,15 @@ and ``pip install`` the dependencies in the `environment.yml <https://raw.github
 Windows specific pre-installation instructions
 ----------------------------------------------
 
-Before following the general installation instructions listed under the header **Installing Parcels on Linux and macOS**, the user needs to install a gcc compiler on the Windows system. It is advised for the Windows user to install the `MinGW <http://www.mingw.org>`_ software suite. Do note that installing MinGW is usually not enough for Parcels to access it, most likely the Windows ``PATH`` must be updated to point to the MinGW\bin directory for Parcels to be able to access gcc.
+Before following the general installation instructions listed under the header **Installing Parcels on Linux and macOS**, the user needs to install a gcc compiler on the Windows system. It is advised for the Windows user to install the `mingw-w64 <https://mingw-w64.org/doku.php>`_ compiler. For users who are unfamiliar with installing this software suite, please follow the instructions below:
 
-If you do not know how to change the ``PATH`` variable on Windows, you can follow this `tutorial <https://www.computerhope.com/issues/ch000549.htm>`_. 
+1. Go to this `sourceforge page <https://sourceforge.net/projects/mingw-w64/files/?source=navbar>`_. Select next either the ``Toolchains targetting Win64`` or ``Win32``, depending on the architecture of your OS.
+
+2. Download the most-update version of a file called ``x86_64-posix-seh`` listed on this page. 
+
+3. The file you got herefrom is a archive file, extract this file to some path on your PC. In the next steps we assume that you have extracted the ``mingw-w64`` folder in the archive to the C: drive.
+
+4. The final step is to add the *install path of mingw-w64**\``mingw-w64`` to your system's ``PATH`` variable. If you do not know how to change the ``PATH`` variable on Windows, you can follow this `tutorial <https://www.computerhope.com/issues/ch000549.htm>`_. 
 
 Getting involved
 ===================================

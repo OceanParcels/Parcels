@@ -38,10 +38,6 @@ class Compiler(object):
         self._cppargs = cppargs
         self._ldargs = ldargs
 
-    @property
-    def gcc_architecture_flags(self):
-        return ['-m64'] if calcsize("P") is 8 else ['-m32']
-
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
         with open(log, 'w') as logfile:
@@ -68,7 +64,8 @@ class GNUCompiler(Compiler):
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=[], ldargs=[]):
         opt_flags = ['-g', '-O3']
+        arch_flag = ['-m64' if calcsize("P") is 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
-        cppargs = cppargs + self.gcc_architecture_flags
-        ldargs = ['-shared'] + ldargs + self.gcc_architecture_flags
+        cppargs += arch_flag
+        ldargs = ['-shared'] + ldargs + arch_flag
         super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
