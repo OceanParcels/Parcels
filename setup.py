@@ -15,4 +15,7 @@ setup(name='parcels',
       packages=['parcels'],
       package_data={'parcels': ['parcels/include/*',
                                 'parcels/examples/*']},
-      include_package_data=True)
+      include_package_data=True,
+      entry_points={'console_scripts': [
+          'parcels_get_examples = parcels.scripts.get_examples:main']}
+      )
