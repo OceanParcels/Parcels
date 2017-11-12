@@ -119,7 +119,7 @@ To install parcels on Windows, the user needs to install a gcc compiler on the W
 
 The next steps follow closely the installation instructions listed under **Installing Parcels on Linux and macOS**. We shall list here the parts of the instructions which are different on a Windows machine:
 
-2. Download Parcels' `enviroment_win32.yml <https://raw.githubusercontent.com/OceanParcels/parcels/fix_windows_install/environment_win32.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` and run::
+2. Download Parcels' `enviroment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` and run::
 
         activate root
         conda env create -f environment_win32.yml -n py2_parcels
