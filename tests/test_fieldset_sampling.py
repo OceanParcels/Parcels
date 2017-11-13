@@ -119,7 +119,7 @@ def test_variable_init_from_field(mode, npart=9):
     assert np.all([abs(p.a - fieldset.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
 
 
-def test_pset_from_field(xdim=10, ydim=10, npart=100000):
+def test_pset_from_field(xdim=10, ydim=10, npart=10000):
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
