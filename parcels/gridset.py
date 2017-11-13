@@ -1,6 +1,9 @@
-from parcels.grid import Grid
+from parcels.grid import GridIndex
+from ctypes import Structure, c_int, POINTER, c_void_p
+import numpy as np
 
 __all__ = ['GridSet', 'GridIndexSet']
+
 
 class GridSet(object):
     """GridSet class that holds the Grids on which the Fields are defined
@@ -10,22 +13,37 @@ class GridSet(object):
     """
 
     def __init__(self, grids=[]):
-        self.grids = {}
-        for grid in grids:
-            setattr(self, grid.name, grid)
-            self.grids[grid.name] = grid
-    
+        self.grids = grids
+        self.size = len(grids)
+
     def add_grid(self, grid):
-        setattr(self, grid.name, grid)
+        self.grids.append(grid)
+        self.size += 1
+
 
 class GridIndexSet(object):
     """GridIndexSet class that holds the GridIndices which store the particle position indices for the different grids
 
-
-    :param gridset: GridSet object 
+    :param gridset: GridSet object
     """
+    def __init__(self, id, gridset):
+        #self.id = id
+        self.size = gridset.size
 
-    def __init__(self, gridSet):
-        for grid in gridSet:
-            self.grid = GridIndex(grid)
-    
+        self.gridindices = np.empty(self.size, GridIndex)
+        self._gridindices_data = np.empty(self.size, GridIndex.dtype())
+
+        def cptr(i):
+            return self._gridindices_data[i]
+
+        for i, g in enumerate(gridset.grids):
+            self.gridindices[i] = GridIndex(g, cptr=cptr(i))
+
+    @property
+    def ctypes_struct(self):
+        class CGridIndexSet(Structure):
+            _fields_ = [('size', c_int),
+                        ('grids', POINTER(c_void_p))]
+        cstruct = CGridIndexSet(self.size,
+                                self._gridindices_data.ctypes.data_as(POINTER(c_void_p)))
+        return cstruct

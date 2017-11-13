@@ -39,7 +39,7 @@ class ParticleSet(object):
     :param time: Optional list of initial time values for particles. Default is fieldset.U.time[0]
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None):
+    def __init__(self, fieldset, gridset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None):
         # Convert numpy arrays to one-dimensional lists
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
@@ -54,6 +54,7 @@ class ParticleSet(object):
 
         size = len(lon)
         self.fieldset = fieldset
+        self.gridset = gridset
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
@@ -74,12 +75,12 @@ class ParticleSet(object):
             assert(size == len(lon) and size == len(lat))
 
             for i in range(size):
-                self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
+                self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, gridset=gridset, depth=depth[i], cptr=cptr(i), time=time[i])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None):
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, gridset=None):
         """Initialise the ParticleSet from lists of lon and lat
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -90,7 +91,7 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
        """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, gridset=gridset)
 
     @classmethod
     def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None):
