@@ -6,18 +6,18 @@
 Welcome to Parcels
 ===================================
 
-**Parcels** (**P**\ robably **A** **R**\ eally **C**\ omputationally **E**\ fficient **L**\ agrangian **S**\ imulator) is an experimental prototype code aimed at exploring novel approaches for Lagrangian tracking of virtual ocean particles in the petascale age. 
+**Parcels** (**P**\ robably **A** **R**\ eally **C**\ omputationally **E**\ fficient **L**\ agrangian **S**\ imulator) is an experimental prototype code aimed at exploring novel approaches for Lagrangian tracking of virtual ocean particles in the petascale age.
 
 Its code is licensed under an `open source MIT license <https://github.com/OceanParcels/parcels/blob/master/LICENSE.md>`_ and can be downloaded from https://github.com/OceanParcels/parcels.
 
 .. figure:: http://oceanparcels.org/animated-gifs/globcurrent_fullyseeded.gif
    :align: center
-   
+
    *Animation of virtual particles carried by ocean surface flow in the* `Agulhas Current <https://en.wikipedia.org/wiki/Agulhas_Current>`_ *off South Africa. The particles are advected with* `Parcels <http://oceanparcels.org/>`_ *in data from the* `GlobCurrent Project <http://globcurrent.ifremer.fr/products-data/products-overview>`_. *See* `this tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_Agulhasparticles.ipynb>`_ *for the Parcels code behind this animated gif.*
 
 Parcels v0.9 manuscript and code
 ===================================
-The manuscript detailing this first release of Parcels, version 0.9, is currently under discussion at `Geoscientific Model Development <https://doi.org/10.5194/gmd-2017-167>`_ and can be cited as 
+The manuscript detailing this first release of Parcels, version 0.9, is currently under discussion at `Geoscientific Model Development <https://doi.org/10.5194/gmd-2017-167>`_ and can be cited as
 
 *Lange, M. and van Sebille, E.: Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age, Geosci. Model Dev. Discuss., https://doi.org/10.5194/gmd-2017-167, in review, 2017.*
 
@@ -26,7 +26,7 @@ The code is available at https://github.com/OceanParcels/parcels. Anyone is welc
 Parcels development status
 ===================================
 
-The current release of Parcels, version 0.9, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye 
+The current release of Parcels, version 0.9, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye
 on the `Github Development Timeline page
 <https://github.com/OceanParcels/parcels/projects/1>`_
 
@@ -50,7 +50,7 @@ on the `Github Development Timeline page
 * Advanced control of particles near land boundaries
 
 
-Parcels Tutorials 
+Parcels Tutorials
 ===================================
 
 The best way to get started with Parcels is to have a look at the Jupyter notebooks below:
@@ -73,9 +73,9 @@ Installing Parcels on Linux and macOS
 =====================================
 
 Parcels depends on a working Python installation, a netCDF installation, a C
-compiler, and various Python packages. 
+compiler, and various Python packages.
 
-The simplest way to install Parcels is to use Anaconda and Conda-Forge for all 
+The simplest way to install Parcels is to use Anaconda and Conda-Forge for all
 requirements. This is the “batteries-included” solution probably suitable for most users.
 
 1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
@@ -91,17 +91,19 @@ requirements. This is the “batteries-included” solution probably suitable fo
 
     python example_peninsula.py --fieldset 100 100
 
-4. Optionally, if you want to run all the examples and tutorials, you may want to download the example hydrodynamic fields by downloading the `pull_data.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/scripts/pull_data.py>`_ file and then run::
+4. Optionally, if you want to run all the examples and tutorials, you can get tutorials and example data by running::
 
-    python pull_data.py
+    parcels_get_examples $HOME/parcels_first_steps
+    cd $HOME/parcels_first_steps
+    jupyter notebook
 
 5. The next time you log in to your machine and want to work with Parcels, activate the environment with::
 
     source $HOME/miniconda2/bin/activate py2_parcels
 
-An alternative, more advanced option is to use an existing netCDF installation and 
-C compiler, ``git clone`` the `master branch of Parcels 
-<https://github.com/OceanParcels/parcels>`_ 
+An alternative, more advanced option is to use an existing netCDF installation and
+C compiler, ``git clone`` the `master branch of Parcels
+<https://github.com/OceanParcels/parcels>`_
 and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
 Windows specific pre-installation instructions
@@ -109,17 +111,17 @@ Windows specific pre-installation instructions
 
 Before following the general installation instructions listed under the header **Installing Parcels on Linux and macOS**, the user needs to install a gcc compiler on the Windows system. It is advised for the Windows user to install the `MinGW <http://www.mingw.org>`_ software suite. Do note that installing MinGW is usually not enough for Parcels to access it, most likely the Windows ``PATH`` must be updated to point to the MinGW\bin directory for Parcels to be able to access gcc.
 
-If you do not know how to change the ``PATH`` variable on Windows, you can follow this `tutorial <https://www.computerhope.com/issues/ch000549.htm>`_. 
+If you do not know how to change the ``PATH`` variable on Windows, you can follow this `tutorial <https://www.computerhope.com/issues/ch000549.htm>`_.
 
 Getting involved
 ===================================
 
-Parcels development is supported by Utrecht University and Imperial College London, with contributions 
-from the people listed on the `Contributors page 
-<https://github.com/OceanParcels/parcels/graphs/contributors>`_. 
+Parcels development is supported by Utrecht University and Imperial College London, with contributions
+from the people listed on the `Contributors page
+<https://github.com/OceanParcels/parcels/graphs/contributors>`_.
 
-If you want to help out with developing, testing or get involved in another way, 
-please join the `mailing list 
+If you want to help out with developing, testing or get involved in another way,
+please join the `mailing list
 <https://mailman.ic.ac.uk/mailman/listinfo/oceanparcels>`_.
 
 
@@ -128,7 +130,7 @@ Python design overview
 
 .. figure:: ParcelsDesign.png
    :align: center
-   
+
    *The figure above gives a brief overview of how the most important classes and methods in Parcels are related.*
 
 
@@ -138,7 +140,7 @@ See below for links to the full documentation of the python code for Parcels
 Writing Parcels Kernels
 ===================================
 
-One of the most powerful features of Parcels is the ability to write custom Kernels (see e.g. `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_). These Kernels are little snippets of code that get executed by Parcels, giving the ability to add 'behaviour' to particles. 
+One of the most powerful features of Parcels is the ability to write custom Kernels (see e.g. `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_). These Kernels are little snippets of code that get executed by Parcels, giving the ability to add 'behaviour' to particles.
 
 However, there are some key limitations to the Kernels that everyone who wants to write their own should be aware of:
 
@@ -151,13 +153,13 @@ However, there are some key limitations to the Kernels that everyone who wants t
   * Basic logical operators (``<``, ``==``, ``>``, ``&``, ``|``)
 
   * ``if`` and ``while`` loops, as well as ``break`` statements. Note that ``for``-loops are not supported in JIT mode
-    
+
   * Interpolation of a ``Field`` from the ``fieldset`` at a (time, lon, lat, depth) point, using using square brackets notation. For example, to interpolate the zonal velocity (`U`) field at the particle location, use the following statement::
 
       value = fieldset.U[time, particle.lon, particle.lat, particle.depth]
 
   * Functions from the ``maths`` standard library and from the custom ``random`` library at :mod:`parcels.rng`
-  
+
   * ``print`` statements. Note however that in JIT mode these only work well for variables that are either floats or any of the inbuilt Particle properties
 
 * Local variables can be used in Kernels, and these variables will be accessible in all concatenated Kernels. Note that these local variables are not shared between particles, and also not between time steps.
@@ -167,7 +169,7 @@ All other functions and methods are not supported yet in Parcels Kernels. If the
 Parcels funding and support
 ===================================
 
-Parcels development has been supported by the following organisations: 
+Parcels development has been supported by the following organisations:
 
 .. figure:: funderlogos.png
    :align: center
@@ -197,4 +199,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
