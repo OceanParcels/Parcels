@@ -107,17 +107,7 @@ and ``pip install`` the dependencies in the `environment.yml <https://raw.github
 Installing Parcels on Windows
 =============================
 
-To install parcels on Windows, the user needs to install a gcc compiler on the Windows system. It is advised for the Windows user to install the `mingw-w64 <https://mingw-w64.org/doku.php>`_ compiler. For users who are unfamiliar with installing this software suite, please follow the instructions below:
-
-1. Go to this `sourceforge page <https://sourceforge.net/projects/mingw-w64/files/?source=navbar>`_. Select next either the ``Toolchains targetting Win64`` or ``Win32``, depending on the architecture of your OS.
-
-2. Download the most-update version of a file called ``x86_64-posix-sjlj`` listed on this page. 
-
-3. The file you got herefrom is a archive file, extract this file to some path on your PC. In the next steps we assume that you have extracted the ``mingw-w64`` folder in the archive to the C: drive.
-
-4. The final step is to add the '*install path of mingw-w64*\\``bin``' to your system's ``PATH`` variable. If you do not know how to change the ``PATH`` variable on Windows, you can follow this `tutorial <https://www.computerhope.com/issues/ch000549.htm>`_. 
-
-The next steps follow closely the installation instructions listed under **Installing Parcels on Linux and macOS**. We shall list here the parts of the instructions which are different on a Windows machine:
+The installation process and usage of Parcels is much the same to the one under **Installing Parcels on Linux and macOS**, however, a few steps will be different. We will list here below the steps which differ on Windows from the other OS's:
 
 2. Download Parcels' `environment_win32.yml <https://raw.githubusercontent.com/OceanParcels/parcels/fix_windows_install/environment_win32.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` and run::
 
