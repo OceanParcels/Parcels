@@ -86,8 +86,15 @@ class FieldSet(object):
         v = fields.pop('V',None)
         return cls(u, v, fields=fields)
 
+    def add_field(self, field):
+        """Add a :class:`parcels.field.Field` object to the FieldSet
+
+        :param field: :class:`parcels.field.Field` object to be added
+        """
+        setattr(self, field.name, field)
+
     def add_data(self, data, dimensions, transpose=True, mesh='spherical',
-                  allow_time_extrapolation=True, **kwargs):
+                 allow_time_extrapolation=True, **kwargs):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
@@ -123,14 +130,14 @@ class FieldSet(object):
             fields[name] = Field(name, datafld, lon, lat, depth=depth,
                                  time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)
-        u = fields.pop('U',None)
-        if u :
+        u = fields.pop('U', None)
+        if u:
             self.U = u
-        v = fields.pop('V',None)
-        if v :
+        v = fields.pop('V', None)
+        if v:
             self.V = v
         for f in fields:
-            add_field(f)
+            self.add_field(f)
 
     def check_complete(self):
         assert(self.U), ('U field is not defined')
@@ -229,13 +236,6 @@ class FieldSet(object):
         """Returns a list of all the :class:`parcels.field.Field` objects
         associated with this FieldSet"""
         return [v for v in self.__dict__.values() if isinstance(v, Field)]
-
-    def add_field(self, field):
-        """Add a :class:`parcels.field.Field` object to the FieldSet
-
-        :param field: :class:`parcels.field.Field` object to be added
-        """
-        setattr(self, field.name, field)
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are

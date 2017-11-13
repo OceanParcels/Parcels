@@ -4,7 +4,7 @@ from collections import Iterable
 from py import path
 import numpy as np
 import xarray
-from ctypes import Structure, c_int, c_float, c_double, POINTER, pointer  
+from ctypes import Structure, c_int, c_float, c_double, POINTER, pointer
 from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta, datetime
@@ -439,8 +439,8 @@ class Field(object):
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
-            % (x, y, z, "particle->xi", "particle->yi", "particle->zi", t, self.name, var,
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, z, "particle->xi", "particle->yi", "particle->zi", "particle->CGridIndexSet", t, self.name, var,
                self.interp_method.upper())
 
     def ccode_convert(self, _, x, y, z):

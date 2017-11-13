@@ -5,6 +5,7 @@ import cgen as c
 from collections import OrderedDict
 import math
 import random
+import numpy as np
 
 
 class IntrinsicNode(ast.AST):
@@ -90,10 +91,10 @@ class ParticleAttributeNode(IntrinsicNode):
         self.ccode = "%s->%s" % (obj.ccode, attr)
         self.ccode_index_var = None
 
-        if self.attr == 'lon':
-            self.ccode_index_var = "%s->%s" % (self.obj.ccode, "xi")
-        elif self.attr == 'lat':
-            self.ccode_index_var = "%s->%s" % (self.obj.ccode, "yi")
+        #if self.attr == 'lon':
+        #    self.ccode_index_var = "%s->%s" % (self.obj.ccode, "xi")
+        #elif self.attr == 'lat':
+        #    self.ccode_index_var = "%s->%s" % (self.obj.ccode, "yi")
 
     @property
     def pyast_index_update(self):
@@ -105,16 +106,21 @@ class ParticleAttributeNode(IntrinsicNode):
     @property
     def ccode_index_update(self):
         """C-code for the index update requires after updating p.lon/p.lat"""
-        if self.attr == 'lon':
-            return "search_linear_float(%s, U->xdim, U->lon, &(%s)); CHECKERROR(err)" \
-                % (self.ccode, self.ccode_index_var)
-        if self.attr == 'lat':
-            return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
-                % (self.ccode, self.ccode_index_var)
-        if self.attr == 'depth':
-            return "search_linear_float(%s, U->zdim, U->depth, &(%s)); CHECKERROR(err)" \
-                % (self.ccode, self.ccode_index_var)
-        return ""
+        func = "search_linear_float(particle->lon, particle->lat, particle->depth, "
+        func += "U->xdim, U->ydim, U->zdim, "
+        func += "U->lon, U->lat, U->depth, "
+        func += "&(particle->xi), &(particle->yi), &(particle->zi)); CHECKERROR(err)"
+        return func
+        #if self.attr == 'lon':
+        #    return "search_linear_float(%s, U->xdim, U->lon, &(%s)); CHECKERROR(err)" \
+        #        % (self.ccode, self.ccode_index_var)
+        #if self.attr == 'lat':
+        #    return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
+        #        % (self.ccode, self.ccode_index_var)
+        #if self.attr == 'depth':
+        #    return "search_linear_float(%s, U->zdim, U->depth, &(%s)); CHECKERROR(err)" \
+        #        % (self.ccode, self.ccode_index_var)
+        #return ""
 
 
 class ParticleNode(IntrinsicNode):
@@ -184,9 +190,9 @@ class IntrinsicTransformer(ast.NodeTransformer):
             self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
             # .. and return the name of the temporary that will be populated
             return ast.Name(id=tmp)
-        elif isinstance(node.value, IntrinsicNode):
-            raise NotImplementedError("Subscript not implemented for object type %s"
-                                      % type(node.value).__name__)
+        #elif isinstance(node.value, IntrinsicNode):
+        #    raise NotImplementedError("Subscript not implemented for object type %s"
+        #                              % type(node.value).__name__)
         else:
             return node
 
@@ -418,9 +424,9 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.slice)
         if isinstance(node.value, FieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
-        elif isinstance(node.value, IntrinsicNode):
-            raise NotImplementedError("Subscript not implemented for object type %s"
-                                      % type(node.value).__name__)
+        #elif isinstance(node.value, IntrinsicNode):
+        #    raise NotImplementedError("Subscript not implemented for object type %s"
+        #                              % type(node.value).__name__)
         else:
             node.ccode = "%s[%s]" % (node.value.ccode, node.slice.ccode)
 
@@ -568,7 +574,13 @@ class LoopGenerator(object):
         ccode += [str(c.Include("math.h", system=False))]
 
         # Generate type definition for particle type
-        vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables]
+        vdecl = []
+        for v in self.ptype.variables:
+            if v.name is 'CGridIndexSet':
+                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
+            else:
+                vdecl.append(c.POD(v.dtype, v.name))
+
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         # Insert kernel code
