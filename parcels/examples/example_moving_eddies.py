@@ -21,7 +21,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350):
     """
     # Set NEMO fieldset variables
     depth = np.zeros(1, dtype=np.float32)
-    time = np.arange(0., 25. * 86400., 86400., dtype=np.float64)
+    time = np.arange(0., 8. * 86400., 86400., dtype=np.float64)
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(0, 4, xdim, dtype=np.float32)
@@ -83,10 +83,10 @@ def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
-    # Execte for 21 days, with 5min timesteps and hourly output
-    endtime = delta(days=21)
+    # Execute for 1 week, with 1 hour timesteps and hourly output
+    endtime = delta(days=7)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
-    pset.execute(method, endtime=endtime, dt=delta(minutes=5),
+    pset.execute(method, endtime=endtime, dt=delta(hours=1),
                  output_file=pset.ParticleFile(name="EddyParticle"),
                  interval=delta(hours=1), show_movie=False)
 
@@ -127,8 +127,8 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
 def test_moving_eddies_fieldset(mode):
     fieldset = moving_eddies_fieldset()
     pset = moving_eddies_example(fieldset, 2, mode=mode)
-    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
-    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
+    assert(pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
+    assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
 @pytest.fixture(scope='module')
@@ -144,8 +144,8 @@ def fieldsetfile():
 def test_moving_eddies_file(fieldsetfile, mode):
     fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
-    assert(pset[0].lon < 0.5 and 46.0 < pset[0].lat < 46.35)
-    assert(pset[1].lon < 0.5 and 49.4 < pset[1].lat < 49.8)
+    assert(pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
+    assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
 if __name__ == "__main__":
