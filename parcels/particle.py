@@ -61,15 +61,16 @@ class ParticleType(object):
 
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
-        # Pick Variable objects out of __dict__. First pick all the 64-bit ones so that
-        # they are aligned for the JIT cptr
-        self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable) and v.is64bit()] + \
-                         [v for v in pclass.__dict__.values() if isinstance(v, Variable) and not v.is64bit()]
+        # Pick Variable objects out of __dict__.
+        self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable)]
         for cls in pclass.__bases__:
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
                 self.variables = ptype.variables + self.variables
+        # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
+        self.variables = [v for v in self.variables if v.is64bit()] + \
+                         [v for v in self.variables if not v.is64bit()]
 
     def __repr__(self):
         return "PType<%s>::%s" % (self.name, self.variables)

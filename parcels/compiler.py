@@ -63,6 +63,6 @@ class GNUCompiler(Compiler):
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=[], ldargs=[]):
         opt_flags = ['-g', '-O3']
-        cppargs = ['-Wall', '-fPIC', '-I%s/include' % get_package_dir()] + opt_flags + cppargs
+        cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         ldargs = ['-shared'] + ldargs
         super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)

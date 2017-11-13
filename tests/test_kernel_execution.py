@@ -192,6 +192,23 @@ def test_multi_kernel_duplicate_varnames(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_multi_kernel_reuse_varnames(fieldset, mode):
+    # Testing for merging of two Kernels with the same variable declared
+    # Should throw a warning, but go ahead regardless
+    def MoveEast1(particle, fieldset, time, dt):
+        add_lon = 0.2
+        particle.lon += add_lon
+
+    def MoveEast2(particle, fieldset, time, dt):
+        particle.lon += add_lon  # NOQA - no flake8 testing of this line
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(MoveEast1) + pset.Kernel(MoveEast2),
+                 starttime=0., endtime=1., dt=1.)
+    assert np.allclose([p.lon for p in pset], [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_update_kernel_in_script(fieldset, mode):
     # Testing what happens when kernels are updated during runtime of a script
     # Should throw a warning, but go ahead regardless

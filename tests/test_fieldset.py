@@ -1,5 +1,6 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D
 from parcels.field import Field
+from datetime import timedelta as delta
 import numpy as np
 import pytest
 from os import path, pardir
@@ -98,7 +99,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
-@pytest.mark.parametrize('indstime', [range(10, 20), [4]])
+@pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime):
     fieldsetfile = path.join(path.dirname(__file__), pardir, 'examples', 'MovingEddies_data', 'moving_eddies')
     fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
@@ -170,3 +171,53 @@ def test_fieldset_constant(mode):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('time_periodic', [True, False])
+@pytest.mark.parametrize('dt_sign', [-1, 1])
+def test_periodic(mode, time_periodic, dt_sign):
+    lon = np.array([0, 1], dtype=np.float32)
+    lat = np.array([0, 1], dtype=np.float32)
+    depth = np.array([0, 1], dtype=np.float32)
+    tsize = 24*60+1
+    period = 86400
+    time = np.linspace(0, period, tsize, dtype=np.float64)
+
+    def temp_func(time):
+        return 20 + 2 * np.sin(time*2*np.pi/period)
+    temp_vec = temp_func(time)
+
+    U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    V = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    temp = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    temp[:, :, :, :] = temp_vec
+
+    data = {'U': U, 'V': V, 'W': W, 'temp': temp}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic)
+
+    def sampleTemp(particle, fieldset, time, dt):
+        # Note that fieldset.temp is interpolated at time=time+dt.
+        # Indeed, sampleTemp is called at time=time, but the result is written
+        # at time=time+dt, after the Kernel update
+        particle.temp = fieldset.temp[time+dt, particle.lon, particle.lat, particle.depth]
+
+    class MyParticle(ptype[mode]):
+        temp = Variable('temp', dtype=np.float32, initial=20.)
+
+    dt_sign = -1
+    pset = ParticleSet.from_list(fieldset, pclass=MyParticle,
+                                 lon=[0.5], lat=[0.5], depth=[0.5])
+    pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp),
+                 runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
+
+    if time_periodic:
+        t = pset.particles[0].time
+        temp_theo = temp_func(t)
+    elif dt_sign == 1:
+        temp_theo = temp_vec[-1]
+    elif dt_sign == -1:
+        temp_theo = temp_vec[0]
+    assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)

@@ -1,3 +1,9 @@
+#ifndef _PARCELS_H
+#define _PARCELS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -16,7 +22,7 @@ typedef enum
 
 typedef struct
 {
-  int xdim, ydim, zdim, tdim, tidx, allow_time_extrapolation;
+  int xdim, ydim, zdim, tdim, tidx, allow_time_extrapolation, time_periodic;
   float *lon, *lat, *depth;
   double *time;
   float ***data;
@@ -37,10 +43,24 @@ static inline ErrorCode search_linear_float(float x, int size, float *xvals, int
 }
 
 /* Local linear search to update time index */
-static inline ErrorCode search_linear_double(double t, int size, double *tvals, int *index)
+static inline ErrorCode search_linear_double(double *t, int size, double *tvals, int *index, int time_periodic)
 {
-  while (*index < size-1 && t >= tvals[*index+1]) ++(*index);
-  while (*index > 0 && t < tvals[*index]) --(*index);
+  if (time_periodic == 1){
+    if (*t < tvals[0]){
+      *index = size-1;      
+      int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
+      *t -= periods * (tvals[size-1]-tvals[0]);
+      search_linear_double(t, size, tvals, index, time_periodic);
+    }  
+    else if (*t > tvals[size-1]){
+      *index = 0;      
+      int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
+      *t -= periods * (tvals[size-1]-tvals[0]);
+      search_linear_double(t, size, tvals, index, time_periodic);
+    }  
+  }          
+  while (*index < size-1 && *t >= tvals[*index+1]) ++(*index);
+  while (*index > 0 && *t < tvals[*index]) --(*index);
   return SUCCESS;
 }
 
@@ -128,10 +148,10 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
   if (f->zdim > 1){
     err = search_linear_float(z, f->zdim, f->depth, &k); CHECKERROR(err);}
   /* Find time index for temporal interpolation */
-  if (f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
+  if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < f->time[0] || time > f->time[f->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_linear_double(time, f->tdim, f->time, &(f->tidx));
+  err = search_linear_double(&time, f->tdim, f->time, &(f->tidx), f->time_periodic);
   if (f->tidx < f->tdim-1 && time > f->time[f->tidx]) {
     t0 = f->time[f->tidx]; t1 = f->time[f->tidx+1];
     if (interp_method == LINEAR){
@@ -241,3 +261,7 @@ static inline float parcels_normalvariate(float loc, float scale)
   y2 = x2 * w;
   return( loc + y1 * scale );
 }
+#ifdef __cplusplus
+}
+#endif
+#endif
