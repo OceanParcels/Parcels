@@ -125,7 +125,7 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
 def test_peninsula_fieldset(mode):
     """Execute peninsula test from fieldset generated in memory"""
     fieldset = peninsula_fieldset(100, 50)
-    pset = pensinsula_example(fieldset, 100, mode=mode, degree=1)
+    pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
@@ -147,7 +147,7 @@ def fieldsetfile():
 def test_peninsula_file(fieldsetfile, mode):
     """Open fieldset files and execute"""
     fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
-    pset = pensinsula_example(fieldset, 100, mode=mode, degree=1)
+    pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
