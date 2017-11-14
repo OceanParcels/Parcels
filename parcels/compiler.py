@@ -10,7 +10,7 @@ except:
 
 
 def get_package_dir():
-    return path.abspath(path.join(path.dirname(__file__)))
+    return path.abspath(path.dirname(__file__))
 
 
 def get_cache_dir():
