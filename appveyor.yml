@@ -1,0 +1,16 @@
+environment:
+
+  matrix:
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "32"
+
+install:
+  - "powershell appveyor/install_miniconda.ps1"
+  - "conda env create -f environment_win32.yml -n py2_parcels"
+  - "activate py2_parcels"
+  - "python setup.py install"
+
+test_script:
+  - "flake8 parcels"
