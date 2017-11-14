@@ -8,7 +8,7 @@ environment:
 
 install:
   - "powershell ./appveyor/install_miniconda.ps1"
-  - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "conda env create -f environment_win32.yml -n py2_parcels"
   - "activate py2_parcels"
   - "python setup.py install"
