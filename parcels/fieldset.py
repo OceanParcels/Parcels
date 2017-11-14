@@ -1,4 +1,5 @@
 from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
+from parcels.gridset import GridSet
 from parcels.loggers import logger
 import numpy as np
 from os import path
@@ -35,12 +36,17 @@ class FieldSet(object):
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, allow_time_extrapolation=False, fields={}):
+        self.gridset = GridSet()
+
         self.U = U
+        self.gridset.add_grid(U.grid)
         self.V = V
+        self.gridset.add_grid(V.grid)
 
         # Add additional fields as attributes
         for name, field in fields.items():
             setattr(self, name, field)
+            self.gridset.add_grid(field.grid)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=True, mesh='spherical',
@@ -250,11 +256,11 @@ class FieldSet(object):
 
         # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
         if zonal:
-            self.add_constant('halo_west', self.U.lon[0])
-            self.add_constant('halo_east', self.U.lon[-1])
+            self.add_constant('halo_west', self.U.grid.lon[0])
+            self.add_constant('halo_east', self.U.grid.lon[-1])
         if meridional:
-            self.add_constant('halo_south', self.U.lat[0])
-            self.add_constant('halo_north', self.U.lat[-1])
+            self.add_constant('halo_south', self.U.grid.lat[0])
+            self.add_constant('halo_north', self.U.grid.lat[-1])
 
         for attr, value in self.__dict__.iteritems():
             if isinstance(value, Field):

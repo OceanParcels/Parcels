@@ -1,11 +1,8 @@
+from parcels.loggers import logger
 import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_char_p, c_void_p
 
 __all__ = ['StructuredGrid', 'GridIndex', 'CGrid']
-
-#gtype = {'structured': StructuredGrid,
-#         'curvilinear': CurvilinearGrid,
-#         'unstructured': UnstructuredGrid}
 
 
 class CGrid(Structure):
@@ -59,8 +56,20 @@ class StructuredGrid(Grid):
         self.name = name
         self.lon = lon
         self.lat = lat
-        self.depth = depth if depth else np.zeros(1, dtype=np.float32)
-        self.time = time
+        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        if not self.lon.dtype == np.float32:
+            logger.warning_once("Casting lon data to np.float32")
+            self.lon = self.lon.astype(np.float32)
+        if not self.lat.dtype == np.float32:
+            logger.warning_once("Casting lat data to np.float32")
+            self.lat = self.lat.astype(np.float32)
+        if not self.depth.dtype == np.float32:
+            logger.warning_once("Casting depth data to np.float32")
+            self.depth = self.depth.astype(np.float32)
+        if not self.time.dtype == np.float64:
+            logger.warning_once("Casting time data to np.float64")
+            self.time = self.time.astype(np.float64)
 
     @property
     def ctypes_struct(self):
@@ -106,7 +115,6 @@ class GridIndex(object):
 
     def __init__(self, grid, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
-        #self.grid = grid
         self.name = grid.name
         self.xi = 0
         self.yi = 0

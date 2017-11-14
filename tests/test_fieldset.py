@@ -88,10 +88,10 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     fieldsetsub = FieldSet.from_nemo(filepath, indices=indices)
-    assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.lat[indices['lat']])
-    assert np.allclose(fieldsetsub.V.lon, fieldsetfull.V.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.V.lat, fieldsetfull.V.lat[indices['lat']])
+    assert np.allclose(fieldsetsub.U.grid.lon, fieldsetfull.U.grid.lon[indices['lon']])
+    assert np.allclose(fieldsetsub.U.grid.lat, fieldsetfull.U.grid.lat[indices['lat']])
+    assert np.allclose(fieldsetsub.V.grid.lon, fieldsetfull.V.grid.lon[indices['lon']])
+    assert np.allclose(fieldsetsub.V.grid.lat, fieldsetfull.V.grid.lat[indices['lat']])
 
     ixgrid = np.ix_([0], indices['lat'], indices['lon'])
     assert np.allclose(fieldsetsub.U.data, fieldsetfull.U.data[ixgrid])
@@ -103,7 +103,7 @@ def test_moving_eddies_file_subsettime(indstime):
     fieldsetfile = path.join(path.dirname(__file__), pardir, 'examples', 'MovingEddies_data', 'moving_eddies')
     fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     fieldsetsub = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
-    assert np.allclose(fieldsetsub.P.time, fieldsetfull.P.time[indstime])
+    assert np.allclose(fieldsetsub.P.grid.time, fieldsetfull.P.grid.time[indstime])
     assert np.allclose(fieldsetsub.P.data, fieldsetfull.P.data[indstime, :, :])
 
 
@@ -113,7 +113,7 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
-    field = Field('newfld', fieldset.U.data, fieldset.U.lon, fieldset.U.lat)
+    field = Field('newfld', fieldset.U.data, fieldset.U.grid.lon, fieldset.U.grid.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
     fieldset.write(filepath)
@@ -143,7 +143,7 @@ def test_fieldset_gradient():
     # Create numpy fields.
     r = 6.371e6
     deg2rd = np.pi / 180.
-    numpy_grad_fields = np.gradient(np.transpose(field.data[0, :, :]), (r * np.diff(field.lat) * deg2rd)[0])
+    numpy_grad_fields = np.gradient(np.transpose(field.data[0, :, :]), (r * np.diff(field.grid.lat) * deg2rd)[0])
 
     # Arbitrarily set relative tolerance to 1%.
     assert np.allclose(grad_fields[0].data[0, :, :], np.array(np.transpose(numpy_grad_fields[0])),

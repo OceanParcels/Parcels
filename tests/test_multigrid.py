@@ -1,4 +1,4 @@
-from parcels import FieldSet, Field, ParticleSet, GridSet, StructuredGrid, ScipyParticle, JITParticle, Variable
+from parcels import FieldSet, Field, ParticleSet, StructuredGrid, ScipyParticle, JITParticle, Variable
 from parcels import AdvectionRK4
 import numpy as np
 import pytest
@@ -32,8 +32,6 @@ def test_multi_structured_grids(mode):
     lat_g1 = np.linspace(0, b, ydim_g1, dtype=np.float32)
     time_g1 = np.linspace(0., 1000., 2, dtype=np.float64)
     grid_1 = StructuredGrid('grid1py', lon_g1, lat_g1, time=time_g1)
-
-    grid_set = GridSet([grid_0, grid_1])
 
     u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_data = 2*u_data
@@ -71,7 +69,7 @@ def test_multi_structured_grids(mode):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
         temp1 = Variable('temp1', dtype=np.float32, initial=20.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001], gridset=grid_set)
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001])
 
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=1, dt=1)
 

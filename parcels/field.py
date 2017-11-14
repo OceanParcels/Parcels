@@ -4,12 +4,12 @@ from collections import Iterable
 from py import path
 import numpy as np
 import xarray
-from ctypes import Structure, c_int, c_float, c_double, POINTER, pointer
+from ctypes import Structure, c_int, c_float, POINTER, pointer
 from netCDF4 import Dataset, num2date
 from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
-from grid import CGrid
+from grid import StructuredGrid, CGrid
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -152,15 +152,8 @@ class Field(object):
         self.data = data
         if grid:
             self.grid = grid
-            self.lon = grid.lon
-            self.lat = grid.lat
-            self.depth = np.zeros(1, dtype=np.float32) if grid.depth is None else grid.depth
-            self.time = grid.time
         else:
-            self.lon = lon
-            self.lat = lat
-            self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
-            self.time = np.zeros(1, dtype=np.float64) if time is None else time
+            self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time)
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
@@ -173,26 +166,14 @@ class Field(object):
         if not self.data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
             self.data = self.data.astype(np.float32)
-        if not self.lon.dtype == np.float32:
-            logger.warning_once("Casting lon data to np.float32")
-            self.lon = self.lon.astype(np.float32)
-        if not self.lat.dtype == np.float32:
-            logger.warning_once("Casting lat data to np.float32")
-            self.lat = self.lat.astype(np.float32)
-        if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
-            self.depth = self.depth.astype(np.float32)
-        if not self.time.dtype == np.float64:
-            logger.warning_once("Casting time data to np.float64")
-            self.time = self.time.astype(np.float64)
         if transpose:
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        if self.depth.size > 1:
-            self.data = self.data.reshape((self.time.size, self.depth.size, self.lat.size, self.lon.size))
+        if self.grid.depth.size > 1:
+            self.data = self.data.reshape((self.grid.time.size, self.grid.depth.size, self.grid.lat.size, self.grid.lon.size))
         else:
-            self.data = self.data.reshape((self.time.size, self.lat.size, self.lon.size))
+            self.data = self.data.reshape((self.grid.time.size, self.grid.lat.size, self.grid.lon.size))
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -204,8 +185,6 @@ class Field(object):
 
         # Variable names in JIT code
         self.ccode_data = self.name
-        self.ccode_lon = self.name + "_lon"
-        self.ccode_lat = self.name + "_lat"
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
@@ -282,23 +261,23 @@ class Field(object):
             name = 'd' + self.name
 
         if timerange is None:
-            time_i = range(len(self.time))
-            time = self.time
+            time_i = range(len(self.grid.time))
+            time = self.grid.time
         else:
-            time_i = range(np.where(self.time >= timerange[0])[0][0], np.where(self.time <= timerange[1])[0][-1]+1)
-            time = self.time[time_i]
+            time_i = range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1)
+            time = self.grid.time[time_i]
         if lonrange is None:
-            lon_i = range(len(self.lon))
-            lon = self.lon
+            lon_i = range(len(self.grid.lon))
+            lon = self.grid.lon
         else:
-            lon_i = range(np.where(self.lon >= lonrange[0])[0][0], np.where(self.lon <= lonrange[1])[0][-1]+1)
-            lon = self.lon[lon_i]
+            lon_i = range(np.where(self.grid.lon >= lonrange[0])[0][0], np.where(self.grid.lon <= lonrange[1])[0][-1]+1)
+            lon = self.grid.lon[lon_i]
         if latrange is None:
-            lat_i = range(len(self.lat))
-            lat = self.lat
+            lat_i = range(len(self.grid.lat))
+            lat = self.grid.lat
         else:
-            lat_i = range(np.where(self.lat >= latrange[0])[0][0], np.where(self.lat <= latrange[1])[0][-1]+1)
-            lat = self.lat[lat_i]
+            lat_i = range(np.where(self.grid.lat >= latrange[0])[0][0], np.where(self.grid.lat <= latrange[1])[0][-1]+1)
+            lat = self.grid.lat[lat_i]
 
         dVdx = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
         dVdy = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
@@ -307,9 +286,9 @@ class Field(object):
             dVdx[t, :, :] = np.array(np.transpose(grad[0]))
             dVdy[t, :, :] = np.array(np.transpose(grad[1]))
 
-        return([Field(name + '_dx', dVdx, lon, lat, self.depth, time,
+        return([Field(name + '_dx', dVdx, lon, lat, self.grid.depth, time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
-                Field(name + '_dy', dVdy, lon, lat, self.depth, time,
+                Field(name + '_dy', dVdy, lon, lat, self.grid.depth, time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
     def interpolator3D(self, idx, z, y, x):
@@ -318,8 +297,8 @@ class Field(object):
         zdx = self.depth_index(z, y, x)
         f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
         f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
-        z0 = self.depth[zdx]
-        z1 = self.depth[zdx + 1]
+        z0 = self.grid.depth[zdx]
+        z1 = self.grid.depth[zdx + 1]
         if z < z0 or z > z1:
             raise FieldSamplingError(x, y, z, field=self)
         if self.interp_method is 'nearest':
@@ -339,7 +318,7 @@ class Field(object):
             data = self.data[t_idx, :]
         else:
             data = self.data[t_idx, z_idx, :]
-        return RegularGridInterpolator((self.lat, self.lon), data,
+        return RegularGridInterpolator((self.grid.lat, self.grid.lon), data,
                                        bounds_error=False, fill_value=np.nan,
                                        method=self.interp_method)
 
@@ -351,15 +330,15 @@ class Field(object):
         :param time: Time to interpolate to
 
         :rtype: Linearly interpolated field"""
-        t0 = self.time[tidx]
-        t1 = self.time[tidx+1]
+        t0 = self.grid.time[tidx]
+        t1 = self.grid.time[tidx+1]
         f0 = self.data[tidx, :]
         f1 = self.data[tidx+1, :]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, tidx, z, y, x):
         """Interpolate horizontal field values using a SciPy interpolator"""
-        if self.depth.size == 1:
+        if self.grid.depth.size == 1:
             val = self.interpolator2D(tidx)((y, x))
         else:
             val = self.interpolator3D(tidx, z, y, x)
@@ -375,25 +354,25 @@ class Field(object):
         Note that we normalize to either the first or the last index
         if the sampled value is outside the time value range.
         """
-        if not self.allow_time_extrapolation and (time < self.time[0] or time > self.time[-1]):
+        if not self.allow_time_extrapolation and (time < self.grid.time[0] or time > self.grid.time[-1]):
             raise TimeExtrapolationError(time, field=self)
-        time_index = self.time <= time
+        time_index = self.grid.time <= time
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
-            return len(self.time) - 1
+            return len(self.grid.time) - 1
         else:
             return time_index.argmin() - 1 if time_index.any() else 0
 
     def depth_index(self, depth, lat, lon):
         """Find the index in the depth array associated with a given depth"""
-        if depth > self.depth[-1]:
+        if depth > self.grid.depth[-1]:
             raise FieldSamplingError(lon, lat, depth, field=self)
-        depth_index = self.depth <= depth
+        depth_index = self.grid.depth <= depth
         if depth_index.all():
             # If given depth == largest field depth, use the second-last
             # field depth (as zidx+1 needed in interpolation)
-            return len(self.depth) - 2
+            return len(self.grid.depth) - 2
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
@@ -405,11 +384,11 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         t_idx = self.time_index(time)
-        if t_idx < len(self.time)-1 and time > self.time[t_idx]:
+        if t_idx < len(self.grid.time)-1 and time > self.grid.time[t_idx]:
             f0 = self.spatial_interpolation(t_idx, z, y, x)
             f1 = self.spatial_interpolation(t_idx + 1, z, y, x)
-            t0 = self.time[t_idx]
-            t1 = self.time[t_idx + 1]
+            t0 = self.grid.time[t_idx]
+            t1 = self.grid.time[t_idx + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
         else:
             # Skip temporal interpolation if time is outside
@@ -421,8 +400,8 @@ class Field(object):
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
-            % (x, y, z, "particle->xi", "particle->yi", "particle->zi", "particle->CGridIndexSet", t, self.name, var,
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, z, "particle->CGridIndexSet", t, self.name, var,
                self.interp_method.upper())
 
     def ccode_convert(self, _, x, y, z):
@@ -438,19 +417,13 @@ class Field(object):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('tidx', c_int),
                         ('allow_time_extrapolation', c_int),
-                        ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
-                        ('depth', POINTER(c_float)), ('time', POINTER(c_double)),
                         ('data', POINTER(POINTER(c_float))),
                         ('grid', POINTER(CGrid))]
 
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
-        cstruct = CField(self.lon.size, self.lat.size, self.depth.size,
-                         self.time.size, 0, allow_time_extrapolation,
-                         self.lon.ctypes.data_as(POINTER(c_float)),
-                         self.lat.ctypes.data_as(POINTER(c_float)),
-                         self.depth.ctypes.data_as(POINTER(c_float)),
-                         self.time.ctypes.data_as(POINTER(c_double)),
+        cstruct = CField(self.grid.lon.size, self.grid.lat.size, self.grid.depth.size,
+                         self.grid.time.size, 0, allow_time_extrapolation,
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))),
                          pointer(self.grid.ctypes_struct))
         return cstruct
@@ -474,14 +447,14 @@ class Field(object):
 
         if with_particles or (not animation):
             idx = self.time_index(show_time)
-            if self.time.size > 1:
+            if self.grid.time.size > 1:
                 data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
             else:
                 data = np.squeeze(self.data)
 
             vmin = data.min() if vmin is None else vmin
             vmax = data.max() if vmax is None else vmax
-            cs = plt.contourf(self.lon, self.lat, data,
+            cs = plt.contourf(self.grid.lon, self.grid.lat, data,
                               levels=np.linspace(vmin, vmax, 256))
             cs.cmap.set_over('k')
             cs.cmap.set_under('w')
@@ -491,11 +464,11 @@ class Field(object):
                 plt.show()
         else:
             fig = plt.figure()
-            ax = plt.axes(xlim=(self.lon[0], self.lon[-1]), ylim=(self.lat[0], self.lat[-1]))
+            ax = plt.axes(xlim=(self.grid.lon[0], self.grid.lon[-1]), ylim=(self.grid.lat[0], self.grid.lat[-1]))
 
             def animate(i):
                 data = np.squeeze(self.data[i, :, :])
-                cont = ax.contourf(self.lon, self.lat, data,
+                cont = ax.contourf(self.grid.lon, self.grid.lat, data,
                                    levels=np.linspace(data.min(), data.max(), 256))
                 return cont
 
@@ -514,25 +487,25 @@ class Field(object):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
-            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            lonshift = (self.grid.lon[-1] - 2 * self.grid.lon[0] + self.grid.lon[1])
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
                                             self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
             else:
                 self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
                                             self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
-            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
-                                       self.lon, self.lon[0:halosize] + lonshift))
+            self.grid.lon = np.concatenate((self.grid.lon[-halosize:] - lonshift,
+                                            self.grid.lon, self.grid.lon[0:halosize] + lonshift))
         if meridional:
-            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
+            latshift = (self.grid.lat[-1] - 2 * self.grid.lat[0] + self.grid.lat[1])
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
                                             self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
             else:
                 self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
                                             self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
-            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
-                                       self.lat, self.lat[0:halosize] + latshift))
+            self.grid.lat = np.concatenate((self.grid.lat[-halosize:] - latshift,
+                                            self.grid.lat, self.grid.lat[0:halosize] + latshift))
 
     def write(self, filename, varname=None):
         """Write a :class:`Field` to a netcdf file
@@ -546,31 +519,31 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        t, d, x, y = (self.time.size, self.depth.size,
-                      self.lon.size, self.lat.size)
-        nav_lon = xarray.DataArray(self.lon + np.zeros((y, x), dtype=np.float32),
-                                   coords=[('y', self.lat), ('x', self.lon)])
-        nav_lat = xarray.DataArray(self.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                                   coords=[('y', self.lat), ('x', self.lon)])
+        t, d, x, y = (self.grid.time.size, self.grid.depth.size,
+                      self.grid.lon.size, self.grid.lat.size)
+        nav_lon = xarray.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        nav_lat = xarray.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
         vardata = xarray.DataArray(self.data.reshape((t, d, y, x)),
-                                   coords=[('time_counter', self.time),
-                                           (vname_depth, self.depth),
-                                           ('y', self.lat), ('x', self.lon)])
+                                   coords=[('time_counter', self.grid.time),
+                                           (vname_depth, self.grid.depth),
+                                           ('y', self.grid.lat), ('x', self.grid.lon)])
         # Create xarray Dataset and output to netCDF format
         dset = xarray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                           'nav_lat': nav_lat,
-                                                          vname_depth: self.depth})
+                                                          vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new):
         if len(field_new.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
-        if field_new.time > self.time[-1]:  # forward in time, so appending at end
+        if field_new.time > self.grid.time[-1]:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            self.time = np.concatenate((self.time[1:], field_new.time))
-        elif field_new.time < self.time[0]:  # backward in time, so prepending at start
+            self.grid.time = np.concatenate((self.grid.time[1:], field_new.time))
+        elif field_new.time < self.grid.time[0]:  # backward in time, so prepending at start
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            self.time = np.concatenate((field_new.time, self.time[:-1]))
+            self.grid.time = np.concatenate((field_new.time, self.grid.time[:-1]))
         else:
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 

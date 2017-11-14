@@ -17,8 +17,33 @@ class GridSet(object):
         self.size = len(grids)
 
     def add_grid(self, grid):
-        self.grids.append(grid)
-        self.size += 1
+        existing_grid = False
+        for g in self.grids:
+            if g.lon.shape != grid.lon.shape:
+                continue
+            if g.lat.shape != grid.lat.shape:
+                continue
+            if g.depth.shape != grid.depth.shape:
+                continue
+            if g.time.shape != grid.time.shape:
+                continue
+            if not np.allclose(g.lon, grid.lon, rtol=1e-4):
+                continue
+            if not np.allclose(g.lat, grid.lat, rtol=1e-4):
+                continue
+            if not np.allclose(g.depth, grid.depth, rtol=1e-4):
+                continue
+            if not np.allclose(g.time, grid.time, rtol=1e-4):
+                continue
+            existing_grid = True
+            break
+
+        if not existing_grid:
+            for g in self.grids:
+                if g.name == grid.name:
+                    grid.name = grid.name + '_b'
+            self.grids.append(grid)
+            self.size += 1
 
 
 class GridIndexSet(object):
@@ -27,9 +52,7 @@ class GridIndexSet(object):
     :param gridset: GridSet object
     """
     def __init__(self, id, gridset):
-        #self.id = id
         self.size = gridset.size
-
         self.gridindices = np.empty(self.size, GridIndex)
         self._gridindices_data = np.empty(self.size, GridIndex.dtype())
 
