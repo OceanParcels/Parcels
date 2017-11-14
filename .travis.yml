@@ -27,11 +27,16 @@ before_script: # configure a headless display to test plot generation
     - "sh -e /etc/init.d/xvfb start"
     - sleep 3 # give xvfb some time to start
 
-script:
-    - flake8 parcels
-    - flake8 tests
-    - flake8 parcels/examples
-    - parcels_get_examples examples/
-    - py.test -v -s tests/
-    - py.test -v -s --nbval-lax examples/
-    - make linkcheck -C docs
+jobs:
+    include:
+        - script:
+            - flake8 parcels
+            - flake8 tests
+            - flake8 parcels/examples
+        - script:
+            - parcels_get_examples examples/
+            - py.test -v -s tests/
+            - py.test -v -s --nbval-lax examples/
+        - script:
+            - make linkcheck -C docs
+            - 'ALLOW_FAIURE=true'
