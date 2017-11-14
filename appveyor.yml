@@ -4,10 +4,10 @@ environment:
 
     - PYTHON: "C:\\Python27-miniconda"
       PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "32"
+      PYTHON_ARCH: "64"
 
 install:
-  - "powershell appveyor/install_miniconda.ps1"
+  - "powershell ./appveyor/install_miniconda.ps1"
   - "set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "conda env create -f environment_win32.yml -n py2_parcels"
   - "activate py2_parcels"
