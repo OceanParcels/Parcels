@@ -91,10 +91,10 @@ requirements. This is the “batteries-included” solution probably suitable fo
 
     python example_peninsula.py --fieldset 100 100
 
-4. Optionally, if you want to run all the examples and tutorials, you can get tutorials and example data by running::
+4. Optionally, to get tutorials and example data, run::
 
-    parcels_get_examples $HOME/parcels_first_steps
-    cd $HOME/parcels_first_steps
+    parcels_get_examples parcels_examples
+    cd parcels_examples
     jupyter notebook
 
 5. The next time you log in to your machine and want to work with Parcels, activate the environment with::
