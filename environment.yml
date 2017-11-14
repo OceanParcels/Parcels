@@ -8,6 +8,7 @@ dependencies:
   - enum34
   - ffmpeg
   - flake8>=2.1.0
+  - git
   - gcc
   - jupyter
   - matplotlib=2.0.2
