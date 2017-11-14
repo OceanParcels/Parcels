@@ -18,3 +18,7 @@ build: false
 
 test_script:
   - "flake8 parcels"
+  - "flake8 tests"
+  - "flake8 examples"
+  - "python parcels/scripts/pull_data.py"
+  - "py.test -v -s tests/"
