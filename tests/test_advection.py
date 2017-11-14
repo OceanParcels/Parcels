@@ -119,7 +119,7 @@ def periodicBC(particle, fieldset, time, dt):
 def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
-    assert(len(fieldset.U.lon) == xdim + 2 * halosize)
+    assert(len(fieldset.U.grid.lon) == xdim + 2 * halosize)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
@@ -130,7 +130,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
 def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
     fieldset.add_periodic_halo(meridional=True)
-    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert(len(fieldset.U.grid.lat) == ydim + 10)  # default halo size is 5 grid points
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
@@ -141,10 +141,10 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
 def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
-    assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
-    assert(len(fieldset.U.lon) == xdim + 10)  # default halo size is 5 grid points
-    assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1]-fieldset.U.lat[0], rtol=0.001)
-    assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
+    assert(len(fieldset.U.grid.lat) == ydim + 10)  # default halo size is 5 grid points
+    assert(len(fieldset.U.grid.lon) == xdim + 10)  # default halo size is 5 grid points
+    assert np.allclose(np.diff(fieldset.U.grid.lat), fieldset.U.grid.lat[1]-fieldset.U.grid.lat[0], rtol=0.001)
+    assert np.allclose(np.diff(fieldset.U.grid.lon), fieldset.U.grid.lon[1]-fieldset.U.grid.lon[0], rtol=0.001)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))

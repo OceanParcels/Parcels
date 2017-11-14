@@ -31,8 +31,6 @@ typedef struct
 typedef struct
 {
   int xdim, ydim, zdim, tdim, tidx, allow_time_extrapolation, time_periodic;
-  float *lon, *lat, *depth;
-  double *time;
   float ***data;
   CGrid *grid;
 } CField;
@@ -176,8 +174,7 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, int xi,
-                                                      int yi, int zi, void *gridIndexSet, double time, CField *f,
+static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, void *gridIndexSet, double time, CField *f,
                                                       float *value, int interp_method)
 {
   ErrorCode err;

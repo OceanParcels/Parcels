@@ -165,7 +165,7 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, fieldset, gridset=None, depth=0., dt=1., time=0., cptr=None):
+    def __init__(self, lon, lat, fieldset, depth=0., dt=1., time=0., cptr=None):
         global lastID
 
         # Enforce default values through Variable descriptor
@@ -202,9 +202,6 @@ class JITParticle(ScipyParticle):
     """
 
     CGridIndexSet = Variable('CGridIndexSet', dtype=np.dtype(c_void_p), to_write=False)
-    xi = Variable('xi', dtype=np.int32, to_write=False)
-    yi = Variable('yi', dtype=np.int32, to_write=False)
-    zi = Variable('zi', dtype=np.int32, to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -214,16 +211,11 @@ class JITParticle(ScipyParticle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-        #fieldset = kwargs.get('fieldset')
-        gridset = kwargs.get('gridset')
-        self.xi = 8   #np.where(self.lon >= fieldset.U.lon)[0][-1]
-        self.yi = 12  #np.where(self.lat >= fieldset.U.lat)[0][-1]
-        self.zi = 47  #np.where(self.depth >= fieldset.U.depth)[0][-1]
-        self.gridIndexSet = GridIndexSet(self.id, gridset)
+        fieldset = kwargs.get('fieldset')
+        self.gridIndexSet = GridIndexSet(self.id, fieldset.gridset)
         self.CGridIndexSetptr = cast(pointer(self.gridIndexSet.ctypes_struct), c_void_p)
         self.CGridIndexSet = self.CGridIndexSetptr.value
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)[xi=%d, yi=%d, zi=%d]" % (self.id, self.lon, self.lat,
-                                                                                  self.depth, self.time,
-                                                                                  self.xi, self.yi, self.zi)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
+                                                             self.depth, self.time)

@@ -89,38 +89,6 @@ class ParticleAttributeNode(IntrinsicNode):
         self.obj = obj
         self.attr = attr
         self.ccode = "%s->%s" % (obj.ccode, attr)
-        self.ccode_index_var = None
-
-        #if self.attr == 'lon':
-        #    self.ccode_index_var = "%s->%s" % (self.obj.ccode, "xi")
-        #elif self.attr == 'lat':
-        #    self.ccode_index_var = "%s->%s" % (self.obj.ccode, "yi")
-
-    @property
-    def pyast_index_update(self):
-        pyast = ast.Assign()
-        pyast.targets = [IntrinsicNode(None, ccode='err')]
-        pyast.value = IntrinsicNode(None, ccode=self.ccode_index_update)
-        return pyast
-
-    @property
-    def ccode_index_update(self):
-        """C-code for the index update requires after updating p.lon/p.lat"""
-        func = "search_linear_float(particle->lon, particle->lat, particle->depth, "
-        func += "U->xdim, U->ydim, U->zdim, "
-        func += "U->lon, U->lat, U->depth, "
-        func += "&(particle->xi), &(particle->yi), &(particle->zi)); CHECKERROR(err)"
-        return func
-        #if self.attr == 'lon':
-        #    return "search_linear_float(%s, U->xdim, U->lon, &(%s)); CHECKERROR(err)" \
-        #        % (self.ccode, self.ccode_index_var)
-        #if self.attr == 'lat':
-        #    return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
-        #        % (self.ccode, self.ccode_index_var)
-        #if self.attr == 'depth':
-        #    return "search_linear_float(%s, U->zdim, U->depth, &(%s)); CHECKERROR(err)" \
-        #        % (self.ccode, self.ccode_index_var)
-        #return ""
 
 
 class ParticleNode(IntrinsicNode):
@@ -190,9 +158,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
             self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
             # .. and return the name of the temporary that will be populated
             return ast.Name(id=tmp)
-        #elif isinstance(node.value, IntrinsicNode):
-        #    raise NotImplementedError("Subscript not implemented for object type %s"
-        #                              % type(node.value).__name__)
         else:
             return node
 
@@ -201,11 +166,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
         stmts = [node]
-
-        # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
-        if isinstance(node.target, ParticleAttributeNode) \
-           and node.target.ccode_index_var is not None:
-            stmts += [node.target.pyast_index_update]
 
         # Inject statements from the stack
         if len(self.stmt_stack) > 0:
@@ -217,11 +177,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.targets = [self.visit(t) for t in node.targets]
         node.value = self.visit(node.value)
         stmts = [node]
-
-        # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
-        if isinstance(node.targets[0], ParticleAttributeNode) \
-           and node.targets[0].ccode_index_var is not None:
-            stmts += [node.targets[0].pyast_index_update]
 
         # Inject statements from the stack
         if len(self.stmt_stack) > 0:
@@ -424,9 +379,6 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.slice)
         if isinstance(node.value, FieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
-        #elif isinstance(node.value, IntrinsicNode):
-        #    raise NotImplementedError("Subscript not implemented for object type %s"
-        #                              % type(node.value).__name__)
         else:
             node.ccode = "%s[%s]" % (node.value.ccode, node.slice.ccode)
 
