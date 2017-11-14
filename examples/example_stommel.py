@@ -85,9 +85,9 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
-    # Execute for 50 days, with 5min timesteps and hourly output
-    runtime = delta(days=50)
-    dt = delta(minutes=5)
+    # Execute for 30 days, with 1hour timesteps and 12-hourly output
+    runtime = delta(days=30)
+    dt = delta(hours=1)
     interval = delta(hours=12)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
     pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt, interval=interval,

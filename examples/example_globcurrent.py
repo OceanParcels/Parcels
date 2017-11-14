@@ -38,8 +38,8 @@ def test_globcurrent_fieldset():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt, substart, subend, lonstart, latstart, irange', [
-    (300., 0, 3, 25, -35, range(3, 9, 1)),
-    (-300., 8, 10, 20, -39, range(7, 2, -1))
+    (3600., 0, 3, 25, -35, range(3, 9, 1)),
+    (-3600., 8, 10, 20, -39, range(7, 2, -1))
 ])
 def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, latstart, irange):
     basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',

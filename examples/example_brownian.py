@@ -42,7 +42,7 @@ def test_brownian_example(mode, npart=3000):
                                  finish=(ptcls_start, ptcls_start))
 
     endtime = delta(days=1)
-    dt = delta(minutes=5)
+    dt = delta(hours=1)
     interval = delta(hours=1)
 
     k_brownian = pset.Kernel(two_dim_brownian_flat)
