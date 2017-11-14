@@ -39,4 +39,5 @@ jobs:
             - py.test -v -s --nbval-lax examples/
         - script:
             - make linkcheck -C docs
+          env:
             - 'ALLOW_FAIURE=true'
