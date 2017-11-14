@@ -20,5 +20,6 @@ test_script:
   - "flake8 parcels"
   - "flake8 tests"
   - "flake8 examples"
-  - "python parcels/scripts/pull_data.py"
+  - "parcels_get_examples examples/"
   - "py.test -v -s tests/"
+  - "py.test -v -s --nbval-lax examples/"
