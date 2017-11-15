@@ -115,9 +115,8 @@ def test_print(fieldset, mode, capfd):
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time, dt):
-        val = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-        particle.p = val
-        print("%d %f" % (particle.id, val))
+        particle.p = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        print("%d %f" % (particle.id, particle.p))
     pset.execute(kernel, endtime=1., dt=1.)
     out, err = capfd.readouterr()
     lst = out.split(' ')
