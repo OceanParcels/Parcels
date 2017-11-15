@@ -62,6 +62,24 @@ def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_zero_runtime(fieldset, mode, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart, dtype=np.float32),
+                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+    pset.execute(DoNothing, runtime=0.)
+    assert(pset[0].time == 0.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_execution_zero_dt(fieldset, mode, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart, dtype=np.float32),
+                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+    pset.execute(DoNothing, dt=0.)
+    assert(pset[0].time == 0.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_timed(fieldset, mode, npart=10):
     def TimedFail(particle, fieldset, time, dt):
         if particle.time >= 10.:
