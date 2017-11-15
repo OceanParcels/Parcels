@@ -158,7 +158,7 @@ However, there are some key limitations to the Kernels that everyone who wants t
 
   * Functions from the ``maths`` standard library and from the custom ``random`` library at :mod:`parcels.rng`
   
-  * ``print`` statements. Simple print statements can be written, such as::
+  * Simple ``print`` statements, such as::
 
       print("Some print")
       print(particle.lon)
