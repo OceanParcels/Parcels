@@ -536,7 +536,7 @@ class KernelGenerator(ast.NodeVisitor):
             args = node.values[0].right.ccode
             s = ('printf("%s\\n"' % node.values[0].left.ccode)
             for arg in args:
-                s = s + (", %s" % arg) 
+                s = s + (", %s" % arg)
             s = s + ")"
             node.ccode = c.Statement(s)
             return
