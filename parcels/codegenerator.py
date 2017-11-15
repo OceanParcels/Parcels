@@ -535,9 +535,12 @@ class KernelGenerator(ast.NodeVisitor):
         if hasattr(node.values[0], 's_print'):
             args = node.values[0].right.ccode
             s = ('printf("%s\\n"' % node.values[0].left.ccode)
-            for arg in args:
-                s = s + (", %s" % arg)
-            s = s + ")"
+            if isinstance(args, str):
+                s = s + (", %s)" % args)
+            else:
+                for arg in args:
+                    s = s + (", %s" % arg)
+                s = s + ")"
             node.ccode = c.Statement(s)
             return
         vars = ', '.join([n.ccode for n in node.values])
