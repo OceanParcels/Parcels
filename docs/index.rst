@@ -115,10 +115,10 @@ Installing Parcels on Windows
 
 The installation process and usage of Parcels is much the same as under :ref:`installing-linux-macos` above. **However, steps 2 and 5 will be different**, as detailed below:
 
-2. Download Parcels' `environment_win32.yml <https://raw.githubusercontent.com/OceanParcels/parcels/fix_windows_install/environment_win32.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` from the Windows start menu and then run::
+2. Download Parcels' `environment_win.yml <https://raw.githubusercontent.com/OceanParcels/parcels/fix_windows_install/environment_win.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` from the Windows start menu and then run::
 
         activate root
-        conda env create -f environment_win32.yml -n py2_parcels
+        conda env create -f environment_win.yml -n py2_parcels
         activate py2_parcels
         pip install git+https://github.com/OceanParcels/parcels.git@master
 
