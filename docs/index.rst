@@ -91,7 +91,7 @@ The five steps below are the installation instructions for Linux and macOS. Note
     source $HOME/miniconda2/bin/activate py2_parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
 
-3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/examples/example_peninsula.py>`_ file and then run::
+3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/examples/example_peninsula.py>`_ file and then run::
 
     python example_peninsula.py --fieldset 100 100
 
