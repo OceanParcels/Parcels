@@ -97,8 +97,8 @@ The five steps below are the installation instructions for Linux and macOS. Note
 
 4. Optionally, if you want to run all the examples and tutorials, you can get tutorials and example data by running::
 
-    parcels_get_examples $HOME/parcels_first_steps
-    cd $HOME/parcels_first_steps
+    parcels_get_examples parcels_examples
+    cd parcels_examples
     jupyter notebook
 
 5. The next time you start a terminal and want to work with Parcels, activate the environment with::
