@@ -4,7 +4,6 @@ notifications:
 language: python
 python:
     - "2.7"
-#    - "3.4"
 
 sudo: false
 
@@ -22,7 +21,7 @@ install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION sphinx
     - pip install -e .
 
-before_script: # configure a headless display to test plot generation
+before_script: # configure a headless display to test  plot generation
     - "export DISPLAY=:99.0"
     - "sh -e /etc/init.d/xvfb start"
     - sleep 3 # give xvfb some time to start
@@ -30,8 +29,7 @@ before_script: # configure a headless display to test plot generation
 script:
     - flake8 parcels
     - flake8 tests
-    - flake8 examples
-    - python parcels/scripts/pull_data.py
+    - parcels_get_examples examples/
     - py.test -v -s tests/
     - py.test -v -s --nbval-lax examples/
     - make linkcheck -C docs

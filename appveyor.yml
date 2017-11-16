@@ -1,0 +1,25 @@
+environment:
+
+  matrix:
+
+    - PYTHON: "C:\\Python27-miniconda"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "64"
+
+install:
+  - "powershell ./appveyor/install_miniconda.ps1"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "conda update --yes conda"
+  - "conda env create -f environment_win.yml -n py2_parcels"
+  - "activate py2_parcels"
+  - "python setup.py install"
+
+build: false
+
+test_script:
+  - "flake8 parcels"
+  - "flake8 tests"
+  - "flake8 examples"
+  - "parcels_get_examples examples/"
+  - "py.test -v -s tests/"
+  - "py.test -v -s --nbval-lax examples/"
