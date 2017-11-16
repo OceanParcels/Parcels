@@ -124,8 +124,6 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         """
-        total = np.sum(start_field.data[0, :, :])
-        start_field.data[0, :, :] = start_field.data[0, :, :] / total
         lonwidth = (start_field.lon[1] - start_field.lon[0]) / 2
         latwidth = (start_field.lat[1] - start_field.lat[0]) / 2
 
@@ -136,16 +134,14 @@ class ParticleSet(object):
             return value
 
         if mode == 'monte_carlo':
-            probs = np.random.uniform(size=size)
-            lon = []
-            lat = []
-            for p in probs:
-                cell = np.unravel_index(np.where([p < i for i in np.cumsum(start_field.data[0, :, :])])[0][0],
-                                        np.shape(start_field.data[0, :, :]))
-                lon.append(add_jitter(start_field.lon[cell[1]], lonwidth,
-                                      start_field.lon.min(), start_field.lon.max()))
-                lat.append(add_jitter(start_field.lat[cell[0]], latwidth,
-                                      start_field.lat.min(), start_field.lat.max()))
+            p = np.reshape(start_field.data, (1, start_field.data.size))
+            inds = np.random.choice(start_field.data.size, size, replace=True, p=p[0] / np.sum(p))
+            lat, lon = np.unravel_index(inds, start_field.data[0, :, :].shape)
+            lon = fieldset.U.lon[lon]
+            lat = fieldset.U.lat[lat]
+            for i in range(lon.size):
+                lon[i] = add_jitter(lon[i], lonwidth, start_field.lon[0], start_field.lon[-1])
+                lat[i] = add_jitter(lat[i], latwidth, start_field.lat[0], start_field.lat[-1])
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
