@@ -157,6 +157,10 @@ class Field(object):
             self.grid = grid
         else:
             self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time)
+        self.lon = self.grid.lon
+        self.lat = self.grid.lat
+        self.depth = self.grid.depth
+        self.time = self.grid.time
         self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
@@ -517,6 +521,7 @@ class Field(object):
                                             self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
             self.grid.lon = np.concatenate((self.grid.lon[-halosize:] - lonshift,
                                             self.grid.lon, self.grid.lon[0:halosize] + lonshift))
+            self.lon = self.grid.lon
         if meridional:
             latshift = (self.grid.lat[-1] - 2 * self.grid.lat[0] + self.grid.lat[1])
             if len(self.data.shape) is 3:
@@ -527,6 +532,7 @@ class Field(object):
                                             self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
             self.grid.lat = np.concatenate((self.grid.lat[-halosize:] - latshift,
                                             self.grid.lat, self.grid.lat[0:halosize] + latshift))
+            self.lat = self.grid.lat
 
     def write(self, filename, varname=None):
         """Write a :class:`Field` to a netcdf file

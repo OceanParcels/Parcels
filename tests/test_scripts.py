@@ -16,7 +16,7 @@ def create_outputfiles(dir):
     delaytime = delta(hours=1)
     endtime = delta(hours=24)
     x = 3. * (1. / 1.852 / 60)
-    y = (fieldset.U.grid.lat[0] + x, fieldset.U.grid.lat[-1] - x)
+    y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)
     lat = np.linspace(y[0], y[1], npart, dtype=np.float32)
 
     fp_index = dir.join("DelayParticle")
