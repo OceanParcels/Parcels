@@ -69,6 +69,8 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 
 * `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
 
+.. _installing-linux-macos:
+
 Installing Parcels on Linux and macOS
 =====================================
 
@@ -76,7 +78,9 @@ Parcels depends on a working Python installation, a netCDF installation, a C
 compiler, and various Python packages. 
 
 The simplest way to install Parcels is to use Anaconda and Conda-Forge for all 
-requirements. This is the “batteries-included” solution probably suitable for most users.
+requirements. This is the “batteries-included” solution probably suitable for most users. 
+
+The five steps below are the installation instructions for Linux and macOS. Note that for Windows, steps 2 and 5 are slightly different, see :ref:`installing-windows` below.
 
 1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
 
@@ -95,7 +99,7 @@ requirements. This is the “batteries-included” solution probably suitable fo
 
     python pull_data.py
 
-5. The next time you log in to your machine and want to work with Parcels, activate the environment with::
+5. The next time you start a terminal and want to work with Parcels, activate the environment with::
 
     source $HOME/miniconda2/bin/activate py2_parcels
 
@@ -104,12 +108,24 @@ C compiler, ``git clone`` the `master branch of Parcels
 <https://github.com/OceanParcels/parcels>`_ 
 and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
-Windows specific pre-installation instructions
-----------------------------------------------
+.. _installing-windows:
 
-Before following the general installation instructions listed under the header **Installing Parcels on Linux and macOS**, the user needs to install a gcc compiler on the Windows system. It is advised for the Windows user to install the `MinGW <http://www.mingw.org>`_ software suite. Do note that installing MinGW is usually not enough for Parcels to access it, most likely the Windows ``PATH`` must be updated to point to the MinGW\bin directory for Parcels to be able to access gcc.
+Installing Parcels on Windows
+=============================
 
-If you do not know how to change the ``PATH`` variable on Windows, you can follow this `tutorial <https://www.computerhope.com/issues/ch000549.htm>`_. 
+The installation process and usage of Parcels is much the same as under :ref:`installing-linux-macos` above. **However, steps 2 and 5 will be different**, as detailed below:
+
+2. Download Parcels' `environment_win.yml <https://raw.githubusercontent.com/OceanParcels/parcels/fix_windows_install/environment_win.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` from the Windows start menu and then run::
+
+        activate root
+        conda env create -f environment_win.yml -n py2_parcels
+        activate py2_parcels
+        pip install git+https://github.com/OceanParcels/parcels.git@master
+
+5. The next time you start the ``Anaconda Prompt`` and want to work with Parcels, activate the environment with::
+
+        activate py2_parcels
+
 
 Getting involved
 ===================================
