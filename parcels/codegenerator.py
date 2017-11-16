@@ -434,6 +434,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.op)
         self.visit(node.right)
         node.ccode = "(%s %s %s)" % (node.left.ccode, node.op.ccode, node.right.ccode)
+        node.s_print = True
 
     def visit_Add(self, node):
         node.ccode = "+"
@@ -452,6 +453,9 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Div(self, node):
         node.ccode = "/"
+
+    def visit_Mod(self, node):
+        node.ccode = "%"
 
     def visit_Num(self, node):
         node.ccode = str(node.n)
@@ -525,6 +529,20 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
+        if hasattr(node.values[0], 's'):
+            node.ccode = c.Statement('printf("%s\\n")' % (n.ccode))
+            return
+        if hasattr(node.values[0], 's_print'):
+            args = node.values[0].right.ccode
+            s = ('printf("%s\\n"' % node.values[0].left.ccode)
+            if isinstance(args, str):
+                s = s + (", %s)" % args)
+            else:
+                for arg in args:
+                    s = s + (", %s" % arg)
+                s = s + ")"
+            node.ccode = c.Statement(s)
+            return
         vars = ', '.join([n.ccode for n in node.values])
         int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
         stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
