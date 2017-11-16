@@ -158,7 +158,12 @@ However, there are some key limitations to the Kernels that everyone who wants t
 
   * Functions from the ``maths`` standard library and from the custom ``random`` library at :mod:`parcels.rng`
   
-  * ``print`` statements. Note however that in JIT mode these only work well for variables that are either floats or any of the inbuilt Particle properties
+  * Simple ``print`` statements, such as::
+
+      print("Some print")
+      print(particle.lon)
+      print("particle id: %d" % particle.id)
+      print("lon: %f, lat: %f" % (particle.lon, particle.lat))
 
 * Local variables can be used in Kernels, and these variables will be accessible in all concatenated Kernels. Note that these local variables are not shared between particles, and also not between time steps.
 

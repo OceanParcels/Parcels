@@ -107,7 +107,6 @@ def test_while_if_break(fieldset, mode):
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
 
 
-@pytest.mark.xfail(reason="JIT stdout printing not accesible to py.test")
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
@@ -116,9 +115,8 @@ def test_print(fieldset, mode, capfd):
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time, dt):
-        val = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-        particle.p = val
-        print particle.id, val
+        particle.p = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        print("%d %f" % (particle.id, particle.p))
     pset.execute(kernel, endtime=1., dt=1.)
     out, err = capfd.readouterr()
     lst = out.split(' ')
