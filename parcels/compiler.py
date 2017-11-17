@@ -1,6 +1,7 @@
 import subprocess
 from os import path, environ, makedirs
 from tempfile import gettempdir
+from struct import calcsize
 try:
     from os import getuid
 except:
@@ -10,7 +11,7 @@ except:
 
 
 def get_package_dir():
-    return path.abspath(path.join(path.dirname(__file__), path.pardir))
+    return path.abspath(path.dirname(__file__))
 
 
 def get_cache_dir():
@@ -63,6 +64,8 @@ class GNUCompiler(Compiler):
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=[], ldargs=[]):
         opt_flags = ['-g', '-O3']
+        arch_flag = ['-m64' if calcsize("P") is 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
-        ldargs = ['-shared'] + ldargs
+        cppargs += arch_flag
+        ldargs = ['-shared'] + ldargs + arch_flag
         super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
