@@ -11,7 +11,7 @@ tracking of virtual ocean particles in the petascale age.
 
 ### Parcels v0.9 manuscript and code
 
-The manuscript detailing the first release of Parcels, version 0.9, has been published at [Geoscientific Model Development](https://doi.org/10.5194/gmd-2017-167>) and can be cited as 
+The manuscript detailing the first release of Parcels, version 0.9, has been published at [Geoscientific Model Development](https://doi.org/10.5194/gmd-2017-167) and can be cited as 
 
 *Lange, M. and E van Sebille (2017) Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age. Geoscientific Model Development, 10, 4175-4186. https://doi.org/10.5194/gmd-2017-167*
 
