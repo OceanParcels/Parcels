@@ -9,7 +9,7 @@ class GridSet(object):
     """GridSet class that holds the Grids on which the Fields are defined
 
 
-    :param grids: Dictionary of :class:`parcels.grid.Grid` objects
+    :param grids: Table of :class:`parcels.grid.Grid` objects
     """
 
     def __init__(self, grids=[]):

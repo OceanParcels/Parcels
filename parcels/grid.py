@@ -1,21 +1,20 @@
 from parcels.loggers import logger
 import numpy as np
-from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_char_p, c_void_p
+from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_char_p, c_void_p, pointer
+from enum import IntEnum
 
-__all__ = ['StructuredGrid', 'GridIndex', 'CGrid']
+__all__ = ['GridCode', 'StructuredGrid', 'GridIndex', 'CGrid']
+
+
+class GridCode(IntEnum):
+    StructuredGrid = 0
+    SemiStructuredGrid = 1
 
 
 class CGrid(Structure):
     _fields_ = [('name', c_char_p),
-                ('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                ('tdim', c_int), ('tidx', c_int),
-                ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
-                ('depth', POINTER(c_float)), ('time', POINTER(c_double))
-                ]
-
-
-class CGridIndex(Structure):
-    _fields_ = [('xi', c_int), ('yi', c_int), ('zi', c_int)]
+                ('gtype', c_int),
+                ('grid', c_void_p)]
 
 
 class Grid(object):
@@ -23,18 +22,21 @@ class Grid(object):
 
     """
 
-    def __init__(self, gtype):
-        self.gtype = gtype
+    @property
+    def ctypes_struct(self):
+        self.cgrid = cast(pointer(self.child_ctypes_struct), c_void_p)
+        cstruct = CGrid(self.name, self.gtype, self.cgrid.value)
+        return cstruct
 
 
 class StructuredGrid(Grid):
     """Structured Grid
 
-    :param name:
-    :param lon:
-    :param lat:
-    :param depth:
-    :param t
+    :param name: Name of the field
+    :param lon: Longitude coordinates of the field
+    :param lat: Latitude coordinates of the field
+    :param depth: Depth coordinates of the field
+    :param time: Time coordinates of the field
     """
 
     def __init__(self, name, lon, lat, depth=None, time=None):
@@ -54,6 +56,7 @@ class StructuredGrid(Grid):
             assert(len(sh) == 1 or len(sh) == 2 and min(sh) == 2), 'time is not a vector'
 
         self.name = name
+        self.gtype = GridCode.StructuredGrid
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -72,18 +75,26 @@ class StructuredGrid(Grid):
             self.time = self.time.astype(np.float64)
 
     @property
-    def ctypes_struct(self):
+    def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid."""
 
+        class CStructuredGrid(Structure):
+            _fields_ = [('name', c_char_p),
+                        ('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
+                        ('tdim', c_int), ('tidx', c_int),
+                        ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
+                        ('depth', POINTER(c_float)), ('time', POINTER(c_double))
+                        ]
+
         # Create and populate the c-struct object
-        cstruct = CGrid(self.name,
-                        self.lon.size, self.lat.size, self.depth.size,
-                        self.time.size, 0,
-                        self.lon.ctypes.data_as(POINTER(c_float)),
-                        self.lat.ctypes.data_as(POINTER(c_float)),
-                        self.depth.ctypes.data_as(POINTER(c_float)),
-                        self.time.ctypes.data_as(POINTER(c_double)))
+        cstruct = CStructuredGrid(self.name,
+                                  self.lon.size, self.lat.size, self.depth.size,
+                                  self.time.size, 0,
+                                  self.lon.ctypes.data_as(POINTER(c_float)),
+                                  self.lat.ctypes.data_as(POINTER(c_float)),
+                                  self.depth.ctypes.data_as(POINTER(c_float)),
+                                  self.time.ctypes.data_as(POINTER(c_double)))
         return cstruct
 
 
@@ -102,10 +113,14 @@ class GVariable(object):
             instance._cptr.__setitem__(self.name, value)
 
 
+class CGridIndex(Structure):
+    _fields_ = [('xi', c_int), ('yi', c_int), ('zi', c_int)]
+
+
 class GridIndex(object):
     """GridIndex class that defines the indices of the particle in the grid
 
-    :param grid:
+    :param grid: grid related to this grid index
 
     """
     name = GVariable('name')

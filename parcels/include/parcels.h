@@ -15,6 +15,11 @@ typedef enum
 
 typedef enum
   {
+    STRUCTURED_GRID=0, SEMI_STRUCTURED_GRID=1
+  } GridCode;
+
+typedef enum
+  {
     LINEAR=0, NEAREST=1
   } InterpCode;
 
@@ -23,10 +28,17 @@ typedef enum
 typedef struct
 {
   char *name;
+  int gtype;
+  void *grid;
+} CGrid;
+
+typedef struct
+{
+  char *name;
   int xdim, ydim, zdim, tdim, tidx;
   float *lon, *lat, *depth;
   double *time;
-} CGrid;
+} CStructuredGrid;
 
 typedef struct
 {
@@ -174,12 +186,13 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, void *gridIndexSet, double time, CField *f,
-                                                      float *value, int interp_method)
+static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, float y, float z, void *gridIndexSet,
+                                                                      double time, CField *f,
+                                                                      float *value, int interp_method)
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
-  CGrid *grid = f->grid;
+  CStructuredGrid *grid = f->grid->grid;
   int iGrid;
   CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
   CGridIndex *gridIndex = NULL;
@@ -272,6 +285,21 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
     return SUCCESS;
   }
 }
+
+static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, void *gridIndexSet, double time, CField *f,
+                                                      float *value, int interp_method)
+{
+  CGrid *_grid = f->grid;
+  GridCode gcode = _grid->gtype;
+  if (gcode == STRUCTURED_GRID)
+    return temporal_interpolation_linear_structured_grid(x, y, z, gridIndexSet, time, f, value, interp_method);
+  else{
+    printf("Only STRUCTURED_GRID grids are currently implemented\n");
+    return ERROR;
+  }
+}
+
+
 
 /**************************************************/
 /*   Random number generation (RNG) functions     */
