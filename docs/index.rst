@@ -17,9 +17,9 @@ Its code is licensed under an `open source MIT license <https://github.com/Ocean
 
 Parcels v0.9 manuscript and code
 ===================================
-The manuscript detailing this first release of Parcels, version 0.9, is currently under discussion at `Geoscientific Model Development <https://doi.org/10.5194/gmd-2017-167>`_ and can be cited as
+The manuscript detailing this first release of Parcels, version 0.9, has been published in `Geoscientific Model Development <https://doi.org/10.5194/gmd-2017-167>`_ and can be cited as
 
-*Lange, M. and van Sebille, E.: Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age, Geosci. Model Dev. Discuss., https://doi.org/10.5194/gmd-2017-167, in review, 2017.*
+*Lange, M. and E van Sebille (2017) Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age. Geoscientific Model Development, 10, 4175-4186. https://doi.org/10.5194/gmd-2017-167*
 
 The code is available at https://github.com/OceanParcels/parcels. Anyone is welcome to comment on the manuscript through the Geoscientific Model Development portal.
 

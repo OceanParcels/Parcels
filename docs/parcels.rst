@@ -92,8 +92,8 @@ scripts.plotParticles module
     :members:
     :undoc-members:
 
-scripts.pull_data module
-------------------------
+scripts.get_examples module
+---------------------------
 
 .. automodule:: scripts.pull_data
     :members:
