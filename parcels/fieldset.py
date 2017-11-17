@@ -86,8 +86,8 @@ class FieldSet(object):
             fields[name] = Field(name, datafld, lon, lat, depth=depth,
                                  time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
-        u = fields.pop('U',None)
-        v = fields.pop('V',None)
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
     def add_field(self, field):
