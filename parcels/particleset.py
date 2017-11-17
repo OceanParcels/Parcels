@@ -140,8 +140,8 @@ class ParticleSet(object):
             lon = fieldset.U.grid.lon[lon]
             lat = fieldset.U.grid.lat[lat]
             for i in range(lon.size):
-                lon[i] = add_jitter(lon[i], lonwidth, start_field.lon[0], start_field.lon[-1])
-                lat[i] = add_jitter(lat[i], latwidth, start_field.lat[0], start_field.lat[-1])
+                lon[i] = add_jitter(lon[i], lonwidth, start_field.grid.lon[0], start_field.grid.lon[-1])
+                lat[i] = add_jitter(lat[i], latwidth, start_field.grid.lat[0], start_field.grid.lat[-1])
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
