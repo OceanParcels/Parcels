@@ -372,16 +372,16 @@ class Field(object):
         time_index = self.grid.time <= time
         if self.time_periodic:
             if time_index.all() or np.logical_not(time_index).all():
-                periods = math.floor((time-self.time[0])/(self.time[-1]-self.time[0]))
-                time -= periods*(self.time[-1]-self.time[0])
-                time_index = self.time <= time
+                periods = math.floor((time-self.grid.time[0])/(self.grid.time[-1]-self.grid.time[0]))
+                time -= periods*(self.grid.time[-1]-self.grid.time[0])
+                time_index = self.grid.time <= time
                 ti = time_index.argmin() - 1 if time_index.any() else 0
                 return (ti, periods)
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
         if time_index.all():
             # If given time > last known field time, use
             # the last field frame without interpolation
-            return (len(self.time) - 1, 0)
+            return (len(self.grid.time) - 1, 0)
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
@@ -405,7 +405,7 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         (t_idx, periods) = self.time_index(time)
-        time -= periods*(self.time[-1]-self.time[0])
+        time -= periods*(self.grid.time[-1]-self.grid.time[0])
         if t_idx < len(self.grid.time)-1 and time > self.grid.time[t_idx]:
             f0 = self.spatial_interpolation(t_idx, z, y, x)
             f1 = self.spatial_interpolation(t_idx + 1, z, y, x)
@@ -446,8 +446,8 @@ class Field(object):
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        cstruct = CField(self.lon.size, self.lat.size, self.depth.size,
-                         self.time.size, 0, allow_time_extrapolation, time_periodic,
+        cstruct = CField(self.grid.lon.size, self.grid.lat.size, self.grid.depth.size,
+                         self.grid.time.size, 0, allow_time_extrapolation, time_periodic,
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))),
                          pointer(self.grid.ctypes_struct))
         return cstruct
@@ -563,14 +563,16 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new):
-        if len(field_new.time) is not 1:
+        if len(field_new.grid.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
-        if field_new.time > self.grid.time[-1]:  # forward in time, so appending at end
+        if field_new.grid.time > self.grid.time[-1]:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            self.grid.time = np.concatenate((self.grid.time[1:], field_new.time))
-        elif field_new.time < self.grid.time[0]:  # backward in time, so prepending at start
+            self.grid.time = np.concatenate((self.grid.time[1:], field_new.grid.time))
+            self.time = self.grid.time
+        elif field_new.grid.time < self.grid.time[0]:  # backward in time, so prepending at start
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            self.grid.time = np.concatenate((field_new.time, self.grid.time[:-1]))
+            self.grid.time = np.concatenate((field_new.grid.time, self.grid.time[:-1]))
+            self.time = self.grid.time
         else:
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
