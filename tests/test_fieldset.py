@@ -4,7 +4,7 @@ from parcels.scripts.get_examples import get_example_data_location
 from datetime import timedelta as delta
 import numpy as np
 import pytest
-from os import path, pardir
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

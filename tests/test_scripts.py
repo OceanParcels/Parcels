@@ -1,14 +1,14 @@
 from parcels import (FieldSet, ParticleSet, JITParticle, AdvectionRK4,
                      plotTrajectoriesFile, convert_IndexedOutputToArray)
+from parcels.scripts.get_examples import get_example_data_location
 from datetime import timedelta as delta
 import numpy as np
 import pytest
-from os import path, pardir
+from os import path
 
 
 def create_outputfiles(dir):
-    datafile = path.join(path.dirname(__file__), pardir, 'examples',
-                         'Peninsula_data', 'peninsula')
+    datafile = path.join(get_example_data_location(), 'Peninsula_data', 'peninsula')
 
     fieldset = FieldSet.from_nemo(datafile, allow_time_extrapolation=True)
     pset = ParticleSet(fieldset=fieldset, lon=[], lat=[], pclass=JITParticle)
