@@ -70,8 +70,14 @@ def get_example_data_location():
     """Get the location where example-data is stored,
     from config_parcels.yml file"""
     config = ConfigParser.RawConfigParser()
-    config.read('config_parcels.yml')
-    example_path = config.get('parcels-example-data', 'example-data-location')
+    try:
+        config.read('config_parcels.yml')
+        example_path = config.get('parcels-example-data', 'example-data-location')
+    except:
+        # if no config_parcels.yml, then assume either 'examples' or 'parcels/examples'
+        example_path = 'examples'
+        if not os.path.isdir(example_path):
+            example_path = os.path.join('parcels', 'examples')
     return example_path
 
 
