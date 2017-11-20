@@ -43,7 +43,7 @@ def _maybe_create_dir(path):
 def copy_data_and_examples_from_package_to(target_path):
     """Copy example data from Parcels directory.
 
-    Return thos parths of the list `file_names` that were not found in the
+    Return those parts of the list `file_names` that were not found in the
     package.
 
     """
@@ -94,8 +94,9 @@ def main(target_path=None):
         target_path = args.target_path
 
     if os.path.exists(target_path):
-        print("Error: {} already exists.".format(target_path))
-        return
+        answer = raw_input("Warning: {} already exists. Continue [y/n]?".format(target_path)).lower()
+        if answer not in ['y', 'Y', 'yes']:
+            return
 
     # copy data and examples
     copy_data_and_examples_from_package_to(target_path)
