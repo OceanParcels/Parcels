@@ -35,16 +35,13 @@ class FieldSet(object):
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, fields={}):
-        self.gridset = GridSet()
-        self.U = U
-        self.gridset.add_grid(U.grid)
-        self.V = V
-        self.gridset.add_grid(V.grid)
+        self.gridset = GridSet([])
+        self.add_field(U)
+        self.add_field(V)
 
         # Add additional fields as attributes
         for name, field in fields.items():
-            setattr(self, name, field)
-            self.gridset.add_grid(field.grid)
+            self.add_field(field)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=True, mesh='spherical',
@@ -83,7 +80,7 @@ class FieldSet(object):
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
 
-            fields[name] = Field(name, datafld, lon, lat, depth=depth,
+            fields[name] = Field(name, datafld, lon=lon, lat=lat, depth=depth,
                                  time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
         u = fields.pop('U', None)
@@ -96,6 +93,8 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
+        self.gridset.add_grid(field.grid)
+        field.fieldset = self
 
     def add_data(self, data, dimensions, transpose=True, mesh='spherical',
                  allow_time_extrapolation=True, **kwargs):
@@ -135,11 +134,12 @@ class FieldSet(object):
                                  time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         u = fields.pop('U', None)
-        if u:
-            self.U = u
         v = fields.pop('V', None)
+        if u:
+            self.add_field(u)
         if v:
-            self.V = v
+            self.add_field(v)
+
         for f in fields:
             self.add_field(f)
 

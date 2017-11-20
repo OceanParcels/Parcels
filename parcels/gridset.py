@@ -19,23 +19,17 @@ class GridSet(object):
     def add_grid(self, grid):
         existing_grid = False
         for g in self.grids:
-            if g.lon.shape != grid.lon.shape:
-                continue
-            if g.lat.shape != grid.lat.shape:
-                continue
-            if g.depth.shape != grid.depth.shape:
-                continue
-            if g.time.shape != grid.time.shape:
-                continue
-            if not np.allclose(g.lon, grid.lon, rtol=1e-4):
-                continue
-            if not np.allclose(g.lat, grid.lat, rtol=1e-4):
-                continue
-            if not np.allclose(g.depth, grid.depth, rtol=1e-4):
-                continue
-            if not np.allclose(g.time, grid.time, rtol=1e-4):
+            sameGrid = True
+            for attr in ['lon', 'lat', 'depth', 'time']:
+                gattr = getattr(g, attr)
+                gridattr = getattr(grid, attr)
+                if gattr.shape != gridattr.shape:
+                    sameGrid = False
+                    break
+            if not sameGrid:
                 continue
             existing_grid = True
+            grid.name = g.name
             break
 
         if not existing_grid:

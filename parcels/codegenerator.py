@@ -379,6 +379,9 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.slice)
         if isinstance(node.value, FieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
+        elif isinstance(node.value, IntrinsicNode):
+            raise NotImplementedError("Subscript not implemented for object type %s"
+                                      % type(node.value).__name__)
         else:
             node.ccode = "%s[%s]" % (node.value.ccode, node.slice.ccode)
 

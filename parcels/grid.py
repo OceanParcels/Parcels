@@ -1,6 +1,6 @@
 from parcels.loggers import logger
 import numpy as np
-from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_char_p, c_void_p, pointer
+from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 
 __all__ = ['GridCode', 'StructuredGrid', 'GridIndex', 'CGrid']
@@ -12,8 +12,7 @@ class GridCode(IntEnum):
 
 
 class CGrid(Structure):
-    _fields_ = [('name', c_char_p),
-                ('gtype', c_int),
+    _fields_ = [('gtype', c_int),
                 ('grid', c_void_p)]
 
 
@@ -25,21 +24,22 @@ class Grid(object):
     @property
     def ctypes_struct(self):
         self.cgrid = cast(pointer(self.child_ctypes_struct), c_void_p)
-        cstruct = CGrid(self.name, self.gtype, self.cgrid.value)
+        cstruct = CGrid(self.gtype, self.cgrid.value)
         return cstruct
 
 
 class StructuredGrid(Grid):
     """Structured Grid
 
-    :param name: Name of the field
-    :param lon: Longitude coordinates of the field
-    :param lat: Latitude coordinates of the field
-    :param depth: Depth coordinates of the field
-    :param time: Time coordinates of the field
+    :param name: Name of the grid
+    :param lon: Vector containing the longitude coordinates of the grid
+    :param lat: Vector containing the latitude coordinates of the grid
+    :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates
+    :param time: Vector containing the time coordinates of the grid
+    :param time_origin: Time origin of the time axis
     """
 
-    def __init__(self, name, lon, lat, depth=None, time=None):
+    def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0):
         assert isinstance(lon, np.ndarray), 'lon is not a numpy array'
         sh = lon.shape
         assert(len(sh) == 1 or len(sh) == 2 and min(sh) == 2), 'lon is not a vector'
@@ -73,6 +73,7 @@ class StructuredGrid(Grid):
         if not self.time.dtype == np.float64:
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
+        self.time_origin = time_origin
 
     @property
     def child_ctypes_struct(self):
@@ -80,16 +81,14 @@ class StructuredGrid(Grid):
         pointers and sizes for this grid."""
 
         class CStructuredGrid(Structure):
-            _fields_ = [('name', c_char_p),
-                        ('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
+            _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('tidx', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
-        cstruct = CStructuredGrid(self.name,
-                                  self.lon.size, self.lat.size, self.depth.size,
+        cstruct = CStructuredGrid(self.lon.size, self.lat.size, self.depth.size,
                                   self.time.size, 0,
                                   self.lon.ctypes.data_as(POINTER(c_float)),
                                   self.lat.ctypes.data_as(POINTER(c_float)),
@@ -106,11 +105,7 @@ class GVariable(object):
         return instance._cptr.__getitem__(self.name)
 
     def __set__(self, instance, value):
-        if self.name == 'name':
-            ptr = cast(value, (c_void_p))
-            instance._cptr.__setitem__(self.name, ptr.value)
-        else:
-            instance._cptr.__setitem__(self.name, value)
+        instance._cptr.__setitem__(self.name, value)
 
 
 class CGridIndex(Structure):
@@ -123,7 +118,6 @@ class GridIndex(object):
     :param grid: grid related to this grid index
 
     """
-    name = GVariable('name')
     xi = GVariable('xi')
     yi = GVariable('yi')
     zi = GVariable('zi')
@@ -137,6 +131,5 @@ class GridIndex(object):
 
     @classmethod
     def dtype(cls):
-        type_list = [('name', c_void_p), ('xi', np.int32), ('yi', np.int32), ('zi', np.int32),
-                     ('pad', np.int32)]
+        type_list = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('pad', np.int32)]
         return np.dtype(type_list)

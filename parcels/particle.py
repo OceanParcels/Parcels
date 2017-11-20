@@ -46,9 +46,8 @@ class Variable(object):
 
     def is64bit(self):
         """Check whether variable is 64-bit"""
-        if self.name == 'CGridIndexSet':
-            return True
-        return True if self.dtype == np.float64 or self.dtype == np.int64 else False
+        return True if self.dtype == np.float64 or self.dtype == np.int64 \
+                       or self.name == 'CGridIndexSet' else False
 
 
 class ParticleType(object):

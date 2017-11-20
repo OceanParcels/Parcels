@@ -41,6 +41,9 @@ class ParticleSet(object):
 
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None):
         # Convert numpy arrays to one-dimensional lists
+        self.fieldset = fieldset
+        self.fieldset.check_complete()
+
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
         depth = np.ones(len(lon)) * fieldset.U.grid.depth[0] if depth is None else depth
@@ -53,11 +56,10 @@ class ParticleSet(object):
         assert len(lon) == len(time)
 
         size = len(lon)
-        self.fieldset = fieldset
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
-        self.time_origin = fieldset.U.time_origin
+        self.time_origin = fieldset.U.grid.time_origin
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
@@ -327,7 +329,7 @@ class ParticleSet(object):
         plat = np.array([p.lat for p in self])
         show_time = self[0].time if show_time is None else show_time
         if isinstance(show_time, datetime):
-            show_time = (show_time - self.fieldset.U.time_origin).total_seconds()
+            show_time = (show_time - self.fieldset.U.grid.time_origin).total_seconds()
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
         if domain is not None:
@@ -347,13 +349,13 @@ class ParticleSet(object):
                 axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
                 namestr = ''
-                time_origin = self.fieldset.U.time_origin
+                time_origin = self.fieldset.U.grid.time_origin
             else:
                 if not isinstance(field, Field):
                     field = getattr(self.fieldset, field)
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
-                time_origin = field.time_origin
+                time_origin = field.grid.time_origin
             if time_origin is 0:
                 timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
             else:
@@ -364,9 +366,9 @@ class ParticleSet(object):
             plt.ylabel(ylbl)
         elif Basemap is None:
             logger.info("Visualisation is not possible. Basemap not found.")
-            time_origin = self.fieldset.U.time_origin
+            time_origin = self.fieldset.U.grid.time_origin
         else:
-            time_origin = self.fieldset.U.time_origin
+            time_origin = self.fieldset.U.grid.time_origin
             (idx, periods) = self.fieldset.U.time_index(show_time)
             show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
             U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))

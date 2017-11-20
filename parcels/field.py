@@ -34,8 +34,8 @@ class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling"""
 
     def __init__(self, time, field=None):
-        if field is not None and field.time_origin != 0:
-            time = field.time_origin + timedelta(seconds=time)
+        if field is not None and field.grid.time_origin != 0:
+            time = field.grid.time_origin + timedelta(seconds=time)
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
         message += " Try setting allow_time_extrapolation to True"
@@ -131,16 +131,18 @@ class Field(object):
 
     :param name: Name of the field
     :param data: 2D, 3D or 4D array of field data
-    :param lon: Longitude coordinates of the field
-    :param lat: Latitude coordinates of the field
-    :param depth: Depth coordinates of the field
-    :param time: Time coordinates of the field
+    :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
+           mesh and time_origin information
+    :param lon: Longitude coordinates of the field. (only if grid is None)
+    :param lat: Latitude coordinates of the field. (only if grid is None)
+    :param depth: Depth coordinates of the field. (only if grid is None)
+    :param time: Time coordinates of the field. (only if grid is None)
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field.
            Data below this value are set to zero
     :param vmax: Maximum allowed value on the field
            Data above this value are set to zero
-    :param time_origin: Time origin of the time axis
+    :param time_origin: Time origin of the time axis (only if grid is None)
     :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
     :param allow_time_extrapolation: boolean whether to allow for extrapolation
@@ -148,7 +150,7 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, lon=None, lat=None, grid=None, depth=None, time=None,
+    def __init__(self, name, data, grid=None, lon=None, lat=None, depth=None, time=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
@@ -156,14 +158,17 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time)
+            self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin)
+        # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
+        # self.grid should be used instead.
+        # Those variables are still defined for backwards compatibility with users codes.
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        self.time_origin = time_origin
         self.units = units if units is not None else UnitConverter()
         self.interp_method = interp_method
+        self.fieldset = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if time is None else False
         else:
@@ -262,7 +267,7 @@ class Field(object):
         if 'time' in indices:
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
-        return cls(name, data, lon, lat, depth=depth, time=time,
+        return cls(name, data, lon=lon, lat=lat, depth=depth, time=time,
                    time_origin=time_origin, allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def __getitem__(self, key):
@@ -299,9 +304,9 @@ class Field(object):
             dVdx[t, :, :] = np.array(np.transpose(grad[0]))
             dVdy[t, :, :] = np.array(np.transpose(grad[1]))
 
-        return([Field(name + '_dx', dVdx, lon, lat, self.grid.depth, time,
+        return([Field(name + '_dx', dVdx, lon=lon, lat=lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
-                Field(name + '_dy', dVdy, lon, lat, self.grid.depth, time,
+                Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
     def interpolator3D(self, idx, z, y, x):
@@ -422,8 +427,14 @@ class Field(object):
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, &%s, %s)" \
-            % (x, y, z, "particle->CGridIndexSet", t, self.name, var,
+        gridset = self.fieldset.gridset
+        iGrid = -1
+        for i, g in enumerate(gridset.grids):
+            if g.name == self.grid.name:
+                iGrid = i
+                break
+        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, z, "particle->CGridIndexSet", iGrid, t, self.name, var,
                self.interp_method.upper())
 
     def ccode_convert(self, _, x, y, z):

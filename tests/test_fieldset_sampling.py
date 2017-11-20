@@ -362,11 +362,11 @@ def test_sampling_multiple_grid_sizes(mode):
     ydim = 20
     gf = 10  # factor by which the resolution of U is higher than of V
     U = Field('U', np.zeros((xdim*gf, ydim*gf), dtype=np.float32),
-              np.linspace(0., 1., xdim*gf, dtype=np.float32),
-              np.linspace(0., 1., ydim*gf, dtype=np.float32))
+              lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
     V = Field('V', np.zeros((xdim, ydim), dtype=np.float32),
-              np.linspace(0., 1., xdim, dtype=np.float32),
-              np.linspace(0., 1., ydim, dtype=np.float32))
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
 

@@ -101,7 +101,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
 
 @pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime):
-    fieldsetfile = path.join(path.dirname(__file__), pardir, 'examples', 'MovingEddies_data', 'moving_eddies')
+    fieldsetfile = path.join(path.dirname(__file__), pardir, 'parcels', 'examples', 'MovingEddies_data', 'moving_eddies')
     fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     fieldsetsub = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
     assert np.allclose(fieldsetsub.P.time, fieldsetfull.P.time[indstime])
@@ -114,7 +114,7 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
-    field = Field('newfld', fieldset.U.data, fieldset.U.lon, fieldset.U.lat)
+    field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
     fieldset.write(filepath)

@@ -27,14 +27,12 @@ typedef enum
 
 typedef struct
 {
-  char *name;
   int gtype;
   void *grid;
 } CGrid;
 
 typedef struct
 {
-  char *name;
   int xdim, ydim, zdim, tdim, tidx;
   float *lon, *lat, *depth;
   double *time;
@@ -49,9 +47,7 @@ typedef struct
 
 typedef struct
 {
-  char *name;
   int xi, yi, zi, pad;
-  //CGrid *grid;
 } CGridIndex;  
 
 typedef struct
@@ -186,27 +182,13 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, float y, float z, void *gridIndexSet,
-                                                                      double time, CField *f,
+static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, float y, float z, CGridIndex *gridIndex,
+                                                                      int iGrid, double time, CField *f,
                                                                       float *value, int interp_method)
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
   CStructuredGrid *grid = f->grid->grid;
-  int iGrid;
-  CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
-  CGridIndex *gridIndex = NULL;
-  for(iGrid = 0; iGrid < giset->size; iGrid++){
-    CGridIndex *gIndex = &giset->gridIndices[iGrid];
-    if(grid->name == gIndex->name){
-      gridIndex = gIndex;
-      break;
-    }
-  }
-  if (gridIndex == NULL){
-    printf("Grid not found\n");
-    exit(-1);
-  }
   /* Identify grid cell to sample through local linear search */
   err = search_linear_float(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi); CHECKERROR(err);
   int i = gridIndex->xi;
@@ -286,13 +268,16 @@ static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, f
   }
 }
 
-static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, void *gridIndexSet, double time, CField *f,
-                                                      float *value, int interp_method)
+static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, void *gridIndexSet, int iGrid, 
+                                                      double time, CField *f, float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
+  CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
+  CGridIndex *gridIndex = &giset->gridIndices[iGrid];
+
   if (gcode == STRUCTURED_GRID)
-    return temporal_interpolation_linear_structured_grid(x, y, z, gridIndexSet, time, f, value, interp_method);
+    return temporal_interpolation_linear_structured_grid(x, y, z, gridIndex, iGrid, time, f, value, interp_method);
   else{
     printf("Only STRUCTURED_GRID grids are currently implemented\n");
     return ERROR;

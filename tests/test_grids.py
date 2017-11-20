@@ -74,3 +74,33 @@ def test_multi_structured_grids(mode):
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=1, dt=1)
 
     assert np.allclose(pset.particles[0].temp0, pset.particles[0].temp1, atol=1e-3)
+
+
+def test_avoid_repeated_grids():
+
+    lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
+    lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
+    time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
+    grid_0 = StructuredGrid('grid0py', lon_g0, lat_g0, time=time_g0)
+
+    lon_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
+    lat_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
+    time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
+    grid_1 = StructuredGrid('grid1py', lon_g1, lat_g1, time=time_g1)
+
+    u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
+    u_field = Field('U', u_data, grid=grid_0, transpose=True)
+
+    v_data = np.zeros((lon_g1.size, lat_g1.size, time_g1.size), dtype=np.float32)
+    v_field = Field('V', v_data, grid=grid_1, transpose=True)
+
+    temp0_field = Field('temp', u_data, lon=lon_g0, lat=lat_g0, time=time_g0, transpose=True)
+
+    other_fields = {}
+    other_fields['temp0'] = temp0_field
+
+    field_set2 = FieldSet(u_field, v_field, fields=other_fields)
+    assert field_set2.gridset.size == 2
+    assert field_set2.U.grid.name == 'grid0py'
+    assert field_set2.V.grid.name == 'grid1py'
+    assert field_set2.temp.grid.name == 'grid0py'
