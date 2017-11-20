@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import os
 import pkg_resources
 from progressbar import ProgressBar
+import ConfigParser
+
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen
@@ -40,6 +42,15 @@ def _maybe_create_dir(path):
             raise
 
 
+def _update_config_file(path):
+    config = ConfigParser.RawConfigParser()
+    config.add_section('parcels-example-data')
+    config.set('parcels-example-data', 'example-data-location',
+               os.path.join(os.getcwd(), path))
+    with open('config_parcels.yml', 'wb') as configfile:
+        config.write(configfile)
+
+
 def copy_data_and_examples_from_package_to(target_path):
     """Copy example data from Parcels directory.
 
@@ -53,6 +64,15 @@ def copy_data_and_examples_from_package_to(target_path):
     except Exception as e:
         print(e)
         pass
+
+
+def get_example_data_location():
+    """Get the location where example-data is stored,
+    from config_parcels.yml file"""
+    config = ConfigParser.RawConfigParser()
+    config.read('config_parcels.yml')
+    example_path = config.get('parcels-example-data', 'example-data-location')
+    return example_path
 
 
 def _still_to_download(file_names, target_path):
@@ -97,6 +117,9 @@ def main(target_path=None):
         answer = raw_input("Warning: {} already exists. Continue and overwrite existing example files [y/N]?".format(target_path)).lower()
         if answer not in ['y', 'Y', 'yes']:
             return
+
+    # update the location of examples data in Parcels config file
+    _update_config_file(target_path)
 
     # copy data and examples
     copy_data_and_examples_from_package_to(target_path)

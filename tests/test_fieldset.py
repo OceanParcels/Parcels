@@ -1,5 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D
 from parcels.field import Field
+from parcels.scripts.get_examples import get_example_data_location
 from datetime import timedelta as delta
 import numpy as np
 import pytest
@@ -101,7 +102,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
 
 @pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime):
-    fieldsetfile = path.join(path.dirname(__file__), pardir, 'parcels', 'examples', 'MovingEddies_data', 'moving_eddies')
+    fieldsetfile = path.join(get_example_data_location(), 'MovingEddies_data', 'moving_eddies')
     fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     fieldsetsub = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
     assert np.allclose(fieldsetsub.P.time, fieldsetfull.P.time[indstime])
