@@ -37,9 +37,15 @@ class StructuredGrid(Grid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates
     :param time: Vector containing the time coordinates of the grid
     :param time_origin: Time origin of the time axis
+    :param mesh: String indicating the type of mesh coordinates and
+           units used during velocity interpolation:
+
+           1. spherical (default): Lat and lon in degree, with a
+              correction for zonal velocity U near the poles.
+           2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0):
+    def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
         assert isinstance(lon, np.ndarray), 'lon is not a numpy array'
         sh = lon.shape
         assert(len(sh) == 1 or len(sh) == 2 and min(sh) == 2), 'lon is not a vector'
@@ -74,6 +80,7 @@ class StructuredGrid(Grid):
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
+        self.mesh = mesh
 
     @property
     def child_ctypes_struct(self):

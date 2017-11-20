@@ -131,27 +131,26 @@ class Field(object):
 
     :param name: Name of the field
     :param data: 2D, 3D or 4D array of field data
-    :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
-           mesh and time_origin information
     :param lon: Longitude coordinates of the field. (only if grid is None)
     :param lat: Latitude coordinates of the field. (only if grid is None)
     :param depth: Depth coordinates of the field. (only if grid is None)
     :param time: Time coordinates of the field. (only if grid is None)
+    :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
+           mesh and time_origin information
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field.
            Data below this value are set to zero
     :param vmax: Maximum allowed value on the field
            Data above this value are set to zero
     :param time_origin: Time origin of the time axis (only if grid is None)
-    :param units: type of units of the field (meters or degrees)
     :param interp_method: Method for interpolation
     :param allow_time_extrapolation: boolean whether to allow for extrapolation
     :param time_periodic: boolean whether to loop periodically over the time component of the Field
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, grid=None, lon=None, lat=None, depth=None, time=None,
-                 transpose=False, vmin=None, vmax=None, time_origin=0, units=None,
+    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
+                 transpose=False, vmin=None, vmax=None, time_origin=0,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
         self.data = data
@@ -166,7 +165,14 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        self.units = units if units is not None else UnitConverter()
+        if self.grid.mesh is 'flat' or (name is not 'U' and name is not 'V'):
+            self.units = UnitConverter()
+        elif self.grid.mesh is 'spherical' and name == 'U':
+            self.units = GeographicPolar()
+        elif self.grid.mesh is 'spherical' and name == 'V':
+            self.units = Geographic()
+        else:
+            raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
         self.fieldset = None
         if allow_time_extrapolation is None:
@@ -206,7 +212,7 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
-                    allow_time_extrapolation=False, **kwargs):
+                    allow_time_extrapolation=False, mesh='flat', **kwargs):
         """Create field from netCDF file
 
         :param name: Name of the field to create
@@ -214,6 +220,12 @@ class Field(object):
         :param filenames: Filenames of the field
         :param indices: indices for each dimension to read from file
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
         """
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
@@ -267,8 +279,9 @@ class Field(object):
         if 'time' in indices:
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
-        return cls(name, data, lon=lon, lat=lat, depth=depth, time=time,
-                   time_origin=time_origin, allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+        grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        return cls(name, data, grid=grid,
+                   allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def __getitem__(self, key):
         return self.eval(*key)

@@ -1,30 +1,14 @@
-from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
+from parcels.field import Field
 from parcels.gridset import GridSet
 from parcels.loggers import logger
 import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
-from collections import defaultdict
+from grid import StructuredGrid
 
 
 __all__ = ['FieldSet']
-
-
-def unit_converters(mesh):
-    """Helper function that assigns :class:`UnitConverter` objects to
-    :class:`Field` objects on :class:`FieldSet`
-
-    :param mesh: mesh type (either `spherical` or `flat`)"""
-    if mesh == 'spherical':
-        u_units = GeographicPolar()
-        v_units = Geographic()
-    elif mesh == 'flat':
-        u_units = None
-        v_units = None
-    else:
-        raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-    return u_units, v_units
 
 
 class FieldSet(object):
@@ -67,9 +51,6 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        u_units, v_units = unit_converters(mesh)
-        units = defaultdict(UnitConverter)
-        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
@@ -79,9 +60,9 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+            grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
 
-            fields[name] = Field(name, datafld, lon=lon, lat=lat, depth=depth,
-                                 time=time, transpose=transpose, units=units[name],
+            fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
@@ -117,9 +98,6 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
         """
 
-        u_units, v_units = unit_converters(mesh)
-        units = defaultdict(UnitConverter)
-        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
@@ -129,9 +107,9 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+            grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
 
-            fields[name] = Field(name, datafld, lon=lon, lat=lat, depth=depth,
-                                 time=time, transpose=transpose, units=units[name],
+            fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
@@ -176,10 +154,6 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        # Determine unit converters for all fields
-        u_units, v_units = unit_converters(mesh)
-        units = defaultdict(UnitConverter)
-        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
@@ -198,7 +172,7 @@ class FieldSet(object):
             dims['data'] = name
             inds = indices[var] if var in indices else indices
 
-            fields[var] = Field.from_netcdf(var, dims, paths, inds, units=units[var],
+            fields[var] = Field.from_netcdf(var, dims, paths, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, **kwargs)
         u = fields.pop('U')
