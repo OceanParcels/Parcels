@@ -94,7 +94,7 @@ def main(target_path=None):
         target_path = args.target_path
 
     if os.path.exists(target_path):
-        answer = raw_input("Warning: {} already exists. Continue [y/n]?".format(target_path)).lower()
+        answer = raw_input("Warning: {} already exists. Continue and overwrite existing example files [y/N]?".format(target_path)).lower()
         if answer not in ['y', 'Y', 'yes']:
             return
 
