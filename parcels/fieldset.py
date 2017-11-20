@@ -130,7 +130,7 @@ class FieldSet(object):
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
 
-            fields[name] = Field(name, datafld, lon, lat, depth=depth,
+            fields[name] = Field(name, datafld, lon=lon, lat=lat, depth=depth,
                                  time=time, transpose=transpose, units=units[name],
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)
         u = fields.pop('U', None)
