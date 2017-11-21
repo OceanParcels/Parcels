@@ -29,9 +29,9 @@ class KernelError(RuntimeError):
 
 
 def parse_particletime(time, fieldset):
-    if fieldset is not None and fieldset.U.time_origin != 0:
+    if fieldset is not None and fieldset.U.grid.time_origin != 0:
         # TODO assuming that error was thrown on U field
-        time = fieldset.U.time_origin + timedelta(seconds=time)
+        time = fieldset.U.grid.time_origin + timedelta(seconds=time)
     return time
 
 
