@@ -7,7 +7,7 @@ from os import path, pardir
 
 
 def create_outputfiles(dir):
-    datafile = path.join(path.dirname(__file__), pardir, 'parcels', 'examples',
+    datafile = path.join(path.dirname(__file__), pardir, 'examples',
                          'Peninsula_data', 'peninsula')
 
     fieldset = FieldSet.from_nemo(datafile, allow_time_extrapolation=True)
