@@ -78,6 +78,11 @@ def get_example_data_location():
         example_path = 'examples'
         if not os.path.isdir(example_path):
             example_path = os.path.join('parcels', 'examples')
+            if not os.path.isdir(example_path):
+                answer = raw_input('Can not find directory with examples data. '
+                                   'Do you want to download the data and save to `examples` [y/N]?').lower()
+                if answer in ['y', 'yes']:
+                    main(target_path='examples')
     return example_path
 
 
