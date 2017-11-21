@@ -41,23 +41,25 @@ class ParticleSet(object):
 
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None):
         # Convert numpy arrays to one-dimensional lists
+        self.fieldset = fieldset
+        self.fieldset.check_complete()
+
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
-        depth = np.ones(len(lon)) * fieldset.U.depth[0] if depth is None else depth
+        depth = np.ones(len(lon)) * fieldset.U.grid.depth[0] if depth is None else depth
         depth = depth.flatten() if isinstance(depth, np.ndarray) else depth
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
-        time = fieldset.U.time[0] if time is None else time
+        time = fieldset.U.grid.time[0] if time is None else time
         time = time.flatten() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
         assert len(lon) == len(time)
 
         size = len(lon)
-        self.fieldset = fieldset
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
-        self.time_origin = fieldset.U.time_origin
+        self.time_origin = fieldset.U.grid.time_origin
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
@@ -124,8 +126,8 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         """
-        lonwidth = (start_field.lon[1] - start_field.lon[0]) / 2
-        latwidth = (start_field.lat[1] - start_field.lat[0]) / 2
+        lonwidth = (start_field.grid.lon[1] - start_field.grid.lon[0]) / 2
+        latwidth = (start_field.grid.lat[1] - start_field.grid.lat[0]) / 2
 
         def add_jitter(pos, width, min, max):
             value = pos + np.random.uniform(-width, width)
@@ -137,11 +139,11 @@ class ParticleSet(object):
             p = np.reshape(start_field.data, (1, start_field.data.size))
             inds = np.random.choice(start_field.data.size, size, replace=True, p=p[0] / np.sum(p))
             lat, lon = np.unravel_index(inds, start_field.data[0, :, :].shape)
-            lon = fieldset.U.lon[lon]
-            lat = fieldset.U.lat[lat]
+            lon = fieldset.U.grid.lon[lon]
+            lat = fieldset.U.grid.lat[lat]
             for i in range(lon.size):
-                lon[i] = add_jitter(lon[i], lonwidth, start_field.lon[0], start_field.lon[-1])
-                lat[i] = add_jitter(lat[i], latwidth, start_field.lat[0], start_field.lat[-1])
+                lon[i] = add_jitter(lon[i], lonwidth, start_field.grid.lon[0], start_field.grid.lon[-1])
+                lat[i] = add_jitter(lat[i], latwidth, start_field.grid.lat[0], start_field.grid.lat[-1])
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
@@ -251,7 +253,7 @@ class ParticleSet(object):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            starttime = self.fieldset.U.time[0] if dt > 0 else self.fieldset.U.time[-1]
+            starttime = self.fieldset.U.grid.time[0] if dt > 0 else self.fieldset.U.grid.time[-1]
         if runtime is not None:
             if runtime < 0:
                 runtime = np.abs(runtime)
@@ -259,7 +261,7 @@ class ParticleSet(object):
             endtime = starttime + runtime * np.sign(dt)
         else:
             if endtime is None:
-                endtime = self.fieldset.U.time[-1] if dt > 0 else self.fieldset.U.time[0]
+                endtime = self.fieldset.U.grid.time[-1] if dt > 0 else self.fieldset.U.grid.time[0]
         if interval is None:
             interval = endtime - starttime
 
@@ -327,7 +329,7 @@ class ParticleSet(object):
         plat = np.array([p.lat for p in self])
         show_time = self[0].time if show_time is None else show_time
         if isinstance(show_time, datetime):
-            show_time = (show_time - self.fieldset.U.time_origin).total_seconds()
+            show_time = (show_time - self.fieldset.U.grid.time_origin).total_seconds()
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
         if domain is not None:
@@ -347,13 +349,13 @@ class ParticleSet(object):
                 axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
                 namestr = ''
-                time_origin = self.fieldset.U.time_origin
+                time_origin = self.fieldset.U.grid.time_origin
             else:
                 if not isinstance(field, Field):
                     field = getattr(self.fieldset, field)
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
-                time_origin = field.time_origin
+                time_origin = field.grid.time_origin
             if time_origin is 0:
                 timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
             else:
@@ -364,9 +366,9 @@ class ParticleSet(object):
             plt.ylabel(ylbl)
         elif Basemap is None:
             logger.info("Visualisation is not possible. Basemap not found.")
-            time_origin = self.fieldset.U.time_origin
+            time_origin = self.fieldset.U.grid.time_origin
         else:
-            time_origin = self.fieldset.U.time_origin
+            time_origin = self.fieldset.U.grid.time_origin
             (idx, periods) = self.fieldset.U.time_index(show_time)
             show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
             U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))
@@ -457,25 +459,25 @@ class ParticleSet(object):
         # will be replaced (see PR #111)
         if field is not None:
             # Kick out particles that are not within the limits of our density field
-            half_lon = (field.lon[1] - field.lon[0])/2
-            half_lat = (field.lat[1] - field.lat[0])/2
-            dparticles = (lons > (np.min(field.lon)-half_lon)) * (lons < (np.max(field.lon)+half_lon)) * \
-                         (lats > (np.min(field.lat)-half_lat)) * (lats < (np.max(field.lat)+half_lat))
+            half_lon = (field.grid.lon[1] - field.grid.lon[0])/2
+            half_lat = (field.grid.lat[1] - field.grid.lat[0])/2
+            dparticles = (lons > (np.min(field.grid.lon)-half_lon)) * (lons < (np.max(field.grid.lon)+half_lon)) * \
+                         (lats > (np.min(field.grid.lat)-half_lat)) * (lats < (np.max(field.grid.lat)+half_lat))
             dparticles = np.where(dparticles)[0]
         else:
             field = self.fieldset.U
             dparticles = range(len(self.particles))
-        Density = np.zeros((field.lon.size, field.lat.size), dtype=np.float32)
+        Density = np.zeros((field.grid.lon.size, field.grid.lat.size), dtype=np.float32)
 
         # For each particle, find closest vertex in x and y and add 1 or val to the count
         if particle_val is not None:
             for p in dparticles:
-                Density[np.argmin(np.abs(lons[p] - field.lon)), np.argmin(np.abs(lats[p] - field.lat))] \
+                Density[np.argmin(np.abs(lons[p] - field.grid.lon)), np.argmin(np.abs(lats[p] - field.grid.lat))] \
                     += getattr(self.particles[p], particle_val)
         else:
             for p in dparticles:
-                nearest_lon = np.argmin(np.abs(lons[p] - field.lon))
-                nearest_lat = np.argmin(np.abs(lats[p] - field.lat))
+                nearest_lon = np.argmin(np.abs(lons[p] - field.grid.lon))
+                nearest_lat = np.argmin(np.abs(lats[p] - field.grid.lat))
                 Density[nearest_lon, nearest_lat] += 1
             if relative:
                 Density /= len(dparticles)
@@ -484,9 +486,9 @@ class ParticleSet(object):
             area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
             U = self.fieldset.U
             V = self.fieldset.V
-            dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0], V.depth[0])
-            for y in range(len(U.lat)):
-                dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y], V.depth[0])
+            dy = (V.grid.lon[1] - V.grid.lon[0])/V.units.to_target(1, V.grid.lon[0], V.grid.lat[0], V.grid.depth[0])
+            for y in range(len(U.grid.lat)):
+                dx = (U.grid.lon[1] - U.grid.lon[0])/U.units.to_target(1, U.grid.lon[0], U.grid.lat[y], V.grid.depth[0])
                 area[y, :] = dy * dx
             # Scale by cell area
             Density /= np.transpose(area)
