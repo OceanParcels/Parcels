@@ -443,7 +443,7 @@ class ParticleSet(object):
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=True):
         """Method to calculate the density of particles in a ParticleSet from their locations,
-        through a 2D histogram
+        through a 2D histogram. Note that returns array of size (lat, lon)
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
                     on. Default is `fieldset.U`
@@ -467,31 +467,23 @@ class ParticleSet(object):
         else:
             field = self.fieldset.U
             dparticles = range(len(self.particles))
-        Density = np.zeros((field.grid.lon.size, field.grid.lat.size), dtype=np.float32)
+        Density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
         # For each particle, find closest vertex in x and y and add 1 or val to the count
         if particle_val is not None:
             for p in dparticles:
-                Density[np.argmin(np.abs(lons[p] - field.grid.lon)), np.argmin(np.abs(lats[p] - field.grid.lat))] \
+                Density[np.argmin(np.abs(lats[p] - field.grid.lat)), np.argmin(np.abs(lons[p] - field.grid.lon))] \
                     += getattr(self.particles[p], particle_val)
         else:
             for p in dparticles:
                 nearest_lon = np.argmin(np.abs(lons[p] - field.grid.lon))
                 nearest_lat = np.argmin(np.abs(lats[p] - field.grid.lat))
-                Density[nearest_lon, nearest_lat] += 1
+                Density[nearest_lat, nearest_lon] += 1
             if relative:
                 Density /= len(dparticles)
 
         if area_scale:
-            area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
-            U = self.fieldset.U
-            V = self.fieldset.V
-            dy = (V.grid.lon[1] - V.grid.lon[0])/V.units.to_target(1, V.grid.lon[0], V.grid.lat[0], V.grid.depth[0])
-            for y in range(len(U.grid.lat)):
-                dx = (U.grid.lon[1] - U.grid.lon[0])/U.units.to_target(1, U.grid.lon[0], U.grid.lat[y], V.grid.depth[0])
-                area[y, :] = dy * dx
-            # Scale by cell area
-            Density /= np.transpose(area)
+            Density /= field.area()
 
         return Density
 

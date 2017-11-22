@@ -13,7 +13,7 @@ import math
 from grid import StructuredGrid, CGrid
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
+__all__ = ['Field', 'Geographic', 'GeographicPolar']
 
 
 class FieldSamplingError(RuntimeError):
@@ -40,44 +40,6 @@ class TimeExtrapolationError(RuntimeError):
             field.name if field else "Field", time)
         message += " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(message)
-
-
-def CentralDifferences(field_data, lat, lon):
-    """Function to calculate gradients in two dimensions
-    using central differences on field
-
-    :param field_data: data to take the gradients of
-    :param lat: latitude vector
-    :param lon: longitude vector
-
-    :rtype: gradient of data in zonal and meridional direction
-    """
-    r = 6.371e6  # radius of the earth
-    deg2rd = np.pi / 180
-    dy = r * np.diff(lat) * deg2rd
-    # calculate the width of each cell, dependent on lon spacing and latitude
-    dx = np.zeros([len(lon)-1, len(lat)], dtype=np.float32)
-    for x in range(len(lon))[1:]:
-        for y in range(len(lat)):
-            dx[x-1, y] = r * np.cos(lat[y] * deg2rd) * (lon[x]-lon[x-1]) * deg2rd
-    # calculate central differences for non-edge cells (with equal weighting)
-    dVdx = np.zeros(shape=np.shape(field_data), dtype=np.float32)
-    dVdy = np.zeros(shape=np.shape(field_data), dtype=np.float32)
-    for x in range(len(lon))[1:-1]:
-        for y in range(len(lat)):
-            dVdx[x, y] = (field_data[x+1, y] - field_data[x-1, y]) / (2 * dx[x-1, y])
-    for x in range(len(lon)):
-        for y in range(len(lat))[1:-1]:
-            dVdy[x, y] = (field_data[x, y+1] - field_data[x, y-1]) / (2 * dy[y-1])
-    # Forward and backward difference for edges
-    for x in range(len(lon)):
-        dVdy[x, 0] = (field_data[x, 1] - field_data[x, 0]) / dy[0]
-        dVdy[x, len(lat)-1] = (field_data[x, len(lat)-1] - field_data[x, len(lat)-2]) / dy[len(lat)-2]
-    for y in range(len(lat)):
-        dVdx[0, y] = (field_data[1, y] - field_data[0, y]) / dx[0, y]
-        dVdx[len(lon)-1, y] = (field_data[len(lon)-1, y] - field_data[len(lon)-2, y]) / dx[len(lon)-2, y]
-
-    return [dVdx, dVdy]
 
 
 class UnitConverter(object):
@@ -286,7 +248,25 @@ class Field(object):
     def __getitem__(self, key):
         return self.eval(*key)
 
-    def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
+    def cell_distances(self):
+        lon_mesh_converter = lat_mesh_converter = UnitConverter()
+        if self.mesh is 'spherical':
+            lon_mesh_converter = GeographicPolar()
+            lat_mesh_converter = Geographic()
+        zonal_distance = [lon_mesh_converter.to_target(d, self.lon[0], lat, self.depth[0])
+                          for d, lat in zip(np.gradient(self.lon), self.lat)]
+        meridonal_distance = [lat_mesh_converter.to_target(d, self.lon[0], self.lat[0], self.depth[0])
+                              for d in np.gradient(self.lat)]
+        return np.array(zonal_distance, dtype=np.float32), np.array(meridonal_distance, dtype=np.float32)
+
+    def area(self):
+        zonal_distance, meridonal_distance = self.cell_distances()
+        area = np.zeros(np.shape(self.data[0, :, :]), dtype=np.float32)
+        for y in range(meridonal_distance.size):
+            area[:, y] = meridonal_distance[y] * zonal_distance
+        return area
+
+    def gradient(self, timerange=None, name=None):
         """Method to create gradients of Field"""
         if name is None:
             name = 'd' + self.name
@@ -297,29 +277,16 @@ class Field(object):
         else:
             time_i = range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1)
             time = self.grid.time[time_i]
-        if lonrange is None:
-            lon_i = range(len(self.grid.lon))
-            lon = self.grid.lon
-        else:
-            lon_i = range(np.where(self.grid.lon >= lonrange[0])[0][0], np.where(self.grid.lon <= lonrange[1])[0][-1]+1)
-            lon = self.grid.lon[lon_i]
-        if latrange is None:
-            lat_i = range(len(self.grid.lat))
-            lat = self.grid.lat
-        else:
-            lat_i = range(np.where(self.grid.lat >= latrange[0])[0][0], np.where(self.grid.lat <= latrange[1])[0][-1]+1)
-            lat = self.grid.lat[lat_i]
 
-        dVdx = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
-        dVdy = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
+        dVdx = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
+        dVdy = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
+        celldist_lon, celldist_lat = self.cell_distances()
         for t in np.nditer(np.int32(time_i)):
-            grad = CentralDifferences(np.transpose(self.data[t, :, :][np.ix_(lat_i, lon_i)]), lat, lon)
-            dVdx[t, :, :] = np.array(np.transpose(grad[0]))
-            dVdy[t, :, :] = np.array(np.transpose(grad[1]))
-
-        return([Field(name + '_dx', dVdx, lon=lon, lat=lat, depth=self.grid.depth, time=time,
+            dVdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / celldist_lat
+            dVdx[t, :, :] = np.gradient(self.data[t, :, :], axis=1) / celldist_lon
+        return([Field(name + '_dx', dVdx, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
-                Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
+                Field(name + '_dy', dVdy, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
     def interpolator3D(self, idx, z, y, x):

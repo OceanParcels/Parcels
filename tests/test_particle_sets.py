@@ -7,7 +7,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 @pytest.fixture
-def fieldset(xdim=100, ydim=100):
+def fieldset(xdim=40, ydim=100):
     U = np.zeros((xdim, ydim), dtype=np.float32)
     V = np.zeros((xdim, ydim), dtype=np.float32)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
@@ -230,25 +230,19 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_density(fieldset, mode):
-    lons, lats = np.meshgrid(fieldset.U.lon[0], fieldset.U.lat)
+    lons, lats = np.meshgrid(fieldset.U.lon, fieldset.U.lat)
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=lons,
                        lat=lats)
     arr = pset.density(area_scale=False)  # Not scaling by area
-    assert(np.sum(arr) == fieldset.U.lat.size)  # check conservation of particles
+    assert(np.sum(arr) == fieldset.U.lat.size*fieldset.U.lon.size)  # check conservation of particles
     inds = zip(*np.where(arr))
     for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
-        assert np.allclose(fieldset.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
-        assert np.allclose(fieldset.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)
+        assert np.allclose(fieldset.U.lon[inds[i][1]], pset[i].lon, rtol=1e-1)
+        assert np.allclose(fieldset.U.lat[inds[i][0]], pset[i].lat, rtol=1e-1)
     arr = pset.density(area_scale=True)  # Scaling by area
-    area = np.zeros(np.shape(fieldset.U.data[0, :, 0]), dtype=np.float32)
-    U = fieldset.U
-    V = fieldset.V
-    dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0], V.depth[0])
-    for y in range(len(U.lat)):
-        dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y], V.depth[0])
-        area[y] = dy * dx
-    assert ((arr[0, :] - (1/area)) == 0).all()  # check that density equals 1/area
+    area = fieldset.U.area()
+    assert np.allclose(arr, 1 / area, rtol=1e-3)  # check that density equals 1/area
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
