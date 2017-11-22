@@ -1,6 +1,6 @@
 import argparse
 import os
-from parcels import Grid
+from parcels.grid import Grid
 import numpy as np
 import math
 
