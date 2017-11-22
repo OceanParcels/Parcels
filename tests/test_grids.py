@@ -1,5 +1,5 @@
-from parcels import FieldSet, Field, ParticleSet, StructuredGrid, ScipyParticle, JITParticle, Variable
-from parcels import AdvectionRK4
+from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4
+from parcels import StructuredGrid, StructuredSGrid
 import numpy as np
 import pytest
 
@@ -99,8 +99,52 @@ def test_avoid_repeated_grids():
     other_fields = {}
     other_fields['temp0'] = temp0_field
 
-    field_set2 = FieldSet(u_field, v_field, fields=other_fields)
-    assert field_set2.gridset.size == 2
-    assert field_set2.U.grid.name == 'grid0py'
-    assert field_set2.V.grid.name == 'grid1py'
-    assert field_set2.temp.grid.name == 'grid0py'
+    field_set = FieldSet(u_field, v_field, fields=other_fields)
+    assert field_set.gridset.size == 2
+    assert field_set.U.grid.name == 'grid0py'
+    assert field_set.V.grid.name == 'grid1py'
+    assert field_set.temp.grid.name == 'grid0py'
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_s_grids(mode):
+
+    lon_g0 = np.linspace(-3e4, 3e4,61 , dtype=np.float32)
+    lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
+    depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+    bath = np.where(lon_g0[:] <= -2e4, 20.,
+                    np.where(lon_g0[:] < 2e4, 110. + 90 * np.sin((lon_g0[:]/2e4 * np.pi/2)),
+                             200.))
+
+    for i in range(depth_g0.shape[0]):
+        for k in range(depth_g0.shape[2]):
+            depth_g0[i,:,k] = bath[i] * k / (depth_g0.shape[2]-1)
+
+    time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
+    grid_0 = StructuredSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0, time=time_g0)
+
+    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
+    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
+    temp_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
+    for k in range(1, depth_g0.shape[2]):
+        temp_data[:,:,k,:] = k / (depth_g0.shape[2]+0.)
+    u_field = Field('U', u_data, grid=grid_0, transpose=True)
+    v_field = Field('V', v_data, grid=grid_0, transpose=True)
+    temp_field = Field('temp', temp_data, grid=grid_0, transpose=True)
+
+    other_fields = {}
+    other_fields['temp'] = temp_field
+    field_set = FieldSet(u_field, v_field, fields=other_fields)
+
+    def sampleTemp(particle, fieldset, time, dt):
+        particle.temp = fieldset.temp[time, particle.lon, particle.lat, particle.depth]
+
+    class MyParticle(ptype[mode]):
+        temp = Variable('temp', dtype=np.float32, initial=20.)
+
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[27.5])
+
+    pset.execute(pset.Kernel(sampleTemp), runtime=1, dt=1)
+    print pset.particles[0].temp
+
+test_s_grids('jit')

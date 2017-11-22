@@ -10,7 +10,7 @@ from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
 import math
-from grid import StructuredGrid, CGrid
+from grid import StructuredGrid, CGrid, GridCode
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -194,8 +194,10 @@ class Field(object):
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        if self.grid.depth.size > 1:
+        if self.grid.depth.size > 1 and len(self.grid.depth.shape) == 1:
             self.data = self.data.reshape((self.grid.time.size, self.grid.depth.size, self.grid.lat.size, self.grid.lon.size))
+        elif len(self.grid.depth.shape) == 3:
+            self.data = self.data.reshape((self.grid.time.size, self.grid.depth.shape[2], self.grid.lat.size, self.grid.lon.size))
         else:
             self.data = self.data.reshape((self.grid.time.size, self.grid.lat.size, self.grid.lon.size))
 
@@ -322,9 +324,10 @@ class Field(object):
                 Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
-    def interpolator3D(self, idx, z, y, x):
+    def interpolator3D_structured(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
+
         zdx = self.depth_index(z, y, x)
         f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
         f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
@@ -338,6 +341,75 @@ class Field(object):
             return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+
+    def interpolator3D_structured_s(self, idx, z, y, x):
+        """Scipy implementation of 3D interpolation, by first interpolating
+        in horizontal, then in the vertical"""
+
+        grid = self.grid
+
+        if x < grid.lon[0] or x > grid.lon[-1]:
+            raise FieldSamplingError(x, y, z, field=self)
+        if y < grid.lat[0] or y > grid.lat[-1]:
+            raise FieldSamplingError(x, y, z, field=self)
+
+        lon_index = grid.lon <= x 
+        xi = yi = zi = -1
+        if lon_index.all():
+            xi = len(grid.lon) - 2
+        else:
+            xi = lon_index.argmin() - 1 if lon_index.any() else 0
+        lat_index = grid.lat <= y
+        if lat_index.all():
+            yi = len(grid.lat) - 2
+        else:
+            yi = lat_index.argmin() - 1 if lat_index.any() else 0
+
+        xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+        eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+        assert xsi >= 0 and xsi <= 1
+        assert eta >= 0 and eta <= 1
+
+        depth_vector = (1-xsi)*(1-eta) * grid.depth[xi,yi,:] + \
+                xsi*(1-eta) * grid.depth[xi+1,yi,:] + \
+                xsi*eta * grid.depth[xi+1,yi+1,:] + \
+                (1-xsi)*eta * grid.depth[xi,yi+1,:]
+
+        depth_index = depth_vector <= z
+        if depth_index.all():
+            zi = len(depth_vector) - 2
+        else:
+            zi = depth_index.argmin() - 1 if depth_index.any() else 0
+
+        data = self.data[idx, zi, :, :].transpose()
+        f0 = (1-xsi)*(1-eta) * data[xi,yi] + \
+                xsi*(1-eta) * data[xi+1,yi] + \
+                xsi*eta * data[xi+1,yi+1] + \
+                (1-xsi)*eta * data[xi,yi+1]
+        data = self.data[idx, zi+1, :, :].transpose()
+        f1 = (1-xsi)*(1-eta) * data[xi,yi] + \
+                xsi*(1-eta) * data[xi+1,yi] + \
+                xsi*eta * data[xi+1,yi+1] + \
+                (1-xsi)*eta * data[xi,yi+1]
+
+        z0 = depth_vector[zi]
+        z1 = depth_vector[zi+1]
+        if z < z0 or z > z1:
+            raise FieldSamplingError(x, y, z, field=self)
+        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+
+    def interpolator3D(self, idx, z, y, x):
+        """Scipy implementation of 3D interpolation, by first interpolating
+        in horizontal, then in the vertical"""
+
+        if self.grid.gtype == GridCode.StructuredGrid:
+            return self.interpolator3D_structured(idx, z, y, x)
+        elif self.grid.gtype == GridCode.StructuredSGrid:
+            return self.interpolator3D_structured_s(idx, z, y, x)
+        else:
+            print("Only StructuredGrid and StructuredSGrid grids are currently implemented")
+            exit(-1)
+
 
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
