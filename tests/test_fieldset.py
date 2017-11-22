@@ -5,7 +5,7 @@ from parcels.scripts import create_moving_eddies_files
 from datetime import timedelta as delta
 import numpy as np
 import pytest
-from os import path, pardir
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
