@@ -77,23 +77,30 @@ def download_files(source_url, file_names, target_path):
                 dst.write(src.read())
 
 
-def main(target_path=None):
+def main(target_path=None, overwrite_examples=None):
     """Get example scripts, example notebooks, and example data.
 
-    Copy the examples from the package directory and get the example data either
-    from the package directory or from the Parcels website.
+    Copy the examples from the package directory and get the example data
+    either from the package directory or from the Parcels website.
     """
-    if target_path is None:
-        # get targe directory
-        parser = argparse.ArgumentParser(
-            description="Get Parcels example data.")
-        parser.add_argument(
-            "target_path",
-            help="Where to put the tutorials?  (This path will be created.)")
-        args = parser.parse_args()
-        target_path = args.target_path
 
-    if os.path.exists(target_path):
+    # Add command line args
+    parser = argparse.ArgumentParser(
+        description="Get Parcels example data.")
+    parser.add_argument(
+        "target_path",
+        help="Where to put the tutorials?  (This path will be created.)")
+    parser.add_argument(
+        "-o", action="store_true",
+        help="If set, existing files will be overwritten.")
+    args = parser.parse_args()
+
+    if target_path is None:
+        target_path = args.target_path
+    if overwrite_examples is None:
+        overwrite_examples = args.o
+
+    if os.path.exists(target_path) and not overwrite_examples:
         print("Error: {} already exists.".format(target_path))
         return
 
