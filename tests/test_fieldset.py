@@ -103,9 +103,9 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
 
 @pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime, tmpdir):
-    create_moving_eddies_files.main(target_path=tmpdir.name,
+    create_moving_eddies_files.main(target_path=str(tmpdir),
                                     overwrite_files=True)
-    fieldsetfile = path.join(tmpdir.name, 'moving_eddies')
+    fieldsetfile = path.join(str(tmpdir), 'moving_eddies')
     fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     fieldsetsub = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'},
                                      indices={'time': indstime})
