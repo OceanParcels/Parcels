@@ -1,3 +1,5 @@
+import argparse
+import os
 from parcels import Grid
 import numpy as np
 import math
@@ -85,7 +87,7 @@ def main(target_path=None, overwrite_files=None):
     # Check for existing files
     if any(os.path.exists(os.path.join(target_path,
                                        'moving_eddies{}.nc'.format(var)))
-           for var_name in [P, U, V]) and not overwrite_files:
+           for var in ["P", "U", "V"]) and not overwrite_files:
         print("Error: moving_eddies[P,U,V].nc already exist in " +
               "{}.".format(target_path))
         return
