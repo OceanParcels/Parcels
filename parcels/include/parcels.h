@@ -15,7 +15,7 @@ typedef enum
 
 typedef enum
   {
-    STRUCTURED_GRID=0, STRUCTURED_S_GRID=1, SEMI_STRUCTURED_GRID=2
+    RECTILINEAR_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_GRID=2
   } GridCode;
 
 typedef enum
@@ -36,7 +36,7 @@ typedef struct
   int xdim, ydim, zdim, tdim, tidx, z4d;
   float *lon, *lat, *depth;
   double *time;
-} CStructuredGrid;
+} CRectilinearGrid;
 
 typedef struct
 {
@@ -84,7 +84,7 @@ static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX
 
   if (sizeZ > 1)
   {
-    if (gcode == STRUCTURED_GRID){
+    if (gcode == RECTILINEAR_GRID){
       if (z < zvals[0] || z > zvals[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
       while (*k < sizeZ-1 && z > zvals[*k+1]) ++(*k);
       while (*k > 0 && x < zvals[*k]) --(*k);
@@ -93,7 +93,7 @@ static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX
          for index+1 in spatial-interpolation*/
       if (*k == sizeZ-1) {--*k;}
     }
-    else if (gcode == STRUCTURED_S_GRID){
+    else if (gcode == RECTILINEAR_S_GRID){
       float zcol[sizeZ];
       double xsi = (x-xvals[*i])/(xvals[*i+1]-xvals[*i]);
       double eta = (y-yvals[*j])/(yvals[*j+1]-yvals[*j]);
@@ -187,7 +187,7 @@ static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float 
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   float f0, f1;
-  if (gcode == STRUCTURED_GRID){
+  if (gcode == RECTILINEAR_GRID){
     z0 = depth[k];
     z1 = depth[k+1];
   }
@@ -228,7 +228,7 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   int ii, jj, kk;
-  if (gcode == STRUCTURED_GRID){
+  if (gcode == RECTILINEAR_GRID){
     z0 = depth[k];
     z1 = depth[k+1];
   }
@@ -246,7 +246,7 @@ static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, f
 {
   ErrorCode err;
   /* Cast data array intp data[time][lat][lon] as per NEMO convention */
-  CStructuredGrid *grid = f->grid->grid;
+  CRectilinearGrid *grid = f->grid->grid;
   /* Identify grid cell to sample through local linear search */
 
   float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
@@ -341,10 +341,10 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
   CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
   CGridIndex *gridIndex = &giset->gridIndices[iGrid];
 
-  if (gcode == STRUCTURED_GRID || gcode == STRUCTURED_S_GRID)
+  if (gcode == RECTILINEAR_GRID || gcode == RECTILINEAR_S_GRID)
     return temporal_interpolation_linear_structured_grid(x, y, z, gridIndex, iGrid, time, f, value, interp_method, gcode);
   else{
-    printf("Only STRUCTURED_GRID and STRUCTURED_S_GRID grids are currently implemented\n");
+    printf("Only RECTILINEAR_GRID and RECTILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;
   }
 }

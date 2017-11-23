@@ -10,7 +10,7 @@ from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
 import math
-from grid import StructuredGrid, CGrid, GridCode
+from grid import RectilinearGrid, CGrid, GridCode
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -157,7 +157,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin)
+            self.grid = RectilinearGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -281,7 +281,7 @@ class Field(object):
         if 'time' in indices:
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
-        grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        grid = RectilinearGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
@@ -422,12 +422,12 @@ class Field(object):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
 
-        if self.grid.gtype == GridCode.StructuredGrid:
+        if self.grid.gtype == GridCode.RectilinearGrid:
             return self.interpolator3D_structured(idx, z, y, x)
-        elif self.grid.gtype == GridCode.StructuredSGrid:
+        elif self.grid.gtype == GridCode.RectilinearSGrid:
             return self.interpolator3D_structured_s(idx, z, y, x, time)
         else:
-            print("Only StructuredGrid and StructuredSGrid grids are currently implemented")
+            print("Only RectilinearGrid and RectilinearSGrid grids are currently implemented")
             exit(-1)
 
     def interpolator2D(self, t_idx, z_idx=None):

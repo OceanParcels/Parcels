@@ -3,13 +3,13 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 
-__all__ = ['GridCode', 'StructuredGrid', 'StructuredSGrid', 'GridIndex', 'CGrid']
+__all__ = ['GridCode', 'RectilinearGrid', 'RectilinearSGrid', 'GridIndex', 'CGrid']
 
 
 class GridCode(IntEnum):
-    StructuredGrid = 0
-    StructuredSGrid = 1
-    SemiStructuredGrid = 2
+    RectilinearGrid = 0
+    RectilinearSGrid = 1
+    CurvilinearGrid = 2
 
 
 class CGrid(Structure):
@@ -29,7 +29,7 @@ class Grid(object):
         return cstruct
 
 
-class StructuredGrid(Grid):
+class RectilinearGrid(Grid):
     """Structured Grid
 
     :param name: Name of the grid
@@ -63,7 +63,7 @@ class StructuredGrid(Grid):
             assert(len(sh) == 1 or len(sh) == 2 and min(sh) == 2), 'time is not a vector'
 
         self.name = name
-        self.gtype = GridCode.StructuredGrid
+        self.gtype = GridCode.RectilinearGrid
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -88,8 +88,8 @@ class StructuredGrid(Grid):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid."""
 
-        class CStructuredGrid(Structure):
-            # z4d is only to have same cstruct as StructuredSGrid
+        class CRectilinearGrid(Structure):
+            # z4d is only to have same cstruct as RectilinearSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('tidx', c_int), ('z4d', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
@@ -97,7 +97,7 @@ class StructuredGrid(Grid):
                         ]
 
         # Create and populate the c-struct object
-        cstruct = CStructuredGrid(self.lon.size, self.lat.size, self.depth.size,
+        cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.size,
                                   self.time.size, 0, -1,
                                   self.lon.ctypes.data_as(POINTER(c_float)),
                                   self.lat.ctypes.data_as(POINTER(c_float)),
@@ -106,7 +106,7 @@ class StructuredGrid(Grid):
         return cstruct
 
 
-class StructuredSGrid(Grid):
+class RectilinearSGrid(Grid):
     """Structured S Grid. Same horizontal discretisation as a structured grid,
        but with s vertical coordinates
 
@@ -133,7 +133,7 @@ class StructuredSGrid(Grid):
             assert(len(time.shape) == 1), 'time is not a vector'
 
         self.name = name
-        self.gtype = GridCode.StructuredSGrid
+        self.gtype = GridCode.RectilinearSGrid
         self.lon = lon
         self.lat = lat
         self.depth = depth
@@ -159,7 +159,7 @@ class StructuredSGrid(Grid):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid."""
 
-        class CStructuredGrid(Structure):
+        class CRectilinearGrid(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('tidx', c_int), ('z4d', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
@@ -167,7 +167,7 @@ class StructuredSGrid(Grid):
                         ]
 
         # Create and populate the c-struct object
-        cstruct = CStructuredGrid(self.lon.size, self.lat.size, self.depth.shape[2],
+        cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.shape[2],
                                   self.time.size, 0, self.z4d,
                                   self.lon.ctypes.data_as(POINTER(c_float)),
                                   self.lat.ctypes.data_as(POINTER(c_float)),
