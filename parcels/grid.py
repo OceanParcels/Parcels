@@ -89,15 +89,16 @@ class StructuredGrid(Grid):
         pointers and sizes for this grid."""
 
         class CStructuredGrid(Structure):
+            # z4d is only to have same cstruct as StructuredSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('tidx', c_int),
+                        ('tdim', c_int), ('tidx', c_int), ('z4d', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
         cstruct = CStructuredGrid(self.lon.size, self.lat.size, self.depth.size,
-                                  self.time.size, 0,
+                                  self.time.size, 0, -1,
                                   self.lon.ctypes.data_as(POINTER(c_float)),
                                   self.lat.ctypes.data_as(POINTER(c_float)),
                                   self.depth.ctypes.data_as(POINTER(c_float)),
@@ -126,7 +127,7 @@ class StructuredSGrid(Grid):
     def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
         assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
         assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) == 3), 'depth is not a 3D numpy array'
+        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
@@ -136,6 +137,7 @@ class StructuredSGrid(Grid):
         self.lon = lon
         self.lat = lat
         self.depth = depth
+        self.z4d = len(depth.shape) == 4
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
@@ -157,20 +159,20 @@ class StructuredSGrid(Grid):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid."""
 
-        class CStructuredSGrid(Structure):
+        class CStructuredGrid(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('tidx', c_int),
+                        ('tdim', c_int), ('tidx', c_int), ('z4d', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
-        cstruct = CStructuredSGrid(self.lon.size, self.lat.size, self.depth.shape[2],
-                                   self.time.size, 0,
-                                   self.lon.ctypes.data_as(POINTER(c_float)),
-                                   self.lat.ctypes.data_as(POINTER(c_float)),
-                                   self.depth.ctypes.data_as(POINTER(c_float)),
-                                   self.time.ctypes.data_as(POINTER(c_double)))
+        cstruct = CStructuredGrid(self.lon.size, self.lat.size, self.depth.shape[2],
+                                  self.time.size, 0, self.z4d,
+                                  self.lon.ctypes.data_as(POINTER(c_float)),
+                                  self.lat.ctypes.data_as(POINTER(c_float)),
+                                  self.depth.ctypes.data_as(POINTER(c_float)),
+                                  self.time.ctypes.data_as(POINTER(c_double)))
         return cstruct
 
 

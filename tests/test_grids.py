@@ -107,11 +107,15 @@ def test_avoid_repeated_grids():
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_s_grids(mode):
-
+@pytest.mark.parametrize('z4d', ['True', 'False'])
+def test_s_grids(mode, z4d):
     lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
-    depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+    time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
+    if z4d:
+        depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5, time_g0.size), dtype=np.float32)
+    else:
+        depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
 
     def bath_func(lon):
         bath = (lon <= -2e4) * 20.
@@ -122,9 +126,11 @@ def test_s_grids(mode):
 
     for i in range(depth_g0.shape[0]):
         for k in range(depth_g0.shape[2]):
-            depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+            if z4d:
+                depth_g0[i, :, k, :] = bath[i] * k / (depth_g0.shape[2]-1)
+            else:
+                depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
     grid_0 = StructuredSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0, time=time_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
@@ -152,5 +158,4 @@ def test_s_grids(mode):
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=1, dt=1)
-    print pset.particles[0].temp
     assert np.allclose(pset.particles[0].temp, ratio, atol=1e-4)

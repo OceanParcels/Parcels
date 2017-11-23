@@ -196,7 +196,7 @@ class Field(object):
             self.data = np.transpose(self.data).copy()
         if self.grid.depth.size > 1 and len(self.grid.depth.shape) == 1:
             self.data = self.data.reshape((self.grid.time.size, self.grid.depth.size, self.grid.lat.size, self.grid.lon.size))
-        elif len(self.grid.depth.shape) == 3:
+        elif len(self.grid.depth.shape) in [3, 4]:
             self.data = self.data.reshape((self.grid.time.size, self.grid.depth.shape[2], self.grid.lat.size, self.grid.lon.size))
         else:
             self.data = self.data.reshape((self.grid.time.size, self.grid.lat.size, self.grid.lon.size))
@@ -342,9 +342,7 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
-    def interpolator3D_structured_s(self, idx, z, y, x):
-        """Scipy implementation of 3D interpolation, by first interpolating
-        in horizontal, then in the vertical"""
+    def interpolator3D_structured_s(self, idx, z, y, x, time):
 
         grid = self.grid
 
@@ -370,10 +368,25 @@ class Field(object):
         assert xsi >= 0 and xsi <= 1
         assert eta >= 0 and eta <= 1
 
-        depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-            xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-            xsi*eta * grid.depth[xi+1, yi+1, :] + \
-            (1-xsi)*eta * grid.depth[xi, yi+1, :]
+        if grid.z4d:
+            if idx == len(self.grid.time)-1:
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+            else:
+                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, idx:idx+2] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :, idx:idx+2] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :, idx:idx+2] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :, idx:idx+2]
+                t0 = self.grid.time[idx]
+                t1 = self.grid.time[idx + 1]
+                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+        else:
+            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
+                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
+                xsi*eta * grid.depth[xi+1, yi+1, :] + \
+                (1-xsi)*eta * grid.depth[xi, yi+1, :]
 
         depth_index = depth_vector <= z
         if depth_index.all():
@@ -405,14 +418,14 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
-    def interpolator3D(self, idx, z, y, x):
+    def interpolator3D(self, idx, z, y, x, time):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
 
         if self.grid.gtype == GridCode.StructuredGrid:
             return self.interpolator3D_structured(idx, z, y, x)
         elif self.grid.gtype == GridCode.StructuredSGrid:
-            return self.interpolator3D_structured_s(idx, z, y, x)
+            return self.interpolator3D_structured_s(idx, z, y, x, time)
         else:
             print("Only StructuredGrid and StructuredSGrid grids are currently implemented")
             exit(-1)
@@ -445,12 +458,12 @@ class Field(object):
         f1 = self.data[tidx+1, :]
         return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    def spatial_interpolation(self, tidx, z, y, x):
+    def spatial_interpolation(self, tidx, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
         if self.grid.depth.size == 1:
             val = self.interpolator2D(tidx)((y, x))
         else:
-            val = self.interpolator3D(tidx, z, y, x)
+            val = self.interpolator3D(tidx, z, y, x, time)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldSamplingError(x, y, z, field=self)
@@ -503,8 +516,8 @@ class Field(object):
         (t_idx, periods) = self.time_index(time)
         time -= periods*(self.grid.time[-1]-self.grid.time[0])
         if t_idx < len(self.grid.time)-1 and time > self.grid.time[t_idx]:
-            f0 = self.spatial_interpolation(t_idx, z, y, x)
-            f1 = self.spatial_interpolation(t_idx + 1, z, y, x)
+            f0 = self.spatial_interpolation(t_idx, z, y, x, time)
+            f1 = self.spatial_interpolation(t_idx + 1, z, y, x, time)
             t0 = self.grid.time[t_idx]
             t1 = self.grid.time[t_idx + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -512,7 +525,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(t_idx, z, y, x)
+            value = self.spatial_interpolation(t_idx, z, y, x, self.grid.time[t_idx-1])
 
         return self.units.to_target(value, x, y, z)
 
