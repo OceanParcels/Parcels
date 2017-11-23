@@ -104,6 +104,7 @@ class StructuredGrid(Grid):
                                   self.time.ctypes.data_as(POINTER(c_double)))
         return cstruct
 
+
 class StructuredSGrid(Grid):
     """Structured S Grid. Same horizontal discretisation as a structured grid,
        but with s vertical coordinates
@@ -165,13 +166,12 @@ class StructuredSGrid(Grid):
 
         # Create and populate the c-struct object
         cstruct = CStructuredSGrid(self.lon.size, self.lat.size, self.depth.shape[2],
-                                  self.time.size, 0,
-                                  self.lon.ctypes.data_as(POINTER(c_float)),
-                                  self.lat.ctypes.data_as(POINTER(c_float)),
-                                  self.depth.ctypes.data_as(POINTER(c_float)),
-                                  self.time.ctypes.data_as(POINTER(c_double)))
+                                   self.time.size, 0,
+                                   self.lon.ctypes.data_as(POINTER(c_float)),
+                                   self.lat.ctypes.data_as(POINTER(c_float)),
+                                   self.depth.ctypes.data_as(POINTER(c_float)),
+                                   self.time.ctypes.data_as(POINTER(c_double)))
         return cstruct
-
 
 
 class GVariable(object):

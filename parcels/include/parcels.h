@@ -185,7 +185,6 @@ static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float 
         + data[k+1][j+1][i] * (lon[i+1] - x) * (y - lat[j])
         + data[k+1][j+1][i+1] * (x - lon[i]) * (y - lat[j]))
         / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
-  printf("%g %g %g\n", z, z0, z1);
   *value = f0 + (f1 - f0) * (float)((z - z0) / (z1 - z0));
   return SUCCESS;
 }
@@ -207,14 +206,19 @@ static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i,
 /* Nearest neighbour interpolation routine for 3D grid */
 static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float z, int i, int j, int k,
                                                         int xdim, int ydim, int zdim, float *lon, float *lat,
-                                                        float *depth, float **f_data, float *value)
+                                                        float *depth, float **f_data, float *value,
+                                                        GridCode gcode, float z0, float z1)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   int ii, jj, kk;
+  if (gcode == STRUCTURED_GRID){
+    z0 = depth[k];
+    z1 = depth[k+1];
+  }
   if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
   if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
-  if (z - depth[k] < depth[k+1] - z) {kk = k;} else {kk = k + 1;}
+  if (z - z0 < z1 - z) {kk = k;} else {kk = k + 1;}
   *value = data[kk][jj][ii];
   return SUCCESS;
 }
@@ -268,10 +272,10 @@ static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, f
       } else {
         err = spatial_interpolation_nearest3D(x, y, z, i, j, k, grid->xdim, grid->ydim,
                                               grid->zdim, grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[grid->tidx]), &f0);
+                                              (float**)(data[grid->tidx]), &f0, gcode, z0, z1);
         err = spatial_interpolation_nearest3D(x, y, z, i, j, k, grid->xdim, grid->ydim,
                                               grid->zdim, grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[grid->tidx+1]), &f1);
+                                              (float**)(data[grid->tidx+1]), &f1, gcode, z0, z1);
       }
     }
     else {
@@ -297,7 +301,7 @@ static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, f
       } else {
         err = spatial_interpolation_nearest3D(x, y, z, i, j, k, grid->xdim, grid->ydim,
                                               grid->zdim, grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[grid->tidx]), value);
+                                              (float**)(data[grid->tidx]), value, gcode, z0, z1);
       }
     }
     else {

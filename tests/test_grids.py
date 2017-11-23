@@ -109,16 +109,20 @@ def test_avoid_repeated_grids():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_s_grids(mode):
 
-    lon_g0 = np.linspace(-3e4, 3e4,61 , dtype=np.float32)
+    lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
     depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
-    bath = np.where(lon_g0[:] <= -2e4, 20.,
-                    np.where(lon_g0[:] < 2e4, 110. + 90 * np.sin((lon_g0[:]/2e4 * np.pi/2)),
-                             200.))
+
+    def bath_func(lon):
+        bath = (lon <= -2e4) * 20.
+        bath += (lon > -2e4) * (lon < 2e4) * (110. + 90 * np.sin(lon/2e4 * np.pi/2.))
+        bath += (lon >= 2e4) * 200.
+        return bath
+    bath = bath_func(lon_g0)
 
     for i in range(depth_g0.shape[0]):
         for k in range(depth_g0.shape[2]):
-            depth_g0[i,:,k] = bath[i] * k / (depth_g0.shape[2]-1)
+            depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
     grid_0 = StructuredSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0, time=time_g0)
@@ -127,7 +131,7 @@ def test_s_grids(mode):
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
     temp_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
     for k in range(1, depth_g0.shape[2]):
-        temp_data[:,:,k,:] = k / (depth_g0.shape[2]+0.)
+        temp_data[:, :, k, :] = k / (depth_g0.shape[2]-1.)
     u_field = Field('U', u_data, grid=grid_0, transpose=True)
     v_field = Field('V', v_data, grid=grid_0, transpose=True)
     temp_field = Field('temp', temp_data, grid=grid_0, transpose=True)
@@ -142,9 +146,11 @@ def test_s_grids(mode):
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[27.5])
+    lon = 400
+    lat = 0
+    ratio = .3
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=1, dt=1)
     print pset.particles[0].temp
-
-test_s_grids('jit')
+    assert np.allclose(pset.particles[0].temp, ratio, atol=1e-4)

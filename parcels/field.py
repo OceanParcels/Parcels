@@ -353,7 +353,7 @@ class Field(object):
         if y < grid.lat[0] or y > grid.lat[-1]:
             raise FieldSamplingError(x, y, z, field=self)
 
-        lon_index = grid.lon <= x 
+        lon_index = grid.lon <= x
         xi = yi = zi = -1
         if lon_index.all():
             xi = len(grid.lon) - 2
@@ -370,33 +370,40 @@ class Field(object):
         assert xsi >= 0 and xsi <= 1
         assert eta >= 0 and eta <= 1
 
-        depth_vector = (1-xsi)*(1-eta) * grid.depth[xi,yi,:] + \
-                xsi*(1-eta) * grid.depth[xi+1,yi,:] + \
-                xsi*eta * grid.depth[xi+1,yi+1,:] + \
-                (1-xsi)*eta * grid.depth[xi,yi+1,:]
+        depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
+            xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
+            xsi*eta * grid.depth[xi+1, yi+1, :] + \
+            (1-xsi)*eta * grid.depth[xi, yi+1, :]
 
         depth_index = depth_vector <= z
         if depth_index.all():
             zi = len(depth_vector) - 2
         else:
             zi = depth_index.argmin() - 1 if depth_index.any() else 0
-
-        data = self.data[idx, zi, :, :].transpose()
-        f0 = (1-xsi)*(1-eta) * data[xi,yi] + \
-                xsi*(1-eta) * data[xi+1,yi] + \
-                xsi*eta * data[xi+1,yi+1] + \
-                (1-xsi)*eta * data[xi,yi+1]
-        data = self.data[idx, zi+1, :, :].transpose()
-        f1 = (1-xsi)*(1-eta) * data[xi,yi] + \
-                xsi*(1-eta) * data[xi+1,yi] + \
-                xsi*eta * data[xi+1,yi+1] + \
-                (1-xsi)*eta * data[xi,yi+1]
-
         z0 = depth_vector[zi]
         z1 = depth_vector[zi+1]
         if z < z0 or z > z1:
             raise FieldSamplingError(x, y, z, field=self)
-        return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+
+        if self.interp_method is 'nearest':
+            zii = zi if z - z0 < z1 - z else zi+1
+            xii = xi if xsi <= .5 else xi+1
+            yii = yi if eta <= .5 else yi+1
+            return self.data[idx, zii, yii, xii]
+        elif self.interp_method is 'linear':
+            data = self.data[idx, zi, :, :].transpose()
+            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
+                xsi*(1-eta) * data[xi+1, yi] + \
+                xsi*eta * data[xi+1, yi+1] + \
+                    (1-xsi)*eta * data[xi, yi+1]
+            data = self.data[idx, zi+1, :, :].transpose()
+            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
+                xsi*(1-eta) * data[xi+1, yi] + \
+                xsi*eta * data[xi+1, yi+1] + \
+                (1-xsi)*eta * data[xi, yi+1]
+            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
     def interpolator3D(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
@@ -409,7 +416,6 @@ class Field(object):
         else:
             print("Only StructuredGrid and StructuredSGrid grids are currently implemented")
             exit(-1)
-
 
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
