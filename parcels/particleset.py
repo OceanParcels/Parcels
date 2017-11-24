@@ -273,7 +273,7 @@ class ParticleSet(object):
             if interval < 0:
                 interval *= -1.
                 logger.warning("Negating interval because running in time-forward mode")
-        if endtime < starttime:  # Time-backward mode
+        elif endtime < starttime:  # Time-backward mode
             if dt > 0.:
                 dt *= -1.
                 logger.warning("Negating dt because running in time-backward mode")
@@ -281,12 +281,19 @@ class ParticleSet(object):
                 interval *= -1.
                 logger.warning("Negating interval because running in time-backward mode")
 
+        if np.allclose(endtime, starttime) or interval == 0 or dt == 0 or runtime == 0:
+            timeleaps = 1
+            dt = 0
+            runtime = 0
+            endtime = starttime
+        else:
+            timeleaps = int((endtime - starttime) / interval)
+
         # Initialise particle timestepping
         for p in self:
             p.time = starttime
             p.dt = dt
         # Execute time loop in sub-steps (timeleaps)
-        timeleaps = int((endtime - starttime) / interval)
         assert(timeleaps >= 0)
         leaptime = starttime
         for _ in range(timeleaps):
