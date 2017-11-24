@@ -553,14 +553,15 @@ class LoopGenerator(object):
         # Inner loop nest for forward runs
         sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
+        dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign * __dt"),
-                                                 dt_pos, c.Statement("continue")]))]
+                                                 dt_pos, dt_0_break, c.Statement("continue")]))]
         body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
                       c.Statement("break"))]
 
-        time_loop = c.While("__dt > __tol", c.Block(body))
+        time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p"), c.Value("ErrorCode", "res"),
                          c.Value("double", "__dt, __tol, sign"), c.Assign("__tol", "1.e-6"),
