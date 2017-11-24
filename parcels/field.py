@@ -324,7 +324,7 @@ class Field(object):
                 Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
-    def interpolator3D_structured(self, idx, z, y, x):
+    def interpolator3D_rectilinear(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
         in horizontal, then in the vertical"""
 
@@ -342,7 +342,7 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
-    def interpolator3D_structured_s(self, idx, z, y, x, time):
+    def interpolator3D_rectilinear_s(self, idx, z, y, x, time):
 
         grid = self.grid
 
@@ -423,9 +423,9 @@ class Field(object):
         in horizontal, then in the vertical"""
 
         if self.grid.gtype == GridCode.RectilinearGrid:
-            return self.interpolator3D_structured(idx, z, y, x)
+            return self.interpolator3D_rectilinear(idx, z, y, x)
         elif self.grid.gtype == GridCode.RectilinearSGrid:
-            return self.interpolator3D_structured_s(idx, z, y, x, time)
+            return self.interpolator3D_rectilinear_s(idx, z, y, x, time)
         else:
             print("Only RectilinearGrid and RectilinearSGrid grids are currently implemented")
             exit(-1)

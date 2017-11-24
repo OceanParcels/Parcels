@@ -107,7 +107,7 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
+            grid = RectilinearGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
 
             fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)

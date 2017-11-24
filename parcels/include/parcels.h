@@ -240,7 +240,7 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear_structured_grid(float x, float y, float z, CGridIndex *gridIndex,
+static inline ErrorCode temporal_interpolation_linear_rectilinear_grid(float x, float y, float z, CGridIndex *gridIndex,
                                                                       int iGrid, double time, CField *f,
                                                                       float *value, int interp_method, GridCode gcode)
 {
@@ -342,7 +342,7 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
   CGridIndex *gridIndex = &giset->gridIndices[iGrid];
 
   if (gcode == RECTILINEAR_GRID || gcode == RECTILINEAR_S_GRID)
-    return temporal_interpolation_linear_structured_grid(x, y, z, gridIndex, iGrid, time, f, value, interp_method, gcode);
+    return temporal_interpolation_linear_rectilinear_grid(x, y, z, gridIndex, iGrid, time, f, value, interp_method, gcode);
   else{
     printf("Only RECTILINEAR_GRID and RECTILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;

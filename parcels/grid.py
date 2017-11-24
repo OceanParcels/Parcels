@@ -30,7 +30,7 @@ class Grid(object):
 
 
 class RectilinearGrid(Grid):
-    """Structured Grid
+    """Rectilinear Grid
 
     :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
@@ -98,16 +98,16 @@ class RectilinearGrid(Grid):
 
         # Create and populate the c-struct object
         cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.size,
-                                  self.time.size, 0, -1,
-                                  self.lon.ctypes.data_as(POINTER(c_float)),
-                                  self.lat.ctypes.data_as(POINTER(c_float)),
-                                  self.depth.ctypes.data_as(POINTER(c_float)),
-                                  self.time.ctypes.data_as(POINTER(c_double)))
+                                   self.time.size, 0, -1,
+                                   self.lon.ctypes.data_as(POINTER(c_float)),
+                                   self.lat.ctypes.data_as(POINTER(c_float)),
+                                   self.depth.ctypes.data_as(POINTER(c_float)),
+                                   self.time.ctypes.data_as(POINTER(c_double)))
         return cstruct
 
 
 class RectilinearSGrid(Grid):
-    """Structured S Grid. Same horizontal discretisation as a structured grid,
+    """Rectilinear S Grid. Same horizontal discretisation as a rectilinear grid,
        but with s vertical coordinates
 
     :param name: Name of the grid
@@ -168,11 +168,11 @@ class RectilinearSGrid(Grid):
 
         # Create and populate the c-struct object
         cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.shape[2],
-                                  self.time.size, 0, self.z4d,
-                                  self.lon.ctypes.data_as(POINTER(c_float)),
-                                  self.lat.ctypes.data_as(POINTER(c_float)),
-                                  self.depth.ctypes.data_as(POINTER(c_float)),
-                                  self.time.ctypes.data_as(POINTER(c_double)))
+                                   self.time.size, 0, self.z4d,
+                                   self.lon.ctypes.data_as(POINTER(c_float)),
+                                   self.lat.ctypes.data_as(POINTER(c_float)),
+                                   self.depth.ctypes.data_as(POINTER(c_float)),
+                                   self.time.ctypes.data_as(POINTER(c_double)))
         return cstruct
 
 
