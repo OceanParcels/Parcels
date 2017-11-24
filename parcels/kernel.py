@@ -160,7 +160,7 @@ class Kernel(object):
         for p in pset.particles:
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
-            while dt_pos > 0 or p.dt == 0:
+            while dt_pos >= 0:
                 try:
                     res = self.pyfunc(p, pset.fieldset, p.time, sign * dt_pos)
                 except FieldSamplingError as fse:
@@ -179,7 +179,7 @@ class Kernel(object):
                     # Update time and repeat
                     p.time += sign * dt_pos
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    if p.dt == 0:
+                    if dt_pos == 0:
                         break
                     continue
                 elif res == ErrorCode.Repeat:

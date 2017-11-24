@@ -280,20 +280,14 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, np
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('test', ['dt', 'endtime'])
-def test_pset_execute_dt_0(fieldset, mode, test, npart=2):
+@pytest.mark.parametrize(('endtime', 'dt'), [(1., 0.), (0., 1.)])
+def test_pset_execute_dt_0(fieldset, mode, endtime, dt, npart=2):
     def SetLat(particle, fieldset, time, dt):
         particle.lat = .6
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
-    if test == 'dt':
-        pset.execute(pset.Kernel(SetLat), starttime=0., endtime=1., dt=0.)
-    elif test == 'endtime':
-        pset.execute(pset.Kernel(SetLat), starttime=0., endtime=0., dt=1.)
-    assert np.allclose(pset.particles[0].lat, .6)
-    assert np.allclose(pset.particles[1].lat, .6)
-    assert np.allclose(pset.particles[0].lon, 0)
-    assert np.allclose(pset.particles[1].lon, 1)
-    assert np.allclose(pset.particles[1].time, 0)
-    assert np.allclose(pset.particles[0].time, 0)
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    pset.execute(pset.Kernel(SetLat), starttime=0., endtime=endtime, dt=dt)
+    assert np.allclose([p.lon for p in pset], lon)
+    assert np.allclose([p.lat for p in pset], .6)
+    assert np.allclose([p.time for p in pset], 0)

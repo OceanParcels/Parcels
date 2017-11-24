@@ -286,6 +286,7 @@ class ParticleSet(object):
             dt = 0
             runtime = 0
             endtime = starttime
+            logger.warning_once("dt = 0 and endtime == starttime. The kernels will be executed once, without incrementing time")
         else:
             timeleaps = int((endtime - starttime) / interval)
 
