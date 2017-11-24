@@ -250,7 +250,7 @@ class Field(object):
 
     def cell_distances(self):
         lon_mesh_converter = lat_mesh_converter = UnitConverter()
-        if self.mesh is 'spherical':
+        if self.grid.mesh is 'spherical':
             lon_mesh_converter = GeographicPolar()
             lat_mesh_converter = Geographic()
         zonal_distance = [lon_mesh_converter.to_target(d, self.lon[0], lat, self.depth[0])
@@ -281,6 +281,7 @@ class Field(object):
         dVdx = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
         dVdy = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
         celldist_lon, celldist_lat = self.cell_distances()
+        celldist_lat = np.dot(celldist_lat.reshape(-1, 1), np.ones((1, self.grid.lon.size)))
         for t in np.nditer(np.int32(time_i)):
             dVdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / celldist_lat
             dVdx[t, :, :] = np.gradient(self.data[t, :, :], axis=1) / celldist_lon
