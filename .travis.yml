@@ -18,7 +18,6 @@ before_install:
 install:
     - conda env create --file environment.yml
     - source activate py2_parcels
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION sphinx
     - pip install -e .
 
 before_script: # configure a headless display to test  plot generation
