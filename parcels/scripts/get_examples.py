@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import os
 import pkg_resources
 from progressbar import ProgressBar
+import ConfigParser
+
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen
@@ -40,10 +42,19 @@ def _maybe_create_dir(path):
             raise
 
 
+def _update_config_file(path):
+    config = ConfigParser.RawConfigParser()
+    config.add_section('parcels-example-data')
+    config.set('parcels-example-data', 'example-data-location',
+               os.path.join(os.getcwd(), path))
+    with open('config_parcels.yml', 'wb') as configfile:
+        config.write(configfile)
+
+
 def copy_data_and_examples_from_package_to(target_path):
     """Copy example data from Parcels directory.
 
-    Return thos parths of the list `file_names` that were not found in the
+    Return those parts of the list `file_names` that were not found in the
     package.
 
     """
@@ -53,6 +64,26 @@ def copy_data_and_examples_from_package_to(target_path):
     except Exception as e:
         print(e)
         pass
+
+
+def get_example_data_location():
+    """Get the location where example-data is stored,
+    from config_parcels.yml file"""
+    config = ConfigParser.RawConfigParser()
+    try:
+        config.read('config_parcels.yml')
+        example_path = config.get('parcels-example-data', 'example-data-location')
+    except:
+        # if no config_parcels.yml, then assume either 'examples' or 'parcels/examples'
+        example_path = 'examples'
+        if not os.path.isdir(example_path):
+            example_path = os.path.join('parcels', 'examples')
+            if not os.path.isdir(example_path):
+                answer = raw_input('Can not find directory with examples data. '
+                                   'Do you want to download the data and save to `examples` [y/N]?').lower()
+                if answer in ['y', 'yes']:
+                    main(target_path='examples')
+    return example_path
 
 
 def _still_to_download(file_names, target_path):
@@ -94,8 +125,12 @@ def main(target_path=None):
         target_path = args.target_path
 
     if os.path.exists(target_path):
-        print("Error: {} already exists.".format(target_path))
-        return
+        answer = raw_input("Warning: {} already exists. Continue and overwrite existing example files [y/N]?".format(target_path)).lower()
+        if answer not in ['y', 'Y', 'yes']:
+            return
+
+    # update the location of examples data in Parcels config file
+    _update_config_file(target_path)
 
     # copy data and examples
     copy_data_and_examples_from_package_to(target_path)

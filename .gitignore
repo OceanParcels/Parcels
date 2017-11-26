@@ -9,6 +9,8 @@ gh-pages/*
 *.pyc
 *.dSYM/*
 
+config_parcels.yml
+
 .idea/*
 Profile.prof
 .ipynb_checkpoints/*
