@@ -15,7 +15,7 @@ typedef enum
 
 typedef enum
   {
-    RECTILINEAR_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_GRID=2
+    RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_GRID=2
   } GridCode;
 
 typedef enum
@@ -84,7 +84,7 @@ static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX
 
   if (sizeZ > 1)
   {
-    if (gcode == RECTILINEAR_GRID){
+    if (gcode == RECTILINEAR_Z_GRID){
       if (z < zvals[0] || z > zvals[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
       while (*k < sizeZ-1 && z > zvals[*k+1]) ++(*k);
       while (*k > 0 && x < zvals[*k]) --(*k);
@@ -187,7 +187,7 @@ static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float 
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   float f0, f1;
-  if (gcode == RECTILINEAR_GRID){
+  if (gcode == RECTILINEAR_Z_GRID){
     z0 = depth[k];
     z1 = depth[k+1];
   }
@@ -228,7 +228,7 @@ static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float 
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   int ii, jj, kk;
-  if (gcode == RECTILINEAR_GRID){
+  if (gcode == RECTILINEAR_Z_GRID){
     z0 = depth[k];
     z1 = depth[k+1];
   }
@@ -341,10 +341,10 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
   CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
   CGridIndex *gridIndex = &giset->gridIndices[iGrid];
 
-  if (gcode == RECTILINEAR_GRID || gcode == RECTILINEAR_S_GRID)
+  if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID)
     return temporal_interpolation_linear_rectilinear_grid(x, y, z, gridIndex, iGrid, time, f, value, interp_method, gcode);
   else{
-    printf("Only RECTILINEAR_GRID and RECTILINEAR_S_GRID grids are currently implemented\n");
+    printf("Only RECTILINEAR_Z_GRID and RECTILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;
   }
 }

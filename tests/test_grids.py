@@ -1,5 +1,5 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4
-from parcels import RectilinearGrid, RectilinearSGrid
+from parcels import RectilinearZGrid, RectilinearSGrid
 import numpy as np
 import pytest
 
@@ -22,7 +22,7 @@ def test_multi_structured_grids(mode):
     lon_g0 = np.linspace(0, a, xdim_g0, dtype=np.float32)
     lat_g0 = np.linspace(0, b, ydim_g0, dtype=np.float32)
     time_g0 = np.linspace(0., 1000., 2, dtype=np.float64)
-    grid_0 = RectilinearGrid('grid0py', lon_g0, lat_g0, time=time_g0)
+    grid_0 = RectilinearZGrid('grid0py', lon_g0, lat_g0, time=time_g0)
 
     # Grid 1
     xdim_g1 = 51
@@ -31,7 +31,7 @@ def test_multi_structured_grids(mode):
     lon_g1 = np.linspace(0, a, xdim_g1, dtype=np.float32)
     lat_g1 = np.linspace(0, b, ydim_g1, dtype=np.float32)
     time_g1 = np.linspace(0., 1000., 2, dtype=np.float64)
-    grid_1 = RectilinearGrid('grid1py', lon_g1, lat_g1, time=time_g1)
+    grid_1 = RectilinearZGrid('grid1py', lon_g1, lat_g1, time=time_g1)
 
     u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_data = 2*u_data
@@ -81,12 +81,12 @@ def test_avoid_repeated_grids():
     lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_0 = RectilinearGrid('grid0py', lon_g0, lat_g0, time=time_g0)
+    grid_0 = RectilinearZGrid('grid0py', lon_g0, lat_g0, time=time_g0)
 
     lon_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
     lat_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
     time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_1 = RectilinearGrid('grid1py', lon_g1, lat_g1, time=time_g1)
+    grid_1 = RectilinearZGrid('grid1py', lon_g1, lat_g1, time=time_g1)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_field = Field('U', u_data, grid=grid_0, transpose=True)

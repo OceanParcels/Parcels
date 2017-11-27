@@ -3,11 +3,11 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 
-__all__ = ['GridCode', 'RectilinearGrid', 'RectilinearSGrid', 'GridIndex', 'CGrid']
+__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'GridIndex', 'CGrid']
 
 
 class GridCode(IntEnum):
-    RectilinearGrid = 0
+    RectilinearZGrid = 0
     RectilinearSGrid = 1
     CurvilinearGrid = 2
 
@@ -29,13 +29,14 @@ class Grid(object):
         return cstruct
 
 
-class RectilinearGrid(Grid):
-    """Rectilinear Grid
+class RectilinearZGrid(Grid):
+    """Rectilinear Z Grid
 
     :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
-    :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates
+    :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
+           The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
     :param time_origin: Time origin of the time axis
     :param mesh: String indicating the type of mesh coordinates and
@@ -63,7 +64,7 @@ class RectilinearGrid(Grid):
             assert(len(sh) == 1 or len(sh) == 2 and min(sh) == 2), 'time is not a vector'
 
         self.name = name
-        self.gtype = GridCode.RectilinearGrid
+        self.gtype = GridCode.RectilinearZGrid
         self.lon = lon
         self.lat = lat
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -107,13 +108,19 @@ class RectilinearGrid(Grid):
 
 
 class RectilinearSGrid(Grid):
-    """Rectilinear S Grid. Same horizontal discretisation as a rectilinear grid,
+    """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
        but with s vertical coordinates
 
     :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
-    :param depth: 3D array containing the vertical coordinates of the grid, which are s-coordinates
+    :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid, 
+           which are s-coordinates.
+           s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
+           or any generalised vertical discretisation.
+           The depth of each node depends then on the horizontal position (lon, lat),
+           the number of the layer and the time is depth is a 4D array.
+           depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
     :param time_origin: Time origin of the time axis
     :param mesh: String indicating the type of mesh coordinates and
