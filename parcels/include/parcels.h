@@ -135,7 +135,6 @@ static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX
       if (*k == sizeZ-1) {--*k;}
       *z0 = zcol[*k];
       *z1 = zcol[*k+1];
-
     }
   }
   return SUCCESS;

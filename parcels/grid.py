@@ -114,7 +114,7 @@ class RectilinearSGrid(Grid):
     :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
-    :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid, 
+    :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
            which are s-coordinates.
            s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
            or any generalised vertical discretisation.

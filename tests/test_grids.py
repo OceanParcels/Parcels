@@ -108,7 +108,7 @@ def test_avoid_repeated_grids():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('z4d', ['True', 'False'])
-def test_s_grids(mode, z4d):
+def test_rectilinear_s_grids(mode, z4d):
     lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
@@ -157,5 +157,5 @@ def test_s_grids(mode, z4d):
     ratio = .3
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
-    pset.execute(pset.Kernel(sampleTemp), runtime=1, dt=1)
+    pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=1)
     assert np.allclose(pset.particles[0].temp, ratio, atol=1e-4)
