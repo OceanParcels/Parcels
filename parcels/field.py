@@ -261,23 +261,25 @@ class Field(object):
     def __getitem__(self, key):
         return self.eval(*key)
 
-    def cell_distances(self):
-        lon_mesh_converter = lat_mesh_converter = UnitConverter()
-        if self.grid.mesh is 'spherical':
-            lon_mesh_converter = GeographicPolar()
-            lat_mesh_converter = Geographic()
-        zonal_distance = [lon_mesh_converter.to_source(d, self.lon[0], lat, self.depth[0])
-                          for d, lat in zip(np.gradient(self.lon), self.lat)]
-        meridonal_distance = [lat_mesh_converter.to_source(d, self.lon[0], self.lat[0], self.depth[0])
-                              for d in np.gradient(self.lat)]
-        return np.array(zonal_distance, dtype=np.float32), np.array(meridonal_distance, dtype=np.float32)
+    def cell_edge_sizes(self):
+        """Method to calculate cell sizes based on numpy.gradient method
+                Currently only works for Rectilinear Grids"""
+        dy_grid = np.zeros((self.grid.lon.size, self.grid.lat.size), dtype=np.float32)
+        dx_grid = np.zeros((self.grid.lon.size, self.grid.lat.size), dtype=np.float32)
 
-    def area(self):
-        zonal_distance, meridonal_distance = self.cell_distances()
-        area = np.zeros(np.shape(self.data[0, :, :]), dtype=np.float32)
-        for y in range(meridonal_distance.size):
-            area[:, y] = meridonal_distance[y] * zonal_distance
-        return area
+        x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
+        y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
+        for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
+            for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
+                dx_grid[x, y] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
+                dy_grid[x, y] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+        return dx_grid, dy_grid
+
+    def cell_areas(self):
+        """Method to calculate cell sizes based on cell_edge_sizes
+                Currently only works for Rectilinear Grids"""
+        dx_mesh, dy_mesh = self.cell_edge_sizes()
+        return dx_mesh * dy_mesh
 
     def gradient(self, timerange=None, name=None):
         """Method to create gradients of Field"""
@@ -293,7 +295,7 @@ class Field(object):
 
         dVdx = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
         dVdy = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
-        celldist_lon, celldist_lat = self.cell_distances()
+        celldist_lon, celldist_lat = self.edge_sizes()
         celldist_lat = np.dot(celldist_lat.reshape(-1, 1), np.ones((1, self.grid.lon.size)))
         for t in np.nditer(np.int32(time_i)):
             dVdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / celldist_lat

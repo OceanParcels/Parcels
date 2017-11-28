@@ -130,34 +130,25 @@ def create_simple_fieldset(x, y, time):
     return field
 
 
-def test_fieldset_celldistance():
-    data, dimensions = generate_fieldset(10, 10)
-    fieldset = FieldSet.from_data(data, dimensions)
-    fieldset.U.mesh = 'flat'
-    Uzonal, Umerdional = fieldset.U.cell_distances()
-    Vzonal, Vmeridonal = fieldset.V.cell_distances()
-    tol = 1e-5
-    assert all(y - Umerdional[0] < tol for y in Umerdional)  # all distances should be the same in flat mesh
-    assert all(x - Uzonal[0] < tol for x in Uzonal)  # including for longitude
-    assert all(y - Vmeridonal[0] < tol for y in Vmeridonal)  # Latitude distances should be equal in spherical mesh
-    assert all(d > 0 for d in np.diff(Vzonal))  # but longitude should decrease
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_fieldset_celledgesizes(mesh):
+    data, dimensions = generate_fieldset(10, 7)
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
+    D_zonal, D_meridional = fieldset.U.cell_edge_sizes()
+
+    assert np.allclose(D_meridional, D_meridional[0])  # all meridional distances should be the same in either mesh
+    if mesh == 'flat':
+        assert np.allclose(D_zonal, D_zonal[0])  # all zonal distances should be the same in flat mesh
+    else:
+        assert all(d < 0 for d in np.diff(D_zonal))  # zonal distances should decrease in spherical mesh
 
 
-def test_fieldset_area():
-    data, dimensions = generate_fieldset(10, 10)
-    fieldset = FieldSet.from_data(data, dimensions)
-    fieldset.U.mesh = 'flat'
-    tol = 1e-5
-    flat_area = fieldset.U.area()
-    assert np.all(cell for cell in flat_area.flatten())
-
-    mesh_area = fieldset.V.area()
-    test_area = np.zeros(fieldset.V.data[0, :, :].shape, dtype=np.float32)
-    mesh_lons, mesh_lats = fieldset.V.cell_distances()
-    for x in range(mesh_lons.size):
-        for y in range(mesh_lats.size):
-            test_area[x, y] = mesh_lons[x] * mesh_lats[y]
-    assert np.all(test_area - mesh_area < tol)
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_fieldset_cellareas(mesh):
+    data, dimensions = generate_fieldset(10, 7)
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
+    cell_areas = fieldset.V.cell_areas()
+    assert np.allclose(cell_areas.flatten(), cell_areas[0, 0], rtol=1e-3)
 
 
 def test_fieldset_gradient():
