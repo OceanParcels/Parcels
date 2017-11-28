@@ -28,7 +28,8 @@ class ParticleFile(object):
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
-    :param user_vars: A list of additional user defined particle variables to write
+    :param user_vars: A list of additional user defined particle variables to write for all particles and all times
+    :param user_vars_once: A list of additional user defined particle variables to write for all particle only once at initial time
     :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
     """
 
@@ -90,15 +91,21 @@ class ParticleFile(object):
         self.z.positive = "down"
 
         self.user_vars = []
+        self.user_vars_once = []
+        
         for v in particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
-            if v.to_write is True:
-                setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
+            if v.to_write:
+                if v.to_write is True:
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
+                    self.user_vars += [v.name]
+                elif v.to_write == 'once':
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "trajectory", fill_value=np.nan))
+                    self.user_vars_once += [v.name]
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
-                self.user_vars += [v.name]
 
         self.idx = 0
 
@@ -140,6 +147,9 @@ class ParticleFile(object):
                     self.z[inds, self.idx] = np.array([p.depth for p in pset])
                     for var in self.user_vars:
                         getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
+                    if self.idx == 0:
+                        for var in self.user_vars_once:
+                            getattr(self, var)[inds] = np.array([getattr(p, var) for p in pset])
                 else:
                     logger.warning("ParticleSet is empty on writing as array")
 
