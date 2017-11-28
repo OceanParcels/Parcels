@@ -70,8 +70,14 @@ class Geographic(UnitConverter):
     def to_target(self, value, x, y, z):
         return value / 1000. / 1.852 / 60.
 
+    def to_source(self, value, x, y, z):
+        return value * 1000. * 1.852 * 60.
+
     def ccode_to_target(self, x, y, z):
         return "(1.0 / (1000.0 * 1.852 * 60.0))"
+
+    def ccode_to_source(self, x, y, z):
+        return "(1000.0 * 1.852 * 60.0)"
 
 
 class GeographicPolar(UnitConverter):
@@ -84,8 +90,14 @@ class GeographicPolar(UnitConverter):
     def to_target(self, value, x, y, z):
         return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
 
+    def to_source(self, value, x, y, z):
+        return value * 1000. * 1.852 * 60. * cos(y * pi / 180)
+
     def ccode_to_target(self, x, y, z):
         return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
+
+    def ccode_to_source(self, x, y, z):
+        return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
 
 
 class Field(object):
@@ -254,9 +266,9 @@ class Field(object):
         if self.grid.mesh is 'spherical':
             lon_mesh_converter = GeographicPolar()
             lat_mesh_converter = Geographic()
-        zonal_distance = [lon_mesh_converter.to_target(d, self.lon[0], lat, self.depth[0])
+        zonal_distance = [lon_mesh_converter.to_source(d, self.lon[0], lat, self.depth[0])
                           for d, lat in zip(np.gradient(self.lon), self.lat)]
-        meridonal_distance = [lat_mesh_converter.to_target(d, self.lon[0], self.lat[0], self.depth[0])
+        meridonal_distance = [lat_mesh_converter.to_source(d, self.lon[0], self.lat[0], self.depth[0])
                               for d in np.gradient(self.lat)]
         return np.array(zonal_distance, dtype=np.float32), np.array(meridonal_distance, dtype=np.float32)
 
