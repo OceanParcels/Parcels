@@ -5,6 +5,7 @@ gh-pages/*
 *.so
 *.log
 *.nc
+!*testfields*.nc
 *.c
 *.pyc
 *.dSYM/*
@@ -14,4 +15,4 @@ Profile.prof
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
 .cache/*
-examples/particle*.png
+parcels/examples/particle*.png
