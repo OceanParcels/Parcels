@@ -92,7 +92,7 @@ class ParticleFile(object):
 
         self.user_vars = []
         self.user_vars_once = []
-        
+
         for v in particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
