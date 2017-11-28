@@ -166,7 +166,7 @@ def test_fieldset_gradient():
     time = np.linspace(0, 2, 3, dtype=np.int)
     field = Field("Test", data=create_simple_fieldset(x, y, time), time=time,
                   lon=np.linspace(0, x-1, x, dtype=np.float32),
-                  lat=np.linspace(-y/2, y/2-1, y, dtype=np.float32))
+                  lat=np.linspace(-y/2, y/2-1, y, dtype=np.float32), mesh='spherical')
 
     # Calculate field gradients for testing against numpy gradients.
     grad_fields = field.gradient()

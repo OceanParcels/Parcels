@@ -97,6 +97,7 @@ class Field(object):
     :param lat: Latitude coordinates of the field. (only if grid is None)
     :param depth: Depth coordinates of the field. (only if grid is None)
     :param time: Time coordinates of the field. (only if grid is None)
+    :param mesh: Type of mesh coordinates of the field. (only if grid is None)
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information
     :param transpose: Transpose data to required (lon, lat) layout
@@ -111,15 +112,15 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
-                 transpose=False, vmin=None, vmax=None, time_origin=0,
+    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, mesh='flat',
+                 grid=None, transpose=False, vmin=None, vmax=None, time_origin=0,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
         self.data = data
         if grid:
             self.grid = grid
         else:
-            self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin)
+            self.grid = StructuredGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
