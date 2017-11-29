@@ -160,7 +160,7 @@ class ParticleFile(object):
                 self.idx += 1
             elif self.type is 'indexed':
                 if self.user_vars_once:
-                    logger.warning("Option to_write='once' is not fully functional in indexed mode! Particle properties of newly added particles are not written.")
+                    logger.warning("Option to_write='once' is not fully functional in indexed mode! Particle properties of such variables are not written for newly added particles.")
                 ind = np.arange(pset.size) + self.idx
                 self.id[ind] = np.array([p.id for p in pset])
                 self.time[ind] = time
