@@ -203,3 +203,49 @@ def test_rectilinear_s_grids_advect1(mode):
 
     pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=10000, dt=500)
     assert np.allclose([p.depth/bath_func(p.lon) for p in pset], ratio)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_rectilinear_s_grids_advect2(mode):
+    # Move particle towards the east, check relative depth evolution
+    lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
+    lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
+    depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+
+    def bath_func(lon):
+        return lon / 1000. + 10
+    bath = bath_func(lon_g0)
+
+    for i in range(depth_g0.shape[0]):
+        for k in range(depth_g0.shape[2]):
+            depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+
+    grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid_1 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid_2 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+
+    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+    rel_depth_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+    for k in range(1, depth_g0.shape[2]):
+        rel_depth_data[:, :, k] = k / (depth_g0.shape[2]-1.)
+
+    u_field = Field('U', u_data, grid=grid_0, transpose=True)
+    v_field = Field('V', v_data, grid=grid_1, transpose=True)
+    rel_depth_field = Field('relDepth', rel_depth_data, grid=grid_2, transpose=True)
+    field_set = FieldSet(u_field, v_field, fields={'relDepth': rel_depth_field})
+
+    class MyParticle(ptype[mode]):
+        relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
+
+    def moveEast(particle, fieldset, time, dt):
+        particle.lon += 5 * dt
+        particle.relDepth = fieldset.relDepth[time, particle.lon, particle.lat, particle.depth]
+
+    depth = .9
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[depth])
+
+    kernel = pset.Kernel(moveEast)
+    for _ in range(10):
+        pset.execute(kernel, starttime=pset[0].time, runtime=100, dt=50)
+        assert np.allclose(pset[0].relDepth, depth/bath_func(pset[0].lon))
