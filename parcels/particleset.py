@@ -253,7 +253,7 @@ class ParticleSet(object):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            starttime = self.fieldset.U.grid.time[0] if dt > 0 else self.fieldset.U.grid.time[-1]
+            starttime = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
         if runtime is not None:
             if runtime < 0:
                 runtime = np.abs(runtime)
@@ -261,7 +261,7 @@ class ParticleSet(object):
             endtime = starttime + runtime * np.sign(dt)
         else:
             if endtime is None:
-                endtime = self.fieldset.U.grid.time[-1] if dt > 0 else self.fieldset.U.grid.time[0]
+                endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
         if interval is None:
             interval = endtime - starttime
 
