@@ -293,13 +293,12 @@ class Field(object):
             time_i = range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1)
             time = self.grid.time[time_i]
 
-        dVdx = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
-        dVdy = np.zeros(shape=(time.size, self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
-        celldist_lon, celldist_lat = self.edge_sizes()
-        celldist_lat = np.dot(celldist_lat.reshape(-1, 1), np.ones((1, self.grid.lon.size)))
+        dFdx = np.zeros_like(self.data)
+        dFdy = np.zeros_like(self.data)
+        celldist_lon, celldist_lat = self.cell_edge_sizes()
         for t in np.nditer(np.int32(time_i)):
-            dVdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / celldist_lat
-            dVdx[t, :, :] = np.gradient(self.data[t, :, :], axis=1) / celldist_lon
+            dFdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / np.transpose(celldist_lat)
+            dFdx[t, :, :] = np.gradient(self.data[t, :, :], axis=1) / np.transpose(celldist_lon)
         return([Field(name + '_dx', dVdx, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
                 Field(name + '_dy', dVdy, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
