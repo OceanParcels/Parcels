@@ -83,6 +83,7 @@ class RectilinearZGrid(Grid):
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
         self.mesh = mesh
+        self.cstruct = None
 
     @property
     def child_ctypes_struct(self):
@@ -98,13 +99,14 @@ class RectilinearZGrid(Grid):
                         ]
 
         # Create and populate the c-struct object
-        cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.size,
-                                   self.time.size, -1,
-                                   self.lon.ctypes.data_as(POINTER(c_float)),
-                                   self.lat.ctypes.data_as(POINTER(c_float)),
-                                   self.depth.ctypes.data_as(POINTER(c_float)),
-                                   self.time.ctypes.data_as(POINTER(c_double)))
-        return cstruct
+        if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+            self.cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.size,
+                                            self.time.size, -1,
+                                            self.lon.ctypes.data_as(POINTER(c_float)),
+                                            self.lat.ctypes.data_as(POINTER(c_float)),
+                                            self.depth.ctypes.data_as(POINTER(c_float)),
+                                            self.time.ctypes.data_as(POINTER(c_double)))
+        return self.cstruct
 
 
 class RectilinearSGrid(Grid):
@@ -160,6 +162,7 @@ class RectilinearSGrid(Grid):
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
         self.mesh = mesh
+        self.cstruct = None
 
     @property
     def child_ctypes_struct(self):
@@ -174,13 +177,14 @@ class RectilinearSGrid(Grid):
                         ]
 
         # Create and populate the c-struct object
-        cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.shape[2],
-                                   self.time.size, self.z4d,
-                                   self.lon.ctypes.data_as(POINTER(c_float)),
-                                   self.lat.ctypes.data_as(POINTER(c_float)),
-                                   self.depth.ctypes.data_as(POINTER(c_float)),
-                                   self.time.ctypes.data_as(POINTER(c_double)))
-        return cstruct
+        if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+            self.cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.shape[2],
+                                            self.time.size, self.z4d,
+                                            self.lon.ctypes.data_as(POINTER(c_float)),
+                                            self.lat.ctypes.data_as(POINTER(c_float)),
+                                            self.depth.ctypes.data_as(POINTER(c_float)),
+                                            self.time.ctypes.data_as(POINTER(c_double)))
+        return self.cstruct
 
 
 class GVariable(object):

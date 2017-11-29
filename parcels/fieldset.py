@@ -74,7 +74,7 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
-        self.gridset.add_grid(field.grid)
+        self.gridset.add_grid(field)
         field.fieldset = self
 
     def add_data(self, data, dimensions, transpose=True, mesh='spherical',
