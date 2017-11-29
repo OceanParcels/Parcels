@@ -85,6 +85,23 @@ class RectilinearZGrid(Grid):
         self.mesh = mesh
         self.cstruct = None
 
+    def add_periodic_halo(self, zonal, meridional, halosize=5):
+        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
+        similarly to the halo created for the Fields
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+        if zonal:
+            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
+                                      self.lon, self.lon[0:halosize] + lonshift))
+        if meridional:
+            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
+            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
+                                      self.lat, self.lat[0:halosize] + latshift))
+
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
@@ -163,6 +180,23 @@ class RectilinearSGrid(Grid):
         self.time_origin = time_origin
         self.mesh = mesh
         self.cstruct = None
+
+    def add_periodic_halo(self, zonal, meridional, halosize=5):
+        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
+        similarly to the halo created for the Fields
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+        if zonal:
+            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
+                                      self.lon, self.lon[0:halosize] + lonshift))
+        if meridional:
+            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
+            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
+                                      self.lat, self.lat[0:halosize] + latshift))
 
     @property
     def child_ctypes_struct(self):

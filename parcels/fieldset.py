@@ -243,6 +243,8 @@ class FieldSet(object):
             self.add_constant('halo_south', self.U.grid.lat[0])
             self.add_constant('halo_north', self.U.grid.lat[-1])
 
+        for grid in self.gridset.grids:
+            grid.add_periodic_halo(zonal, meridional, halosize)
         for attr, value in self.__dict__.iteritems():
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
