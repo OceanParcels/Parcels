@@ -388,11 +388,14 @@ class Field(object):
                 xsi*eta * grid.depth[xi+1, yi+1, :] + \
                 (1-xsi)*eta * grid.depth[xi, yi+1, :]
 
+        # depth variable is defined at np.float32 in particle.py, but as soon as
+        # as there is an operation with dt which is type float, it becomes np.float64
+        z = np.float32(z)
         depth_index = depth_vector <= z
-        if depth_index.all():
+        if z >= depth_vector[-1]:
             zi = len(depth_vector) - 2
         else:
-            zi = depth_index.argmin() - 1 if depth_index.any() else 0
+            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
         z0 = depth_vector[zi]
         z1 = depth_vector[zi+1]
         if z < z0 or z > z1:
@@ -552,7 +555,7 @@ class Field(object):
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('tidx', c_int),
+                        ('tdim', c_int),
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
                         ('data', POINTER(POINTER(c_float))),
@@ -562,7 +565,7 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         cstruct = CField(self.grid.lon.size, self.grid.lat.size, self.grid.depth.size,
-                         self.grid.time.size, 0, allow_time_extrapolation, time_periodic,
+                         self.grid.time.size, allow_time_extrapolation, time_periodic,
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))),
                          pointer(self.grid.ctypes_struct))
         return cstruct

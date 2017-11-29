@@ -92,14 +92,14 @@ class RectilinearZGrid(Grid):
         class CRectilinearGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('tidx', c_int), ('z4d', c_int),
+                        ('tdim', c_int), ('z4d', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
         cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.size,
-                                   self.time.size, 0, -1,
+                                   self.time.size, -1,
                                    self.lon.ctypes.data_as(POINTER(c_float)),
                                    self.lat.ctypes.data_as(POINTER(c_float)),
                                    self.depth.ctypes.data_as(POINTER(c_float)),
@@ -168,14 +168,14 @@ class RectilinearSGrid(Grid):
 
         class CRectilinearGrid(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('tidx', c_int), ('z4d', c_int),
+                        ('tdim', c_int), ('z4d', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
         cstruct = CRectilinearGrid(self.lon.size, self.lat.size, self.depth.shape[2],
-                                   self.time.size, 0, self.z4d,
+                                   self.time.size, self.z4d,
                                    self.lon.ctypes.data_as(POINTER(c_float)),
                                    self.lat.ctypes.data_as(POINTER(c_float)),
                                    self.depth.ctypes.data_as(POINTER(c_float)),
@@ -194,10 +194,6 @@ class GVariable(object):
         instance._cptr.__setitem__(self.name, value)
 
 
-class CGridIndex(Structure):
-    _fields_ = [('xi', c_int), ('yi', c_int), ('zi', c_int)]
-
-
 class GridIndex(object):
     """GridIndex class that defines the indices of the particle in the grid
 
@@ -207,6 +203,7 @@ class GridIndex(object):
     xi = GVariable('xi')
     yi = GVariable('yi')
     zi = GVariable('zi')
+    ti = GVariable('ti')
 
     def __init__(self, grid, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -214,8 +211,9 @@ class GridIndex(object):
         self.xi = 0
         self.yi = 0
         self.zi = 0
+        self.ti = 0
 
     @classmethod
     def dtype(cls):
-        type_list = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('pad', np.int32)]
+        type_list = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('ti', np.int32)]
         return np.dtype(type_list)
