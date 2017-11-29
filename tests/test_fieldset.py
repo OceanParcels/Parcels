@@ -10,8 +10,8 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
-    lon = np.linspace(0., 1., xdim, dtype=np.float32)
-    lat = np.linspace(0., 1., ydim, dtype=np.float32)
+    lon = np.linspace(0., 10., xdim, dtype=np.float32)
+    lat = np.linspace(0., 10., ydim, dtype=np.float32)
     depth = np.zeros(zdim, dtype=np.float32)
     time = np.zeros(tdim, dtype=np.float64)
     U, V = np.meshgrid(lon, lat)
@@ -136,11 +136,11 @@ def test_fieldset_celledgesizes(mesh):
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
     D_zonal, D_meridional = fieldset.U.cell_edge_sizes()
 
-    assert np.allclose(D_meridional, D_meridional[0])  # all meridional distances should be the same in either mesh
+    assert np.allclose(D_meridional.flatten(), D_meridional[0, 0])  # all meridional distances should be the same in either mesh
     if mesh == 'flat':
-        assert np.allclose(D_zonal, D_zonal[0])  # all zonal distances should be the same in flat mesh
+        assert np.allclose(D_zonal.flatten(), D_zonal[0, 0])  # all zonal distances should be the same in flat mesh
     else:
-        assert all(d < 0 for d in np.diff(D_zonal))  # zonal distances should decrease in spherical mesh
+        assert all((np.gradient(D_zonal, axis=1) < 0).flatten())  # zonal distances should decrease in spherical mesh
 
 
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
@@ -148,7 +148,12 @@ def test_fieldset_cellareas(mesh):
     data, dimensions = generate_fieldset(10, 7)
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
     cell_areas = fieldset.V.cell_areas()
-    assert np.allclose(cell_areas.flatten(), cell_areas[0, 0], rtol=1e-3)
+    if mesh == 'flat':
+        assert np.allclose(cell_areas.flatten(), cell_areas[0, 0], rtol=1e-3)
+    else:
+        assert all((np.gradient(cell_areas, axis=1) < 0).flatten())  # areas should decrease with latitude in spherical mesh
+        for y in range(cell_areas.shape[1]):
+            assert np.allclose(cell_areas[:, y], cell_areas[0, y], rtol=1e-3)
 
 
 def test_fieldset_gradient():
