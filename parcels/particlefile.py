@@ -88,14 +88,12 @@ class ParticleFile(object):
         self.z.units = "m"
         self.z.positive = "down"
 
-
+        self.user_vars = []
+        self.user_vars_once = []
         """
         :user_vars: list of additional user defined particle variables to write for all particles and all times
         :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time. Only fully functional for type='array'
         """
-
-        self.user_vars = []
-        self.user_vars_once = []
 
         for v in particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
