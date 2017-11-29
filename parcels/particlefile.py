@@ -28,8 +28,6 @@ class ParticleFile(object):
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
-    :param user_vars: A list of additional user defined particle variables to write for all particles and all times
-    :param user_vars_once: A list of additional user defined particle variables to write for all particle only once at initial time
     :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
     """
 
@@ -89,6 +87,12 @@ class ParticleFile(object):
         self.z.standard_name = "depth"
         self.z.units = "m"
         self.z.positive = "down"
+
+
+        """
+        :user_vars: list of additional user defined particle variables to write for all particles and all times
+        :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time. Only fully functional for type='array'
+        """
 
         self.user_vars = []
         self.user_vars_once = []
@@ -155,6 +159,8 @@ class ParticleFile(object):
 
                 self.idx += 1
             elif self.type is 'indexed':
+                if self.user_vars_once:
+                    logger.warning("Option to_write='once' is not fully functional in indexed mode! Particle properties of newly added particles are not written.")
                 ind = np.arange(pset.size) + self.idx
                 self.id[ind] = np.array([p.id for p in pset])
                 self.time[ind] = time
