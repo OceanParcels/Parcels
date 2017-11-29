@@ -684,11 +684,15 @@ class Field(object):
             raise RuntimeError('New FieldSet needs to have only one snapshot')
         if field_new.grid.time > self.grid.time[-1]:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            self.grid.time = np.concatenate((self.grid.time[1:], field_new.grid.time))
+            if not self.grid.newTime:
+                self.grid.time = np.concatenate((self.grid.time[1:], field_new.grid.time))
+                self.grid.newTime = True
             self.time = self.grid.time
         elif field_new.grid.time < self.grid.time[0]:  # backward in time, so prepending at start
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            self.grid.time = np.concatenate((field_new.grid.time, self.grid.time[:-1]))
+            if not self.grid.newTime:
+                self.grid.time = np.concatenate((field_new.grid.time, self.grid.time[:-1]))
+                self.grid.newTime = True
             self.time = self.grid.time
         else:
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")

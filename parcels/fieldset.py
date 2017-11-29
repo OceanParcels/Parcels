@@ -279,6 +279,8 @@ class FieldSet(object):
 
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
+        for g in self.gridset.grids:
+            g.newTime = False
         for vnew in fieldset_new.fields:
             v = getattr(self, vnew.name)
             v.advancetime(vnew)
