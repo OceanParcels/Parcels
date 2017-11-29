@@ -180,7 +180,6 @@ def test_rectilinear_s_grids_advect1(mode):
     grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
     grid_1 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
     grid_2 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
-    grid_3 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
@@ -190,33 +189,17 @@ def test_rectilinear_s_grids_advect1(mode):
         for k in range(depth_g0.shape[2]):
             w_data[i, :, k] = u_data[i, :, k] * depth_g0[i, :, k] / bath[i] * 1e-3
 
-    temp_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    for k in range(1, depth_g0.shape[2]):
-        temp_data[:, :, k] = k / (depth_g0.shape[2]-1.)
-
     u_field = Field('U', u_data, grid=grid_0, transpose=True)
     v_field = Field('V', v_data, grid=grid_1, transpose=True)
     w_field = Field('W', w_data, grid=grid_2, transpose=True)
-    temp_field = Field('temp', temp_data, grid=grid_3, transpose=True)
 
-    other_fields = {}
-    other_fields['temp'] = temp_field
-    other_fields['W'] = w_field
-    field_set = FieldSet(u_field, v_field, fields=other_fields)
+    field_set = FieldSet(u_field, v_field, fields={'W': w_field})
 
-    def sampleTemp(particle, fieldset, time, dt):
-        particle.temp = fieldset.temp[time+dt, particle.lon, particle.lat, particle.depth]
-
-    class MyParticle(ptype[mode]):
-        temp = Variable('temp', dtype=np.float32, initial=20.)
-
-    lon = np.array([0 for i in range(11)])
-    lat = [0 for i in range(11)]
+    lon = np.zeros((11))
+    lat = np.zeros((11))
     ratio = [min(i/10., .99) for i in range(11)]
     depth = bath_func(lon)*ratio
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=lon, lat=lat, depth=depth)
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
 
-    kernels = AdvectionRK4_3D + pset.Kernel(sampleTemp)
-    for _ in range(10):
-        pset.execute(kernels, starttime=pset[0].time, runtime=1000, dt=1000)
-    assert np.allclose([p.temp for p in pset], ratio)
+    pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=10000, dt=500)
+    assert np.allclose([p.depth/bath_func(p.lon) for p in pset], ratio)
