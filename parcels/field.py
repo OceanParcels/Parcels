@@ -301,9 +301,9 @@ class Field(object):
         for t in np.nditer(np.int32(time_i)):
             dFdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / np.transpose(celldist_lat)
             dFdx[t, :, :] = np.gradient(self.data[t, :, :], axis=1) / np.transpose(celldist_lon)
-        return([Field(name + '_dx', dVdx, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
+        return([Field(name + '_dx', dFdx, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
-                Field(name + '_dy', dVdy, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
+                Field(name + '_dy', dFdy, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
     def interpolator3D_rectilinear_z(self, idx, z, y, x):
