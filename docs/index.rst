@@ -30,7 +30,7 @@ The current release of Parcels, version 0.9, is a fully-functional, feature-comp
 on the `Github Development Timeline page
 <https://github.com/OceanParcels/parcels/projects/1>`_
 
-**Currently implemented in v0.9**
+**Major features**
 
 * Advection of particles in 2D using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward and in 3D using the inbuilt kernel for Runge-Kutta4_3D (see :mod:`parcels.kernels.advection`)
 * Ability to define and execute custom kernels (see `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
@@ -41,7 +41,13 @@ on the `Github Development Timeline page
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_plotting.ipynb>`_)
 
-**Major developed goals beyond v0.9**
+**Experimental features**
+
+*The features below are implemented, but not yet thoroughly tested. Please use with caution*
+
+* Ability to run particles in any vertical coordinate system: z-level, sigma-level (terrain-following), or rho-level (density-following).
+
+**Future development goals**
 
 * Diffusion of particles using suite of inbuilt kernels
 * Support for non-rectangular grids, including unstructured meshes

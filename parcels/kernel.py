@@ -54,7 +54,7 @@ class Kernel(object):
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
         if pyfunc is AdvectionRK4_3D:
-            logger.info('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
+            logger.warning_once('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
