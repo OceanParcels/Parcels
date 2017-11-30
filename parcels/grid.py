@@ -76,6 +76,18 @@ class RectilinearGrid(Grid):
             self.lat = np.concatenate((self.lat[-halosize:] - latshift,
                                       self.lat, self.lat[0:halosize] + latshift))
 
+    def advancetime(self, grid_new):
+        if len(grid_new.time) is not 1:
+            raise RuntimeError('New FieldSet needs to have only one snapshot')
+        if grid_new.time > self.time[-1]:  # forward in time, so appending at end
+            self.time = np.concatenate((self.time[1:], grid_new.time))
+            return 1
+        elif grid_new.time < self.time[0]:  # backward in time, so prepending at start
+            self.time = np.concatenate((grid_new.time, self.time[:-1]))
+            return -1
+        else:
+            raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
+
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant

@@ -160,7 +160,7 @@ class FieldSet(object):
             if isinstance(filenames[var], list):
                 paths = filenames[var]
             else:
-                paths = glob(str(filenames[var]))
+                paths = sorted(glob(str(filenames[var])))
             if len(paths) == 0:
                 raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
@@ -276,19 +276,15 @@ class FieldSet(object):
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
-
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
-        for g in fieldset_new.gridset.grids:
-            g.newTime = False
-            g.newTimeIn = False
-        for vnew in fieldset_new.fields:
-            v = getattr(self, vnew.name)
-            if not vnew.grid.newTimeIn:
-                vnew.grid.advance = 0
-                if vnew.grid.time > v.grid.time[-1]:
-                    vnew.grid.advance = 1
-                elif vnew.grid.time < v.grid.time[0]:
-                    vnew.grid.advance = -1
-                vnew.grid.newTimeIn = True
-            v.advancetime(vnew)
+        advance = 0
+        for gnew in fieldset_new.gridset.grids:
+            g = getattr(self.gridset, gnew.name)
+            advance2 = g.advancetime(gnew)
+            if advance2*advance < 0:
+                raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
+            advance = advance2
+        for fnew in fieldset_new.fields:
+            f = getattr(self, fnew.name)
+            f.advancetime(fnew, advance == 1)

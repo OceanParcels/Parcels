@@ -15,6 +15,8 @@ class GridSet(object):
     def __init__(self, grids=[]):
         self.grids = grids
         self.size = len(grids)
+        for g in grids:
+            setattr(self, g.name, g)
 
     def add_grid(self, field):
         grid = field.grid
@@ -38,6 +40,7 @@ class GridSet(object):
                 if g.name == grid.name:
                     grid.name = grid.name + '_b'
             self.grids.append(grid)
+            setattr(self, grid.name, grid)
             self.size += 1
 
 

@@ -679,23 +679,13 @@ class Field(object):
                                                           vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
-    def advancetime(self, field_new):
-        if len(field_new.grid.time) is not 1:
-            raise RuntimeError('New FieldSet needs to have only one snapshot')
-        if field_new.grid.advance == 1:  # forward in time, so appending at end
+    def advancetime(self, field_new, advanceForward):
+        if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            if not field_new.grid.newTime:
-                self.grid.time = np.concatenate((self.grid.time[1:], field_new.grid.time))
-                self.grid.newTime = True
             self.time = self.grid.time
-        elif field_new.grid.advance == -1:  # backward in time, so prepending at start
+        else:  # backward in time, so prepending at start
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            if not field_new.grid.newTime:
-                self.grid.time = np.concatenate((field_new.grid.time, self.grid.time[:-1]))
-                self.grid.newTime = True
             self.time = self.grid.time
-        else:
-            raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
 
 class FileBuffer(object):
