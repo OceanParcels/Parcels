@@ -85,7 +85,7 @@ compiler, and various Python packages.
 
 The simplest way to install Parcels is to use Anaconda and Conda-Forge for all
 requirements. This is the “batteries-included” solution probably suitable for most users. 
-Note that this works best if Python is not installed yet. Otherwise, see the instructions at the bottom of this section.
+Note that if you already have an existing Python setup that you wish to use for Parcels, you should follow the instructions at the bottom of this section.
 
 The five steps below are the installation instructions for Linux and macOS. Note that for Windows, steps 2 and 5 are slightly different, see :ref:`installing-windows` below.
 
