@@ -2,6 +2,7 @@ from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable,
 from parcels.field import Field
 from datetime import timedelta as delta
 import numpy as np
+import math
 import pytest
 from os import path
 
@@ -120,16 +121,6 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     fieldset.write(filepath)
 
 
-def create_simple_fieldset(x, y, time):
-    field = np.zeros((time.size, x, y), dtype=np.float32)
-    ltri = np.triu_indices(n=x, m=y)
-    for t in time:
-        temp = np.zeros((x, y), dtype=np.float32)
-        temp[ltri] = 1
-        field[t, :, :] = np.reshape(temp.T, np.shape(field[t, :, :]))
-    return field
-
-
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)
@@ -156,27 +147,24 @@ def test_fieldset_cellareas(mesh):
             assert np.allclose(cell_areas[:, y], cell_areas[0, y], rtol=1e-3)
 
 
-def test_fieldset_gradient():
-    x = 4
-    y = 6
-    time = np.linspace(0, 2, 3, dtype=np.int)
-    field = Field("Test", data=create_simple_fieldset(x, y, time), time=time,
-                  lon=np.linspace(0, x-1, x, dtype=np.float32),
-                  lat=np.linspace(-y/2, y/2-1, y, dtype=np.float32), mesh='spherical')
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_fieldset_gradient(mesh):
+    data, dimensions = generate_fieldset(5, 3)
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
 
     # Calculate field gradients for testing against numpy gradients.
-    grad_fields = field.gradient()
+    dFdx, dFdy = fieldset.V.gradient()
 
     # Create numpy fields.
-    r = 6.371e6
-    deg2rd = np.pi / 180.
-    numpy_grad_fields = np.gradient(np.transpose(field.data[0, :, :]), (r * np.diff(field.lat) * deg2rd)[0])
+    conv_factor = 6.371e6 * np.pi / 180. if mesh == 'spherical' else 1.
+    np_dFdx = np.gradient(fieldset.V.data[0, :, :], (np.diff(fieldset.V.lon) * conv_factor)[0], axis=1)
+    np_dFdy = np.gradient(fieldset.V.data[0, :, :], (np.diff(fieldset.V.lat) * conv_factor)[0], axis=0)
+    if mesh == 'spherical':
+        for y in range(np_dFdx.shape[0]):
+            np_dFdx[:, y] /= math.cos(fieldset.V.grid.lat[y] * math.pi / 180.)
 
-    # Arbitrarily set relative tolerance to 1%.
-    assert np.allclose(grad_fields[0].data[0, :, :], np.array(np.transpose(numpy_grad_fields[0])),
-                       rtol=1e-2)  # Field gradient dx.
-    assert np.allclose(grad_fields[1].data[0, :, :], np.array(np.transpose(numpy_grad_fields[1])),
-                       rtol=1e-2)  # Field gradient dy.
+    assert np.allclose(dFdx.data, np_dFdx, rtol=5e-2)  # Field gradient dx.
+    assert np.allclose(dFdy.data, np_dFdy, rtol=5e-2)  # Field gradient dy.
 
 
 def addConst(particle, fieldset, time, dt):
