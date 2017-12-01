@@ -163,8 +163,8 @@ def test_fieldset_gradient(mesh):
         for y in range(np_dFdx.shape[0]):
             np_dFdx[:, y] /= math.cos(fieldset.V.grid.lat[y] * math.pi / 180.)
 
-    assert np.allclose(dFdx.data, np_dFdx, rtol=5e-2)  # Field gradient dx.
-    assert np.allclose(dFdy.data, np_dFdy, rtol=5e-2)  # Field gradient dy.
+    assert np.allclose(dFdx, np_dFdx, rtol=5e-2)  # Field gradient dx.
+    assert np.allclose(dFdy, np_dFdy, rtol=5e-2)  # Field gradient dy.
 
 
 def addConst(particle, fieldset, time, dt):

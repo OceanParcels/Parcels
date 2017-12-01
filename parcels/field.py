@@ -283,28 +283,15 @@ class Field(object):
         dx_mesh, dy_mesh = self.cell_edge_sizes()
         return dx_mesh * dy_mesh
 
-    def gradient(self, timerange=None, name=None):
-        """Method to create gradients of Field"""
-        if name is None:
-            name = 'd' + self.name
-
-        if timerange is None:
-            time_i = range(len(self.grid.time))
-            time = self.grid.time
-        else:
-            time_i = range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1)
-            time = self.grid.time[time_i]
-
+    def gradient(self):
+        """Method to calculate horizontal gradients of Field.
+                Returns two numpy arrays: the zonal and meridional gradients"""
         dFdx = np.zeros_like(self.data)
         dFdy = np.zeros_like(self.data)
         celldist_lon, celldist_lat = self.cell_edge_sizes()
-        for t in np.nditer(np.int32(time_i)):
-            dFdy[t, :, :] = np.gradient(self.data[t, :, :], axis=0) / np.transpose(celldist_lat)
-            dFdx[t, :, :] = np.gradient(self.data[t, :, :], axis=1) / np.transpose(celldist_lon)
-        return([Field(name + '_dx', dFdx, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
-                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
-                Field(name + '_dy', dFdy, lon=self.grid.lon, lat=self.grid.lat, depth=self.grid.depth, time=time,
-                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
+        dFdy = np.gradient(self.data, axis=-2) / np.transpose(celldist_lat)
+        dFdx = np.gradient(self.data, axis=-1) / np.transpose(celldist_lon)
+        return dFdx, dFdy
 
     def interpolator3D_rectilinear_z(self, idx, z, y, x):
         """Scipy implementation of 3D interpolation, by first interpolating
