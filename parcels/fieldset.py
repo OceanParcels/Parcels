@@ -74,7 +74,7 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
-        self.gridset.add_grid(field.grid)
+        self.gridset.add_grid(field)
         field.fieldset = self
 
     def add_data(self, data, dimensions, transpose=True, mesh='spherical',
@@ -160,7 +160,7 @@ class FieldSet(object):
             if isinstance(filenames[var], list):
                 paths = filenames[var]
             else:
-                paths = glob(str(filenames[var]))
+                paths = sorted(glob(str(filenames[var])))
             if len(paths) == 0:
                 raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
@@ -243,6 +243,8 @@ class FieldSet(object):
             self.add_constant('halo_south', self.U.grid.lat[0])
             self.add_constant('halo_north', self.U.grid.lat[-1])
 
+        for grid in self.gridset.grids:
+            grid.add_periodic_halo(zonal, meridional, halosize)
         for attr, value in self.__dict__.iteritems():
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
@@ -274,9 +276,15 @@ class FieldSet(object):
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
-
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
-        for vnew in fieldset_new.fields:
-            v = getattr(self, vnew.name)
-            v.advancetime(vnew)
+        advance = 0
+        for gnew in fieldset_new.gridset.grids:
+            g = getattr(self.gridset, gnew.name)
+            advance2 = g.advancetime(gnew)
+            if advance2*advance < 0:
+                raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
+            advance = advance2
+        for fnew in fieldset_new.fields:
+            f = getattr(self, fnew.name)
+            f.advancetime(fnew, advance == 1)

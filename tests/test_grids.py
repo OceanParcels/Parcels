@@ -108,6 +108,41 @@ def test_avoid_repeated_grids():
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_multigrids_pointer(mode):
+    lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
+    lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
+    depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+
+    def bath_func(lon):
+        return lon / 1000. + 10
+    bath = bath_func(lon_g0)
+
+    for i in range(depth_g0.shape[0]):
+        for k in range(depth_g0.shape[2]):
+            depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+
+    grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid_1 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+
+    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+    w_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+
+    u_field = Field('U', u_data, grid=grid_0, transpose=True)
+    v_field = Field('V', v_data, grid=grid_0, transpose=True)
+    w_field = Field('W', w_data, grid=grid_1, transpose=True)
+
+    field_set = FieldSet(u_field, v_field, fields={'W': w_field})
+    assert(u_field.grid == v_field.grid)
+    assert(u_field.grid == w_field.grid)  # w_field.grid is now supposed to be grid_1
+
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
+
+    for i in range(10):
+        pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=1000, dt=500)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('z4d', ['True', 'False'])
 def test_rectilinear_s_grid_sampling(mode, z4d):
     lon_g0 = np.linspace(-3e4, 3e4, 61, dtype=np.float32)
@@ -132,16 +167,16 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
             else:
                 depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0, time=time_g0)
+    grid = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0, time=time_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
     temp_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
     for k in range(1, depth_g0.shape[2]):
         temp_data[:, :, k, :] = k / (depth_g0.shape[2]-1.)
-    u_field = Field('U', u_data, grid=grid_0, transpose=True)
-    v_field = Field('V', v_data, grid=grid_0, transpose=True)
-    temp_field = Field('temp', temp_data, grid=grid_0, transpose=True)
+    u_field = Field('U', u_data, grid=grid, transpose=True)
+    v_field = Field('V', v_data, grid=grid, transpose=True)
+    temp_field = Field('temp', temp_data, grid=grid, transpose=True)
 
     other_fields = {}
     other_fields['temp'] = temp_field
@@ -177,9 +212,7 @@ def test_rectilinear_s_grids_advect1(mode):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
-    grid_1 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
-    grid_2 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
@@ -189,9 +222,9 @@ def test_rectilinear_s_grids_advect1(mode):
         for k in range(depth_g0.shape[2]):
             w_data[i, :, k] = u_data[i, :, k] * depth_g0[i, :, k] / bath[i] * 1e-3
 
-    u_field = Field('U', u_data, grid=grid_0, transpose=True)
-    v_field = Field('V', v_data, grid=grid_1, transpose=True)
-    w_field = Field('W', w_data, grid=grid_2, transpose=True)
+    u_field = Field('U', u_data, grid=grid, transpose=True)
+    v_field = Field('V', v_data, grid=grid, transpose=True)
+    w_field = Field('W', w_data, grid=grid, transpose=True)
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
 
@@ -220,9 +253,7 @@ def test_rectilinear_s_grids_advect2(mode):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
-    grid_1 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
-    grid_2 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
@@ -230,9 +261,9 @@ def test_rectilinear_s_grids_advect2(mode):
     for k in range(1, depth_g0.shape[2]):
         rel_depth_data[:, :, k] = k / (depth_g0.shape[2]-1.)
 
-    u_field = Field('U', u_data, grid=grid_0, transpose=True)
-    v_field = Field('V', v_data, grid=grid_1, transpose=True)
-    rel_depth_field = Field('relDepth', rel_depth_data, grid=grid_2, transpose=True)
+    u_field = Field('U', u_data, grid=grid, transpose=True)
+    v_field = Field('V', v_data, grid=grid, transpose=True)
+    rel_depth_field = Field('relDepth', rel_depth_data, grid=grid, transpose=True)
     field_set = FieldSet(u_field, v_field, fields={'relDepth': rel_depth_field})
 
     class MyParticle(ptype[mode]):

@@ -15,8 +15,11 @@ class GridSet(object):
     def __init__(self, grids=[]):
         self.grids = grids
         self.size = len(grids)
+        for g in grids:
+            setattr(self, g.name, g)
 
-    def add_grid(self, grid):
+    def add_grid(self, field):
+        grid = field.grid
         existing_grid = False
         for g in self.grids:
             sameGrid = True
@@ -29,7 +32,7 @@ class GridSet(object):
             if not sameGrid:
                 continue
             existing_grid = True
-            grid.name = g.name
+            field.grid = g
             break
 
         if not existing_grid:
@@ -37,6 +40,7 @@ class GridSet(object):
                 if g.name == grid.name:
                     grid.name = grid.name + '_b'
             self.grids.append(grid)
+            setattr(self, grid.name, grid)
             self.size += 1
 
 

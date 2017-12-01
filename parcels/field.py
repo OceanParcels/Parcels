@@ -624,32 +624,31 @@ class Field(object):
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
+        Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
 
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
-            lonshift = (self.grid.lon[-1] - 2 * self.grid.lon[0] + self.grid.lon[1])
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
                                             self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
+                assert self.data.shape[2] == self.grid.lon.size
             else:
                 self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
                                             self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
-            self.grid.lon = np.concatenate((self.grid.lon[-halosize:] - lonshift,
-                                            self.grid.lon, self.grid.lon[0:halosize] + lonshift))
+                assert self.data.shape[3] == self.grid.lon.size
             self.lon = self.grid.lon
         if meridional:
-            latshift = (self.grid.lat[-1] - 2 * self.grid.lat[0] + self.grid.lat[1])
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
                                             self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
+                assert self.data.shape[1] == self.grid.lat.size
             else:
                 self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
                                             self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
-            self.grid.lat = np.concatenate((self.grid.lat[-halosize:] - latshift,
-                                            self.grid.lat, self.grid.lat[0:halosize] + latshift))
+                assert self.data.shape[2] == self.grid.lat.size
             self.lat = self.grid.lat
 
     def write(self, filename, varname=None):
@@ -680,19 +679,13 @@ class Field(object):
                                                           vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
-    def advancetime(self, field_new):
-        if len(field_new.grid.time) is not 1:
-            raise RuntimeError('New FieldSet needs to have only one snapshot')
-        if field_new.grid.time > self.grid.time[-1]:  # forward in time, so appending at end
+    def advancetime(self, field_new, advanceForward):
+        if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
-            self.grid.time = np.concatenate((self.grid.time[1:], field_new.grid.time))
             self.time = self.grid.time
-        elif field_new.grid.time < self.grid.time[0]:  # backward in time, so prepending at start
+        else:  # backward in time, so prepending at start
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
-            self.grid.time = np.concatenate((field_new.grid.time, self.grid.time[:-1]))
             self.time = self.grid.time
-        else:
-            raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
 
 class FileBuffer(object):
