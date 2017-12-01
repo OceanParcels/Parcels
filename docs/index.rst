@@ -84,20 +84,21 @@ Parcels depends on a working Python installation, a netCDF installation, a C
 compiler, and various Python packages.
 
 The simplest way to install Parcels is to use Anaconda and Conda-Forge for all
-requirements. This is the “batteries-included” solution probably suitable for most users.
+requirements. This is the “batteries-included” solution probably suitable for most users. 
+Note that if you already have an existing Python setup that you wish to use for Parcels, you should follow the instructions at the bottom of this section.
 
 The five steps below are the installation instructions for Linux and macOS. Note that for Windows, steps 2 and 5 are slightly different, see :ref:`installing-windows` below.
 
 1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
 
-2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file and run::
+2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file, navigate to the directory where you saved that file, and run::
 
     source $HOME/miniconda2/bin/activate root
     conda env create -f environment.yml -n py2_parcels
     source $HOME/miniconda2/bin/activate py2_parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
 
-3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/examples/example_peninsula.py>`_ file and then run::
+3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/examples/example_peninsula.py>`_ file, navigate to the directory where you saved that file, and then run::
 
     python example_peninsula.py --fieldset 100 100
 
@@ -123,7 +124,7 @@ Installing Parcels on Windows
 
 The installation process and usage of Parcels is much the same as under :ref:`installing-linux-macos` above. **However, steps 2 and 5 will be different**, as detailed below:
 
-2. Download Parcels' `environment_win.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_win.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` from the Windows start menu and then run::
+2. Download Parcels' `environment_win.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_win.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` from the Windows start menu, navigate to the directory where you saved that file, and then run::
 
         activate root
         conda env create -f environment_win.yml -n py2_parcels

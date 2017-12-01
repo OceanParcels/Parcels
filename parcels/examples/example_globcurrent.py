@@ -44,7 +44,7 @@ def test_globcurrent_fieldset():
 def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, latstart, irange):
     basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                          '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
-    files = glob(str(basepath))
+    files = sorted(glob(str(basepath)))
 
     fieldsetsub = set_globcurrent_fieldset(files[substart:subend])
     psetsub = ParticleSet.from_list(fieldset=fieldsetsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
