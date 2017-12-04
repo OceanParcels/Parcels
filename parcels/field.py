@@ -194,12 +194,22 @@ class Field(object):
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        if self.grid.depth.size > 1 and len(self.grid.depth.shape) == 1:
-            self.data = self.data.reshape((self.grid.time.size, self.grid.depth.size, self.grid.lat.size, self.grid.lon.size))
-        elif len(self.grid.depth.shape) in [3, 4]:
-            self.data = self.data.reshape((self.grid.time.size, self.grid.depth.shape[2], self.grid.lat.size, self.grid.lon.size))
+        if self.grid.zdim > 1:
+            self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
+            #if self.data.shape != ((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)):
+            #    if self.data.shape == ((self.grid.zdim, self.grid.ydim, self.grid.xdim)) and self.grid.tdim == 1:
+            #        self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
+            #    else:
+            #        print 'Error in formatting the field:  ', self.data.shape, '  vs  ', self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim
+            #        exit(-1)
         else:
-            self.data = self.data.reshape((self.grid.time.size, self.grid.lat.size, self.grid.lon.size))
+            self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
+            #if self.data.shape != ((self.grid.tdim, self.grid.ydim, self.grid.xdim)):
+            #    if self.data.shape == ((self.grid.ydim, self.grid.xdim)) and self.grid.tdim == 1:
+            #        self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
+            #    else:
+            #        print 'Error in formatting the field:  ', self.data.shape, '  vs  ', self.grid.tdim, self.grid.ydim, self.grid.xdim
+            #        exit(-1)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -430,8 +440,7 @@ class Field(object):
         elif self.grid.gtype == GridCode.RectilinearSGrid:
             return self.interpolator3D_rectilinear_s(idx, z, y, x, time)
         else:
-            print("Only RectilinearZGrid and RectilinearSGrid grids are currently implemented")
-            exit(-1)
+            raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
 
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
@@ -446,6 +455,58 @@ class Field(object):
         return RegularGridInterpolator((self.grid.lat, self.grid.lon), data,
                                        bounds_error=False, fill_value=np.nan,
                                        method=self.interp_method)
+
+    def search_indices(self, x, y, xi, yi):
+        xsi = eta = -1
+        grid = self.grid
+        maxIterSearch = 1e6
+        it = 0
+        while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
+            px = np.array([grid.lon[xi, yi], grid.lon[xi+1, yi], grid.lon[xi+1, yi+1], grid.lon[xi, yi+1]])
+            py = np.array([grid.lat[xi, yi], grid.lat[xi+1, yi], grid.lat[xi+1, yi+1], grid.lat[xi, yi+1]])
+            #px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            #py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
+            invA = np.array([[ 1,  0,  0,  0],
+                             [-1,  1,  0,  0],
+                             [-1,  0,  0,  1],
+                             [ 1, -1,  1, -1]])
+            a = np.dot(invA,px)
+            b = np.dot(invA,py)
+
+            aa = a[3]*b[2] - a[2]*b[3]
+            # aa could be 0. If (x,y) way outside the cell, do something else!!
+            bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
+            cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
+            det = np.sqrt(bb*bb-4*aa*cc)
+            eta = (-bb+det)/(2*aa)
+            xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+            if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
+                raise FieldSamplingError(x, y, 0, field=self)
+            if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
+                raise FieldSamplingError(x, y, 0, field=self)
+            if xsi < 0 and xi > 0:
+               xi -=1
+            elif xsi > 1 and xi < grid.xdim-1:
+               xi +=1
+            if eta < 0 and yi > 0:
+               yi -=1
+            elif eta > 1 and yi < grid.ydim-1:
+               yi +=1
+            it +=1
+            if it > maxIterSearch:
+                print('Correct cell not found')
+                raise FieldSamplingError(x, y, 0, field=self)
+        return (xsi, eta, xi, yi)
+
+    def interpolatorCurvilinear2D(self, tidx, z, y, x, time):
+        xi = int(self.grid.xdim / 2)
+        yi = int(self.grid.ydim / 2)
+        (xsi, eta, xi, yi) = self.search_indices(x, y, xi, yi)
+        val = (1-xsi)*(1-eta) * self.data[tidx, yi, xi] + \
+              xsi*(1-eta) * self.data[tidx, yi, xi+1] + \
+              xsi*eta * self.data[tidx, yi+1, xi+1] + \
+              (1-xsi)*eta * self.data[tidx, yi+1, xi]
+        return val
 
     def temporal_interpolate_fullfield(self, tidx, time):
         """Calculate the data of a field between two snapshots,
@@ -463,10 +524,18 @@ class Field(object):
 
     def spatial_interpolation(self, tidx, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
-        if self.grid.depth.size == 1:
-            val = self.interpolator2D(tidx)((y, x))
+        if self.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            if self.grid.zdim == 1:
+                val = self.interpolator2D(tidx)((y, x))
+            else:
+                val = self.interpolator3D(tidx, z, y, x, time)
+        elif self.grid.gtype == GridCode.CurvilinearGrid:
+            if self.grid.zdim == 1:
+                val = self.interpolatorCurvilinear2D(tidx, z, y, x, time)
+            else:
+                val = self.interpolatorCurvilinear3D(tidx, z, y, x, time)
         else:
-            val = self.interpolator3D(tidx, z, y, x, time)
+            raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldSamplingError(x, y, z, field=self)
@@ -518,7 +587,7 @@ class Field(object):
         """
         (t_idx, periods) = self.time_index(time)
         time -= periods*(self.grid.time[-1]-self.grid.time[0])
-        if t_idx < len(self.grid.time)-1 and time > self.grid.time[t_idx]:
+        if t_idx < self.grid.tdim-1 and time > self.grid.time[t_idx]:
             f0 = self.spatial_interpolation(t_idx, z, y, x, time)
             f1 = self.spatial_interpolation(t_idx + 1, z, y, x, time)
             t0 = self.grid.time[t_idx]
@@ -564,8 +633,8 @@ class Field(object):
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        cstruct = CField(self.grid.lon.size, self.grid.lat.size, self.grid.depth.size,
-                         self.grid.time.size, allow_time_extrapolation, time_periodic,
+        cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
+                         self.grid.tdim, allow_time_extrapolation, time_periodic,
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))),
                          pointer(self.grid.ctypes_struct))
         return cstruct
