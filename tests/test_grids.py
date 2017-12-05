@@ -287,7 +287,7 @@ def test_curvilinear_grids(mode):
 
     x = np.linspace(0, 1e3, 7, dtype=np.float32)
     y = np.linspace(0, 1e3, 5, dtype=np.float32)
-    (xx, yy) = np.meshgrid(x, y, indexing='ij')
+    (xx, yy) = np.meshgrid(x, y)
 
     r = np.sqrt(xx*xx+yy*yy)
     theta = np.arctan2(yy, xx)
@@ -304,11 +304,11 @@ def test_curvilinear_grids(mode):
 
     grid = CurvilinearGrid('grid', lon, lat, time=time)
 
-    u_data = np.ones((x.size, y.size, 2), dtype=np.float32)
-    v_data = np.zeros((x.size, y.size, 2), dtype=np.float32)
-    u_data[:, :, 0] = lon[:, :]+lat[:, :]
-    u_field = Field('U', u_data, grid=grid, transpose=True)
-    v_field = Field('V', v_data, grid=grid, transpose=True)
+    u_data = np.ones((2, y.size, x.size), dtype=np.float32)
+    v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
+    u_data[0, :, :] = lon[:, :] + lat[:, :]
+    u_field = Field('U', u_data, grid=grid, transpose=False)
+    v_field = Field('V', v_data, grid=grid, transpose=False)
     field_set = FieldSet(u_field, v_field)
 
     def sampleSpeed(particle, fieldset, time, dt):

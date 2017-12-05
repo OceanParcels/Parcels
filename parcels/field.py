@@ -455,8 +455,8 @@ class Field(object):
         maxIterSearch = 1e6
         it = 0
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
-            px = np.array([grid.lon[xi, yi], grid.lon[xi+1, yi], grid.lon[xi+1, yi+1], grid.lon[xi, yi+1]])
-            py = np.array([grid.lat[xi, yi], grid.lat[xi+1, yi], grid.lat[xi+1, yi+1], grid.lat[xi, yi+1]])
+            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
 

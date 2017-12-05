@@ -239,8 +239,8 @@ class CurvilinearGrid(Grid):
         self.mesh = mesh
         self.cstruct = None
         self.gtype = GridCode.CurvilinearGrid
-        self.xdim = self.lon.shape[0]
-        self.ydim = self.lon.shape[1]
+        self.xdim = self.lon.shape[1]
+        self.ydim = self.lon.shape[0]
         self.zdim = self.depth.shape[2]
         self.tdim = self.time.size
         self.z4d = len(self.depth.shape) == 4

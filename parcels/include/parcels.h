@@ -157,22 +157,23 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
-  float (* xgrid)[ydim] = (float (*)[ydim]) xvals;
-  float (* ygrid)[ydim] = (float (*)[ydim]) yvals;
+  // NEMO convention
+  float (* xgrid)[xdim] = (float (*)[xdim]) xvals;
+  float (* ygrid)[xdim] = (float (*)[xdim]) yvals;
 
   float a[4], b[4];
 
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    a[0] =  xgrid[*i][*j];
-    a[1] = -xgrid[*i][*j] + xgrid[*i+1][*j];
-    a[2] = -xgrid[*i][*j]                                       + xgrid[*i][*j+1];
-    a[3] =  xgrid[*i][*j] - xgrid[*i+1][*j] + xgrid[*i+1][*j+1] - xgrid[*i][*j+1];
-    b[0] =  ygrid[*i][*j];
-    b[1] = -ygrid[*i][*j] + ygrid[*i+1][*j];
-    b[2] = -ygrid[*i][*j]                                       + ygrid[*i][*j+1];
-    b[3] =  ygrid[*i][*j] - ygrid[*i+1][*j] + ygrid[*i+1][*j+1] - ygrid[*i][*j+1];
+    a[0] =  xgrid[*j][*i];
+    a[1] = -xgrid[*j][*i] + xgrid[*j][*i+1];
+    a[2] = -xgrid[*j][*i]                                       + xgrid[*j+1][*i];
+    a[3] =  xgrid[*j][*i] - xgrid[*j][*i+1] + xgrid[*j+1][*i+1] - xgrid[*j+1][*i];
+    b[0] =  ygrid[*j][*i];
+    b[1] = -ygrid[*j][*i] + ygrid[*j][*i+1];
+    b[2] = -ygrid[*j][*i]                                       + ygrid[*j+1][*i];
+    b[3] =  ygrid[*j][*i] - ygrid[*j][*i+1] + ygrid[*j+1][*i+1] - ygrid[*j+1][*i];
 
     double aa = a[3]*b[2] - a[2]*b[3];
     // aa could be 0 if (x,y) way outside the cell? do something else!!
