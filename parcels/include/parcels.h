@@ -57,104 +57,236 @@ typedef struct
 } CGridIndexSet;  
 
 
-
-/* Local linear search to update grid index
- * params tidx, sizeT, time. t0, t1 are only used for 4D S grids
- * */
-static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX, int sizeY, int sizeZ,
+static inline ErrorCode search_indices_rectilinear_z(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals,
-                                            int *i, int *j, int *k, GridCode gcode, int z4d, int tidx,
-                                            int sizeT, double time, double t0, double t1, float *z0, float *z1)
+                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta)
 {
-  if (x < xvals[0] || x > xvals[sizeX-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*i < sizeX-1 && x > xvals[*i+1]) ++(*i);
+  if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
   while (*i > 0 && x < xvals[*i]) --(*i);
 
   /* Lowering index by 1 if last index, to avoid out-of-array sampling
   for index+1 in spatial-interpolation*/
-  if (*i == sizeX-1) {--*i;}
+  if (*i == xdim-1) {--*i;}
 
-  if (y < yvals[0] || y > yvals[sizeY-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*j < sizeY-1 && y > yvals[*j+1]) ++(*j);
+  if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*j < ydim-1 && y > yvals[*j+1]) ++(*j);
   while (*j > 0 && y < yvals[*j]) --(*j);
 
   /* Lowering index by 1 if last index, to avoid out-of-array sampling
   for index+1 in spatial-interpolation*/
-  if (*j == sizeY-1) {--*j;}
+  if (*j == ydim-1) {--*j;}
 
-  if (sizeZ > 1)
-  {
-    if (gcode == RECTILINEAR_Z_GRID){
-      if (z < zvals[0] || z > zvals[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
-      while (*k < sizeZ-1 && z > zvals[*k+1]) ++(*k);
-      while (*k > 0 && x < zvals[*k]) --(*k);
-  
-      /* Lowering index by 1 if last index, to avoid out-of-array sampling
-         for index+1 in spatial-interpolation*/
-      if (*k == sizeZ-1) {--*k;}
-    }
-    else if (gcode == RECTILINEAR_S_GRID){
-      float zcol[sizeZ];
-      double xsi = (x-xvals[*i])/(xvals[*i+1]-xvals[*i]);
-      double eta = (y-yvals[*j])/(yvals[*j+1]-yvals[*j]);
-      int iz;
-      if (z4d == 1){
-        float (*zvalstab)[sizeY][sizeZ][sizeT] = (float (*)[sizeY][sizeZ][sizeT]) zvals;
-        int tidx1 = tidx;
-        if (tidx < sizeT-1)
-           tidx1= tidx+1;
-        double zt0, zt1;
-        for (iz=0; iz < sizeZ; iz++){
-          zt0 = (1-xsi)*(1-eta) * zvalstab[*i  ][*j  ][iz][tidx]
-              + (  xsi)*(1-eta) * zvalstab[*i+1][*j  ][iz][tidx]
-              + (  xsi)*(  eta) * zvalstab[*i+1][*j+1][iz][tidx]
-              + (1-xsi)*(  eta) * zvalstab[*i  ][*j+1][iz][tidx];
-          zt1 = (1-xsi)*(1-eta) * zvalstab[*i  ][*j  ][iz][tidx1]
-              + (  xsi)*(1-eta) * zvalstab[*i+1][*j  ][iz][tidx1]
-              + (  xsi)*(  eta) * zvalstab[*i+1][*j+1][iz][tidx1]
-              + (1-xsi)*(  eta) * zvalstab[*i  ][*j+1][iz][tidx1];
-          zcol[iz] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
-        }
+  *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
+  *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
 
-      }
-      else{
-        float (*zvalstab)[sizeY][sizeZ] = (float (*)[sizeY][sizeZ]) zvals;
-        for (iz=0; iz < sizeZ; iz++){
-          zcol[iz] = (1-xsi)*(1-eta) * zvalstab[*i  ][*j  ][iz]
-                   + (  xsi)*(1-eta) * zvalstab[*i+1][*j  ][iz]
-                   + (  xsi)*(  eta) * zvalstab[*i+1][*j+1][iz]
-                   + (1-xsi)*(  eta) * zvalstab[*i  ][*j+1][iz];
-        }
-      }
-      if (z < zcol[0] || z > zcol[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
-      while (*k < sizeZ-1 && z > zcol[*k+1]) ++(*k);
-      while (*k > 0 && x < zcol[*k]) --(*k);
-  
-      /* Lowering index by 1 if last index, to avoid out-of-array sampling
-         for index+1 in spatial-interpolation*/
-      if (*k == sizeZ-1) {--*k;}
-      *z0 = zcol[*k];
-      *z1 = zcol[*k+1];
+  if (zdim > 1){
+    if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*k < zdim-1 && z > zvals[*k+1]) ++(*k);
+    while (*k > 0 && x < zvals[*k]) --(*k);
+    if (*k == zdim-1) {--*k;}
+
+    *zeta = (z - zvals[*k]) / (zvals[*k+1] - zvals[*k]);
+  }
+
+  return SUCCESS;
+}
+
+static inline ErrorCode search_indices_rectilinear_s(float x, float y, float z, int xdim, int ydim, int zdim,
+                                            float *xvals, float *yvals, float *zvals,
+                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            int z4d, int ti, int tdim, double time, double t0, double t1)
+{
+  if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
+  while (*i > 0 && x < xvals[*i]) --(*i);
+  if (*i == xdim-1) {--*i;}
+
+  if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*j < ydim-1 && y > yvals[*j+1]) ++(*j);
+  while (*j > 0 && y < yvals[*j]) --(*j);
+  if (*j == ydim-1) {--*j;}
+
+  *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
+  *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
+
+
+  float zcol[zdim];
+  int iz;
+  if (z4d == 1){
+    float (*zvalstab)[ydim][zdim][tdim] = (float (*)[ydim][zdim][tdim]) zvals;
+    int ti1 = ti;
+    if (ti < tdim-1)
+       ti1= ti+1;
+    double zt0, zt1;
+    for (iz=0; iz < zdim; iz++){
+      zt0 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti]
+          + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti]
+          + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti]
+          + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti];
+      zt1 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti1]
+          + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti1]
+          + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti1]
+          + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti1];
+      zcol[iz] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
     }
+
+  }
+  else{
+    float (*zvalstab)[ydim][zdim] = (float (*)[ydim][zdim]) zvals;
+    for (iz=0; iz < zdim; iz++){
+      zcol[iz] = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz]
+               + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz]
+               + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz]
+               + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz];
+    }
+  }
+
+  if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*k < zdim-1 && z > zcol[*k+1]) ++(*k);
+  while (*k > 0 && x < zcol[*k]) --(*k);
+  if (*k == zdim-1) {--*k;}
+
+  *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
+
+  return SUCCESS;
+}
+
+static inline ErrorCode search_indices_curvilinear(float x, float y, float z, int xdim, int ydim, int zdim,
+                                            float *xvals, float *yvals, float *zvals,
+                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            int z4d, int ti, int tdim, double time, double t0, double t1)
+{
+  float (* xgrid)[ydim] = (float (*)[ydim]) xvals;
+  float (* ygrid)[ydim] = (float (*)[ydim]) yvals;
+
+  float a[4], b[4];
+
+  *xsi = *eta = -1;
+  int maxIterSearch = 1e6, it = 0;
+  while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
+    a[0] =  xgrid[*i][*j];
+    a[1] = -xgrid[*i][*j] + xgrid[*i+1][*j];
+    a[2] = -xgrid[*i][*j]                                       + xgrid[*i][*j+1];
+    a[3] =  xgrid[*i][*j] - xgrid[*i+1][*j] + xgrid[*i+1][*j+1] - xgrid[*i][*j+1];
+    b[0] =  ygrid[*i][*j];
+    b[1] = -ygrid[*i][*j] + ygrid[*i+1][*j];
+    b[2] = -ygrid[*i][*j]                                       + ygrid[*i][*j+1];
+    b[3] =  ygrid[*i][*j] - ygrid[*i+1][*j] + ygrid[*i+1][*j+1] - ygrid[*i][*j+1];
+
+    double aa = a[3]*b[2] - a[2]*b[3];
+    // aa could be 0 if (x,y) way outside the cell? do something else!!
+    double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
+    double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
+    double det = sqrt(bb*bb-4*aa*cc);
+    *eta = (-bb+det)/(2*aa);
+    *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
+    if ( (*xsi < 0) && (*eta < 0) && (*i == 0) && (*j == 0) )
+      return ERROR_OUT_OF_BOUNDS;
+    if ( (*xsi > 1) && (*eta > 1) && (*i == xdim-1) && (*j == ydim-1) )
+      return ERROR_OUT_OF_BOUNDS;
+    if ( (*xsi < 0) && (*i > 0) )
+      (*i)--;
+    if ( (*xsi > 1) && (*i < xdim-1) )
+      (*i)++;
+    if ( (*eta < 0) && (*j > 0) )
+      (*j)--;
+    if ( (*eta > 1) && (*j < ydim-1) )
+      (*j)++;
+    it++;
+    if ( it > maxIterSearch){
+      printf("Correct cell not found after %d iterations\n", maxIterSearch);
+      return ERROR_OUT_OF_BOUNDS;
+    }
+
+  }
+
+  if (zdim > 1){
+    float zcol[zdim];
+    int iz;
+    if (z4d == 1){
+      float (*zvalstab)[ydim][zdim][tdim] = (float (*)[ydim][zdim][tdim]) zvals;
+      int ti1 = ti;
+      if (ti < tdim-1)
+         ti1= ti+1;
+      double zt0, zt1;
+      for (iz=0; iz < zdim; iz++){
+        zt0 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti]
+            + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti]
+            + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti]
+            + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti];
+        zt1 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti1]
+            + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti1]
+            + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti1]
+            + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti1];
+        zcol[iz] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
+      }
+
+    }
+    else{
+      float (*zvalstab)[ydim][zdim] = (float (*)[ydim][zdim]) zvals;
+      for (iz=0; iz < zdim; iz++){
+        zcol[iz] = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz]
+                 + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz]
+                 + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz]
+                 + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz];
+      }
+    }
+
+    if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*k < zdim-1 && z > zcol[*k+1]) ++(*k);
+    while (*k > 0 && x < zcol[*k]) --(*k);
+    if (*k == zdim-1) {--*k;}
+
+    *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
+  }
+
+  return SUCCESS;
+}
+
+/* Local linear search to update grid index
+ * params ti, sizeT, time. t0, t1 are only used for 4D S grids
+ * */
+static inline ErrorCode search_indices(float x, float y, float z, int xdim, int ydim, int zdim,
+                                            float *xvals, float *yvals, float *zvals,
+                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            GridCode gcode, int z4d,
+                                            int ti, int tdim, double time, double t0, double t1, float *z0, float *z1)
+{
+  switch(gcode){
+    case RECTILINEAR_Z_GRID:
+      return search_indices_rectilinear_z(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, i, j, k, xsi, eta, zeta);
+      break;
+    case RECTILINEAR_S_GRID:
+      return search_indices_rectilinear_s(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, i, j, k, xsi, eta, zeta,
+                                   z4d, ti, tdim, time, t0, t1);
+      break;
+    case CURVILINEAR_GRID:
+      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, i, j, k, xsi, eta, zeta,
+                                   z4d, ti, tdim, time, t0, t1);
+      break;
+    default:
+      printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID and CURVILINEAR_GRID grids are currently implemented\n");
+      return ERROR;
   }
   return SUCCESS;
 }
 
 /* Local linear search to update time index */
-static inline ErrorCode search_linear_double(double *t, int size, double *tvals, int *index, int time_periodic)
+static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *index, int time_periodic)
 {
   if (time_periodic == 1){
     if (*t < tvals[0]){
       *index = size-1;      
       int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
       *t -= periods * (tvals[size-1]-tvals[0]);
-      search_linear_double(t, size, tvals, index, time_periodic);
+      search_time_index(t, size, tvals, index, time_periodic);
     }  
     else if (*t > tvals[size-1]){
       *index = 0;      
       int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
       *t -= periods * (tvals[size-1]-tvals[0]);
-      search_linear_double(t, size, tvals, index, time_periodic);
+      search_time_index(t, size, tvals, index, time_periodic);
     }  
   }          
   while (*index < size-1 && *t >= tvals[*index+1]) ++(*index);
@@ -163,135 +295,107 @@ static inline ErrorCode search_linear_double(double *t, int size, double *tvals,
 }
 
 /* Bilinear interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_bilinear(float x, float y, int i, int j, int xdim,
-                                                       float *lon, float *lat, float **f_data,
-                                                       float *value)
+static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, int i, int j, int xdim, float **f_data, float *value)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
-  *value = (data[j][i] * (lon[i+1] - x) * (lat[j+1] - y)
-            + data[j][i+1] * (x - lon[i]) * (lat[j+1] - y)
-            + data[j+1][i] * (lon[i+1] - x) * (y - lat[j])
-            + data[j+1][i+1] * (x - lon[i]) * (y - lat[j]))
-            / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
+  *value = (1-xsi)*(1-eta) * data[j  ][i  ]
+         +    xsi *(1-eta) * data[j  ][i+1]
+         +    xsi *   eta  * data[j+1][i+1]
+         + (1-xsi)*   eta  * data[j+1][i  ];
   return SUCCESS;
 }
 
 /* Trilinear interpolation routine for 3D grid */
-static inline ErrorCode spatial_interpolation_trilinear(float x, float y, float z, int i, int j, int k,
-                                                        int xdim, int ydim, float *lon, float *lat,
-                                                        float *depth, float **f_data, float *value,
-                                                        GridCode gcode, float z0, float z1)
+static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, double zeta, int i, int j, int k,
+                                                        int xdim, int ydim, float **f_data, float *value)
 {
-  /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   float f0, f1;
-  if (gcode == RECTILINEAR_Z_GRID){
-    z0 = depth[k];
-    z1 = depth[k+1];
-  }
-  f0 = (data[k][j][i] * (lon[i+1] - x) * (lat[j+1] - y)
-        + data[k][j][i+1] * (x - lon[i]) * (lat[j+1] - y)
-        + data[k][j+1][i] * (lon[i+1] - x) * (y - lat[j])
-        + data[k][j+1][i+1] * (x - lon[i]) * (y - lat[j]))
-        / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
-  f1 = (data[k+1][j][i] * (lon[i+1] - x) * (lat[j+1] - y)
-        + data[k+1][j][i+1] * (x - lon[i]) * (lat[j+1] - y)
-        + data[k+1][j+1][i] * (lon[i+1] - x) * (y - lat[j])
-        + data[k+1][j+1][i+1] * (x - lon[i]) * (y - lat[j]))
-        / ((lon[i+1] - lon[i]) * (lat[j+1] - lat[j]));
-  *value = f0 + (f1 - f0) * (float)((z - z0) / (z1 - z0));
+  f0 = (1-xsi)*(1-eta) * data[k  ][j  ][i  ]
+     +    xsi *(1-eta) * data[k  ][j  ][i+1]
+     +    xsi *   eta  * data[k  ][j+1][i+1]
+     + (1-xsi)*   eta  * data[k  ][j+1][i  ];
+  f1 = (1-xsi)*(1-eta) * data[k+1][j  ][i  ]
+     +    xsi *(1-eta) * data[k+1][j  ][i+1]
+     +    xsi *   eta  * data[k+1][j+1][i+1]
+     + (1-xsi)*   eta  * data[k+1][j+1][i  ];
+  *value = (1-zeta) * f0 + zeta * f1;
   return SUCCESS;
 }
 
 /* Nearest neighbour interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_nearest2D(float x, float y, int i, int j, int xdim, int ydim,
-                                                        float *lon, float *lat, float **f_data,
-                                                        float *value)
+static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta, int i, int j, int xdim,
+                                                        float **f_data, float *value)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
   int ii, jj;
-  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
-  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
+  if (xsi < .5) {ii = i;} else {ii = i + 1;}
+  if (eta < .5) {jj = j;} else {jj = j + 1;}
   *value = data[jj][ii];
   return SUCCESS;
 }
 
 /* Nearest neighbour interpolation routine for 3D grid */
-static inline ErrorCode spatial_interpolation_nearest3D(float x, float y, float z, int i, int j, int k,
-                                                        int xdim, int ydim, int zdim, float *lon, float *lat,
-                                                        float *depth, float **f_data, float *value,
-                                                        GridCode gcode, float z0, float z1)
+static inline ErrorCode spatial_interpolation_nearest3D(double xsi, double eta, double zeta, int i, int j, int k,
+                                                        int xdim, int ydim, float **f_data, float *value)
 {
-  /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   int ii, jj, kk;
-  if (gcode == RECTILINEAR_Z_GRID){
-    z0 = depth[k];
-    z1 = depth[k+1];
-  }
-  if (x - lon[i] < lon[i+1] - x) {ii = i;} else {ii = i + 1;}
-  if (y - lat[j] < lat[j+1] - y) {jj = j;} else {jj = j + 1;}
-  if (z - z0 < z1 - z) {kk = k;} else {kk = k + 1;}
+  if (xsi < .5) {ii = i;} else {ii = i + 1;}
+  if (eta < .5) {jj = j;} else {jj = j + 1;}
+  if (zeta < .5) {kk = k;} else {kk = k + 1;}
   *value = data[kk][jj][ii];
   return SUCCESS;
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_linear_rectilinear_grid(float x, float y, float z, CGridIndex *gridIndex,
-                                                                      int iGrid, double time, CField *f,
-                                                                      float *value, int interp_method, GridCode gcode)
+static inline ErrorCode temporal_interpolation_structured_grid(float x, float y, float z, double time, CField *f, 
+                                                               GridCode gcode, CGridIndex *gridIndex,
+                                                               float *value, int interp_method)
 {
   ErrorCode err;
-  /* Cast data array intp data[time][lat][lon] as per NEMO convention */
   CRectilinearGrid *grid = f->grid->grid;
-  /* Identify grid cell to sample through local linear search */
 
-  float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
-  float f0, f1;
-  double t0, t1;
   /* Find time index for temporal interpolation */
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_linear_double(&time, grid->tdim, grid->time, &gridIndex->ti, f->time_periodic);
+  err = search_time_index(&time, grid->tdim, grid->time, &gridIndex->ti, f->time_periodic);
+
+  /* Cast data array intp data[time][depth][lat][lon] as per NEMO convention */
+  float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
+  double xsi, eta, zeta;
 
   float z0 = 0, z1 = 0;
+
   if (gridIndex->ti < grid->tdim-1 && time > grid->time[gridIndex->ti]) {
-    t0 = grid->time[gridIndex->ti]; t1 = grid->time[gridIndex->ti+1];
-    err = search_linear_float(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1, &z0, &z1); CHECKERROR(err);
+    float f0, f1;
+    double t0 = grid->time[gridIndex->ti]; double t1 = grid->time[gridIndex->ti+1];
+    /* Identify grid cell to sample through local linear search */
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1, &z0, &z1); CHECKERROR(err);
     int i = gridIndex->xi;
     int j = gridIndex->yi;
     int k = gridIndex->zi;
     if (interp_method == LINEAR){
       if (grid->zdim==1){
-        err = spatial_interpolation_bilinear(x, y, i, j, grid->xdim, grid->lon, grid->lat,
-                                             (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_bilinear(x, y, i, j, grid->xdim, grid->lon, grid->lat,
-                                             (float**)(data[gridIndex->ti+1]), &f1);
+        err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), &f0);
+        err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti+1]), &f1);
       } else {
-        err = spatial_interpolation_trilinear(x, y, z, i, j, k, grid->xdim, grid->ydim,
-                                              grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[gridIndex->ti]), &f0, gcode, z0, z1);
-        err = spatial_interpolation_trilinear(x, y, z, i, j, k, grid->xdim, grid->ydim,
-                                              grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[gridIndex->ti+1]), &f1, gcode, z0, z1);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti]), &f0);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti+1]), &f0);
       }
     }
     else if  (interp_method == NEAREST){
       if (grid->zdim==1){
-        err = spatial_interpolation_nearest2D(x, y, i, j, grid->xdim, grid->ydim, grid->lon,
-                                              grid->lat, (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_nearest2D(x, y, i, j, grid->xdim, grid->ydim, grid->lon,
-                                              grid->lat, (float**)(data[gridIndex->ti+1]), &f1);
+        err = spatial_interpolation_nearest2D(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), &f0);
+        err = spatial_interpolation_nearest2D(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti+1]), &f1);
       } else {
-        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, grid->xdim, grid->ydim,
-                                              grid->zdim, grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[gridIndex->ti]), &f0, gcode, z0, z1);
-        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, grid->xdim, grid->ydim,
-                                              grid->zdim, grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[gridIndex->ti+1]), &f1, gcode, z0, z1);
+        err = spatial_interpolation_nearest3D(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
+                                              (float**)(data[gridIndex->ti]), &f0);
+        err = spatial_interpolation_nearest3D(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
+                                              (float**)(data[gridIndex->ti+1]), &f1);
       }
     }
     else {
@@ -300,29 +404,24 @@ static inline ErrorCode temporal_interpolation_linear_rectilinear_grid(float x, 
     *value = f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
     return SUCCESS;
   } else {
-    t0 = grid->time[gridIndex->ti];
-    err = search_linear_float(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1, &z0, &z1); CHECKERROR(err);
+    double t0 = grid->time[gridIndex->ti];
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1, &z0, &z1); CHECKERROR(err);
     int i = gridIndex->xi;
     int j = gridIndex->yi;
     int k = gridIndex->zi;
     if (interp_method == LINEAR){
-      if (grid->zdim==1){
-        err = spatial_interpolation_bilinear(x, y, i, j, grid->xdim, grid->lon, grid->lat,
+      if (grid->zdim==1)
+        err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), value);
+      else
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
                                              (float**)(data[gridIndex->ti]), value);
-      } else {
-        err = spatial_interpolation_trilinear(x, y, z, i, j, k, grid->xdim, grid->ydim,
-                                              grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[gridIndex->ti]), value, gcode, z0, z1);
-      }
     }
     else if (interp_method == NEAREST){
-      if (grid->zdim==1){
-        err = spatial_interpolation_nearest2D(x, y, i, j, grid->xdim, grid->ydim, grid->lon,
-                                              grid->lat, (float**)(data[gridIndex->ti]), value);
-      } else {
-        err = spatial_interpolation_nearest3D(x, y, z, i, j, k, grid->xdim, grid->ydim,
-                                              grid->zdim, grid->lon, grid->lat, grid->depth,
-                                              (float**)(data[gridIndex->ti]), value, gcode, z0, z1);
+      if (grid->zdim==1)
+        err = spatial_interpolation_nearest2D(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), value);
+      else {
+        err = spatial_interpolation_nearest3D(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
+                                             (float**)(data[gridIndex->ti]), value);
       }
     }
     else {
@@ -332,18 +431,18 @@ static inline ErrorCode temporal_interpolation_linear_rectilinear_grid(float x, 
   }
 }
 
-static inline ErrorCode temporal_interpolation_linear(float x, float y, float z, void *gridIndexSet, int iGrid, 
-                                                      double time, CField *f, float *value, int interp_method)
+static inline ErrorCode temporal_interpolation(float x, float y, float z, double time, CField *f, 
+                                               void *gridIndexSet, int iGrid, float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
   CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
   CGridIndex *gridIndex = &giset->gridIndices[iGrid];
 
-  if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID)
-    return temporal_interpolation_linear_rectilinear_grid(x, y, z, gridIndex, iGrid, time, f, value, interp_method, gcode);
+  if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_GRID)
+    return temporal_interpolation_structured_grid(x, y, z, time, f, gcode, gridIndex, value, interp_method);
   else{
-    printf("Only RECTILINEAR_Z_GRID and RECTILINEAR_S_GRID grids are currently implemented\n");
+    printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID and CURVILINEAR_GRID grids are currently implemented\n");
     return ERROR;
   }
 }

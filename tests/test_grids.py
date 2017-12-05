@@ -1,7 +1,7 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
-
-from parcels import RectilinearZGrid, RectilinearSGrid
+from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearGrid
 import numpy as np
+import math
 import pytest
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -280,3 +280,45 @@ def test_rectilinear_s_grids_advect2(mode):
     for _ in range(10):
         pset.execute(kernel, starttime=pset[0].time, runtime=100, dt=50)
         assert np.allclose(pset[0].relDepth, depth/bath_func(pset[0].lon))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_curvilinear_grids(mode):
+
+    x = np.linspace(0, 1e3, 7, dtype=np.float32)
+    y = np.linspace(0, 1e3, 5, dtype=np.float32)
+    (xx, yy) = np.meshgrid(x, y, indexing='ij')
+
+    r = np.sqrt(xx*xx+yy*yy)
+    theta = np.arctan2(yy, xx)
+    theta = theta + np.pi/6.
+
+    lon = r * np.cos(theta)
+    lat = r * np.sin(theta)
+    time = np.array([0, 86400], dtype=np.float64)
+    # import matplotlib.pyplot as plt
+    # plt.plot(xx,yy,"ob")
+    # plt.plot(lon,lat,".r")
+    # plt.axis('equal')
+    # plt.show()
+
+    grid = CurvilinearGrid('grid', lon, lat, time=time)
+
+    u_data = np.ones((x.size, y.size, 2), dtype=np.float32)
+    v_data = np.zeros((x.size, y.size, 2), dtype=np.float32)
+    u_data[:, :, 0] = lon[:, :]+lat[:, :]
+    u_field = Field('U', u_data, grid=grid, transpose=True)
+    v_field = Field('V', v_data, grid=grid, transpose=True)
+    field_set = FieldSet(u_field, v_field)
+
+    def sampleSpeed(particle, fieldset, time, dt):
+        u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        v = fieldset.V[time, particle.lon, particle.lat, particle.depth]
+        particle.speed = math.sqrt(u*u+v*v)
+
+    class MyParticle(ptype[mode]):
+        speed = Variable('speed', dtype=np.float32, initial=0.)
+
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[400], lat=[600])
+    pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
+    assert(np.allclose(pset[0].speed, 1000))

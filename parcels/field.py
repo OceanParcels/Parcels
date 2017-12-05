@@ -389,8 +389,8 @@ class Field(object):
                     xsi*(1-eta) * grid.depth[xi+1, yi, :, idx:idx+2] + \
                     xsi*eta * grid.depth[xi+1, yi+1, :, idx:idx+2] + \
                     (1-xsi)*eta * grid.depth[xi, yi+1, :, idx:idx+2]
-                t0 = self.grid.time[idx]
-                t1 = self.grid.time[idx + 1]
+                t0 = grid.time[idx]
+                t1 = grid.time[idx + 1]
                 depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
         else:
             depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
@@ -431,17 +431,6 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
-    def interpolator3D(self, idx, z, y, x, time):
-        """Scipy implementation of 3D interpolation, by first interpolating
-        in horizontal, then in the vertical"""
-
-        if self.grid.gtype == GridCode.RectilinearZGrid:
-            return self.interpolator3D_rectilinear_z(idx, z, y, x)
-        elif self.grid.gtype == GridCode.RectilinearSGrid:
-            return self.interpolator3D_rectilinear_s(idx, z, y, x, time)
-        else:
-            raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
-
     def interpolator2D(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
 
@@ -456,25 +445,23 @@ class Field(object):
                                        bounds_error=False, fill_value=np.nan,
                                        method=self.interp_method)
 
-    def search_indices(self, x, y, xi, yi):
+    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
         xsi = eta = -1
         grid = self.grid
+        invA = np.array([[1, 0, 0, 0],
+                         [-1, 1, 0, 0],
+                         [-1, 0, 0, 1],
+                         [1, -1, 1, -1]])
         maxIterSearch = 1e6
         it = 0
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[xi, yi], grid.lon[xi+1, yi], grid.lon[xi+1, yi+1], grid.lon[xi, yi+1]])
             py = np.array([grid.lat[xi, yi], grid.lat[xi+1, yi], grid.lat[xi+1, yi+1], grid.lat[xi, yi+1]])
-            #px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-            #py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
-            invA = np.array([[ 1,  0,  0,  0],
-                             [-1,  1,  0,  0],
-                             [-1,  0,  0,  1],
-                             [ 1, -1,  1, -1]])
-            a = np.dot(invA,px)
-            b = np.dot(invA,py)
+            a = np.dot(invA, px)
+            b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
-            # aa could be 0. If (x,y) way outside the cell, do something else!!
+            # aa could be 0 if (x,y) way outside the cell? do something else!!
             bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
             cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
             det = np.sqrt(bb*bb-4*aa*cc)
@@ -485,28 +472,77 @@ class Field(object):
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi < 0 and xi > 0:
-               xi -=1
+                xi -= 1
             elif xsi > 1 and xi < grid.xdim-1:
-               xi +=1
+                xi += 1
             if eta < 0 and yi > 0:
-               yi -=1
+                yi -= 1
             elif eta > 1 and yi < grid.ydim-1:
-               yi +=1
-            it +=1
+                yi += 1
+            it += 1
             if it > maxIterSearch:
                 print('Correct cell not found')
                 raise FieldSamplingError(x, y, 0, field=self)
-        return (xsi, eta, xi, yi)
 
-    def interpolatorCurvilinear2D(self, tidx, z, y, x, time):
+        zi = 0
+        zeta = -1
+        if grid.zdim > 1:
+            if grid.z4d:
+                if tidx == len(self.grid.time)-1:
+                    depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
+                        xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
+                        xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
+                        (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+                else:
+                    dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, tidx:tidx+2] + \
+                        xsi*(1-eta) * grid.depth[xi+1, yi, :, tidx:tidx+2] + \
+                        xsi*eta * grid.depth[xi+1, yi+1, :, tidx:tidx+2] + \
+                        (1-xsi)*eta * grid.depth[xi, yi+1, :, tidx:tidx+2]
+                    t0 = grid.time[tidx]
+                    t1 = grid.time[tidx + 1]
+                    depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+            else:
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :]
+            z = np.float32(z)
+            depth_index = depth_vector <= z
+            if z >= depth_vector[-1]:
+                zi = len(depth_vector) - 2
+            else:
+                zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
+            if z < depth_vector[zi] or z > depth_vector[zi+1]:
+                raise FieldSamplingError(x, y, z, field=self)
+            zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
+
+        return (xsi, eta, zeta, xi, yi, zi)
+
+    def interpolatorCurvilinear2D(self, tidx, z, y, x):
         xi = int(self.grid.xdim / 2)
         yi = int(self.grid.ydim / 2)
-        (xsi, eta, xi, yi) = self.search_indices(x, y, xi, yi)
+        (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
         val = (1-xsi)*(1-eta) * self.data[tidx, yi, xi] + \
-              xsi*(1-eta) * self.data[tidx, yi, xi+1] + \
-              xsi*eta * self.data[tidx, yi+1, xi+1] + \
-              (1-xsi)*eta * self.data[tidx, yi+1, xi]
+            xsi*(1-eta) * self.data[tidx, yi, xi+1] + \
+            xsi*eta * self.data[tidx, yi+1, xi+1] + \
+            (1-xsi)*eta * self.data[tidx, yi+1, xi]
         return val
+
+    def interpolatorCurvilinear3D(self, tidx, z, y, x, time):
+        xi = int(self.grid.xdim / 2)
+        yi = int(self.grid.ydim / 2)
+        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, tidx, time)
+        data = self.data[tidx, zi, :, :].transpose()
+        f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
+            xsi*(1-eta) * data[xi+1, yi] + \
+            xsi*eta * data[xi+1, yi+1] + \
+                (1-xsi)*eta * data[xi, yi+1]
+        data = self.data[tidx, zi+1, :, :].transpose()
+        f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
+            xsi*(1-eta) * data[xi+1, yi] + \
+            xsi*eta * data[xi+1, yi+1] + \
+            (1-xsi)*eta * data[xi, yi+1]
+        return (1-zeta) * f0 + zeta * f1
 
     def temporal_interpolate_fullfield(self, tidx, time):
         """Calculate the data of a field between two snapshots,
@@ -527,11 +563,13 @@ class Field(object):
         if self.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
             if self.grid.zdim == 1:
                 val = self.interpolator2D(tidx)((y, x))
-            else:
-                val = self.interpolator3D(tidx, z, y, x, time)
+            elif self.grid.gtype == GridCode.RectilinearZGrid:
+                val = self.interpolator3D_rectilinear_z(tidx, z, y, x)
+            elif self.grid.gtype == GridCode.RectilinearSGrid:
+                val = self.interpolator3D_rectilinear_s(tidx, z, y, x, time)
         elif self.grid.gtype == GridCode.CurvilinearGrid:
             if self.grid.zdim == 1:
-                val = self.interpolatorCurvilinear2D(tidx, z, y, x, time)
+                val = self.interpolatorCurvilinear2D(tidx, z, y, x)
             else:
                 val = self.interpolatorCurvilinear3D(tidx, z, y, x, time)
         else:
@@ -609,8 +647,8 @@ class Field(object):
             if g.name == self.grid.name:
                 iGrid = i
                 break
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
-            % (x, y, z, "particle->CGridIndexSet", iGrid, t, self.name, var,
+        return "temporal_interpolation(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, z, t, self.name, "particle->CGridIndexSet", iGrid, var,
                self.interp_method.upper())
 
     def ccode_convert(self, _, x, y, z):

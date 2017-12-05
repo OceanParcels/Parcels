@@ -187,7 +187,7 @@ class RectilinearSGrid(RectilinearGrid):
 
 
 class CurvilinearGrid(Grid):
-    """Curvilinear Grid. 
+    """Curvilinear Grid.
 
     :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
@@ -221,7 +221,7 @@ class CurvilinearGrid(Grid):
         self.name = name
         self.lon = lon
         self.lat = lat
-        self.depth = np.zeros((1,1,1), dtype=np.float64) if depth is None else depth
+        self.depth = np.zeros((1, 1, 1), dtype=np.float64) if depth is None else depth
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
@@ -289,6 +289,7 @@ class CurvilinearGrid(Grid):
                                             self.depth.ctypes.data_as(POINTER(c_float)),
                                             self.time.ctypes.data_as(POINTER(c_double)))
         return self.cstruct
+
 
 class GVariable(object):
     def __init__(self, name):
