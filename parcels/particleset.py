@@ -451,7 +451,7 @@ class ParticleSet(object):
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=True):
         """Method to calculate the density of particles in a ParticleSet from their locations,
-        through a 2D histogram. Note that returns array of size (lat, lon)
+        through a 2D histogram.
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
                     on. Default is `fieldset.U`
