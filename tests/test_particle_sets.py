@@ -229,20 +229,19 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_density(fieldset, mode):
+@pytest.mark.parametrize('area_scale', [True, False])
+def test_density(fieldset, mode, area_scale):
     lons, lats = np.meshgrid(fieldset.U.lon, fieldset.U.lat)
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=lons,
-                       lat=lats)
-    arr = pset.density(area_scale=False)  # Not scaling by area
-    assert(np.sum(arr) == fieldset.U.lat.size*fieldset.U.lon.size)  # check conservation of particles
-    inds = zip(*np.where(arr))
-    for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
-        assert np.allclose(fieldset.U.lon[inds[i][1]], pset[i].lon, rtol=1e-1)
-        assert np.allclose(fieldset.U.lat[inds[i][0]], pset[i].lat, rtol=1e-1)
-    arr = pset.density(area_scale=True)  # Scaling by area
-    area = fieldset.U.area()
-    assert np.allclose(arr, 1 / area, rtol=1e-3)  # check that density equals 1/area
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats)
+    arr = pset.density(area_scale=area_scale)
+    if area_scale:
+        assert np.allclose(arr, 1 / fieldset.U.cell_areas(), rtol=1e-3)  # check that density equals 1/area
+    else:
+        assert(np.sum(arr) == fieldset.U.lat.size*fieldset.U.lon.size)  # check conservation of particles
+        inds = zip(*np.where(arr.T))
+        for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
+            assert np.allclose(fieldset.U.lon[inds[i][1]], pset[i].lon, rtol=1e-1)
+            assert np.allclose(fieldset.U.lat[inds[i][0]], pset[i].lat, rtol=1e-1)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

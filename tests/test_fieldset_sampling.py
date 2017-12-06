@@ -134,7 +134,7 @@ def test_pset_from_field(xdim=10, ydim=10, npart=10000):
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=JITParticle,
                                   start_field=fieldset.start)
     pdens = pset.density(area_scale=False, relative=True)
-    assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=5e-3)
+    assert np.allclose(pdens, startfield/np.sum(startfield), atol=5e-3)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
