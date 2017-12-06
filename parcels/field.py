@@ -266,6 +266,9 @@ class Field(object):
     def cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
                 Currently only works for Rectilinear Grids"""
+        if self.grid.gtype not in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
+            logger.error('Field.cell_edge_sizes() is only implemented for Rectilinear Grids')
+            exit(-1)
         dy_grid = np.zeros((self.grid.lon.size, self.grid.lat.size), dtype=np.float32)
         dx_grid = np.zeros((self.grid.lon.size, self.grid.lat.size), dtype=np.float32)
 
