@@ -83,7 +83,7 @@ static inline ErrorCode search_indices_rectilinear_z(float x, float y, float z, 
   if (zdim > 1){
     if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
     while (*k < zdim-1 && z > zvals[*k+1]) ++(*k);
-    while (*k > 0 && x < zvals[*k]) --(*k);
+    while (*k > 0 && z < zvals[*k]) --(*k);
     if (*k == zdim-1) {--*k;}
 
     *zeta = (z - zvals[*k]) / (zvals[*k+1] - zvals[*k]);
@@ -144,7 +144,7 @@ static inline ErrorCode search_indices_rectilinear_s(float x, float y, float z, 
 
   if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
   while (*k < zdim-1 && z > zcol[*k+1]) ++(*k);
-  while (*k > 0 && x < zcol[*k]) --(*k);
+  while (*k > 0 && z < zcol[*k]) --(*k);
   if (*k == zdim-1) {--*k;}
 
   *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
@@ -246,7 +246,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
 
     if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
     while (*k < zdim-1 && z > zcol[*k+1]) ++(*k);
-    while (*k > 0 && x < zcol[*k]) --(*k);
+    while (*k > 0 && z < zcol[*k]) --(*k);
     if (*k == zdim-1) {--*k;}
 
     *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
