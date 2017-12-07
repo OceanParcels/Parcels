@@ -176,12 +176,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     b[3] =  ygrid[*j][*i] - ygrid[*j][*i+1] + ygrid[*j+1][*i+1] - ygrid[*j+1][*i];
 
     double aa = a[3]*b[2] - a[2]*b[3];
-    // aa could be 0 if (x,y) way outside the cell? do something else!!
-    double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
-    double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
-    double det = sqrt(bb*bb-4*aa*cc);
-    *eta = (-bb+det)/(2*aa);
-    *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
+    if (fabs(aa) < 1e-6){  // Rectilinear  cell, or quasi
+      *xsi = ( (x-xgrid[*j][*i]) / (xgrid[*j][*i+1]-xgrid[*j][*i])
+           +   (x-xgrid[*j+1][*i]) / (xgrid[*j+1][*i+1]-xgrid[*j+1][*i]) ) * .5;
+      *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
+           +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
+    }
+    else{
+      double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
+      double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
+      double det = sqrt(bb*bb-4*aa*cc);
+      *eta = (-bb+det)/(2*aa);
+      *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
+    }
     if ( (*xsi < 0) && (*eta < 0) && (*i == 0) && (*j == 0) )
       return ERROR_OUT_OF_BOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*i == xdim-1) && (*j == ydim-1) )
@@ -199,7 +206,10 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
       printf("Correct cell not found after %d iterations\n", maxIterSearch);
       return ERROR_OUT_OF_BOUNDS;
     }
-
+  }
+  if ( (*xsi != *xsi) || (*eta != *eta) ){  // check if nan
+      printf("xsi and or eta are nan values\n");
+      return ERROR_OUT_OF_BOUNDS;
   }
 
   if (zdim > 1){

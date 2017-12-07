@@ -29,6 +29,9 @@ class GridSet(object):
                 if gattr.shape != gridattr.shape:
                     sameGrid = False
                     break
+                if not np.allclose(gattr, gridattr):
+                    sameGrid = False
+                    break
             if not sameGrid:
                 continue
             existing_grid = True

@@ -3,6 +3,7 @@ from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearGrid
 import numpy as np
 import math
 import pytest
+import xarray as xr
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -322,3 +323,49 @@ def test_curvilinear_grids(mode):
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[400], lat=[600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
     assert(np.allclose(pset[0].speed, 1000))
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nemo_grid(mode):
+    path = '/Users/delandmeter/benchmarks/nemo_zonal_current/Zonal_ORCA025_surface_current/'
+    datasetU = xr.open_dataset(path+'Uu_purely_zonal-ORCA025_test_grid_U.nc4')
+    datasetV = xr.open_dataset(path+'Vv_purely_zonal-ORCA025_test_grid_V.nc4')
+
+    lonU = datasetU.nav_lon_u.values
+    latU = datasetU.nav_lat_u.values
+    timeU = datasetU.time_counter.values
+    U = datasetU.Uu.values
+    gridU = CurvilinearGrid('gridU', lonU, latU, time=timeU)
+    u_field = Field('U', U, grid=gridU, transpose=False)
+
+    lonV = datasetV.nav_lon_v.values
+    latV = datasetV.nav_lat_v.values
+    timeV = datasetV.time_counter.values
+    V = datasetV.Vv.values
+    gridV = CurvilinearGrid('gridV', lonV, latV, time=timeV)
+    v_field = Field('V', V, grid=gridV, transpose=False)
+
+    field_set = FieldSet(u_field, v_field)
+
+    def sampleSpeed(particle, fieldset, time, dt):
+        u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        v = fieldset.V[time, particle.lon, particle.lat, particle.depth]
+        particle.u = u
+        particle.v = v
+        particle.speed = math.sqrt(u*u+v*v)
+
+    class MyParticle(ptype[mode]):
+        speed = Variable('speed', dtype=np.float32, initial=0.)
+        u = Variable('u', dtype=np.float32, initial=0.)
+        v = Variable('v', dtype=np.float32, initial=0.)
+
+    lonp = 45
+    latp = 50
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
+    pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
+    u = pset[0].u
+    v = pset[0].v
+    s = pset[0].speed
+    print u, v, s
+    #alpha = np.arctan2(v,u)
+    #print alpha*180/np.pi
+test_nemo_grid('scipy')

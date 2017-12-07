@@ -316,8 +316,8 @@ class GridIndex(object):
     def __init__(self, grid, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         self.name = grid.name
-        self.xi = 0
-        self.yi = 0
+        self.xi = int(grid.xdim /2)
+        self.yi = int(grid.xdim /2)
         self.zi = 0
         self.ti = 0
 

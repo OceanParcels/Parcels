@@ -461,12 +461,17 @@ class Field(object):
             b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
-            # aa could be 0 if (x,y) way outside the cell? do something else!!
-            bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
-            cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
-            det = np.sqrt(bb*bb-4*aa*cc)
-            eta = (-bb+det)/(2*aa)
-            xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+            if abs(aa) < 1e-6:  # Rectilinear  cell, or quasi
+                xsi = ((x-grid.lon[yi, xi]) / (grid.lon[yi, xi+1]-grid.lon[yi, xi]) \
+                    + (x-grid.lon[yi+1, xi]) / (grid.lon[yi+1, xi+1]-grid.lon[yi+1, xi]) ) * .5
+                eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi]) \
+                    + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1]) ) * .5
+            else:
+                bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
+                cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
+                det = np.sqrt(bb*bb-4*aa*cc)
+                eta = (-bb+det)/(2*aa)
+                xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
@@ -481,8 +486,32 @@ class Field(object):
                 yi += 1
             it += 1
             if it > maxIterSearch:
-                print('Correct cell not found')
+                print('Correct cell not found after %d iterations' % maxIterSearch)
                 raise FieldSamplingError(x, y, 0, field=self)
+
+        yy = grid.lat[yi,xi+1]-grid.lat[yi,xi]
+        xx = grid.lon[yi,xi+1]-grid.lon[yi,xi]
+        angleu1 = np.arctan2(yy,xx)
+        yy = grid.lat[yi+1,xi+1]-grid.lat[yi+1,xi]
+        xx = grid.lon[yi+1,xi+1]-grid.lon[yi+1,xi]
+        angleu2 = np.arctan2(yy,xx)
+        angleu = (1-xsi)*angleu1 + eta*angleu2
+
+        yy = grid.lat[yi+1,xi]-grid.lat[yi,xi]
+        xx = grid.lon[yi+1,xi]-grid.lon[yi,xi]
+        anglev1 = np.arctan2(yy,xx)
+        yy = grid.lat[yi+1,xi+1]-grid.lat[yi,xi+1]
+        xx = grid.lon[yi+1,xi+1]-grid.lon[yi,xi+1]
+        anglev2 = np.arctan2(yy,xx)
+        anglev = (1-eta)*anglev1 + xsi*anglev2
+
+        print('Grid:')
+        print('i, j: %d, %d; xsi, eta: %g, %g' % (xi,yi,xsi,eta))
+        #print 'mesh angle u', angleu*180/np.pi, '(eta, ', eta, ')'
+        #print 'mesh angle v', anglev*180/np.pi, '(xsi, ', xsi, ')'
+        print np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+        print np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
+        print(' ')
 
         zi = 0
         zeta = -1
