@@ -54,7 +54,7 @@ class Kernel(object):
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
         if pyfunc is AdvectionRK4_3D:
-            logger.info('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
+            logger.warning_once('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -148,6 +148,8 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
+        for g in pset.fieldset.gridset.grids:
+            g.cstruct = None  # This force to point newly the grids from Python to C
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
@@ -160,7 +162,7 @@ class Kernel(object):
         for p in pset.particles:
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
-            while dt_pos > 0:
+            while dt_pos > 1e-6 or dt == 0:
                 try:
                     res = self.pyfunc(p, pset.fieldset, p.time, sign * dt_pos)
                 except FieldSamplingError as fse:
@@ -179,6 +181,8 @@ class Kernel(object):
                     # Update time and repeat
                     p.time += sign * dt_pos
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if dt == 0:
+                        break
                     continue
                 elif res == ErrorCode.Repeat:
                     # Try again without time update

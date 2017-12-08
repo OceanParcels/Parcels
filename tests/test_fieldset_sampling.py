@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Geographic, AdvectionRK4, Variable
+from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Geographic, AdvectionRK4, Variable
 import numpy as np
 import pytest
 from math import cos, pi
@@ -117,6 +117,24 @@ def test_variable_init_from_field(mode, npart=9):
     pset = ParticleSet(fieldset, pclass=VarParticle,
                        lon=xv.flatten(), lat=yv.flatten())
     assert np.all([abs(p.a - fieldset.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
+
+
+def test_pset_from_field(xdim=10, ydim=10, npart=10000):
+    np.random.seed(123456)
+    dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
+    startfield = np.ones((xdim, ydim), dtype=np.float32)
+    for x in range(xdim):
+        startfield[x, :] = x
+    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim), dtype=np.float32),
+            'start': startfield}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=JITParticle,
+                                  start_field=fieldset.start)
+    pdens = pset.density(area_scale=False, relative=True)
+    assert np.allclose(pdens, startfield/np.sum(startfield), atol=5e-3)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -330,3 +348,27 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
     else:
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_sampling_multiple_grid_sizes(mode):
+    """Sampling test that tests for FieldSet with different grid sizes
+
+    While this currently works fine in Scipy mode, it fails in JIT mode with
+    an out_of_bounds_error because there is only one (xi, yi, zi) for each particle
+    A solution would be to define xi, yi, zi for each field separately
+    """
+    xdim = 10
+    ydim = 20
+    gf = 10  # factor by which the resolution of U is higher than of V
+    U = Field('U', np.zeros((xdim*gf, ydim*gf), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
+    V = Field('V', np.zeros((xdim, ydim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
+
+    pset.execute(AdvectionRK4, runtime=10, dt=1)
+    assert np.isclose(pset[0].lon, 0.8)

@@ -2,6 +2,8 @@ from parcels.kernels.error import ErrorCode
 from parcels.field import Field
 from operator import attrgetter
 import numpy as np
+from parcels.gridset import GridIndexSet
+from ctypes import cast, pointer, c_void_p
 
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
@@ -44,7 +46,8 @@ class Variable(object):
 
     def is64bit(self):
         """Check whether variable is 64-bit"""
-        return True if self.dtype == np.float64 or self.dtype == np.int64 else False
+        return True if self.dtype == np.float64 or self.dtype == np.int64 \
+                       or self.name == 'CGridIndexSet' else False
 
 
 class ParticleType(object):
@@ -103,7 +106,7 @@ class ParticleType(object):
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
         # major headache. Perhaps in a later stage
-        return [np.int32, np.int64, np.float32, np.double, np.float64]
+        return [np.int32, np.int64, np.float32, np.double, np.float64, c_void_p]
 
 
 class _Particle(object):
@@ -124,7 +127,8 @@ class _Particle(object):
             else:
                 initial = v.initial
             # Enforce type of initial value
-            setattr(self, v.name, v.dtype(initial))
+            if v.name != 'CGridIndexSet':
+                setattr(self, v.name, v.dtype(initial))
 
         # Placeholder for explicit error handling
         self.exception = None
@@ -196,24 +200,21 @@ class JITParticle(ScipyParticle):
 
     """
 
-    xi = Variable('xi', dtype=np.int32, to_write=False)
-    yi = Variable('yi', dtype=np.int32, to_write=False)
-    zi = Variable('zi', dtype=np.int32, to_write=False)
+    CGridIndexSet = Variable('CGridIndexSet', dtype=np.dtype(c_void_p), to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
-        ptype = self.getPType()
         if self._cptr is None:
             # Allocate data for a single particle
+            ptype = self.getPType()
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
-        self.xi = np.where(self.lon >= fieldset.U.lon)[0][-1]
-        self.yi = np.where(self.lat >= fieldset.U.lat)[0][-1]
-        self.zi = np.where(self.depth >= fieldset.U.depth)[0][-1]
+        self.gridIndexSet = GridIndexSet(self.id, fieldset.gridset)
+        self.CGridIndexSetptr = cast(pointer(self.gridIndexSet.ctypes_struct), c_void_p)
+        self.CGridIndexSet = self.CGridIndexSetptr.value
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)[xi=%d, yi=%d, zi=%d]" % (self.id, self.lon, self.lat,
-                                                                                  self.depth, self.time,
-                                                                                  self.xi, self.yi, self.zi)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
+                                                             self.depth, self.time)

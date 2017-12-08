@@ -22,6 +22,20 @@ parcels.field module
     :members:
     :show-inheritance:
 
+parcels.gridset module
+-----------------------
+
+.. automodule:: parcels.gridset
+    :members:
+    :show-inheritance:
+
+parcels.grid module
+--------------------
+
+.. automodule:: parcels.grid
+    :members:
+    :show-inheritance:
+
 parcels.particle module
 -----------------------
 
@@ -92,9 +106,9 @@ scripts.plotParticles module
     :members:
     :undoc-members:
 
-scripts.pull_data module
-------------------------
+scripts.get_examples module
+---------------------------
 
-.. automodule:: scripts.pull_data
+.. automodule:: scripts.get_examples
     :members:
     :undoc-members:

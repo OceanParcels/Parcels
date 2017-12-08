@@ -1,29 +1,14 @@
-from parcels.field import Field, UnitConverter, Geographic, GeographicPolar
+from parcels.field import Field
+from parcels.gridset import GridSet
 from parcels.loggers import logger
 import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
-from collections import defaultdict
+from grid import RectilinearZGrid
 
 
 __all__ = ['FieldSet']
-
-
-def unit_converters(mesh):
-    """Helper function that assigns :class:`UnitConverter` objects to
-    :class:`Field` objects on :class:`FieldSet`
-
-    :param mesh: mesh type (either `spherical` or `flat`)"""
-    if mesh == 'spherical':
-        u_units = GeographicPolar()
-        v_units = Geographic()
-    elif mesh == 'flat':
-        u_units = None
-        v_units = None
-    else:
-        raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-    return u_units, v_units
 
 
 class FieldSet(object):
@@ -31,16 +16,16 @@ class FieldSet(object):
 
     :param U: :class:`parcels.field.Field` object for zonal velocity component
     :param V: :class:`parcels.field.Field` object for meridional velocity component
-    :param allow_time_extrapolation: boolean whether to allow for extrapolation
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, fields={}):
-        self.U = U
-        self.V = V
+        self.gridset = GridSet([])
+        self.add_field(U)
+        self.add_field(V)
 
         # Add additional fields as attributes
         for name, field in fields.items():
-            setattr(self, name, field)
+            self.add_field(field)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=True, mesh='spherical',
@@ -66,9 +51,6 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        u_units, v_units = unit_converters(mesh)
-        units = defaultdict(UnitConverter)
-        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
@@ -78,13 +60,70 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+            grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
 
-            fields[name] = Field(name, datafld, lon, lat, depth=depth,
-                                 time=time, transpose=transpose, units=units[name],
+            fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
-        u = fields.pop('U')
-        v = fields.pop('V')
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
         return cls(u, v, fields=fields)
+
+    def add_field(self, field):
+        """Add a :class:`parcels.field.Field` object to the FieldSet
+
+        :param field: :class:`parcels.field.Field` object to be added
+        """
+        setattr(self, field.name, field)
+        self.gridset.add_grid(field)
+        field.fieldset = self
+
+    def add_data(self, data, dimensions, transpose=True, mesh='spherical',
+                 allow_time_extrapolation=True, **kwargs):
+        """Initialise FieldSet object from raw data
+
+        :param data: Dictionary mapping field names to numpy arrays.
+               Note that at least a 'U' and 'V' numpy array need to be given
+        :param dimensions: Dictionary mapping field dimensions (lon,
+               lat, depth, time) to numpy arrays.
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
+        :param transpose: Boolean whether to transpose data on read-in
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        """
+
+        fields = {}
+        for name, datafld in data.items():
+            # Use dimensions[name] if dimensions is a dict of dicts
+            dims = dimensions[name] if name in dimensions else dimensions
+
+            lon = dims['lon']
+            lat = dims['lat']
+            depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
+            time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
+            grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
+
+            fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
+                                 allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
+        if u:
+            self.add_field(u)
+        if v:
+            self.add_field(v)
+
+        for f in fields:
+            self.add_field(f)
+
+    def check_complete(self):
+        assert(self.U), ('U field is not defined')
+        assert(self.V), ('V field is not defined')
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
@@ -115,17 +154,13 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        # Determine unit converters for all fields
-        u_units, v_units = unit_converters(mesh)
-        units = defaultdict(UnitConverter)
-        units.update({'U': u_units, 'V': v_units})
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
             if isinstance(filenames[var], list):
                 paths = filenames[var]
             else:
-                paths = glob(str(filenames[var]))
+                paths = sorted(glob(str(filenames[var])))
             if len(paths) == 0:
                 raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
@@ -137,7 +172,7 @@ class FieldSet(object):
             dims['data'] = name
             inds = indices[var] if var in indices else indices
 
-            fields[var] = Field.from_netcdf(var, dims, paths, inds, units=units[var],
+            fields[var] = Field.from_netcdf(var, dims, paths, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, **kwargs)
         u = fields.pop('U')
@@ -180,13 +215,6 @@ class FieldSet(object):
         associated with this FieldSet"""
         return [v for v in self.__dict__.values() if isinstance(v, Field)]
 
-    def add_field(self, field):
-        """Add a :class:`parcels.field.Field` object to the FieldSet
-
-        :param field: :class:`parcels.field.Field` object to be added
-        """
-        setattr(self, field.name, field)
-
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
         stored as 32-bit floats. While constants can be updated during
@@ -209,12 +237,14 @@ class FieldSet(object):
 
         # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
         if zonal:
-            self.add_constant('halo_west', self.U.lon[0])
-            self.add_constant('halo_east', self.U.lon[-1])
+            self.add_constant('halo_west', self.U.grid.lon[0])
+            self.add_constant('halo_east', self.U.grid.lon[-1])
         if meridional:
-            self.add_constant('halo_south', self.U.lat[0])
-            self.add_constant('halo_north', self.U.lat[-1])
+            self.add_constant('halo_south', self.U.grid.lat[0])
+            self.add_constant('halo_north', self.U.grid.lat[-1])
 
+        for grid in self.gridset.grids:
+            grid.add_periodic_halo(zonal, meridional, halosize)
         for attr, value in self.__dict__.iteritems():
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
@@ -246,9 +276,15 @@ class FieldSet(object):
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
-
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
-        for vnew in fieldset_new.fields:
-            v = getattr(self, vnew.name)
-            v.advancetime(vnew)
+        advance = 0
+        for gnew in fieldset_new.gridset.grids:
+            g = getattr(self.gridset, gnew.name)
+            advance2 = g.advancetime(gnew)
+            if advance2*advance < 0:
+                raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
+            advance = advance2
+        for fnew in fieldset_new.fields:
+            f = getattr(self, fnew.name)
+            f.advancetime(fnew, advance == 1)

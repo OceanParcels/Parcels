@@ -3,7 +3,7 @@ from parcels.field import Field
 from datetime import timedelta as delta
 import numpy as np
 import pytest
-from os import path, pardir
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -89,10 +89,10 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     fieldsetsub = FieldSet.from_nemo(filepath, indices=indices)
-    assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.lat[indices['lat']])
-    assert np.allclose(fieldsetsub.V.lon, fieldsetfull.V.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.V.lat, fieldsetfull.V.lat[indices['lat']])
+    assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices['lon']])
+    assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices['lat']])
+    assert np.allclose(fieldsetsub.V.lon, fieldsetfull.V.grid.lon[indices['lon']])
+    assert np.allclose(fieldsetsub.V.lat, fieldsetfull.V.grid.lat[indices['lat']])
 
     ixgrid = np.ix_([0], indices['lat'], indices['lon'])
     assert np.allclose(fieldsetsub.U.data, fieldsetfull.U.data[ixgrid])
@@ -101,7 +101,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
 
 @pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime):
-    fieldsetfile = path.join(path.dirname(__file__), pardir, 'examples', 'MovingEddies_data', 'moving_eddies')
+    fieldsetfile = path.join(path.dirname(__file__), 'test_data', 'testfields')
     fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
     fieldsetsub = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
     assert np.allclose(fieldsetsub.P.time, fieldsetfull.P.time[indstime])
@@ -114,7 +114,7 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
     fieldset = FieldSet.from_data(data, dimensions)
-    field = Field('newfld', fieldset.U.data, fieldset.U.lon, fieldset.U.lat)
+    field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
     fieldset.write(filepath)

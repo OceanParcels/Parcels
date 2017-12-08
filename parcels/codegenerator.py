@@ -5,6 +5,7 @@ import cgen as c
 from collections import OrderedDict
 import math
 import random
+import numpy as np
 
 
 class IntrinsicNode(ast.AST):
@@ -88,33 +89,6 @@ class ParticleAttributeNode(IntrinsicNode):
         self.obj = obj
         self.attr = attr
         self.ccode = "%s->%s" % (obj.ccode, attr)
-        self.ccode_index_var = None
-
-        if self.attr == 'lon':
-            self.ccode_index_var = "%s->%s" % (self.obj.ccode, "xi")
-        elif self.attr == 'lat':
-            self.ccode_index_var = "%s->%s" % (self.obj.ccode, "yi")
-
-    @property
-    def pyast_index_update(self):
-        pyast = ast.Assign()
-        pyast.targets = [IntrinsicNode(None, ccode='err')]
-        pyast.value = IntrinsicNode(None, ccode=self.ccode_index_update)
-        return pyast
-
-    @property
-    def ccode_index_update(self):
-        """C-code for the index update requires after updating p.lon/p.lat"""
-        if self.attr == 'lon':
-            return "search_linear_float(%s, U->xdim, U->lon, &(%s)); CHECKERROR(err)" \
-                % (self.ccode, self.ccode_index_var)
-        if self.attr == 'lat':
-            return "search_linear_float(%s, U->ydim, U->lat, &(%s)); CHECKERROR(err)" \
-                % (self.ccode, self.ccode_index_var)
-        if self.attr == 'depth':
-            return "search_linear_float(%s, U->zdim, U->depth, &(%s)); CHECKERROR(err)" \
-                % (self.ccode, self.ccode_index_var)
-        return ""
 
 
 class ParticleNode(IntrinsicNode):
@@ -184,9 +158,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
             self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
             # .. and return the name of the temporary that will be populated
             return ast.Name(id=tmp)
-        elif isinstance(node.value, IntrinsicNode):
-            raise NotImplementedError("Subscript not implemented for object type %s"
-                                      % type(node.value).__name__)
         else:
             return node
 
@@ -195,11 +166,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.op = self.visit(node.op)
         node.value = self.visit(node.value)
         stmts = [node]
-
-        # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
-        if isinstance(node.target, ParticleAttributeNode) \
-           and node.target.ccode_index_var is not None:
-            stmts += [node.target.pyast_index_update]
 
         # Inject statements from the stack
         if len(self.stmt_stack) > 0:
@@ -211,11 +177,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.targets = [self.visit(t) for t in node.targets]
         node.value = self.visit(node.value)
         stmts = [node]
-
-        # Capture p.lat/p.lon updates and insert p.xi/p.yi updates
-        if isinstance(node.targets[0], ParticleAttributeNode) \
-           and node.targets[0].ccode_index_var is not None:
-            stmts += [node.targets[0].pyast_index_update]
 
         # Inject statements from the stack
         if len(self.stmt_stack) > 0:
@@ -434,6 +395,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.op)
         self.visit(node.right)
         node.ccode = "(%s %s %s)" % (node.left.ccode, node.op.ccode, node.right.ccode)
+        node.s_print = True
 
     def visit_Add(self, node):
         node.ccode = "+"
@@ -452,6 +414,9 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Div(self, node):
         node.ccode = "/"
+
+    def visit_Mod(self, node):
+        node.ccode = "%"
 
     def visit_Num(self, node):
         node.ccode = str(node.n)
@@ -525,6 +490,20 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Print(self, node):
         for n in node.values:
             self.visit(n)
+        if hasattr(node.values[0], 's'):
+            node.ccode = c.Statement('printf("%s\\n")' % (n.ccode))
+            return
+        if hasattr(node.values[0], 's_print'):
+            args = node.values[0].right.ccode
+            s = ('printf("%s\\n"' % node.values[0].left.ccode)
+            if isinstance(args, str):
+                s = s + (", %s)" % args)
+            else:
+                for arg in args:
+                    s = s + (", %s" % arg)
+                s = s + ")"
+            node.ccode = c.Statement(s)
+            return
         vars = ', '.join([n.ccode for n in node.values])
         int_vars = ['particle->id', 'particle->xi', 'particle->yi', 'particle->zi']
         stat = ', '.join(["%d" if n.ccode in int_vars else "%f" for n in node.values])
@@ -550,7 +529,13 @@ class LoopGenerator(object):
         ccode += [str(c.Include("math.h", system=False))]
 
         # Generate type definition for particle type
-        vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables]
+        vdecl = []
+        for v in self.ptype.variables:
+            if v.name is 'CGridIndexSet':
+                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
+            else:
+                vdecl.append(c.POD(v.dtype, v.name))
+
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
         # Insert kernel code
@@ -568,14 +553,15 @@ class LoopGenerator(object):
         # Inner loop nest for forward runs
         sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
+        dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign * __dt"),
-                                                 dt_pos, c.Statement("continue")]))]
+                                                 dt_pos, dt_0_break, c.Statement("continue")]))]
         body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
                       c.Statement("break"))]
 
-        time_loop = c.While("__dt > __tol", c.Block(body))
+        time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p"), c.Value("ErrorCode", "res"),
                          c.Value("double", "__dt, __tol, sign"), c.Assign("__tol", "1.e-6"),

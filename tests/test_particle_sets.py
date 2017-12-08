@@ -1,7 +1,7 @@
-from parcels import FieldSet, ParticleSet, Field, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, Field, ScipyParticle, JITParticle, Variable
 import numpy as np
 import pytest
-
+from netCDF4 import Dataset
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -277,3 +277,38 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, np
         pset.remove(-1)
     pfile.write(pset, 1)
     pfile.write(pset, 2)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize(('endtime', 'dt'), [(1., 0.), (0., 1.)])
+def test_pset_execute_dt_0(fieldset, mode, endtime, dt, npart=2):
+    def SetLat(particle, fieldset, time, dt):
+        particle.lat = .6
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    pset.execute(pset.Kernel(SetLat), starttime=0., endtime=endtime, dt=dt)
+    assert np.allclose([p.lon for p in pset], lon)
+    assert np.allclose([p.lat for p in pset], .6)
+    assert np.allclose([p.time for p in pset], 0)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('npart', [1, 2, 5])
+def test_variable_written_once(fieldset, mode, tmpdir, npart):
+    filepath = tmpdir.join("pfile_once_written_variables")
+
+    def Update_v(particle, fieldset, time, dt):
+        particle.v_once += 1.
+
+    class MyParticle(ptype[mode]):
+        v_once = Variable('v_once', dtype=np.float32, initial=1., to_write='once')
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
+    pset.execute(pset.Kernel(Update_v), starttime=0., endtime=1, dt=0.1, interval=0.2, output_file=pset.ParticleFile(name=filepath))
+    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    V_once = ncfile.variables['v_once'][:]
+    assert np.all([p.v_once == 11.0 for p in pset])
+    assert (V_once.shape == (npart, ))
+    assert (V_once[0] == 1.)
