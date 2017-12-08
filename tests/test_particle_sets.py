@@ -80,10 +80,8 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeated_release_delayed_adding(fieldset, mode, npart=10):
-    time = np.arange(0, npart, 1)  # release 1 particle every second
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
-                       pclass=ptype[mode], time=time)
-    assert np.allclose([p.time for p in pset], time)
+                                     pclass=ptype[mode], repeatdt=1)
 
     def IncrLon(particle, fieldset, time, dt):
         particle.lon += 1.

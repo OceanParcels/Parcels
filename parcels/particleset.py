@@ -39,10 +39,11 @@ class ParticleSet(object):
     :param time: Optional list of initial time values for particles. Default is fieldset.U.time[0]
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None):
+    def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
         # Convert numpy arrays to one-dimensional lists
         self.fieldset = fieldset
         self.fieldset.check_complete()
+        self.repeatdt = repeatdt
 
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
