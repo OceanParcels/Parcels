@@ -51,7 +51,7 @@ class ParticleSet(object):
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
         time = fieldset.U.grid.time[0] if time is None else time
-        time = time.flatten() if isinstance(time, np.ndarray) else time
+        time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
         assert len(lon) == len(time)
 
