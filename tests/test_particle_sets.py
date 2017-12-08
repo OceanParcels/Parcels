@@ -66,6 +66,19 @@ def test_pset_create_with_time(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_repeated_release(fieldset, mode, npart=10):
+    time = np.arange(0, npart, 1)  # release 1 particle every second
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                       pclass=ptype[mode], time=time)
+    assert np.allclose([p.time for p in pset], time)
+
+    def IncrLon(particle, fieldset, time, dt):
+        particle.lon += 1.
+    pset.execute(IncrLon, dt=1., runtime=npart)
+    assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
