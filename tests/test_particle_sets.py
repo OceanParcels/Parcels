@@ -81,7 +81,7 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeated_release_delayed_adding(fieldset, mode, npart=10):
     pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
-                                     pclass=ptype[mode], repeatdt=1)
+                       pclass=ptype[mode], repeatdt=1)
 
     def IncrLon(particle, fieldset, time, dt):
         particle.lon += 1.
