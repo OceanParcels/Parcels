@@ -74,7 +74,7 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 
     def IncrLon(particle, fieldset, time, dt):
         particle.lon += 1.
-    pset.execute(IncrLon, dt=1., runtime=npart)
+    pset.execute(IncrLon, dt=1., runtime=npart, interval=1)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
@@ -154,7 +154,7 @@ def test_pset_add_execute(fieldset, mode, npart=10):
     for i in range(npart):
         pset += ptype[mode](lon=0.1, lat=0.1, fieldset=fieldset)
     for _ in range(3):
-        pset.execute(pset.Kernel(AddLat), starttime=0., endtime=1., dt=1.0)
+        pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
     assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
 
 
@@ -235,7 +235,7 @@ def test_pset_multi_execute(fieldset, mode, npart=10, n=5):
                        lat=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
-        pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
+        pset.execute(k_add, runtime=1., dt=1.0)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
@@ -249,7 +249,7 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
                        lat=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
-        pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
+        pset.execute(k_add, runtime=1., dt=1.0)
         pset.remove(-1)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
 

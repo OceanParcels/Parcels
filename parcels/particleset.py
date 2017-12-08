@@ -254,7 +254,7 @@ class ParticleSet(object):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         if starttime is None:
-            starttime = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
+            starttime = min([p.time for p in self]) if dt >= 0 else max([p.time for p in self])
         if runtime is not None:
             if runtime < 0:
                 runtime = np.abs(runtime)
@@ -293,7 +293,6 @@ class ParticleSet(object):
 
         # Initialise particle timestepping
         for p in self:
-            p.time = starttime
             p.dt = dt
         # Execute time loop in sub-steps (timeleaps)
         assert(timeleaps >= 0)
