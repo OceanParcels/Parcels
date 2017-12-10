@@ -34,7 +34,7 @@ def fieldset(xdim=20, ydim=20):
     (20., -10., 7, -2.),
 ])
 def test_execution_endtime(fieldset, mode, start, end, substeps, dt, npart=10):
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     pset.execute(DoNothing, starttime=start, endtime=end, dt=dt)
@@ -51,7 +51,7 @@ def test_execution_endtime(fieldset, mode, start, end, substeps, dt, npart=10):
     (20., -10., 7, -2.),
 ])
 def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
+    pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     t_step = (end - start) / substeps

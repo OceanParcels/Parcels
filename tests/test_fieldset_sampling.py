@@ -328,26 +328,33 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat',
                                   allow_time_extrapolation=allow_time_extrapolation)
-    pset = ParticleSet.from_line(fieldset, size=1, pclass=pclass(mode),
-                                 start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=-1.0)
     if allow_time_extrapolation:
         pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
         assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
-    pset.execute(k_sample_p, starttime=0.0, endtime=0.1, dt=0.1)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0)
+    pset.execute(k_sample_p, runtime=0.1, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
-    pset.execute(k_sample_p, starttime=0.5, endtime=0.6, dt=0.1)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0.5)
+    pset.execute(k_sample_p, runtime=0.1, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 0.5, rtol=1e-5)
-    pset.execute(k_sample_p, starttime=1.0, endtime=1.1, dt=0.1)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=1.0)
+    pset.execute(k_sample_p, runtime=0.1, dt=0.1)
     assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=2.0)
     if allow_time_extrapolation:
-        pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
+        pset.execute(k_sample_p, runtime=0.1, dt=0.1)
         assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
-            pset.execute(k_sample_p, starttime=2.0, endtime=2.1, dt=0.1)
+            pset.execute(k_sample_p, runtime=0.1, dt=0.1)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
