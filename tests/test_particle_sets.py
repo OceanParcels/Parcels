@@ -1,4 +1,5 @@
-from parcels import FieldSet, ParticleSet, Field, ScipyParticle, JITParticle, Variable
+from parcels import (FieldSet, ParticleSet, Field, ScipyParticle, JITParticle,
+                     Variable, ErrorCode)
 import numpy as np
 import pytest
 from netCDF4 import Dataset
@@ -298,3 +299,27 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     assert np.all([p.v_once == 11.0 for p in pset])
     assert (V_once.shape == (npart, ))
     assert (V_once[0] == 1.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
+    filepath = tmpdir.join("pfile_on_delete_written_variables")
+
+    def move_west(particle, fieldset, time, dt):
+        tmp = fieldset.U[time, particle.lon, particle.lat, particle.depth]  # to trigger out-of-bounds error
+        particle.lon -= 0.1 + tmp
+
+    def DeleteP(particle, fieldset, time, dt):
+        particle.delete()
+
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+
+    outfile = pset.ParticleFile(name=filepath)  # add to_write=on_delete here
+    pset.execute(move_west, runtime=1.1, dt=0.1,
+                 interval=0.3, output_file=outfile,
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
+    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    lon = ncfile.variables['lon'][:]
+    assert (lon.size == npart)
