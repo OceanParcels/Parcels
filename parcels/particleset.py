@@ -43,7 +43,6 @@ class ParticleSet(object):
         # Convert numpy arrays to one-dimensional lists
         self.fieldset = fieldset
         self.fieldset.check_complete()
-        self.repeatdt = repeatdt
 
         lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
         lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
@@ -56,6 +55,7 @@ class ParticleSet(object):
         time = [time] * len(lat) if not isinstance(time, list) else time
         assert len(lon) == len(time)
 
+        self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if repeatdt is not None:
             if not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
