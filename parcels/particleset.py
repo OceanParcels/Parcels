@@ -36,7 +36,8 @@ class ParticleSet(object):
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
     :param depth: Optional list of initial depth values for particles. Default is 0m
-    :param time: Optional list of initial time values for particles. Default is fieldset.U.time[0]
+    :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
+    :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
     """
 
     def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
@@ -56,11 +57,15 @@ class ParticleSet(object):
         assert len(lon) == len(time)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
-        if repeatdt is not None:
+        if self.repeatdt is not None:
+            if self.repeatdt <= 0:
+                raise('Repeatdt should be > 0')
             if not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
+            self.repeat_starttime = time[0]
             self.repeatlon = lon
             self.repeatlat = lat
+            self.repeatdepth = depth
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -314,9 +319,10 @@ class ParticleSet(object):
                 self.show(field=show_movie, show_time=leaptime)
             leaptime += interval
             self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
-            if self.repeatdt is not None:
-                self.add(ParticleSet(fieldset=self.fieldset, time=leaptime,
-                                     lon=self.repeatlon, lat=self.repeatlat))
+            # Add new particles if repeatdt is used
+            if self.repeatdt is not None and abs(leaptime - self.repeat_starttime) % self.repeatdt == 0:
+                self.add(ParticleSet(fieldset=self.fieldset, time=leaptime, lon=self.repeatlon,
+                                     lat=self.repeatlat, depth=self.repeatdepth))
         # Write out a final output_file
         if output_file:
             output_file.write(self, leaptime)
