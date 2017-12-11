@@ -56,6 +56,12 @@ class ParticleSet(object):
         time = [time] * len(lat) if not isinstance(time, list) else time
         assert len(lon) == len(time)
 
+        if repeatdt is not None:
+            if not np.allclose(time, time[0]):
+                raise ('All Particle.time should be the same when repeatdt is not None')
+            self.repeatlon = lon
+            self.repeatlat = lat
+
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
@@ -291,6 +297,9 @@ class ParticleSet(object):
         else:
             timeleaps = int((endtime - starttime) / interval)
 
+        if self.repeatdt is not None and self.repeatdt % interval != 0:
+            raise ("repeatdt should be multiple of interval")
+
         # Initialise particle timestepping
         for p in self:
             p.dt = dt
@@ -304,8 +313,10 @@ class ParticleSet(object):
             if show_movie:
                 self.show(field=show_movie, show_time=leaptime)
             leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt,
-                                recovery=recovery)
+            self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
+            if self.repeatdt is not None:
+                self.add(ParticleSet(fieldset=self.fieldset, time=leaptime,
+                                     lon=self.repeatlon, lat=self.repeatlat))
         # Write out a final output_file
         if output_file:
             output_file.write(self, leaptime)
