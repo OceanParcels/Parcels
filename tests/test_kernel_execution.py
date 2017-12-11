@@ -62,21 +62,25 @@ def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_zero_runtime(fieldset, mode, npart=10):
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
-    pset.execute(DoNothing, runtime=0.)
-    assert(pset[0].time == 0.)
+@pytest.mark.parametrize('time', [0., 1])
+@pytest.mark.parametrize('dt', [0., 1])
+def test_pset_execute_dt_0(fieldset, mode, time, dt, npart=2):
+    def SetLat(particle, fieldset, time, dt):
+        particle.lat = .6
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
 
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    pset.execute(SetLat, endtime=time, dt=dt)
+    assert np.allclose([p.lon for p in pset], lon)
+    assert np.allclose([p.lat for p in pset], [.6])
+    assert np.allclose([p.time for p in pset], min([time, dt]))
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_execution_zero_dt(fieldset, mode, npart=10):
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
-    pset.execute(DoNothing, dt=0.)
-    assert(pset[0].time == 0.)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+    pset.execute(SetLat, runtime=time, dt=dt)
+    assert np.allclose([p.lon for p in pset], lon)
+    assert np.allclose([p.lat for p in pset], [.6])
+    assert np.allclose([p.time for p in pset], min([time, dt]))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
