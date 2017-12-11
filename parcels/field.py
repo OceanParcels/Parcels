@@ -288,7 +288,9 @@ class Field(object):
 
     def gradient(self):
         """Method to calculate horizontal gradients of Field.
-                Returns two numpy arrays: the zonal and meridional gradients"""
+                Currently only works for Rectilinear Grids.
+                Returns two numpy arrays: the zonal and meridional gradients,
+                on the same Grid as the original Field, using numpy.gradient() method"""
         dFdx = np.zeros_like(self.data)
         dFdy = np.zeros_like(self.data)
         celldist_lon, celldist_lat = self.cell_edge_sizes()
