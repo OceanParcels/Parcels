@@ -14,5 +14,6 @@ gh-pages/*
 Profile.prof
 .ipynb_checkpoints/*
 */.ipynb_checkpoints/*
+parcels/examples/.ipynb_checkpoints/*
 .cache/*
 parcels/examples/particle*.png
