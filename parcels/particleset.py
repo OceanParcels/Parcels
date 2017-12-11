@@ -281,7 +281,7 @@ class ParticleSet(object):
                 interval *= -1.
                 logger.warning("Negating interval because running in time-backward mode")
 
-        if np.allclose(endtime, starttime) or interval == 0 or dt == 0 or runtime == 0:
+        if abs(endtime-starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
             timeleaps = 1
             dt = 0
             runtime = 0

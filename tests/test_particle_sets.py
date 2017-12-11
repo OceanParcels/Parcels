@@ -273,20 +273,6 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, np
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize(('endtime', 'dt'), [(1., 0.), (0., 1.)])
-def test_pset_execute_dt_0(fieldset, mode, endtime, dt, npart=2):
-    def SetLat(particle, fieldset, time, dt):
-        particle.lat = .6
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
-    pset.execute(pset.Kernel(SetLat), starttime=0., endtime=endtime, dt=dt)
-    assert np.allclose([p.lon for p in pset], lon)
-    assert np.allclose([p.lat for p in pset], .6)
-    assert np.allclose([p.time for p in pset], 0)
-
-
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, mode, tmpdir, npart):
     filepath = tmpdir.join("pfile_once_written_variables")

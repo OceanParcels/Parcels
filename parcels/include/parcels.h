@@ -87,7 +87,7 @@ static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX
     if (gcode == RECTILINEAR_Z_GRID){
       if (z < zvals[0] || z > zvals[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
       while (*k < sizeZ-1 && z > zvals[*k+1]) ++(*k);
-      while (*k > 0 && x < zvals[*k]) --(*k);
+      while (*k > 0 && z < zvals[*k]) --(*k);
   
       /* Lowering index by 1 if last index, to avoid out-of-array sampling
          for index+1 in spatial-interpolation*/
@@ -128,7 +128,7 @@ static inline ErrorCode search_linear_float(float x, float y, float z, int sizeX
       }
       if (z < zcol[0] || z > zcol[sizeZ-1]) {return ERROR_OUT_OF_BOUNDS;}
       while (*k < sizeZ-1 && z > zcol[*k+1]) ++(*k);
-      while (*k > 0 && x < zcol[*k]) --(*k);
+      while (*k > 0 && z < zcol[*k]) --(*k);
   
       /* Lowering index by 1 if last index, to avoid out-of-array sampling
          for index+1 in spatial-interpolation*/
