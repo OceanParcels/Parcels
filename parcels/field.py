@@ -196,20 +196,8 @@ class Field(object):
             self.data = np.transpose(self.data).copy()
         if self.grid.zdim > 1:
             self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
-            #if self.data.shape != ((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)):
-            #    if self.data.shape == ((self.grid.zdim, self.grid.ydim, self.grid.xdim)) and self.grid.tdim == 1:
-            #        self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
-            #    else:
-            #        print 'Error in formatting the field:  ', self.data.shape, '  vs  ', self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim
-            #        exit(-1)
         else:
             self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
-            #if self.data.shape != ((self.grid.tdim, self.grid.ydim, self.grid.xdim)):
-            #    if self.data.shape == ((self.grid.ydim, self.grid.xdim)) and self.grid.tdim == 1:
-            #        self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
-            #    else:
-            #        print 'Error in formatting the field:  ', self.data.shape, '  vs  ', self.grid.tdim, self.grid.ydim, self.grid.xdim
-            #        exit(-1)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -504,14 +492,6 @@ class Field(object):
         xx = grid.lon[yi+1,xi+1]-grid.lon[yi,xi+1]
         anglev2 = np.arctan2(yy,xx)
         anglev = (1-eta)*anglev1 + xsi*anglev2
-
-        print('Grid:')
-        print('i, j: %d, %d; xsi, eta: %g, %g' % (xi,yi,xsi,eta))
-        #print 'mesh angle u', angleu*180/np.pi, '(eta, ', eta, ')'
-        #print 'mesh angle v', anglev*180/np.pi, '(xsi, ', xsi, ')'
-        print np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-        print np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
-        print(' ')
 
         zi = 0
         zeta = -1
