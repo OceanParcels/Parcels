@@ -51,7 +51,6 @@ class ParticleSet(object):
         depth = depth.flatten() if isinstance(depth, np.ndarray) else depth
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
-        time = fieldset.U.grid.time[0] if time is None else time
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
         assert len(lon) == len(time)
@@ -263,6 +262,11 @@ class ParticleSet(object):
             starttime = (starttime - self.time_origin).total_seconds()
         if isinstance(endtime, datetime):
             endtime = (endtime - self.time_origin).total_seconds()
+
+        # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
+        for p in self:
+            if np.isnan(p.time):
+                p.time = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
 
         # Derive starttime, endtime and interval from arguments or fieldset defaults
         if runtime is not None and endtime is not None:

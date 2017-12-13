@@ -115,7 +115,7 @@ def test_variable_init_from_field(mode, npart=9):
         a = Variable('a', dtype=np.float32, initial=fieldset.P)
 
     pset = ParticleSet(fieldset, pclass=VarParticle,
-                       lon=xv.flatten(), lat=yv.flatten())
+                       lon=xv.flatten(), lat=yv.flatten(), time=0)
     assert np.all([abs(p.a - fieldset.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
 
 
