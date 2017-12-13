@@ -81,14 +81,17 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, npart=10):
-    pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=ptype[mode], repeatdt=repeatdt)
+
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=0.)
+    pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
 
     def IncrLon(particle, fieldset, time, dt):
-        particle.lon += 1.
+        particle.sample_var += 1.
     for i in range(npart):
         assert len(pset) == (i // repeatdt) + 1
         pset.execute(IncrLon, dt=1., runtime=1.)
-    assert np.allclose([p.lon for p in pset], np.arange(npart, -1, -repeatdt))
+    assert np.allclose([p.sample_var for p in pset], np.arange(npart, -1, -repeatdt))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

@@ -68,6 +68,7 @@ class ParticleSet(object):
             self.repeatlon = lon
             self.repeatlat = lat
             self.repeatdepth = depth
+            self.repeatpclass = pclass
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -315,7 +316,8 @@ class ParticleSet(object):
             # Add new particles if repeatdt is used
             if self.repeatdt is not None and abs(leaptime - self.repeat_starttime) % self.repeatdt == 0:
                 self.add(ParticleSet(fieldset=self.fieldset, time=leaptime, lon=self.repeatlon,
-                                     lat=self.repeatlat, depth=self.repeatdepth))
+                                     lat=self.repeatlat, depth=self.repeatdepth,
+                                     pclass=self.repeatpclass))
         # Write out a final output_file
         if output_file:
             output_file.write(self, leaptime)
