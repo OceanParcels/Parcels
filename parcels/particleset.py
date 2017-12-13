@@ -53,6 +53,11 @@ class ParticleSet(object):
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
+        if isinstance(time[0], delta):
+            time = [t.total_seconds() for t in time]
+        elif isinstance(time[0], datetime):
+            time = [(t - fieldset.U.grid.time_origin).total_seconds() for t in time]
+
         assert len(lon) == len(time)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
@@ -347,6 +352,8 @@ class ParticleSet(object):
             show_time = (show_time - self.fieldset.U.grid.time_origin).total_seconds()
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
+        if np.isnan(show_time):
+            show_time = 0
         if domain is not None:
             latN = nearest_index(self.fieldset.U.lat, domain[0])
             latS = nearest_index(self.fieldset.U.lat, domain[1])
@@ -371,10 +378,6 @@ class ParticleSet(object):
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
                 time_origin = field.grid.time_origin
-            if time_origin is 0:
-                timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
-            else:
-                timestr = ' on ' + str(time_origin + delta(seconds=show_time))
             xlbl = 'Zonal distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Longitude [degrees]'
             ylbl = 'Meridional distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
             plt.xlabel(xlbl)
