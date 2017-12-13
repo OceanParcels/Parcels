@@ -153,6 +153,8 @@ class Field(object):
                  transpose=False, vmin=None, vmax=None, time_origin=0,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
+        if self.name == 'UV':
+            return
         self.data = data
         if grid:
             self.grid = grid
@@ -283,7 +285,24 @@ class Field(object):
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
+    def getUV(self, key):
+        U = self.fieldset.U.eval(*key)
+        V = self.fieldset.V.eval(*key)
+        if self.fieldset.U.grid.gtype == GridCode.CurvilinearGrid:
+            cosU = self.fieldset.cosU.eval(*key)
+            sinU = self.fieldset.sinU.eval(*key)
+            cosV = self.fieldset.cosV.eval(*key)
+            sinV = self.fieldset.sinV.eval(*key)
+            zonal = U * cosU + V * cosV
+            meridional = U * sinU + V * sinV
+        else:
+            U = zonal
+            V = meridional
+        return (zonal, meridional)
+
     def __getitem__(self, key):
+        if self.name == 'UV':
+            return self.getUV(key)
         return self.eval(*key)
 
     def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
@@ -647,6 +666,38 @@ class Field(object):
             value = self.spatial_interpolation(t_idx, z, y, x, self.grid.time[t_idx-1])
 
         return self.units.to_target(value, x, y, z)
+
+    def ccode_evalUV(self, varU, varV, t, x, y, z):
+        # Casting interp_methd to int as easier to pass on in C-code
+        gridset = self.fieldset.gridset
+        self.units = UnitConverter()
+        uiGrid = -1
+        viGrid = -1
+        cosuiGrid = -1
+        sinuiGrid = -1
+        cosviGrid = -1
+        sinviGrid = -1
+        for i, g in enumerate(gridset.grids):
+            if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
+                break
+            if g.name == self.fieldset.U.grid.name:
+                uiGrid = i
+            if g.name == self.fieldset.V.grid.name:
+                viGrid = i
+            if g.name == self.fieldset.cosU.grid.name:
+                cosuiGrid = i
+            if g.name == self.fieldset.sinU.grid.name:
+                sinuiGrid = i
+            if g.name == self.fieldset.cosV.grid.name:
+                cosviGrid = i
+            if g.name == self.fieldset.sinV.grid.name:
+                sinviGrid = i
+        return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
+            % (x, y, z, t,
+               self.fieldset.U.name, self.fieldset.V.name, self.fieldset.cosU.name, self.fieldset.sinU.name, self.fieldset.cosV.name, self.fieldset.sinV.name,
+               "particle->CGridIndexSet",
+               uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid,
+               varU, varV, self.fieldset.U.interp_method.upper())
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code

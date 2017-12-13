@@ -92,6 +92,12 @@ class Kernel(object):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
+            if 'UV' in self.field_args:
+                fieldset = self.field_args['UV'].fieldset
+                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
+                    if f not in self.field_args:
+                        self.field_args[f] = getattr(fieldset, f)
+                del self.field_args['UV']
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,

@@ -22,6 +22,9 @@ class FieldSet(object):
         self.gridset = GridSet([])
         self.add_field(U)
         self.add_field(V)
+        UV = Field('UV', None)
+        UV.fieldset = self
+        self.UV = UV
 
         # Add additional fields as attributes
         for name, field in fields.items():

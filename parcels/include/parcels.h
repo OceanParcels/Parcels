@@ -458,6 +458,16 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
   }
 }
 
+static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
+                                                 CField *U, CField *V, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
+                                                 void *gridIndexSet, int uiGrid, int viGrid, int cosuiGrid, 
+                                                 int sinuiGrid, int cosviGrid, int sinviGrid,
+                                                 float *valueU, float *valueV, int interp_method)
+{
+  *valueU = 7;
+  *valueV = 7;
+}
+
 
 
 /**************************************************/
