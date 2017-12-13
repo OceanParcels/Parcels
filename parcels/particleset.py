@@ -59,7 +59,7 @@ class ParticleSet(object):
         if self.repeatdt is not None:
             if self.repeatdt <= 0:
                 raise('Repeatdt should be > 0')
-            if not np.allclose(time, time[0]):
+            if time[0] is not None and not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
             self.repeat_starttime = time[0]
             self.repeatlon = lon
@@ -211,8 +211,8 @@ class ParticleSet(object):
                 p._cptr = pdata
         return particles
 
-    def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, interval=None, recovery=None, output_file=None,
+    def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
+                interval=None, recovery=None, output_file=None,
                 show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -221,7 +221,6 @@ class ParticleSet(object):
         :param pyfunc: Kernel function to execute. This can be the name of a
                        defined Python function or a :class:`parcels.kernel.Kernel` object.
                        Kernels can be concatenated using the + operator
-        :param starttime: Starting time for the timestepping loop. Defaults to 0.0.
         :param endtime: End time for the timestepping loop
         :param runtime: Length of the timestepping loop. Use instead of endtime.
         :param dt: Timestep interval to be passed to the kernel
@@ -248,66 +247,50 @@ class ParticleSet(object):
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
-        if isinstance(starttime, delta):
-            starttime = starttime.total_seconds()
         if isinstance(endtime, delta):
             endtime = endtime.total_seconds()
+        elif isinstance(endtime, datetime):
+            endtime = (endtime - self.time_origin).total_seconds()
         if isinstance(runtime, delta):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
         if isinstance(interval, delta):
             interval = interval.total_seconds()
-        if isinstance(starttime, datetime):
-            starttime = (starttime - self.time_origin).total_seconds()
-        if isinstance(endtime, datetime):
-            endtime = (endtime - self.time_origin).total_seconds()
 
         # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
         for p in self:
             if np.isnan(p.time):
                 p.time = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
 
-        # Derive starttime, endtime and interval from arguments or fieldset defaults
+        # Derive _starttime, endtime and interval from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
-        if starttime is None:
-            starttime = min([p.time for p in self]) if dt >= 0 else max([p.time for p in self])
+        _starttime = min([p.time for p in self]) if dt >= 0 else max([p.time for p in self])
+        if self.repeatdt is not None and self.repeat_starttime is None:
+            self.repeat_starttime = _starttime
         if runtime is not None:
             if runtime < 0:
                 runtime = np.abs(runtime)
                 logger.warning("Negating runtime because it has to be positive")
-            endtime = starttime + runtime * np.sign(dt)
-        else:
-            if endtime is None:
-                endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
+            endtime = _starttime + runtime * np.sign(dt)
+        elif endtime is None:
+            endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
         if interval is None:
-            interval = endtime - starttime
+            interval = endtime - _starttime
+        elif dt < 0 and interval > 0.:
+            interval *= -1.
+            logger.warning("Negating interval because running in time-backward mode")
 
-        # Ensure that dt and interval have the correct sign
-        if endtime > starttime:  # Time-forward mode
-            if dt < 0:
-                dt *= -1.
-                logger.warning("Negating dt because running in time-forward mode")
-            if interval < 0:
-                interval *= -1.
-                logger.warning("Negating interval because running in time-forward mode")
-        elif endtime < starttime:  # Time-backward mode
-            if dt > 0.:
-                dt *= -1.
-                logger.warning("Negating dt because running in time-backward mode")
-            if interval > 0.:
-                interval *= -1.
-                logger.warning("Negating interval because running in time-backward mode")
-
-        if abs(endtime-starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
+        if abs(endtime-_starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
             timeleaps = 1
             dt = 0
             runtime = 0
-            endtime = starttime
-            logger.warning_once("dt = 0 and endtime == starttime. The kernels will be executed once, without incrementing time")
+            endtime = _starttime
+            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
+                                "The kernels will be executed once, without incrementing time")
         else:
-            timeleaps = int((endtime - starttime) / interval)
+            timeleaps = int((endtime - _starttime) / interval)
 
         if self.repeatdt is not None and self.repeatdt % interval != 0:
             raise ("repeatdt should be multiple of interval")
@@ -317,7 +300,7 @@ class ParticleSet(object):
             p.dt = dt
         # Execute time loop in sub-steps (timeleaps)
         assert(timeleaps >= 0)
-        leaptime = starttime
+        leaptime = _starttime
         for _ in range(timeleaps):
             # First write output_file, because particles could have been added
             if output_file:

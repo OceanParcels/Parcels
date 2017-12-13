@@ -1,5 +1,6 @@
 from parcels.kernels.error import ErrorCode
 from parcels.field import Field
+from parcels.loggers import logger
 from operator import attrgetter
 import numpy as np
 from parcels.gridset import GridIndexSet

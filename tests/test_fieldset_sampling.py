@@ -330,11 +330,11 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
                                   allow_time_extrapolation=allow_time_extrapolation)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=-1.0)
     if allow_time_extrapolation:
-        pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
+        pset.execute(k_sample_p, endtime=-0.9, dt=0.1)
         assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
-            pset.execute(k_sample_p, starttime=-1.0, endtime=-0.9, dt=0.1)
+            pset.execute(k_sample_p, endtime=-0.9, dt=0.1)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)

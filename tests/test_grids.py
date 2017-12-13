@@ -139,7 +139,7 @@ def test_multigrids_pointer(mode):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
 
     for i in range(10):
-        pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=1000, dt=500)
+        pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -234,7 +234,7 @@ def test_rectilinear_s_grids_advect1(mode):
     depth = bath_func(lon)*ratio
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
 
-    pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=10000, dt=500)
+    pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
     assert np.allclose([p.depth/bath_func(p.lon) for p in pset], ratio)
 
 
@@ -278,5 +278,5 @@ def test_rectilinear_s_grids_advect2(mode):
 
     kernel = pset.Kernel(moveEast)
     for _ in range(10):
-        pset.execute(kernel, starttime=pset[0].time, runtime=100, dt=50)
+        pset.execute(kernel, runtime=100, dt=50)
         assert np.allclose(pset[0].relDepth, depth/bath_func(pset[0].lon))

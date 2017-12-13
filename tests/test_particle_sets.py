@@ -221,7 +221,7 @@ def test_pset_remove_kernel(fieldset, mode, npart=100):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
-    pset.execute(pset.Kernel(DeleteKernel), starttime=0., endtime=1., dt=1.0)
+    pset.execute(pset.Kernel(DeleteKernel), endtime=1., dt=1.0)
     assert(pset.size == 40)
 
 
@@ -318,7 +318,8 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
-    pset.execute(pset.Kernel(Update_v), starttime=0., endtime=1, dt=0.1, interval=0.2, output_file=pset.ParticleFile(name=filepath))
+    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, interval=0.2,
+                 output_file=pset.ParticleFile(name=filepath))
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     V_once = ncfile.variables['v_once'][:]
     assert np.all([p.v_once == 11.0 for p in pset])
