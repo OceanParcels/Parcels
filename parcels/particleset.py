@@ -53,10 +53,8 @@ class ParticleSet(object):
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
-        if isinstance(time[0], delta):
-            time = [t.total_seconds() for t in time]
-        elif isinstance(time[0], datetime):
-            time = [(t - fieldset.U.grid.time_origin).total_seconds() for t in time]
+        time = [t.total_seconds() if isinstance(t, delta) else t for t in time]
+        time = [(t - fieldset.U.grid.time_origin).total_seconds() if isinstance(t, datetime) else t for t in time]
 
         assert len(lon) == len(time)
 
