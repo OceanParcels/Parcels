@@ -135,6 +135,12 @@ class Field(object):
     :param lat: Latitude coordinates of the field. (only if grid is None)
     :param depth: Depth coordinates of the field. (only if grid is None)
     :param time: Time coordinates of the field. (only if grid is None)
+    :param mesh: String indicating the type of mesh coordinates and
+           units used during velocity interpolation: (only if grid is None)
+
+           1. spherical (default): Lat and lon in degree, with a
+              correction for zonal velocity U near the poles.
+           2. flat: No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information
     :param transpose: Transpose data to required (lon, lat) layout
@@ -151,7 +157,7 @@ class Field(object):
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, mesh='flat'):
         self.name = name
         if self.name == 'UV':
             self.phantom = True
@@ -161,7 +167,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin)
+            self.grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -287,24 +293,27 @@ class Field(object):
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
-    def getUV(self, key):
-        U = self.fieldset.U.eval(*key)
-        V = self.fieldset.V.eval(*key)
-        if self.fieldset.U.grid.gtype == GridCode.CurvilinearGrid:
-            cosU = self.fieldset.cosU.eval(*key)
-            sinU = self.fieldset.sinU.eval(*key)
-            cosV = self.fieldset.cosV.eval(*key)
-            sinV = self.fieldset.sinV.eval(*key)
+    def getUV(self, time, x, y, z):
+        fieldset = self.fieldset
+        U = fieldset.U.eval(time, x, y, z, False)
+        V = fieldset.V.eval(time, x, y, z, False)
+        if fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            zonal = U
+            meridional = V
+        else:
+            cosU = fieldset.cosU.eval(time, x, y, z, False)
+            sinU = fieldset.sinU.eval(time, x, y, z, False)
+            cosV = fieldset.cosV.eval(time, x, y, z, False)
+            sinV = fieldset.sinV.eval(time, x, y, z, False)
             zonal = U * cosU + V * cosV
             meridional = U * sinU + V * sinV
-        else:
-            U = zonal
-            V = meridional
+        zonal = fieldset.U.units.to_target(zonal, x, y, z)
+        meridional = fieldset.V.units.to_target(meridional, x, y, z)
         return (zonal, meridional)
 
     def __getitem__(self, key):
         if self.name == 'UV':
-            return self.getUV(key)
+            return self.getUV(*key)
         return self.eval(*key)
 
     def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
@@ -465,6 +474,16 @@ class Field(object):
         it = 0
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            if self.grid.mesh == 'spherical':
+                if x > 0:
+                    for i in range(len(px)):
+                        if abs(px[i]-x) > abs(px[i]+360-x):
+                            px[i] += 360
+                else:
+                    for i in range(len(px)):
+                        if abs(px[i]-x) > abs(px[i]-360-x):
+                            px[i] -= 360
+
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
@@ -634,7 +653,7 @@ class Field(object):
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
-    def eval(self, time, x, y, z):
+    def eval(self, time, x, y, z, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -655,7 +674,10 @@ class Field(object):
             # excat value in the time array.
             value = self.spatial_interpolation(t_idx, z, y, x, self.grid.time[t_idx-1])
 
-        return self.units.to_target(value, x, y, z)
+        if applyConversion:
+            return self.units.to_target(value, x, y, z)
+        else:
+            return value
 
     def ccode_evalUV(self, varU, varV, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
