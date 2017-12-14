@@ -100,7 +100,8 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
     # Initialise particles
     x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)  # latitude range, including offsets
-    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, start=(x, y[0]), finish=(x, y[1]))
+    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
+                                 start=(x, y[0]), finish=(x, y[1]), time=0)
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)

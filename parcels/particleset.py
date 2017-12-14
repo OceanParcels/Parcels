@@ -36,10 +36,11 @@ class ParticleSet(object):
     :param lon: List of initial longitude values for particles
     :param lat: List of initial latitude values for particles
     :param depth: Optional list of initial depth values for particles. Default is 0m
-    :param time: Optional list of initial time values for particles. Default is fieldset.U.time[0]
+    :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
+    :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None):
+    def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
         # Convert numpy arrays to one-dimensional lists
         self.fieldset = fieldset
         self.fieldset.check_complete()
@@ -50,10 +51,24 @@ class ParticleSet(object):
         depth = depth.flatten() if isinstance(depth, np.ndarray) else depth
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
-        time = fieldset.U.grid.time[0] if time is None else time
-        time = time.flatten() if isinstance(time, np.ndarray) else time
+        time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
+        time = [t.total_seconds() if isinstance(t, delta) else t for t in time]
+        time = [(t - fieldset.U.grid.time_origin).total_seconds() if isinstance(t, datetime) else t for t in time]
+
         assert len(lon) == len(time)
+
+        self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
+        if self.repeatdt is not None:
+            if self.repeatdt <= 0:
+                raise('Repeatdt should be > 0')
+            if time[0] is not None and not np.allclose(time, time[0]):
+                raise ('All Particle.time should be the same when repeatdt is not None')
+            self.repeat_starttime = time[0]
+            self.repeatlon = lon
+            self.repeatlat = lat
+            self.repeatdepth = depth
+            self.repeatpclass = pclass
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -81,7 +96,7 @@ class ParticleSet(object):
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None):
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None):
         """Initialise the ParticleSet from lists of lon and lat
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -91,11 +106,12 @@ class ParticleSet(object):
         :param lat: List of initial latitude values for particles
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
        """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None):
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None):
         """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
         Note that this method uses simple numpy.linspace calls and does not take into account
         great circles, so may not be a exact on a globe
@@ -108,13 +124,14 @@ class ParticleSet(object):
         :param size: Initial size of particle set
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
         lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
         lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
 
     @classmethod
-    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None):
+    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -125,6 +142,7 @@ class ParticleSet(object):
         :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
         lonwidth = (start_field.grid.lon[1] - start_field.grid.lon[0]) / 2
         latwidth = (start_field.grid.lat[1] - start_field.grid.lat[0]) / 2
@@ -147,7 +165,7 @@ class ParticleSet(object):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
 
     @property
     def size(self):
@@ -197,8 +215,8 @@ class ParticleSet(object):
                 p._cptr = pdata
         return particles
 
-    def execute(self, pyfunc=AdvectionRK4, starttime=None, endtime=None, dt=1.,
-                runtime=None, interval=None, recovery=None, output_file=None,
+    def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
+                interval=None, recovery=None, output_file=None,
                 show_movie=False):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
@@ -207,7 +225,6 @@ class ParticleSet(object):
         :param pyfunc: Kernel function to execute. This can be the name of a
                        defined Python function or a :class:`parcels.kernel.Kernel` object.
                        Kernels can be concatenated using the + operator
-        :param starttime: Starting time for the timestepping loop. Defaults to 0.0.
         :param endtime: End time for the timestepping loop
         :param runtime: Length of the timestepping loop. Use instead of endtime.
         :param dt: Timestep interval to be passed to the kernel
@@ -234,69 +251,60 @@ class ParticleSet(object):
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
-        if isinstance(starttime, delta):
-            starttime = starttime.total_seconds()
         if isinstance(endtime, delta):
             endtime = endtime.total_seconds()
+        elif isinstance(endtime, datetime):
+            endtime = (endtime - self.time_origin).total_seconds()
         if isinstance(runtime, delta):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
         if isinstance(interval, delta):
             interval = interval.total_seconds()
-        if isinstance(starttime, datetime):
-            starttime = (starttime - self.time_origin).total_seconds()
-        if isinstance(endtime, datetime):
-            endtime = (endtime - self.time_origin).total_seconds()
 
-        # Derive starttime, endtime and interval from arguments or fieldset defaults
+        # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
+        for p in self:
+            if np.isnan(p.time):
+                p.time = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
+
+        # Derive _starttime, endtime and interval from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
-        if starttime is None:
-            starttime = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
+        _starttime = min([p.time for p in self]) if dt >= 0 else max([p.time for p in self])
+        if self.repeatdt is not None and self.repeat_starttime is None:
+            self.repeat_starttime = _starttime
         if runtime is not None:
             if runtime < 0:
                 runtime = np.abs(runtime)
                 logger.warning("Negating runtime because it has to be positive")
-            endtime = starttime + runtime * np.sign(dt)
-        else:
-            if endtime is None:
-                endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
+            endtime = _starttime + runtime * np.sign(dt)
+        elif endtime is None:
+            endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
         if interval is None:
-            interval = endtime - starttime
+            interval = endtime - _starttime
+        elif dt < 0 and interval > 0.:
+            interval *= -1.
+            logger.warning("Negating interval because running in time-backward mode")
 
-        # Ensure that dt and interval have the correct sign
-        if endtime > starttime:  # Time-forward mode
-            if dt < 0:
-                dt *= -1.
-                logger.warning("Negating dt because running in time-forward mode")
-            if interval < 0:
-                interval *= -1.
-                logger.warning("Negating interval because running in time-forward mode")
-        elif endtime < starttime:  # Time-backward mode
-            if dt > 0.:
-                dt *= -1.
-                logger.warning("Negating dt because running in time-backward mode")
-            if interval > 0.:
-                interval *= -1.
-                logger.warning("Negating interval because running in time-backward mode")
-
-        if abs(endtime-starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
+        if abs(endtime-_starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
             timeleaps = 1
             dt = 0
             runtime = 0
-            endtime = starttime
-            logger.warning_once("dt = 0 and endtime == starttime. The kernels will be executed once, without incrementing time")
+            endtime = _starttime
+            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
+                                "The kernels will be executed once, without incrementing time")
         else:
-            timeleaps = int((endtime - starttime) / interval)
+            timeleaps = int((endtime - _starttime) / interval)
+
+        if self.repeatdt is not None and self.repeatdt % interval != 0:
+            raise ("repeatdt should be multiple of interval")
 
         # Initialise particle timestepping
         for p in self:
-            p.time = starttime
             p.dt = dt
         # Execute time loop in sub-steps (timeleaps)
         assert(timeleaps >= 0)
-        leaptime = starttime
+        leaptime = _starttime
         for _ in range(timeleaps):
             # First write output_file, because particles could have been added
             if output_file:
@@ -304,8 +312,12 @@ class ParticleSet(object):
             if show_movie:
                 self.show(field=show_movie, show_time=leaptime)
             leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt,
-                                recovery=recovery)
+            self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
+            # Add new particles if repeatdt is used
+            if self.repeatdt is not None and abs(leaptime - self.repeat_starttime) % self.repeatdt == 0:
+                self.add(ParticleSet(fieldset=self.fieldset, time=leaptime, lon=self.repeatlon,
+                                     lat=self.repeatlat, depth=self.repeatdepth,
+                                     pclass=self.repeatpclass))
         # Write out a final output_file
         if output_file:
             output_file.write(self, leaptime)
@@ -340,6 +352,8 @@ class ParticleSet(object):
             show_time = (show_time - self.fieldset.U.grid.time_origin).total_seconds()
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
+        if np.isnan(show_time):
+            show_time = 0
         if domain is not None:
             latN = nearest_index(self.fieldset.U.lat, domain[0])
             latS = nearest_index(self.fieldset.U.lat, domain[1])
@@ -364,10 +378,6 @@ class ParticleSet(object):
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
                 namestr = field.name
                 time_origin = field.grid.time_origin
-            if time_origin is 0:
-                timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
-            else:
-                timestr = ' on ' + str(time_origin + delta(seconds=show_time))
             xlbl = 'Zonal distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Longitude [degrees]'
             ylbl = 'Meridional distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
             plt.xlabel(xlbl)
