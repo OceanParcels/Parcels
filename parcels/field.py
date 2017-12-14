@@ -108,8 +108,14 @@ class Geographic(UnitConverter):
     def to_target(self, value, x, y, z):
         return value / 1000. / 1.852 / 60.
 
+    def to_source(self, value, x, y, z):
+        return value * 1000. * 1.852 * 60.
+
     def ccode_to_target(self, x, y, z):
         return "(1.0 / (1000.0 * 1.852 * 60.0))"
+
+    def ccode_to_source(self, x, y, z):
+        return "(1000.0 * 1.852 * 60.0)"
 
 
 class GeographicPolar(UnitConverter):
@@ -122,8 +128,14 @@ class GeographicPolar(UnitConverter):
     def to_target(self, value, x, y, z):
         return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
 
+    def to_source(self, value, x, y, z):
+        return value * 1000. * 1.852 * 60. * cos(y * pi / 180)
+
     def ccode_to_target(self, x, y, z):
         return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
+
+    def ccode_to_source(self, x, y, z):
+        return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
 
 
 class Field(object):
