@@ -5,6 +5,7 @@ import numpy as np
 import math
 import pytest
 import xarray as xr
+from os import path
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -329,11 +330,11 @@ def test_curvilinear_grids(mode):
 # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_nemo_grid(mode):
-    path = './test_data/'
-    datasetU = xr.open_dataset(path+'Uu_eastward_nemo_cross_180lon.nc')
-    datasetV = xr.open_dataset(path+'Vv_eastward_nemo_cross_180lon.nc')
-    utils.compute_curvilinear_rotation_angles(path+'mask_nemo_cross_180lon.nc',
-                                              path+'rotation_angles_nemo_cross_180lon.nc')
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+    datasetU = xr.open_dataset(data_path+'Uu_eastward_nemo_cross_180lon.nc')
+    datasetV = xr.open_dataset(data_path+'Vv_eastward_nemo_cross_180lon.nc')
+    utils.compute_curvilinear_rotation_angles(data_path+'mask_nemo_cross_180lon.nc',
+                                              data_path+'rotation_angles_nemo_cross_180lon.nc')
     lonU = datasetU.nav_lon_u.values
     latU = datasetU.nav_lat_u.values
     timeU = datasetU.time_counter.values
@@ -348,7 +349,7 @@ def test_nemo_grid(mode):
     gridV = CurvilinearGrid('gridV', lonV, latV, time=timeV, mesh='spherical')
     v_field = Field('V', V, grid=gridV, transpose=False)
 
-    datasetA = xr.open_dataset(path+'rotation_angles_nemo_cross_180lon.nc')
+    datasetA = xr.open_dataset(data_path+'rotation_angles_nemo_cross_180lon.nc')
     lonAU = datasetA.lonU.values
     latAU = datasetA.latU.values
     lonAV = datasetA.lonV.values
@@ -393,11 +394,11 @@ def test_nemo_grid(mode):
 # @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_advect_nemo(mode):
-    path = './test_data/'
-    datasetU = xr.open_dataset(path+'Uu_eastward_nemo_cross_180lon.nc')
-    datasetV = xr.open_dataset(path+'Vv_eastward_nemo_cross_180lon.nc')
-    utils.compute_curvilinear_rotation_angles(path+'mask_nemo_cross_180lon.nc',
-                                              path+'rotation_angles_nemo_cross_180lon.nc')
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+    datasetU = xr.open_dataset(data_path+'Uu_eastward_nemo_cross_180lon.nc')
+    datasetV = xr.open_dataset(data_path+'Vv_eastward_nemo_cross_180lon.nc')
+    utils.compute_curvilinear_rotation_angles(data_path+'mask_nemo_cross_180lon.nc',
+                                              data_path+'rotation_angles_nemo_cross_180lon.nc')
 
     lonU = datasetU.nav_lon_u.values
     latU = datasetU.nav_lat_u.values
@@ -413,7 +414,7 @@ def test_advect_nemo(mode):
     gridV = CurvilinearGrid('gridV', lonV, latV, time=timeV, mesh='spherical')
     v_field = Field('V', V, grid=gridV, transpose=False)
 
-    datasetA = xr.open_dataset(path+'rotation_angles_nemo_cross_180lon.nc')
+    datasetA = xr.open_dataset(data_path+'rotation_angles_nemo_cross_180lon.nc')
     lonAU = datasetA.lonU.values
     latAU = datasetA.latU.values
     lonAV = datasetA.lonV.values
