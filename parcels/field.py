@@ -831,6 +831,8 @@ class Field(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
+        if self.phantom:
+            return
         if zonal:
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
@@ -883,6 +885,8 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
+        if self.phantom:
+            return
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
             self.time = self.grid.time
