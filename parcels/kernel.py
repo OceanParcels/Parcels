@@ -96,7 +96,10 @@ class Kernel(object):
                 fieldset = self.field_args['UV'].fieldset
                 for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
                     if f not in self.field_args:
-                        self.field_args[f] = getattr(fieldset, f)
+                        try:
+                            self.field_args[f] = getattr(fieldset, f)
+                        except:
+                            continue
                 del self.field_args['UV']
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)

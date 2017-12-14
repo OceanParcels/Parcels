@@ -277,13 +277,18 @@ class KernelGenerator(ast.NodeVisitor):
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
-        for field, _ in self.field_args.items():
-            if field == 'UV':
+        for field_name, field in self.field_args.items():
+            if field_name == 'UV':
+                fieldset = field.fieldset
                 for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
-                    if f not in self.field_args:
-                        args += [c.Pointer(c.Value("CField", "%s" % f))]
-                continue
-            args += [c.Pointer(c.Value("CField", "%s" % field))]
+                    try:
+                        getattr(fieldset, f)
+                        if f not in self.field_args:
+                            args += [c.Pointer(c.Value("CField", "%s" % f))]
+                    except:
+                        continue
+            else:
+                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 

@@ -154,7 +154,9 @@ class Field(object):
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
         if self.name == 'UV':
+            self.phantom = True
             return
+        self.phantom = False
         self.data = data
         if grid:
             self.grid = grid
@@ -469,10 +471,10 @@ class Field(object):
 
             aa = a[3]*b[2] - a[2]*b[3]
             if abs(aa) < 1e-6:  # Rectilinear  cell, or quasi
-                xsi = ((x-grid.lon[yi, xi]) / (grid.lon[yi, xi+1]-grid.lon[yi, xi]) \
-                    + (x-grid.lon[yi+1, xi]) / (grid.lon[yi+1, xi+1]-grid.lon[yi+1, xi]) ) * .5
-                eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi]) \
-                    + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1]) ) * .5
+                xsi = ((x-grid.lon[yi, xi]) / (grid.lon[yi, xi+1]-grid.lon[yi, xi])
+                       + (x-grid.lon[yi+1, xi]) / (grid.lon[yi+1, xi+1]-grid.lon[yi+1, xi])) * .5
+                eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])
+                       + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1])) * .5
             else:
                 bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
                 cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
@@ -495,22 +497,6 @@ class Field(object):
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
                 raise FieldSamplingError(x, y, 0, field=self)
-
-        yy = grid.lat[yi,xi+1]-grid.lat[yi,xi]
-        xx = grid.lon[yi,xi+1]-grid.lon[yi,xi]
-        angleu1 = np.arctan2(yy,xx)
-        yy = grid.lat[yi+1,xi+1]-grid.lat[yi+1,xi]
-        xx = grid.lon[yi+1,xi+1]-grid.lon[yi+1,xi]
-        angleu2 = np.arctan2(yy,xx)
-        angleu = (1-xsi)*angleu1 + eta*angleu2
-
-        yy = grid.lat[yi+1,xi]-grid.lat[yi,xi]
-        xx = grid.lon[yi+1,xi]-grid.lon[yi,xi]
-        anglev1 = np.arctan2(yy,xx)
-        yy = grid.lat[yi+1,xi+1]-grid.lat[yi,xi+1]
-        xx = grid.lon[yi+1,xi+1]-grid.lon[yi,xi+1]
-        anglev2 = np.arctan2(yy,xx)
-        anglev = (1-eta)*anglev1 + xsi*anglev2
 
         zi = 0
         zeta = -1
@@ -543,6 +529,10 @@ class Field(object):
             if z < depth_vector[zi] or z > depth_vector[zi+1]:
                 raise FieldSamplingError(x, y, z, field=self)
             zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
+            assert(zeta >= 0 and zeta <= 1)
+
+        assert(xsi >= 0 and xsi <= 1)
+        assert(eta >= 0 and eta <= 1)
 
         return (xsi, eta, zeta, xi, yi, zi)
 
@@ -669,35 +659,45 @@ class Field(object):
 
     def ccode_evalUV(self, varU, varV, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
+
         gridset = self.fieldset.gridset
-        self.units = UnitConverter()
         uiGrid = -1
         viGrid = -1
-        cosuiGrid = -1
-        sinuiGrid = -1
-        cosviGrid = -1
-        sinviGrid = -1
-        for i, g in enumerate(gridset.grids):
-            if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
-                break
-            if g.name == self.fieldset.U.grid.name:
-                uiGrid = i
-            if g.name == self.fieldset.V.grid.name:
-                viGrid = i
-            if g.name == self.fieldset.cosU.grid.name:
-                cosuiGrid = i
-            if g.name == self.fieldset.sinU.grid.name:
-                sinuiGrid = i
-            if g.name == self.fieldset.cosV.grid.name:
-                cosviGrid = i
-            if g.name == self.fieldset.sinV.grid.name:
-                sinviGrid = i
-        return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
-            % (x, y, z, t,
-               self.fieldset.U.name, self.fieldset.V.name, self.fieldset.cosU.name, self.fieldset.sinU.name, self.fieldset.cosV.name, self.fieldset.sinV.name,
-               "particle->CGridIndexSet",
-               uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid,
-               varU, varV, self.fieldset.U.interp_method.upper())
+        if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            for i, g in enumerate(gridset.grids):
+                if min(uiGrid, viGrid) > -1:
+                    break
+                if g.name == self.fieldset.U.grid.name:
+                    uiGrid = i
+                if g.name == self.fieldset.V.grid.name:
+                    viGrid = i
+            return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->CGridIndexSet, %s, %s, &%s, &%s, %s)" \
+                % (x, y, z, t,
+                   uiGrid, viGrid, varU, varV, self.fieldset.U.interp_method.upper())
+        else:
+            cosuiGrid = -1
+            sinuiGrid = -1
+            cosviGrid = -1
+            sinviGrid = -1
+            for i, g in enumerate(gridset.grids):
+                if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
+                    break
+                if g.name == self.fieldset.U.grid.name:
+                    uiGrid = i
+                if g.name == self.fieldset.V.grid.name:
+                    viGrid = i
+                if g.name == self.fieldset.cosU.grid.name:
+                    cosuiGrid = i
+                if g.name == self.fieldset.sinU.grid.name:
+                    sinuiGrid = i
+                if g.name == self.fieldset.cosV.grid.name:
+                    cosviGrid = i
+                if g.name == self.fieldset.sinV.grid.name:
+                    sinviGrid = i
+            return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->CGridIndexSet, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
+                % (x, y, z, t,
+                   uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid,
+                   varU, varV, self.fieldset.U.interp_method.upper())
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
@@ -823,6 +823,8 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
+        if self.phantom:
+            return
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name

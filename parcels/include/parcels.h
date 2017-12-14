@@ -459,15 +459,43 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
 }
 
 static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
+                                                 CField *U, CField *V,
+                                                 void *gridIndexSet, int uiGrid, int viGrid,
+                                                 float *valueU, float *valueV, int interp_method)
+{
+  ErrorCode err;
+
+  err = temporal_interpolation(x, y, z, time, U, gridIndexSet, uiGrid, valueU, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, V, gridIndexSet, viGrid, valueV, interp_method); CHECKERROR(err);
+
+  return SUCCESS;
+}
+
+static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float z, double time,
                                                  CField *U, CField *V, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
                                                  void *gridIndexSet, int uiGrid, int viGrid, int cosuiGrid, 
                                                  int sinuiGrid, int cosviGrid, int sinviGrid,
                                                  float *valueU, float *valueV, int interp_method)
 {
-  *valueU = 7;
-  *valueV = 7;
+  ErrorCode err;
+
+  float u_val, v_val, cosU_val, sinU_val, cosV_val, sinV_val;
+  err = temporal_interpolation(x, y, z, time, U, gridIndexSet, uiGrid, &u_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, V, gridIndexSet, viGrid, &v_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, cosU, gridIndexSet, cosuiGrid, &cosU_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, sinU, gridIndexSet, sinuiGrid, &sinU_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, cosV, gridIndexSet, cosviGrid, &cosV_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, sinV, gridIndexSet, sinviGrid, &sinV_val, interp_method); CHECKERROR(err);
+
+  *valueU = u_val * cosU_val + v_val * cosV_val;
+  *valueV = u_val * sinU_val + v_val * sinV_val;
+
+  return SUCCESS;
 }
 
+
+
+/**************************************************/
 
 
 /**************************************************/
