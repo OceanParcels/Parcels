@@ -1,5 +1,6 @@
 import numpy as np
 import xarray as xr
+from netCDF4 import Dataset
 
 
 def compute_curvilinear_rotation_angles(mesh_filename, angles_filename):
@@ -42,39 +43,73 @@ def compute_curvilinear_rotation_angles(mesh_filename, angles_filename):
     gsinv = (zxnpv*zxffv + zynpv*zyffv) / znffv
     gcosv = -(zxnpv*zyffv - zynpv*zxffv) / znffv
 
-    lonUArray = xr.DataArray(lonU[1:, 1:],
-                             name='lonU',
-                             dims=('y', 'x'),
-                             attrs={'valid_min': np.min(lonU),
-                                    'valid_max': np.max(lonU)})
-    latUArray = xr.DataArray(latU[1:, 1:],
-                             name='latU',
-                             dims=('y', 'x'),
-                             attrs={'valid_min': np.min(latU),
-                                    'valid_max': np.max(latU)})
-    coords = {lonUArray.name: lonUArray,
-              latUArray.name: latUArray}
-    cUArray = xr.DataArray(gcosu, name='cosU', coords=coords, dims=('y', 'x'))
-    sUArray = xr.DataArray(gsinu, name='sinU', coords=coords, dims=('y', 'x'))
+    # ** netCDF4 writing, since xArray is bugged **
+    lonU = lonU[1:, 1:]
+    latU = latU[1:, 1:]
+    lonV = lonV[1:, 1:]
+    latV = latV[1:, 1:]
 
-    lonVArray = xr.DataArray(lonV[1:, 1:],
-                             name='lonV',
-                             dims=('y', 'x'),
-                             attrs={'valid_min': np.min(lonV),
-                                    'valid_max': np.max(lonV)})
-    latVArray = xr.DataArray(latV[1:, 1:],
-                             name='latV',
-                             dims=('y', 'x'),
-                             attrs={'valid_min': np.min(latV),
-                                    'valid_max': np.max(latV)})
-    coords = {lonVArray.name: lonVArray,
-              latVArray.name: latVArray}
-    cVArray = xr.DataArray(gcosv, name='cosV', coords=coords, dims=('y', 'x'))
-    sVArray = xr.DataArray(gsinv, name='sinV', coords=coords, dims=('y', 'x'))
+    subDataset = Dataset(angles_filename, 'w', format='NETCDF4')
+    subDataset.createDimension('x', lonU.shape[1])
+    subDataset.createDimension('y', lonU.shape[0])
+    lonUVar = subDataset.createVariable('lonU', 'f8', ('y', 'x',))
+    latUVar = subDataset.createVariable('latU', 'f8', ('y', 'x',))
+    lonUVar.valid_min = np.min(lonU)
+    lonUVar.valid_max = np.max(lonU)
+    lonUVar[:] = lonU
+    latUVar[:] = latU
+    lonVVar = subDataset.createVariable('lonV', 'f8', ('y', 'x',))
+    latVVar = subDataset.createVariable('latV', 'f8', ('y', 'x',))
+    lonVVar.valid_min = np.min(lonV)
+    lonVVar.valid_max = np.max(lonV)
+    lonVVar[:] = lonV
+    latVVar[:] = latV
 
-    dataset = xr.Dataset()
-    dataset[cUArray.name] = cUArray
-    dataset[sUArray.name] = sUArray
-    dataset[cVArray.name] = cVArray
-    dataset[sVArray.name] = sVArray
-    dataset.to_netcdf(path=angles_filename, engine='scipy')
+    cosUVar = subDataset.createVariable('cosU', 'f8', ('y', 'x',))
+    cosUVar[:] = gcosu
+    sinUVar = subDataset.createVariable('sinU', 'f8', ('y', 'x',))
+    sinUVar[:] = gsinu
+    cosVVar = subDataset.createVariable('cosV', 'f8', ('y', 'x',))
+    cosVVar[:] = gcosv
+    sinVVar = subDataset.createVariable('sinV', 'f8', ('y', 'x',))
+    sinVVar[:] = gsinv
+
+    subDataset.close()
+    # ** end netCDF4 writing **
+
+    # lonUArray = xr.DataArray(lonU[1:, 1:],
+    #                          name='lonU',
+    #                          dims=('y', 'x'),
+    #                          attrs={'valid_min': np.min(lonU),
+    #                                 'valid_max': np.max(lonU)})
+    # latUArray = xr.DataArray(latU[1:, 1:],
+    #                          name='latU',
+    #                          dims=('y', 'x'),
+    #                          attrs={'valid_min': np.min(latU),
+    #                                 'valid_max': np.max(latU)})
+    # coords = {lonUArray.name: lonUArray,
+    #           latUArray.name: latUArray}
+    # cUArray = xr.DataArray(gcosu, name='cosU', coords=coords, dims=('y', 'x'))
+    # sUArray = xr.DataArray(gsinu, name='sinU', coords=coords, dims=('y', 'x'))
+
+    # lonVArray = xr.DataArray(lonV[1:, 1:],
+    #                          name='lonV',
+    #                          dims=('y', 'x'),
+    #                          attrs={'valid_min': np.min(lonV),
+    #                                 'valid_max': np.max(lonV)})
+    # latVArray = xr.DataArray(latV[1:, 1:],
+    #                          name='latV',
+    #                          dims=('y', 'x'),
+    #                          attrs={'valid_min': np.min(latV),
+    #                                 'valid_max': np.max(latV)})
+    # coords = {lonVArray.name: lonVArray,
+    #           latVArray.name: latVArray}
+    # cVArray = xr.DataArray(gcosv, name='cosV', coords=coords, dims=('y', 'x'))
+    # sVArray = xr.DataArray(gsinv, name='sinV', coords=coords, dims=('y', 'x'))
+
+    # dataset = xr.Dataset()
+    # dataset[cUArray.name] = cUArray
+    # dataset[sUArray.name] = sUArray
+    # dataset[cVArray.name] = cVArray
+    # dataset[sVArray.name] = sVArray
+    # dataset.to_netcdf(path=angles_filename, engine='scipy')
