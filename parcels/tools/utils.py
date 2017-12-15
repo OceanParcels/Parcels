@@ -30,17 +30,17 @@ def compute_curvilinear_rotation_angles(mesh_filename, angles_filename):
     znffu = np.sqrt(znnpu * (zxffu*zxffu + zyffu*zyffu))
     znffu = np.maximum(znffu, 1.e-14)
 
-    zxffv = 2. * np.cos(rad*lonF[1:, :-1]) * np.tan(rpi/4. - rad*latF[1:, :-1]/2.) \
-        - 2. * np.cos(rad*lonF[1:, 1:]) * np.tan(rpi/4. - rad*latF[1:, 1:]/2.)
-    zyffv = 2. * np.sin(rad*lonF[1:, :-1]) * np.tan(rpi/4. - rad*latF[1:, :-1]/2.) \
-        - 2. * np.sin(rad*lonF[1:, 1:]) * np.tan(rpi/4. - rad*latF[1:, 1:]/2.)
+    zxffv = 2. * np.cos(rad*lonF[1:, 1:]) * np.tan(rpi/4. - rad*latF[1:, 1:]/2.) \
+        - 2. * np.cos(rad*lonF[1:, :-1]) * np.tan(rpi/4. - rad*latF[1:, :-1]/2.)
+    zyffv = 2. * np.sin(rad*lonF[1:, 1:]) * np.tan(rpi/4. - rad*latF[1:, 1:]/2.) \
+        - 2. * np.sin(rad*lonF[1:, :-1]) * np.tan(rpi/4. - rad*latF[1:, :-1]/2.)
     znffv = np.sqrt(znnpv * (zxffv*zxffv + zyffv*zyffv))
     znffv = np.maximum(znffv, 1.e-14)
 
     gsinu = (zxnpu*zyffu - zynpu*zxffu) / znffu
     gcosu = (zxnpu*zxffu + zynpu*zyffu) / znffu
-    gsinv = (zxnpv*zyffv - zynpv*zxffv) / znffv
-    gcosv = (zxnpv*zxffv + zynpv*zyffv) / znffv
+    gsinv = (zxnpv*zxffv + zynpv*zyffv) / znffv
+    gcosv = -(zxnpv*zyffv - zynpv*zxffv) / znffv
 
     lonUArray = xr.DataArray(lonU[1:, 1:],
                              name='lonU',

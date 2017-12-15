@@ -317,8 +317,8 @@ class Field(object):
             sinU = fieldset.sinU.eval(time, x, y, z, False)
             cosV = fieldset.cosV.eval(time, x, y, z, False)
             sinV = fieldset.sinV.eval(time, x, y, z, False)
-            zonal = U * cosU + V * cosV
-            meridional = U * sinU + V * sinV
+            zonal = U * cosU - V * sinV
+            meridional = U * sinU + V * cosV
         zonal = fieldset.U.units.to_target(zonal, x, y, z)
         meridional = fieldset.V.units.to_target(meridional, x, y, z)
         return (zonal, meridional)

@@ -487,8 +487,8 @@ static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float
   err = temporal_interpolation(x, y, z, time, cosV, gridIndexSet, cosviGrid, &cosV_val, interp_method); CHECKERROR(err);
   err = temporal_interpolation(x, y, z, time, sinV, gridIndexSet, sinviGrid, &sinV_val, interp_method); CHECKERROR(err);
 
-  *valueU = u_val * cosU_val + v_val * cosV_val;
-  *valueV = u_val * sinU_val + v_val * sinV_val;
+  *valueU = u_val * cosU_val - v_val * sinV_val;
+  *valueV = u_val * sinU_val + v_val * cosV_val;
 
   return SUCCESS;
 }
