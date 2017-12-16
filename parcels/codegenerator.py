@@ -552,7 +552,8 @@ class LoopGenerator(object):
             shared += [field]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
-        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys()) + list(const_args.keys()))
+        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt']
+                              + list(field_args.keys()) + list(const_args.keys()))
         # Inner loop nest for forward runs
         sign_dt = c.Assign("sign_dt", "dt > 0. ? 1 : -1")
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
