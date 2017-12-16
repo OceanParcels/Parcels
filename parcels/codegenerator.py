@@ -524,9 +524,10 @@ class LoopGenerator(object):
     def generate(self, funcname, field_args, const_args, kernel_ast):
         ccode = []
 
-        # Add include for Parcels and math header
+        # Add include for OpenMP, Parcels, math and time header
         ccode += [str(c.Include("parcels.h", system=False))]
         ccode += [str(c.Include("math.h", system=False))]
+        ccode += [str(c.Include("time.h", system=False))]
 
         # Generate type definition for particle type
         vdecl = []
@@ -545,14 +546,15 @@ class LoopGenerator(object):
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
                 c.Value("double", "endtime"), c.Value("float", "dt")]
+        shared = ["particles"]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
+            shared += [field]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
-        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys())
-                              + list(const_args.keys()))
+        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys()) + list(const_args.keys()))
         # Inner loop nest for forward runs
-        sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
+        sign_dt = c.Assign("sign_dt", "dt > 0. ? 1 : -1")
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
@@ -566,11 +568,17 @@ class LoopGenerator(object):
                       c.Statement("break"))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
-        part_loop = c.For("p = 0", "p < num_particles", "++p",
-                          c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
-        fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
-                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
-                         sign_dt, part_loop])
+        part_loop = c.Block([c.Statement("srand((int)time(NULL) ^ omp_get_thread_num())"),
+                             c.Pragma("omp for schedule(static)"),
+                             c.For("p = 0", "p < num_particles", "++p",
+                                   c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))])
+        fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
+                         c.Value("ErrorCode", "res"),
+                         c.Value("double", "__dt, __tol"),
+                         c.Assign("__tol", "1.e-6"),
+                         c.Statement("omp_set_num_threads(omp_get_num_procs())"),
+                         sign_dt, c.Pragma("omp parallel private(p,__dt,res)"),
+                         part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
