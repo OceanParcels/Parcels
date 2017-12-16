@@ -66,6 +66,6 @@ class GNUCompiler(Compiler):
         opt_flags = ['-g', '-O3']
         arch_flag = ['-m64' if calcsize("P") is 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
-        cppargs += arch_flag
+        cppargs += arch_flag + ['-lgomp', '-fopenmp']
         ldargs = ['-shared'] + ldargs + arch_flag
         super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
