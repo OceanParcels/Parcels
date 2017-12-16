@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -353,7 +354,6 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
 /**************************************************/
 /*   Random number generation (RNG) functions     */
 /**************************************************/
-
 static void parcels_seed(int seed)
 {
   srand(seed);
@@ -370,7 +370,7 @@ static inline float parcels_uniform(float low, float high)
 }
 
 static inline int parcels_randint(int low, int high)
-{
+{	
   return (rand() % (high-low)) + low;
 }
 
