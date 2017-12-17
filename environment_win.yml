@@ -5,6 +5,7 @@ dependencies:
   - python=2.7
   - cachetools>=1.0.0
   - cgen
+  - openmp
   - enum34
   - ffmpeg
   - flake8>=2.1.0
