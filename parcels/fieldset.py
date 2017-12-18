@@ -1,6 +1,6 @@
 from parcels.field import Field
 from parcels.gridset import GridSet
-from parcels.grid import CurvilinearGrid
+from parcels.grid import RectilinearZGrid, CurvilinearZGrid
 from parcels.loggers import logger
 from parcels.tools import utils
 import numpy as np
@@ -8,7 +8,6 @@ import xarray as xr
 from os import path
 from glob import glob
 from copy import deepcopy
-from grid import RectilinearZGrid
 
 
 __all__ = ['FieldSet']
@@ -234,7 +233,7 @@ class FieldSet(object):
         timeU = datasetU.time_counter.values
         U = getattr(datasetU, uVar).values
         datasetU.close()
-        gridU = CurvilinearGrid('gridU', lonU, latU, time=timeU, mesh=mesh)
+        gridU = CurvilinearZGrid('gridU', lonU, latU, time=timeU, mesh=mesh)
         u_field = Field('U', U, grid=gridU, transpose=False,
                         allow_time_extrapolation=allow_time_extrapolation,
                         time_periodic=time_periodic)
@@ -245,7 +244,7 @@ class FieldSet(object):
         timeV = datasetV.time_counter.values
         V = getattr(datasetV, vVar).values
         datasetV.close()
-        gridV = CurvilinearGrid('gridV', lonV, latV, time=timeV, mesh=mesh)
+        gridV = CurvilinearZGrid('gridV', lonV, latV, time=timeV, mesh=mesh)
         v_field = Field('V', V, grid=gridV, transpose=False,
                         allow_time_extrapolation=allow_time_extrapolation,
                         time_periodic=time_periodic)
@@ -255,8 +254,8 @@ class FieldSet(object):
         latAU = datasetA.latU.values
         lonAV = datasetA.lonV.values
         latAV = datasetA.latV.values
-        gridAU = CurvilinearGrid('gridAU', lonAU, latAU, mesh=mesh)
-        gridAV = CurvilinearGrid('gridAV', lonAV, latAV, mesh=mesh)
+        gridAU = CurvilinearZGrid('gridAU', lonAU, latAU, mesh=mesh)
+        gridAV = CurvilinearZGrid('gridAV', lonAV, latAV, mesh=mesh)
 
         cosU = datasetA.cosU.values
         sinU = datasetA.sinU.values

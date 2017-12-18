@@ -1,5 +1,5 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
-from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearGrid
+from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
 import numpy as np
 import math
 import pytest
@@ -303,7 +303,7 @@ def test_curvilinear_grids(mode):
     # plt.axis('equal')
     # plt.show()
 
-    grid = CurvilinearGrid('grid', lon, lat, time=time)
+    grid = CurvilinearZGrid('grid', lon, lat, time=time)
 
     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
     v_data = np.zeros((2, y.size, x.size), dtype=np.float32)

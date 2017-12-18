@@ -15,7 +15,7 @@ typedef enum
 
 typedef enum
   {
-    RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_GRID=2
+    RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_Z_GRID=2, CURVILINEAR_S_GRID=3
   } GridCode;
 
 typedef enum
@@ -56,61 +56,21 @@ typedef struct
   CGridIndex *gridIndices;
 } CGridIndexSet;  
 
-
-static inline ErrorCode search_indices_rectilinear_z(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals,
-                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta)
+static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *k, double *zeta)
 {
-  if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
-  while (*i > 0 && x < xvals[*i]) --(*i);
+  if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*k < zdim-1 && z > zvals[*k+1]) ++(*k);
+  while (*k > 0 && z < zvals[*k]) --(*k);
+  if (*k == zdim-1) {--*k;}
 
-  /* Lowering index by 1 if last index, to avoid out-of-array sampling
-  for index+1 in spatial-interpolation*/
-  if (*i == xdim-1) {--*i;}
-
-  if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*j < ydim-1 && y > yvals[*j+1]) ++(*j);
-  while (*j > 0 && y < yvals[*j]) --(*j);
-
-  /* Lowering index by 1 if last index, to avoid out-of-array sampling
-  for index+1 in spatial-interpolation*/
-  if (*j == ydim-1) {--*j;}
-
-  *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
-  *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
-
-  if (zdim > 1){
-    if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-    while (*k < zdim-1 && z > zvals[*k+1]) ++(*k);
-    while (*k > 0 && z < zvals[*k]) --(*k);
-    if (*k == zdim-1) {--*k;}
-
-    *zeta = (z - zvals[*k]) / (zvals[*k+1] - zvals[*k]);
-  }
-
+  *zeta = (z - zvals[*k]) / (zvals[*k+1] - zvals[*k]);
   return SUCCESS;
 }
 
-static inline ErrorCode search_indices_rectilinear_s(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals,
-                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
-                                            int z4d, int ti, int tdim, double time, double t0, double t1)
+static inline ErrorCode search_indices_vertical_s(float z, int xdim, int ydim, int zdim, float *zvals,
+                                    int i, int j, int *k, double xsi, double eta, double *zeta,
+                                    int z4d, int ti, int tdim, double time, double t0, double t1)
 {
-  if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
-  while (*i > 0 && x < xvals[*i]) --(*i);
-  if (*i == xdim-1) {--*i;}
-
-  if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*j < ydim-1 && y > yvals[*j+1]) ++(*j);
-  while (*j > 0 && y < yvals[*j]) --(*j);
-  if (*j == ydim-1) {--*j;}
-
-  *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
-  *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
-
-
   float zcol[zdim];
   int iz;
   if (z4d == 1){
@@ -120,14 +80,14 @@ static inline ErrorCode search_indices_rectilinear_s(float x, float y, float z, 
        ti1= ti+1;
     double zt0, zt1;
     for (iz=0; iz < zdim; iz++){
-      zt0 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti]
-          + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti]
-          + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti]
-          + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti];
-      zt1 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti1]
-          + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti1]
-          + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti1]
-          + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti1];
+      zt0 = (1-xsi)*(1-eta) * zvalstab[i  ][j  ][iz][ti]
+          + (  xsi)*(1-eta) * zvalstab[i+1][j  ][iz][ti]
+          + (  xsi)*(  eta) * zvalstab[i+1][j+1][iz][ti]
+          + (1-xsi)*(  eta) * zvalstab[i  ][j+1][iz][ti];
+      zt1 = (1-xsi)*(1-eta) * zvalstab[i  ][j  ][iz][ti1]
+          + (  xsi)*(1-eta) * zvalstab[i+1][j  ][iz][ti1]
+          + (  xsi)*(  eta) * zvalstab[i+1][j+1][iz][ti1]
+          + (1-xsi)*(  eta) * zvalstab[i  ][j+1][iz][ti1];
       zcol[iz] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
     }
 
@@ -135,10 +95,10 @@ static inline ErrorCode search_indices_rectilinear_s(float x, float y, float z, 
   else{
     float (*zvalstab)[ydim][zdim] = (float (*)[ydim][zdim]) zvals;
     for (iz=0; iz < zdim; iz++){
-      zcol[iz] = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz]
-               + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz]
-               + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz]
-               + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz];
+      zcol[iz] = (1-xsi)*(1-eta) * zvalstab[i  ][j  ][iz]
+               + (  xsi)*(1-eta) * zvalstab[i+1][j  ][iz]
+               + (  xsi)*(  eta) * zvalstab[i+1][j+1][iz]
+               + (1-xsi)*(  eta) * zvalstab[i  ][j+1][iz];
     }
   }
 
@@ -148,12 +108,59 @@ static inline ErrorCode search_indices_rectilinear_s(float x, float y, float z, 
   if (*k == zdim-1) {--*k;}
 
   *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
+  return SUCCESS;
+}
+
+static inline ErrorCode search_indices_rectilinear(float x, float y, float z, int xdim, int ydim, int zdim,
+                                            float *xvals, float *yvals, float *zvals, GridCode gcode,
+                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            int z4d, int ti, int tdim, double time, double t0, double t1)
+{
+  if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
+  while (*i > 0 && x < xvals[*i]) --(*i);
+  /* Lowering index by 1 if last index, to avoid out-of-array sampling
+  for index+1 in spatial-interpolation*/
+  if (*i == xdim-1) {--*i;}
+
+  if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  while (*j < ydim-1 && y > yvals[*j+1]) ++(*j);
+  while (*j > 0 && y < yvals[*j]) --(*j);
+  /* Lowering index by 1 if last index, to avoid out-of-array sampling
+  for index+1 in spatial-interpolation*/
+  if (*j == ydim-1) {--*j;}
+
+  *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
+  *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
+
+  ErrorCode err;
+  if (zdim > 1){
+    switch(gcode){
+      case RECTILINEAR_Z_GRID:
+        err = search_indices_vertical_z(z, zdim, zvals, k, zeta);
+        break;
+      case RECTILINEAR_S_GRID:
+        err = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
+                                        *i, *j, k, *xsi, *eta, zeta,
+                                        z4d, ti, tdim, time, t0, t1);
+        break;
+      default:
+        err = ERROR;
+    }
+    CHECKERROR(err);
+  }
+  else
+    *zeta = 0;
+
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_OUT_OF_BOUNDS;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR_OUT_OF_BOUNDS;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_OUT_OF_BOUNDS;
 
   return SUCCESS;
 }
 
 static inline ErrorCode search_indices_curvilinear(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals,
+                                            float *xvals, float *yvals, float *zvals, GridCode gcode,
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
@@ -211,46 +218,29 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
       printf("xsi and or eta are nan values\n");
       return ERROR_OUT_OF_BOUNDS;
   }
+  ErrorCode err;
 
   if (zdim > 1){
-    float zcol[zdim];
-    int iz;
-    if (z4d == 1){
-      float (*zvalstab)[ydim][zdim][tdim] = (float (*)[ydim][zdim][tdim]) zvals;
-      int ti1 = ti;
-      if (ti < tdim-1)
-         ti1= ti+1;
-      double zt0, zt1;
-      for (iz=0; iz < zdim; iz++){
-        zt0 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti]
-            + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti]
-            + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti]
-            + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti];
-        zt1 = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz][ti1]
-            + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz][ti1]
-            + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz][ti1]
-            + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz][ti1];
-        zcol[iz] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
-      }
-
+    switch(gcode){
+      case CURVILINEAR_Z_GRID:
+        err = search_indices_vertical_z(z, zdim, zvals, k, zeta);
+        break;
+      case CURVILINEAR_S_GRID:
+        err = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
+                                        *i, *j, k, *xsi, *eta, zeta,
+                                        z4d, ti, tdim, time, t0, t1);
+        break;
+      default:
+        err = ERROR;
     }
-    else{
-      float (*zvalstab)[ydim][zdim] = (float (*)[ydim][zdim]) zvals;
-      for (iz=0; iz < zdim; iz++){
-        zcol[iz] = (1-*xsi)*(1-*eta) * zvalstab[*i  ][*j  ][iz]
-                 + (  *xsi)*(1-*eta) * zvalstab[*i+1][*j  ][iz]
-                 + (  *xsi)*(  *eta) * zvalstab[*i+1][*j+1][iz]
-                 + (1-*xsi)*(  *eta) * zvalstab[*i  ][*j+1][iz];
-      }
-    }
-
-    if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-    while (*k < zdim-1 && z > zcol[*k+1]) ++(*k);
-    while (*k > 0 && z < zcol[*k]) --(*k);
-    if (*k == zdim-1) {--*k;}
-
-    *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
+    CHECKERROR(err);
   }
+  else
+    *zeta = 0;
+
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_OUT_OF_BOUNDS;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR_OUT_OF_BOUNDS;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_OUT_OF_BOUNDS;
 
   return SUCCESS;
 }
@@ -266,21 +256,19 @@ static inline ErrorCode search_indices(float x, float y, float z, int xdim, int 
 {
   switch(gcode){
     case RECTILINEAR_Z_GRID:
-      return search_indices_rectilinear_z(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, i, j, k, xsi, eta, zeta);
-      break;
     case RECTILINEAR_S_GRID:
-      return search_indices_rectilinear_s(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, i, j, k, xsi, eta, zeta,
+      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, gcode, i, j, k, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
-    case CURVILINEAR_GRID:
-      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, i, j, k, xsi, eta, zeta,
+    case CURVILINEAR_Z_GRID:
+    case CURVILINEAR_S_GRID:
+      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, gcode, i, j, k, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     default:
-      printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID and CURVILINEAR_GRID grids are currently implemented\n");
+      printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID, CURVILINEAR_Z_GRID and CURVILINEAR_S_GRID grids are currently implemented\n");
       return ERROR;
   }
-  return SUCCESS;
 }
 
 /* Local linear search to update time index */
@@ -450,10 +438,10 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
   CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
   CGridIndex *gridIndex = &giset->gridIndices[iGrid];
 
-  if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_GRID)
+  if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_Z_GRID || gcode == CURVILINEAR_S_GRID)
     return temporal_interpolation_structured_grid(x, y, z, time, f, gcode, gridIndex, value, interp_method);
   else{
-    printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID and CURVILINEAR_GRID grids are currently implemented\n");
+    printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID, CURVILINEAR_Z_GRID and CURVILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;
   }
 }

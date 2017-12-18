@@ -364,104 +364,7 @@ class Field(object):
                 Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
-    def interpolator3D_rectilinear_z(self, idx, z, y, x):
-        """Scipy implementation of 3D interpolation, by first interpolating
-        in horizontal, then in the vertical"""
-
-        zdx = self.depth_index(z, y, x)
-        f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
-        f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
-        z0 = self.grid.depth[zdx]
-        z1 = self.grid.depth[zdx + 1]
-        if z < z0 or z > z1:
-            raise FieldSamplingError(x, y, z, field=self)
-        if self.interp_method is 'nearest':
-            return f0 if z - z0 < z1 - z else f1
-        elif self.interp_method is 'linear':
-            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
-        else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
-
-    def interpolator3D_rectilinear_s(self, idx, z, y, x, time):
-
-        grid = self.grid
-
-        if x < grid.lon[0] or x > grid.lon[-1]:
-            raise FieldSamplingError(x, y, z, field=self)
-        if y < grid.lat[0] or y > grid.lat[-1]:
-            raise FieldSamplingError(x, y, z, field=self)
-
-        lon_index = grid.lon <= x
-        xi = yi = zi = -1
-        if lon_index.all():
-            xi = len(grid.lon) - 2
-        else:
-            xi = lon_index.argmin() - 1 if lon_index.any() else 0
-        lat_index = grid.lat <= y
-        if lat_index.all():
-            yi = len(grid.lat) - 2
-        else:
-            yi = lat_index.argmin() - 1 if lat_index.any() else 0
-
-        xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
-        eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
-        assert xsi >= 0 and xsi <= 1
-        assert eta >= 0 and eta <= 1
-
-        if grid.z4d:
-            if idx == len(self.grid.time)-1:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
-            else:
-                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, idx:idx+2] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, idx:idx+2] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, idx:idx+2] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, idx:idx+2]
-                t0 = grid.time[idx]
-                t1 = grid.time[idx + 1]
-                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
-        else:
-            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-                xsi*eta * grid.depth[xi+1, yi+1, :] + \
-                (1-xsi)*eta * grid.depth[xi, yi+1, :]
-
-        # depth variable is defined at np.float32 in particle.py, but as soon as
-        # as there is an operation with dt which is type float, it becomes np.float64
-        z = np.float32(z)
-        depth_index = depth_vector <= z
-        if z >= depth_vector[-1]:
-            zi = len(depth_vector) - 2
-        else:
-            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        z0 = depth_vector[zi]
-        z1 = depth_vector[zi+1]
-        if z < z0 or z > z1:
-            raise FieldSamplingError(x, y, z, field=self)
-
-        if self.interp_method is 'nearest':
-            zii = zi if z - z0 < z1 - z else zi+1
-            xii = xi if xsi <= .5 else xi+1
-            yii = yi if eta <= .5 else yi+1
-            return self.data[idx, zii, yii, xii]
-        elif self.interp_method is 'linear':
-            data = self.data[idx, zi, :, :].transpose()
-            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                    (1-xsi)*eta * data[xi, yi+1]
-            data = self.data[idx, zi+1, :, :].transpose()
-            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                (1-xsi)*eta * data[xi, yi+1]
-            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
-        else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
-
-    def interpolator2D(self, t_idx, z_idx=None):
+    def interpolator2D_scipy(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
 
         Note that the interpolator is configured to return NaN for
@@ -475,7 +378,107 @@ class Field(object):
                                        bounds_error=False, fill_value=np.nan,
                                        method=self.interp_method)
 
-    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
+    def interpolator3D_rectilinear_z(self, idx, z, y, x):
+        """Scipy implementation of 3D interpolation, by first interpolating
+        in horizontal, then in the vertical"""
+
+        zdx = self.depth_index(z, y, x)
+        f0 = self.interpolator2D_scipy(idx, z_idx=zdx)((y, x))
+        f1 = self.interpolator2D_scipy(idx, z_idx=zdx + 1)((y, x))
+        z0 = self.grid.depth[zdx]
+        z1 = self.grid.depth[zdx + 1]
+        if z < z0 or z > z1:
+            raise FieldSamplingError(x, y, z, field=self)
+        if self.interp_method is 'nearest':
+            return f0 if z - z0 < z1 - z else f1
+        elif self.interp_method is 'linear':
+            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+
+    def search_indices_vertical_z(self, z):
+        grid = self.grid
+        z = np.float32(z)
+        depth_index = grid.depth <= z
+        if z >= grid.depth[-1]:
+            zi = len(grid.depth) - 2
+        else:
+            zi = depth_index.argmin() - 1 if z >= grid.depth[0] else 0
+        zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
+        return (zi, zeta)
+
+    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, tidx, time):
+        grid = self.grid
+        if grid.z4d:
+            if tidx == len(grid.time)-1:
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+            else:
+                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, tidx:tidx+2] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :, tidx:tidx+2] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :, tidx:tidx+2] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :, tidx:tidx+2]
+                t0 = grid.time[tidx]
+                t1 = grid.time[tidx + 1]
+                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+        else:
+            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
+                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
+                xsi*eta * grid.depth[xi+1, yi+1, :] + \
+                (1-xsi)*eta * grid.depth[xi, yi+1, :]
+        z = np.float32(z)
+        depth_index = depth_vector <= z
+        if z >= depth_vector[-1]:
+            zi = len(depth_vector) - 2
+        else:
+            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
+        if z < depth_vector[zi] or z > depth_vector[zi+1]:
+            raise FieldSamplingError(x, y, z, field=self)
+        zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
+        return (zi, zeta)
+
+    def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
+
+        grid = self.grid
+        if x < grid.lon[0] or x > grid.lon[-1]:
+            raise FieldSamplingError(x, y, z, field=self)
+        if y < grid.lat[0] or y > grid.lat[-1]:
+            raise FieldSamplingError(x, y, z, field=self)
+
+        xi = yi = -1
+        lon_index = grid.lon <= x
+        if lon_index.all():
+            xi = len(grid.lon) - 2
+        else:
+            xi = lon_index.argmin() - 1 if lon_index.any() else 0
+        lat_index = grid.lat <= y
+        if lat_index.all():
+            yi = len(grid.lat) - 2
+        else:
+            yi = lat_index.argmin() - 1 if lat_index.any() else 0
+
+        xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+        eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+
+        if grid.zdim > 1:
+            if grid.gtype == GridCode.RectilinearZGrid:
+                # Never passes here, because in this case, we work with scipy
+                (zi, zeta) = self.search_indices_vertical_z(z)
+            elif grid.gtype == GridCode.RectilinearSGrid:
+                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
+        else:
+            zi = 0
+            zeta = 0
+
+        assert(xsi >= 0 and xsi <= 1)
+        assert(eta >= 0 and eta <= 1)
+        assert(zeta >= 0 and zeta <= 1)
+
+        return (xsi, eta, zeta, xi, yi, zi)
+
+    def search_indices_curvilinear(self, x, y, z, xi, yi, tidx=-1, time=-1):
         xsi = eta = -1
         grid = self.grid
         invA = np.array([[1, 0, 0, 0],
@@ -529,69 +532,67 @@ class Field(object):
                 print('Correct cell not found after %d iterations' % maxIterSearch)
                 raise FieldSamplingError(x, y, 0, field=self)
 
-        zi = 0
-        zeta = -1
         if grid.zdim > 1:
-            if grid.z4d:
-                if tidx == len(self.grid.time)-1:
-                    depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
-                        xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
-                        xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
-                        (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
-                else:
-                    dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, tidx:tidx+2] + \
-                        xsi*(1-eta) * grid.depth[xi+1, yi, :, tidx:tidx+2] + \
-                        xsi*eta * grid.depth[xi+1, yi+1, :, tidx:tidx+2] + \
-                        (1-xsi)*eta * grid.depth[xi, yi+1, :, tidx:tidx+2]
-                    t0 = grid.time[tidx]
-                    t1 = grid.time[tidx + 1]
-                    depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
-            else:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :]
-            z = np.float32(z)
-            depth_index = depth_vector <= z
-            if z >= depth_vector[-1]:
-                zi = len(depth_vector) - 2
-            else:
-                zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-            if z < depth_vector[zi] or z > depth_vector[zi+1]:
-                raise FieldSamplingError(x, y, z, field=self)
-            zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
-            assert(zeta >= 0 and zeta <= 1)
+            if grid.gtype == GridCode.CurvilinearZGrid:
+                (zi, zeta) = self.search_indices_vertical_z(z)
+            elif grid.gtype == GridCode.CurvilinearSGrid:
+                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
+        else:
+            zi = 0
+            zeta = 0
 
         assert(xsi >= 0 and xsi <= 1)
         assert(eta >= 0 and eta <= 1)
+        assert(zeta >= 0 and zeta <= 1)
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def interpolatorCurvilinear2D(self, tidx, z, y, x):
+    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
+        if self.grid.gtype == GridCode.RectilinearSGrid:
+            return self.search_indices_rectilinear(x, y, z, tidx, time)
+        else:
+            return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time)
+
+    def interpolator2D(self, tidx, z, y, x):
         xi = int(self.grid.xdim / 2)
         yi = int(self.grid.ydim / 2)
         (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
-        val = (1-xsi)*(1-eta) * self.data[tidx, yi, xi] + \
-            xsi*(1-eta) * self.data[tidx, yi, xi+1] + \
-            xsi*eta * self.data[tidx, yi+1, xi+1] + \
-            (1-xsi)*eta * self.data[tidx, yi+1, xi]
-        return val
+        if self.interp_method is 'nearest':
+            xii = xi if xsi <= .5 else xi+1
+            yii = yi if eta <= .5 else yi+1
+            return self.data[tidx, yii, xii]
+        elif self.interp_method is 'linear':
+            val = (1-xsi)*(1-eta) * self.data[tidx, yi, xi] + \
+                xsi*(1-eta) * self.data[tidx, yi, xi+1] + \
+                xsi*eta * self.data[tidx, yi+1, xi+1] + \
+                (1-xsi)*eta * self.data[tidx, yi+1, xi]
+            return val
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
-    def interpolatorCurvilinear3D(self, tidx, z, y, x, time):
+    def interpolator3D(self, tidx, z, y, x, time):
         xi = int(self.grid.xdim / 2)
         yi = int(self.grid.ydim / 2)
         (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, tidx, time)
-        data = self.data[tidx, zi, :, :].transpose()
-        f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
-            xsi*(1-eta) * data[xi+1, yi] + \
-            xsi*eta * data[xi+1, yi+1] + \
+        if self.interp_method is 'nearest':
+            xii = xi if xsi <= .5 else xi+1
+            yii = yi if eta <= .5 else yi+1
+            zii = zi if zeta <= .5 else zi+1
+            return self.data[tidx, zii, yii, xii]
+        elif self.interp_method is 'linear':
+            data = self.data[tidx, zi, :, :].transpose()
+            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
+                xsi*(1-eta) * data[xi+1, yi] + \
+                xsi*eta * data[xi+1, yi+1] + \
+                    (1-xsi)*eta * data[xi, yi+1]
+            data = self.data[tidx, zi+1, :, :].transpose()
+            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
+                xsi*(1-eta) * data[xi+1, yi] + \
+                xsi*eta * data[xi+1, yi+1] + \
                 (1-xsi)*eta * data[xi, yi+1]
-        data = self.data[tidx, zi+1, :, :].transpose()
-        f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
-            xsi*(1-eta) * data[xi+1, yi] + \
-            xsi*eta * data[xi+1, yi+1] + \
-            (1-xsi)*eta * data[xi, yi+1]
-        return (1-zeta) * f0 + zeta * f1
+            return (1-zeta) * f0 + zeta * f1
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, tidx, time):
         """Calculate the data of a field between two snapshots,
@@ -609,18 +610,17 @@ class Field(object):
 
     def spatial_interpolation(self, tidx, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
-        if self.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+
+        if self.grid.gtype is GridCode.RectilinearZGrid:  # The only case where we use scipy interpolation
             if self.grid.zdim == 1:
-                val = self.interpolator2D(tidx)((y, x))
-            elif self.grid.gtype == GridCode.RectilinearZGrid:
-                val = self.interpolator3D_rectilinear_z(tidx, z, y, x)
-            elif self.grid.gtype == GridCode.RectilinearSGrid:
-                val = self.interpolator3D_rectilinear_s(tidx, z, y, x, time)
-        elif self.grid.gtype == GridCode.CurvilinearGrid:
-            if self.grid.zdim == 1:
-                val = self.interpolatorCurvilinear2D(tidx, z, y, x)
+                val = self.interpolator2D_scipy(tidx)((y, x))
             else:
-                val = self.interpolatorCurvilinear3D(tidx, z, y, x, time)
+                val = self.interpolator3D_rectilinear_z(tidx, z, y, x)
+        elif self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+            if self.grid.zdim == 1:
+                val = self.interpolator2D(tidx, z, y, x)
+            else:
+                val = self.interpolator3D(tidx, z, y, x, time)
         else:
             raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
         if np.isnan(val):
