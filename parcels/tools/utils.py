@@ -1,17 +1,24 @@
 import numpy as np
 import xarray as xr
+from os import path
 from netCDF4 import Dataset
 
 
-def compute_curvilinear_rotation_angles(mesh_filename, angles_filename):
+def compute_curvilinear_rotation_angles(mesh_data, angles_filename):
 
-    dataset = xr.open_dataset(mesh_filename)
-    lonU = dataset.glamu.values[0, 0, :, :]
-    latU = dataset.gphiu.values[0, 0, :, :]
-    lonV = dataset.glamv.values[0, 0, :, :]
-    latV = dataset.gphiv.values[0, 0, :, :]
-    lonF = dataset.glamf.values[0, 0, :, :]
-    latF = dataset.gphif.values[0, 0, :, :]
+    (mesh_fname, ulonVar, ulatVar, vlonVar, vlatVar, flonVar, flatVar) = mesh_data
+
+    if path.isfile(angles_filename) and path.getmtime(angles_filename) > path.getmtime(mesh_fname):
+        return
+
+    dataset = xr.open_dataset(mesh_fname)
+    lonU = getattr(dataset, ulonVar).values[0, 0, :, :]
+    latU = getattr(dataset, ulatVar).values[0, 0, :, :]
+    lonV = getattr(dataset, vlonVar).values[0, 0, :, :]
+    latV = getattr(dataset, vlatVar).values[0, 0, :, :]
+    lonF = getattr(dataset, flonVar).values[0, 0, :, :]
+    latF = getattr(dataset, flatVar).values[0, 0, :, :]
+    dataset.close()
 
     rad = np.pi / 180.
     rpi = np.pi

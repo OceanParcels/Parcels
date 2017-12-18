@@ -1,10 +1,8 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearGrid
-from parcels import utils
 import numpy as np
 import math
 import pytest
-import xarray as xr
 from os import path
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -331,46 +329,14 @@ def test_curvilinear_grids(mode):
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_nemo_grid(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
-    datasetU = xr.open_dataset(data_path+'Uu_eastward_nemo_cross_180lon.nc')
-    datasetV = xr.open_dataset(data_path+'Vv_eastward_nemo_cross_180lon.nc')
-    utils.compute_curvilinear_rotation_angles(data_path+'mask_nemo_cross_180lon.nc',
-                                              data_path+'rotation_angles_nemo_cross_180lon.nc')
-    lonU = datasetU.nav_lon_u.values
-    latU = datasetU.nav_lat_u.values
-    timeU = datasetU.time_counter.values
-    U = datasetU.Uu.values
-    gridU = CurvilinearGrid('gridU', lonU, latU, time=timeU, mesh='spherical')
-    u_field = Field('U', U, grid=gridU, transpose=False)
-
-    lonV = datasetV.nav_lon_v.values
-    latV = datasetV.nav_lat_v.values
-    timeV = datasetV.time_counter.values
-    V = datasetV.Vv.values
-    gridV = CurvilinearGrid('gridV', lonV, latV, time=timeV, mesh='spherical')
-    v_field = Field('V', V, grid=gridV, transpose=False)
-
-    datasetA = xr.open_dataset(data_path+'rotation_angles_nemo_cross_180lon.nc')
-    lonAU = datasetA.lonU.values
-    latAU = datasetA.latU.values
-    lonAV = datasetA.lonV.values
-    latAV = datasetA.latV.values
-    gridAU = CurvilinearGrid('gridAU', lonAU, latAU, mesh='spherical')
-    gridAV = CurvilinearGrid('gridAV', lonAV, latAV, mesh='spherical')
-
-    cosU = datasetA.cosU.values
-    sinU = datasetA.sinU.values
-    cosU_field = Field('cosU', cosU, grid=gridAU, transpose=False)
-    sinU_field = Field('sinU', sinU, grid=gridAU, transpose=False)
-    cosV = datasetA.cosV.values
-    sinV = datasetA.sinV.values
-    cosV_field = Field('cosV', cosV, grid=gridAV, transpose=False)
-    sinV_field = Field('sinV', sinV, grid=gridAV, transpose=False)
-
-    other_fields = {'cosU': cosU_field,
-                    'sinU': sinU_field,
-                    'cosV': cosV_field,
-                    'sinV': sinV_field}
-    field_set = FieldSet(u_field, v_field, other_fields)
+    u_data = (data_path+'Uu_eastward_nemo_cross_180lon.nc',
+              'nav_lon_u', 'nav_lat_u', 'Uu')
+    v_data = (data_path+'Vv_eastward_nemo_cross_180lon.nc',
+              'nav_lon_v', 'nav_lat_v', 'Vv')
+    mesh_data = (data_path+'mask_nemo_cross_180lon.nc',
+                 'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
+    field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
+                                               mesh='spherical')
 
     def sampleVel(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
@@ -385,8 +351,8 @@ def test_nemo_grid(mode):
     latp = 81.5
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    u = u_field.units.to_source(pset[0].zonal, lonp, latp, 0)
-    v = v_field.units.to_source(pset[0].meridional, lonp, latp, 0)
+    u = field_set.U.units.to_source(pset[0].zonal, lonp, latp, 0)
+    v = field_set.V.units.to_source(pset[0].meridional, lonp, latp, 0)
     assert abs(u - 1) < 1e-4
     assert abs(v) < 1e-4
 
@@ -395,47 +361,14 @@ def test_nemo_grid(mode):
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_advect_nemo(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
-    datasetU = xr.open_dataset(data_path+'Uu_eastward_nemo_cross_180lon.nc')
-    datasetV = xr.open_dataset(data_path+'Vv_eastward_nemo_cross_180lon.nc')
-    utils.compute_curvilinear_rotation_angles(data_path+'mask_nemo_cross_180lon.nc',
-                                              data_path+'rotation_angles_nemo_cross_180lon.nc')
-
-    lonU = datasetU.nav_lon_u.values
-    latU = datasetU.nav_lat_u.values
-    timeU = datasetU.time_counter.values
-    U = datasetU.Uu.values
-    gridU = CurvilinearGrid('gridU', lonU, latU, time=timeU, mesh='spherical')
-    u_field = Field('U', U, grid=gridU, transpose=False)
-
-    lonV = datasetV.nav_lon_v.values
-    latV = datasetV.nav_lat_v.values
-    timeV = datasetV.time_counter.values
-    V = datasetV.Vv.values
-    gridV = CurvilinearGrid('gridV', lonV, latV, time=timeV, mesh='spherical')
-    v_field = Field('V', V, grid=gridV, transpose=False)
-
-    datasetA = xr.open_dataset(data_path+'rotation_angles_nemo_cross_180lon.nc')
-    lonAU = datasetA.lonU.values
-    latAU = datasetA.latU.values
-    lonAV = datasetA.lonV.values
-    latAV = datasetA.latV.values
-    gridAU = CurvilinearGrid('gridAU', lonAU, latAU, mesh='spherical')
-    gridAV = CurvilinearGrid('gridAV', lonAV, latAV, mesh='spherical')
-
-    cosU = datasetA.cosU.values
-    sinU = datasetA.sinU.values
-    cosU_field = Field('cosU', cosU, grid=gridAU, transpose=False)
-    sinU_field = Field('sinU', sinU, grid=gridAU, transpose=False)
-    cosV = datasetA.cosV.values
-    sinV = datasetA.sinV.values
-    cosV_field = Field('cosV', cosV, grid=gridAV, transpose=False)
-    sinV_field = Field('sinV', sinV, grid=gridAV, transpose=False)
-
-    other_fields = {'cosU': cosU_field,
-                    'sinU': sinU_field,
-                    'cosV': cosV_field,
-                    'sinV': sinV_field}
-    field_set = FieldSet(u_field, v_field, other_fields)
+    u_data = (data_path+'Uu_eastward_nemo_cross_180lon.nc',
+              'nav_lon_u', 'nav_lat_u', 'Uu')
+    v_data = (data_path+'Vv_eastward_nemo_cross_180lon.nc',
+              'nav_lon_v', 'nav_lat_v', 'Vv')
+    mesh_data = (data_path+'mask_nemo_cross_180lon.nc',
+                 'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
+    field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
+                                               mesh='spherical')
 
     def eulerAdvect(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
