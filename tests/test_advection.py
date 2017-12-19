@@ -107,7 +107,7 @@ def periodicfields(xdim, ydim, uvel, vvel):
 
     data = {'U': uvel * np.ones((xdim, ydim), dtype=np.float32),
             'V': vvel * np.ones((xdim, ydim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh='spherical')
+    return FieldSet.from_data(data, dimensions, mesh='flat')
 
 
 def periodicBC(particle, fieldset, time, dt):
@@ -122,7 +122,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
     assert(len(fieldset.U.lon) == xdim + 2 * halosize)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=0.65, dt=0.01)
     assert abs(pset[0].lon - 0.15) < 0.1
 
 
@@ -133,7 +133,7 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=0.65, dt=0.01)
     assert abs(pset[0].lat - 0.15) < 0.1
 
 
@@ -147,7 +147,7 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=0.65, dt=0.01)
     assert abs(pset[0].lon - 0.05) < 0.1
     assert abs(pset[0].lat - 0.15) < 0.1
 

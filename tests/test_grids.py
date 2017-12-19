@@ -336,8 +336,6 @@ def test_nemo_grid(mode):
                  'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
     field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
                                                mesh='spherical')
-    for g in field_set.gridset.grids:
-        g.lon_grid_to_target()
 
     def sampleVel(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
@@ -369,8 +367,6 @@ def test_advect_nemo(mode):
                  'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
     field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
                                                mesh='spherical')
-    for g in field_set.gridset.grids:
-        g.lon_grid_to_target()
 
     def eulerAdvect(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]

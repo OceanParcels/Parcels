@@ -442,13 +442,14 @@ class Field(object):
     def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
 
         grid = self.grid
-        if x < grid.lon[0] or x > grid.lon[-1]:
+        lon_monotonic = np.where(grid.lon < grid.min_lon_source, grid.lon+360, grid.lon)
+        if x < lon_monotonic[0] or x > lon_monotonic[-1]:
             raise FieldSamplingError(x, y, z, field=self)
         if y < grid.lat[0] or y > grid.lat[-1]:
             raise FieldSamplingError(x, y, z, field=self)
 
         xi = yi = -1
-        lon_index = grid.lon <= x
+        lon_index = lon_monotonic <= x
         if lon_index.all():
             xi = len(grid.lon) - 2
         else:
@@ -459,7 +460,7 @@ class Field(object):
         else:
             yi = lat_index.argmin() - 1 if lat_index.any() else 0
 
-        xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+        xsi = (x-lon_monotonic[xi]) / (lon_monotonic[xi+1]-lon_monotonic[xi])
         eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
 
         if grid.zdim > 1:
@@ -489,6 +490,7 @@ class Field(object):
         it = 0
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            px = np.where(px < grid.min_lon_source, px+360, px)
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)

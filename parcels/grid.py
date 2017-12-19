@@ -18,28 +18,6 @@ class CGrid(Structure):
                 ('grid', c_void_p)]
 
 
-class SphericalRemapping(object):
-    def __init__(self, lon):
-        self.min_lon_source = np.min(lon[:, 0])
-        self.min_lon_target = None
-        self.max_lon_target = None
-
-    def to_target(self, lon):
-        lon = np.where(lon < self.min_lon_source, lon+360, lon)
-        self.min_lon_target = np.min(lon)
-        self.max_lon_target = np.max(lon)
-        return lon
-
-    def to_source(self, lon):
-        lon = np.where(lon > self.min_lon_source+360, lon-360, lon)
-        return lon
-
-    def particle_to_target(self, lon):
-        if lon > self.max_lon_target:
-            return lon - 360
-            # This is uncorrect at this stage.
-
-
 class Grid(object):
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined
 
@@ -96,6 +74,10 @@ class RectilinearGrid(Grid):
         self.tdim = self.time.size
         self.time_origin = time_origin
         self.mesh = mesh
+        if self.mesh == 'spherical':
+            self.min_lon_source = lon[0]
+        else:
+            self.min_lon_source = -1e100
         self.cstruct = None
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
@@ -134,22 +116,22 @@ class RectilinearGrid(Grid):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid."""
 
-        class CRectilinearGrid(Structure):
+        class CStructuredGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int),
+                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_float),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
-            self.cstruct = CRectilinearGrid(self.xdim, self.ydim, self.zdim,
-                                            self.tdim, self.z4d,
-                                            self.lon.ctypes.data_as(POINTER(c_float)),
-                                            self.lat.ctypes.data_as(POINTER(c_float)),
-                                            self.depth.ctypes.data_as(POINTER(c_float)),
-                                            self.time.ctypes.data_as(POINTER(c_double)))
+            self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
+                                           self.tdim, self.z4d, self.min_lon_source,
+                                           self.lon.ctypes.data_as(POINTER(c_float)),
+                                           self.lat.ctypes.data_as(POINTER(c_float)),
+                                           self.depth.ctypes.data_as(POINTER(c_float)),
+                                           self.time.ctypes.data_as(POINTER(c_double)))
         return self.cstruct
 
 
@@ -247,9 +229,9 @@ class CurvilinearGrid(Grid):
         self.time_origin = time_origin
         self.mesh = mesh
         if self.mesh == 'spherical':
-            self.lon_remapping = SphericalRemapping(self.lon)
+            self.min_lon_source = np.min(lon[:, 0])
         else:
-            self.lon_remapping = None
+            self.min_lon_source = -1e100
         self.cstruct = None
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
@@ -282,21 +264,21 @@ class CurvilinearGrid(Grid):
         """Returns a ctypes struct object containing all relevant
         pointers and sizes for this grid."""
 
-        class CRectilinearGrid(Structure):
+        class CStructuredGrid(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int),
+                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_float),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
-            self.cstruct = CRectilinearGrid(self.xdim, self.ydim, self.zdim,
-                                            self.tdim, self.z4d,
-                                            self.lon.ctypes.data_as(POINTER(c_float)),
-                                            self.lat.ctypes.data_as(POINTER(c_float)),
-                                            self.depth.ctypes.data_as(POINTER(c_float)),
-                                            self.time.ctypes.data_as(POINTER(c_double)))
+            self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
+                                           self.tdim, self.z4d, self.min_lon_source,
+                                           self.lon.ctypes.data_as(POINTER(c_float)),
+                                           self.lat.ctypes.data_as(POINTER(c_float)),
+                                           self.depth.ctypes.data_as(POINTER(c_float)),
+                                           self.time.ctypes.data_as(POINTER(c_double)))
         return self.cstruct
 
 

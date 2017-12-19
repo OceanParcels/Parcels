@@ -34,9 +34,10 @@ typedef struct
 typedef struct
 {
   int xdim, ydim, zdim, tdim, z4d;
+  float min_lon_source;
   float *lon, *lat, *depth;
   double *time;
-} CRectilinearGrid;
+} CStructuredGrid;
 
 typedef struct
 {
@@ -112,13 +113,28 @@ static inline ErrorCode search_indices_vertical_s(float z, int xdim, int ydim, i
 }
 
 static inline ErrorCode search_indices_rectilinear(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals, GridCode gcode,
+                                            float *xvals, float *yvals, float *zvals, float min_lon_source, GridCode gcode,
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
-  if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
-  while (*i > 0 && x < xvals[*i]) --(*i);
+  float xvals0 = (xvals[0] < min_lon_source) ? xvals[0]+360 : xvals[0];
+  float xvalsEnd = (xvals[xdim-1] < min_lon_source) ? xvals[xdim-1]+360 : xvals[xdim-1];
+  if (x < xvals0 || x > xvalsEnd) {return ERROR_OUT_OF_BOUNDS;}
+  //while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
+  //while (*i > 0 && x < xvals[*i]) --(*i);
+  while (*i < xdim-1){
+    float xvalsi1 = (xvals[*i+1] < min_lon_source) ? xvals[*i+1]+360 : xvals[*i+1];
+    if (xvalsi1 > x)
+      break;
+    ++(*i);
+  }
+  while (*i > 0){
+    float xvalsi = (xvals[*i] < min_lon_source) ? xvals[*i]+360 : xvals[*i];
+    if (xvalsi < x)
+      break;
+    --(*i);
+  }
+
   /* Lowering index by 1 if last index, to avoid out-of-array sampling
   for index+1 in spatial-interpolation*/
   if (*i == xdim-1) {--*i;}
@@ -130,7 +146,9 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
   for index+1 in spatial-interpolation*/
   if (*j == ydim-1) {--*j;}
 
-  *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
+  float xvalsi = (xvals[*i] < min_lon_source) ? xvals[*i]+360 : xvals[*i];
+  float xvalsi1 = (xvals[*i+1] < min_lon_source) ? xvals[*i+1]+360 : xvals[*i+1];
+  *xsi = (x - xvalsi) / (xvalsi1 - xvalsi);
   *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
 
   ErrorCode err;
@@ -160,7 +178,7 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
 }
 
 static inline ErrorCode search_indices_curvilinear(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals, GridCode gcode,
+                                            float *xvals, float *yvals, float *zvals, float min_lon_source, GridCode gcode,
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
@@ -173,10 +191,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    a[0] =  xgrid[*j][*i];
-    a[1] = -xgrid[*j][*i] + xgrid[*j][*i+1];
-    a[2] = -xgrid[*j][*i]                                       + xgrid[*j+1][*i];
-    a[3] =  xgrid[*j][*i] - xgrid[*j][*i+1] + xgrid[*j+1][*i+1] - xgrid[*j+1][*i];
+    float xgrid_ji = xgrid[*j][*i];
+    float xgrid_j1i = xgrid[*j+1][*i];
+    float xgrid_j1i1 = xgrid[*j+1][*i+1];
+    float xgrid_ji1 = xgrid[*j][*i+1];
+    if (xgrid_ji < min_lon_source) xgrid_ji += 360;
+    if (xgrid_j1i < min_lon_source) xgrid_j1i += 360;
+    if (xgrid_j1i1 < min_lon_source) xgrid_j1i1 += 360;
+    if (xgrid_ji1 < min_lon_source) xgrid_ji1 += 360;
+
+    a[0] =  xgrid_ji;
+    a[1] = -xgrid_ji      + xgrid_ji1;
+    a[2] = -xgrid_ji                                            + xgrid_j1i;
+    a[3] =  xgrid_ji      - xgrid_ji1       + xgrid_j1i1        - xgrid_j1i;
     b[0] =  ygrid[*j][*i];
     b[1] = -ygrid[*j][*i] + ygrid[*j][*i+1];
     b[2] = -ygrid[*j][*i]                                       + ygrid[*j+1][*i];
@@ -184,8 +211,8 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
 
     double aa = a[3]*b[2] - a[2]*b[3];
     if (fabs(aa) < 1e-6){  // Rectilinear  cell, or quasi
-      *xsi = ( (x-xgrid[*j][*i]) / (xgrid[*j][*i+1]-xgrid[*j][*i])
-           +   (x-xgrid[*j+1][*i]) / (xgrid[*j+1][*i+1]-xgrid[*j+1][*i]) ) * .5;
+      *xsi = ( (x-xgrid_ji) / (xgrid_ji1-xgrid_ji)
+           +   (x-xgrid_j1i) / (xgrid_j1i1-xgrid_j1i) ) * .5;
       *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
            +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
     }
@@ -250,19 +277,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
  * */
 static inline ErrorCode search_indices(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals,
-                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta, float min_lon_source,
                                             GridCode gcode, int z4d,
                                             int ti, int tdim, double time, double t0, double t1, float *z0, float *z1)
 {
   switch(gcode){
     case RECTILINEAR_Z_GRID:
     case RECTILINEAR_S_GRID:
-      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, gcode, i, j, k, xsi, eta, zeta,
+      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, min_lon_source, gcode, i, j, k, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     case CURVILINEAR_Z_GRID:
     case CURVILINEAR_S_GRID:
-      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, gcode, i, j, k, xsi, eta, zeta,
+      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, min_lon_source, gcode, i, j, k, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     default:
@@ -355,7 +382,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
                                                                float *value, int interp_method)
 {
   ErrorCode err;
-  CRectilinearGrid *grid = f->grid->grid;
+  CStructuredGrid *grid = f->grid->grid;
 
   /* Find time index for temporal interpolation */
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
@@ -373,7 +400,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     float f0, f1;
     double t0 = grid->time[gridIndex->ti]; double t1 = grid->time[gridIndex->ti+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1, &z0, &z1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->min_lon_source, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1, &z0, &z1); CHECKERROR(err);
     int i = gridIndex->xi;
     int j = gridIndex->yi;
     int k = gridIndex->zi;
@@ -404,7 +431,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     return SUCCESS;
   } else {
     double t0 = grid->time[gridIndex->ti];
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1, &z0, &z1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->min_lon_source, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1, &z0, &z1); CHECKERROR(err);
     int i = gridIndex->xi;
     int j = gridIndex->yi;
     int k = gridIndex->zi;
