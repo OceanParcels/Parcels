@@ -489,22 +489,12 @@ class Field(object):
         it = 0
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-            if self.grid.mesh == 'spherical':
-                if x > 0:
-                    for i in range(len(px)):
-                        if abs(px[i]-x) > abs(px[i]+360-x):
-                            px[i] += 360
-                else:
-                    for i in range(len(px)):
-                        if abs(px[i]-x) > abs(px[i]-360-x):
-                            px[i] -= 360
-
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
-            if abs(aa) < 1e-6:  # Rectilinear  cell, or quasi
+            if abs(aa) < 1e-6:  # Rectilinear cell, or quasi
                 xsi = ((x-grid.lon[yi, xi]) / (grid.lon[yi, xi+1]-grid.lon[yi, xi])
                        + (x-grid.lon[yi+1, xi]) / (grid.lon[yi+1, xi+1]-grid.lon[yi+1, xi])) * .5
                 eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])

@@ -325,8 +325,7 @@ def test_curvilinear_grids(mode):
     assert(np.allclose(pset[0].speed, 1000))
 
 
-# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('mode', ['scipy'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nemo_grid(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
     u_data = (data_path+'Uu_eastward_nemo_cross_180lon.nc',
@@ -337,6 +336,8 @@ def test_nemo_grid(mode):
                  'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
     field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
                                                mesh='spherical')
+    for g in field_set.gridset.grids:
+        g.lon_grid_to_target()
 
     def sampleVel(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
@@ -357,8 +358,7 @@ def test_nemo_grid(mode):
     assert abs(v) < 1e-4
 
 
-# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('mode', ['scipy'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advect_nemo(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
     u_data = (data_path+'Uu_eastward_nemo_cross_180lon.nc',
@@ -369,6 +369,8 @@ def test_advect_nemo(mode):
                  'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
     field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
                                                mesh='spherical')
+    for g in field_set.gridset.grids:
+        g.lon_grid_to_target()
 
     def eulerAdvect(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]

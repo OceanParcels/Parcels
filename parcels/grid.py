@@ -18,6 +18,28 @@ class CGrid(Structure):
                 ('grid', c_void_p)]
 
 
+class SphericalRemapping(object):
+    def __init__(self, lon):
+        self.min_lon_source = np.min(lon[:, 0])
+        self.min_lon_target = None
+        self.max_lon_target = None
+
+    def to_target(self, lon):
+        lon = np.where(lon < self.min_lon_source, lon+360, lon)
+        self.min_lon_target = np.min(lon)
+        self.max_lon_target = np.max(lon)
+        return lon
+
+    def to_source(self, lon):
+        lon = np.where(lon > self.min_lon_source+360, lon-360, lon)
+        return lon
+
+    def particle_to_target(self, lon):
+        if lon > self.max_lon_target:
+            return lon - 360
+            # This is uncorrect at this stage.
+
+
 class Grid(object):
     """Grid class that defines a (spatial and temporal) grid on which Fields are defined
 
@@ -28,6 +50,19 @@ class Grid(object):
         self.cgrid = cast(pointer(self.child_ctypes_struct), c_void_p)
         cstruct = CGrid(self.gtype, self.cgrid.value)
         return cstruct
+
+    def lon_grid_to_target(self):
+        if self.lon_remapping:
+            self.lon = self.lon_remapping.to_target(self.lon)
+
+    def lon_grid_to_source(self):
+        if self.lon_remapping:
+            self.lon = self.lon_remapping.to_source(self.lon)
+
+    def lon_particle_to_target(self, lon):
+        if self.lon_remapping:
+            return self.lon_remapping.particle_to_target(lon)
+        return lon
 
 
 class RectilinearGrid(Grid):
@@ -211,6 +246,10 @@ class CurvilinearGrid(Grid):
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
         self.mesh = mesh
+        if self.mesh == 'spherical':
+            self.lon_remapping = SphericalRemapping(self.lon)
+        else:
+            self.lon_remapping = None
         self.cstruct = None
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
