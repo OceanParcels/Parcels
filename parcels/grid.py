@@ -75,7 +75,7 @@ class RectilinearGrid(Grid):
         self.time_origin = time_origin
         self.mesh = mesh
         if self.mesh == 'spherical':
-            self.min_lon_source = lon[0]
+            self.min_lon_source = self.lon[0]
         else:
             self.min_lon_source = -1e100
         self.cstruct = None
@@ -92,6 +92,8 @@ class RectilinearGrid(Grid):
             lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
             self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
                                       self.lon, self.lon[0:halosize] + lonshift))
+            if self.mesh == 'spherical':
+                self.min_lon_source = self.lon[0]
             self.xdim = self.lon.size
         if meridional:
             latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
@@ -229,7 +231,7 @@ class CurvilinearGrid(Grid):
         self.time_origin = time_origin
         self.mesh = mesh
         if self.mesh == 'spherical':
-            self.min_lon_source = np.min(lon[:, 0])
+            self.min_lon_source = np.min(self.lon[:, 0])
         else:
             self.min_lon_source = -1e100
         self.cstruct = None
