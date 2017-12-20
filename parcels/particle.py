@@ -183,8 +183,9 @@ class ScipyParticle(_Particle):
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
-                                                             self.depth, self.time)
+        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
+                                                             self.depth, time_string)
 
     def delete(self):
         self.state = ErrorCode.Delete
@@ -221,5 +222,6 @@ class JITParticle(ScipyParticle):
         self.CGridIndexSet = self.CGridIndexSetptr.value
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
-                                                             self.depth, self.time)
+        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
+                                                             self.depth, time_string)
