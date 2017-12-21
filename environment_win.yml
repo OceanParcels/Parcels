@@ -11,6 +11,8 @@ dependencies:
   - flake8>=2.1.0
   - git
   - m2w64-toolchain
+  - gsl
+  - m2w64-gsl
   - jupyter
   - matplotlib=2.0.2
   - netcdf4>=1.1.9
