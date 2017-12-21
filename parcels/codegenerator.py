@@ -529,6 +529,9 @@ class LoopGenerator(object):
         ccode += [str(c.Include("math.h", system=False))]
         ccode += [str(c.Include("time.h", system=False))]
 
+        # Define and assign extern varriable
+        ccode += ["gsl_rng *prng_state = (gsl_rng *)NULL;\n"]
+
         # Generate type definition for particle type
         vdecl = []
         for v in self.ptype.variables:
@@ -544,12 +547,12 @@ class LoopGenerator(object):
 
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
-                c.Pointer(c.Value(self.ptype.name, "particles")),
-                c.Value("double", "endtime"), c.Value("float", "dt")]
-        shared = ["particles"]
+                c.Pointer(c.Value(self.ptype.name, "particles")), c.Value("double", "endtime"), c.Value("float", "dt"),
+                c.Value("int", "seed"), c.Value("int", "numbers_pulled")]
+        # shared = ["particles"]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
-            shared += [field]
+            # shared += [field]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
         fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt']
@@ -569,16 +572,26 @@ class LoopGenerator(object):
                       c.Statement("break"))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
-        part_loop = c.Block([c.Statement("srand((int)time(NULL) ^ omp_get_thread_num())"),
-                             c.Pragma("omp for schedule(static)"),
-                             c.For("p = 0", "p < num_particles", "++p",
-                                   c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))])
+        part_loop = c.For("p = 0", "p < num_particles", "++p",
+                          c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
+        check_rng = c.If("prng_state == NULL || prev_seed != seed",
+                         c.Block([c.Statement("gsl_rng_env_setup()"),
+                                  c.Assign("rng_type", "gsl_rng_default"),
+                                  c.Assign("prng_state", "gsl_rng_alloc(rng_type)"),
+                                  c.Statement('gsl_rng_set(prng_state, (unsigned long int)seed)'),
+                                  c.Assign("prev_seed", "seed"),
+                                  c.Assign("rand_c", "0")]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
+                         c.Assign("static int rand_c", "0"),
+                         c.Assign("static int prev_seed", "0"),
+                         c.Pointer(c.Value("gsl_rng_type", "rng_type")),
                          c.Value("ErrorCode", "res"),
                          c.Value("double", "__dt, __tol"),
                          c.Assign("__tol", "1.e-6"),
+                         check_rng,
+                         c.For("", "rand_c < numbers_pulled", "++rand_c",c.Statement("gsl_rng_get(prng_state)")),
                          c.Statement("omp_set_num_threads(omp_get_num_procs())"),
-                         sign_dt, c.Pragma("omp parallel private(p,__dt,res)"),
+                         sign_dt, c.Pragma("omp parallel for private(p,__dt,res,sign_end_part) schedule(static)"),
                          part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]

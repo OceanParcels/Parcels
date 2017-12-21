@@ -8,6 +8,10 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <gsl/gsl_rng.h>
+
+#define GSL_RNG_TYPE mt19937
+#define GSL_RNG_SEED 0x1UL
 
 typedef enum
   {
@@ -354,24 +358,34 @@ static inline ErrorCode temporal_interpolation_linear(float x, float y, float z,
 /**************************************************/
 /*   Random number generation (RNG) functions     */
 /**************************************************/
+extern gsl_rng *prng_state;
+
 static void parcels_seed(int seed)
 {
-  srand(seed);
+  gsl_rng_env_setup();
+  const gsl_rng_type *default_rng_type = gsl_rng_default;
+  if (prng_state != NULL)
+  {
+	  gsl_rng_free(prng_state);
+	  prng_state = NULL;
+  }
+  prng_state = gsl_rng_alloc(default_rng_type);
+  gsl_rng_set(prng_state, (unsigned long)seed);
 }
 
 static inline float parcels_random()
 {
-  return (float)rand()/(float)(RAND_MAX);
+  return (float)gsl_rng_uniform(prng_state);
 }
 
 static inline float parcels_uniform(float low, float high)
 {
-  return (float)rand()/(float)(RAND_MAX / (high-low)) + low;
+  return (float)parcels_random()/(1.0 / (high-low)) + low;
 }
 
 static inline int parcels_randint(int low, int high)
-{	
-  return (rand() % (high-low)) + low;
+{
+  return (int)(gsl_rng_get(prng_state) % (high-low)) + low;
 }
 
 static inline float parcels_normalvariate(float loc, float scale)
@@ -384,8 +398,8 @@ static inline float parcels_normalvariate(float loc, float scale)
   static float y2;
 
   do {
-    x1 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
-    x2 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
+    x1 = 2.0 * (float)gsl_rng_uniform(prng_state) - 1.0;
+    x2 = 2.0 * (float)gsl_rng_uniform(prng_state) - 1.0;
     w = x1 * x1 + x2 * x2;
   } while ( w >= 1.0 );
 
@@ -393,6 +407,14 @@ static inline float parcels_normalvariate(float loc, float scale)
   y1 = x1 * w;
   y2 = x2 * w;
   return( loc + y1 * scale );
+}
+
+/*Function which is called when the library is unloaded from the system.*/
+__attribute__((destructor))
+static inline void close_library()
+{
+  if(prng_state != NULL)
+    gsl_rng_free(prng_state);
 }
 #ifdef __cplusplus
 }

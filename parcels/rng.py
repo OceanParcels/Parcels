@@ -5,11 +5,12 @@ import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
 
 
-__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate']
+__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', '_parcels_random_info']
 
 
 class Random(object):
     stmt_import = """#include "parcels.h"\n\n"""
+    assign_rng = """gsl_rng *prng_state = NULL;\n"""
     fnct_seed = """
 extern void pcls_seed(int seed){
   parcels_seed(seed);
@@ -35,7 +36,7 @@ extern float pcls_normalvariate(float loc, float scale){
   return parcels_normalvariate(loc, scale);
 }
 """
-    ccode = stmt_import + fnct_seed
+    ccode = stmt_import + assign_rng + fnct_seed
     ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate
     src_file = path.join(get_cache_dir(), "random.c")
     lib_file = path.join(get_cache_dir(), "random.so")
@@ -43,6 +44,8 @@ extern float pcls_normalvariate(float loc, float scale){
 
     def __init__(self):
         self._lib = None
+        self.seed = 1
+        self.numbers_pulled = 0
 
     @property
     def lib(self, compiler=GNUCompiler()):
@@ -58,9 +61,16 @@ extern float pcls_normalvariate(float loc, float scale){
 parcels_random = Random()
 
 
+def _parcels_random_info():
+    """Give the current seed and the times a number was pulled of the rng object."""
+    return parcels_random.seed, parcels_random.numbers_pulled
+
+
 def seed(seed):
     """Sets the seed for parcels internal RNG"""
     parcels_random.lib.pcls_seed(c_int(seed))
+    parcels_random.seed = seed
+    parcels_random.numbers_pulled = 0
 
 
 def random():
@@ -68,6 +78,7 @@ def random():
     rnd = parcels_random.lib.pcls_random
     rnd.argtype = []
     rnd.restype = c_float
+    parcels_random.numbers_pulled += 1
     return rnd()
 
 
@@ -76,6 +87,7 @@ def uniform(low, high):
     rnd = parcels_random.lib.pcls_uniform
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
+    parcels_random.numbers_pulled += 1
     return rnd(c_float(low), c_float(high))
 
 
@@ -84,6 +96,7 @@ def randint(low, high):
     rnd = parcels_random.lib.pcls_randint
     rnd.argtype = [c_int, c_int]
     rnd.restype = c_int
+    parcels_random.numbers_pulled += 1
     return rnd(c_int(low), c_int(high))
 
 
@@ -92,4 +105,5 @@ def normalvariate(loc, scale):
     rnd = parcels_random.lib.pcls_normalvariate
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
+    parcels_random.numbers_pulled += 2
     return rnd(c_float(loc), c_float(scale))
