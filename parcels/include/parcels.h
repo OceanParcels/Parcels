@@ -279,7 +279,7 @@ static inline ErrorCode search_indices(float x, float y, float z, int xdim, int 
                                             float *xvals, float *yvals, float *zvals,
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta, float min_lon_source,
                                             GridCode gcode, int z4d,
-                                            int ti, int tdim, double time, double t0, double t1, float *z0, float *z1)
+                                            int ti, int tdim, double time, double t0, double t1)
 {
   switch(gcode){
     case RECTILINEAR_Z_GRID:
@@ -394,13 +394,12 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
   double xsi, eta, zeta;
 
-  float z0 = 0, z1 = 0;
 
   if (gridIndex->ti < grid->tdim-1 && time > grid->time[gridIndex->ti]) {
     float f0, f1;
     double t0 = grid->time[gridIndex->ti]; double t1 = grid->time[gridIndex->ti+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->min_lon_source, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1, &z0, &z1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->min_lon_source, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1); CHECKERROR(err);
     int i = gridIndex->xi;
     int j = gridIndex->yi;
     int k = gridIndex->zi;
@@ -431,7 +430,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     return SUCCESS;
   } else {
     double t0 = grid->time[gridIndex->ti];
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->min_lon_source, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1, &z0, &z1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->min_lon_source, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1); CHECKERROR(err);
     int i = gridIndex->xi;
     int j = gridIndex->yi;
     int k = gridIndex->zi;
