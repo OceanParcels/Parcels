@@ -570,7 +570,7 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):
+    def show(self, with_particles=False, animation=False, show_time=None, vmin=None, vmax=None):
         """Method to 'show' a :class:`Field` using matplotlib
 
         :param with_particles: Boolean whether particles are also plotted on Field
@@ -588,6 +588,7 @@ class Field(object):
             return
 
         if with_particles or (not animation):
+            show_time = self.grid.time[0] if show_time is None else show_time
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
             if self.grid.time.size > 1:

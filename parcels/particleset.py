@@ -353,7 +353,7 @@ class ParticleSet(object):
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
         if np.isnan(show_time):
-            show_time = 0
+            show_time = self.fieldset.U.grid.time[0]
         if domain is not None:
             latN = nearest_index(self.fieldset.U.lat, domain[0])
             latS = nearest_index(self.fieldset.U.lat, domain[1])
