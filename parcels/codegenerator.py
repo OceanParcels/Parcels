@@ -279,6 +279,10 @@ class KernelGenerator(ast.NodeVisitor):
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
             if field_name == 'UV':
+                continue
+            args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+        for field_name, field in self.field_args.items():
+            if field_name == 'UV':
                 fieldset = field.fieldset
                 for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
                     try:
@@ -287,8 +291,6 @@ class KernelGenerator(ast.NodeVisitor):
                             args += [c.Pointer(c.Value("CField", "%s" % f))]
                     except:
                         continue
-            else:
-                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
