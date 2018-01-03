@@ -410,7 +410,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
         err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti+1]), &f1);
       } else {
         err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti+1]), &f0);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti+1]), &f1);
       }
     }
     else if  (interp_method == NEAREST){
