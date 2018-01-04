@@ -4,20 +4,18 @@ from os import path
 from netCDF4 import Dataset
 
 
-def compute_curvilinear_rotation_angles(mesh_data, angles_filename):
+def compute_curvilinear_rotation_angles(mesh_filename, rotation_angles_filename, variables, dimensions):
 
-    (mesh_fname, ulonVar, ulatVar, vlonVar, vlatVar, flonVar, flatVar) = mesh_data
-
-    if path.isfile(angles_filename) and path.getmtime(angles_filename) > path.getmtime(mesh_fname):
+    if path.isfile(rotation_angles_filename) and path.getmtime(rotation_angles_filename) > path.getmtime(mesh_filename):
         return
 
-    dataset = xr.open_dataset(mesh_fname)
-    lonU = np.squeeze(getattr(dataset, ulonVar).values)
-    latU = np.squeeze(getattr(dataset, ulatVar).values)
-    lonV = np.squeeze(getattr(dataset, vlonVar).values)
-    latV = np.squeeze(getattr(dataset, vlatVar).values)
-    lonF = np.squeeze(getattr(dataset, flonVar).values)
-    latF = np.squeeze(getattr(dataset, flatVar).values)
+    dataset = xr.open_dataset(mesh_filename)
+    lonU = np.squeeze(getattr(dataset, dimensions['U']['lon']).values)
+    latU = np.squeeze(getattr(dataset, dimensions['U']['lat']).values)
+    lonV = np.squeeze(getattr(dataset, dimensions['V']['lon']).values)
+    latV = np.squeeze(getattr(dataset, dimensions['V']['lat']).values)
+    lonF = np.squeeze(getattr(dataset, dimensions['F']['lon']).values)
+    latF = np.squeeze(getattr(dataset, dimensions['F']['lat']).values)
     dataset.close()
 
     rad = np.pi / 180.
@@ -56,29 +54,29 @@ def compute_curvilinear_rotation_angles(mesh_data, angles_filename):
     lonV = lonV[1:, 1:]
     latV = latV[1:, 1:]
 
-    subDataset = Dataset(angles_filename, 'w', format='NETCDF4')
+    subDataset = Dataset(rotation_angles_filename, 'w', format='NETCDF4')
     subDataset.createDimension('x', lonU.shape[1])
     subDataset.createDimension('y', lonU.shape[0])
-    lonUVar = subDataset.createVariable('lonU', 'f8', ('y', 'x',))
-    latUVar = subDataset.createVariable('latU', 'f8', ('y', 'x',))
+    lonUVar = subDataset.createVariable(dimensions['U']['lon'], 'f8', ('y', 'x',))
+    latUVar = subDataset.createVariable(dimensions['U']['lat'], 'f8', ('y', 'x',))
     lonUVar.valid_min = np.min(lonU)
     lonUVar.valid_max = np.max(lonU)
     lonUVar[:] = lonU
     latUVar[:] = latU
-    lonVVar = subDataset.createVariable('lonV', 'f8', ('y', 'x',))
-    latVVar = subDataset.createVariable('latV', 'f8', ('y', 'x',))
+    lonVVar = subDataset.createVariable(dimensions['V']['lon'], 'f8', ('y', 'x',))
+    latVVar = subDataset.createVariable(dimensions['V']['lat'], 'f8', ('y', 'x',))
     lonVVar.valid_min = np.min(lonV)
     lonVVar.valid_max = np.max(lonV)
     lonVVar[:] = lonV
     latVVar[:] = latV
 
-    cosUVar = subDataset.createVariable('cosU', 'f8', ('y', 'x',))
+    cosUVar = subDataset.createVariable(variables['cosU'], 'f8', ('y', 'x',))
     cosUVar[:] = gcosu
-    sinUVar = subDataset.createVariable('sinU', 'f8', ('y', 'x',))
+    sinUVar = subDataset.createVariable(variables['sinU'], 'f8', ('y', 'x',))
     sinUVar[:] = gsinu
-    cosVVar = subDataset.createVariable('cosV', 'f8', ('y', 'x',))
+    cosVVar = subDataset.createVariable(variables['cosV'], 'f8', ('y', 'x',))
     cosVVar[:] = gcosv
-    sinVVar = subDataset.createVariable('sinV', 'f8', ('y', 'x',))
+    sinVVar = subDataset.createVariable(variables['sinV'], 'f8', ('y', 'x',))
     sinVVar[:] = gsinv
 
     subDataset.close()

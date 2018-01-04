@@ -1,10 +1,8 @@
 from parcels.field import Field
 from parcels.gridset import GridSet
-from parcels.grid import RectilinearZGrid, CurvilinearZGrid
+from parcels.grid import RectilinearZGrid
 from parcels.loggers import logger
-from parcels.tools import utils
 import numpy as np
-import xarray as xr
 from os import path
 from glob import glob
 from copy import deepcopy
@@ -213,65 +211,6 @@ class FieldSet(object):
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                time_periodic=time_periodic, **kwargs)
-
-    @classmethod
-    def from_nemo_curvilinear(cls, u_data, v_data, mesh_data,
-                              allow_time_extrapolation=False,
-                              time_periodic=False, mesh='flat'):
-
-        (u_fname, ulonVar, ulatVar, uVar) = u_data
-        (v_fname, vlonVar, vlatVar, vVar) = v_data
-
-        data_path = path.dirname(mesh_data[0]) + '/'
-        rotation_data = data_path+'rotation_angles_nemo_cross_180lon.nc'
-        utils.compute_curvilinear_rotation_angles(mesh_data, rotation_data)
-
-        datasetU = xr.open_dataset(u_fname)
-        lonU = getattr(datasetU, ulonVar).values
-        latU = getattr(datasetU, ulatVar).values
-        latU = datasetU.nav_lat_u.values
-        timeU = datasetU.time_counter.values
-        U = getattr(datasetU, uVar).values
-        datasetU.close()
-        gridU = CurvilinearZGrid('gridU', lonU, latU, time=timeU, mesh=mesh)
-        u_field = Field('U', U, grid=gridU, transpose=False,
-                        allow_time_extrapolation=allow_time_extrapolation,
-                        time_periodic=time_periodic)
-
-        datasetV = xr.open_dataset(v_fname)
-        lonV = getattr(datasetV, vlonVar).values
-        latV = getattr(datasetV, vlatVar).values
-        timeV = datasetV.time_counter.values
-        V = getattr(datasetV, vVar).values
-        datasetV.close()
-        gridV = CurvilinearZGrid('gridV', lonV, latV, time=timeV, mesh=mesh)
-        v_field = Field('V', V, grid=gridV, transpose=False,
-                        allow_time_extrapolation=allow_time_extrapolation,
-                        time_periodic=time_periodic)
-
-        datasetA = xr.open_dataset(rotation_data)
-        lonAU = datasetA.lonU.values
-        latAU = datasetA.latU.values
-        lonAV = datasetA.lonV.values
-        latAV = datasetA.latV.values
-        gridAU = CurvilinearZGrid('gridAU', lonAU, latAU, mesh=mesh)
-        gridAV = CurvilinearZGrid('gridAV', lonAV, latAV, mesh=mesh)
-
-        cosU = datasetA.cosU.values
-        sinU = datasetA.sinU.values
-        cosU_field = Field('cosU', cosU, grid=gridAU, transpose=False)
-        sinU_field = Field('sinU', sinU, grid=gridAU, transpose=False)
-        cosV = datasetA.cosV.values
-        sinV = datasetA.sinV.values
-        cosV_field = Field('cosV', cosV, grid=gridAV, transpose=False)
-        sinV_field = Field('sinV', sinV, grid=gridAV, transpose=False)
-        datasetA.close()
-
-        other_fields = {'cosU': cosU_field,
-                        'sinU': sinU_field,
-                        'cosV': cosV_field,
-                        'sinV': sinV_field}
-        return FieldSet(u_field, v_field, other_fields)
 
     @property
     def fields(self):

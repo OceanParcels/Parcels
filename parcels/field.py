@@ -10,7 +10,8 @@ from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
 import math
-from grid import RectilinearZGrid, CGrid, GridCode
+from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
+                  CurvilinearSGrid, CGrid, GridCode)
 
 
 __all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
@@ -253,9 +254,8 @@ class Field(object):
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon, indslon = filebuffer.read_dimension('lon', indices)
-            lat, indslat = filebuffer.read_dimension('lat', indices)
-            depth, indsdepth = filebuffer.read_dimension('depth', indices)
+            lon, lat = filebuffer.read_lonlat(indices)
+            depth = filebuffer.read_depth(indices)
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
@@ -278,13 +278,22 @@ class Field(object):
                 time_origin = parse(str(time_origin))
 
         # Pre-allocate data before reading files into buffer
-        data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
+        depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
-                filebuffer.indslat = indslat
-                filebuffer.indslon = indslon
-                filebuffer.indsdepth = indsdepth
+                depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+                latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+                lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+                filebuffer.indslat = indices['lat'] if 'lat' in indices else range(latsize)
+                filebuffer.indslon = indices['lon'] if 'lon' in indices else range(lonsize)
+                filebuffer.indsdepth = indices['depth'] if 'depth' in indices else range(depthsize)
+                for inds in [filebuffer.indslat, filebuffer.indslon, filebuffer.indsdepth]:
+                    if not isinstance(inds, list):
+                        raise RuntimeError('Indices sur field subsetting need to be a list')
                 if 'data' in dimensions:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -292,7 +301,9 @@ class Field(object):
                 else:
                     filebuffer.name = name
 
-                if len(filebuffer.dataset[filebuffer.name].shape) is 3:
+                if len(filebuffer.dataset[filebuffer.name].shape) is 2:
+                    data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :]
+                elif len(filebuffer.dataset[filebuffer.name].shape) is 3:
                     data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:tidx+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
@@ -301,7 +312,18 @@ class Field(object):
         if 'time' in indices:
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
-        grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        if time.size == 1 and time[0] is None:
+            time[0] = 0
+        if len(lon.shape) == 1:
+            if len(depth.shape) == 1:
+                grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            else:
+                grid = RectilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        else:
+            if len(depth.shape) == 1:
+                grid = CurvilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            else:
+                grid = CurvilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
@@ -902,34 +924,46 @@ class FileBuffer(object):
     def __exit__(self, type, value, traceback):
         self.dataset.close()
 
-    def read_dimension(self, dimname, indices):
-        dim = getattr(self, dimname)
-        inds = indices[dimname] if dimname in indices else range(dim.size)
-        if not isinstance(inds, list):
-            raise RuntimeError('Index for '+dimname+' needs to be a list')
-        return dim[inds], inds
+    def subset(self, dim, dimname, indices):
+        if len(dim.shape) == 1:  # RectilinearZGrid
+            inds = indices[dimname] if dimname in indices else range(dim.size)
+            dim_inds = dim[inds]
+        else:
+            inds_lon = indices['lon'] if 'lon' in indices else range(dim.shape[-1])
+            inds_lat = indices['lat'] if 'lat' in indices else range(dim.shape[-2])
+            if len(dim.shape) == 2:  # CurvilinearGrid
+                dim_inds = dim[inds_lat, inds_lon]
+            elif len(dim.shape) == 3:  # SGrid
+                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
+                dim_inds = dim[inds_depth, inds_lat, inds_lon]
+            elif len(dim.shape) == 4:  # SGrid
+                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
+                dim_inds = dim[:, inds_depth, inds_lat, inds_lon]
+        return dim_inds
 
-    @property
-    def lon(self):
+    def read_lonlat(self, indices):
         lon = self.dataset[self.dimensions['lon']]
-        return lon[0, :] if len(lon.shape) > 1 else lon[:]
-
-    @property
-    def lat(self):
         lat = self.dataset[self.dimensions['lat']]
-        return lat[:, 0] if len(lat.shape) > 1 else lat[:]
+        if len(lon.shape):
+            if np.allclose(lon[0, :], lon[-1, :]) and np.allclose(lat[:, 0], lat[:, -1]):
+                lon = lon[0, :]
+                lat = lat[:, 0]
+        lon_subset = self.subset(lon, 'lon', indices)
+        lat_subset = self.subset(lat, 'lat', indices)
+        return lon_subset, lat_subset
 
-    @property
-    def depth(self):
+    def read_depth(self, indices):
         if 'depth' in self.dimensions:
             depth = self.dataset[self.dimensions['depth']]
-            return depth[:, 0] if len(depth.shape) > 1 else depth[:]
+            return self.subset(depth, 'depth', indices)
         else:
             return np.zeros(1)
 
     @property
     def data(self):
-        if len(self.dataset[self.name].shape) == 3:
+        if len(self.dataset[self.name].shape) == 2:
+            data = self.dataset[self.name][self.indslat, self.indslon]
+        elif len(self.dataset[self.name].shape) == 3:
             data = self.dataset[self.name][:, self.indslat, self.indslon]
         else:
             data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]

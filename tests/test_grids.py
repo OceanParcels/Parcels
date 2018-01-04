@@ -1,5 +1,6 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
+from parcels.scripts import utils
 import numpy as np
 import math
 import pytest
@@ -328,14 +329,39 @@ def test_curvilinear_grids(mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nemo_grid(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
-    u_data = (data_path+'Uu_eastward_nemo_cross_180lon.nc',
-              'nav_lon_u', 'nav_lat_u', 'Uu')
-    v_data = (data_path+'Vv_eastward_nemo_cross_180lon.nc',
-              'nav_lon_v', 'nav_lat_v', 'Vv')
-    mesh_data = (data_path+'mask_nemo_cross_180lon.nc',
-                 'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
-    field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
-                                               mesh='spherical')
+
+    mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
+    rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
+    variables = {'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+    dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'V': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'F': {'lon': 'glamf', 'lat': 'gphif'}}
+    utils.compute_curvilinear_rotation_angles(mesh_filename, rotation_angles_filename, variables, dimensions)
+
+    filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
+                 'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
+                 'cosU': rotation_angles_filename,
+                 'sinU': rotation_angles_filename,
+                 'cosV': rotation_angles_filename,
+                 'sinV': rotation_angles_filename}
+    variables = {'U': 'Uu',
+                 'V': 'Vv',
+                 'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+
+    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
+                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
+                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
+
+    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical')
 
     def sampleVel(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
@@ -359,14 +385,39 @@ def test_nemo_grid(mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advect_nemo(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
-    u_data = (data_path+'Uu_eastward_nemo_cross_180lon.nc',
-              'nav_lon_u', 'nav_lat_u', 'Uu')
-    v_data = (data_path+'Vv_eastward_nemo_cross_180lon.nc',
-              'nav_lon_v', 'nav_lat_v', 'Vv')
-    mesh_data = (data_path+'mask_nemo_cross_180lon.nc',
-                 'glamu', 'gphiu', 'glamv', 'gphiv', 'glamf', 'gphif')
-    field_set = FieldSet.from_nemo_curvilinear(u_data, v_data, mesh_data,
-                                               mesh='spherical')
+
+    mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
+    rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
+    variables = {'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+    dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'V': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'F': {'lon': 'glamf', 'lat': 'gphif'}}
+    utils.compute_curvilinear_rotation_angles(mesh_filename, rotation_angles_filename, variables, dimensions)
+
+    filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
+                 'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
+                 'cosU': rotation_angles_filename,
+                 'sinU': rotation_angles_filename,
+                 'cosV': rotation_angles_filename,
+                 'sinV': rotation_angles_filename}
+    variables = {'U': 'Uu',
+                 'V': 'Vv',
+                 'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+
+    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
+                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
+                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
+
+    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
 
     def eulerAdvect(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
