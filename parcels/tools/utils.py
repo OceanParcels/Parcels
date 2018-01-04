@@ -12,12 +12,12 @@ def compute_curvilinear_rotation_angles(mesh_data, angles_filename):
         return
 
     dataset = xr.open_dataset(mesh_fname)
-    lonU = getattr(dataset, ulonVar).values[0, 0, :, :]
-    latU = getattr(dataset, ulatVar).values[0, 0, :, :]
-    lonV = getattr(dataset, vlonVar).values[0, 0, :, :]
-    latV = getattr(dataset, vlatVar).values[0, 0, :, :]
-    lonF = getattr(dataset, flonVar).values[0, 0, :, :]
-    latF = getattr(dataset, flatVar).values[0, 0, :, :]
+    lonU = np.squeeze(getattr(dataset, ulonVar).values)
+    latU = np.squeeze(getattr(dataset, ulatVar).values)
+    lonV = np.squeeze(getattr(dataset, vlonVar).values)
+    latV = np.squeeze(getattr(dataset, vlatVar).values)
+    lonF = np.squeeze(getattr(dataset, flonVar).values)
+    latF = np.squeeze(getattr(dataset, flatVar).values)
     dataset.close()
 
     rad = np.pi / 180.
