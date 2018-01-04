@@ -944,8 +944,10 @@ class FileBuffer(object):
     def read_lonlat(self, indices):
         lon = self.dataset[self.dimensions['lon']]
         lat = self.dataset[self.dimensions['lat']]
-        if len(lon.shape):
-            if np.allclose(lon[0, :], lon[-1, :]) and np.allclose(lat[:, 0], lat[:, -1]):
+        if len(lon.shape) > 1:
+            londim = lon.shape[0]
+            latdim = lat.shape[1]
+            if np.allclose(lon[0, :], lon[int(londim/2), :]) and np.allclose(lat[:, 0], lat[:, int(latdim/2)]):
                 lon = lon[0, :]
                 lat = lat[:, 0]
         lon_subset = self.subset(lon, 'lon', indices)
