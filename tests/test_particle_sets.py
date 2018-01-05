@@ -66,6 +66,35 @@ def test_pset_create_with_time(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_repeated_release(fieldset, mode, npart=10):
+    time = np.arange(0, npart, 1)  # release 1 particle every second
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                       pclass=ptype[mode], time=time)
+    assert np.allclose([p.time for p in pset], time)
+
+    def IncrLon(particle, fieldset, time, dt):
+        particle.lon += 1.
+    pset.execute(IncrLon, dt=1., runtime=npart, interval=1)
+    assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('repeatdt', range(1, 3))
+def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, npart=10):
+
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=0.)
+    pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
+
+    def IncrLon(particle, fieldset, time, dt):
+        particle.sample_var += 1.
+    for i in range(npart):
+        assert len(pset) == (i // repeatdt) + 1
+        pset.execute(IncrLon, dt=1., runtime=1.)
+    assert np.allclose([p.sample_var for p in pset], np.arange(npart, -1, -repeatdt))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
@@ -128,7 +157,7 @@ def test_pset_add_execute(fieldset, mode, npart=10):
     for i in range(npart):
         pset += ptype[mode](lon=0.1, lat=0.1, fieldset=fieldset)
     for _ in range(3):
-        pset.execute(pset.Kernel(AddLat), starttime=0., endtime=1., dt=1.0)
+        pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
     assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
 
 
@@ -195,7 +224,7 @@ def test_pset_remove_kernel(fieldset, mode, npart=100):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
-    pset.execute(pset.Kernel(DeleteKernel), starttime=0., endtime=1., dt=1.0)
+    pset.execute(pset.Kernel(DeleteKernel), endtime=1., dt=1.0)
     assert(pset.size == 40)
 
 
@@ -209,7 +238,7 @@ def test_pset_multi_execute(fieldset, mode, npart=10, n=5):
                        lat=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
-        pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
+        pset.execute(k_add, runtime=1., dt=1.0)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
@@ -223,7 +252,7 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
                        lat=np.zeros(npart, dtype=np.float32))
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
-        pset.execute(k_add, starttime=0., endtime=1., dt=1.0)
+        pset.execute(k_add, runtime=1., dt=1.0)
         pset.remove(-1)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
 
@@ -280,20 +309,6 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, np
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize(('endtime', 'dt'), [(1., 0.), (0., 1.)])
-def test_pset_execute_dt_0(fieldset, mode, endtime, dt, npart=2):
-    def SetLat(particle, fieldset, time, dt):
-        particle.lat = .6
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
-    pset.execute(pset.Kernel(SetLat), starttime=0., endtime=endtime, dt=dt)
-    assert np.allclose([p.lon for p in pset], lon)
-    assert np.allclose([p.lat for p in pset], .6)
-    assert np.allclose([p.time for p in pset], 0)
-
-
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, mode, tmpdir, npart):
     filepath = tmpdir.join("pfile_once_written_variables")
@@ -306,7 +321,8 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
-    pset.execute(pset.Kernel(Update_v), starttime=0., endtime=1, dt=0.1, interval=0.2, output_file=pset.ParticleFile(name=filepath))
+    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, interval=0.2,
+                 output_file=pset.ParticleFile(name=filepath))
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     V_once = ncfile.variables['v_once'][:]
     assert np.all([p.v_once == 11.0 for p in pset])

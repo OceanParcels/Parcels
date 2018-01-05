@@ -575,23 +575,28 @@ class LoopGenerator(object):
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
-        fargs_str = ", ".join(['particles[p].time', 'sign * __dt'] + list(field_args.keys()) + list(const_args.keys()))
+        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys())
+                              + list(const_args.keys()))
         # Inner loop nest for forward runs
-        sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
+        sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
+        sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
+        notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
+                                   c.Statement("continue"))
         body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
-        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign * __dt"),
+        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
                                                  dt_pos, dt_0_break, c.Statement("continue")]))]
         body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
                       c.Statement("break"))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
-        part_loop = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_pos, time_loop]))
-        fbody = c.Block([c.Value("int", "p"), c.Value("ErrorCode", "res"),
-                         c.Value("double", "__dt, __tol, sign"), c.Assign("__tol", "1.e-6"),
-                         sign, part_loop])
+        part_loop = c.For("p = 0", "p < num_particles", "++p",
+                          c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
+        fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
+                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
+                         sign_dt, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)

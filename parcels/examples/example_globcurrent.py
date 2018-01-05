@@ -56,10 +56,10 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
         psetall[0].time = fieldsetall.U.time[-1]
 
     for i in irange:
-        psetsub.execute(AdvectionRK4, starttime=psetsub[0].time, runtime=delta(days=1), dt=dt)
+        psetsub.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
         fieldsetsub.advancetime(set_globcurrent_fieldset(files[i]))
 
-        psetall.execute(AdvectionRK4, starttime=psetall[0].time, runtime=delta(days=1), dt=dt)
+        psetall.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
 
@@ -85,8 +85,8 @@ def test_globcurrent_particles(mode):
 def test_globcurrent_time_extrapolation_error(mode):
     fieldset = set_globcurrent_fieldset()
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35])
-    starttime = fieldset.U.time[0]-delta(days=1).total_seconds()
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35],
+                       time=fieldset.U.time[0]-delta(days=1).total_seconds())
 
-    pset.execute(AdvectionRK4, starttime=starttime, runtime=delta(days=1),
+    pset.execute(AdvectionRK4, runtime=delta(days=1),
                  dt=delta(minutes=5), interval=delta(hours=1))

@@ -5,6 +5,7 @@ from parcels.field import FieldSamplingError
 from parcels.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
+import numpy as np
 import numpy.ctypeslib as npct
 import time
 from ctypes import c_int, c_float, c_double, c_void_p, byref
@@ -167,13 +168,18 @@ class Kernel(object):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
-        sign = 1. if dt > 0. else -1.
+        sign_dt = np.sign(dt)
         for p in pset.particles:
+            # Don't execute particles that aren't started yet
+            sign_end_part = np.sign(endtime - p.time)
+            if (sign_end_part != sign_dt) and (dt != 0):
+                continue
+
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
             while dt_pos > 1e-6 or dt == 0:
                 try:
-                    res = self.pyfunc(p, pset.fieldset, p.time, sign * dt_pos)
+                    res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
                 except FieldSamplingError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
@@ -188,7 +194,7 @@ class Kernel(object):
                 # Handle particle time and time loop
                 if res is None or res == ErrorCode.Success:
                     # Update time and repeat
-                    p.time += sign * dt_pos
+                    p.time += sign_dt * dt_pos
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     if dt == 0:
                         break

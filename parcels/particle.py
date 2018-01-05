@@ -1,5 +1,6 @@
 from parcels.kernels.error import ErrorCode
 from parcels.field import Field
+from parcels.loggers import logger
 from operator import attrgetter
 import numpy as np
 from parcels.gridset import GridIndexSet
@@ -123,6 +124,10 @@ class _Particle(object):
                 lat = self.getInitialValue(ptype, name='lat')
                 depth = self.getInitialValue(ptype, name='depth')
                 time = self.getInitialValue(ptype, name='time')
+                if time is None:
+                    logger.error('Cannot initialise a Variable with a Field if no time provided. '
+                                 'Add a "time=" to ParticleSet construction')
+                    exit(-1)
                 initial = v.initial[time, lon, lat, depth]
             else:
                 initial = v.initial
@@ -178,8 +183,9 @@ class ScipyParticle(_Particle):
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
-                                                             self.depth, self.time)
+        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
+                                                             self.depth, time_string)
 
     def delete(self):
         self.state = ErrorCode.Delete
@@ -216,5 +222,6 @@ class JITParticle(ScipyParticle):
         self.CGridIndexSet = self.CGridIndexSetptr.value
 
     def __repr__(self):
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%f)" % (self.id, self.lon, self.lat,
-                                                             self.depth, self.time)
+        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
+                                                             self.depth, time_string)
