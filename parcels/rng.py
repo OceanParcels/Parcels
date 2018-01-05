@@ -5,7 +5,7 @@ import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
 
 
-__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate']
+__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate']
 
 
 class Random(object):
@@ -35,8 +35,13 @@ extern float pcls_normalvariate(float loc, float scale){
   return parcels_normalvariate(loc, scale);
 }
 """
+    fnct_expovariate = """
+extern float pcls_expovariate(float lamb){
+  return parcels_expovariate(lamb);
+}
+"""
     ccode = stmt_import + fnct_seed
-    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate
+    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate + fnct_expovariate
     src_file = path.join(get_cache_dir(), "random.c")
     lib_file = path.join(get_cache_dir(), "random.so")
     log_file = path.join(get_cache_dir(), "random.log")
@@ -93,3 +98,11 @@ def normalvariate(loc, scale):
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
     return rnd(c_float(loc), c_float(scale))
+
+
+def expovariate(lamb):
+    """Returns a randome float of an exponential distribution with parameter lamb"""
+    rnd = parcels_random.lib.pcls_expovariate
+    rnd.argtype = c_float
+    rnd.restype = c_float
+    return rnd(c_float(lamb))
