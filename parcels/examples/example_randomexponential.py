@@ -7,7 +7,7 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def vertical_exponential(particle, fieldset, time, dt):
+def vertical_randomexponential(particle, fieldset, time, dt):
     # Kernel for random exponential variable in depth direction
 
     particle.depth = random.expovariate(fieldset.lambd)
@@ -25,7 +25,7 @@ def zero_fieldset(zdim=20):    # Define a flat field set with only one point in 
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_expo_example(mode, npart=2000):
+def test_randomexponential_example(mode, npart=2000):
     fieldset = zero_fieldset()
 
     # Rate parameter
@@ -34,24 +34,16 @@ def test_expo_example(mode, npart=2000):
     # Set random seed
     random.seed(123456)
 
-    pset = ParticleSet.from_line(fieldset=fieldset, size=npart, pclass=ptype[mode],
-                                 start=(0., 0., 0.),
-                                 finish=(0., 0., 0.))
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     endtime = delta(hours=1)
     dt = delta(hours=1)
     interval = delta(hours=1)
 
-    k_expo = pset.Kernel(vertical_exponential)
+    k_expo = pset.Kernel(vertical_randomexponential)
 
-    pset.execute(k_expo, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="ExpoParticle"),
-                 show_movie=False)
+    pset.execute(k_expo, endtime=endtime, dt=dt, interval=interval)
 
     depth = np.array([particle.depth for particle in pset.particles])
     expected_mean = 1./fieldset.lambd
     assert np.allclose(np.mean(depth), expected_mean, rtol=.1)
-
-
-if __name__ == "__main__":
-    test_expo_example('jit')
