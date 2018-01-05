@@ -40,9 +40,7 @@ def test_randomexponential_example(mode, npart=2000):
     dt = delta(hours=1)
     interval = delta(hours=1)
 
-    k_expo = pset.Kernel(vertical_randomexponential)
-
-    pset.execute(k_expo, endtime=endtime, dt=dt, interval=interval)
+    pset.execute(vertical_randomexponential, endtime=endtime, dt=dt, interval=interval)
 
     depth = np.array([particle.depth for particle in pset.particles])
     expected_mean = 1./fieldset.lambd
