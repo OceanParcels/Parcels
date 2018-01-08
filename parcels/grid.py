@@ -248,23 +248,27 @@ class CurvilinearGrid(Grid):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
-            lonshift = (self.lon[:,-1] - 2 * self.lon[:,0] + self.lon[:,1])
+            lonshift = (self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1])
             if self.lon.shape[1] > 3:
-                if np.min(self.lon[:,-3]) < self.min_lon_source:
-                    lonshift +=360
-            self.lon = np.concatenate((self.lon[:,-halosize:] - lonshift[:, np.newaxis],
-                self.lon, self.lon[:,0:halosize] + lonshift[:, np.newaxis]), axis=len(self.lon.shape)-1)
-            self.lat = np.concatenate((self.lat[:,-halosize:],
-                self.lat, self.lat[:,0:halosize]), axis=len(self.lat.shape)-1)
+                if np.min(self.lon[:, -3]) < self.min_lon_source:
+                    lonshift += 360
+            self.lon = np.concatenate((self.lon[:, -halosize:] - lonshift[:, np.newaxis],
+                                       self.lon, self.lon[:, 0:halosize] + lonshift[:, np.newaxis]),
+                                      axis=len(self.lon.shape)-1)
+            self.lat = np.concatenate((self.lat[:, -halosize:],
+                                       self.lat, self.lat[:, 0:halosize]),
+                                      axis=len(self.lat.shape)-1)
             if self.mesh == 'spherical':
-                self.min_lon_source = np.min(self.lon[:,0])
+                self.min_lon_source = np.min(self.lon[:, 0])
             self.xdim = self.lon.shape[1]
         if meridional:
-            latshift = (self.lat[-1,:] - 2 * self.lat[0,:] + self.lat[1,:])
-            self.lat = np.concatenate((self.lat[-halosize:,:] - latshift[np.newaxis, :],
-                self.lat, self.lat[0:halosize,:] + latshift[np.newaxis, :]), axis=len(self.lat.shape)-2)
-            self.lon = np.concatenate((self.lon[-halosize:,:],
-                self.lon, self.lon[0:halosize,:]), axis=len(self.lon.shape)-2)
+            latshift = (self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :])
+            self.lat = np.concatenate((self.lat[-halosize:, :] - latshift[np.newaxis, :],
+                                       self.lat, self.lat[0:halosize, :] + latshift[np.newaxis, :]),
+                                      axis=len(self.lat.shape)-2)
+            self.lon = np.concatenate((self.lon[-halosize:, :],
+                                       self.lon, self.lon[0:halosize, :]),
+                                      axis=len(self.lon.shape)-2)
             self.ydim = self.lat.shape[0]
 
     def advancetime(self, grid_new):

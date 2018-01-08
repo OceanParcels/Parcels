@@ -173,9 +173,7 @@ class Field(object):
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, mesh='flat'):
         self.name = name
         if self.name == 'UV':
-            self.phantom = True
             return
-        self.phantom = False
         self.data = data
         if grid:
             self.grid = grid
@@ -846,7 +844,7 @@ class Field(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
-        if self.phantom:
+        if self.name == 'UV':
             return
         if zonal:
             if len(self.data.shape) is 3:
@@ -874,7 +872,7 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
-        if self.phantom:
+        if self.name == 'UV':
             return
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
@@ -900,7 +898,7 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
-        if self.phantom:
+        if self.name == 'UV':
             return
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)

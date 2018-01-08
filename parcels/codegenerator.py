@@ -6,6 +6,7 @@ from collections import OrderedDict
 import math
 import random
 import numpy as np
+from grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
@@ -33,8 +34,8 @@ class FieldEvalNode(IntrinsicNode):
     def __init__(self, field, args, var, var2=None):
         self.field = field
         self.args = args
-        self.var = var
-        self.var2 = var2
+        self.var = var  # the variable in which the interpolated field is written
+        self.var2 = var2  # second variable for UV interpolation
 
 
 class ConstNode(IntrinsicNode):
@@ -155,15 +156,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # temporary variable and put the evaluation call on the stack.
         if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
-            tmp2 = None
-            if node.value.obj.name == 'UV':
-                tmp2 = self.get_tmp()
+            tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
             # Insert placeholder node for field eval ...
             self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp, tmp2)]
             # .. and return the name of the temporary that will be populated
-            if tmp2:
-                return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load())
-            return ast.Name(id=tmp)
+            return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load()) if tmp2 else ast.Name(id=tmp)
         else:
             return node
 
@@ -278,9 +275,8 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if field_name == 'UV':
-                continue
-            args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+            if field_name is not 'UV':
+                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.field_args.items():
             if field_name == 'UV':
                 fieldset = field.fieldset
@@ -290,7 +286,8 @@ class KernelGenerator(ast.NodeVisitor):
                         if f not in self.field_args:
                             args += [c.Pointer(c.Value("CField", "%s" % f))]
                     except:
-                        continue
+                        if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+                            raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 

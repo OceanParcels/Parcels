@@ -1,10 +1,11 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
-from parcels.scripts import utils
+from parcels import compute_curvilinearGrid_rotationAngles
 import numpy as np
 import math
 import pytest
 from os import path
+from datetime import timedelta as delta
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -298,12 +299,6 @@ def test_curvilinear_grids(mode):
     lon = r * np.cos(theta)
     lat = r * np.sin(theta)
     time = np.array([0, 86400], dtype=np.float64)
-    # import matplotlib.pyplot as plt
-    # plt.plot(xx,yy,"ob")
-    # plt.plot(lon,lat,".r")
-    # plt.axis('equal')
-    # plt.show()
-
     grid = CurvilinearZGrid('grid', lon, lat, time=time)
 
     u_data = np.ones((2, y.size, x.size), dtype=np.float32)
@@ -339,7 +334,7 @@ def test_nemo_grid(mode):
     dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
                   'V': {'lon': 'glamv', 'lat': 'gphiv'},
                   'F': {'lon': 'glamf', 'lat': 'gphif'}}
-    utils.compute_curvilinear_rotation_angles(mesh_filename, rotation_angles_filename, variables, dimensions)
+    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions)
 
     filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
                  'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
@@ -367,8 +362,6 @@ def test_nemo_grid(mode):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
 
     class MyParticle(ptype[mode]):
-        u = Variable('u', dtype=np.float32, initial=0.)
-        v = Variable('v', dtype=np.float32, initial=0.)
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
         meridional = Variable('meridional', dtype=np.float32, initial=0.)
 
@@ -395,7 +388,7 @@ def test_advect_nemo(mode):
     dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
                   'V': {'lon': 'glamv', 'lat': 'gphiv'},
                   'F': {'lon': 'glamf', 'lat': 'gphif'}}
-    utils.compute_curvilinear_rotation_angles(mesh_filename, rotation_angles_filename, variables, dimensions)
+    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions)
 
     filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
                  'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
@@ -419,21 +412,8 @@ def test_advect_nemo(mode):
 
     field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
 
-    def eulerAdvect(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
-        particle.lon += particle.zonal * dt
-        particle.lat += particle.meridional * dt
-        # print('P[%g, %2.6f] = (%g, %g)' % (particle.lon, particle.lat, particle.zonal, particle.meridional))
-
-    class MyParticle(ptype[mode]):
-        speed = Variable('speed', dtype=np.float32, initial=0.)
-        u = Variable('u', dtype=np.float32, initial=0.)
-        v = Variable('v', dtype=np.float32, initial=0.)
-        zonal = Variable('zonal', dtype=np.float32, initial=0.)
-        meridional = Variable('meridional', dtype=np.float32, initial=0.)
-
     lonp = 175.5
     latp = 81.5
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
-    pset.execute(pset.Kernel(eulerAdvect), runtime=86400*2, dt=3600*6)
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
+    pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
     assert abs(pset[0].lat - latp) < 1e-3
