@@ -187,6 +187,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   float (* ygrid)[xdim] = (float (*)[xdim]) yvals;
 
   float a[4], b[4];
+  if (x < min_lon_source) x += 360;
 
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
@@ -210,7 +211,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     b[3] =  ygrid[*j][*i] - ygrid[*j][*i+1] + ygrid[*j+1][*i+1] - ygrid[*j+1][*i];
 
     double aa = a[3]*b[2] - a[2]*b[3];
-    if (fabs(aa) < 1e-6){  // Rectilinear  cell, or quasi
+    if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
       *xsi = ( (x-xgrid_ji) / (xgrid_ji1-xgrid_ji)
            +   (x-xgrid_j1i) / (xgrid_j1i1-xgrid_j1i) ) * .5;
       *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])

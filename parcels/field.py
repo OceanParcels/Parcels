@@ -518,7 +518,7 @@ class Field(object):
             b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
-            if abs(aa) < 1e-6:  # Rectilinear cell, or quasi
+            if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
                 xsi = ((x-grid.lon[yi, xi]) / (grid.lon[yi, xi+1]-grid.lon[yi, xi])
                        + (x-grid.lon[yi+1, xi]) / (grid.lon[yi+1, xi+1]-grid.lon[yi+1, xi])) * .5
                 eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])
@@ -852,21 +852,21 @@ class Field(object):
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
                                             self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
-                assert self.data.shape[2] == self.grid.lon.size
+                assert self.data.shape[2] == self.grid.xdim
             else:
                 self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
                                             self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
-                assert self.data.shape[3] == self.grid.lon.size
+                assert self.data.shape[3] == self.grid.xdim
             self.lon = self.grid.lon
         if meridional:
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
                                             self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
-                assert self.data.shape[1] == self.grid.lat.size
+                assert self.data.shape[1] == self.grid.ydim
             else:
                 self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
                                             self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
-                assert self.data.shape[2] == self.grid.lat.size
+                assert self.data.shape[2] == self.grid.ydim
             self.lat = self.grid.lat
 
     def write(self, filename, varname=None):
