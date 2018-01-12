@@ -8,7 +8,6 @@ from os import path
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def run_nemo_curvilinear(mode, outfile):
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
@@ -92,6 +91,12 @@ def make_plot(trajfile):
     m.scatter(xs, ys, c=T.time, s=5)
 
     plt.show()
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+def test_nemo_curvilinear(mode):
+    outfile = 'nemo_particles'
+    run_nemo_curvilinear(mode, outfile)
 
 
 if __name__ == "__main__":
