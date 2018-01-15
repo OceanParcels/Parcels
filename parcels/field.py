@@ -459,28 +459,55 @@ class Field(object):
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
+    def fix_i_index(self, xi, dim, sphere_mesh):
+        if xi < 0:
+            if sphere_mesh:
+                xi = dim-2
+            else:
+                xi = 0
+        if xi > dim-2:
+            if sphere_mesh:
+                xi = 0
+            else:
+                xi = dim-2
+        return xi
+
     def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
 
         grid = self.grid
-        lon_monotonic = np.where(grid.lon < grid.min_lon_source, grid.lon+360, grid.lon)
-        if x < lon_monotonic[0] or x > lon_monotonic[-1]:
-            raise FieldSamplingError(x, y, z, field=self)
+        xi = yi = -1
+        lon_index = grid.lon <= x
+
+        if grid.mesh is not 'spherical':
+            if x < grid.lon[0] or x > grid.lon[-1]:
+                raise FieldSamplingError(x, y, z, field=self)
+            lon_index = grid.lon <= x
+            if lon_index.all():
+                xi = len(grid.lon) - 2
+            else:
+                xi = lon_index.argmin() - 1 if lon_index.any() else 0
+            xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+        else:
+            lon_fixed = grid.lon
+            lon_fixed = np.where(lon_fixed - x > 180., lon_fixed - 360, lon_fixed)
+            lon_fixed = np.where(x - lon_fixed > 180., lon_fixed + 360, lon_fixed)
+            if x < lon_fixed[0] or x > lon_fixed[-1]:
+                raise FieldSamplingError(x, y, z, field=self)
+            lon_index = lon_fixed <= x
+            if lon_index.all():
+                xi = len(lon_fixed) - 2
+            else:
+                xi = lon_index.argmin() - 1 if lon_index.any() else 0
+            xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+
         if y < grid.lat[0] or y > grid.lat[-1]:
             raise FieldSamplingError(x, y, z, field=self)
-
-        xi = yi = -1
-        lon_index = lon_monotonic <= x
-        if lon_index.all():
-            xi = len(grid.lon) - 2
-        else:
-            xi = lon_index.argmin() - 1 if lon_index.any() else 0
         lat_index = grid.lat <= y
         if lat_index.all():
             yi = len(grid.lat) - 2
         else:
             yi = lat_index.argmin() - 1 if lat_index.any() else 0
 
-        xsi = (x-lon_monotonic[xi]) / (lon_monotonic[xi+1]-lon_monotonic[xi])
         eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
 
         if grid.zdim > 1:
@@ -510,15 +537,17 @@ class Field(object):
         it = 0
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
-            px = np.where(px < grid.min_lon_source, px+360, px)
+            if grid.mesh == 'spherical':
+                px = np.where(px - x > 180, px-360, px)
+                px = np.where(-px + x > 180, px+360, px)
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
             if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
-                xsi = ((x-grid.lon[yi, xi]) / (grid.lon[yi, xi+1]-grid.lon[yi, xi])
-                       + (x-grid.lon[yi+1, xi]) / (grid.lon[yi+1, xi+1]-grid.lon[yi+1, xi])) * .5
+                xsi = ((x-px[0]) / (px[1]-px[0])
+                       + (x-px[3]) / (px[2]-px[3])) * .5
                 eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])
                        + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1])) * .5
             else:
@@ -531,14 +560,16 @@ class Field(object):
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
                 raise FieldSamplingError(x, y, 0, field=self)
-            if xsi < 0 and xi > 0:
+            if xsi < 0:
                 xi -= 1
-            elif xsi > 1 and xi < grid.xdim-1:
+            elif xsi > 1:
                 xi += 1
-            if eta < 0 and yi > 0:
+            if eta < 0:
                 yi -= 1
-            elif eta > 1 and yi < grid.ydim-1:
+            elif eta > 1:
                 yi += 1
+            xi = self.fix_i_index(xi, grid.xdim, grid.mesh == 'spherical')
+            yi = self.fix_i_index(yi, grid.ydim, False)
             it += 1
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
@@ -566,8 +597,8 @@ class Field(object):
             return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time)
 
     def interpolator2D(self, tidx, z, y, x):
-        xi = int(self.grid.xdim / 2)
-        yi = int(self.grid.ydim / 2)
+        xi = 0
+        yi = 0
         (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
@@ -856,6 +887,7 @@ class Field(object):
                                             self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
                 assert self.data.shape[3] == self.grid.xdim
             self.lon = self.grid.lon
+            self.lat = self.grid.lat
         if meridional:
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, -halosize:, :], self.data,

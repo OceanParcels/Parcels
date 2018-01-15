@@ -43,7 +43,6 @@ def run_nemo_curvilinear(mode, outfile):
                   'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
 
     field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
-    field_set.add_periodic_halo(zonal=True)
 
     def periodicBC(particle, fieldset, time, dt):
         if particle.lon > 432:
@@ -53,7 +52,7 @@ def run_nemo_curvilinear(mode, outfile):
     latp = [i for i in range(-70, 41, 10)]
     timep = [0 for i in range(-70, 41, 10)]
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp, time=timep)
-    kernel = AdvectionRK4 + pset.Kernel(periodicBC)
+    kernel = AdvectionRK4  # + pset.Kernel(periodicBC)
     pfile = ParticleFile(outfile, pset, type="indexed")
     pfile.write(pset, pset[0].time)
     for _ in range(160):

@@ -74,10 +74,6 @@ class RectilinearGrid(Grid):
         self.tdim = self.time.size
         self.time_origin = time_origin
         self.mesh = mesh
-        if self.mesh == 'spherical':
-            self.min_lon_source = self.lon[0]
-        else:
-            self.min_lon_source = -1e100
         self.cstruct = None
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
@@ -92,8 +88,6 @@ class RectilinearGrid(Grid):
             lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
             self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
                                       self.lon, self.lon[0:halosize] + lonshift))
-            if self.mesh == 'spherical':
-                self.min_lon_source = self.lon[0]
             self.xdim = self.lon.size
         if meridional:
             latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
@@ -121,7 +115,7 @@ class RectilinearGrid(Grid):
         class CStructuredGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_float),
+                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
@@ -129,7 +123,7 @@ class RectilinearGrid(Grid):
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
-                                           self.tdim, self.z4d, self.min_lon_source,
+                                           self.tdim, self.z4d, self.mesh == 'spherical',
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
@@ -230,10 +224,6 @@ class CurvilinearGrid(Grid):
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
         self.mesh = mesh
-        if self.mesh == 'spherical':
-            self.min_lon_source = np.min(self.lon[:, 0])
-        else:
-            self.min_lon_source = -1e100
         self.cstruct = None
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
@@ -248,27 +238,24 @@ class CurvilinearGrid(Grid):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
         if zonal:
-            lonshift = (self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1])
-            if self.lon.shape[1] > 3:
-                if np.min(self.lon[:, -3]) < self.min_lon_source:
-                    lonshift += 360
+            lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
             self.lon = np.concatenate((self.lon[:, -halosize:] - lonshift[:, np.newaxis],
                                        self.lon, self.lon[:, 0:halosize] + lonshift[:, np.newaxis]),
                                       axis=len(self.lon.shape)-1)
             self.lat = np.concatenate((self.lat[:, -halosize:],
                                        self.lat, self.lat[:, 0:halosize]),
                                       axis=len(self.lat.shape)-1)
-            if self.mesh == 'spherical':
-                self.min_lon_source = np.min(self.lon[:, 0])
             self.xdim = self.lon.shape[1]
+            self.ydim = self.lat.shape[0]
         if meridional:
-            latshift = (self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :])
+            latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
             self.lat = np.concatenate((self.lat[-halosize:, :] - latshift[np.newaxis, :],
                                        self.lat, self.lat[0:halosize, :] + latshift[np.newaxis, :]),
                                       axis=len(self.lat.shape)-2)
             self.lon = np.concatenate((self.lon[-halosize:, :],
                                        self.lon, self.lon[0:halosize, :]),
                                       axis=len(self.lon.shape)-2)
+            self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
 
     def advancetime(self, grid_new):
@@ -290,7 +277,7 @@ class CurvilinearGrid(Grid):
 
         class CStructuredGrid(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_float),
+                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
@@ -298,7 +285,7 @@ class CurvilinearGrid(Grid):
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
-                                           self.tdim, self.z4d, self.min_lon_source,
+                                           self.tdim, self.z4d, self.mesh == 'spherical',
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
@@ -399,8 +386,8 @@ class GridIndex(object):
     def __init__(self, grid, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         self.name = grid.name
-        self.xi = int(grid.xdim / 2)
-        self.yi = int(grid.ydim / 2)
+        self.xi = 0
+        self.yi = 0
         self.zi = 0
         self.ti = 0
 
