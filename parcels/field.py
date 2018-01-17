@@ -299,9 +299,9 @@ class Field(object):
                 else:
                     filebuffer.name = name
 
-                if len(filebuffer.dataset[filebuffer.name].shape) is 2:
+                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                     data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :]
-                elif len(filebuffer.dataset[filebuffer.name].shape) is 3:
+                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
                     data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:tidx+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
