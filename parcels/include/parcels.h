@@ -119,13 +119,13 @@ static inline void fix_i_index(int *i, int dim, int sphere_mesh)
     if (sphere_mesh)
       (*i) = dim-2; 
     else
-      (*i) == 0;
+      (*i) = 0;
   }
   if (*i > dim-2){
     if (sphere_mesh)
       (*i) = 0; 
     else
-      (*i) == dim-2;
+      (*i) = dim-2;
   }
 }
 
@@ -223,7 +223,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   float (* xgrid)[xdim] = (float (*)[xdim]) xvals;
   float (* ygrid)[xdim] = (float (*)[xdim]) yvals;
 
-  float a[4], b[4];
+  double a[4], b[4];
 
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;

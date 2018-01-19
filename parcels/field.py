@@ -322,6 +322,8 @@ class Field(object):
                 grid = CurvilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
                 grid = CurvilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        if name in ['cosU', 'sinU', 'cosV', 'sinV']:
+            allow_time_extrapolation = True
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
