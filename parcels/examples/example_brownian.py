@@ -49,7 +49,7 @@ def test_brownian_example(mode, npart=3000):
     ys = np.array([p.lat for p in pset]) * conversion
     xs = np.array([p.lon for p in pset]) * conversion  # since near equator, we do not need to care about curvature effect
 
-    tol = 100  # 100m tolerance
+    tol = 200  # 200m tolerance
     assert np.allclose(np.std(xs), expected_std_x, atol=tol)
     assert np.allclose(np.std(ys), expected_std_y, atol=tol)
     assert np.allclose(np.mean(xs), 0, atol=tol)
