@@ -43,7 +43,7 @@ def run_nemo_curvilinear(mode, outfile):
     # Now run particles as normal
     npart = 10
     lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 40, npart)]
+    latp = [i for i in np.linspace(-70, 50, npart)]
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile(outfile, pset)
