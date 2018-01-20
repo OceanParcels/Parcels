@@ -13,7 +13,7 @@ import math
 from grid import RectilinearZGrid, CGrid, GridCode
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
+__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
 
 
 class FieldSamplingError(RuntimeError):
@@ -126,6 +126,44 @@ class GeographicPolar(UnitConverter):
         return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
 
 
+class GeographicSquare(UnitConverter):
+    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
+    source_unit = 'm2'
+    target_unit = 'degree2'
+
+    def to_target(self, value, x, y, z):
+        return value / pow(1000. * 1.852 * 60., 2)
+
+    def to_source(self, value, x, y, z):
+        return value * pow(1000. * 1.852 * 60., 2)
+
+    def ccode_to_target(self, x, y, z):
+        return "pow(1.0 / (1000.0 * 1.852 * 60.0), 2)"
+
+    def ccode_to_source(self, x, y, z):
+        return "pow((1000.0 * 1.852 * 60.0), 2)"
+
+
+class GeographicPolarSquare(UnitConverter):
+    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
+        with a correction to account for narrower grid cells closer to the poles.
+    """
+    source_unit = 'm2'
+    target_unit = 'degree2'
+
+    def to_target(self, value, x, y, z):
+        return value / pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
+
+    def to_source(self, value, x, y, z):
+        return value * pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
+
+    def ccode_to_target(self, x, y, z):
+        return "pow(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+
+    def ccode_to_source(self, x, y, z):
+        return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -149,6 +187,10 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
+    unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
+                      'Kh_zonal': GeographicPolarSquare(),
+                      'Kh_meridional': GeographicSquare()}
+
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
@@ -165,12 +207,10 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        if self.grid.mesh is 'flat' or (name is not 'U' and name is not 'V'):
+        if self.grid.mesh is 'flat' or (name not in self.unitconverters.keys()):
             self.units = UnitConverter()
-        elif self.grid.mesh is 'spherical' and name == 'U':
-            self.units = GeographicPolar()
-        elif self.grid.mesh is 'spherical' and name == 'V':
-            self.units = Geographic()
+        elif self.grid.mesh is 'spherical':
+            self.units = self.unitconverters[name]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
