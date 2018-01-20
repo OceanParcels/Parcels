@@ -33,6 +33,7 @@ on the `Github Development Timeline page
 **Major features**
 
 * Advection of particles in 2D using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward and in 3D using the inbuilt kernel for Runge-Kutta4_3D (see :mod:`parcels.kernels.advection`)
+* Simple horizontal diffusion of particles using inbuilt Brownian Motion kernel (see :mod:`parcels.kernels.diffusion`)
 * Ability to define and execute custom kernels (see `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
 * Ability to add custom Variables to Particles (see `the Sampling-a-Field-with-Particles part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Sampling-a-Field-with-Particles>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
@@ -49,7 +50,7 @@ on the `Github Development Timeline page
 
 **Future development goals**
 
-* Diffusion of particles using suite of inbuilt kernels
+* More types of diffusion of particles using suite of inbuilt kernels
 * Support for unstructured grids
 * Implementation of parallel execution using tiling of the domain
 * Faster and more efficient code
