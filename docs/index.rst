@@ -37,7 +37,7 @@ on the `Github Development Timeline page
 * Ability to add custom Variables to Particles (see `the Sampling-a-Field-with-Particles part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Sampling-a-Field-with-Particles>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
 * Ability to run in both Scipy and JIT (Just-In-Time compilation) mode. The former is easier to debug, but the latter can be a factor 1,000 faster (see the `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_jit_vs_scipy.ipynb>`_)
-* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.fieldset.FieldSet.from_netcdf` and `the Reading-in-data-from-arbritrary-NetCDF-files part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
+* Ability to read in hydrodynamic field in NetCDF format from a suite of models (see `the Reading-in-data-from-arbritrary-NetCDF-files part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_). Parcels currently supports Rectilinear and Curvilinear grids in the horizontal (see also the `NEMO curvilinear grids tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_).
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_plotting.ipynb>`_)
 
@@ -50,7 +50,7 @@ on the `Github Development Timeline page
 **Future development goals**
 
 * Diffusion of particles using suite of inbuilt kernels
-* Support for non-rectangular grids, including unstructured meshes
+* Support for unstructured grids
 * Implementation of parallel execution using tiling of the domain
 * Faster and more efficient code
 * Advanced control of particles near land boundaries
@@ -64,6 +64,8 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 * `Parcels tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_ for a general introduction and overview into the main features of Parcels
 
 * `Periodic boundaries tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_ for a tutorial on how to implement periodic boundary conditions
+
+* `NEMO curvilinear grids tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_ for a tutorial on how to run Parcels on curvilinear grids such as those of the NEMO models
 
 * `FieldSet.advancetime() tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_advancetime.ipynb>`_ for a tutorial on how to use Parcels with datasets that have a large number of time snapshots.
 
@@ -191,6 +193,8 @@ However, there are some key limitations to the Kernels that everyone who wants t
       print("lon: %f, lat: %f" % (particle.lon, particle.lat))
 
 * Local variables can be used in Kernels, and these variables will be accessible in all concatenated Kernels. Note that these local variables are not shared between particles, and also not between time steps.
+
+* Note that one has to be careful with writing kernels for vector fields on Curvilinear grids. While Parcels automatically rotates the `U` and `V` field when necessary, this is not the case for for example wind data. In that case, one will have to write their own rotation function.
 
 All other functions and methods are not supported yet in Parcels Kernels. If there is a functionality that can not be programmed with this limited set of commands, please create an `Issue ticket <https://github.com/OceanParcels/parcels/issues>`_.
 
