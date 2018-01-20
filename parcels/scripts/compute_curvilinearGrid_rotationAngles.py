@@ -80,6 +80,7 @@ def compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filena
     latV = latV[1:, 1:]
 
     subDataset = Dataset(rotation_angles_filename, 'w', format='NETCDF4')
+    subDataset.source = 'parcels_compute_curvilinearGrid_rotationAngles'
     subDataset.createDimension('x', lonU.shape[1])
     subDataset.createDimension('y', lonU.shape[0])
     lonUVar = subDataset.createVariable(dimensions['U']['lon'], 'f8', ('y', 'x',))
