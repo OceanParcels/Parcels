@@ -253,25 +253,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    float xgrid_ji = xgrid[*j][*i];
-    float xgrid_j1i = xgrid[*j+1][*i];
-    float xgrid_j1i1 = xgrid[*j+1][*i+1];
-    float xgrid_ji1 = xgrid[*j][*i+1];
+    float xgrid_loc[4] = {xgrid[*j][*i], xgrid[*j][*i+1], xgrid[*j+1][*i+1], xgrid[*j+1][*i]};
     if (sphere_mesh){ //we are on the sphere
-      if (xgrid_ji   < x - 180) xgrid_ji += 360;
-      if (xgrid_ji   > x + 180) xgrid_ji -= 360;
-      if (xgrid_j1i  < x - 180) xgrid_j1i += 360;
-      if (xgrid_j1i  > x + 180) xgrid_j1i -= 360;
-      if (xgrid_j1i1 < x - 180) xgrid_j1i1 += 360;
-      if (xgrid_j1i1 > x + 180) xgrid_j1i1 -= 360;
-      if (xgrid_ji1  < x - 180) xgrid_ji1 += 360;
-      if (xgrid_ji1  > x + 180) xgrid_ji1 -= 360;
+      int i4;
+      for (i4 = 0; i4 < 4; ++i4){
+        if (xgrid_loc[i4] < x - 180) xgrid_loc[i4] += 360;
+        if (xgrid_loc[i4] > x + 180) xgrid_loc[i4] -= 360;
+      }
     }
 
-    a[0] =  xgrid_ji;
-    a[1] = -xgrid_ji      + xgrid_ji1;
-    a[2] = -xgrid_ji                                            + xgrid_j1i;
-    a[3] =  xgrid_ji      - xgrid_ji1       + xgrid_j1i1        - xgrid_j1i;
+    a[0] =  xgrid_loc[0];
+    a[1] = -xgrid_loc[0]  + xgrid_loc[1];
+    a[2] = -xgrid_loc[0]                                        + xgrid_loc[3];
+    a[3] =  xgrid_loc[0]  - xgrid_loc[1]    + xgrid_loc[2]      - xgrid_loc[3];
     b[0] =  ygrid[*j][*i];
     b[1] = -ygrid[*j][*i] + ygrid[*j][*i+1];
     b[2] = -ygrid[*j][*i]                                       + ygrid[*j+1][*i];
@@ -280,16 +274,16 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     double aa = a[3]*b[2] - a[2]*b[3];
     if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
       if( fabs(ygrid[*j+1][*i] - ygrid[*j][*i]) >  fabs(ygrid[*j][*i+1] - ygrid[*j][*i]) ){ // well-oriented cell, like in mid latitudes in NEMO
-        *xsi = ( (x-xgrid_ji) / (xgrid_ji1-xgrid_ji)
-             +   (x-xgrid_j1i) / (xgrid_j1i1-xgrid_j1i) ) * .5;
+        *xsi = ( (x-xgrid_loc[0]) / (xgrid_loc[1]-xgrid_loc[0])
+             +   (x-xgrid_loc[3]) / (xgrid_loc[2]-xgrid_loc[3]) ) * .5;
         *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
              +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
       }
       else{ // miss-oriented cell, like in the arctic in NEMO
         *xsi = ( (y-ygrid[*j][*i]) / (ygrid[*j][*i+1]-ygrid[*j][*i])
              +   (y-ygrid[*j+1][*i]) / (ygrid[*j+1][*i+1]-ygrid[*j+1][*i]) ) * .5;
-        *eta = ( (x-xgrid_ji) / (xgrid_j1i-xgrid_ji)
-             +   (x-xgrid_ji1) / (xgrid_j1i1-xgrid_ji1) ) * .5;
+        *eta = ( (x-xgrid_loc[0]) / (xgrid_loc[3]-xgrid_loc[0])
+             +   (x-xgrid_loc[1]) / (xgrid_loc[2]-xgrid_loc[1]) ) * .5;
       }
     }
     else{
