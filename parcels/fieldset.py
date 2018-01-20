@@ -1,11 +1,11 @@
 from parcels.field import Field
 from parcels.gridset import GridSet
+from parcels.grid import RectilinearZGrid
 from parcels.loggers import logger
 import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
-from grid import RectilinearZGrid
 
 
 __all__ = ['FieldSet']
@@ -22,6 +22,9 @@ class FieldSet(object):
         self.gridset = GridSet([])
         self.add_field(U)
         self.add_field(V)
+        UV = Field('UV', None)
+        UV.fieldset = self
+        self.UV = UV
 
         # Add additional fields as attributes
         for name, field in fields.items():
