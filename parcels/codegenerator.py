@@ -275,7 +275,7 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if field_name is not 'UV':
+            if field_name != 'UV':
                 args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.field_args.items():
             if field_name == 'UV':
