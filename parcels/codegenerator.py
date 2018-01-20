@@ -503,8 +503,7 @@ class KernelGenerator(ast.NodeVisitor):
             ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
         node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat,
-                              c.Statement("CHECKERROR(err)")])
+                              conv_stat, c.Statement("CHECKERROR(err)")])
 
     def visit_Return(self, node):
         self.visit(node.value)

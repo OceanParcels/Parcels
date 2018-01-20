@@ -5,7 +5,7 @@ from netCDF4 import Dataset
 from parcels.loggers import logger
 
 
-def compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions):
+def compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables=None, dimensions=None):
     """Function that computes and writes in a netcdf file the rotation angles for vector fields written
        in curvilinear C grids to zonal/meridional directions. It follows the NEMO standards.
        The angles are not directly computed since it is unnecessary and more expensive, but the cosine and sine
@@ -20,8 +20,8 @@ def compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filena
 
     :param mesh_filename: path to the mesh file which contains the coordinates of the U, V and F grids
     :param rotation_angles_filename: path of the rotation angles file to write
-    :param variables: dictionary of the names for the `cosU`, `sinU`, `cosV` and `sinV` variables in the rotation ncfile
-    :param dimensions: dictionary of dictionaries. The main dictionary contains the keys `U`, `V` and `F`.
+    :param variables: optional dictionary of the names for the `cosU`, `sinU`, `cosV` and `sinV` variables in the rotation ncfile.
+    :param dimensions: optional dictionary of dictionaries. The main dictionary contains the keys `U`, `V` and `F`.
                        In each subdictionary, the keys `lon` and `lat` give the name of the dimensions in the mesh ncfile.
     """
 
@@ -30,6 +30,16 @@ def compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filena
         return
 
     logger.info("Generating rotation angles fields in file: %s" % rotation_angles_filename)
+
+    if variables is None:
+        variables = {'cosU': 'cosU',
+                     'sinU': 'sinU',
+                     'cosV': 'cosV',
+                     'sinV': 'sinV'}
+    if dimensions is None:
+        dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
+                      'V': {'lon': 'glamv', 'lat': 'gphiv'},
+                      'F': {'lon': 'glamf', 'lat': 'gphif'}}
 
     dataset = xr.open_dataset(mesh_filename, decode_times=False)
     lonU = np.squeeze(getattr(dataset, dimensions['U']['lon']).values)

@@ -327,14 +327,7 @@ def test_nemo_grid(mode):
 
     mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
     rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
-    variables = {'cosU': 'cosU',
-                 'sinU': 'sinU',
-                 'cosV': 'cosV',
-                 'sinV': 'sinV'}
-    dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'F': {'lon': 'glamf', 'lat': 'gphif'}}
-    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions)
+    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename)
 
     filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
                  'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',

@@ -3,25 +3,23 @@ from parcels import compute_curvilinearGrid_rotationAngles
 from argparse import ArgumentParser
 import numpy as np
 import pytest
+from datetime import timedelta as delta
 from os import path
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def run_nemo_curvilinear(mode, outfile):
+    """Function that shows how to read in curvilinear grids, in this case from NEMO"""
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
+    # First, create a file with the rotation angles using the compute_curvilinearGrid_rotationAngles script
     mesh_filename = data_path + 'mesh_mask.nc4'
     rotation_angles_filename = data_path + 'rotation_angles.nc'
-    variables = {'cosU': 'cosU',
-                 'sinU': 'sinU',
-                 'cosV': 'cosV',
-                 'sinV': 'sinV'}
-    dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'F': {'lon': 'glamf', 'lat': 'gphif'}}
-    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions)
+    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename)
 
+    # Now define the variables and dimensions of both the zonal (U) and meridional (V)
+    # velocity, as well as the rotation angles just created in the rotation_angles.nc file
     filenames = {'U': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4',
                  'V': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4',
                  'cosU': rotation_angles_filename,
@@ -34,31 +32,24 @@ def run_nemo_curvilinear(mode, outfile):
                  'sinU': 'sinU',
                  'cosV': 'cosV',
                  'sinV': 'sinV'}
-
     dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
                   'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
                   'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
                   'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
                   'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
                   'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
-
     field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
 
-    def periodicBC(particle, fieldset, time, dt):
-        if particle.lon > 432:
-            particle.lon -= 360
+    # Now run particles as normal
+    npart = 10
+    lonp = 30 * np.ones(npart)
+    latp = [i for i in np.linspace(-70, 40, npart)]
 
-    lonp = [30 for i in range(-70, 41, 10)]
-    latp = [i for i in range(-70, 41, 10)]
-    timep = [0 for i in range(-70, 41, 10)]
-    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp, time=timep)
-    kernel = AdvectionRK4  # + pset.Kernel(periodicBC)
-    pfile = ParticleFile(outfile, pset, type="indexed")
-    pfile.write(pset, pset[0].time)
-    for _ in range(160):
-        pset.execute(kernel, runtime=86400*1, dt=3600*6)
-        pfile.write(pset, pset[0].time)
-    assert abs(pset[0].lat - latp[0]) < 1e-3
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
+    pfile = ParticleFile(outfile, pset)
+    pset.execute(AdvectionRK4, runtime=delta(days=1)*160, dt=delta(hours=6),
+                 interval=delta(days=1), output_file=pfile)
+    assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=1e-3)
 
 
 def make_plot(trajfile):
@@ -88,11 +79,10 @@ def make_plot(trajfile):
 
     xs, ys = m(T.lon, T.lat)
     m.scatter(xs, ys, c=T.time, s=5)
-
     plt.show()
 
 
-@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 def test_nemo_curvilinear(mode):
     outfile = 'nemo_particles'
     run_nemo_curvilinear(mode, outfile)
