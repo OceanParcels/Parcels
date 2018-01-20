@@ -566,9 +566,11 @@ class Field(object):
             else:
                 bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
                 cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
-                det = np.sqrt(bb*bb-4*aa*cc)
-                eta = (-bb+det)/(2*aa)
-                xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+                det2 = bb*bb-4*aa*cc
+                if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
+                    det = np.sqrt(det2)
+                    eta = (-bb+det)/(2*aa)
+                    xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
