@@ -130,6 +130,31 @@ static inline void fix_i_index(int *i, int dim, int sphere_mesh)
 }
 
 
+static inline void fix_ij_index(int *i, int *j, int xdim, int ydim, int sphere_mesh)
+{
+  if (*i < 0){
+    if (sphere_mesh)
+      (*i) = xdim-2;
+    else
+      (*i) = 0;
+  }
+  if (*i > xdim-2){
+    if (sphere_mesh)
+      (*i) = 0;
+    else
+      (*i) = xdim-2;
+  }
+  if (*j < 0){
+    (*j) = 0;
+  }
+  if (*j > ydim-2){
+    (*j) = ydim-2;
+    if (sphere_mesh)
+      (*i) = xdim - (*i);
+  }
+}
+
+
 static inline ErrorCode search_indices_rectilinear(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals, int sphere_mesh, GridCode gcode,
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
@@ -254,10 +279,18 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
 
     double aa = a[3]*b[2] - a[2]*b[3];
     if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
-      *xsi = ( (x-xgrid_ji) / (xgrid_ji1-xgrid_ji)
-           +   (x-xgrid_j1i) / (xgrid_j1i1-xgrid_j1i) ) * .5;
-      *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
-           +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
+      if( fabs(ygrid[*j+1][*i] - ygrid[*j][*i]) >  fabs(ygrid[*j][*i+1] - ygrid[*j][*i]) ){ // well-oriented cell, like in mid latitudes in NEMO
+        *xsi = ( (x-xgrid_ji) / (xgrid_ji1-xgrid_ji)
+             +   (x-xgrid_j1i) / (xgrid_j1i1-xgrid_j1i) ) * .5;
+        *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
+             +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
+      }
+      else{ // miss-oriented cell, like in the arctic in NEMO
+        *xsi = ( (y-ygrid[*j][*i]) / (ygrid[*j][*i+1]-ygrid[*j][*i])
+             +   (y-ygrid[*j+1][*i]) / (ygrid[*j+1][*i+1]-ygrid[*j+1][*i]) ) * .5;
+        *eta = ( (x-xgrid_ji) / (xgrid_j1i-xgrid_ji)
+             +   (x-xgrid_ji1) / (xgrid_j1i1-xgrid_ji1) ) * .5;
+      }
     }
     else{
       double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
@@ -280,8 +313,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
       (*j)--;
     if (*eta > 1)
       (*j)++;
-    fix_i_index(i, xdim, sphere_mesh);
-    fix_i_index(j, ydim, 0);
+    fix_ij_index(i, j, xdim, ydim, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
       printf("Correct cell not found after %d iterations\n", maxIterSearch);

@@ -41,13 +41,18 @@ def run_nemo_curvilinear(mode, outfile):
     field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
 
     # Now run particles as normal
-    npart = 10
+    npart = 20
     lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 50, npart)]
+    latp = [i for i in np.linspace(-70, 88, npart)]
+
+    def periodicBC(particle, pieldSet, time, dt):
+        if particle.lon > 180:
+            particle.lon -= 360
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile(outfile, pset)
-    pset.execute(AdvectionRK4, runtime=delta(days=1)*160, dt=delta(hours=6),
+    kernels = pset.Kernel(AdvectionRK4) + periodicBC
+    pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
                  interval=delta(days=1), output_file=pfile)
     assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=1e-3)
 
@@ -70,8 +75,7 @@ def make_plot(trajfile):
         return T
 
     T = load_particles_file(trajfile, ['lon', 'lat', 'time'])
-    m = Basemap(projection='merc', llcrnrlat=-85, urcrnrlat=85, llcrnrlon=-180, urcrnrlon=180, resolution='c')
-    m.drawcoastlines()
+    m = Basemap(projection='cyl')
     m.drawparallels(np.arange(-90, 91, 30), labels=[True, False, False, False])
     m.drawmeridians(np.arange(-180, 181, 60), labels=[False, False, False, True])
 
