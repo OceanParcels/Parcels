@@ -15,18 +15,18 @@ Its code is licensed under an `open source MIT license <https://github.com/Ocean
 
    *Animation of virtual particles carried by ocean surface flow in the* `Agulhas Current <https://en.wikipedia.org/wiki/Agulhas_Current>`_ *off South Africa. The particles are advected with* `Parcels <http://oceanparcels.org/>`_ *in data from the* `GlobCurrent Project <http://globcurrent.ifremer.fr/products-data/products-overview>`_. *See* `this tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Agulhasparticles.ipynb>`_ *for the Parcels code behind this animated gif.*
 
-Parcels v0.9 manuscript and code
+Parcels manuscript and code
 ===================================
 The manuscript detailing this first release of Parcels, version 0.9, has been published in `Geoscientific Model Development <https://www.geosci-model-dev.net/10/4175/2017/gmd-10-4175-2017.html>`_ and can be cited as
 
 *Lange, M. and E van Sebille (2017) Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age. Geoscientific Model Development, 10, 4175-4186. doi:10.5194/gmd-2017-167*
 
-The code is available at https://github.com/OceanParcels/parcels. Anyone is welcome to comment on the manuscript through the Geoscientific Model Development portal.
+The latest version of the code is available at https://github.com/OceanParcels/parcels.
 
 Parcels development status
 ===================================
 
-The current release of Parcels, version 0.9, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye
+The current release of Parcels, version 1.0, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye
 on the `Github Development Timeline page
 <https://github.com/OceanParcels/parcels/projects/1>`_
 
