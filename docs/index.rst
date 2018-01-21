@@ -199,6 +199,17 @@ However, there are some key limitations to the Kernels that everyone who wants t
 
 All other functions and methods are not supported yet in Parcels Kernels. If there is a functionality that can not be programmed with this limited set of commands, please create an `Issue ticket <https://github.com/OceanParcels/parcels/issues>`_.
 
+Parcels references
+===================================
+
+The following peer-reviewed articles have used Parcels
+
+* McAdam R and E van Sebille (2018) Surface connectivity and inter-ocean exchanges from drifter-based transition matrices. *Journal of Geophysical Research*, *in press*. doi:`10.1002/2017JC013363 <https://dx.doi.org/10.1002/2017JC013363>`_
+
+* van Sebille, E, SM Griffies, R Abernathey, TP Adams, P Berloff, A Biastoch, B Blanke, EP Chassignet, Y Cheng, CJ Cotter, E Deleersnijder, K Döös, HF Drake, S Drijfhout, SF Gary, AW Heemink, J Kjellsson, IM Koszalka, M Lange, C Lique, GA MacGilchrist, R Marsh, CG Mayorga Adame, R McAdam, F Nencioli, CB Paris, MD Piggott, JA Polton, S Rühs, SHAM Shah, MD Thomas, J Wang, PJ Wolfram, L Zanna, and JD Zika (2018) Lagrangian ocean analysis: fundamentals and practices. *Ocean Modelling*, *121*, 49-75. doi:`10.1016/j.ocemod.2017.11.008 <http://dx.doi.org/10.1016/j.ocemod.2017.11.008>`_
+
+* Lange, M and E van Sebille (2017) Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age. *Geoscientific Model Development*, *10*, 4175-4186. doi:`10.5194/gmd-2017-167 <https://www.geosci-model-dev.net/10/4175/2017/gmd-10-4175-2017.html>`_
+
 Parcels funding and support
 ===================================
 
