@@ -26,7 +26,7 @@ class GridSet(object):
             for attr in ['lon', 'lat', 'depth', 'time']:
                 gattr = getattr(g, attr)
                 gridattr = getattr(grid, attr)
-                if gattr.shape != gridattr.shape:
+                if gattr.shape != gridattr.shape or not np.allclose(gattr, gridattr):
                     sameGrid = False
                     break
             if not sameGrid:

@@ -80,7 +80,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
 
     pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
-                                 start=(100, 5000), finish=(200, 5000))
+                                 start=(100, 5000), finish=(200, 5000), time=0)
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)

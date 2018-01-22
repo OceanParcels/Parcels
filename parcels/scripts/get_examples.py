@@ -26,7 +26,10 @@ example_data_files = (
         for date in [datetime(2002, 1, 1) + timedelta(days=x)
                      for x in range(0, 365)]]] +
     ["DecayingMovingEddy_data/" + fn for fn in [
-        "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]])
+        "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]] +
+    ["NemoCurvilinear_data/" + fn for fn in [
+        "U_purely_zonal-ORCA025_grid_U.nc4", "V_purely_zonal-ORCA025_grid_V.nc4",
+        "mesh_mask.nc4"]])
 
 example_data_url = "http://oceanparcels.org/examples-data"
 

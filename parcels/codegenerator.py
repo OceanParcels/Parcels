@@ -6,6 +6,7 @@ from collections import OrderedDict
 import math
 import random
 import numpy as np
+from grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
@@ -30,10 +31,11 @@ class FieldNode(IntrinsicNode):
 
 
 class FieldEvalNode(IntrinsicNode):
-    def __init__(self, field, args, var):
+    def __init__(self, field, args, var, var2=None):
         self.field = field
         self.args = args
-        self.var = var
+        self.var = var  # the variable in which the interpolated field is written
+        self.var2 = var2  # second variable for UV interpolation
 
 
 class ConstNode(IntrinsicNode):
@@ -154,10 +156,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # temporary variable and put the evaluation call on the stack.
         if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
+            tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
+            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp, tmp2)]
             # .. and return the name of the temporary that will be populated
-            return ast.Name(id=tmp)
+            return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load()) if tmp2 else ast.Name(id=tmp)
         else:
             return node
 
@@ -229,12 +232,12 @@ class KernelGenerator(ast.NodeVisitor):
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
-        # Untangle Pythonic tuple-assignment statements
-        py_ast = TupleSplitter().visit(py_ast)
-
         # Replace occurences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
+
+        # Untangle Pythonic tuple-assignment statements
+        py_ast = TupleSplitter().visit(py_ast)
 
         # Generate C-code for all nodes in the Python AST
         self.visit(py_ast)
@@ -271,8 +274,20 @@ class KernelGenerator(ast.NodeVisitor):
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
-        for field, _ in self.field_args.items():
-            args += [c.Pointer(c.Value("CField", "%s" % field))]
+        for field_name, field in self.field_args.items():
+            if field_name != 'UV':
+                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+        for field_name, field in self.field_args.items():
+            if field_name == 'UV':
+                fieldset = field.fieldset
+                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
+                    try:
+                        getattr(fieldset, f)
+                        if f not in self.field_args:
+                            args += [c.Pointer(c.Value("CField", "%s" % f))]
+                    except:
+                        if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+                            raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
@@ -477,11 +492,18 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
-        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+        if node.var2:  # evaluation UV Field
+            ccode_eval = node.field.obj.ccode_evalUV(node.var, node.var2, *node.args.ccode)
+            ccode_conv1 = node.field.obj.fieldset.U.ccode_convert(*node.args.ccode)
+            ccode_conv2 = node.field.obj.fieldset.V.ccode_convert(*node.args.ccode)
+            conv_stat = c.Block([c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                                 c.Statement("%s *= %s" % (node.var2, ccode_conv2))])
+        else:
+            ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
         node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              c.Statement("%s *= %s" % (node.var, ccode_conv)),
-                              c.Statement("CHECKERROR(err)")])
+                              conv_stat, c.Statement("CHECKERROR(err)")])
 
     def visit_Return(self, node):
         self.visit(node.value)
@@ -549,23 +571,28 @@ class LoopGenerator(object):
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
-        fargs_str = ", ".join(['particles[p].time', 'sign * __dt'] + list(field_args.keys()) + list(const_args.keys()))
+        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys())
+                              + list(const_args.keys()))
         # Inner loop nest for forward runs
-        sign = c.Assign("sign", "dt > 0. ? 1. : -1.")
+        sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
+        sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
+        notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
+                                   c.Statement("continue"))
         body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
-        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign * __dt"),
+        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
                                                  dt_pos, dt_0_break, c.Statement("continue")]))]
         body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
                       c.Statement("break"))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
-        part_loop = c.For("p = 0", "p < num_particles", "++p", c.Block([dt_pos, time_loop]))
-        fbody = c.Block([c.Value("int", "p"), c.Value("ErrorCode", "res"),
-                         c.Value("double", "__dt, __tol, sign"), c.Assign("__tol", "1.e-6"),
-                         sign, part_loop])
+        part_loop = c.For("p = 0", "p < num_particles", "++p",
+                          c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
+        fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
+                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
+                         sign_dt, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)

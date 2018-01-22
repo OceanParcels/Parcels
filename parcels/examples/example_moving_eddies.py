@@ -110,11 +110,11 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
     dt = delta(minutes=5)
     interval = delta(hours=1)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
-    pset.execute(method, starttime=0, endtime=endtime, dt=dt, interval=interval,
+    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
                  output_file=pset.ParticleFile(name="EddyParticlefwd"))
 
     print("Now running in backward time mode")
-    pset.execute(method, starttime=endtime, endtime=0, dt=-dt, interval=-interval,
+    pset.execute(method, endtime=0, dt=-dt, interval=-interval,
                  output_file=pset.ParticleFile(name="EddyParticlebwd"))
 
     assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
