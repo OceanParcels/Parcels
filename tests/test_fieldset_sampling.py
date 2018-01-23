@@ -119,7 +119,7 @@ def test_variable_init_from_field(mode, npart=9):
     assert np.all([abs(p.a - fieldset.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
 
 
-def test_pset_from_field(xdim=10, ydim=10, npart=10000):
+def test_pset_from_field(xdim=10, ydim=20, npart=10000):
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
@@ -134,7 +134,7 @@ def test_pset_from_field(xdim=10, ydim=10, npart=10000):
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=JITParticle,
                                   start_field=fieldset.start)
     pdens = pset.density(area_scale=False, relative=True)
-    assert np.allclose(pdens, startfield/np.sum(startfield), atol=5e-3)
+    assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=5e-3)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

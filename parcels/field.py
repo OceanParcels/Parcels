@@ -369,15 +369,15 @@ class Field(object):
         if self.grid.gtype not in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
             logger.error('Field.cell_edge_sizes() is only implemented for Rectilinear Grids')
             exit(-1)
-        dy_grid = np.zeros((self.grid.lon.size, self.grid.lat.size), dtype=np.float32)
-        dx_grid = np.zeros((self.grid.lon.size, self.grid.lat.size), dtype=np.float32)
+        dy_grid = np.zeros((self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
+        dx_grid = np.zeros((self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
 
         x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
         y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
         for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
             for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
-                dx_grid[x, y] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
-                dy_grid[x, y] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+                dx_grid[y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
+                dy_grid[y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
         return dx_grid, dy_grid
 
     def cell_areas(self):
@@ -391,11 +391,9 @@ class Field(object):
                 Currently only works for Rectilinear Grids.
                 Returns two numpy arrays: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method"""
-        dFdx = np.zeros_like(self.data)
-        dFdy = np.zeros_like(self.data)
         celldist_lon, celldist_lat = self.cell_edge_sizes()
-        dFdy = np.gradient(self.data, axis=-2) / np.transpose(celldist_lat)
-        dFdx = np.gradient(self.data, axis=-1) / np.transpose(celldist_lon)
+        dFdy = np.gradient(self.data, axis=-2) / celldist_lat
+        dFdx = np.gradient(self.data, axis=-1) / celldist_lon
         return dFdx, dFdy
 
     def interpolator2D_scipy(self, t_idx, z_idx=None):

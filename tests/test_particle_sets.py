@@ -267,7 +267,7 @@ def test_density(fieldset, mode, area_scale):
         assert np.allclose(arr, 1 / fieldset.U.cell_areas(), rtol=1e-3)  # check that density equals 1/area
     else:
         assert(np.sum(arr) == fieldset.U.lat.size*fieldset.U.lon.size)  # check conservation of particles
-        inds = zip(*np.where(arr.T))
+        inds = zip(*np.where(arr))
         for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
             assert np.allclose(fieldset.U.lon[inds[i][1]], pset[i].lon, rtol=1e-1)
             assert np.allclose(fieldset.U.lat[inds[i][0]], pset[i].lat, rtol=1e-1)

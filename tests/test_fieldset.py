@@ -131,7 +131,7 @@ def test_fieldset_celledgesizes(mesh):
     if mesh == 'flat':
         assert np.allclose(D_zonal.flatten(), D_zonal[0, 0])  # all zonal distances should be the same in flat mesh
     else:
-        assert all((np.gradient(D_zonal, axis=1) < 0).flatten())  # zonal distances should decrease in spherical mesh
+        assert all((np.gradient(D_zonal, axis=0) < 0).flatten())  # zonal distances should decrease in spherical mesh
 
 
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
@@ -142,9 +142,9 @@ def test_fieldset_cellareas(mesh):
     if mesh == 'flat':
         assert np.allclose(cell_areas.flatten(), cell_areas[0, 0], rtol=1e-3)
     else:
-        assert all((np.gradient(cell_areas, axis=1) < 0).flatten())  # areas should decrease with latitude in spherical mesh
-        for y in range(cell_areas.shape[1]):
-            assert np.allclose(cell_areas[:, y], cell_areas[0, y], rtol=1e-3)
+        assert all((np.gradient(cell_areas, axis=0) < 0).flatten())  # areas should decrease with latitude in spherical mesh
+        for y in range(cell_areas.shape[0]):
+            assert np.allclose(cell_areas[y, :], cell_areas[y, 0], rtol=1e-3)
 
 
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])

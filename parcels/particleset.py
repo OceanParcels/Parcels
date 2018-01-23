@@ -485,18 +485,18 @@ class ParticleSet(object):
         else:
             field = self.fieldset.U
             dparticles = range(len(self.particles))
-        Density = np.zeros((field.grid.lon.size, field.grid.lat.size), dtype=np.float32)
+        Density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
         # For each particle, find closest vertex in x and y and add 1 or val to the count
         if particle_val is not None:
             for p in dparticles:
-                Density[np.argmin(np.abs(lons[p] - field.grid.lon)), np.argmin(np.abs(lats[p] - field.grid.lat))] \
+                Density[np.argmin(np.abs(lats[p] - field.grid.lat)), np.argmin(np.abs(lons[p] - field.grid.lon))] \
                     += getattr(self.particles[p], particle_val)
         else:
             for p in dparticles:
                 nearest_lon = np.argmin(np.abs(lons[p] - field.grid.lon))
                 nearest_lat = np.argmin(np.abs(lats[p] - field.grid.lat))
-                Density[nearest_lon, nearest_lat] += 1
+                Density[nearest_lat, nearest_lon] += 1
             if relative:
                 Density /= len(dparticles)
 
