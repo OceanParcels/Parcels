@@ -220,7 +220,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -365,14 +365,14 @@ class Field(object):
             time[0] = 0
         if len(lon.shape) == 1:
             if len(depth.shape) == 1:
-                grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = RectilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         else:
             if len(depth.shape) == 1:
-                grid = CurvilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = CurvilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
         return cls(name, data, grid=grid,

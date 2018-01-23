@@ -38,6 +38,7 @@ class GridSet(object):
         if not existing_grid:
             for g in self.grids:
                 if g.name == grid.name:
+                    print grid.name
                     grid.name = grid.name + '_b'
             self.grids.append(grid)
             setattr(self, grid.name, grid)

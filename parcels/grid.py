@@ -2,6 +2,7 @@ from parcels.loggers import logger
 import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
+import hashlib
 
 __all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'GridIndex', 'CGrid']
 
@@ -49,14 +50,14 @@ class RectilinearGrid(Grid):
 
     """
 
-    def __init__(self, name, lon, lat, time, time_origin, mesh):
+    def __init__(self, lon, lat, time, time_origin, mesh):
         assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
         assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        self.name = name
+        self.name = hashlib.md5().hexdigest()
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -134,7 +135,6 @@ class RectilinearGrid(Grid):
 class RectilinearZGrid(RectilinearGrid):
     """Rectilinear Z Grid
 
-    :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
@@ -149,8 +149,8 @@ class RectilinearZGrid(RectilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
-        RectilinearGrid.__init__(self, name, lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
+        RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
 
@@ -167,7 +167,6 @@ class RectilinearSGrid(RectilinearGrid):
     """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
        but with s vertical coordinates
 
-    :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
     :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
@@ -187,8 +186,8 @@ class RectilinearSGrid(RectilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
-        RectilinearGrid.__init__(self, name, lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
+        RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
@@ -202,14 +201,14 @@ class RectilinearSGrid(RectilinearGrid):
 
 class CurvilinearGrid(Grid):
 
-    def __init__(self, name, lon, lat, time=None, time_origin=0, mesh='flat'):
+    def __init__(self, lon, lat, time=None, time_origin=0, mesh='flat'):
         assert(isinstance(lon, np.ndarray) and len(lon.shape) == 2), 'lon is not a 2D numpy array'
         assert(isinstance(lat, np.ndarray) and len(lat.shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        self.name = name
+        self.name = hashlib.md5().hexdigest()
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -296,7 +295,6 @@ class CurvilinearGrid(Grid):
 class CurvilinearZGrid(CurvilinearGrid):
     """Curvilinear Z Grid.
 
-    :param name: Name of the grid
     :param lon: 2D array containing the longitude coordinates of the grid
     :param lat: 2D array containing the latitude coordinates of the grid
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
@@ -311,8 +309,8 @@ class CurvilinearZGrid(CurvilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
-        CurvilinearGrid.__init__(self, name, lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
+        CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
 
@@ -328,7 +326,6 @@ class CurvilinearZGrid(CurvilinearGrid):
 class CurvilinearSGrid(CurvilinearGrid):
     """Curvilinear S Grid.
 
-    :param name: Name of the grid
     :param lon: 2D array containing the longitude coordinates of the grid
     :param lat: 2D array containing the latitude coordinates of the grid
     :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
@@ -348,8 +345,8 @@ class CurvilinearSGrid(CurvilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
-        CurvilinearGrid.__init__(self, name, lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
+        CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid
