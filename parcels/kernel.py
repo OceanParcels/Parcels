@@ -121,7 +121,7 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
-            map(remove, [self.src_file, self.lib_file, self.log_file]) if path.isfile(self.lib_file) else None
+            #map(remove, [self.src_file, self.lib_file, self.log_file]) if path.isfile(self.lib_file) else None
 
     @property
     def _cache_key(self):
