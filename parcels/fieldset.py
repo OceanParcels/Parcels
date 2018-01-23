@@ -282,12 +282,19 @@ class FieldSet(object):
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         advance = 0
-        for i, gnew in enumerate(fieldset_new.gridset.grids):
-            g = self.gridset.grids[i]
-            advance2 = g.advancetime(gnew)
-            if advance2*advance < 0:
-                raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
-            advance = advance2
+        for gnew in fieldset_new.gridset.grids:
+            gnew.advanced = False
+
         for fnew in fieldset_new.fields:
+            if fnew.name == 'UV':
+                continue
             f = getattr(self, fnew.name)
+            gnew = fnew.grid
+            if not gnew.advanced:
+                g = f.grid
+                advance2 = g.advancetime(gnew)
+                if advance2*advance < 0:
+                    raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
+                advance = advance2
+                gnew.advanced = True
             f.advancetime(fnew, advance == 1)

@@ -985,8 +985,6 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
-        if self.name == 'UV':
-            return
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
             self.time = self.grid.time
