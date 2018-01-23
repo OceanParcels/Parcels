@@ -220,7 +220,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -365,14 +365,14 @@ class Field(object):
             time[0] = 0
         if len(lon.shape) == 1:
             if len(depth.shape) == 1:
-                grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = RectilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         else:
             if len(depth.shape) == 1:
-                grid = CurvilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = CurvilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
         return cls(name, data, grid=grid,
@@ -799,9 +799,9 @@ class Field(object):
             for i, g in enumerate(gridset.grids):
                 if min(uiGrid, viGrid) > -1:
                     break
-                if g.name == self.fieldset.U.grid.name:
+                if g is self.fieldset.U.grid:
                     uiGrid = i
-                if g.name == self.fieldset.V.grid.name:
+                if g is self.fieldset.V.grid:
                     viGrid = i
             return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->CGridIndexSet, %s, %s, &%s, &%s, %s)" \
                 % (x, y, z, t,
@@ -814,17 +814,17 @@ class Field(object):
             for i, g in enumerate(gridset.grids):
                 if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
                     break
-                if g.name == self.fieldset.U.grid.name:
+                if g is self.fieldset.U.grid:
                     uiGrid = i
-                if g.name == self.fieldset.V.grid.name:
+                if g is self.fieldset.V.grid:
                     viGrid = i
-                if g.name == self.fieldset.cosU.grid.name:
+                if g is self.fieldset.cosU.grid:
                     cosuiGrid = i
-                if g.name == self.fieldset.sinU.grid.name:
+                if g is self.fieldset.sinU.grid:
                     sinuiGrid = i
-                if g.name == self.fieldset.cosV.grid.name:
+                if g is self.fieldset.cosV.grid:
                     cosviGrid = i
-                if g.name == self.fieldset.sinV.grid.name:
+                if g is self.fieldset.sinV.grid:
                     sinviGrid = i
             return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->CGridIndexSet, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
                 % (x, y, z, t,
@@ -836,7 +836,7 @@ class Field(object):
         gridset = self.fieldset.gridset
         iGrid = -1
         for i, g in enumerate(gridset.grids):
-            if g.name == self.grid.name:
+            if g is self.grid:
                 iGrid = i
                 break
         return "temporal_interpolation(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
@@ -985,8 +985,6 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
-        if self.name == 'UV':
-            return
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
             self.time = self.grid.time
