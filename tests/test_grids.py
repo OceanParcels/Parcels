@@ -105,8 +105,8 @@ def test_avoid_repeated_grids():
 
     field_set = FieldSet(u_field, v_field, fields=other_fields)
     assert field_set.gridset.size == 2
-    assert field_set.U.grid.name == field_set.temp.grid.name
-    assert field_set.V.grid.name != field_set.U.grid.name
+    assert field_set.U.grid.hash == field_set.temp.grid.hash
+    assert field_set.V.grid.hash != field_set.U.grid.hash
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

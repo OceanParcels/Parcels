@@ -16,7 +16,7 @@ class GridSet(object):
         self.grids = grids
         self.size = len(grids)
         for g in grids:
-            setattr(self, g.name, g)
+            setattr(self, g.hash, g)
 
     def add_grid(self, field):
         grid = field.grid
@@ -37,11 +37,10 @@ class GridSet(object):
 
         if not existing_grid:
             for g in self.grids:
-                if g.name == grid.name:
-                    print grid.name
-                    grid.name = grid.name + '_b'
+                if g.hash == grid.hash:
+                    grid.hash = grid.hash + '_b'
             self.grids.append(grid)
-            setattr(self, grid.name, grid)
+            setattr(self, grid.hash, grid)
             self.size += 1
 
 

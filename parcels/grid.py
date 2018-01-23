@@ -57,7 +57,7 @@ class RectilinearGrid(Grid):
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        self.name = hashlib.md5().hexdigest()
+        self.hash = hashlib.md5().hexdigest()
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -208,7 +208,7 @@ class CurvilinearGrid(Grid):
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        self.name = hashlib.md5().hexdigest()
+        self.hash = hashlib.md5().hexdigest()
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -382,7 +382,7 @@ class GridIndex(object):
 
     def __init__(self, grid, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
-        self.name = grid.name
+        self.hash = grid.hash
         self.xi = 0
         self.yi = 0
         self.zi = 0
