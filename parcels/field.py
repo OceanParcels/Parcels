@@ -799,9 +799,9 @@ class Field(object):
             for i, g in enumerate(gridset.grids):
                 if min(uiGrid, viGrid) > -1:
                     break
-                if g.hash == self.fieldset.U.grid.hash:
+                if g is self.fieldset.U.grid:
                     uiGrid = i
-                if g.hash == self.fieldset.V.grid.hash:
+                if g is self.fieldset.V.grid:
                     viGrid = i
             return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->CGridIndexSet, %s, %s, &%s, &%s, %s)" \
                 % (x, y, z, t,
@@ -814,17 +814,17 @@ class Field(object):
             for i, g in enumerate(gridset.grids):
                 if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
                     break
-                if g.hash == self.fieldset.U.grid.hash:
+                if g is self.fieldset.U.grid:
                     uiGrid = i
-                if g.hash == self.fieldset.V.grid.hash:
+                if g is self.fieldset.V.grid:
                     viGrid = i
-                if g.hash == self.fieldset.cosU.grid.hash:
+                if g is self.fieldset.cosU.grid:
                     cosuiGrid = i
-                if g.hash == self.fieldset.sinU.grid.hash:
+                if g is self.fieldset.sinU.grid:
                     sinuiGrid = i
-                if g.hash == self.fieldset.cosV.grid.hash:
+                if g is self.fieldset.cosV.grid:
                     cosviGrid = i
-                if g.hash == self.fieldset.sinV.grid.hash:
+                if g is self.fieldset.sinV.grid:
                     sinviGrid = i
             return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->CGridIndexSet, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
                 % (x, y, z, t,
@@ -836,7 +836,7 @@ class Field(object):
         gridset = self.fieldset.gridset
         iGrid = -1
         for i, g in enumerate(gridset.grids):
-            if g.hash == self.grid.hash:
+            if g is self.grid:
                 iGrid = i
                 break
         return "temporal_interpolation(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \

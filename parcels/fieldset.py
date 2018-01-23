@@ -19,7 +19,7 @@ class FieldSet(object):
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, fields={}):
-        self.gridset = GridSet([])
+        self.gridset = GridSet()
         self.add_field(U)
         self.add_field(V)
         UV = Field('UV', None)
@@ -282,8 +282,8 @@ class FieldSet(object):
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         advance = 0
-        for gnew in fieldset_new.gridset.grids:
-            g = getattr(self.gridset, gnew.name)
+        for i, gnew in enumerate(fieldset_new.gridset.grids):
+            g = self.gridset.grids[i]
             advance2 = g.advancetime(gnew)
             if advance2*advance < 0:
                 raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
