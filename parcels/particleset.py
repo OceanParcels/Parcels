@@ -45,10 +45,17 @@ class ParticleSet(object):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
-        lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
-        lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
+        def convert_to_list(dim):
+            if isinstance(dim, (int, float)):
+                return [dim]
+            elif isinstance(dim, np.ndarray):
+                return dim.flatten()
+            return dim
+
+        lon = convert_to_list(lon)
+        lat = convert_to_list(lat)
         depth = np.ones(len(lon)) * fieldset.U.grid.depth[0] if depth is None else depth
-        depth = depth.flatten() if isinstance(depth, np.ndarray) else depth
+        depth = convert_to_list(depth)
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
