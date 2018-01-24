@@ -161,7 +161,7 @@ def test_c_kernel(fieldset, mode):
         print('%g %g' % (U.data[0, 0, 0], U.data[0, 0, 1]))
         print('%g %g' % (U.data[0, 1, 0], U.data[0, 1, 1]))
 
-    c_func_lib = """
+    c_include = """
              static inline void c_func(CField *f)
              {
                printf("Calling the C func\\n");
@@ -174,5 +174,5 @@ def test_c_kernel(fieldset, mode):
     def ckernel(particle, fieldset, time, dt):
         c_func(fieldset.U)
 
-    kernel = pset.Kernel(ckernel, lib=c_func_lib)
+    kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=1., dt=1.)

@@ -48,7 +48,7 @@ class Kernel(object):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, lib=""):
+                 funccode=None, py_ast=None, funcvars=None, c_include=""):
         self.fieldset = fieldset
         self.ptype = ptype
 
@@ -105,7 +105,7 @@ class Kernel(object):
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
-                                          kernel_ccode, lib)
+                                          kernel_ccode, c_include)
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
