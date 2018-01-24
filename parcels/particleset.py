@@ -41,16 +41,16 @@ class ParticleSet(object):
     """
 
     def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
-        # Convert numpy arrays to one-dimensional lists
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
-        def convert_to_list(dim):
-            if isinstance(dim, (int, float)):
-                return [dim]
-            elif isinstance(dim, np.ndarray):
-                return dim.flatten()
-            return dim
+        def convert_to_list(var):
+            # Convert numpy arrays and single integers/floats to one-dimensional lists
+            if isinstance(var, (int, float)):
+                return [var]
+            elif isinstance(var, np.ndarray):
+                return var.flatten()
+            return var
 
         lon = convert_to_list(lon)
         lat = convert_to_list(lat)
