@@ -83,7 +83,7 @@ class FieldSet(object):
 
     def add_data(self, data, dimensions, transpose=True, mesh='spherical',
                  allow_time_extrapolation=True, **kwargs):
-        """Initialise FieldSet object from raw data
+        """Add a dictionary of Fields from raw data to a FieldSet object
 
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given
@@ -133,7 +133,7 @@ class FieldSet(object):
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
                     mesh='spherical', allow_time_extrapolation=False, time_periodic=False, **kwargs):
-        """Initialises FieldSet data from files using NEMO conventions.
+        """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
@@ -189,7 +189,7 @@ class FieldSet(object):
     def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
                   indices={}, extra_fields={}, allow_time_extrapolation=False,
                   time_periodic=False, **kwargs):
-        """Initialises FieldSet data from files using NEMO conventions.
+        """Initialises FieldSet data from NetCDF files using NEMO conventions.
 
         :param basename: Base name of the file(s); may contain
                wildcards to indicate multiple files.
