@@ -152,10 +152,17 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
 
 
+
+def c_func(U):
+    print 'in python'
+
 def test_c_kernel(fieldset):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0])
     def ckernel(particle, fieldset, time, dt):
-        u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-    pset.execute(ckernel, endtime=1., dt=1.)
+        #u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        c_func(fieldset.U)
+
+    kernel = pset.Kernel(ckernel)
+    pset.execute(kernel, endtime=1., dt=1.)
 
 test_c_kernel(fieldset())

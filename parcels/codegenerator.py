@@ -302,8 +302,11 @@ class KernelGenerator(ast.NodeVisitor):
         supported."""
         for a in node.args:
             self.visit(a)
+            if isinstance(a, FieldNode):
+                a.ccode = a.obj.name
         ccode_args = ", ".join([a.ccode for a in node.args])
         try:
+            self.visit(node.func)
             node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
         except:
             raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
