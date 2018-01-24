@@ -81,51 +81,6 @@ class FieldSet(object):
         self.gridset.add_grid(field)
         field.fieldset = self
 
-    def add_data(self, data, dimensions, transpose=True, mesh='spherical',
-                 allow_time_extrapolation=True, **kwargs):
-        """Add a dictionary of Fields from raw data to a FieldSet object
-
-        :param data: Dictionary mapping field names to numpy arrays.
-               Note that at least a 'U' and 'V' numpy array need to be given
-        :param dimensions: Dictionary mapping field dimensions (lon,
-               lat, depth, time) to numpy arrays.
-               Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable
-               (e.g. dimensions['U'], dimensions['V'], etc).
-        :param transpose: Boolean whether to transpose data on read-in
-        :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
-
-               1. spherical (default): Lat and lon in degree, with a
-                  correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
-               (i.e. beyond the last available time snapshot)
-        """
-
-        fields = {}
-        for name, datafld in data.items():
-            # Use dimensions[name] if dimensions is a dict of dicts
-            dims = dimensions[name] if name in dimensions else dimensions
-
-            lon = dims['lon']
-            lat = dims['lat']
-            depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
-            time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
-
-            fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
-                                 allow_time_extrapolation=allow_time_extrapolation, **kwargs)
-        u = fields.pop('U', None)
-        v = fields.pop('V', None)
-        if u:
-            self.add_field(u)
-        if v:
-            self.add_field(v)
-
-        for f in fields:
-            self.add_field(f)
-
     def check_complete(self):
         assert(self.U), ('U field is not defined')
         assert(self.V), ('V field is not defined')
