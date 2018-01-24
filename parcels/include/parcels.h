@@ -58,15 +58,6 @@ typedef struct
 } CGridIndexSet;  
 
 
-static inline void c_func(CField *f)
-{
-  float (*data3)[f->xdim] = (float (*)[f->xdim]) f->data;
-  printf("I'm in my new c_func %g\n", data3[0][0]);
-  printf("I'm in my new c_func %g\n", data3[1][0]);
-  printf("I'm in my new c_func %g\n", data3[0][1]);
-  printf("I'm in my new c_func %g\n", data3[2][1]);
-}
-
 static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *k, double *zeta)
 {
   if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}

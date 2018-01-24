@@ -546,7 +546,7 @@ class LoopGenerator(object):
         self.fieldset = fieldset
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, const_args, kernel_ast):
+    def generate(self, funcname, field_args, const_args, kernel_ast, lib):
         ccode = []
 
         # Add include for Parcels and math header
@@ -562,6 +562,9 @@ class LoopGenerator(object):
                 vdecl.append(c.POD(v.dtype, v.name))
 
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
+
+        if lib:
+            ccode += [lib]
 
         # Insert kernel code
         ccode += [str(kernel_ast)]

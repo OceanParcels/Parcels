@@ -513,10 +513,10 @@ class ParticleSet(object):
 
         return Density
 
-    def Kernel(self, pyfunc):
+    def Kernel(self, pyfunc, lib=""):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet"""
-        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc)
+        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, lib=lib)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

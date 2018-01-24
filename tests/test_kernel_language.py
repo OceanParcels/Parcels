@@ -152,17 +152,27 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_c_kernel(fieldset, mode):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
 
-def c_func(U):
-    print 'in python'
+    def c_func(U):
+        print('Calling the python func')
+        print('%g %g' % (U.data[0, 0, 0], U.data[0, 0, 1]))
+        print('%g %g' % (U.data[0, 1, 0], U.data[0, 1, 1]))
 
-def test_c_kernel(fieldset):
-    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.5], lat=[0])
+    c_func_lib = """
+             static inline void c_func(CField *f)
+             {
+               printf("Calling the C func\\n");
+               float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
+               printf("%g %g\\n", data[0][0], data[0][1]);
+               printf("%g %g\\n", data[1][0], data[1][1]);
+             }
+             """
+
     def ckernel(particle, fieldset, time, dt):
-        #u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
         c_func(fieldset.U)
 
-    kernel = pset.Kernel(ckernel)
+    kernel = pset.Kernel(ckernel, lib=c_func_lib)
     pset.execute(kernel, endtime=1., dt=1.)
-
-test_c_kernel(fieldset())
