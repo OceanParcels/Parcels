@@ -1,8 +1,11 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
-
-from parcels import RectilinearZGrid, RectilinearSGrid
+from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
+from parcels import compute_curvilinearGrid_rotationAngles
 import numpy as np
+import math
 import pytest
+from os import path
+from datetime import timedelta as delta
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -23,7 +26,7 @@ def test_multi_structured_grids(mode):
     lon_g0 = np.linspace(0, a, xdim_g0, dtype=np.float32)
     lat_g0 = np.linspace(0, b, ydim_g0, dtype=np.float32)
     time_g0 = np.linspace(0., 1000., 2, dtype=np.float64)
-    grid_0 = RectilinearZGrid('grid0py', lon_g0, lat_g0, time=time_g0)
+    grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
 
     # Grid 1
     xdim_g1 = 51
@@ -32,7 +35,7 @@ def test_multi_structured_grids(mode):
     lon_g1 = np.linspace(0, a, xdim_g1, dtype=np.float32)
     lat_g1 = np.linspace(0, b, ydim_g1, dtype=np.float32)
     time_g1 = np.linspace(0., 1000., 2, dtype=np.float64)
-    grid_1 = RectilinearZGrid('grid1py', lon_g1, lat_g1, time=time_g1)
+    grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
 
     u_data = np.ones((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_data = 2*u_data
@@ -82,12 +85,12 @@ def test_avoid_repeated_grids():
     lon_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 11, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_0 = RectilinearZGrid('grid0py', lon_g0, lat_g0, time=time_g0)
+    grid_0 = RectilinearZGrid(lon_g0, lat_g0, time=time_g0)
 
     lon_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
     lat_g1 = np.linspace(0, 1000, 21, dtype=np.float32)
     time_g1 = np.linspace(0, 1000, 2, dtype=np.float64)
-    grid_1 = RectilinearZGrid('grid1py', lon_g1, lat_g1, time=time_g1)
+    grid_1 = RectilinearZGrid(lon_g1, lat_g1, time=time_g1)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, time_g0.size), dtype=np.float32)
     u_field = Field('U', u_data, grid=grid_0, transpose=True)
@@ -102,9 +105,8 @@ def test_avoid_repeated_grids():
 
     field_set = FieldSet(u_field, v_field, fields=other_fields)
     assert field_set.gridset.size == 2
-    assert field_set.U.grid.name == 'grid0py'
-    assert field_set.V.grid.name == 'grid1py'
-    assert field_set.temp.grid.name == 'grid0py'
+    assert field_set.U.grid is field_set.temp.grid
+    assert field_set.V.grid is not field_set.U.grid
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -121,8 +123,8 @@ def test_multigrids_pointer(mode):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid_0 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
-    grid_1 = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid_0 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
+    grid_1 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
@@ -139,7 +141,7 @@ def test_multigrids_pointer(mode):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=[0], lat=[0], depth=[1])
 
     for i in range(10):
-        pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=1000, dt=500)
+        pset.execute(AdvectionRK4_3D, runtime=1000, dt=500)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -167,7 +169,7 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
             else:
                 depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0, time=time_g0)
+    grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0, time=time_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
@@ -212,7 +214,7 @@ def test_rectilinear_s_grids_advect1(mode):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
@@ -234,7 +236,7 @@ def test_rectilinear_s_grids_advect1(mode):
     depth = bath_func(lon)*ratio
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
 
-    pset.execute(AdvectionRK4_3D, starttime=pset[0].time, runtime=10000, dt=500)
+    pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
     assert np.allclose([p.depth/bath_func(p.lon) for p in pset], ratio)
 
 
@@ -253,7 +255,7 @@ def test_rectilinear_s_grids_advect2(mode):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
 
-    grid = RectilinearSGrid('grid0py', lon_g0, lat_g0, depth=depth_g0)
+    grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 
     u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
     v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
@@ -278,5 +280,132 @@ def test_rectilinear_s_grids_advect2(mode):
 
     kernel = pset.Kernel(moveEast)
     for _ in range(10):
-        pset.execute(kernel, starttime=pset[0].time, runtime=100, dt=50)
+        pset.execute(kernel, runtime=100, dt=50)
         assert np.allclose(pset[0].relDepth, depth/bath_func(pset[0].lon))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_curvilinear_grids(mode):
+
+    x = np.linspace(0, 1e3, 7, dtype=np.float32)
+    y = np.linspace(0, 1e3, 5, dtype=np.float32)
+    (xx, yy) = np.meshgrid(x, y)
+
+    r = np.sqrt(xx*xx+yy*yy)
+    theta = np.arctan2(yy, xx)
+    theta = theta + np.pi/6.
+
+    lon = r * np.cos(theta)
+    lat = r * np.sin(theta)
+    time = np.array([0, 86400], dtype=np.float64)
+    grid = CurvilinearZGrid(lon, lat, time=time)
+
+    u_data = np.ones((2, y.size, x.size), dtype=np.float32)
+    v_data = np.zeros((2, y.size, x.size), dtype=np.float32)
+    u_data[0, :, :] = lon[:, :] + lat[:, :]
+    u_field = Field('U', u_data, grid=grid, transpose=False)
+    v_field = Field('V', v_data, grid=grid, transpose=False)
+    field_set = FieldSet(u_field, v_field)
+
+    def sampleSpeed(particle, fieldset, time, dt):
+        u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        v = fieldset.V[time, particle.lon, particle.lat, particle.depth]
+        particle.speed = math.sqrt(u*u+v*v)
+
+    class MyParticle(ptype[mode]):
+        speed = Variable('speed', dtype=np.float32, initial=0.)
+
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[400], lat=[600])
+    pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
+    assert(np.allclose(pset[0].speed, 1000))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nemo_grid(mode):
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
+    rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
+    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename)
+
+    filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
+                 'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
+                 'cosU': rotation_angles_filename,
+                 'sinU': rotation_angles_filename,
+                 'cosV': rotation_angles_filename,
+                 'sinV': rotation_angles_filename}
+    variables = {'U': 'Uu',
+                 'V': 'Vv',
+                 'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+
+    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
+                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
+                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
+
+    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical')
+
+    def sampleVel(particle, fieldset, time, dt):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+
+    class MyParticle(ptype[mode]):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+
+    lonp = 175.5
+    latp = 81.5
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    u = field_set.U.units.to_source(pset[0].zonal, lonp, latp, 0)
+    v = field_set.V.units.to_source(pset[0].meridional, lonp, latp, 0)
+    assert abs(u - 1) < 1e-4
+    assert abs(v) < 1e-4
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_advect_nemo(mode):
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
+    rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
+    variables = {'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+    dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'V': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'F': {'lon': 'glamf', 'lat': 'gphif'}}
+    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions)
+
+    filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
+                 'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
+                 'cosU': rotation_angles_filename,
+                 'sinU': rotation_angles_filename,
+                 'cosV': rotation_angles_filename,
+                 'sinV': rotation_angles_filename}
+    variables = {'U': 'Uu',
+                 'V': 'Vv',
+                 'cosU': 'cosU',
+                 'sinU': 'sinU',
+                 'cosV': 'cosV',
+                 'sinV': 'sinV'}
+
+    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
+                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
+                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
+
+    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
+
+    lonp = 175.5
+    latp = 81.5
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
+    pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
+    assert abs(pset[0].lat - latp) < 1e-3

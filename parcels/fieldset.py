@@ -1,11 +1,11 @@
 from parcels.field import Field
 from parcels.gridset import GridSet
+from parcels.grid import RectilinearZGrid
 from parcels.loggers import logger
 import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
-from grid import RectilinearZGrid
 
 
 __all__ = ['FieldSet']
@@ -19,9 +19,12 @@ class FieldSet(object):
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, fields={}):
-        self.gridset = GridSet([])
+        self.gridset = GridSet()
         self.add_field(U)
         self.add_field(V)
+        UV = Field('UV', None)
+        UV.fieldset = self
+        self.UV = UV
 
         # Add additional fields as attributes
         for name, field in fields.items():
@@ -60,7 +63,7 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
+            grid = RectilinearZGrid(lon, lat, depth, time, mesh=mesh)
 
             fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
@@ -107,7 +110,7 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, mesh=mesh)
+            grid = RectilinearZGrid(lon, lat, depth, time, mesh=mesh)
 
             fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, **kwargs)
@@ -280,11 +283,18 @@ class FieldSet(object):
 
         advance = 0
         for gnew in fieldset_new.gridset.grids:
-            g = getattr(self.gridset, gnew.name)
-            advance2 = g.advancetime(gnew)
-            if advance2*advance < 0:
-                raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
-            advance = advance2
+            gnew.advanced = False
+
         for fnew in fieldset_new.fields:
+            if fnew.name == 'UV':
+                continue
             f = getattr(self, fnew.name)
+            gnew = fnew.grid
+            if not gnew.advanced:
+                g = f.grid
+                advance2 = g.advancetime(gnew)
+                if advance2*advance < 0:
+                    raise RuntimeError("Some Fields of the Fieldset are advanced forward and other backward")
+                advance = advance2
+                gnew.advanced = True
             f.advancetime(fnew, advance == 1)

@@ -15,29 +15,30 @@ Its code is licensed under an `open source MIT license <https://github.com/Ocean
 
    *Animation of virtual particles carried by ocean surface flow in the* `Agulhas Current <https://en.wikipedia.org/wiki/Agulhas_Current>`_ *off South Africa. The particles are advected with* `Parcels <http://oceanparcels.org/>`_ *in data from the* `GlobCurrent Project <http://globcurrent.ifremer.fr/products-data/products-overview>`_. *See* `this tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Agulhasparticles.ipynb>`_ *for the Parcels code behind this animated gif.*
 
-Parcels v0.9 manuscript and code
+Parcels manuscript and code
 ===================================
 The manuscript detailing this first release of Parcels, version 0.9, has been published in `Geoscientific Model Development <https://www.geosci-model-dev.net/10/4175/2017/gmd-10-4175-2017.html>`_ and can be cited as
 
 *Lange, M. and E van Sebille (2017) Parcels v0.9: prototyping a Lagrangian Ocean Analysis framework for the petascale age. Geoscientific Model Development, 10, 4175-4186. doi:10.5194/gmd-2017-167*
 
-The code is available at https://github.com/OceanParcels/parcels. Anyone is welcome to comment on the manuscript through the Geoscientific Model Development portal.
+The latest version of the code is available at https://github.com/OceanParcels/parcels.
 
 Parcels development status
 ===================================
 
-The current release of Parcels, version 0.9, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye
+The current release of Parcels, version 1.0, is a fully-functional, feature-complete code for offline Lagrangian ocean analysis. See below for a list of features, or keep an eye
 on the `Github Development Timeline page
 <https://github.com/OceanParcels/parcels/projects/1>`_
 
 **Major features**
 
 * Advection of particles in 2D using inbuilt kernels for Runge-Kutta4, Runge-Kutta45 and Euler Forward and in 3D using the inbuilt kernel for Runge-Kutta4_3D (see :mod:`parcels.kernels.advection`)
+* Simple horizontal diffusion of particles using inbuilt Brownian Motion kernel (see :mod:`parcels.kernels.diffusion`)
 * Ability to define and execute custom kernels (see `the Adding-a-custom-behaviour-kernel part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Adding-a-custom-behaviour-kernel>`_)
 * Ability to add custom Variables to Particles (see `the Sampling-a-Field-with-Particles part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Sampling-a-Field-with-Particles>`_)
 * Ability to add and remove Particles (see :func:`parcels.particleset.ParticleSet.add` and :func:`parcels.particleset.ParticleSet.remove`)
 * Ability to run in both Scipy and JIT (Just-In-Time compilation) mode. The former is easier to debug, but the latter can be a factor 1,000 faster (see the `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_jit_vs_scipy.ipynb>`_)
-* Ability to read in any type of hydrodynamic field in NetCDF format, as long as the grid is rectangular (i.e. grid axes are aligned with longitude and latitude; see :mod:`parcels.fieldset.FieldSet.from_netcdf` and `the Reading-in-data-from-arbritrary-NetCDF-files part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_)
+* Ability to read in hydrodynamic field in NetCDF format from a suite of models (see `the Reading-in-data-from-arbritrary-NetCDF-files part of the Tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb#Reading-in-data-from-arbritrary-NetCDF-files>`_). Parcels currently supports Rectilinear and Curvilinear grids in the horizontal (see also the `NEMO curvilinear grids tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_).
 * Output particles in NetCDF format (see :mod:`parcels.particlefile`)
 * Basic plotting of particles, both on the fly and from netcdf output files (see the `plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_plotting.ipynb>`_)
 
@@ -49,8 +50,8 @@ on the `Github Development Timeline page
 
 **Future development goals**
 
-* Diffusion of particles using suite of inbuilt kernels
-* Support for non-rectangular grids, including unstructured meshes
+* More types of diffusion of particles using suite of inbuilt kernels
+* Support for unstructured grids
 * Implementation of parallel execution using tiling of the domain
 * Faster and more efficient code
 * Advanced control of particles near land boundaries
@@ -64,6 +65,8 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 * `Parcels tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_ for a general introduction and overview into the main features of Parcels
 
 * `Periodic boundaries tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_ for a tutorial on how to implement periodic boundary conditions
+
+* `NEMO curvilinear grids tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_ for a tutorial on how to run Parcels on curvilinear grids such as those of the NEMO models
 
 * `FieldSet.advancetime() tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_advancetime.ipynb>`_ for a tutorial on how to use Parcels with datasets that have a large number of time snapshots.
 
@@ -191,6 +194,8 @@ However, there are some key limitations to the Kernels that everyone who wants t
       print("lon: %f, lat: %f" % (particle.lon, particle.lat))
 
 * Local variables can be used in Kernels, and these variables will be accessible in all concatenated Kernels. Note that these local variables are not shared between particles, and also not between time steps.
+
+* Note that one has to be careful with writing kernels for vector fields on Curvilinear grids. While Parcels automatically rotates the `U` and `V` field when necessary, this is not the case for for example wind data. In that case, one will have to write their own rotation function.
 
 All other functions and methods are not supported yet in Parcels Kernels. If there is a functionality that can not be programmed with this limited set of commands, please create an `Issue ticket <https://github.com/OceanParcels/parcels/issues>`_.
 

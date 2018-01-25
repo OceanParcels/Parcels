@@ -10,10 +10,11 @@ from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
 import math
-from grid import RectilinearZGrid, CGrid, GridCode
+from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
+                  CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
+__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
 
 
 class FieldSamplingError(RuntimeError):
@@ -108,8 +109,14 @@ class Geographic(UnitConverter):
     def to_target(self, value, x, y, z):
         return value / 1000. / 1.852 / 60.
 
+    def to_source(self, value, x, y, z):
+        return value * 1000. * 1.852 * 60.
+
     def ccode_to_target(self, x, y, z):
         return "(1.0 / (1000.0 * 1.852 * 60.0))"
+
+    def ccode_to_source(self, x, y, z):
+        return "(1000.0 * 1.852 * 60.0)"
 
 
 class GeographicPolar(UnitConverter):
@@ -122,8 +129,52 @@ class GeographicPolar(UnitConverter):
     def to_target(self, value, x, y, z):
         return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
 
+    def to_source(self, value, x, y, z):
+        return value * 1000. * 1.852 * 60. * cos(y * pi / 180)
+
     def ccode_to_target(self, x, y, z):
         return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
+
+    def ccode_to_source(self, x, y, z):
+        return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
+
+
+class GeographicSquare(UnitConverter):
+    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
+    source_unit = 'm2'
+    target_unit = 'degree2'
+
+    def to_target(self, value, x, y, z):
+        return value / pow(1000. * 1.852 * 60., 2)
+
+    def to_source(self, value, x, y, z):
+        return value * pow(1000. * 1.852 * 60., 2)
+
+    def ccode_to_target(self, x, y, z):
+        return "pow(1.0 / (1000.0 * 1.852 * 60.0), 2)"
+
+    def ccode_to_source(self, x, y, z):
+        return "pow((1000.0 * 1.852 * 60.0), 2)"
+
+
+class GeographicPolarSquare(UnitConverter):
+    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
+        with a correction to account for narrower grid cells closer to the poles.
+    """
+    source_unit = 'm2'
+    target_unit = 'degree2'
+
+    def to_target(self, value, x, y, z):
+        return value / pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
+
+    def to_source(self, value, x, y, z):
+        return value * pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
+
+    def ccode_to_target(self, x, y, z):
+        return "pow(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+
+    def ccode_to_source(self, x, y, z):
+        return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
 
 
 class Field(object):
@@ -135,6 +186,12 @@ class Field(object):
     :param lat: Latitude coordinates of the field. (only if grid is None)
     :param depth: Depth coordinates of the field. (only if grid is None)
     :param time: Time coordinates of the field. (only if grid is None)
+    :param mesh: String indicating the type of mesh coordinates and
+           units used during velocity interpolation: (only if grid is None)
+
+           1. spherical (default): Lat and lon in degree, with a
+              correction for zonal velocity U near the poles.
+           2. flat: No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information
     :param transpose: Transpose data to required (lon, lat) layout
@@ -149,15 +206,21 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
+    unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
+                      'Kh_zonal': GeographicPolarSquare(),
+                      'Kh_meridional': GeographicSquare()}
+
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, mesh='flat'):
         self.name = name
+        if self.name == 'UV':
+            return
         self.data = data
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin)
+            self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -165,12 +228,10 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        if self.grid.mesh is 'flat' or (name is not 'U' and name is not 'V'):
+        if self.grid.mesh is 'flat' or (name not in self.unitconverters.keys()):
             self.units = UnitConverter()
-        elif self.grid.mesh is 'spherical' and name == 'U':
-            self.units = GeographicPolar()
-        elif self.grid.mesh is 'spherical' and name == 'V':
-            self.units = Geographic()
+        elif self.grid.mesh is 'spherical':
+            self.units = self.unitconverters[name]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
@@ -194,12 +255,10 @@ class Field(object):
             # Make a copy of the transposed array to enforce
             # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        if self.grid.depth.size > 1 and len(self.grid.depth.shape) == 1:
-            self.data = self.data.reshape((self.grid.time.size, self.grid.depth.size, self.grid.lat.size, self.grid.lon.size))
-        elif len(self.grid.depth.shape) in [3, 4]:
-            self.data = self.data.reshape((self.grid.time.size, self.grid.depth.shape[2], self.grid.lat.size, self.grid.lon.size))
+        if self.grid.zdim > 1:
+            self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
         else:
-            self.data = self.data.reshape((self.grid.time.size, self.grid.lat.size, self.grid.lon.size))
+            self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -233,12 +292,22 @@ class Field(object):
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon, indslon = filebuffer.read_dimension('lon', indices)
-            lat, indslat = filebuffer.read_dimension('lat', indices)
-            depth, indsdepth = filebuffer.read_dimension('depth', indices)
+            lon, lat = filebuffer.read_lonlat(indices)
+            depth = filebuffer.read_depth(indices)
             # Assign time_units if the time dimension has units and calendar
             time_units = filebuffer.time_units
             calendar = filebuffer.calendar
+            if name in ['cosU', 'sinU', 'cosV', 'sinV']:
+                warning = False
+                try:
+                    source = filebuffer.dataset.source
+                    if source != 'parcels_compute_curvilinearGrid_rotationAngles':
+                        warning = True
+                except:
+                    warning = True
+                if warning:
+                    logger.warning_once("You are defining a field name 'cosU', 'sinU', 'cosV' or 'sinV' which was not generated by Parcels. This field will be used to rotate UV velocity at interpolation")
+
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = []
@@ -258,13 +327,22 @@ class Field(object):
                 time_origin = parse(str(time_origin))
 
         # Pre-allocate data before reading files into buffer
-        data = np.empty((time.size, depth.size, lat.size, lon.size), dtype=np.float32)
+        depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
         tidx = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
-                filebuffer.indslat = indslat
-                filebuffer.indslon = indslon
-                filebuffer.indsdepth = indsdepth
+                depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+                latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+                lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+                filebuffer.indslat = indices['lat'] if 'lat' in indices else range(latsize)
+                filebuffer.indslon = indices['lon'] if 'lon' in indices else range(lonsize)
+                filebuffer.indsdepth = indices['depth'] if 'depth' in indices else range(depthsize)
+                for inds in [filebuffer.indslat, filebuffer.indslon, filebuffer.indsdepth]:
+                    if not isinstance(inds, list):
+                        raise RuntimeError('Indices sur field subsetting need to be a list')
                 if 'data' in dimensions:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -272,7 +350,9 @@ class Field(object):
                 else:
                     filebuffer.name = name
 
-                if len(filebuffer.dataset[filebuffer.name].shape) is 3:
+                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                    data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :]
+                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
                     data[tidx:tidx+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[tidx:tidx+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
@@ -281,11 +361,44 @@ class Field(object):
         if 'time' in indices:
             time = time[indices['time']]
             data = data[indices['time'], :, :, :]
-        grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        if time.size == 1 and time[0] is None:
+            time[0] = 0
+        if len(lon.shape) == 1:
+            if len(depth.shape) == 1:
+                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            else:
+                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        else:
+            if len(depth.shape) == 1:
+                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            else:
+                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        if name in ['cosU', 'sinU', 'cosV', 'sinV']:
+            allow_time_extrapolation = True
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
+    def getUV(self, time, x, y, z):
+        fieldset = self.fieldset
+        U = fieldset.U.eval(time, x, y, z, False)
+        V = fieldset.V.eval(time, x, y, z, False)
+        if fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            zonal = U
+            meridional = V
+        else:
+            cosU = fieldset.cosU.eval(time, x, y, z, False)
+            sinU = fieldset.sinU.eval(time, x, y, z, False)
+            cosV = fieldset.cosV.eval(time, x, y, z, False)
+            sinV = fieldset.sinV.eval(time, x, y, z, False)
+            zonal = U * cosU - V * sinV
+            meridional = U * sinU + V * cosV
+        zonal = fieldset.U.units.to_target(zonal, x, y, z)
+        meridional = fieldset.V.units.to_target(meridional, x, y, z)
+        return (zonal, meridional)
+
     def __getitem__(self, key):
+        if self.name == 'UV':
+            return self.getUV(*key)
         return self.eval(*key)
 
     def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
@@ -324,116 +437,7 @@ class Field(object):
                 Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
                       interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
 
-    def interpolator3D_rectilinear_z(self, idx, z, y, x):
-        """Scipy implementation of 3D interpolation, by first interpolating
-        in horizontal, then in the vertical"""
-
-        zdx = self.depth_index(z, y, x)
-        f0 = self.interpolator2D(idx, z_idx=zdx)((y, x))
-        f1 = self.interpolator2D(idx, z_idx=zdx + 1)((y, x))
-        z0 = self.grid.depth[zdx]
-        z1 = self.grid.depth[zdx + 1]
-        if z < z0 or z > z1:
-            raise FieldSamplingError(x, y, z, field=self)
-        if self.interp_method is 'nearest':
-            return f0 if z - z0 < z1 - z else f1
-        elif self.interp_method is 'linear':
-            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
-        else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
-
-    def interpolator3D_rectilinear_s(self, idx, z, y, x, time):
-
-        grid = self.grid
-
-        if x < grid.lon[0] or x > grid.lon[-1]:
-            raise FieldSamplingError(x, y, z, field=self)
-        if y < grid.lat[0] or y > grid.lat[-1]:
-            raise FieldSamplingError(x, y, z, field=self)
-
-        lon_index = grid.lon <= x
-        xi = yi = zi = -1
-        if lon_index.all():
-            xi = len(grid.lon) - 2
-        else:
-            xi = lon_index.argmin() - 1 if lon_index.any() else 0
-        lat_index = grid.lat <= y
-        if lat_index.all():
-            yi = len(grid.lat) - 2
-        else:
-            yi = lat_index.argmin() - 1 if lat_index.any() else 0
-
-        xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
-        eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
-        assert xsi >= 0 and xsi <= 1
-        assert eta >= 0 and eta <= 1
-
-        if grid.z4d:
-            if idx == len(self.grid.time)-1:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
-            else:
-                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, idx:idx+2] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, idx:idx+2] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, idx:idx+2] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, idx:idx+2]
-                t0 = self.grid.time[idx]
-                t1 = self.grid.time[idx + 1]
-                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
-        else:
-            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-                xsi*eta * grid.depth[xi+1, yi+1, :] + \
-                (1-xsi)*eta * grid.depth[xi, yi+1, :]
-
-        # depth variable is defined at np.float32 in particle.py, but as soon as
-        # as there is an operation with dt which is type float, it becomes np.float64
-        z = np.float32(z)
-        depth_index = depth_vector <= z
-        if z >= depth_vector[-1]:
-            zi = len(depth_vector) - 2
-        else:
-            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        z0 = depth_vector[zi]
-        z1 = depth_vector[zi+1]
-        if z < z0 or z > z1:
-            raise FieldSamplingError(x, y, z, field=self)
-
-        if self.interp_method is 'nearest':
-            zii = zi if z - z0 < z1 - z else zi+1
-            xii = xi if xsi <= .5 else xi+1
-            yii = yi if eta <= .5 else yi+1
-            return self.data[idx, zii, yii, xii]
-        elif self.interp_method is 'linear':
-            data = self.data[idx, zi, :, :].transpose()
-            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                    (1-xsi)*eta * data[xi, yi+1]
-            data = self.data[idx, zi+1, :, :].transpose()
-            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                (1-xsi)*eta * data[xi, yi+1]
-            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
-        else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
-
-    def interpolator3D(self, idx, z, y, x, time):
-        """Scipy implementation of 3D interpolation, by first interpolating
-        in horizontal, then in the vertical"""
-
-        if self.grid.gtype == GridCode.RectilinearZGrid:
-            return self.interpolator3D_rectilinear_z(idx, z, y, x)
-        elif self.grid.gtype == GridCode.RectilinearSGrid:
-            return self.interpolator3D_rectilinear_s(idx, z, y, x, time)
-        else:
-            print("Only RectilinearZGrid and RectilinearSGrid grids are currently implemented")
-            exit(-1)
-
-    def interpolator2D(self, t_idx, z_idx=None):
+    def interpolator2D_scipy(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
 
         Note that the interpolator is configured to return NaN for
@@ -446,6 +450,247 @@ class Field(object):
         return RegularGridInterpolator((self.grid.lat, self.grid.lon), data,
                                        bounds_error=False, fill_value=np.nan,
                                        method=self.interp_method)
+
+    def interpolator3D_rectilinear_z(self, idx, z, y, x):
+        """Scipy implementation of 3D interpolation, by first interpolating
+        in horizontal, then in the vertical"""
+
+        zdx = self.depth_index(z, y, x)
+        f0 = self.interpolator2D_scipy(idx, z_idx=zdx)((y, x))
+        f1 = self.interpolator2D_scipy(idx, z_idx=zdx + 1)((y, x))
+        z0 = self.grid.depth[zdx]
+        z1 = self.grid.depth[zdx + 1]
+        if z < z0 or z > z1:
+            raise FieldSamplingError(x, y, z, field=self)
+        if self.interp_method is 'nearest':
+            return f0 if z - z0 < z1 - z else f1
+        elif self.interp_method is 'linear':
+            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+
+    def search_indices_vertical_z(self, z):
+        grid = self.grid
+        z = np.float32(z)
+        depth_index = grid.depth <= z
+        if z >= grid.depth[-1]:
+            zi = len(grid.depth) - 2
+        else:
+            zi = depth_index.argmin() - 1 if z >= grid.depth[0] else 0
+        zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
+        return (zi, zeta)
+
+    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, tidx, time):
+        grid = self.grid
+        if grid.z4d:
+            if tidx == len(grid.time)-1:
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+            else:
+                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, tidx:tidx+2] + \
+                    xsi*(1-eta) * grid.depth[xi+1, yi, :, tidx:tidx+2] + \
+                    xsi*eta * grid.depth[xi+1, yi+1, :, tidx:tidx+2] + \
+                    (1-xsi)*eta * grid.depth[xi, yi+1, :, tidx:tidx+2]
+                t0 = grid.time[tidx]
+                t1 = grid.time[tidx + 1]
+                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+        else:
+            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
+                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
+                xsi*eta * grid.depth[xi+1, yi+1, :] + \
+                (1-xsi)*eta * grid.depth[xi, yi+1, :]
+        z = np.float32(z)
+        depth_index = depth_vector <= z
+        if z >= depth_vector[-1]:
+            zi = len(depth_vector) - 2
+        else:
+            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
+        if z < depth_vector[zi] or z > depth_vector[zi+1]:
+            raise FieldSamplingError(x, y, z, field=self)
+        zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
+        return (zi, zeta)
+
+    def fix_i_index(self, xi, dim, sphere_mesh):
+        if xi < 0:
+            if sphere_mesh:
+                xi = dim-2
+            else:
+                xi = 0
+        if xi > dim-2:
+            if sphere_mesh:
+                xi = 0
+            else:
+                xi = dim-2
+        return xi
+
+    def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
+
+        grid = self.grid
+        xi = yi = -1
+        lon_index = grid.lon <= x
+
+        if grid.mesh is not 'spherical':
+            if x < grid.lon[0] or x > grid.lon[-1]:
+                raise FieldSamplingError(x, y, z, field=self)
+            lon_index = grid.lon <= x
+            if lon_index.all():
+                xi = len(grid.lon) - 2
+            else:
+                xi = lon_index.argmin() - 1 if lon_index.any() else 0
+            xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+        else:
+            lon_fixed = grid.lon
+            lon_fixed = np.where(lon_fixed - x > 180., lon_fixed - 360, lon_fixed)
+            lon_fixed = np.where(x - lon_fixed > 180., lon_fixed + 360, lon_fixed)
+            if x < lon_fixed[0] or x > lon_fixed[-1]:
+                raise FieldSamplingError(x, y, z, field=self)
+            lon_index = lon_fixed <= x
+            if lon_index.all():
+                xi = len(lon_fixed) - 2
+            else:
+                xi = lon_index.argmin() - 1 if lon_index.any() else 0
+            xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+
+        if y < grid.lat[0] or y > grid.lat[-1]:
+            raise FieldSamplingError(x, y, z, field=self)
+        lat_index = grid.lat <= y
+        if lat_index.all():
+            yi = len(grid.lat) - 2
+        else:
+            yi = lat_index.argmin() - 1 if lat_index.any() else 0
+
+        eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+
+        if grid.zdim > 1:
+            if grid.gtype == GridCode.RectilinearZGrid:
+                # Never passes here, because in this case, we work with scipy
+                (zi, zeta) = self.search_indices_vertical_z(z)
+            elif grid.gtype == GridCode.RectilinearSGrid:
+                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
+        else:
+            zi = 0
+            zeta = 0
+
+        assert(xsi >= 0 and xsi <= 1)
+        assert(eta >= 0 and eta <= 1)
+        assert(zeta >= 0 and zeta <= 1)
+
+        return (xsi, eta, zeta, xi, yi, zi)
+
+    def search_indices_curvilinear(self, x, y, z, xi, yi, tidx=-1, time=-1):
+        xsi = eta = -1
+        grid = self.grid
+        invA = np.array([[1, 0, 0, 0],
+                         [-1, 1, 0, 0],
+                         [-1, 0, 0, 1],
+                         [1, -1, 1, -1]])
+        maxIterSearch = 1e6
+        it = 0
+        while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
+            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            if grid.mesh == 'spherical':
+                px = np.where(px - x > 180, px-360, px)
+                px = np.where(-px + x > 180, px+360, px)
+            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
+            a = np.dot(invA, px)
+            b = np.dot(invA, py)
+
+            aa = a[3]*b[2] - a[2]*b[3]
+            if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
+                xsi = ((x-px[0]) / (px[1]-px[0])
+                       + (x-px[3]) / (px[2]-px[3])) * .5
+                eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])
+                       + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1])) * .5
+            else:
+                bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
+                cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
+                det2 = bb*bb-4*aa*cc
+                if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
+                    det = np.sqrt(det2)
+                    eta = (-bb+det)/(2*aa)
+                    xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+            if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
+                raise FieldSamplingError(x, y, 0, field=self)
+            if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
+                raise FieldSamplingError(x, y, 0, field=self)
+            if xsi < 0:
+                xi -= 1
+            elif xsi > 1:
+                xi += 1
+            if eta < 0:
+                yi -= 1
+            elif eta > 1:
+                yi += 1
+            xi = self.fix_i_index(xi, grid.xdim, grid.mesh == 'spherical')
+            yi = self.fix_i_index(yi, grid.ydim, False)
+            it += 1
+            if it > maxIterSearch:
+                print('Correct cell not found after %d iterations' % maxIterSearch)
+                raise FieldSamplingError(x, y, 0, field=self)
+
+        if grid.zdim > 1:
+            if grid.gtype == GridCode.CurvilinearZGrid:
+                (zi, zeta) = self.search_indices_vertical_z(z)
+            elif grid.gtype == GridCode.CurvilinearSGrid:
+                (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
+        else:
+            zi = 0
+            zeta = 0
+
+        assert(xsi >= 0 and xsi <= 1)
+        assert(eta >= 0 and eta <= 1)
+        assert(zeta >= 0 and zeta <= 1)
+
+        return (xsi, eta, zeta, xi, yi, zi)
+
+    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
+        if self.grid.gtype == GridCode.RectilinearSGrid:
+            return self.search_indices_rectilinear(x, y, z, tidx, time)
+        else:
+            return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time)
+
+    def interpolator2D(self, tidx, z, y, x):
+        xi = 0
+        yi = 0
+        (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
+        if self.interp_method is 'nearest':
+            xii = xi if xsi <= .5 else xi+1
+            yii = yi if eta <= .5 else yi+1
+            return self.data[tidx, yii, xii]
+        elif self.interp_method is 'linear':
+            val = (1-xsi)*(1-eta) * self.data[tidx, yi, xi] + \
+                xsi*(1-eta) * self.data[tidx, yi, xi+1] + \
+                xsi*eta * self.data[tidx, yi+1, xi+1] + \
+                (1-xsi)*eta * self.data[tidx, yi+1, xi]
+            return val
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+
+    def interpolator3D(self, tidx, z, y, x, time):
+        xi = int(self.grid.xdim / 2)
+        yi = int(self.grid.ydim / 2)
+        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, tidx, time)
+        if self.interp_method is 'nearest':
+            xii = xi if xsi <= .5 else xi+1
+            yii = yi if eta <= .5 else yi+1
+            zii = zi if zeta <= .5 else zi+1
+            return self.data[tidx, zii, yii, xii]
+        elif self.interp_method is 'linear':
+            data = self.data[tidx, zi, :, :].transpose()
+            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
+                xsi*(1-eta) * data[xi+1, yi] + \
+                xsi*eta * data[xi+1, yi+1] + \
+                    (1-xsi)*eta * data[xi, yi+1]
+            data = self.data[tidx, zi+1, :, :].transpose()
+            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
+                xsi*(1-eta) * data[xi+1, yi] + \
+                xsi*eta * data[xi+1, yi+1] + \
+                (1-xsi)*eta * data[xi, yi+1]
+            return (1-zeta) * f0 + zeta * f1
+        else:
+            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, tidx, time):
         """Calculate the data of a field between two snapshots,
@@ -463,10 +708,19 @@ class Field(object):
 
     def spatial_interpolation(self, tidx, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
-        if self.grid.depth.size == 1:
-            val = self.interpolator2D(tidx)((y, x))
+
+        if self.grid.gtype is GridCode.RectilinearZGrid:  # The only case where we use scipy interpolation
+            if self.grid.zdim == 1:
+                val = self.interpolator2D_scipy(tidx)((y, x))
+            else:
+                val = self.interpolator3D_rectilinear_z(tidx, z, y, x)
+        elif self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+            if self.grid.zdim == 1:
+                val = self.interpolator2D(tidx, z, y, x)
+            else:
+                val = self.interpolator3D(tidx, z, y, x, time)
         else:
-            val = self.interpolator3D(tidx, z, y, x, time)
+            raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldSamplingError(x, y, z, field=self)
@@ -509,7 +763,7 @@ class Field(object):
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
-    def eval(self, time, x, y, z):
+    def eval(self, time, x, y, z, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -518,7 +772,7 @@ class Field(object):
         """
         (t_idx, periods) = self.time_index(time)
         time -= periods*(self.grid.time[-1]-self.grid.time[0])
-        if t_idx < len(self.grid.time)-1 and time > self.grid.time[t_idx]:
+        if t_idx < self.grid.tdim-1 and time > self.grid.time[t_idx]:
             f0 = self.spatial_interpolation(t_idx, z, y, x, time)
             f1 = self.spatial_interpolation(t_idx + 1, z, y, x, time)
             t0 = self.grid.time[t_idx]
@@ -530,18 +784,63 @@ class Field(object):
             # excat value in the time array.
             value = self.spatial_interpolation(t_idx, z, y, x, self.grid.time[t_idx-1])
 
-        return self.units.to_target(value, x, y, z)
+        if applyConversion:
+            return self.units.to_target(value, x, y, z)
+        else:
+            return value
+
+    def ccode_evalUV(self, varU, varV, t, x, y, z):
+        # Casting interp_methd to int as easier to pass on in C-code
+
+        gridset = self.fieldset.gridset
+        uiGrid = -1
+        viGrid = -1
+        if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            for i, g in enumerate(gridset.grids):
+                if min(uiGrid, viGrid) > -1:
+                    break
+                if g is self.fieldset.U.grid:
+                    uiGrid = i
+                if g is self.fieldset.V.grid:
+                    viGrid = i
+            return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->CGridIndexSet, %s, %s, &%s, &%s, %s)" \
+                % (x, y, z, t,
+                   uiGrid, viGrid, varU, varV, self.fieldset.U.interp_method.upper())
+        else:
+            cosuiGrid = -1
+            sinuiGrid = -1
+            cosviGrid = -1
+            sinviGrid = -1
+            for i, g in enumerate(gridset.grids):
+                if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
+                    break
+                if g is self.fieldset.U.grid:
+                    uiGrid = i
+                if g is self.fieldset.V.grid:
+                    viGrid = i
+                if g is self.fieldset.cosU.grid:
+                    cosuiGrid = i
+                if g is self.fieldset.sinU.grid:
+                    sinuiGrid = i
+                if g is self.fieldset.cosV.grid:
+                    cosviGrid = i
+                if g is self.fieldset.sinV.grid:
+                    sinviGrid = i
+            return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->CGridIndexSet, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
+                % (x, y, z, t,
+                   uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid,
+                   varU, varV, self.fieldset.U.interp_method.upper())
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
         gridset = self.fieldset.gridset
         iGrid = -1
         for i, g in enumerate(gridset.grids):
-            if g.name == self.grid.name:
+            if g is self.grid:
                 iGrid = i
                 break
-        return "temporal_interpolation_linear(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
-            % (x, y, z, "particle->CGridIndexSet", iGrid, t, self.name, var,
+        return "temporal_interpolation(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
+            % (x, y, z, t, self.name, "particle->CGridIndexSet", iGrid, var,
                self.interp_method.upper())
 
     def ccode_convert(self, _, x, y, z):
@@ -564,13 +863,13 @@ class Field(object):
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        cstruct = CField(self.grid.lon.size, self.grid.lat.size, self.grid.depth.size,
-                         self.grid.time.size, allow_time_extrapolation, time_periodic,
+        cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
+                         self.grid.tdim, allow_time_extrapolation, time_periodic,
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))),
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, with_particles=False, animation=False, show_time=0, vmin=None, vmax=None):
+    def show(self, with_particles=False, animation=False, show_time=None, vmin=None, vmax=None):
         """Method to 'show' a :class:`Field` using matplotlib
 
         :param with_particles: Boolean whether particles are also plotted on Field
@@ -588,6 +887,7 @@ class Field(object):
             return
 
         if with_particles or (not animation):
+            show_time = self.grid.time[0] if show_time is None else show_time
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
             if self.grid.time.size > 1:
@@ -630,25 +930,28 @@ class Field(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
+        if self.name == 'UV':
+            return
         if zonal:
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
                                             self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
-                assert self.data.shape[2] == self.grid.lon.size
+                assert self.data.shape[2] == self.grid.xdim
             else:
                 self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
                                             self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
-                assert self.data.shape[3] == self.grid.lon.size
+                assert self.data.shape[3] == self.grid.xdim
             self.lon = self.grid.lon
+            self.lat = self.grid.lat
         if meridional:
             if len(self.data.shape) is 3:
                 self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
                                             self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
-                assert self.data.shape[1] == self.grid.lat.size
+                assert self.data.shape[1] == self.grid.ydim
             else:
                 self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
                                             self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
-                assert self.data.shape[2] == self.grid.lat.size
+                assert self.data.shape[2] == self.grid.ydim
             self.lat = self.grid.lat
 
     def write(self, filename, varname=None):
@@ -656,6 +959,8 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
+        if self.name == 'UV':
+            return
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
@@ -703,34 +1008,48 @@ class FileBuffer(object):
     def __exit__(self, type, value, traceback):
         self.dataset.close()
 
-    def read_dimension(self, dimname, indices):
-        dim = getattr(self, dimname)
-        inds = indices[dimname] if dimname in indices else range(dim.size)
-        if not isinstance(inds, list):
-            raise RuntimeError('Index for '+dimname+' needs to be a list')
-        return dim[inds], inds
+    def subset(self, dim, dimname, indices):
+        if len(dim.shape) == 1:  # RectilinearZGrid
+            inds = indices[dimname] if dimname in indices else range(dim.size)
+            dim_inds = dim[inds]
+        else:
+            inds_lon = indices['lon'] if 'lon' in indices else range(dim.shape[-1])
+            inds_lat = indices['lat'] if 'lat' in indices else range(dim.shape[-2])
+            if len(dim.shape) == 2:  # CurvilinearGrid
+                dim_inds = dim[inds_lat, inds_lon]
+            elif len(dim.shape) == 3:  # SGrid
+                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
+                dim_inds = dim[inds_depth, inds_lat, inds_lon]
+            elif len(dim.shape) == 4:  # SGrid
+                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
+                dim_inds = dim[:, inds_depth, inds_lat, inds_lon]
+        return dim_inds
 
-    @property
-    def lon(self):
+    def read_lonlat(self, indices):
         lon = self.dataset[self.dimensions['lon']]
-        return lon[0, :] if len(lon.shape) > 1 else lon[:]
-
-    @property
-    def lat(self):
         lat = self.dataset[self.dimensions['lat']]
-        return lat[:, 0] if len(lat.shape) > 1 else lat[:]
+        if len(lon.shape) > 1:
+            londim = lon.shape[0]
+            latdim = lat.shape[1]
+            if np.allclose(lon[0, :], lon[int(londim/2), :]) and np.allclose(lat[:, 0], lat[:, int(latdim/2)]):
+                lon = lon[0, :]
+                lat = lat[:, 0]
+        lon_subset = self.subset(lon, 'lon', indices)
+        lat_subset = self.subset(lat, 'lat', indices)
+        return lon_subset, lat_subset
 
-    @property
-    def depth(self):
+    def read_depth(self, indices):
         if 'depth' in self.dimensions:
             depth = self.dataset[self.dimensions['depth']]
-            return depth[:, 0] if len(depth.shape) > 1 else depth[:]
+            return self.subset(depth, 'depth', indices)
         else:
             return np.zeros(1)
 
     @property
     def data(self):
-        if len(self.dataset[self.name].shape) == 3:
+        if len(self.dataset[self.name].shape) == 2:
+            data = self.dataset[self.name][self.indslat, self.indslon]
+        elif len(self.dataset[self.name].shape) == 3:
             data = self.dataset[self.name][:, self.indslat, self.indslon]
         else:
             data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
