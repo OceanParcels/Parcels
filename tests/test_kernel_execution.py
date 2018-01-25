@@ -54,7 +54,7 @@ def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
     pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
-    t_step = (end - start) / substeps
+    t_step = abs(end - start) / substeps
     for _ in range(substeps):
         pset.execute(DoNothing, runtime=t_step, dt=dt)
         start += t_step
