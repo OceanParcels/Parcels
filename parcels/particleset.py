@@ -6,6 +6,7 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.loggers import logger
 import numpy as np
+import math
 import bisect
 from collections import Iterable
 from datetime import timedelta as delta
@@ -280,11 +281,10 @@ class ParticleSet(object):
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
+        else:
+            runtime = np.abs(endtime - _starttime)
         if interval is None:
-            interval = endtime - _starttime
-        elif dt < 0 and interval > 0.:
-            interval *= -1.
-            logger.warning("Negating interval because running in time-backward mode")
+            interval = abs(endtime - _starttime)
 
         if abs(endtime-_starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
             timeleaps = 1
@@ -294,7 +294,7 @@ class ParticleSet(object):
             logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
                                 "The kernels will be executed once, without incrementing time")
         else:
-            timeleaps = int((endtime - _starttime) / interval)
+            timeleaps = int(math.ceil(runtime / interval))
 
         if self.repeatdt is not None and self.repeatdt % interval != 0:
             raise ("repeatdt should be multiple of interval")
@@ -311,8 +311,10 @@ class ParticleSet(object):
                 output_file.write(self, leaptime)
             if show_movie:
                 self.show(field=show_movie, show_time=leaptime)
-            leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
+            if dt > 0:
+                leaptime = min([leaptime + interval, endtime])
+            else:
+                leaptime = max([leaptime - interval, _starttime])
             self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery, output_file=output_file)
             # Add new particles if repeatdt is used
             if self.repeatdt is not None and abs(leaptime - self.repeat_starttime) % self.repeatdt == 0:
