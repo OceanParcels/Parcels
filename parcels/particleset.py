@@ -313,6 +313,7 @@ class ParticleSet(object):
                 self.show(field=show_movie, show_time=leaptime)
             leaptime += interval
             self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
+            self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery, output_file=output_file)
             # Add new particles if repeatdt is used
             if self.repeatdt is not None and abs(leaptime - self.repeat_starttime) % self.repeatdt == 0:
                 self.add(ParticleSet(fieldset=self.fieldset, time=leaptime, lon=self.repeatlon,

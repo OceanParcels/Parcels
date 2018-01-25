@@ -346,7 +346,7 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
-    outfile = pset.ParticleFile(name=filepath)  # add to_write=on_delete here
+    outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
     pset.execute(move_west, runtime=1.1, dt=0.1,
                  interval=0.3, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
