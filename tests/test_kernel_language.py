@@ -156,23 +156,28 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
 def test_c_kernel(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
 
-    def c_func(U):
-        print('Calling the python func')
-        print('%g %g' % (U.data[0, 0, 0], U.data[0, 0, 1]))
-        print('%g %g' % (U.data[0, 1, 0], U.data[0, 1, 1]))
+    def func(U, lon, dt):
+        u = U.data[0, 2, 1]
+        return lon + u * dt
 
     c_include = """
-             static inline void c_func(CField *f)
+             static inline void func(CField *f, float *lon, float *dt)
              {
-               printf("Calling the C func\\n");
                float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
-               printf("%g %g\\n", data[0][0], data[0][1]);
-               printf("%g %g\\n", data[1][0], data[1][1]);
+               float u = data[2][1];
+               *lon += u * *dt;
              }
              """
 
     def ckernel(particle, fieldset, time, dt):
-        c_func(fieldset.U)
+        func('pointer_args', fieldset.U, particle.lon, dt)
 
-    kernel = pset.Kernel(ckernel, c_include=c_include)
-    pset.execute(kernel, endtime=1., dt=1.)
+    def pykernel(particle, fieldset, time, dt):
+        particle.lon = func(fieldset.U, particle.lon, dt)
+
+    if mode == 'scipy':
+        kernel = pset.Kernel(pykernel)
+    else:
+        kernel = pset.Kernel(ckernel, c_include=c_include)
+    pset.execute(kernel, endtime=3., dt=3.)
+    assert np.allclose(pset[0].lon, 0.81578948)

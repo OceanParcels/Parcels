@@ -300,11 +300,17 @@ class KernelGenerator(ast.NodeVisitor):
         """Generate C code for simple C-style function calls. Please
         note that starred and keyword arguments are currently not
         supported."""
+        pointer_args = False
         for a in node.args:
             self.visit(a)
+            if a.ccode == 'pointer_args':
+                pointer_args = True
+                continue
             if isinstance(a, FieldNode):
                 a.ccode = a.obj.name
-        ccode_args = ", ".join([a.ccode for a in node.args])
+            elif pointer_args:
+                a.ccode = "&%s" % a.ccode
+        ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
         try:
             self.visit(node.func)
             node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
