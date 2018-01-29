@@ -9,7 +9,7 @@ tracking of virtual ocean particles in the petascale age.
 
 *Animation of virtual particles carried by ocean surface flow in the [Agulhas Current](https://en.wikipedia.org/wiki/Agulhas_Current) off South Africa. The particles are advected with [Parcels](http://oceanparcels.org/) in data from the [GlobCurrent Project](http://globcurrent.ifremer.fr/products-data/products-overview).*
 
-### Parcels v0.9 manuscript and code
+### Parcels manuscript and code
 
 The manuscript detailing the first release of Parcels, version 0.9, has been published at [Geoscientific Model Development](https://www.geosci-model-dev.net/10/4175/2017/gmd-10-4175-2017.html) and can be cited as 
 
