@@ -71,4 +71,4 @@ class GNUCompiler(Compiler):
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
         ldargs = ['-shared'] + ldargs + arch_flag
-        super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
+        super(GNUCompiler, self).__init__(_gcc, cppargs=cppargs, ldargs=ldargs)
