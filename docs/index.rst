@@ -87,14 +87,14 @@ Parcels depends on a working Python installation, a netCDF installation, a C
 compiler, and various Python packages.
 
 The simplest way to install Parcels is to use Anaconda and Conda-Forge for all
-requirements. This is the “batteries-included” solution probably suitable for most users. 
+requirements. This is the “batteries-included” solution probably suitable for most users.
 Note that if you already have an existing Python setup that you wish to use for Parcels, you should follow the instructions at the bottom of this section.
 
 The five steps below are the installation instructions for Linux and macOS. Note that for Windows, steps 2 and 5 are slightly different, see :ref:`installing-windows` below.
 
 1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
 
-2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file, navigate to the directory where you saved that file, and run::
+2. Download Parcels' environment definition for either Linux (`environment_linux.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_linux.yml>`_) or for macOS (`environment_osx.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_osx.yml>`_), save it as `environment.yml`, navigate to the directory where you saved that file, and run::
 
     source $HOME/miniconda2/bin/activate root
     conda env create -f environment.yml -n py2_parcels

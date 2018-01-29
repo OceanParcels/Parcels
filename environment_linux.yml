@@ -9,7 +9,7 @@ dependencies:
   - ffmpeg
   - flake8>=2.1.0
   - git
-  - gcc
+  - gcc_linux-64
   - jupyter
   - matplotlib=2.0.2
   - netcdf4>=1.1.9

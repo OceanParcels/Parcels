@@ -16,7 +16,7 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda env create --file environment.yml
+    - conda env create --file environment_linux.yml
     - source activate py2_parcels
     - conda install --yes sphinx
     - pip install -e .
