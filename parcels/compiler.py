@@ -49,10 +49,13 @@ class Compiler(object):
 Please check if compiler exists: %s""" % self._cc
                 raise RuntimeError(err)
             except subprocess.CalledProcessError:
-                err = """Error during compilation:
+                with open(log, 'r') as logfile2:
+                    err = """Error during compilation:
 Compilation command: %s
 Source file: %s
-Log file: %s""" % (" ".join(cc), src, logfile.name)
+Log file: %s
+
+Log output: %s""" % (" ".join(cc), src, logfile.name, logfile2.read())
                 raise RuntimeError(err)
 
 

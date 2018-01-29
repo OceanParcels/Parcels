@@ -26,7 +26,7 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     vec = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, 2)
-    grid = RectilinearZGrid('K_grid', lon=vec, lat=vec, mesh=mesh)
+    grid = RectilinearZGrid(lon=vec, lat=vec, mesh=mesh)
 
     fieldset.add_field(Field('Kh_zonal', kh_zonal*np.ones((2, 2)), grid=grid))
     fieldset.add_field(Field('Kh_meridional', kh_meridional*np.ones((2, 2)), grid=grid))
