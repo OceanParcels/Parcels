@@ -14,7 +14,7 @@ from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                   CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar']
+__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
 
 
 class FieldSamplingError(RuntimeError):
@@ -139,6 +139,44 @@ class GeographicPolar(UnitConverter):
         return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
 
 
+class GeographicSquare(UnitConverter):
+    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
+    source_unit = 'm2'
+    target_unit = 'degree2'
+
+    def to_target(self, value, x, y, z):
+        return value / pow(1000. * 1.852 * 60., 2)
+
+    def to_source(self, value, x, y, z):
+        return value * pow(1000. * 1.852 * 60., 2)
+
+    def ccode_to_target(self, x, y, z):
+        return "pow(1.0 / (1000.0 * 1.852 * 60.0), 2)"
+
+    def ccode_to_source(self, x, y, z):
+        return "pow((1000.0 * 1.852 * 60.0), 2)"
+
+
+class GeographicPolarSquare(UnitConverter):
+    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
+        with a correction to account for narrower grid cells closer to the poles.
+    """
+    source_unit = 'm2'
+    target_unit = 'degree2'
+
+    def to_target(self, value, x, y, z):
+        return value / pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
+
+    def to_source(self, value, x, y, z):
+        return value * pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
+
+    def ccode_to_target(self, x, y, z):
+        return "pow(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+
+    def ccode_to_source(self, x, y, z):
+        return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -168,6 +206,10 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
+    unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
+                      'Kh_zonal': GeographicPolarSquare(),
+                      'Kh_meridional': GeographicSquare()}
+
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
                  transpose=False, vmin=None, vmax=None, time_origin=0,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, mesh='flat'):
@@ -178,7 +220,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -186,12 +228,10 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        if self.grid.mesh is 'flat' or (name is not 'U' and name is not 'V'):
+        if self.grid.mesh is 'flat' or (name not in self.unitconverters.keys()):
             self.units = UnitConverter()
-        elif self.grid.mesh is 'spherical' and name == 'U':
-            self.units = GeographicPolar()
-        elif self.grid.mesh is 'spherical' and name == 'V':
-            self.units = Geographic()
+        elif self.grid.mesh is 'spherical':
+            self.units = self.unitconverters[name]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
@@ -325,14 +365,14 @@ class Field(object):
             time[0] = 0
         if len(lon.shape) == 1:
             if len(depth.shape) == 1:
-                grid = RectilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = RectilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         else:
             if len(depth.shape) == 1:
-                grid = CurvilinearZGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = CurvilinearSGrid('auto_gen_grid', lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
         return cls(name, data, grid=grid,
@@ -759,9 +799,9 @@ class Field(object):
             for i, g in enumerate(gridset.grids):
                 if min(uiGrid, viGrid) > -1:
                     break
-                if g.name == self.fieldset.U.grid.name:
+                if g is self.fieldset.U.grid:
                     uiGrid = i
-                if g.name == self.fieldset.V.grid.name:
+                if g is self.fieldset.V.grid:
                     viGrid = i
             return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->CGridIndexSet, %s, %s, &%s, &%s, %s)" \
                 % (x, y, z, t,
@@ -774,17 +814,17 @@ class Field(object):
             for i, g in enumerate(gridset.grids):
                 if min(uiGrid, viGrid, cosuiGrid, sinuiGrid, cosviGrid, sinviGrid) > -1:
                     break
-                if g.name == self.fieldset.U.grid.name:
+                if g is self.fieldset.U.grid:
                     uiGrid = i
-                if g.name == self.fieldset.V.grid.name:
+                if g is self.fieldset.V.grid:
                     viGrid = i
-                if g.name == self.fieldset.cosU.grid.name:
+                if g is self.fieldset.cosU.grid:
                     cosuiGrid = i
-                if g.name == self.fieldset.sinU.grid.name:
+                if g is self.fieldset.sinU.grid:
                     sinuiGrid = i
-                if g.name == self.fieldset.cosV.grid.name:
+                if g is self.fieldset.cosV.grid:
                     cosviGrid = i
-                if g.name == self.fieldset.sinV.grid.name:
+                if g is self.fieldset.sinV.grid:
                     sinviGrid = i
             return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->CGridIndexSet, %s, %s, %s, %s, %s, %s, &%s, &%s, %s)" \
                 % (x, y, z, t,
@@ -796,7 +836,7 @@ class Field(object):
         gridset = self.fieldset.gridset
         iGrid = -1
         for i, g in enumerate(gridset.grids):
-            if g.name == self.grid.name:
+            if g is self.grid:
                 iGrid = i
                 break
         return "temporal_interpolation(%s, %s, %s, %s, %s, %s, %s, &%s, %s)" \
@@ -945,8 +985,6 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
-        if self.name == 'UV':
-            return
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
             self.time = self.grid.time

@@ -130,6 +130,31 @@ static inline void fix_i_index(int *i, int dim, int sphere_mesh)
 }
 
 
+static inline void fix_ij_index(int *i, int *j, int xdim, int ydim, int sphere_mesh)
+{
+  if (*i < 0){
+    if (sphere_mesh)
+      (*i) = xdim-2;
+    else
+      (*i) = 0;
+  }
+  if (*i > xdim-2){
+    if (sphere_mesh)
+      (*i) = 0;
+    else
+      (*i) = xdim-2;
+  }
+  if (*j < 0){
+    (*j) = 0;
+  }
+  if (*j > ydim-2){
+    (*j) = ydim-2;
+    if (sphere_mesh)
+      (*i) = xdim - (*i);
+  }
+}
+
+
 static inline ErrorCode search_indices_rectilinear(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals, int sphere_mesh, GridCode gcode,
                                             int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
@@ -228,25 +253,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    float xgrid_ji = xgrid[*j][*i];
-    float xgrid_j1i = xgrid[*j+1][*i];
-    float xgrid_j1i1 = xgrid[*j+1][*i+1];
-    float xgrid_ji1 = xgrid[*j][*i+1];
+    float xgrid_loc[4] = {xgrid[*j][*i], xgrid[*j][*i+1], xgrid[*j+1][*i+1], xgrid[*j+1][*i]};
     if (sphere_mesh){ //we are on the sphere
-      if (xgrid_ji   < x - 180) xgrid_ji += 360;
-      if (xgrid_ji   > x + 180) xgrid_ji -= 360;
-      if (xgrid_j1i  < x - 180) xgrid_j1i += 360;
-      if (xgrid_j1i  > x + 180) xgrid_j1i -= 360;
-      if (xgrid_j1i1 < x - 180) xgrid_j1i1 += 360;
-      if (xgrid_j1i1 > x + 180) xgrid_j1i1 -= 360;
-      if (xgrid_ji1  < x - 180) xgrid_ji1 += 360;
-      if (xgrid_ji1  > x + 180) xgrid_ji1 -= 360;
+      int i4;
+      for (i4 = 0; i4 < 4; ++i4){
+        if (xgrid_loc[i4] < x - 180) xgrid_loc[i4] += 360;
+        if (xgrid_loc[i4] > x + 180) xgrid_loc[i4] -= 360;
+      }
     }
 
-    a[0] =  xgrid_ji;
-    a[1] = -xgrid_ji      + xgrid_ji1;
-    a[2] = -xgrid_ji                                            + xgrid_j1i;
-    a[3] =  xgrid_ji      - xgrid_ji1       + xgrid_j1i1        - xgrid_j1i;
+    a[0] =  xgrid_loc[0];
+    a[1] = -xgrid_loc[0]  + xgrid_loc[1];
+    a[2] = -xgrid_loc[0]                                        + xgrid_loc[3];
+    a[3] =  xgrid_loc[0]  - xgrid_loc[1]    + xgrid_loc[2]      - xgrid_loc[3];
     b[0] =  ygrid[*j][*i];
     b[1] = -ygrid[*j][*i] + ygrid[*j][*i+1];
     b[2] = -ygrid[*j][*i]                                       + ygrid[*j+1][*i];
@@ -254,10 +273,18 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
 
     double aa = a[3]*b[2] - a[2]*b[3];
     if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
-      *xsi = ( (x-xgrid_ji) / (xgrid_ji1-xgrid_ji)
-           +   (x-xgrid_j1i) / (xgrid_j1i1-xgrid_j1i) ) * .5;
-      *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
-           +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
+      if( fabs(ygrid[*j+1][*i] - ygrid[*j][*i]) >  fabs(ygrid[*j][*i+1] - ygrid[*j][*i]) ){ // well-oriented cell, like in mid latitudes in NEMO
+        *xsi = ( (x-xgrid_loc[0]) / (xgrid_loc[1]-xgrid_loc[0])
+             +   (x-xgrid_loc[3]) / (xgrid_loc[2]-xgrid_loc[3]) ) * .5;
+        *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
+             +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
+      }
+      else{ // miss-oriented cell, like in the arctic in NEMO
+        *xsi = ( (y-ygrid[*j][*i]) / (ygrid[*j][*i+1]-ygrid[*j][*i])
+             +   (y-ygrid[*j+1][*i]) / (ygrid[*j+1][*i+1]-ygrid[*j+1][*i]) ) * .5;
+        *eta = ( (x-xgrid_loc[0]) / (xgrid_loc[3]-xgrid_loc[0])
+             +   (x-xgrid_loc[1]) / (xgrid_loc[2]-xgrid_loc[1]) ) * .5;
+      }
     }
     else{
       double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
@@ -280,8 +307,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
       (*j)--;
     if (*eta > 1)
       (*j)++;
-    fix_i_index(i, xdim, sphere_mesh);
-    fix_i_index(j, ydim, 0);
+    fix_ij_index(i, j, xdim, ydim, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
       printf("Correct cell not found after %d iterations\n", maxIterSearch);
@@ -564,7 +590,7 @@ static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float
 /*   Random number generation (RNG) functions     */
 /**************************************************/
 
-static void parcels_seed(int seed)
+static inline void parcels_seed(int seed)
 {
   srand(seed);
 }
@@ -591,7 +617,6 @@ static inline float parcels_normalvariate(float loc, float scale)
 /*     this software for any application provided this copyright notice is preserved.       */
 {
   float x1, x2, w, y1;
-  static float y2;
 
   do {
     x1 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
@@ -601,7 +626,6 @@ static inline float parcels_normalvariate(float loc, float scale)
 
   w = sqrt( (-2.0 * log( w ) ) / w );
   y1 = x1 * w;
-  y2 = x2 * w;
   return( loc + y1 * scale );
 }
 #ifdef __cplusplus
