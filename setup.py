@@ -9,7 +9,7 @@ setup(name='parcels',
       version='1.0',
       description="""Framework for Lagrangian tracking of virtual
       ocean particles in the petascale age.""",
-      author="Imperial College London",
+      author="oceanparcels.org team",
       use_scm_version=True,
       setup_requires=['setuptools_scm'],
       packages=find_packages(),
