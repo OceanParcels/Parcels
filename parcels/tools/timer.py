@@ -44,10 +44,8 @@ class Timer():
         print(('(%3d%%)' % round(time/root_time*100)), end='')
         for i in range(step+1):
             print('  ', end='')
-        print("Timer '%s': %1.1e s" % (self._name, time), end='')
-        if step == 0:
-            print('')
-        else:
-            print(('  (%3d%%)' % round(time/parent_time*100)))
+        if step > 0:
+            print('(%3d%%) ' % round(time/parent_time*100), end='')
+        print("Timer '%s': %1.1e s" % (self._name, time))
         for child in self._children:
             child.print_tree(step+1, root_time, time)
