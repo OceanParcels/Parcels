@@ -1,11 +1,11 @@
 from parcels.field import Field
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
+from parcels.scripts import compute_curvilinearGrid_rotationAngles
 from parcels.loggers import logger
 import numpy as np
 from os import path
 from glob import glob
-from copy import deepcopy
 
 
 __all__ = ['FieldSet']
@@ -141,34 +141,77 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_nemo(cls, basename, uvar='vozocrtx', vvar='vomecrty',
-                  indices={}, extra_fields={}, allow_time_extrapolation=False,
-                  time_periodic=False, **kwargs):
-        """Initialises FieldSet data from NetCDF files using NEMO conventions.
+    def from_nemo(cls, filenames, variables, dimensions, indices={}, mesh='spherical',
+                  allow_time_extrapolation=False, time_periodic=False, **kwargs):
+        """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
+        Note that this assumes the following default values for the mesh_mask:
+        variables['mesh_mask'] = {'cosU': 'cosU',
+                                  'sinU': 'sinU',
+                                  'cosV': 'cosV',
+                                  'sinV': 'sinV'}
+        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
+                                   'V': {'lon': 'glamv', 'lat': 'gphiv'},
+                                   'F': {'lon': 'glamf', 'lat': 'gphif'}}
 
-        :param basename: Base name of the file(s); may contain
-               wildcards to indicate multiple files.
-        :param extra_fields: Extra fields to read beyond U and V
+        :param filenames: Dictionary mapping variables to file(s). The
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file. At least a 'mesh_mask' needs to be present
+        :param variables: Dictionary mapping variables to variable
+               names in the netCDF file(s).
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        dimensions = {}
-        default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
-                        'depth': 'depth', 'time': 'time_counter'}
-        extra_fields.update({'U': uvar, 'V': vvar})
-        for vars in extra_fields:
-            dimensions[vars] = deepcopy(default_dims)
-            dimensions[vars]['depth'] = 'depth%s' % vars.lower()
-        filenames = dict([(v, str("%s%s.nc" % (basename, v)))
-                          for v in extra_fields.keys()])
-        return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
-                               dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, **kwargs)
+        if 'mesh_mask' not in variables:
+            variables['mesh_mask'] = {'cosU': 'cosU',
+                                      'sinU': 'sinU',
+                                      'cosV': 'cosV',
+                                      'sinV': 'sinV'}
+            dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
+                                       'V': {'lon': 'glamv', 'lat': 'gphiv'},
+                                       'F': {'lon': 'glamf', 'lat': 'gphif'}}
+
+        rotation_angles_filename = path.join(path.dirname(filenames['mesh_mask']), 'rotation_angles.nc').replace('/', '_')
+        compute_curvilinearGrid_rotationAngles(filenames['mesh_mask'], rotation_angles_filename,
+                                               variables=variables['mesh_mask'], dimensions=dimensions['mesh_mask'])
+
+        if 'cosU' not in filenames:
+            filenames['cosU'] = rotation_angles_filename
+            filenames['sinU'] = rotation_angles_filename
+            filenames['cosV'] = rotation_angles_filename
+            filenames['sinV'] = rotation_angles_filename
+
+            variables['cosU'] = 'cosU'
+            variables['sinU'] = 'sinU'
+            variables['cosV'] = 'cosV'
+            variables['sinV'] = 'sinV'
+
+            dimensions['cosU'] = {'lon': 'glamu', 'lat': 'gphiu'}
+            dimensions['sinU'] = {'lon': 'glamu', 'lat': 'gphiu'}
+            dimensions['cosV'] = {'lon': 'glamv', 'lat': 'gphiv'}
+            dimensions['sinV'] = {'lon': 'glamv', 'lat': 'gphiv'}
+
+        variables.pop('mesh_mask')
+        dimensions.pop('mesh_mask')
+
+        return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                               allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     @property
     def fields(self):
