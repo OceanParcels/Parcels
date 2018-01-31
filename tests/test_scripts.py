@@ -9,7 +9,7 @@ from os import path
 def create_outputfiles(dir):
     datafile = path.join(path.dirname(__file__), 'test_data', 'testfields')
 
-    fieldset = FieldSet.from_nemo(datafile, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels(datafile, allow_time_extrapolation=True)
     pset = ParticleSet(fieldset=fieldset, lon=[], lat=[], pclass=JITParticle)
     npart = 10
     delaytime = delta(hours=1)
