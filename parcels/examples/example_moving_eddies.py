@@ -19,7 +19,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350):
     Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
     artificially with uniform velocities. Velocities are calculated from geostrophy.
     """
-    # Set NEMO fieldset variables
+    # Set Parcels FieldSet variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.arange(0., 8. * 86400., 86400., dtype=np.float64)
 
@@ -142,7 +142,7 @@ def fieldsetfile():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_file(fieldsetfile, mode):
-    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
+    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
     assert(pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
     assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
@@ -172,7 +172,7 @@ Example of particle advection around an idealised peninsula""")
         fieldset.write(filename)
 
     # Open fieldset files
-    fieldset = FieldSet.from_nemo(filename, extra_fields={'P': 'P'})
+    fieldset = FieldSet.from_parcels(filename, extra_fields={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx

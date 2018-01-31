@@ -6,6 +6,7 @@ from parcels.loggers import logger
 import numpy as np
 from os import path
 from glob import glob
+from copy import deepcopy
 
 
 __all__ = ['FieldSet']
@@ -212,6 +213,36 @@ class FieldSet(object):
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+
+    @classmethod
+    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
+                     allow_time_extrapolation=False, time_periodic=False, **kwargs):
+        """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
+
+        :param basename: Base name of the file(s); may contain
+               wildcards to indicate multiple files.
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+        :param extra_fields: Extra fields to read beyond U and V
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        """
+
+        dimensions = {}
+        default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
+                        'depth': 'depth', 'time': 'time_counter'}
+        extra_fields.update({'U': uvar, 'V': vvar})
+        for vars in extra_fields:
+            dimensions[vars] = deepcopy(default_dims)
+            dimensions[vars]['depth'] = 'depth%s' % vars.lower()
+        filenames = dict([(v, str("%s%s.nc" % (basename, v)))
+                          for v in extra_fields.keys()])
+        return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
+                               dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
+                               time_periodic=time_periodic, **kwargs)
 
     @property
     def fields(self):
