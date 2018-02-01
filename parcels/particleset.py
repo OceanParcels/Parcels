@@ -246,7 +246,9 @@ class ParticleSet(object):
         :param recovery: Dictionary with additional `:mod:parcels.kernels.error`
                          recovery kernels to allow custom recovery behaviour in case of
                          kernel errors.
-        :param movie_background_field: field plotted as background in the movie if moviedt is not None
+        :param movie_background_field: field plotted as background in the movie if moviedt is set.
+                                       'vector' shows the velocity as a vector field.
+
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -352,13 +354,13 @@ class ParticleSet(object):
         if output_file:
             output_file.write(self, time)
 
-    def show(self, particles=True, show_time=None, field=True, domain=None,
+    def show(self, particles=True, show_time=None, field=None, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
         """Method to 'show' a Parcels ParticleSet
 
         :param particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
-        :param field: Field to plot under particles (either True, a Field object, or 'vector')
+        :param field: Field to plot under particles (either None, a Field object, or 'vector')
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
         :param land: Boolean whether to show land (in field='vector' mode only)
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -396,7 +398,7 @@ class ParticleSet(object):
             plt.clf()
             if particles:
                 plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
-            if field is True:
+            if field is None:
                 axes = plt.gca()
                 axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
