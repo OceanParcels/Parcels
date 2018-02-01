@@ -74,7 +74,7 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 
 * `JIT-vs-Scipy tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_jit_vs_scipy.ipynb>`_ for a tutorial showing how JIT  and Scipy mode compare.
 
-* `Argo float tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/hart-davis/parcels/examples/tutorial_Argofloats.ipynb>`_ for a tutorial on how to write a Kernel that mimics the vertical movement of Argo floats
+* `Argo float tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`_ for a tutorial on how to write a Kernel that mimics the vertical movement of Argo floats
 
 * `Animated Gif tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Agulhasparticles.ipynb>`_ for a  tutorial on how to created the Agulhas region animated gif on the top of this page. This tutorial also features a brief explanation of how to handle `OutOfBounds` errors.
 
