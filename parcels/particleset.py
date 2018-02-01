@@ -321,7 +321,6 @@ class ParticleSet(object):
             if dt > 0:
                 leaptime = min([leaptime + interval, endtime])
             else:
-                leaptime = max([leaptime - interval, _starttime])
                 leaptime = max([leaptime - interval, endtime])
             self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery, output_file=output_file)
             # Add new particles if repeatdt is used
