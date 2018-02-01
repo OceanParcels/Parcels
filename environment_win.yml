@@ -5,13 +5,14 @@ dependencies:
   - python=2.7
   - cachetools>=1.0.0
   - cgen
+  - coverage
   - enum34
-  - ffmpeg
+  - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
   - git
-  - m2w64-toolchain
   - jupyter
-  - matplotlib=2.0.2
+  - m2w64-toolchain
+  - matplotlib 2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
   - progressbar2
