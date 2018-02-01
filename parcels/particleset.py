@@ -223,7 +223,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
-                outputdt=None, moviedt=None, recovery=None, output_file=None, movie_background_field=None):
+                moviedt=None, recovery=None, output_file=None, movie_background_field=None):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -237,11 +237,7 @@ class ParticleSet(object):
                         It is either a timedelta object or a positive double.
         :param dt: Timestep interval to be passed to the kernel.
                    It is either a timedelta object or a double.
-                   Negative value means backward in time simulation.
-        :param outputdt: Interval for inner sub-timestepping (leap), which dictates
-                         the update frequency of file output.
-                         It is either a timedelta object or a positive double.
-                         None value means no file output.
+                   Use a negative value for a backward-in-time simulation.
         :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
                          the update frequency of animation.
                          It is either a timedelta object or a positive double.
@@ -275,6 +271,7 @@ class ParticleSet(object):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
+        outputdt = output_file.outputdt if output_file else np.infty
         if isinstance(outputdt, delta):
             outputdt = outputdt.total_seconds()
         if isinstance(moviedt, delta):
@@ -300,11 +297,10 @@ class ParticleSet(object):
         elif endtime is None:
             endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
 
-        if abs(endtime-_starttime) < 1e-5 or outputdt == 0 or dt == 0 or runtime == 0:
+        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
             endtime = _starttime
-            outputdt = 0
             logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
                                 "The kernels will be executed once, without incrementing time")
 
@@ -318,8 +314,6 @@ class ParticleSet(object):
         if moviedt:
             self.show(field=movie_background_field, show_time=_starttime)
 
-        if outputdt is None:
-            outputdt = np.infty
         if moviedt is None:
             moviedt = np.infty
         time = _starttime
@@ -334,13 +328,12 @@ class ParticleSet(object):
         tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if dt > 0:
-                leaptime = min(next_prelease, next_input, next_output, next_movie, endtime)
+                time = min(next_prelease, next_input, next_output, next_movie, endtime)
             else:
-                leaptime = max(next_prelease, next_input, next_output, next_movie, endtime)
-            self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
-            time = leaptime
+                time = max(next_prelease, next_input, next_output, next_movie, endtime)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery)
             if abs(time-next_prelease) < tol:
-                self.add(ParticleSet(fieldset=self.fieldset, time=leaptime, lon=self.repeatlon,
+                self.add(ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                      lat=self.repeatlat, depth=self.repeatdepth,
                                      pclass=self.repeatpclass))
                 next_prelease += self.repeatdt * np.sign(dt)
@@ -356,7 +349,7 @@ class ParticleSet(object):
             if dt == 0:
                 break
 
-        if output_file and next_output == np.infty:
+        if output_file:
             output_file.write(self, time)
 
     def show(self, particles=True, show_time=None, field=True, domain=None,

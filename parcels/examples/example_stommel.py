@@ -97,8 +97,8 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
-    pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt, outputdt=outputdt,
-                 moviedt=None, output_file=pset.ParticleFile(name="StommelParticle"))
+    pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt,
+                 moviedt=None, output_file=pset.ParticleFile(name="StommelParticle", outputdt=outputdt))
 
     if verbose:
         print("Final particle positions:\n%s" % pset)

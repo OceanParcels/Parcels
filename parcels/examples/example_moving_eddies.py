@@ -87,8 +87,8 @@ def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
     runtime = delta(days=7)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
     pset.execute(method, runtime=runtime, dt=delta(hours=1),
-                 output_file=pset.ParticleFile(name="EddyParticle"),
-                 outputdt=delta(hours=1), moviedt=None)
+                 output_file=pset.ParticleFile(name="EddyParticle", outputdt=delta(hours=1)),
+                 moviedt=None)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -110,12 +110,12 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
     dt = delta(minutes=5)
     outputdt = delta(hours=1)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
-    pset.execute(method, runtime=runtime, dt=dt, outputdt=outputdt,
-                 output_file=pset.ParticleFile(name="EddyParticlefwd"))
+    pset.execute(method, runtime=runtime, dt=dt,
+                 output_file=pset.ParticleFile(name="EddyParticlefwd", outputdt=outputdt))
 
     print("Now running in backward time mode")
-    pset.execute(method, endtime=0, dt=-dt, outputdt=outputdt,
-                 output_file=pset.ParticleFile(name="EddyParticlebwd"))
+    pset.execute(method, endtime=0, dt=-dt,
+                 output_file=pset.ParticleFile(name="EddyParticlebwd", outputdt=outputdt))
 
     assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
     assert(pset[1].lon > 3.2 and 47.7 < pset[1].lat < 47.9)

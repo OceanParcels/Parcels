@@ -73,8 +73,7 @@ def test_globcurrent_particles(mode):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5),
-                 outputdt=delta(hours=1))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
 
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
@@ -88,5 +87,4 @@ def test_globcurrent_time_extrapolation_error(mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35],
                        time=fieldset.U.time[0]-delta(days=1).total_seconds())
 
-    pset.execute(AdvectionRK4, runtime=delta(days=1),
-                 dt=delta(minutes=5), outputdt=delta(hours=1))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))

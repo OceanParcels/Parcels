@@ -30,10 +30,10 @@ def run_nemo_curvilinear(mode, outfile):
             particle.lon -= 360
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile(outfile, pset)
+    pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))
     kernels = pset.Kernel(AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
-                 outputdt=delta(days=1), output_file=pfile)
+                 output_file=pfile)
     assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=1e-3)
 
 
