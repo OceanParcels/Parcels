@@ -292,6 +292,9 @@ class ParticleSet(object):
             runtime = np.abs(endtime - _starttime)
         if interval is None:
             interval = abs(endtime - _starttime)
+        elif interval < 0:
+            interval = np.abs(interval)
+            logger.warning("interval has to be positive")
 
         if abs(endtime-_starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
             timeleaps = 1
