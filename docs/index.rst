@@ -92,9 +92,9 @@ The simplest way to install Parcels is to use Anaconda and the Parcels Conda-For
 
 The steps below are the installation instructions for Linux / macOS and for Windows.  If the commands for Linux / macOS and Windows differ, this is indicated with a comment at the end of the line.
 
-1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/.  All the code below assumes that you download the Python-2 version.  If you're on Linux, it also assumes that you installed Miniconda-2 to your home directory.
+1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/.  All the code below assumes that you download the Python-2 version.  If you're on Linux / macOS, it also assumes that you installed Miniconda-2 to your home directory.
 
-2. Activate the root (or base) environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have Jupyter and Basemap package::
+2. Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the root (or base) environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have Jupyter and Basemap package::
 
     source $HOME/miniconda2/bin/activate root  # Linux / macOS
     activate root                              # Windows
@@ -126,9 +126,9 @@ The steps below are the installation instructions for Linux / macOS and for Wind
 Installing a non-released version of Parcels
 ============================================
 
-There might be cases where want to install a version of Parcels that has not been released yet.  (Perhaps, if you want to use a bleeding-edge feature which already is included on Github, but not in the conda-forge package.)
+There might be cases where you want to install a version of Parcels that has not been released yet.  (Perhaps, if you want to use a bleeding-edge feature which already is included on Github, but not in the conda-forge package.)
 
-Then, just after Step 2. of :ref:`installing-parcels` above, remove the conda-forge package again, and use Pip to install Parcels from Github::
+Then, just after step 2 of :ref:`installing-parcels` above, remove the conda-forge package again, and use Pip to install Parcels from Github::
 
     source $HOME/miniconda2/bin/activate py2_parcels_master  # Linux / macOS
     activate py2_parcels_master                              # Windows
@@ -141,9 +141,9 @@ Then, just after Step 2. of :ref:`installing-parcels` above, remove the conda-fo
 Installation for developers
 ===========================
 
-Parcels depends on a working Python installation, a netCDF installation, a C compiler, and various Python packages.  If you prefer to maintain an own Python installation providing all this, ``git clone`` the `master branch of Parcels <https://github.com/OceanParcels/parcels>`_ and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
+Parcels depends on a working Python installation, a netCDF installation, a C compiler, and various Python packages.  If you prefer to maintain your own Python installation providing all this, ``git clone`` the `master branch of Parcels <https://github.com/OceanParcels/parcels>`_ and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
-Then, install Parcels in an `editable way <https://pip.pypa.io/en/stable/reference/pip_install/?highlight=editable#cmdoption-e>` by running::
+Then, install Parcels in an `editable way <https://pip.pypa.io/en/stable/reference/pip_install/?highlight=editable#cmdoption-e>`_ by running::
 
     pip install -e .
 
