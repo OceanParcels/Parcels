@@ -181,11 +181,11 @@ class Field(object):
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
-    :param data: 2D, 3D or 4D array of field data
-    :param lon: Longitude coordinates of the field. (only if grid is None)
-    :param lat: Latitude coordinates of the field. (only if grid is None)
-    :param depth: Depth coordinates of the field. (only if grid is None)
-    :param time: Time coordinates of the field. (only if grid is None)
+    :param data: 2D, 3D or 4D numpy array of field data
+    :param lon: Longitude coordinates (numpy vector or array) of the field (only if grid is None)
+    :param lat: Latitude coordinates (numpy vector or array) of the field (only if grid is None)
+    :param depth: Depth coordinates (numpy vector or array) of the field (only if grid is None)
+    :param time: Time coordinates (numpy vector) of the field (only if grid is None)
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation: (only if grid is None)
 
@@ -193,15 +193,14 @@ class Field(object):
               correction for zonal velocity U near the poles.
            2. flat: No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
-           mesh and time_origin information
+           mesh and time_origin information. Can be constructed from any of the Grid objects
     :param transpose: Transpose data to required (lon, lat) layout
-    :param vmin: Minimum allowed value on the field.
-           Data below this value are set to zero
-    :param vmax: Maximum allowed value on the field
-           Data above this value are set to zero
-    :param time_origin: Time origin of the time axis (only if grid is None)
-    :param interp_method: Method for interpolation
-    :param allow_time_extrapolation: boolean whether to allow for extrapolation
+    :param vmin: Minimum allowed value on the field. Data below this value are set to zero
+    :param vmax: Maximum allowed value on the field. Data above this value are set to zero
+    :param time_origin: Time origin (datetime object) of the time axis (only if grid is None)
+    :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
+    :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
+           (i.e. beyond the last available time snapshot)
     :param time_periodic: boolean whether to loop periodically over the time component of the Field
            This flag overrides the allow_time_interpolation and sets it to False
     """
@@ -277,10 +276,13 @@ class Field(object):
         """Create field from netCDF file
 
         :param name: Name of the field to create
-        :param dimensions: Variable names for the relevant dimensions
-        :param filenames: Filenames of the field
-        :param indices: indices for each dimension to read from file
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
+        :param filenames: list of filenames to read for the field.
+               Note that wildcards ('*') are also allowed
+        :param indices: dictionary mapping indices for each dimension to read from file.
+               This can be used for reading in only a subregion of the NetCDF file
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
+               (i.e. beyond the last available time snapshot
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -526,7 +528,6 @@ class Field(object):
         return xi
 
     def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
-
         grid = self.grid
         xi = yi = -1
         lon_index = grid.lon <= x
