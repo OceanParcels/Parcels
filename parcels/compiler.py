@@ -1,4 +1,3 @@
-from parcels.loggers import logger
 import subprocess
 from os import path, environ, makedirs
 from tempfile import gettempdir
@@ -41,7 +40,6 @@ class Compiler(object):
 
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
-        logger.info("Compiling: %s\n" % " ".join(cc))
         with open(log, 'w') as logfile:
             logfile.write("Compiling: %s\n" % " ".join(cc))
             try:
@@ -65,10 +63,9 @@ class GNUCompiler(Compiler):
          (optional).
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=[], ldargs=[]):
-        _gcc = environ.get('GCC', "gcc")
         opt_flags = ['-g', '-O3']
         arch_flag = ['-m64' if calcsize("P") is 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
         ldargs = ['-shared'] + ldargs + arch_flag
-        super(GNUCompiler, self).__init__(_gcc, cppargs=cppargs, ldargs=ldargs)
+        super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
