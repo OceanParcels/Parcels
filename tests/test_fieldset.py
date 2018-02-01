@@ -65,13 +65,13 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
 
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
-def test_fieldset_from_nemo(xdim, ydim, tmpdir, filename='test_nemo'):
-    """ Simple test for fieldset initialisation from NEMO file format. """
+def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
+    """ Simple test for fieldset initialisation from Parcels FieldSet file format. """
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
     fieldset_out = FieldSet.from_data(data, dimensions)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_nemo(filepath)
+    fieldset = FieldSet.from_parcels(filepath)
     u_t = np.transpose(data['U']).reshape((dimensions['lat'].size, dimensions['lon'].size))
     v_t = np.transpose(data['V']).reshape((dimensions['lat'].size, dimensions['lon'].size))
     assert len(fieldset.U.data.shape) == 3  # Will be 4 once we use depth
@@ -89,7 +89,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull = FieldSet.from_data(data, dimensions)
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
-    fieldsetsub = FieldSet.from_nemo(filepath, indices=indices)
+    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
     assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices['lat']])
     assert np.allclose(fieldsetsub.V.lon, fieldsetfull.V.grid.lon[indices['lon']])
@@ -103,8 +103,8 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
 @pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime):
     fieldsetfile = path.join(path.dirname(__file__), 'test_data', 'testfields')
-    fieldsetfull = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
-    fieldsetsub = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
+    fieldsetfull = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'})
+    fieldsetsub = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
     assert np.allclose(fieldsetsub.P.time, fieldsetfull.P.time[indstime])
     assert np.allclose(fieldsetsub.P.data, fieldsetfull.P.data[indstime, :, :])
 
