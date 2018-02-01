@@ -133,6 +133,7 @@ Then, just after step 2 of :ref:`installing-parcels` above, remove the conda-for
     source $HOME/miniconda2/bin/activate py2_parcels_master  # Linux / macOS
     activate py2_parcels_master                              # Windows
 
+    conda remove parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
 
 
