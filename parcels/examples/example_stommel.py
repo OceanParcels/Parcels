@@ -93,12 +93,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     # Execute for 30 days, with 1hour timesteps and 12-hourly output
     runtime = delta(days=30)
     dt = delta(hours=1)
-    interval = delta(hours=12)
+    outputdt = delta(hours=12)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
-    pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="StommelParticle"), show_movie=False)
+    pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt, outputdt=outputdt,
+                 moviedt=None, output_file=pset.ParticleFile(name="StommelParticle"))
 
     if verbose:
         print("Final particle positions:\n%s" % pset)

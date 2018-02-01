@@ -48,7 +48,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32))
-    pset2D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
 
     dimensions['depth'] = depth
@@ -57,7 +57,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32),
                          depth=np.zeros(npart, dtype=np.float32) + 10.)
-    pset3D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset3D])) > 1.e-4).all()
 
 
@@ -75,7 +75,7 @@ def test_advection_meridional(lon, lat, mode, npart=10):
                        lon=np.linspace(-60, 60, npart, dtype=np.float32),
                        lat=np.linspace(0, 30, npart, dtype=np.float32))
     delta_lat = np.diff(np.array([p.lat for p in pset]))
-    pset.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
 
 
@@ -97,7 +97,7 @@ def test_advection_3D(mode, npart=11):
                        lat=np.zeros(npart, dtype=np.float32) + 1e2,
                        depth=np.linspace(0, 1, npart, dtype=np.float32))
     time = delta(hours=2).total_seconds()
-    pset.execute(AdvectionRK4, endtime=time, dt=delta(seconds=30))
+    pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
     assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], atol=1.e-1)
 
 
@@ -122,7 +122,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
     assert(len(fieldset.U.lon) == xdim + 2 * halosize)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lon - 0.15) < 0.1
 
 
@@ -133,7 +133,7 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lat - 0.15) < 0.1
 
 
@@ -147,7 +147,7 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lon - 0.05) < 0.1
     assert abs(pset[0].lat - 0.15) < 0.1
 
@@ -347,6 +347,6 @@ Example of particle advection around an idealised peninsula""")
                        lat=np.linspace(12500, 12500, npart, dtype=np.float32))
     if args.verbose:
         print("Initial particle positions:\n%s" % pset)
-    pset.execute(kernel[args.method], dt=delta(minutes=3), endtime=delta(hours=6))
+    pset.execute(kernel[args.method], dt=delta(minutes=3), runtime=delta(hours=6))
     if args.verbose:
         print("Final particle positions:\n%s" % pset)

@@ -110,9 +110,9 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
     out = pset.ParticleFile(name="MyParticle") if output else None
-    interval = delta(hours=1) if output else -1
+    outputdt = delta(hours=1) if output else -1
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
-    pset.execute(k_adv + k_p, endtime=time, dt=dt, output_file=out, interval=interval)
+    pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out, outputdt=outputdt)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)

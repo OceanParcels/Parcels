@@ -74,7 +74,7 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 
     def IncrLon(particle, fieldset, time, dt):
         particle.lon += 1.
-    pset.execute(IncrLon, dt=1., runtime=npart, interval=1)
+    pset.execute(IncrLon, dt=1., runtime=npart, outputdt=1)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
@@ -321,7 +321,7 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
-    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, interval=0.2,
+    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, outputdt=0.2,
                  output_file=pset.ParticleFile(name=filepath))
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     V_once = ncfile.variables['v_once'][:]

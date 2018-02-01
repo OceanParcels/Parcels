@@ -24,10 +24,10 @@ def create_outputfiles(dir):
     for t in range(npart):
         pset.add(JITParticle(lon=x, lat=lat[t], fieldset=fieldset))
         pset.execute(AdvectionRK4, runtime=delaytime, dt=delta(minutes=5),
-                     interval=delaytime, output_file=output_file)
+                     outputdt=delaytime, output_file=output_file)
 
     pset.execute(AdvectionRK4, runtime=endtime-npart*delaytime,
-                 dt=delta(minutes=5), interval=delta(hours=1), output_file=output_file)
+                 dt=delta(minutes=5), outputdt=delta(hours=1), output_file=output_file)
 
     fp_array = dir.join("DelayParticle_array")
     convert_IndexedOutputToArray(fp_index+'.nc', fp_array+'.nc')

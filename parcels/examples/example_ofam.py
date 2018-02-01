@@ -43,7 +43,7 @@ def test_ofam_particles(mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart, depth=depstart)
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5),
-                 interval=delta(hours=6))
+                 outputdt=delta(hours=6))
 
     assert(abs(pset[0].lon - 173) < 1)
     assert(abs(pset[0].lat - 11) < 1)
