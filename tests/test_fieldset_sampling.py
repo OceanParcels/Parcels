@@ -133,8 +133,11 @@ def test_pset_from_field(xdim=10, ydim=20, npart=10000):
 
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=JITParticle,
                                   start_field=fieldset.start)
-    pdens = pset.density(area_scale=False, relative=True)
-    assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=5e-3)
+    densfield = Field(name='densfield', data=np.zeros((xdim+1, ydim+1), dtype=np.float32),
+                      lon=np.linspace(-1./(xdim*2), 1.+1./(xdim*2), xdim+1, dtype=np.float32),
+                      lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32))
+    pdens = pset.density(field=densfield, relative=True)[:-1, :-1]
+    assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

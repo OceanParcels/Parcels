@@ -606,7 +606,7 @@ class Field(object):
         return (xsi, eta, zeta, xi, yi, zi)
 
     def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
-        if self.grid.gtype == GridCode.RectilinearSGrid:
+        if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
             return self.search_indices_rectilinear(x, y, z, tidx, time)
         else:
             return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time)

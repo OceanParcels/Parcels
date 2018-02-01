@@ -14,17 +14,6 @@ from datetime import datetime
 __all__ = ['ParticleSet']
 
 
-def nearest_index(array, value):
-    """returns index of the nearest value in array using O(log n) bisection method"""
-    y = bisect.bisect(array, value)
-    if y == len(array):
-        return y-1
-    elif(abs(array[y-1] - value) < abs(array[y] - value)):
-        return y-1
-    else:
-        return y
-
-
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
@@ -362,6 +351,16 @@ class ParticleSet(object):
         if np.isnan(show_time):
             show_time = self.fieldset.U.grid.time[0]
         if domain is not None:
+            def nearest_index(array, value):
+                """returns index of the nearest value in array using O(log n) bisection method"""
+                y = bisect.bisect(array, value)
+                if y == len(array):
+                    return y - 1
+                elif (abs(array[y - 1] - value) < abs(array[y] - value)):
+                    return y - 1
+                else:
+                    return y
+
             latN = nearest_index(self.fieldset.U.lat, domain[0])
             latS = nearest_index(self.fieldset.U.lat, domain[1])
             lonE = nearest_index(self.fieldset.U.lon, domain[2])
@@ -466,51 +465,44 @@ class ParticleSet(object):
             logger.info('Plot saved to '+savefile+'.png')
             plt.close()
 
-    def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+    def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
-                    on. Default is `fieldset.U`
-        :param particle_val: Optional list of values to weigh each particlewith
+                      on. Default is `fieldset.U`
+        :param particle_val: Optional numpy-array of values to weigh each particle with.
+                             Default is 1 for each particle
         :param relative: Boolean to control whether the density is scaled by the total
-                    number of particles
+                         weight of all particles. Default is False
         :param area_scale: Boolean to control whether the density is scaled by the area
-                    (in m^2) of each grid cell"""
-        lons = [p.lon for p in self.particles]
-        lats = [p.lat for p in self.particles]
-        # Code for finding nearest vertex for each particle is currently very inefficient
-        # once cell tracking is implemented for SciPy particles, the below use of np.min/max
-        # will be replaced (see PR #111)
-        if field is not None:
-            # Kick out particles that are not within the limits of our density field
-            half_lon = (field.grid.lon[1] - field.grid.lon[0])/2
-            half_lat = (field.grid.lat[1] - field.grid.lat[0])/2
-            dparticles = (lons > (np.min(field.grid.lon)-half_lon)) * (lons < (np.max(field.grid.lon)+half_lon)) * \
-                         (lats > (np.min(field.grid.lat)-half_lat)) * (lats < (np.max(field.grid.lat)+half_lat))
-            dparticles = np.where(dparticles)[0]
-        else:
-            field = self.fieldset.U
-            dparticles = range(len(self.particles))
-        Density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
+                           (in m^2) of each grid cell. Default is False
+        """
 
-        # For each particle, find closest vertex in x and y and add 1 or val to the count
-        if particle_val is not None:
-            for p in dparticles:
-                Density[np.argmin(np.abs(lats[p] - field.grid.lat)), np.argmin(np.abs(lons[p] - field.grid.lon))] \
-                    += getattr(self.particles[p], particle_val)
-        else:
-            for p in dparticles:
-                nearest_lon = np.argmin(np.abs(lons[p] - field.grid.lon))
-                nearest_lat = np.argmin(np.abs(lats[p] - field.grid.lat))
-                Density[nearest_lat, nearest_lon] += 1
-            if relative:
-                Density /= len(dparticles)
+        field = field if field else self.fieldset.U
+        particle_val = particle_val if particle_val else np.ones(len(self.particles))
+        density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
+
+        for i, g in enumerate(self.fieldset.gridset.grids):
+            if g is field.grid:
+                iGrid = i
+
+        for pi, p in enumerate(self.particles):
+            if hasattr(p, 'gridIndesSet'):
+                xi = p.gridIndexSet.gridindices[iGrid].xi
+                # xi = p.gridIndexSet.gridindices[field.grid].xi  #is nicer as no need for calculating iGrid then
+                yi = p.gridIndexSet.gridindices[iGrid].yi
+            else:
+                _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0)
+            density[yi, xi] += particle_val[pi]
+
+        if relative:
+            density /= np.sum(particle_val)
 
         if area_scale:
-            Density /= field.cell_areas()
+            density /= field.cell_areas()
 
-        return Density
+        return density
 
     def Kernel(self, pyfunc):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
