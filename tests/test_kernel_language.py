@@ -3,6 +3,7 @@ from parcels import random as parcels_random
 import numpy as np
 import pytest
 import random as py_random
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -171,7 +172,7 @@ def test_c_kernel(fieldset, mode, c_inc):
                  }
                  """
     else:
-        c_include = 'customed_header.h'
+        c_include = path.join(path.dirname(__file__), 'customed_header.h')
 
     def ckernel(particle, fieldset, time, dt):
         func('pointer_args', fieldset.U, particle.lon, dt)
