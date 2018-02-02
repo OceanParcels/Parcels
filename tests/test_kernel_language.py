@@ -184,5 +184,4 @@ def test_c_kernel(fieldset, mode, c_inc):
     else:
         kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=3., dt=3.)
-    print 'bou'
     assert np.allclose(pset[0].lon, 0.81578948)
