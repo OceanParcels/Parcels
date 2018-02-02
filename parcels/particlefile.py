@@ -28,15 +28,19 @@ class ParticleFile(object):
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
+    :param outputdt: Interval which dictates the update frequency of file output
+                     while ParticleFile is given as an argument of ParticleSet.execute()
+                     It is either a timedelta object or a positive double.
     :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     """
 
-    def __init__(self, name, particleset, type='array', write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, type='array', write_ondelete=False):
 
         self.type = type
         self.name = name
         self.write_ondelete = write_ondelete
+        self.outputdt = outputdt
         if self.write_ondelete and self.type is 'array':
             logger.warning('ParticleFile.write_ondelete=True requires type="indexed". Setting that option')
             self.type = 'indexed'

@@ -56,7 +56,7 @@ def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
     t_step = abs(end - start) / substeps
     for _ in range(substeps):
-        pset.execute(DoNothing, runtime=t_step, dt=dt)
+        pset.execute(DoNothing, runtime=abs(t_step), dt=dt)
         start += t_step
     assert np.allclose(np.array([p.time for p in pset]), end)
 
