@@ -333,7 +333,7 @@ class ParticleSet(object):
                 time = min(next_prelease, next_input, next_output, next_movie, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, endtime)
-            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
             if abs(time-next_prelease) < tol:
                 self.add(ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                      lat=self.repeatlat, depth=self.repeatdepth,

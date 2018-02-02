@@ -32,12 +32,18 @@ class ParticleFile(object):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
+    :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, type='array'):
+    def __init__(self, name, particleset, outputdt=np.infty, type='array', write_ondelete=False):
 
         self.type = type
         self.name = name
+        self.write_ondelete = write_ondelete
+        self.outputdt = outputdt
+        if self.write_ondelete and self.type is 'array':
+            logger.warning('ParticleFile.write_ondelete=True requires type="indexed". Setting that option')
+            self.type = 'indexed'
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
@@ -122,7 +128,7 @@ class ParticleFile(object):
         """Write all buffered data to disk"""
         self.dataset.sync()
 
-    def write(self, pset, time, sync=True):
+    def write(self, pset, time, sync=True, deleted_only=False):
         """Write :class:`parcels.particleset.ParticleSet` data to file
 
         :param pset: ParticleSet object to write
@@ -132,7 +138,9 @@ class ParticleFile(object):
         """
         if isinstance(time, delta):
             time = time.total_seconds()
-        if self.lasttime_written != time:  # only write if 'time' hasn't been written yet
+        if self.lasttime_written != time and \
+           (self.write_ondelete is False or deleted_only is True):
+
             self.lasttime_written = time
             if self.type is 'array':
                 # Check if largest particle ID is smaller than the last ID in ParticleFile.
@@ -140,6 +148,7 @@ class ParticleFile(object):
                 if pset.size > 0:
                     if max([p.id for p in pset]) > self.id[-1]:
                         logger.error("Number of particles appears to increase. Use type='indexed' for ParticleFile")
+                        exit(-1)
 
                     # Finds the indices (inds) of the particle IDs in the ParticleFile,
                     # because particles can have been deleted
@@ -165,7 +174,7 @@ class ParticleFile(object):
                     logger.warning("Option to_write='once' is not fully functional in indexed mode! Particle properties of such variables are not written for newly added particles.")
                 ind = np.arange(pset.size) + self.idx
                 self.id[ind] = np.array([p.id for p in pset])
-                self.time[ind] = time
+                self.time[ind] = np.array([p.time for p in pset])
                 self.lat[ind] = np.array([p.lat for p in pset])
                 self.lon[ind] = np.array([p.lon for p in pset])
                 self.z[ind] = np.array([p.depth for p in pset])
