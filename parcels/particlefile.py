@@ -44,6 +44,7 @@ class ParticleFile(object):
         if self.write_ondelete and self.type is 'array':
             logger.warning('ParticleFile.write_ondelete=True requires type="indexed". Setting that option')
             self.type = 'indexed'
+        self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
