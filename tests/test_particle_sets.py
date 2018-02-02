@@ -345,11 +345,16 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
     lat = np.linspace(0.95, 0.05, npart, dtype=np.float32)
+
+    (dt, runtime) = (0.1, 0.8)
+    lon_end = lon - runtime/dt*0.1
+    noutside = len(lon_end[lon_end < 0])
+
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
     outfile = pset.ParticleFile(name=filepath, write_ondelete=True, type="indexed")
-    pset.execute(move_west, runtime=1.1, dt=0.1, output_file=outfile,
+    pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     lon = ncfile.variables['lon'][:]
-    assert (lon.size == npart)
+    assert (lon.size == noutside)
