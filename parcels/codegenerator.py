@@ -308,6 +308,8 @@ class KernelGenerator(ast.NodeVisitor):
                 continue
             if isinstance(a, FieldNode):
                 a.ccode = a.obj.name
+            elif isinstance(a, ParticleNode):
+                continue
             elif pointer_args:
                 a.ccode = "&%s" % a.ccode
         ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
