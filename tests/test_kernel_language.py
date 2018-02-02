@@ -3,6 +3,7 @@ from parcels import random as parcels_random
 import numpy as np
 import pytest
 import random as py_random
+from os import path
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -150,3 +151,38 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
     pset.execute(kernel, endtime=1., dt=1.)
     assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('c_inc', ['str', 'file'])
+def test_c_kernel(fieldset, mode, c_inc):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
+
+    def func(U, lon, dt):
+        u = U.data[0, 2, 1]
+        return lon + u * dt
+
+    if c_inc == 'str':
+        c_include = """
+                 static inline void func(CField *f, float *lon, float *dt)
+                 {
+                   float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
+                   float u = data[2][1];
+                   *lon += u * *dt;
+                 }
+                 """
+    else:
+        c_include = path.join(path.dirname(__file__), 'customed_header.h')
+
+    def ckernel(particle, fieldset, time, dt):
+        func('pointer_args', fieldset.U, particle.lon, dt)
+
+    def pykernel(particle, fieldset, time, dt):
+        particle.lon = func(fieldset.U, particle.lon, dt)
+
+    if mode == 'scipy':
+        kernel = pset.Kernel(pykernel)
+    else:
+        kernel = pset.Kernel(ckernel, c_include=c_include)
+    pset.execute(kernel, endtime=3., dt=3.)
+    assert np.allclose(pset[0].lon, 0.81578948)
