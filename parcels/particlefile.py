@@ -28,13 +28,17 @@ class ParticleFile(object):
 
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
+    :param outputdt: Interval which dictates the update frequency of file output
+                     while ParticleFile is given as an argument of ParticleSet.execute()
+                     It is either a timedelta object or a positive double.
     :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
     """
 
-    def __init__(self, name, particleset, type='array'):
+    def __init__(self, name, particleset, outputdt=np.infty, type='array'):
 
         self.type = type
         self.name = name
+        self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)

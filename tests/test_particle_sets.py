@@ -74,13 +74,14 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 
     def IncrLon(particle, fieldset, time, dt):
         particle.lon += 1.
-    pset.execute(IncrLon, dt=1., runtime=npart, interval=1)
+    pset.execute(IncrLon, dt=1., runtime=npart)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
-def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, npart=10):
+@pytest.mark.parametrize('dt', [-1, 1])
+def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, dt, npart=10):
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
@@ -90,7 +91,7 @@ def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, npart=10
         particle.sample_var += 1.
     for i in range(npart):
         assert len(pset) == (i // repeatdt) + 1
-        pset.execute(IncrLon, dt=1., runtime=1.)
+        pset.execute(IncrLon, dt=dt, runtime=1.)
     assert np.allclose([p.sample_var for p in pset], np.arange(npart, -1, -repeatdt))
 
 
@@ -321,8 +322,8 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
-    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, interval=0.2,
-                 output_file=pset.ParticleFile(name=filepath))
+    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
+                 output_file=pset.ParticleFile(name=filepath, outputdt=0.2))
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     V_once = ncfile.variables['v_once'][:]
     assert np.all([p.v_once == 11.0 for p in pset])
