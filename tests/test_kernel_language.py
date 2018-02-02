@@ -153,21 +153,25 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_c_kernel(fieldset, mode):
+@pytest.mark.parametrize('c_inc', ['str', 'file'])
+def test_c_kernel(fieldset, mode, c_inc):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
 
     def func(U, lon, dt):
         u = U.data[0, 2, 1]
         return lon + u * dt
 
-    c_include = """
-             static inline void func(CField *f, float *lon, float *dt)
-             {
-               float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
-               float u = data[2][1];
-               *lon += u * *dt;
-             }
-             """
+    if c_inc == 'str':
+        c_include = """
+                 static inline void func(CField *f, float *lon, float *dt)
+                 {
+                   float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
+                   float u = data[2][1];
+                   *lon += u * *dt;
+                 }
+                 """
+    else:
+        c_include = 'customed_header.h'
 
     def ckernel(particle, fieldset, time, dt):
         func('pointer_args', fieldset.U, particle.lon, dt)
@@ -180,4 +184,5 @@ def test_c_kernel(fieldset, mode):
     else:
         kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=3., dt=3.)
+    print 'bou'
     assert np.allclose(pset[0].lon, 0.81578948)
