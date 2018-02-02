@@ -55,12 +55,12 @@ def rotation_example(fieldset, mode='jit', method=AdvectionRK4):
                                  start=(30., 30.),
                                  finish=(30., 50.))  # One particle in centre, one on periphery of Field.
 
-    endtime = delta(hours=17)
+    runtime = delta(hours=17)
     dt = delta(minutes=5)
-    interval = delta(hours=1)
+    outputdt = delta(hours=1)
 
-    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="RadialParticle"), show_movie=False)
+    pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
+                 output_file=pset.ParticleFile(name="RadialParticle", outputdt=outputdt))
 
     return pset
 

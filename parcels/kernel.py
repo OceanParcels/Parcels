@@ -211,13 +211,15 @@ class Kernel(object):
                 else:
                     break  # Failure - stop time loop
 
-    def execute(self, pset, endtime, dt, recovery=None):
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
             indices = [i for i, p in enumerate(pset.particles)
                        if p.state in [ErrorCode.Delete]]
+            if len(indices) > 0 and output_file is not None:
+                output_file.write(pset[indices], endtime, deleted_only=True)
             pset.remove(indices)
 
         if recovery is None:

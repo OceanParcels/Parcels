@@ -80,65 +80,73 @@ The best way to get started with Parcels is to have a look at the Jupyter notebo
 
 * `Plotting tutorial <http://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_plotting.ipynb>`_ for further explanation on the plotting capabilities of Parcels
 
-.. _installing-linux-macos:
 
-Installing Parcels on Linux and macOS
-=====================================
+.. _installing-parcels:
 
-Parcels depends on a working Python installation, a netCDF installation, a C
-compiler, and various Python packages.
+Installing Parcels
+==================
 
-The simplest way to install Parcels is to use Anaconda and Conda-Forge for all
-requirements. This is the “batteries-included” solution probably suitable for most users. 
-Note that if you already have an existing Python setup that you wish to use for Parcels, you should follow the instructions at the bottom of this section.
+This is the “batteries-included” solution probably suitable for most users.
 
-The five steps below are the installation instructions for Linux and macOS. Note that for Windows, steps 2 and 5 are slightly different, see :ref:`installing-windows` below.
+The simplest way to install Parcels is to use Anaconda and the Parcels Conda-Forge package with the latest release of Parcels.  This package will automatically install (almost) all the requirements for a fully functional installaion of Parcels.
 
-1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/. All the code below assumes that you download the Python-2 version.
+The steps below are the installation instructions for Linux / macOS and for Windows.  If the commands for Linux / macOS and Windows differ, this is indicated with a comment at the end of the line.
 
-2. Download Parcels' `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file, navigate to the directory where you saved that file, and run::
+1. Install Anaconda's Miniconda following the steps at https://conda.io/docs/user-guide/install/.  All the code below assumes that you download the Python-2 version.  If you're on Linux / macOS, it also assumes that you installed Miniconda-2 to your home directory.
 
-    source $HOME/miniconda2/bin/activate root
-    conda env create -f environment.yml -n py2_parcels
-    source $HOME/miniconda2/bin/activate py2_parcels
-    pip install git+https://github.com/OceanParcels/parcels.git@master
+2. Start a terminal (Linux / macOS) or the Anaconda prompt (Windows). Activate the root (or base) environment of your Miniconda and create an environment containing Parcels, all its essential dependencies, and the nice-to-have Jupyter and Basemap package::
 
-3. Validate the installation by downloading the `example_peninsula.py <https://raw.githubusercontent.com/OceanParcels/parcels/master/parcels/examples/example_peninsula.py>`_ file, navigate to the directory where you saved that file, and then run::
+    source $HOME/miniconda2/bin/activate root  # Linux / macOS
+    activate root                              # Windows
 
-    python example_peninsula.py --fieldset 100 100
+    conda create -n py2_parcels -c conda-forge parcels jupyter basemap basemap-data-hires
 
-4. Optionally, if you want to run all the examples and tutorials, you can get tutorials and example data by running::
+3. Activate the newly created Parcels environment, get a copy of the the Parcels tutorials and examples, and run the simplest of the examples to validate that you have a working Parcels setup::
+
+    source $HOME/miniconda2/bin/activate py2_parcels  # Linux / macOS
+    activate py2_parcels                              # Windows
 
     parcels_get_examples parcels_examples
     cd parcels_examples
+
+    python example_peninsula.py --fieldset 100 100
+
+4. Optionally, if you want to run all the examples and tutorials, start Jupyter and open the tutorial notebooks::
+
     jupyter notebook
 
 5. The next time you start a terminal and want to work with Parcels, activate the environment with::
 
-    source $HOME/miniconda2/bin/activate py2_parcels
+    source $HOME/miniconda2/bin/activate py2_parcels  # Linux / macOS
+    activate py2_parcels                              # Windows
 
-An alternative, more advanced option is to use an existing netCDF installation and
-C compiler, ``git clone`` the `master branch of Parcels
-<https://github.com/OceanParcels/parcels>`_
-and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
-.. _installing-windows:
+.. _installing-arbitrary-Git-reference:
 
-Installing Parcels on Windows
-=============================
+Installing a non-released version of Parcels
+============================================
 
-The installation process and usage of Parcels is much the same as under :ref:`installing-linux-macos` above. **However, steps 2 and 5 will be different**, as detailed below:
+There might be cases where you want to install a version of Parcels that has not been released yet.  (Perhaps, if you want to use a bleeding-edge feature which already is included on Github, but not in the conda-forge package.)
 
-2. Download Parcels' `environment_win.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment_win.yml>`_ file from the main Parcels' directory, start the ``Anaconda Prompt`` from the Windows start menu, navigate to the directory where you saved that file, and then run::
+Then, just after step 2 of :ref:`installing-parcels` above, remove the conda-forge package again, and use Pip to install Parcels from Github::
 
-        activate root
-        conda env create -f environment_win.yml -n py2_parcels
-        activate py2_parcels
-        pip install git+https://github.com/OceanParcels/parcels.git@master
+    source $HOME/miniconda2/bin/activate py2_parcels_master  # Linux / macOS
+    activate py2_parcels_master                              # Windows
 
-5. The next time you start the ``Anaconda Prompt`` and want to work with Parcels, activate the environment with::
+    conda remove parcels
+    pip install git+https://github.com/OceanParcels/parcels.git@master
 
-        activate py2_parcels
+
+.. _installation-dev:
+
+Installation for developers
+===========================
+
+Parcels depends on a working Python installation, a netCDF installation, a C compiler, and various Python packages.  If you prefer to maintain your own Python installation providing all this, ``git clone`` the `master branch of Parcels <https://github.com/OceanParcels/parcels>`_ and manually ``pip install`` all packages lister under ``dependencies`` in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
+
+Then, install Parcels in an `editable way <https://pip.pypa.io/en/stable/reference/pip_install/?highlight=editable#cmdoption-e>`_ by running::
+
+    pip install -e .
 
 
 Getting involved

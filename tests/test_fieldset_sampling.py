@@ -250,13 +250,13 @@ def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
 
     lonstart = [0, 45]
     latstart = [0, 45]
-    endtime = delta(hours=24)
+    runtime = delta(hours=24)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
-    pset.execute(pset.Kernel(AdvectionRK4), endtime=endtime, dt=delta(hours=1))
+    pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=delta(hours=1))
 
-    assert(pset[0].lat - (latstart[0] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
+    assert(pset[0].lat - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
     assert(pset[0].lon - lonstart[0] < 1e-4)
-    assert(pset[1].lat - (latstart[1] + endtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
+    assert(pset[1].lat - (latstart[1] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
     assert(pset[1].lon - lonstart[1] < 1e-4)
 
 
@@ -279,17 +279,17 @@ def test_zonalflow_spherical(mode, k_sample_p, xdim=100, ydim=200):
 
     lonstart = [0, 45]
     latstart = [0, 45]
-    endtime = delta(hours=24)
+    runtime = delta(hours=24)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
-                 endtime=endtime, dt=delta(hours=1))
+                 runtime=runtime, dt=delta(hours=1))
 
     assert(pset[0].lat - latstart[0] < 1e-4)
-    assert(pset[0].lon - (lonstart[0] + endtime.total_seconds() * maxvel / 1852 / 60
+    assert(pset[0].lon - (lonstart[0] + runtime.total_seconds() * maxvel / 1852 / 60
                           / cos(latstart[0] * pi / 180)) < 1e-4)
     assert(abs(pset[0].p - p_fld) < 1e-4)
     assert(pset[1].lat - latstart[1] < 1e-4)
-    assert(pset[1].lon - (lonstart[1] + endtime.total_seconds() * maxvel / 1852 / 60
+    assert(pset[1].lon - (lonstart[1] + runtime.total_seconds() * maxvel / 1852 / 60
                           / cos(latstart[1] * pi / 180)) < 1e-4)
     assert(abs(pset[1].p - p_fld) < 1e-4)
 
