@@ -320,7 +320,7 @@ class ParticleSet(object):
             moviedt = np.infty
         time = _starttime
         if self.repeatdt:
-            next_prelease = self.repeat_starttime + ((time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt
+            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty * np.sign(dt)
         next_output = time + outputdt * np.sign(dt)
