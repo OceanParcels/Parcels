@@ -100,7 +100,7 @@ The steps below are the installation instructions for Linux / macOS and for Wind
     activate root                              # Windows
 
     conda create -n py2_parcels -c conda-forge parcels jupyter basemap basemap-data-hires
-
+    
 3. Activate the newly created Parcels environment, get a copy of the the Parcels tutorials and examples, and run the simplest of the examples to validate that you have a working Parcels setup::
 
     source $HOME/miniconda2/bin/activate py2_parcels  # Linux / macOS
@@ -130,12 +130,11 @@ There might be cases where you want to install a version of Parcels that has not
 
 Then, just after step 2 of :ref:`installing-parcels` above, remove the conda-forge package again, and use Pip to install Parcels from Github::
 
-    source $HOME/miniconda2/bin/activate py2_parcels_master  # Linux / macOS
-    activate py2_parcels_master                              # Windows
+    source $HOME/miniconda2/bin/activate py2_parcels  # Linux / macOS
+    activate py2_parcels                              # Windows
 
     conda remove parcels
     pip install git+https://github.com/OceanParcels/parcels.git@master
-
 
 .. _installation-dev:
 
