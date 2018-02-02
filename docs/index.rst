@@ -142,7 +142,7 @@ Then, just after step 2 of :ref:`installing-parcels` above, remove the conda-for
 Installation for developers
 ===========================
 
-Parcels depends on a working Python installation, a netCDF installation, a C compiler, and various Python packages.  If you prefer to maintain your own Python installation providing all this, ``git clone`` the `master branch of Parcels <https://github.com/OceanParcels/parcels>`_ and ``pip install`` the dependencies in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
+Parcels depends on a working Python installation, a netCDF installation, a C compiler, and various Python packages.  If you prefer to maintain your own Python installation providing all this, ``git clone`` the `master branch of Parcels <https://github.com/OceanParcels/parcels>`_ and manually ``pip install`` all packages lister under ``dependencies`` in the `environment.yml <https://raw.githubusercontent.com/OceanParcels/parcels/master/environment.yml>`_ file.
 
 Then, install Parcels in an `editable way <https://pip.pypa.io/en/stable/reference/pip_install/?highlight=editable#cmdoption-e>`_ by running::
 
