@@ -200,14 +200,14 @@ class RectilinearSGrid(RectilinearGrid):
 class CurvilinearGrid(Grid):
 
     def __init__(self, lon, lat, time=None, time_origin=0, mesh='flat'):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) == 2), 'lon is not a 2D numpy array'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) == 2), 'lat is not a 2D numpy array'
+        assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
+        assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        self.lon = lon
-        self.lat = lat
+        self.lon = lon.squeeze()
+        self.lat = lat.squeeze()
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
