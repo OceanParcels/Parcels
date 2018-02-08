@@ -5,9 +5,7 @@ os:
     - osx
     - linux
 
-language: python
-python:
-    - "2.7"
+language: generic
 
 sudo: false
 
