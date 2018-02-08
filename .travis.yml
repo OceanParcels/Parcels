@@ -24,6 +24,13 @@ install:
     - pip install -e .
 
 script:
+    - |
+      # Set up display to be able to plot in linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        export DISPLAY=:99.0;
+        sh -e /etc/init.d/xvfb start;
+        sleep 3;
+      fi
     - py.test -v -s tests/
     - parcels_get_examples examples/
     - |
@@ -39,8 +46,5 @@ script:
     - |
       # evaluate example notebooks only on linux
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        export DISPLAY=:99.0;
-        sh -e /etc/init.d/xvfb start;
-        sleep 3;
         py.test -v -s --nbval-lax examples/;
       fi
