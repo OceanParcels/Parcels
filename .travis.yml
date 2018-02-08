@@ -38,6 +38,7 @@ script:
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         flake8 parcels;
         flake8 tests;
+      fi
     - |
       # run link checks only on linux
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
