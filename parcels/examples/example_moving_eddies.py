@@ -19,7 +19,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350):
     Note that this is not a proper geophysical flow. Rather, a Gaussian eddy is moved
     artificially with uniform velocities. Velocities are calculated from geostrophy.
     """
-    # Set NEMO fieldset variables
+    # Set Parcels FieldSet variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.arange(0., 8. * 86400., 86400., dtype=np.float64)
 
@@ -84,11 +84,11 @@ def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
         print("Initial particle positions:\n%s" % pset)
 
     # Execute for 1 week, with 1 hour timesteps and hourly output
-    endtime = delta(days=7)
-    print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
-    pset.execute(method, endtime=endtime, dt=delta(hours=1),
-                 output_file=pset.ParticleFile(name="EddyParticle"),
-                 interval=delta(hours=1), show_movie=False)
+    runtime = delta(days=7)
+    print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
+    pset.execute(method, runtime=runtime, dt=delta(hours=1),
+                 output_file=pset.ParticleFile(name="EddyParticle", outputdt=delta(hours=1)),
+                 moviedt=None)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -106,16 +106,16 @@ def test_moving_eddies_fwdbwd(mode, npart=2):
                                  start=(3.3, 46.), finish=(3.3, 47.8))
 
     # Execte for 14 days, with 30sec timesteps and hourly output
-    endtime = delta(days=1)
+    runtime = delta(days=1)
     dt = delta(minutes=5)
-    interval = delta(hours=1)
-    print("MovingEddies: Advecting %d particles for %s" % (npart, str(endtime)))
-    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="EddyParticlefwd"))
+    outputdt = delta(hours=1)
+    print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
+    pset.execute(method, runtime=runtime, dt=dt,
+                 output_file=pset.ParticleFile(name="EddyParticlefwd", outputdt=outputdt))
 
     print("Now running in backward time mode")
-    pset.execute(method, endtime=0, dt=-dt, interval=-interval,
-                 output_file=pset.ParticleFile(name="EddyParticlebwd"))
+    pset.execute(method, endtime=0, dt=-dt,
+                 output_file=pset.ParticleFile(name="EddyParticlebwd", outputdt=outputdt))
 
     assert(pset[0].lon > 3.2 and 45.9 < pset[0].lat < 46.1)
     assert(pset[1].lon > 3.2 and 47.7 < pset[1].lat < 47.9)
@@ -142,7 +142,7 @@ def fieldsetfile():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_moving_eddies_file(fieldsetfile, mode):
-    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'})
+    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
     assert(pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
     assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
@@ -172,7 +172,7 @@ Example of particle advection around an idealised peninsula""")
         fieldset.write(filename)
 
     # Open fieldset files
-    fieldset = FieldSet.from_nemo(filename, extra_fields={'P': 'P'})
+    fieldset = FieldSet.from_parcels(filename, extra_fields={'P': 'P'})
 
     if args.profiling:
         from cProfile import runctx

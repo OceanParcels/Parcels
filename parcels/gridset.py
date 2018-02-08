@@ -8,15 +8,11 @@ __all__ = ['GridSet', 'GridIndexSet']
 class GridSet(object):
     """GridSet class that holds the Grids on which the Fields are defined
 
-
-    :param grids: Table of :class:`parcels.grid.Grid` objects
     """
 
-    def __init__(self, grids=[]):
-        self.grids = grids
-        self.size = len(grids)
-        for g in grids:
-            setattr(self, g.name, g)
+    def __init__(self):
+        self.grids = []
+        self.size = 0
 
     def add_grid(self, field):
         grid = field.grid
@@ -36,11 +32,7 @@ class GridSet(object):
             break
 
         if not existing_grid:
-            for g in self.grids:
-                if g.name == grid.name:
-                    grid.name = grid.name + '_b'
             self.grids.append(grid)
-            setattr(self, grid.name, grid)
             self.size += 1
 
 

@@ -57,6 +57,7 @@ typedef struct
   CGridIndex *gridIndices;
 } CGridIndexSet;  
 
+
 static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *k, double *zeta)
 {
   if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
@@ -590,7 +591,7 @@ static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float
 /*   Random number generation (RNG) functions     */
 /**************************************************/
 
-static void parcels_seed(int seed)
+static inline void parcels_seed(int seed)
 {
   srand(seed);
 }
@@ -617,7 +618,6 @@ static inline float parcels_normalvariate(float loc, float scale)
 /*     this software for any application provided this copyright notice is preserved.       */
 {
   float x1, x2, w, y1;
-  static float y2;
 
   do {
     x1 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
@@ -627,7 +627,6 @@ static inline float parcels_normalvariate(float loc, float scale)
 
   w = sqrt( (-2.0 * log( w ) ) / w );
   y1 = x1 * w;
-  y2 = x2 * w;
   return( loc + y1 * scale );
 }
 #ifdef __cplusplus

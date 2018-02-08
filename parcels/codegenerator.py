@@ -300,10 +300,21 @@ class KernelGenerator(ast.NodeVisitor):
         """Generate C code for simple C-style function calls. Please
         note that starred and keyword arguments are currently not
         supported."""
+        pointer_args = False
         for a in node.args:
             self.visit(a)
-        ccode_args = ", ".join([a.ccode for a in node.args])
+            if a.ccode == 'pointer_args':
+                pointer_args = True
+                continue
+            if isinstance(a, FieldNode):
+                a.ccode = a.obj.name
+            elif isinstance(a, ParticleNode):
+                continue
+            elif pointer_args:
+                a.ccode = "&%s" % a.ccode
+        ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
         try:
+            self.visit(node.func)
             node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
         except:
             raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
@@ -543,7 +554,7 @@ class LoopGenerator(object):
         self.fieldset = fieldset
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, const_args, kernel_ast):
+    def generate(self, funcname, field_args, const_args, kernel_ast, c_include):
         ccode = []
 
         # Add include for Parcels and math header
@@ -559,6 +570,9 @@ class LoopGenerator(object):
                 vdecl.append(c.POD(v.dtype, v.name))
 
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
+
+        if c_include:
+            ccode += [c_include]
 
         # Insert kernel code
         ccode += [str(kernel_ast)]
