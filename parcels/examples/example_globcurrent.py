@@ -28,7 +28,7 @@ def test_globcurrent_fieldset():
     assert(fieldset.V.lat.size == 41)
     assert(fieldset.V.data.shape == (365, 41, 81))
 
-    indices = {'lon': [5], 'lat': range(20, 30)}
+    indices = {'lon': [5], 'lat': list(range(20, 30))}
     fieldsetsub = set_globcurrent_fieldset(indices=indices)
     assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
@@ -38,8 +38,8 @@ def test_globcurrent_fieldset():
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt, substart, subend, lonstart, latstart, irange', [
-    (3600., 0, 3, 25, -35, range(3, 9, 1)),
-    (-3600., 8, 10, 20, -39, range(7, 2, -1))
+    (3600., 0, 3, 25, -35, list(range(3, 9, 1))),
+    (-3600., 8, 10, 20, -39, list(range(7, 2, -1)))
 ])
 def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, latstart, irange):
     basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',

@@ -6,7 +6,7 @@ from collections import OrderedDict
 import math
 import random
 import numpy as np
-from grid import GridCode
+from .grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
