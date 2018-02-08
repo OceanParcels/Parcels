@@ -8,6 +8,7 @@ matrix:
     - os: linux
       python: 2.7
       env: MINICONDA_NAME=Miniconda2-latest-Linux-x86_64.sh
+      sudo: required
     - os: osx
       language: generic
       env: MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
