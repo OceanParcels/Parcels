@@ -5,7 +5,7 @@ matrix:
   include:
     - os: linux
       sudo: false
-      language: generic
+      language: python
       env: MINICONDA_NAME=Miniconda2-latest-Linux-x86_64.sh
     - os: osx
       language: generic
