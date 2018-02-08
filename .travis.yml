@@ -1,14 +1,6 @@
 notifications:
   email: false
 
-sudo: false
-
-language: generic
-
-os:
-    - osx
-    - linux
-
 matrix:
   include:
     - os: linux
@@ -18,7 +10,6 @@ matrix:
     - os: osx
       language: generic
       env: MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
-
 
 before_install:
     # Setup anaconda
