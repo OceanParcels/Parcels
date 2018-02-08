@@ -14,7 +14,6 @@ matrix:
       env: MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
 
 before_install:
-    # Setup anaconda
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
@@ -26,21 +25,11 @@ install:
     - conda install --yes sphinx
     - pip install -e .
 
-before_script: # configure a headless display to test  plot generation
-    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        "export DISPLAY=:99.0";
-        "sh -e /etc/init.d/xvfb start";
-        sleep 3; # give xvfb some time to start
-      fi
+before_script:
+    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3; fi
 
 script:
-    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        flake8 parcels;
-        flake8 tests;
-        make linkcheck -C docs;
-      fi
+    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then flake8 parcels; flake8 tests; make linkcheck -C docs; fi
     - parcels_get_examples examples/
     - py.test -v -s tests/
-    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        py.test -v -s --nbval-lax examples/;
-      fi
+    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then py.test -v -s --nbval-lax examples/; fi
