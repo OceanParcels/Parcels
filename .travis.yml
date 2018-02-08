@@ -1,14 +1,12 @@
 language: python
 
-sudo: false
-
 notifications:
   email: false
 
 matrix:
   include:
     - os: linux
-      python: "2.7"
+      python: 2.7
       env: MINICONDA_NAME=Miniconda2-latest-Linux-x86_64.sh
     - os: osx
       language: generic
