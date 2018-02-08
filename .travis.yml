@@ -13,23 +13,34 @@ matrix:
       language: generic
       env: MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
 
-before_install:
+install:
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - conda update --yes conda
-
-install:
     - conda env create --file environment_${TRAVIS_OS_NAME}.yml
     - source activate py2_parcels
     - conda install --yes sphinx
     - pip install -e .
 
-before_script:
-    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then export DISPLAY=:99.0; sh -e /etc/init.d/xvfb start; sleep 3; fi
-
 script:
-    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then flake8 parcels; flake8 tests; make linkcheck -C docs; fi
-    - parcels_get_examples examples/
     - py.test -v -s tests/
-    - if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then py.test -v -s --nbval-lax examples/; fi
+    - parcels_get_examples examples/
+    - |
+      # run linter on linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        flake8 parcels;
+        flake8 tests;
+    - |
+      # run link checks only on linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        make linkcheck -C docs;
+      fi
+    - |
+      # evaluate example notebooks only on linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        export DISPLAY=:99.0;
+        sh -e /etc/init.d/xvfb start;
+        sleep 3;
+        py.test -v -s --nbval-lax examples/;
+      fi
