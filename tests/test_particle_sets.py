@@ -80,7 +80,7 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('repeatdt', list(range(1, 3)))
+@pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
 def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, dt, npart=10):
 
@@ -267,7 +267,7 @@ def test_density(fieldset, mode):
                        lat=lats)
     arr = pset.density(area_scale=False)  # Not scaling by area
     assert(np.sum(arr) == fieldset.U.lat.size)  # check conservation of particles
-    inds = list(zip(*np.where(arr)))
+    inds = np.where(arr)
     for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
         assert np.allclose(fieldset.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
         assert np.allclose(fieldset.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)

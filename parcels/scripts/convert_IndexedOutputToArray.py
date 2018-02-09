@@ -54,7 +54,7 @@ def convert_IndexedOutputToArray(file_in, file_out):
             var[v].setncatts({k: varin.getncattr(k) for k in varin.ncattrs() if k != '_FillValue'})
 
     pbar = ProgressBar()
-    for i in pbar(list(range(trajs.nid))):
+    for i in pbar(range(trajs.nid)):
         ii = np.sort(trajs.indices[trajs.starts[i]:trajs.ends[i]])
         for v in var:
             var[v][i, 0:trajs.lengths[i]] = pfile_in.variables[v][ii]

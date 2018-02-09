@@ -227,7 +227,7 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        if self.grid.mesh is 'flat' or (name not in list(self.unitconverters.keys())):
+        if self.grid.mesh is 'flat' or (name not in self.unitconverters.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh is 'spherical':
             self.units = self.unitconverters[name]
@@ -339,12 +339,12 @@ class Field(object):
                 depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
                 latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
                 lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-                filebuffer.indslat = indices['lat'] if 'lat' in indices else list(range(latsize))
-                filebuffer.indslon = indices['lon'] if 'lon' in indices else list(range(lonsize))
-                filebuffer.indsdepth = indices['depth'] if 'depth' in indices else list(range(depthsize))
+                filebuffer.indslat = indices['lat'] if 'lat' in indices else range(latsize)
+                filebuffer.indslon = indices['lon'] if 'lon' in indices else range(lonsize)
+                filebuffer.indsdepth = indices['depth'] if 'depth' in indices else range(depthsize)
                 for inds in [filebuffer.indslat, filebuffer.indslon, filebuffer.indsdepth]:
-                    if not isinstance(inds, list):
-                        raise RuntimeError('Indices sur field subsetting need to be a list')
+                    if type(inds) not in [list, range]:
+                        raise RuntimeError('Indices for field subsetting need to be a list')
                 if 'data' in dimensions:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -409,22 +409,22 @@ class Field(object):
             name = 'd' + self.name
 
         if timerange is None:
-            time_i = list(range(len(self.grid.time)))
+            time_i = range(len(self.grid.time))
             time = self.grid.time
         else:
-            time_i = list(range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1))
+            time_i = range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1)
             time = self.grid.time[time_i]
         if lonrange is None:
-            lon_i = list(range(len(self.grid.lon)))
+            lon_i = range(len(self.grid.lon))
             lon = self.grid.lon
         else:
-            lon_i = list(range(np.where(self.grid.lon >= lonrange[0])[0][0], np.where(self.grid.lon <= lonrange[1])[0][-1]+1))
+            lon_i = range(np.where(self.grid.lon >= lonrange[0])[0][0], np.where(self.grid.lon <= lonrange[1])[0][-1]+1)
             lon = self.grid.lon[lon_i]
         if latrange is None:
-            lat_i = list(range(len(self.grid.lat)))
+            lat_i = range(len(self.grid.lat))
             lat = self.grid.lat
         else:
-            lat_i = list(range(np.where(self.grid.lat >= latrange[0])[0][0], np.where(self.grid.lat <= latrange[1])[0][-1]+1))
+            lat_i = range(np.where(self.grid.lat >= latrange[0])[0][0], np.where(self.grid.lat <= latrange[1])[0][-1]+1)
             lat = self.grid.lat[lat_i]
 
         dVdx = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
@@ -1011,18 +1011,18 @@ class FileBuffer(object):
 
     def subset(self, dim, dimname, indices):
         if len(dim.shape) == 1:  # RectilinearZGrid
-            inds = indices[dimname] if dimname in indices else list(range(dim.size))
+            inds = indices[dimname] if dimname in indices else range(dim.size)
             dim_inds = dim[inds]
         else:
-            inds_lon = indices['lon'] if 'lon' in indices else list(range(dim.shape[-1]))
-            inds_lat = indices['lat'] if 'lat' in indices else list(range(dim.shape[-2]))
+            inds_lon = indices['lon'] if 'lon' in indices else range(dim.shape[-1])
+            inds_lat = indices['lat'] if 'lat' in indices else range(dim.shape[-2])
             if len(dim.shape) == 2:  # CurvilinearGrid
                 dim_inds = dim[inds_lat, inds_lon]
             elif len(dim.shape) == 3:  # SGrid
-                inds_depth = indices['depth'] if 'depth' in indices else list(range(dim.shape[0]))
+                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
                 dim_inds = dim[inds_depth, inds_lat, inds_lon]
             elif len(dim.shape) == 4:  # SGrid
-                inds_depth = indices['depth'] if 'depth' in indices else list(range(dim.shape[0]))
+                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
                 dim_inds = dim[:, inds_depth, inds_lat, inds_lon]
         return dim_inds
 
@@ -1072,7 +1072,7 @@ class FileBuffer(object):
                 # parse it as a string.
                 # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
                 dt -= parse(str(offset))
-            return list(map(timedelta.total_seconds, dt))
+            return [d.total_seconds() for d in dt]
         else:
             try:
                 return self.dataset[self.dimensions['time']][:]

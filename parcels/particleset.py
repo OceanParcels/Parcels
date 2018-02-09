@@ -516,7 +516,7 @@ class ParticleSet(object):
             dparticles = np.where(dparticles)[0]
         else:
             field = self.fieldset.U
-            dparticles = list(range(len(self.particles)))
+            dparticles = range(len(self.particles))
         Density = np.zeros((field.grid.lon.size, field.grid.lat.size), dtype=np.float32)
 
         # For each particle, find closest vertex in x and y and add 1 or val to the count

@@ -79,8 +79,8 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     assert np.allclose(fieldset.V.data[0, :], v_t, rtol=1e-12)
 
 
-@pytest.mark.parametrize('indslon', [list(range(10, 20)), [1]])
-@pytest.mark.parametrize('indslat', [list(range(30, 60)), [22]])
+@pytest.mark.parametrize('indslon', [range(10, 20), [1]])
+@pytest.mark.parametrize('indslat', [range(30, 60), [22]])
 def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
@@ -99,7 +99,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
-@pytest.mark.parametrize('indstime', [list(range(2, 8)), [4]])
+@pytest.mark.parametrize('indstime', [range(2, 8), [4]])
 def test_moving_eddies_file_subsettime(indstime):
     fieldsetfile = path.join(path.dirname(__file__), 'test_data', 'testfields')
     fieldsetfull = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'})
