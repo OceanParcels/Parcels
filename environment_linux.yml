@@ -2,7 +2,6 @@ name: py2_parcels
 channels:
   - conda-forge
 dependencies:
-  - python=2.7
   - cachetools>=1.0.0
   - cgen
   - coverage
