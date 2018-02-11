@@ -57,6 +57,7 @@ typedef struct
   CGridIndex *gridIndices;
 } CGridIndexSet;  
 
+
 static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *k, double *zeta)
 {
   if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}

@@ -21,8 +21,10 @@ class FieldSet(object):
     """
     def __init__(self, U, V, fields={}):
         self.gridset = GridSet()
-        self.add_field(U)
-        self.add_field(V)
+        if U:
+            self.add_field(U)
+        if V:
+            self.add_field(V)
         UV = Field('UV', None)
         UV.fieldset = self
         self.UV = UV
@@ -137,8 +139,8 @@ class FieldSet(object):
             fields[var] = Field.from_netcdf(var, dims, paths, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, **kwargs)
-        u = fields.pop('U')
-        v = fields.pop('V')
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
     @classmethod

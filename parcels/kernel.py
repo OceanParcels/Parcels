@@ -48,7 +48,7 @@ class Kernel(object):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None):
+                 funccode=None, py_ast=None, funcvars=None, c_include=""):
         self.fieldset = fieldset
         self.ptype = ptype
 
@@ -104,8 +104,13 @@ class Kernel(object):
                 del self.field_args['UV']
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
+            if path.isfile(c_include):
+                with open(c_include, 'r') as f:
+                    c_include_str = f.read()
+            else:
+                c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
-                                          kernel_ccode)
+                                          kernel_ccode, c_include_str)
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
@@ -206,13 +211,15 @@ class Kernel(object):
                 else:
                     break  # Failure - stop time loop
 
-    def execute(self, pset, endtime, dt, recovery=None):
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
             indices = [i for i, p in enumerate(pset.particles)
                        if p.state in [ErrorCode.Delete]]
+            if len(indices) > 0 and output_file is not None:
+                output_file.write(pset[indices], endtime, deleted_only=True)
             pset.remove(indices)
 
         if recovery is None:
