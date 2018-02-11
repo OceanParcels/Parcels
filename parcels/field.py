@@ -368,18 +368,26 @@ class Field(object):
     def cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
                 Currently only works for Rectilinear Grids"""
-        if self.grid.gtype not in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
-            logger.error('Field.cell_edge_sizes() is only implemented for Rectilinear Grids')
-            exit(-1)
-        dy_grid = np.zeros((self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
-        dx_grid = np.zeros((self.grid.lat.size, self.grid.lon.size), dtype=np.float32)
+        dy_grid = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
+        dx_grid = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
         x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
         y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
-        for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
-            for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
-                dx_grid[y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
-                dy_grid[y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+        if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
+            for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
+                for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
+                    dx_grid[y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
+                    dy_grid[y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+        elif self.grid.gtype in (GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid):
+            DX = np.gradient(self.grid.lon, axis=-1)
+            DY = np.gradient(self.grid.lat, axis=-2)
+            for y in range(self.grid.ydim):
+                for x in range(self.grid.xdim):
+                    dx_grid[y, x] = x_conv.to_source(DX[y, x], self.grid.lon[y, x], self.grid.lat[y, x], self.grid.depth[0])
+                    dy_grid[y, x] = y_conv.to_source(DY[y, x], self.grid.lon[y, x], self.grid.lat[y, x], self.grid.depth[0])
+        else:
+            logger.error('Field.cell_edge_sizes() not implemented for ', self.grid.gtype, 'grids')
+            exit(-1)
         return dx_grid, dy_grid
 
     def cell_areas(self):
@@ -390,7 +398,6 @@ class Field(object):
 
     def gradient(self):
         """Method to calculate horizontal gradients of Field.
-                Currently only works for Rectilinear Grids.
                 Returns two numpy arrays: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method"""
         celldist_lon, celldist_lat = self.cell_edge_sizes()

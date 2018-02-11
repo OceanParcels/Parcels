@@ -134,6 +134,22 @@ def test_fieldset_celledgesizes(mesh):
         assert all((np.gradient(D_zonal, axis=0) < 0).flatten())  # zonal distances should decrease in spherical mesh
 
 
+@pytest.mark.parametrize('dx, dy', [('e1u', 'e2u'), ('e1v', 'e2v')])
+def test_fieldset_celledgesizes_curvilinear(dx, dy):
+    fname = 'mesh_mask_ORCA025.L75-MJM101.1.nc4'  # Needs to be uploaded somewhere
+    filenames = {dx: fname, dy: fname, 'mesh_mask': fname}
+    variables = {dx: dx, dy: dy}
+    dimensions = {'e1u': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'e2u': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'e1v': {'lon': 'glamv', 'lat': 'gphiv'},
+                  'e2v': {'lon': 'glamv', 'lat': 'gphiv'}}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    DX, DY = getattr(fieldset, dx).cell_edge_sizes()
+    assert np.allclose(DX, getattr(fieldset, dx).data)
+    assert np.allclose(DY, getattr(fieldset, dy).data)
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_cellareas(mesh):
     data, dimensions = generate_fieldset(10, 7)
