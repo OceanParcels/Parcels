@@ -18,11 +18,6 @@ class ParticleFile(object):
     The current implementation is based on the NCEI template:
     http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
 
-    Both 'Orthogonal multidimensional array' and 'Indexed ragged array' representation
-    are implemented. The former is simpler to post-process, but the latter is required
-    when particles will be added during the .execute (i.e. the number of particles in
-    the pset increases).
-
     Developer note: We cannot use xray.Dataset here, since it does not yet allow
     incremental writes to disk: https://github.com/pydata/xarray/issues/199
 
@@ -31,43 +26,28 @@ class ParticleFile(object):
     :param outputdt: Interval which dictates the update frequency of file output
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
-    :param type: Either 'array' for default matrix style, or 'indexed' for indexed ragged array
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, type='array', write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
 
-        self.type = type
         self.name = name
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
-        if self.write_ondelete and self.type is 'array':
-            logger.warning('ParticleFile.write_ondelete=True requires type="indexed". Setting that option')
-            self.type = 'indexed'
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
         self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
-        if self.type is 'array':
-            self.dataset.createDimension("trajectory", particleset.size)
-            coords = ("trajectory", "obs")
-        elif self.type is 'indexed':
-            coords = ("obs")
-        else:
-            raise RuntimeError("ParticleFile type must be either 'array' or 'indexed'")
+        self.dataset.createDimension("trajectory", None)
+        coords = ("trajectory", "obs")
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
 
         # Create ID variable according to CF conventions
-        if self.type is 'array':
-            self.id = self.dataset.createVariable("trajectory", "i4", ("trajectory",))
-            self.id.long_name = "Unique identifier for each particle"
-            self.id.cf_role = "trajectory_id"
-            self.id[:] = np.array([p.id for p in particleset])
-        elif self.type is 'indexed':
-            self.id = self.dataset.createVariable("trajectory", "i4", ("obs",))
-            self.id.long_name = "index of trajectory this obs belongs to"
+        self.id = self.dataset.createVariable("trajectory", "i4", coords)
+        self.id.long_name = "Unique identifier for each particle"
+        self.id.cf_role = "trajectory_id"
 
         # Create time, lat, lon and z variables according to CF conventions:
         self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan)
@@ -102,7 +82,7 @@ class ParticleFile(object):
         self.user_vars_once = []
         """
         :user_vars: list of additional user defined particle variables to write for all particles and all times
-        :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time. Only fully functional for type='array'
+        :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time.
         """
 
         for v in particleset.ptype.variables:
@@ -142,46 +122,34 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
 
             self.lasttime_written = time
-            if self.type is 'array':
-                # Check if largest particle ID is smaller than the last ID in ParticleFile.
-                # Otherwise, new particles have been added and netcdf will fail
-                if pset.size > 0:
-                    if max([p.id for p in pset]) > self.id[-1]:
-                        logger.error("Number of particles appears to increase. Use type='indexed' for ParticleFile")
-                        exit(-1)
+            if pset.size > 0:
+                fids = self.id[:]
+                if fids.shape[1] > 0:
+                    fids = fids[:, -1]
+                pids = [p.id for p in pset]
+                in_set = np.in1d(fids, pids, assume_unique=True)
+                oldinds = np.arange(len(fids))[in_set]
 
-                    # Finds the indices (inds) of the particle IDs in the ParticleFile,
-                    # because particles can have been deleted
-                    pids = [p.id for p in pset]
-                    inds = np.in1d(self.id[:], pids, assume_unique=True)
-                    inds = np.arange(len(self.id[:]))[inds]
+                not_in_set = np.in1d(pids, fids, assume_unique=True, invert=True)
+                newinds = len(fids) + np.arange(sum(not_in_set))
 
-                    self.time[inds, self.idx] = time
-                    self.lat[inds, self.idx] = np.array([p.lat for p in pset])
-                    self.lon[inds, self.idx] = np.array([p.lon for p in pset])
-                    self.z[inds, self.idx] = np.array([p.depth for p in pset])
-                    for var in self.user_vars:
-                        getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
-                    if self.idx == 0:
-                        for var in self.user_vars_once:
-                            getattr(self, var)[inds] = np.array([getattr(p, var) for p in pset])
-                else:
-                    logger.warning("ParticleSet is empty on writing as array")
+                inds = np.concatenate((oldinds, newinds))
 
-                self.idx += 1
-            elif self.type is 'indexed':
-                if self.user_vars_once:
-                    logger.warning("Option to_write='once' is not fully functional in indexed mode! Particle properties of such variables are not written for newly added particles.")
-                ind = np.arange(pset.size) + self.idx
-                self.id[ind] = np.array([p.id for p in pset])
-                self.time[ind] = np.array([p.time for p in pset])
-                self.lat[ind] = np.array([p.lat for p in pset])
-                self.lon[ind] = np.array([p.lon for p in pset])
-                self.z[ind] = np.array([p.depth for p in pset])
+                self.id[inds, self.idx] = pids
+                self.time[inds, self.idx] = time
+                self.lat[inds, self.idx] = np.array([p.lat for p in pset])
+                self.lon[inds, self.idx] = np.array([p.lon for p in pset])
+                self.z[inds, self.idx] = np.array([p.depth for p in pset])
                 for var in self.user_vars:
-                    getattr(self, var)[ind] = np.array([getattr(p, var) for p in pset])
+                    getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
+                for var in self.user_vars_once:
+                    if np.any(not_in_set):
+                        vals = np.array([getattr(p, var) for i, p in enumerate(pset) if not_in_set[i]])
+                        getattr(self, var)[newinds] = vals
+            else:
+                logger.warning("ParticleSet is empty on writing as array")
 
-                self.idx += pset.size
+            self.idx += 1
 
         if sync:
             self.sync()

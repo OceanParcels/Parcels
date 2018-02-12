@@ -35,12 +35,6 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     lon = pfile.variables['lon']
     lat = pfile.variables['lat']
     z = pfile.variables['z']
-    time = pfile.variables['time'][:]
-    if len(lon.shape) == 1:
-        type = 'indexed'
-        id = pfile.variables['trajectory'][:]
-    else:
-        type = 'array'
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
@@ -56,49 +50,23 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         fig = plt.figure(1)
         ax = fig.gca(projection='3d')
-        if type == 'array':
-            for p in range(len(lon)):
-                ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
-        elif type == 'indexed':
-            for t in np.unique(id):
-                ax.plot(lon[id == t], lat[id == t],
-                        z[id == t], '.-')
+        for p in range(len(lon)):
+            ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
     elif mode == '2d':
-        if type == 'array':
-            plt.plot(np.transpose(lon), np.transpose(lat), '.-')
-        elif type == 'indexed':
-            for t in np.unique(id):
-                plt.plot(lon[id == t], lat[id == t], '.-')
+        plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
     elif mode == 'movie2d' or 'movie2d_notebook':
-        if type == 'array' and any(time[:, 0] != time[0, 0]):
-            # since particles don't start at the same time, treat as indexed
-            type = 'indexed'
-            id = pfile.variables['trajectory'][:].flatten()
-            lon = lon[:].flatten()
-            lat = lat[:].flatten()
-            time = time.flatten()
-
         fig = plt.figure()
-        ax = plt.axes(xlim=(np.amin(lon), np.amax(lon)), ylim=(np.amin(lat), np.amax(lat)))
-        if type == 'array':
-            scat = ax.scatter(lon[:, 0], lat[:, 0], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
-            frames = np.arange(1, lon.shape[1])
-        elif type == 'indexed':
-            mintime = min(time)
-            scat = ax.scatter(lon[time == mintime], lat[time == mintime],
-                              s=60, cmap=plt.get_cmap('autumn'))
-            frames = np.unique(time[~np.isnan(time)])
+        ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
+        scat = ax.scatter(lon[:, 0], lat[:, 0], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
+        frames = np.arange(1, lon.shape[1])
 
         def animate(t):
-            if type == 'array':
-                scat.set_offsets(np.matrix((lon[:, t], lat[:, t])).transpose())
-            elif type == 'indexed':
-                scat.set_offsets(np.matrix((lon[time == t], lat[time == t])).transpose())
+            scat.set_offsets(np.matrix((lon[:, t], lat[:, t])).transpose())
             if recordedvar is not None:
                 scat.set_array(record[:, t])
             return scat,
