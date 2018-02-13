@@ -3,6 +3,7 @@ import numpy as np
 import netCDF4
 from datetime import timedelta as delta
 from parcels.loggers import logger
+from os import path
 
 
 __all__ = ['ParticleFile']
@@ -36,7 +37,9 @@ class ParticleFile(object):
         self.outputdt = outputdt
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
-        self.dataset = netCDF4.Dataset("%s.nc" % name, "w", format="NETCDF4")
+        extension = path.splitext(name)[1]
+        fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
+        self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
         self.dataset.createDimension("trajectory", None)
         coords = ("trajectory", "obs")
