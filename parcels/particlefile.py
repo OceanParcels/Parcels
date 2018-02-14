@@ -37,7 +37,7 @@ class ParticleFile(object):
         self.outputdt = outputdt
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
-        extension = path.splitext(name)[1]
+        extension = path.splitext(str(name))[1]
         fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
