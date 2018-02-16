@@ -35,7 +35,7 @@ class ParticleFile(object):
         self.name = name
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
-        self.outputdt = outputdt
+        self.lasttraj = 0  # id of last particle written
         self.lasttime_written = None  # variable to check if time has been written already
         extension = path.splitext(str(name))[1]
         fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
@@ -123,22 +123,17 @@ class ParticleFile(object):
             time = time.total_seconds()
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
-
             self.lasttime_written = time
             if pset.size > 0:
-                fids = self.id[:]
-                if fids.shape[1] > 0:
-                    fids = fids[:, -1]
-                pids = [p.id for p in pset]
-                in_set = np.in1d(fids, pids, assume_unique=True)
-                oldinds = np.arange(len(fids))[in_set]
 
-                not_in_set = np.in1d(pids, fids, assume_unique=True, invert=True)
-                newinds = len(fids) + np.arange(sum(not_in_set))
+                first_write = [p for p in pset if p.fileid < 0]
+                for p in first_write:
+                    p.fileid = self.lasttraj
+                    self.lasttraj += 1
 
-                inds = np.concatenate((oldinds, newinds))
+                inds = [p.fileid for p in pset]
 
-                self.id[inds, self.idx] = pids
+                self.id[inds, self.idx] = [p.id for p in pset]
                 self.time[inds, self.idx] = time
                 self.lat[inds, self.idx] = np.array([p.lat for p in pset])
                 self.lon[inds, self.idx] = np.array([p.lon for p in pset])
@@ -146,9 +141,10 @@ class ParticleFile(object):
                 for var in self.user_vars:
                     getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
                 for var in self.user_vars_once:
-                    if np.any(not_in_set):
-                        vals = np.array([getattr(p, var) for i, p in enumerate(pset) if not_in_set[i]])
-                        getattr(self, var)[newinds] = vals
+                    if np.any(first_write):
+                        vals = [getattr(p, var) for p in first_write]
+                        newinds = [p.fileid for p in first_write]
+                        getattr(self, var)[newinds] = np.array(vals)
             else:
                 logger.warning("ParticleSet is empty on writing as array")
 
