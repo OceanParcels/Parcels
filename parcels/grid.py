@@ -384,7 +384,7 @@ class GridIndex(object):
         self.xi = 0
         self.yi = 0
         self.zi = 0
-        self.ti = 0
+        self.ti = -1   # -1 means that ti has not been computed yet
 
     @classmethod
     def dtype(cls):

@@ -508,15 +508,11 @@ class ParticleSet(object):
         particle_val = particle_val if particle_val else np.ones(len(self.particles))
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
-        for i, g in enumerate(self.fieldset.gridset.grids):
-            if g is field.grid:
-                iGrid = i
-
         for pi, p in enumerate(self.particles):
-            if hasattr(p, 'gridIndesSet'):
-                xi = p.gridIndexSet.gridindices[iGrid].xi
-                # xi = p.gridIndexSet.gridindices[field.grid].xi  #is nicer as no need for calculating iGrid then
-                yi = p.gridIndexSet.gridindices[iGrid].yi
+            if hasattr(p, 'GridIndexSet') and field.grid in p.GridIndexSet.gridindices and \
+               p.GridIndexSet.gridindices[field.grid].ti >= 0:
+                xi = p.GridIndexSet.gridindices[field.grid].xi
+                yi = p.GridIndexSet.gridindices[field.grid].yi
             else:
                 _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0)
             density[yi, xi] += particle_val[pi]
