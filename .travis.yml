@@ -65,5 +65,10 @@ script:
     - |
       # evaluate example notebooks only on linux
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        py.test -v -s --nbval-lax examples/;
+        if [[ $TRAVIS_PYTHON_VERSION < 3 ]]; then
+          py.test -v -s --nbval-lax examples/;
+        fi
+        if [[ $TRAVIS_PYTHON_VERSION > 3 ]]; then
+          py.test -v -s examples/;
+        fi
       fi
