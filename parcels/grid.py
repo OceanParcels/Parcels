@@ -74,6 +74,7 @@ class RectilinearGrid(Grid):
         self.time_origin = time_origin
         self.mesh = mesh
         self.cstruct = None
+        self.cell_edge_sizes = {}
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -224,6 +225,7 @@ class CurvilinearGrid(Grid):
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
+        self.cell_edge_sizes = {}
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)

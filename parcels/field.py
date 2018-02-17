@@ -365,44 +365,42 @@ class Field(object):
             return self.getUV(*key)
         return self.eval(*key)
 
-    def cell_edge_sizes(self):
+    def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
                 Currently only works for Rectilinear Grids"""
-        dy_grid = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
-        dx_grid = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
+        if not self.grid.cell_edge_sizes:
+            if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
+                self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
+                self.grid.cell_edge_sizes['y'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
-        x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
-        y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
-        if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
-            for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
-                for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
-                    dx_grid[y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
-                    dy_grid[y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
-        elif self.grid.gtype in (GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid):
-            DX = np.gradient(self.grid.lon, axis=-1)
-            DY = np.gradient(self.grid.lat, axis=-2)
-            for y in range(self.grid.ydim):
-                for x in range(self.grid.xdim):
-                    dx_grid[y, x] = x_conv.to_source(DX[y, x], self.grid.lon[y, x], self.grid.lat[y, x], self.grid.depth[0])
-                    dy_grid[y, x] = y_conv.to_source(DY[y, x], self.grid.lon[y, x], self.grid.lat[y, x], self.grid.depth[0])
-        else:
-            logger.error('Field.cell_edge_sizes() not implemented for ', self.grid.gtype, 'grids')
-            exit(-1)
-        return dx_grid, dy_grid
+                x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
+                y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
+                for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
+                    for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
+                        self.grid.cell_edge_sizes['x'][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
+                        self.grid.cell_edge_sizes['y'][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+                self.cell_edge_sizes = self.grid.cell_edge_sizes
+            else:
+                logger.error(('Field.cell_edge_sizes() not implemented for ', self.grid.gtype, 'grids.',
+                              'You can provide Field.grid.cell_edge_sizes yourself',
+                              'by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file'))
+                exit(-1)
 
     def cell_areas(self):
         """Method to calculate cell sizes based on cell_edge_sizes
                 Currently only works for Rectilinear Grids"""
-        dx_mesh, dy_mesh = self.cell_edge_sizes()
-        return dx_mesh * dy_mesh
+        if not self.grid.cell_edge_sizes:
+            self.calc_cell_edge_sizes()
+        return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
 
     def gradient(self):
         """Method to calculate horizontal gradients of Field.
                 Returns two numpy arrays: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method"""
-        celldist_lon, celldist_lat = self.cell_edge_sizes()
-        dFdy = np.gradient(self.data, axis=-2) / celldist_lat
-        dFdx = np.gradient(self.data, axis=-1) / celldist_lon
+        if not self.grid.cell_edge_sizes:
+            self.calc_cell_edge_sizes()
+        dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
+        dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
         return dFdx, dFdy
 
     def interpolator2D_scipy(self, t_idx, z_idx=None):

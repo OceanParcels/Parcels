@@ -125,7 +125,10 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
 def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)
     fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
-    D_zonal, D_meridional = fieldset.U.cell_edge_sizes()
+
+    fieldset.U.calc_cell_edge_sizes()
+    D_meridional = fieldset.U.cell_edge_sizes['y']
+    D_zonal = fieldset.U.cell_edge_sizes['x']
 
     assert np.allclose(D_meridional.flatten(), D_meridional[0, 0])  # all meridional distances should be the same in either mesh
     if mesh == 'flat':
@@ -137,17 +140,18 @@ def test_fieldset_celledgesizes(mesh):
 @pytest.mark.parametrize('dx, dy', [('e1u', 'e2u'), ('e1v', 'e2v')])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
     fname = 'mesh_mask_ORCA025.L75-MJM101.1.nc4'  # Needs to be uploaded somewhere
-    filenames = {dx: fname, dy: fname, 'mesh_mask': fname}
-    variables = {dx: dx, dy: dy}
-    dimensions = {'e1u': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'e2u': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'e1v': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'e2v': {'lon': 'glamv', 'lat': 'gphiv'}}
+    filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
+    variables = {'dx': dx, 'dy': dy}
+    dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
+                  'dy': {'lon': 'glamu', 'lat': 'gphiu'}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
 
-    DX, DY = getattr(fieldset, dx).cell_edge_sizes()
-    assert np.allclose(DX, getattr(fieldset, dx).data)
-    assert np.allclose(DY, getattr(fieldset, dy).data)
+    # explicitly setting cell_edge_sizes from e1u and e2u etc
+    fieldset.dx.grid.cell_edge_sizes['x'] = fieldset.dx.data
+    fieldset.dx.grid.cell_edge_sizes['y'] = fieldset.dy.data
+
+    A = fieldset.dx.cell_areas()
+    assert np.allclose(A, fieldset.dx.data * fieldset.dy.data)
 
 
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
