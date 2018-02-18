@@ -64,11 +64,11 @@ script:
       fi
     - |
       # evaluate example scripts and notebooks on linux w python2
-      if [[ "${TRAVIS_OS_NAME}" = "linux" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:1} -eq 2 ]]; then
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]]; then
         py.test -v -s --nbval-lax examples/;
       fi
     - |
       # evaluate example scripts on linux w python3
-      if [[ "${TRAVIS_OS_NAME}" = "linux" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:1} -eq 3 ]]; then
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:1} == "3" ]]; then
         py.test -v -s examples/;
       fi
