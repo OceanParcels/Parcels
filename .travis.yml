@@ -63,12 +63,12 @@ script:
         make linkcheck -C docs;
       fi
     - |
-      # evaluate example notebooks only on linux
-      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        if [[ $TRAVIS_PYTHON_VERSION < 3 ]]; then
-          py.test -v -s --nbval-lax examples/;
-        fi
-        if [[ $TRAVIS_PYTHON_VERSION > 3 ]]; then
-          py.test -v -s examples/;
-        fi
+      # evaluate example scripts and notebooks on linux w python2
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:1} -eq 2 ]]; then
+        py.test -v -s --nbval-lax examples/;
+      fi
+    - |
+      # evaluate example scripts on linux w python3
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]] && [[ ${TRAVIS_PYTHON_VERSION:0:1} -eq 3 ]]; then
+        py.test -v -s examples/;
       fi
