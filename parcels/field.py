@@ -250,12 +250,8 @@ class Field(object):
         if not self.data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
             self.data = self.data.astype(np.float32)
-        # Make a copy of the transposed array to enforce
-        # C-contiguous memory layout for JIT mode.
         if transpose:
-            self.data = np.transpose(self.data).copy()
-        else:
-            self.data = self.data.copy()
+            self.data = np.transpose(self.data)
 
         if self.grid.tdim == 1:
             if len(self.data.shape) < 4:

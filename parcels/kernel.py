@@ -165,6 +165,11 @@ class Kernel(object):
         """Invokes JIT engine to perform the core update loop"""
         for g in pset.fieldset.gridset.grids:
             g.cstruct = None  # This force to point newly the grids from Python to C
+        # Make a copy of the transposed array to enforce
+        # C-contiguous memory layout for JIT mode.
+        for f in self.field_args.values():
+            if not f.data.flags.c_contiguous:
+                f.data = f.data.copy()
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
