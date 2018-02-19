@@ -491,7 +491,7 @@ class Field(object):
                 xi = dim-2
         return xi
 
-    def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
+    def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1, search2D=False):
         grid = self.grid
         xi = yi = -1
         lon_index = grid.lon <= x
@@ -528,14 +528,14 @@ class Field(object):
 
         eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
 
-        if grid.zdim > 1:
+        if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 (zi, zeta) = self.search_indices_vertical_z(z)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
         else:
-            zi = 0
+            zi = -1
             zeta = 0
 
         assert(xsi >= 0 and xsi <= 1)
@@ -544,7 +544,7 @@ class Field(object):
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices_curvilinear(self, x, y, z, xi, yi, tidx=-1, time=-1):
+    def search_indices_curvilinear(self, x, y, z, xi, yi, tidx=-1, time=-1, search2D=False):
         xsi = eta = -1
         grid = self.grid
         invA = np.array([[1, 0, 0, 0],
@@ -595,13 +595,13 @@ class Field(object):
                 print('Correct cell not found after %d iterations' % maxIterSearch)
                 raise FieldSamplingError(x, y, 0, field=self)
 
-        if grid.zdim > 1:
+        if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.CurvilinearZGrid:
                 (zi, zeta) = self.search_indices_vertical_z(z)
             elif grid.gtype == GridCode.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
         else:
-            zi = 0
+            zi = -1
             zeta = 0
 
         assert(xsi >= 0 and xsi <= 1)
@@ -610,11 +610,11 @@ class Field(object):
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
+    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1, search2D=False):
         if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
-            return self.search_indices_rectilinear(x, y, z, tidx, time)
+            return self.search_indices_rectilinear(x, y, z, tidx, time, search2D=search2D)
         else:
-            return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time)
+            return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time, search2D=search2D)
 
     def interpolator2D(self, tidx, z, y, x):
         xi = 0

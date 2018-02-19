@@ -514,7 +514,7 @@ class ParticleSet(object):
                 xi = p.GridIndexSet.gridindices[field.grid].xi
                 yi = p.GridIndexSet.gridindices[field.grid].yi
             else:
-                _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0)
+                _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
             density[yi, xi] += particle_val[pi]
 
         if relative:
