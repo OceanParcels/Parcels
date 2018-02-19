@@ -684,16 +684,16 @@ class Field(object):
             zii = zi if zeta <= .5 else zi+1
             return self.data[tidx, zii, yii, xii]
         elif self.interp_method is 'linear':
-            data = self.data[tidx, zi, :, :].transpose()
-            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                    (1-xsi)*eta * data[xi, yi+1]
-            data = self.data[tidx, zi+1, :, :].transpose()
-            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                (1-xsi)*eta * data[xi, yi+1]
+            data = self.data[tidx, zi, :, :]
+            f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
+                xsi*(1-eta) * data[yi, xi+1] + \
+                xsi*eta * data[yi+1, xi+1] + \
+                (1-xsi)*eta * data[yi+1, xi]
+            data = self.data[tidx, zi+1, :, :]
+            f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
+                xsi*(1-eta) * data[yi, xi+1] + \
+                xsi*eta * data[yi+1, xi+1] + \
+                (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
