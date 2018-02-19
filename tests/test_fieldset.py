@@ -139,7 +139,7 @@ def test_fieldset_celledgesizes(mesh):
 
 @pytest.mark.parametrize('dx, dy', [('e1u', 'e2u'), ('e1v', 'e2v')])
 def test_fieldset_celledgesizes_curvilinear(dx, dy):
-    fname = 'mesh_mask_ORCA025.L75-MJM101.1.nc4'  # Needs to be uploaded somewhere
+    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
     filenames = {'dx': fname, 'dy': fname, 'mesh_mask': fname}
     variables = {'dx': dx, 'dy': dy}
     dimensions = {'dx': {'lon': 'glamu', 'lat': 'gphiu'},
