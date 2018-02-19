@@ -507,8 +507,9 @@ class Field(object):
             xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
         else:
             lon_fixed = grid.lon
-            lon_fixed = np.where(lon_fixed - x > 180., lon_fixed - 360, lon_fixed)
-            lon_fixed = np.where(x - lon_fixed > 180., lon_fixed + 360, lon_fixed)
+            lon_fixed = np.where(grid.lon < grid.lon[0], lon_fixed + 360, lon_fixed)
+            if x < lon_fixed[0]:
+                lon_fixed -= 360
             if x < lon_fixed[0] or x > lon_fixed[-1]:
                 raise FieldSamplingError(x, y, z, field=self)
             lon_index = lon_fixed <= x
