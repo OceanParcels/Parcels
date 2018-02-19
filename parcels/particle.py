@@ -217,8 +217,8 @@ class JITParticle(ScipyParticle):
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
-        self.gridIndexSet = GridIndexSet(self.id, fieldset.gridset)
-        self.CGridIndexSetptr = cast(pointer(self.gridIndexSet.ctypes_struct), c_void_p)
+        self.GridIndexSet = GridIndexSet(self.id, fieldset.gridset)
+        self.CGridIndexSetptr = cast(pointer(self.GridIndexSet.ctypes_struct), c_void_p)
         self.CGridIndexSet = self.CGridIndexSetptr.value
 
     def __repr__(self):

@@ -14,7 +14,7 @@ from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                   CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['CentralDifferences', 'Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
+__all__ = ['Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
 
 
 class FieldSamplingError(RuntimeError):
@@ -41,44 +41,6 @@ class TimeExtrapolationError(RuntimeError):
             field.name if field else "Field", time)
         message += " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(message)
-
-
-def CentralDifferences(field_data, lat, lon):
-    """Function to calculate gradients in two dimensions
-    using central differences on field
-
-    :param field_data: data to take the gradients of
-    :param lat: latitude vector
-    :param lon: longitude vector
-
-    :rtype: gradient of data in zonal and meridional direction
-    """
-    r = 6.371e6  # radius of the earth
-    deg2rd = np.pi / 180
-    dy = r * np.diff(lat) * deg2rd
-    # calculate the width of each cell, dependent on lon spacing and latitude
-    dx = np.zeros([len(lon)-1, len(lat)], dtype=np.float32)
-    for x in range(len(lon))[1:]:
-        for y in range(len(lat)):
-            dx[x-1, y] = r * np.cos(lat[y] * deg2rd) * (lon[x]-lon[x-1]) * deg2rd
-    # calculate central differences for non-edge cells (with equal weighting)
-    dVdx = np.zeros(shape=np.shape(field_data), dtype=np.float32)
-    dVdy = np.zeros(shape=np.shape(field_data), dtype=np.float32)
-    for x in range(len(lon))[1:-1]:
-        for y in range(len(lat)):
-            dVdx[x, y] = (field_data[x+1, y] - field_data[x-1, y]) / (2 * dx[x-1, y])
-    for x in range(len(lon)):
-        for y in range(len(lat))[1:-1]:
-            dVdy[x, y] = (field_data[x, y+1] - field_data[x, y-1]) / (2 * dy[y-1])
-    # Forward and backward difference for edges
-    for x in range(len(lon)):
-        dVdy[x, 0] = (field_data[x, 1] - field_data[x, 0]) / dy[0]
-        dVdy[x, len(lat)-1] = (field_data[x, len(lat)-1] - field_data[x, len(lat)-2]) / dy[len(lat)-2]
-    for y in range(len(lat)):
-        dVdx[0, y] = (field_data[1, y] - field_data[0, y]) / dx[0, y]
-        dVdx[len(lon)-1, y] = (field_data[len(lon)-1, y] - field_data[len(lon)-2, y]) / dx[len(lon)-2, y]
-
-    return [dVdx, dVdy]
 
 
 class UnitConverter(object):
@@ -209,9 +171,9 @@ class Field(object):
                       'Kh_zonal': GeographicPolarSquare(),
                       'Kh_meridional': GeographicSquare()}
 
-    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None,
+    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  transpose=False, vmin=None, vmax=None, time_origin=0,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, mesh='flat'):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
         self.name = name
         if self.name == 'UV':
             return
@@ -403,41 +365,43 @@ class Field(object):
             return self.getUV(*key)
         return self.eval(*key)
 
-    def gradient(self, timerange=None, lonrange=None, latrange=None, name=None):
-        """Method to create gradients of Field"""
-        if name is None:
-            name = 'd' + self.name
+    def calc_cell_edge_sizes(self):
+        """Method to calculate cell sizes based on numpy.gradient method
+                Currently only works for Rectilinear Grids"""
+        if not self.grid.cell_edge_sizes:
+            if self.grid.gtype in (GridCode.RectilinearZGrid, GridCode.RectilinearSGrid):
+                self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
+                self.grid.cell_edge_sizes['y'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
-        if timerange is None:
-            time_i = range(len(self.grid.time))
-            time = self.grid.time
-        else:
-            time_i = range(np.where(self.grid.time >= timerange[0])[0][0], np.where(self.grid.time <= timerange[1])[0][-1]+1)
-            time = self.grid.time[time_i]
-        if lonrange is None:
-            lon_i = range(len(self.grid.lon))
-            lon = self.grid.lon
-        else:
-            lon_i = range(np.where(self.grid.lon >= lonrange[0])[0][0], np.where(self.grid.lon <= lonrange[1])[0][-1]+1)
-            lon = self.grid.lon[lon_i]
-        if latrange is None:
-            lat_i = range(len(self.grid.lat))
-            lat = self.grid.lat
-        else:
-            lat_i = range(np.where(self.grid.lat >= latrange[0])[0][0], np.where(self.grid.lat <= latrange[1])[0][-1]+1)
-            lat = self.grid.lat[lat_i]
+                x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
+                y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
+                for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
+                    for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
+                        self.grid.cell_edge_sizes['x'][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
+                        self.grid.cell_edge_sizes['y'][y, x] = y_conv.to_source(dy, lon, lat, self.grid.depth[0])
+                self.cell_edge_sizes = self.grid.cell_edge_sizes
+            else:
+                logger.error(('Field.cell_edge_sizes() not implemented for ', self.grid.gtype, 'grids.',
+                              'You can provide Field.grid.cell_edge_sizes yourself',
+                              'by in e.g. NEMO using the e1u fields etc from the mesh_mask.nc file'))
+                exit(-1)
 
-        dVdx = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
-        dVdy = np.zeros(shape=(time.size, lat.size, lon.size), dtype=np.float32)
-        for t in np.nditer(np.int32(time_i)):
-            grad = CentralDifferences(np.transpose(self.data[t, :, :][np.ix_(lat_i, lon_i)]), lat, lon)
-            dVdx[t, :, :] = np.array(np.transpose(grad[0]))
-            dVdy[t, :, :] = np.array(np.transpose(grad[1]))
+    def cell_areas(self):
+        """Method to calculate cell sizes based on cell_edge_sizes
+                Currently only works for Rectilinear Grids"""
+        if not self.grid.cell_edge_sizes:
+            self.calc_cell_edge_sizes()
+        return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
 
-        return([Field(name + '_dx', dVdx, lon=lon, lat=lat, depth=self.grid.depth, time=time,
-                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation),
-                Field(name + '_dy', dVdy, lon=lon, lat=lat, depth=self.grid.depth, time=time,
-                      interp_method=self.interp_method, allow_time_extrapolation=self.allow_time_extrapolation)])
+    def gradient(self):
+        """Method to calculate horizontal gradients of Field.
+                Returns two numpy arrays: the zonal and meridional gradients,
+                on the same Grid as the original Field, using numpy.gradient() method"""
+        if not self.grid.cell_edge_sizes:
+            self.calc_cell_edge_sizes()
+        dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
+        dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
+        return dFdx, dFdy
 
     def interpolator2D_scipy(self, t_idx, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
@@ -527,7 +491,7 @@ class Field(object):
                 xi = dim-2
         return xi
 
-    def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1):
+    def search_indices_rectilinear(self, x, y, z, tidx=-1, time=-1, search2D=False):
         grid = self.grid
         xi = yi = -1
         lon_index = grid.lon <= x
@@ -543,8 +507,9 @@ class Field(object):
             xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
         else:
             lon_fixed = grid.lon
-            lon_fixed = np.where(lon_fixed - x > 180., lon_fixed - 360, lon_fixed)
-            lon_fixed = np.where(x - lon_fixed > 180., lon_fixed + 360, lon_fixed)
+            lon_fixed = np.where(grid.lon < grid.lon[0], lon_fixed + 360, lon_fixed)
+            if x < lon_fixed[0]:
+                lon_fixed -= 360
             if x < lon_fixed[0] or x > lon_fixed[-1]:
                 raise FieldSamplingError(x, y, z, field=self)
             lon_index = lon_fixed <= x
@@ -564,14 +529,14 @@ class Field(object):
 
         eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
 
-        if grid.zdim > 1:
+        if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
                 (zi, zeta) = self.search_indices_vertical_z(z)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
         else:
-            zi = 0
+            zi = -1
             zeta = 0
 
         assert(xsi >= 0 and xsi <= 1)
@@ -580,7 +545,7 @@ class Field(object):
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices_curvilinear(self, x, y, z, xi, yi, tidx=-1, time=-1):
+    def search_indices_curvilinear(self, x, y, z, xi, yi, tidx=-1, time=-1, search2D=False):
         xsi = eta = -1
         grid = self.grid
         invA = np.array([[1, 0, 0, 0],
@@ -631,13 +596,13 @@ class Field(object):
                 print('Correct cell not found after %d iterations' % maxIterSearch)
                 raise FieldSamplingError(x, y, 0, field=self)
 
-        if grid.zdim > 1:
+        if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.CurvilinearZGrid:
                 (zi, zeta) = self.search_indices_vertical_z(z)
             elif grid.gtype == GridCode.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, tidx, time)
         else:
-            zi = 0
+            zi = -1
             zeta = 0
 
         assert(xsi >= 0 and xsi <= 1)
@@ -646,11 +611,11 @@ class Field(object):
 
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1):
-        if self.grid.gtype == GridCode.RectilinearSGrid:
-            return self.search_indices_rectilinear(x, y, z, tidx, time)
+    def search_indices(self, x, y, z, xi, yi, tidx=-1, time=-1, search2D=False):
+        if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+            return self.search_indices_rectilinear(x, y, z, tidx, time, search2D=search2D)
         else:
-            return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time)
+            return self.search_indices_curvilinear(x, y, z, xi, yi, tidx, time, search2D=search2D)
 
     def interpolator2D(self, tidx, z, y, x):
         xi = 0

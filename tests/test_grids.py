@@ -334,8 +334,8 @@ def test_nemo_grid(mode):
                  'sinU': rotation_angles_filename,
                  'cosV': rotation_angles_filename,
                  'sinV': rotation_angles_filename}
-    variables = {'U': 'Uu',
-                 'V': 'Vv',
+    variables = {'U': 'U',
+                 'V': 'V',
                  'cosU': 'cosU',
                  'sinU': 'sinU',
                  'cosV': 'cosV',
@@ -388,8 +388,8 @@ def test_advect_nemo(mode):
                  'sinU': rotation_angles_filename,
                  'cosV': rotation_angles_filename,
                  'sinV': rotation_angles_filename}
-    variables = {'U': 'Uu',
-                 'V': 'Vv',
+    variables = {'U': 'U',
+                 'V': 'V',
                  'cosU': 'cosU',
                  'sinU': 'sinU',
                  'cosV': 'cosV',
