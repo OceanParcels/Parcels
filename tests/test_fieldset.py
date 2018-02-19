@@ -25,13 +25,11 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
 def test_fieldset_from_data(xdim, ydim):
     """ Simple test for fieldset initialisation from data. """
     data, dimensions = generate_fieldset(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions)
-    u_t = np.transpose(data['U']).reshape((dimensions['lat'].size, dimensions['lon'].size))
-    v_t = np.transpose(data['V']).reshape((dimensions['lat'].size, dimensions['lon'].size))
+    fieldset = FieldSet.from_data(data, dimensions, transpose=False)
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
-    assert np.allclose(fieldset.U.data[0, :], u_t, rtol=1e-12)
-    assert np.allclose(fieldset.V.data[0, :], v_t, rtol=1e-12)
+    assert np.allclose(fieldset.U.data[0, :], data['U'], rtol=1e-12)
+    assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
 @pytest.mark.parametrize('xdim', [100, 200])
@@ -68,15 +66,13 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     """ Simple test for fieldset initialisation from Parcels FieldSet file format. """
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
-    fieldset_out = FieldSet.from_data(data, dimensions)
+    fieldset_out = FieldSet.from_data(data, dimensions, transpose=False)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath)
-    u_t = np.transpose(data['U']).reshape((dimensions['lat'].size, dimensions['lon'].size))
-    v_t = np.transpose(data['V']).reshape((dimensions['lat'].size, dimensions['lon'].size))
     assert len(fieldset.U.data.shape) == 3  # Will be 4 once we use depth
     assert len(fieldset.V.data.shape) == 3
-    assert np.allclose(fieldset.U.data[0, :], u_t, rtol=1e-12)
-    assert np.allclose(fieldset.V.data[0, :], v_t, rtol=1e-12)
+    assert np.allclose(fieldset.U.data[0, :], data['U'], rtol=1e-12)
+    assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
@@ -85,7 +81,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
-    fieldsetfull = FieldSet.from_data(data, dimensions)
+    fieldsetfull = FieldSet.from_data(data, dimensions, transpose=False)
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
@@ -113,7 +109,7 @@ def test_moving_eddies_file_subsettime(indstime):
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions, transpose=False)
     field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
@@ -121,12 +117,12 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
 
 
 def create_simple_fieldset(x, y, time):
-    field = np.zeros((time.size, x, y), dtype=np.float32)
-    ltri = np.triu_indices(n=x, m=y)
+    field = np.zeros((time.size, y, x), dtype=np.float32)
+    ltri = np.triu_indices(n=y, m=x)
     for t in time:
-        temp = np.zeros((x, y), dtype=np.float32)
+        temp = np.zeros((y, x), dtype=np.float32)
         temp[ltri] = 1
-        field[t, :, :] = np.reshape(temp.T, np.shape(field[t, :, :]))
+        field[t, :, :] = np.reshape(temp, np.shape(field[t, :, :]))
     return field
 
 
@@ -160,7 +156,7 @@ def addConst(particle, fieldset, time, dt):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_constant(mode):
     data, dimensions = generate_fieldset(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions, transpose=False)
     westval = -0.2
     eastval = 0.3
     fieldset.add_constant('movewest', westval)

@@ -250,14 +250,23 @@ class Field(object):
         if not self.data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
             self.data = self.data.astype(np.float32)
+        # Make a copy of the transposed array to enforce
+        # C-contiguous memory layout for JIT mode.
         if transpose:
-            # Make a copy of the transposed array to enforce
-            # C-contiguous memory layout for JIT mode.
             self.data = np.transpose(self.data).copy()
-        if self.grid.zdim > 1:
-            self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
         else:
-            self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
+            self.data = self.data.copy()
+
+        if self.grid.tdim == 1:
+            if len(self.data.shape) < 4:
+                self.data = self.data.reshape(sum(((1,), self.data.shape), ()))
+        if self.grid.zdim == 1:
+            if len(self.data.shape) == 4:
+                self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
+        if len(self.data.shape) == 4:
+            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)
+        else:
+            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
