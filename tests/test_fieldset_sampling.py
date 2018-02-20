@@ -119,7 +119,8 @@ def test_variable_init_from_field(mode, npart=9):
     assert np.all([abs(p.a - fieldset.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
 
 
-def test_pset_from_field(xdim=10, ydim=10, npart=10000):
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
     np.random.seed(123456)
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
@@ -131,10 +132,13 @@ def test_pset_from_field(xdim=10, ydim=10, npart=10000):
             'start': startfield}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
-    pset = ParticleSet.from_field(fieldset, size=npart, pclass=JITParticle,
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
                                   start_field=fieldset.start)
-    pdens = pset.density(area_scale=False, relative=True)
-    assert np.allclose(pdens, startfield/np.sum(startfield), atol=5e-3)
+    densfield = Field(name='densfield', data=np.zeros((xdim+1, ydim+1), dtype=np.float32),
+                      lon=np.linspace(-1./(xdim*2), 1.+1./(xdim*2), xdim+1, dtype=np.float32),
+                      lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32), transpose=True)
+    pdens = pset.density(field=densfield, relative=True)[:-1, :-1]
+    assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -368,10 +372,10 @@ def test_sampling_multiple_grid_sizes(mode):
     xdim = 10
     ydim = 20
     gf = 10  # factor by which the resolution of U is higher than of V
-    U = Field('U', np.zeros((xdim*gf, ydim*gf), dtype=np.float32),
+    U = Field('U', np.zeros((ydim*gf, xdim*gf), dtype=np.float32),
               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
-    V = Field('V', np.zeros((xdim, ydim), dtype=np.float32),
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
