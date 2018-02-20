@@ -376,6 +376,8 @@ static inline ErrorCode search_indices(float x, float y, float z, int xdim, int 
 /* Local linear search to update time index */
 static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *index, int time_periodic)
 {
+  if (*index < 0)
+    *index = 0;
   if (time_periodic == 1){
     if (*t < tvals[0]){
       *index = size-1;      
