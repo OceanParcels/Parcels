@@ -509,10 +509,9 @@ class ParticleSet(object):
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
         for pi, p in enumerate(self.particles):
-            if hasattr(p, 'GridIndexSet') and field.grid in p.GridIndexSet.gridindices and \
-               p.GridIndexSet.gridindices[field.grid].ti >= 0:
-                xi = p.GridIndexSet.gridindices[field.grid].xi
-                yi = p.GridIndexSet.gridindices[field.grid].yi
+            if hasattr(p, 'GridIndexSet') and p.GridIndexSet[field.grid].ti >= 0:
+                xi = p.GridIndexSet[field.grid].xi
+                yi = p.GridIndexSet[field.grid].yi
             else:
                 _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
             density[yi, xi] += particle_val[pi]
