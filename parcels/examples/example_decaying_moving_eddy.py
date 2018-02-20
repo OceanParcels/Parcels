@@ -58,7 +58,7 @@ def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
     outputdt = delta(hours=1)
 
     pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
-                 output_file=pset.ParticleFile(name="DecayingMovingParticle", outputdt=outputdt))
+                 output_file=pset.ParticleFile(name="DecayingMovingParticle.nc", outputdt=outputdt))
 
     return pset
 
