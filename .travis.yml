@@ -66,6 +66,9 @@ script:
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         make linkcheck -C docs;
       fi
+    - echo "${TRAVIS_RUN_EXAMPLES}"
+    - echo "$TRAVIS_RUN_EXAMPLES"
+    - echo $TRAVIS_RUN_EXAMPLES
     - |
       # evaluate example scripts and notebooks on linux w python2
       if [[ "${TRAVIS_RUN_EXAMPLES}" = "both" ]]; then
