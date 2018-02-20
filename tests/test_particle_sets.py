@@ -82,18 +82,22 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
-def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, dt, npart=10):
-
+def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, tmpdir, dt, npart=10):
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
+    outfilepath = tmpdir.join("pfile_repeatdt")
+    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
     for i in range(npart):
         assert len(pset) == (i // repeatdt) + 1
-        pset.execute(IncrLon, dt=dt, runtime=1.)
+        pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
     assert np.allclose([p.sample_var for p in pset], np.arange(npart, -1, -repeatdt))
+    ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
+    samplevar = ncfile.variables['sample_var'][:]
+    assert samplevar.shape == (len(pset), npart+1)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -288,14 +292,13 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pfile_type', ['array', 'indexed'])
-def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, npart=10):
+def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
 
     filepath = tmpdir.join("pfile_array_remove_particles")
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=0.5*np.ones(npart, dtype=np.float32))
-    pfile = pset.ParticleFile(filepath, type=pfile_type)
+    pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
     for _ in range(npart):
         pset.remove(-1)
@@ -310,19 +313,21 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 
     def Update_v(particle, fieldset, time, dt):
         particle.v_once += 1.
+        particle.age += dt
 
     class MyParticle(ptype[mode]):
-        v_once = Variable('v_once', dtype=np.float32, initial=1., to_write='once')
+        v_once = Variable('v_once', dtype=np.float32, initial=0., to_write='once')
+        age = Variable('age', dtype=np.float32, initial=0.)
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, repeatdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
-                 output_file=pset.ParticleFile(name=filepath, outputdt=0.2))
+                 output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
+    assert np.allclose([p.v_once - p.age * 10 for p in pset], 0, atol=1e-5)
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
-    V_once = ncfile.variables['v_once'][:]
-    assert np.all([p.v_once == 11.0 for p in pset])
-    assert (V_once.shape == (npart, ))
-    assert (V_once[0] == 1.)
+    vfile = ncfile.variables['v_once'][:]
+    assert (vfile.shape == (npart*11, ))
+    assert [v == 0 for v in vfile]
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -345,7 +350,7 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
-    outfile = pset.ParticleFile(name=filepath, write_ondelete=True, type="indexed")
+    outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
