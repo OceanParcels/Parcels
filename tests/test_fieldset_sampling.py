@@ -136,7 +136,7 @@ def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
                                   start_field=fieldset.start)
     densfield = Field(name='densfield', data=np.zeros((xdim+1, ydim+1), dtype=np.float32),
                       lon=np.linspace(-1./(xdim*2), 1.+1./(xdim*2), xdim+1, dtype=np.float32),
-                      lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32))
+                      lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32), transpose=True)
     pdens = pset.density(field=densfield, relative=True)[:-1, :-1]
     assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
 

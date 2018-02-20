@@ -43,7 +43,7 @@ def test_pset_create_field(fieldset, mode, npart=100):
     np.random.seed(123456)
     shape = (fieldset.U.lon.size, fieldset.U.lat.size)
     K = Field('K', lon=fieldset.U.lon, lat=fieldset.U.lat,
-              data=np.ones(shape, dtype=np.float32))
+              data=np.ones(shape, dtype=np.float32), transpose=True)
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode], start_field=K)
     assert (np.array([p.lon for p in pset]) <= K.lon[-1]).all()
     assert (np.array([p.lon for p in pset]) >= K.lon[0]).all()
