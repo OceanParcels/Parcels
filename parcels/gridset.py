@@ -60,3 +60,6 @@ class GridIndexSet(object):
         cstruct = CGridIndexSet(self.size,
                                 self._gridindices_data.ctypes.data_as(POINTER(c_void_p)))
         return cstruct
+
+    def __getitem__(self, key):
+        return self.gridindices[key]
