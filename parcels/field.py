@@ -213,13 +213,18 @@ class Field(object):
             logger.warning_once("Casting field data to np.float32")
             self.data = self.data.astype(np.float32)
         if transpose:
-            # Make a copy of the transposed array to enforce
-            # C-contiguous memory layout for JIT mode.
-            self.data = np.transpose(self.data).copy()
-        if self.grid.zdim > 1:
-            self.data = self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim))
+            self.data = np.transpose(self.data)
+
+        if self.grid.tdim == 1:
+            if len(self.data.shape) < 4:
+                self.data = self.data.reshape(sum(((1,), self.data.shape), ()))
+        if self.grid.zdim == 1:
+            if len(self.data.shape) == 4:
+                self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
+        if len(self.data.shape) == 4:
+            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)
         else:
-            self.data = self.data.reshape((self.grid.tdim, self.grid.ydim, self.grid.xdim))
+            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -644,16 +649,16 @@ class Field(object):
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
         elif self.interp_method is 'linear':
-            data = self.data[ti, zi, :, :].transpose()
-            f0 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                    (1-xsi)*eta * data[xi, yi+1]
-            data = self.data[ti, zi+1, :, :].transpose()
-            f1 = (1-xsi)*(1-eta) * data[xi, yi] + \
-                xsi*(1-eta) * data[xi+1, yi] + \
-                xsi*eta * data[xi+1, yi+1] + \
-                (1-xsi)*eta * data[xi, yi+1]
+            data = self.data[ti, zi, :, :]
+            f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
+                xsi*(1-eta) * data[yi, xi+1] + \
+                xsi*eta * data[yi+1, xi+1] + \
+                (1-xsi)*eta * data[yi+1, xi]
+            data = self.data[ti, zi+1, :, :]
+            f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
+                xsi*(1-eta) * data[yi, xi+1] + \
+                xsi*eta * data[yi+1, xi+1] + \
+                (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         else:
             raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
