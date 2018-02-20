@@ -25,12 +25,10 @@ def peninsula_fieldset(xdim, ydim):
     ICES Cooperative Research Report No. 295. 111 pp.
     http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
 
-    Note that the problem is defined on an A-grid while NEMO
-    normally returns C-grids. However, to avoid accuracy
-    problems with interpolation from A-grid to C-grid, we
-    return NetCDF files that are on an A-grid.
+    To avoid accuracy problems with interpolation from A-grid
+    to C-grid, we return NetCDF files that are on an A-grid.
     """
-    # Set NEMO fieldset variables
+    # Set Parcels FieldSet variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
 
@@ -111,10 +109,9 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
     dt = delta(minutes=5)
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    out = pset.ParticleFile(name="MyParticle") if output else None
-    interval = delta(hours=1) if output else -1
+    out = pset.ParticleFile(name="MyParticle", outputdt=delta(hours=1)) if output else None
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
-    pset.execute(k_adv + k_p, endtime=time, dt=dt, output_file=out, interval=interval)
+    pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -147,7 +144,7 @@ def fieldsetfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(fieldsetfile, mode):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -184,7 +181,7 @@ Example of particle advection around an idealised peninsula""")
         fieldset.write(filename)
 
     # Open fieldset file set
-    fieldset = FieldSet.from_nemo('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
 
     if args.profiling:
         from cProfile import runctx

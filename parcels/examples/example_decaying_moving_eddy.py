@@ -53,12 +53,12 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
 def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
-    endtime = delta(days=2)
+    runtime = delta(days=2)
     dt = delta(minutes=5)
-    interval = delta(hours=1)
+    outputdt = delta(hours=1)
 
-    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="DecayingMovingParticle"), show_movie=False)
+    pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
+                 output_file=pset.ParticleFile(name="DecayingMovingParticle.nc", outputdt=outputdt))
 
     return pset
 

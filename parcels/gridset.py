@@ -8,15 +8,11 @@ __all__ = ['GridSet', 'GridIndexSet']
 class GridSet(object):
     """GridSet class that holds the Grids on which the Fields are defined
 
-
-    :param grids: Table of :class:`parcels.grid.Grid` objects
     """
 
-    def __init__(self, grids=[]):
-        self.grids = grids
-        self.size = len(grids)
-        for g in grids:
-            setattr(self, g.name, g)
+    def __init__(self):
+        self.grids = []
+        self.size = 0
 
     def add_grid(self, field):
         grid = field.grid
@@ -36,11 +32,7 @@ class GridSet(object):
             break
 
         if not existing_grid:
-            for g in self.grids:
-                if g.name == grid.name:
-                    grid.name = grid.name + '_b'
             self.grids.append(grid)
-            setattr(self, grid.name, grid)
             self.size += 1
 
 
@@ -51,14 +43,14 @@ class GridIndexSet(object):
     """
     def __init__(self, id, gridset):
         self.size = gridset.size
-        self.gridindices = np.empty(self.size, GridIndex)
+        self.gridindices = {}
         self._gridindices_data = np.empty(self.size, GridIndex.dtype())
 
         def cptr(i):
             return self._gridindices_data[i]
 
         for i, g in enumerate(gridset.grids):
-            self.gridindices[i] = GridIndex(g, cptr=cptr(i))
+            self.gridindices[g] = GridIndex(g, cptr=cptr(i))
 
     @property
     def ctypes_struct(self):
@@ -68,3 +60,6 @@ class GridIndexSet(object):
         cstruct = CGridIndexSet(self.size,
                                 self._gridindices_data.ctypes.data_as(POINTER(c_void_p)))
         return cstruct
+
+    def __getitem__(self, key):
+        return self.gridindices[key]

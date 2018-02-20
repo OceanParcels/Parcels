@@ -1,5 +1,4 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, ParticleFile
-from parcels import compute_curvilinearGrid_rotationAngles
 from argparse import ArgumentParser
 import numpy as np
 import pytest
@@ -13,32 +12,13 @@ def run_nemo_curvilinear(mode, outfile):
     """Function that shows how to read in curvilinear grids, in this case from NEMO"""
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
-    # First, create a file with the rotation angles using the compute_curvilinearGrid_rotationAngles script
-    mesh_filename = data_path + 'mesh_mask.nc4'
-    rotation_angles_filename = data_path + 'rotation_angles.nc'
-    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename)
-
-    # Now define the variables and dimensions of both the zonal (U) and meridional (V)
-    # velocity, as well as the rotation angles just created in the rotation_angles.nc file
     filenames = {'U': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4',
                  'V': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4',
-                 'cosU': rotation_angles_filename,
-                 'sinU': rotation_angles_filename,
-                 'cosV': rotation_angles_filename,
-                 'sinV': rotation_angles_filename}
-    variables = {'U': 'U',
-                 'V': 'V',
-                 'cosU': 'cosU',
-                 'sinU': 'sinU',
-                 'cosV': 'cosV',
-                 'sinV': 'sinV'}
+                 'mesh_mask': data_path + 'mesh_mask.nc4'}
+    variables = {'U': 'U', 'V': 'V'}
     dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
-                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
-                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
-    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
+                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'}}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True)
 
     # Now run particles as normal
     npart = 20
@@ -50,10 +30,10 @@ def run_nemo_curvilinear(mode, outfile):
             particle.lon -= 360
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile(outfile, pset)
+    pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))
     kernels = pset.Kernel(AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
-                 interval=delta(days=1), output_file=pfile)
+                 output_file=pfile)
     assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=1e-3)
 
 

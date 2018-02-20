@@ -14,17 +14,6 @@ from datetime import datetime
 __all__ = ['ParticleSet']
 
 
-def nearest_index(array, value):
-    """returns index of the nearest value in array using O(log n) bisection method"""
-    y = bisect.bisect(array, value)
-    if y == len(array):
-        return y-1
-    elif(abs(array[y-1] - value) < abs(array[y] - value)):
-        return y-1
-    else:
-        return y
-
-
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
@@ -41,14 +30,21 @@ class ParticleSet(object):
     """
 
     def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
-        # Convert numpy arrays to one-dimensional lists
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
-        lon = lon.flatten() if isinstance(lon, np.ndarray) else lon
-        lat = lat.flatten() if isinstance(lat, np.ndarray) else lat
+        def convert_to_list(var):
+            # Convert numpy arrays and single integers/floats to one-dimensional lists
+            if isinstance(var, (int, float)):
+                return [var]
+            elif isinstance(var, np.ndarray):
+                return var.flatten()
+            return var
+
+        lon = convert_to_list(lon)
+        lat = convert_to_list(lat)
         depth = np.ones(len(lon)) * fieldset.U.grid.depth[0] if depth is None else depth
-        depth = depth.flatten() if isinstance(depth, np.ndarray) else depth
+        depth = convert_to_list(depth)
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
@@ -59,10 +55,10 @@ class ParticleSet(object):
         assert len(lon) == len(time)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
-        if self.repeatdt is not None:
+        if self.repeatdt:
             if self.repeatdt <= 0:
                 raise('Repeatdt should be > 0')
-            if time[0] is not None and not np.allclose(time, time[0]):
+            if time[0] and not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
             self.repeat_starttime = time[0]
             self.repeatlon = lon
@@ -216,8 +212,7 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
-                interval=None, recovery=None, output_file=None,
-                show_movie=False):
+                moviedt=None, recovery=None, output_file=None, movie_background_field=None):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -225,16 +220,24 @@ class ParticleSet(object):
         :param pyfunc: Kernel function to execute. This can be the name of a
                        defined Python function or a :class:`parcels.kernel.Kernel` object.
                        Kernels can be concatenated using the + operator
-        :param endtime: End time for the timestepping loop
+        :param endtime: End time for the timestepping loop.
+                        It is either a datetime object or a positive double.
         :param runtime: Length of the timestepping loop. Use instead of endtime.
-        :param dt: Timestep interval to be passed to the kernel
-        :param interval: Interval for inner sub-timestepping (leap), which dictates
-                         the update frequency of file output and animation.
+                        It is either a timedelta object or a positive double.
+        :param dt: Timestep interval to be passed to the kernel.
+                   It is either a timedelta object or a double.
+                   Use a negative value for a backward-in-time simulation.
+        :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
+                         the update frequency of animation.
+                         It is either a timedelta object or a positive double.
+                         None value means no animation.
         :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
         :param recovery: Dictionary with additional `:mod:parcels.kernels.error`
                          recovery kernels to allow custom recovery behaviour in case of
                          kernel errors.
-        :param show_movie: True shows particles; name of field plots that field as background
+        :param movie_background_field: field plotted as background in the movie if moviedt is set.
+                                       'vector' shows the velocity as a vector field.
+
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -252,83 +255,101 @@ class ParticleSet(object):
 
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
-            endtime = endtime.total_seconds()
-        elif isinstance(endtime, datetime):
+            raise RuntimeError('endtime must be either a datetime or a double')
+        if isinstance(endtime, datetime):
             endtime = (endtime - self.time_origin).total_seconds()
         if isinstance(runtime, delta):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
             dt = dt.total_seconds()
-        if isinstance(interval, delta):
-            interval = interval.total_seconds()
+        outputdt = output_file.outputdt if output_file else np.infty
+        if isinstance(outputdt, delta):
+            outputdt = outputdt.total_seconds()
+        if isinstance(moviedt, delta):
+            moviedt = moviedt.total_seconds()
+
+        assert runtime is None or runtime >= 0, 'runtime must be positive'
+        assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
+        assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
         # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
         for p in self:
             if np.isnan(p.time):
                 p.time = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
 
-        # Derive _starttime, endtime and interval from arguments or fieldset defaults
+        # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
         _starttime = min([p.time for p in self]) if dt >= 0 else max([p.time for p in self])
         if self.repeatdt is not None and self.repeat_starttime is None:
             self.repeat_starttime = _starttime
         if runtime is not None:
-            if runtime < 0:
-                runtime = np.abs(runtime)
-                logger.warning("Negating runtime because it has to be positive")
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
-        if interval is None:
-            interval = endtime - _starttime
-        elif dt < 0 and interval > 0.:
-            interval *= -1.
-            logger.warning("Negating interval because running in time-backward mode")
 
-        if abs(endtime-_starttime) < 1e-5 or interval == 0 or dt == 0 or runtime == 0:
-            timeleaps = 1
+        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
             endtime = _starttime
             logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
                                 "The kernels will be executed once, without incrementing time")
-        else:
-            timeleaps = int((endtime - _starttime) / interval)
-
-        if self.repeatdt is not None and self.repeatdt % interval != 0:
-            raise ("repeatdt should be multiple of interval")
 
         # Initialise particle timestepping
         for p in self:
             p.dt = dt
-        # Execute time loop in sub-steps (timeleaps)
-        assert(timeleaps >= 0)
-        leaptime = _starttime
-        for _ in range(timeleaps):
-            # First write output_file, because particles could have been added
-            if output_file:
-                output_file.write(self, leaptime)
-            if show_movie:
-                self.show(field=show_movie, show_time=leaptime)
-            leaptime += interval
-            self.kernel.execute(self, endtime=leaptime, dt=dt, recovery=recovery)
-            # Add new particles if repeatdt is used
-            if self.repeatdt is not None and abs(leaptime - self.repeat_starttime) % self.repeatdt == 0:
-                self.add(ParticleSet(fieldset=self.fieldset, time=leaptime, lon=self.repeatlon,
+
+        # First write output_file, because particles could have been added
+        if output_file:
+            output_file.write(self, _starttime)
+        if moviedt:
+            self.show(field=movie_background_field, show_time=_starttime)
+
+        if moviedt is None:
+            moviedt = np.infty
+        time = _starttime
+        if self.repeatdt:
+            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+        else:
+            next_prelease = np.infty * np.sign(dt)
+        next_output = time + outputdt * np.sign(dt)
+        next_movie = time + moviedt * np.sign(dt)
+        next_input = np.infty * np.sign(dt)  # Not used yet
+
+        tol = 1e-12
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+            if dt > 0:
+                time = min(next_prelease, next_input, next_output, next_movie, endtime)
+            else:
+                time = max(next_prelease, next_input, next_output, next_movie, endtime)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
+            if abs(time-next_prelease) < tol:
+                self.add(ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                      lat=self.repeatlat, depth=self.repeatdepth,
                                      pclass=self.repeatpclass))
-        # Write out a final output_file
-        if output_file:
-            output_file.write(self, leaptime)
+                next_prelease += self.repeatdt * np.sign(dt)
+            if abs(time-next_input) < tol:
+                continue
+            if abs(time-next_output) < tol:
+                if output_file:
+                    output_file.write(self, time)
+                next_output += outputdt * np.sign(dt)
+            if abs(time-next_movie) < tol:
+                self.show(field=movie_background_field, show_time=time)
+                next_movie += moviedt * np.sign(dt)
+            if dt == 0:
+                break
 
-    def show(self, particles=True, show_time=None, field=True, domain=None,
+        if output_file:
+            output_file.write(self, time)
+
+    def show(self, particles=True, show_time=None, field=None, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
         """Method to 'show' a Parcels ParticleSet
 
         :param particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
-        :param field: Field to plot under particles (either True, a Field object, or 'vector')
+        :param field: Field to plot under particles (either None, a Field object, or 'vector')
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
         :param land: Boolean whether to show land (in field='vector' mode only)
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -355,6 +376,16 @@ class ParticleSet(object):
         if np.isnan(show_time):
             show_time = self.fieldset.U.grid.time[0]
         if domain is not None:
+            def nearest_index(array, value):
+                """returns index of the nearest value in array using O(log n) bisection method"""
+                y = bisect.bisect(array, value)
+                if y == len(array):
+                    return y - 1
+                elif (abs(array[y - 1] - value) < abs(array[y] - value)):
+                    return y - 1
+                else:
+                    return y
+
             latN = nearest_index(self.fieldset.U.lat, domain[0])
             latS = nearest_index(self.fieldset.U.lat, domain[1])
             lonE = nearest_index(self.fieldset.U.lon, domain[2])
@@ -366,7 +397,7 @@ class ParticleSet(object):
             plt.clf()
             if particles:
                 plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
-            if field is True:
+            if field is None:
                 axes = plt.gca()
                 axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
@@ -459,64 +490,46 @@ class ParticleSet(object):
             logger.info('Plot saved to '+savefile+'.png')
             plt.close()
 
-    def density(self, field=None, particle_val=None, relative=False, area_scale=True):
+    def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
-        through a 2D histogram
+        through a 2D histogram.
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
-                    on. Default is `fieldset.U`
-        :param particle_val: Optional list of values to weigh each particlewith
+                      on. Default is `fieldset.U`
+        :param particle_val: Optional numpy-array of values to weigh each particle with.
+                             Default is 1 for each particle
         :param relative: Boolean to control whether the density is scaled by the total
-                    number of particles
+                         weight of all particles. Default is False
         :param area_scale: Boolean to control whether the density is scaled by the area
-                    (in m^2) of each grid cell"""
-        lons = [p.lon for p in self.particles]
-        lats = [p.lat for p in self.particles]
-        # Code for finding nearest vertex for each particle is currently very inefficient
-        # once cell tracking is implemented for SciPy particles, the below use of np.min/max
-        # will be replaced (see PR #111)
-        if field is not None:
-            # Kick out particles that are not within the limits of our density field
-            half_lon = (field.grid.lon[1] - field.grid.lon[0])/2
-            half_lat = (field.grid.lat[1] - field.grid.lat[0])/2
-            dparticles = (lons > (np.min(field.grid.lon)-half_lon)) * (lons < (np.max(field.grid.lon)+half_lon)) * \
-                         (lats > (np.min(field.grid.lat)-half_lat)) * (lats < (np.max(field.grid.lat)+half_lat))
-            dparticles = np.where(dparticles)[0]
-        else:
-            field = self.fieldset.U
-            dparticles = range(len(self.particles))
-        Density = np.zeros((field.grid.lon.size, field.grid.lat.size), dtype=np.float32)
+                           (in m^2) of each grid cell. Default is False
+        """
 
-        # For each particle, find closest vertex in x and y and add 1 or val to the count
-        if particle_val is not None:
-            for p in dparticles:
-                Density[np.argmin(np.abs(lons[p] - field.grid.lon)), np.argmin(np.abs(lats[p] - field.grid.lat))] \
-                    += getattr(self.particles[p], particle_val)
-        else:
-            for p in dparticles:
-                nearest_lon = np.argmin(np.abs(lons[p] - field.grid.lon))
-                nearest_lat = np.argmin(np.abs(lats[p] - field.grid.lat))
-                Density[nearest_lon, nearest_lat] += 1
-            if relative:
-                Density /= len(dparticles)
+        field = field if field else self.fieldset.U
+        particle_val = particle_val if particle_val else np.ones(len(self.particles))
+        density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
+
+        for pi, p in enumerate(self.particles):
+            try:  # breaks if either p.gridIndexSet does not exist (in scipy) or field not in fieldset
+                if p.gridIndexSet[field.grid].ti < 0:  # xi, yi, ti, not initialised
+                    raise('error')
+                xi = p.gridIndexSet[field.grid].xi
+                yi = p.gridIndexSet[field.grid].yi
+            except:
+                _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
+            density[yi, xi] += particle_val[pi]
+
+        if relative:
+            density /= np.sum(particle_val)
 
         if area_scale:
-            area = np.zeros(np.shape(field.data[0, :, :]), dtype=np.float32)
-            U = self.fieldset.U
-            V = self.fieldset.V
-            dy = (V.grid.lon[1] - V.grid.lon[0])/V.units.to_target(1, V.grid.lon[0], V.grid.lat[0], V.grid.depth[0])
-            for y in range(len(U.grid.lat)):
-                dx = (U.grid.lon[1] - U.grid.lon[0])/U.units.to_target(1, U.grid.lon[0], U.grid.lat[y], V.grid.depth[0])
-                area[y, :] = dy * dx
-            # Scale by cell area
-            Density /= np.transpose(area)
+            density /= field.cell_areas()
 
-        return Density
+        return density
 
-    def Kernel(self, pyfunc):
+    def Kernel(self, pyfunc, c_include=""):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet"""
-        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc)
+        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

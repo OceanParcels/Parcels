@@ -57,114 +57,115 @@ typedef struct
   CGridIndex *gridIndices;
 } CGridIndexSet;  
 
-static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *k, double *zeta)
+
+static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *zi, double *zeta)
 {
   if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*k < zdim-1 && z > zvals[*k+1]) ++(*k);
-  while (*k > 0 && z < zvals[*k]) --(*k);
-  if (*k == zdim-1) {--*k;}
+  while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
+  while (*zi > 0 && z < zvals[*zi]) --(*zi);
+  if (*zi == zdim-1) {--*zi;}
 
-  *zeta = (z - zvals[*k]) / (zvals[*k+1] - zvals[*k]);
+  *zeta = (z - zvals[*zi]) / (zvals[*zi+1] - zvals[*zi]);
   return SUCCESS;
 }
 
 static inline ErrorCode search_indices_vertical_s(float z, int xdim, int ydim, int zdim, float *zvals,
-                                    int i, int j, int *k, double xsi, double eta, double *zeta,
+                                    int xi, int yi, int *zi, double xsi, double eta, double *zeta,
                                     int z4d, int ti, int tdim, double time, double t0, double t1)
 {
   float zcol[zdim];
-  int iz;
+  int zii;
   if (z4d == 1){
     float (*zvalstab)[ydim][zdim][tdim] = (float (*)[ydim][zdim][tdim]) zvals;
     int ti1 = ti;
     if (ti < tdim-1)
        ti1= ti+1;
     double zt0, zt1;
-    for (iz=0; iz < zdim; iz++){
-      zt0 = (1-xsi)*(1-eta) * zvalstab[i  ][j  ][iz][ti]
-          + (  xsi)*(1-eta) * zvalstab[i+1][j  ][iz][ti]
-          + (  xsi)*(  eta) * zvalstab[i+1][j+1][iz][ti]
-          + (1-xsi)*(  eta) * zvalstab[i  ][j+1][iz][ti];
-      zt1 = (1-xsi)*(1-eta) * zvalstab[i  ][j  ][iz][ti1]
-          + (  xsi)*(1-eta) * zvalstab[i+1][j  ][iz][ti1]
-          + (  xsi)*(  eta) * zvalstab[i+1][j+1][iz][ti1]
-          + (1-xsi)*(  eta) * zvalstab[i  ][j+1][iz][ti1];
-      zcol[iz] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
+    for (zii=0; zii < zdim; zii++){
+      zt0 = (1-xsi)*(1-eta) * zvalstab[xi  ][yi  ][zii][ti]
+          + (  xsi)*(1-eta) * zvalstab[xi+1][yi  ][zii][ti]
+          + (  xsi)*(  eta) * zvalstab[xi+1][yi+1][zii][ti]
+          + (1-xsi)*(  eta) * zvalstab[xi  ][yi+1][zii][ti];
+      zt1 = (1-xsi)*(1-eta) * zvalstab[xi  ][yi  ][zii][ti1]
+          + (  xsi)*(1-eta) * zvalstab[xi+1][yi  ][zii][ti1]
+          + (  xsi)*(  eta) * zvalstab[xi+1][yi+1][zii][ti1]
+          + (1-xsi)*(  eta) * zvalstab[xi  ][yi+1][zii][ti1];
+      zcol[zii] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
     }
 
   }
   else{
     float (*zvalstab)[ydim][zdim] = (float (*)[ydim][zdim]) zvals;
-    for (iz=0; iz < zdim; iz++){
-      zcol[iz] = (1-xsi)*(1-eta) * zvalstab[i  ][j  ][iz]
-               + (  xsi)*(1-eta) * zvalstab[i+1][j  ][iz]
-               + (  xsi)*(  eta) * zvalstab[i+1][j+1][iz]
-               + (1-xsi)*(  eta) * zvalstab[i  ][j+1][iz];
+    for (zii=0; zii < zdim; zii++){
+      zcol[zii] = (1-xsi)*(1-eta) * zvalstab[xi  ][yi  ][zii]
+                + (  xsi)*(1-eta) * zvalstab[xi+1][yi  ][zii]
+                + (  xsi)*(  eta) * zvalstab[xi+1][yi+1][zii]
+                + (1-xsi)*(  eta) * zvalstab[xi  ][yi+1][zii];
     }
   }
 
   if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*k < zdim-1 && z > zcol[*k+1]) ++(*k);
-  while (*k > 0 && z < zcol[*k]) --(*k);
-  if (*k == zdim-1) {--*k;}
+  while (*zi < zdim-1 && z > zcol[*zi+1]) ++(*zi);
+  while (*zi > 0 && z < zcol[*zi]) --(*zi);
+  if (*zi == zdim-1) {--*zi;}
 
-  *zeta = (z - zcol[*k]) / (zcol[*k+1] - zcol[*k]);
+  *zeta = (z - zcol[*zi]) / (zcol[*zi+1] - zcol[*zi]);
   return SUCCESS;
 }
 
 
-static inline void fix_i_index(int *i, int dim, int sphere_mesh)
+static inline void fix_1d_index(int *xi, int xdim, int sphere_mesh)
 {
-  if (*i < 0){
+  if (*xi < 0){
     if (sphere_mesh)
-      (*i) = dim-2; 
+      (*xi) = xdim-2;
     else
-      (*i) = 0;
+      (*xi) = 0;
   }
-  if (*i > dim-2){
+  if (*xi > xdim-2){
     if (sphere_mesh)
-      (*i) = 0; 
+      (*xi) = 0;
     else
-      (*i) = dim-2;
+      (*xi) = xdim-2;
   }
 }
 
 
-static inline void fix_ij_index(int *i, int *j, int xdim, int ydim, int sphere_mesh)
+static inline void fix_2d_indices(int *xi, int *yi, int xdim, int ydim, int sphere_mesh)
 {
-  if (*i < 0){
+  if (*xi < 0){
     if (sphere_mesh)
-      (*i) = xdim-2;
+      (*xi) = xdim-2;
     else
-      (*i) = 0;
+      (*xi) = 0;
   }
-  if (*i > xdim-2){
+  if (*xi > xdim-2){
     if (sphere_mesh)
-      (*i) = 0;
+      (*xi) = 0;
     else
-      (*i) = xdim-2;
+      (*xi) = xdim-2;
   }
-  if (*j < 0){
-    (*j) = 0;
+  if (*yi < 0){
+    (*yi) = 0;
   }
-  if (*j > ydim-2){
-    (*j) = ydim-2;
+  if (*yi > ydim-2){
+    (*yi) = ydim-2;
     if (sphere_mesh)
-      (*i) = xdim - (*i);
+      (*xi) = xdim - (*xi);
   }
 }
 
 
 static inline ErrorCode search_indices_rectilinear(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals, int sphere_mesh, GridCode gcode,
-                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
   if (sphere_mesh == 0){
     if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-    while (*i < xdim-1 && x > xvals[*i+1]) ++(*i);
-    while (*i > 0 && x < xvals[*i]) --(*i);
-    *xsi = (x - xvals[*i]) / (xvals[*i+1] - xvals[*i]);
+    while (*xi < xdim-1 && x > xvals[*xi+1]) ++(*xi);
+    while (*xi > 0 && x < xvals[*xi]) --(*xi);
+    *xsi = (x - xvals[*xi]) / (xvals[*xi+1] - xvals[*xi]);
   }
   else{
     float xvals0 = xvals[0];
@@ -176,10 +177,10 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
     if ( xvals0 < xvalsEnd && (x < xvals0 || x > xvalsEnd) ) return ERROR_OUT_OF_BOUNDS;
     if ( xvals0 > xvalsEnd && x < xvals0 && x > xvalsEnd ) return ERROR_OUT_OF_BOUNDS;
 
-    float xvalsi1 = xvals[*i+1];
+    float xvalsi1 = xvals[*xi+1];
     if (xvalsi1 < x - 180) xvalsi1 += 360;
     if (xvalsi1 > x + 180) xvalsi1 -= 360;
-    float xvalsi = xvals[*i];
+    float xvalsi = xvals[*xi];
     if (xvalsi < x - 180) xvalsi += 360;
     if (xvalsi > x + 180) xvalsi -= 360;
 
@@ -187,14 +188,14 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
     int it = 0;
     while ( (xvalsi > x) || (xvalsi1 < x) ){
       if (xvalsi1 < x)
-        ++(*i);
+        ++(*xi);
       else if (xvalsi > x)
-        --(*i);
-      fix_i_index(i, xdim, 1);
-      xvalsi1 = xvals[*i+1];
+        --(*xi);
+      fix_1d_index(xi, xdim, 1);
+      xvalsi1 = xvals[*xi+1];
       if (xvalsi1 < x - 180) xvalsi1 += 360;
       if (xvalsi1 > x + 180) xvalsi1 -= 360;
-      xvalsi = xvals[*i];
+      xvalsi = xvals[*xi];
       if (xvalsi < x - 180) xvalsi += 360;
       if (xvalsi > x + 180) xvalsi -= 360;
       it++;
@@ -207,20 +208,20 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
   }
 
   if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*j < ydim-1 && y > yvals[*j+1]) ++(*j);
-  while (*j > 0 && y < yvals[*j]) --(*j);
+  while (*yi < ydim-1 && y > yvals[*yi+1]) ++(*yi);
+  while (*yi > 0 && y < yvals[*yi]) --(*yi);
 
-  *eta = (y - yvals[*j]) / (yvals[*j+1] - yvals[*j]);
+  *eta = (y - yvals[*yi]) / (yvals[*yi+1] - yvals[*yi]);
 
   ErrorCode err;
   if (zdim > 1){
     switch(gcode){
       case RECTILINEAR_Z_GRID:
-        err = search_indices_vertical_z(z, zdim, zvals, k, zeta);
+        err = search_indices_vertical_z(z, zdim, zvals, zi, zeta);
         break;
       case RECTILINEAR_S_GRID:
         err = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
-                                        *i, *j, k, *xsi, *eta, zeta,
+                                        *xi, *yi, zi, *xsi, *eta, zeta,
                                         z4d, ti, tdim, time, t0, t1);
         break;
       default:
@@ -241,7 +242,7 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
 
 static inline ErrorCode search_indices_curvilinear(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals, int sphere_mesh, GridCode gcode,
-                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta,
+                                            int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
   // NEMO convention
@@ -253,7 +254,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    float xgrid_loc[4] = {xgrid[*j][*i], xgrid[*j][*i+1], xgrid[*j+1][*i+1], xgrid[*j+1][*i]};
+    float xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
     if (sphere_mesh){ //we are on the sphere
       int i4;
       for (i4 = 0; i4 < 4; ++i4){
@@ -263,25 +264,25 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     }
 
     a[0] =  xgrid_loc[0];
-    a[1] = -xgrid_loc[0]  + xgrid_loc[1];
-    a[2] = -xgrid_loc[0]                                        + xgrid_loc[3];
-    a[3] =  xgrid_loc[0]  - xgrid_loc[1]    + xgrid_loc[2]      - xgrid_loc[3];
-    b[0] =  ygrid[*j][*i];
-    b[1] = -ygrid[*j][*i] + ygrid[*j][*i+1];
-    b[2] = -ygrid[*j][*i]                                       + ygrid[*j+1][*i];
-    b[3] =  ygrid[*j][*i] - ygrid[*j][*i+1] + ygrid[*j+1][*i+1] - ygrid[*j+1][*i];
+    a[1] = -xgrid_loc[0]    + xgrid_loc[1];
+    a[2] = -xgrid_loc[0]                                              + xgrid_loc[3];
+    a[3] =  xgrid_loc[0]    - xgrid_loc[1]      + xgrid_loc[2]        - xgrid_loc[3];
+    b[0] =  ygrid[*yi][*xi];
+    b[1] = -ygrid[*yi][*xi] + ygrid[*yi][*xi+1];
+    b[2] = -ygrid[*yi][*xi]                                           + ygrid[*yi+1][*xi];
+    b[3] =  ygrid[*yi][*xi] - ygrid[*yi][*xi+1] + ygrid[*yi+1][*xi+1] - ygrid[*yi+1][*xi];
 
     double aa = a[3]*b[2] - a[2]*b[3];
     if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
-      if( fabs(ygrid[*j+1][*i] - ygrid[*j][*i]) >  fabs(ygrid[*j][*i+1] - ygrid[*j][*i]) ){ // well-oriented cell, like in mid latitudes in NEMO
+      if( fabs(ygrid[*yi+1][*xi] - ygrid[*yi][*xi]) >  fabs(ygrid[*yi][*xi+1] - ygrid[*yi][*xi]) ){ // well-oriented cell, like in mid latitudes in NEMO
         *xsi = ( (x-xgrid_loc[0]) / (xgrid_loc[1]-xgrid_loc[0])
              +   (x-xgrid_loc[3]) / (xgrid_loc[2]-xgrid_loc[3]) ) * .5;
-        *eta = ( (y-ygrid[*j][*i]) / (ygrid[*j+1][*i]-ygrid[*j][*i])
-             +   (y-ygrid[*j][*i+1]) / (ygrid[*j+1][*i+1]-ygrid[*j][*i+1]) ) * .5;
+        *eta = ( (y-ygrid[*yi][*xi  ]) / (ygrid[*yi+1][*xi  ]-ygrid[*yi][*xi  ])
+             +   (y-ygrid[*yi][*xi+1]) / (ygrid[*yi+1][*xi+1]-ygrid[*yi][*xi+1]) ) * .5;
       }
       else{ // miss-oriented cell, like in the arctic in NEMO
-        *xsi = ( (y-ygrid[*j][*i]) / (ygrid[*j][*i+1]-ygrid[*j][*i])
-             +   (y-ygrid[*j+1][*i]) / (ygrid[*j+1][*i+1]-ygrid[*j+1][*i]) ) * .5;
+        *xsi = ( (y-ygrid[*yi  ][*xi]) / (ygrid[*yi  ][*xi+1]-ygrid[*yi  ][*xi])
+             +   (y-ygrid[*yi+1][*xi]) / (ygrid[*yi+1][*xi+1]-ygrid[*yi+1][*xi]) ) * .5;
         *eta = ( (x-xgrid_loc[0]) / (xgrid_loc[3]-xgrid_loc[0])
              +   (x-xgrid_loc[1]) / (xgrid_loc[2]-xgrid_loc[1]) ) * .5;
       }
@@ -295,19 +296,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
         *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
       }
     }
-    if ( (*xsi < 0) && (*eta < 0) && (*i == 0) && (*j == 0) )
+    if ( (*xsi < 0) && (*eta < 0) && (*xi == 0) && (*yi == 0) )
       return ERROR_OUT_OF_BOUNDS;
-    if ( (*xsi > 1) && (*eta > 1) && (*i == xdim-1) && (*j == ydim-1) )
+    if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
       return ERROR_OUT_OF_BOUNDS;
     if (*xsi < 0) 
-      (*i)--;
+      (*xi)--;
     if (*xsi > 1)
-      (*i)++;
+      (*xi)++;
     if (*eta < 0)
-      (*j)--;
+      (*yi)--;
     if (*eta > 1)
-      (*j)++;
-    fix_ij_index(i, j, xdim, ydim, sphere_mesh);
+      (*yi)++;
+    fix_2d_indices(xi, yi, xdim, ydim, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
       printf("Correct cell not found after %d iterations\n", maxIterSearch);
@@ -324,11 +325,11 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   if (zdim > 1){
     switch(gcode){
       case CURVILINEAR_Z_GRID:
-        err = search_indices_vertical_z(z, zdim, zvals, k, zeta);
+        err = search_indices_vertical_z(z, zdim, zvals, zi, zeta);
         break;
       case CURVILINEAR_S_GRID:
         err = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
-                                        *i, *j, k, *xsi, *eta, zeta,
+                                        *xi, *yi, zi, *xsi, *eta, zeta,
                                         z4d, ti, tdim, time, t0, t1);
         break;
       default:
@@ -351,19 +352,19 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
  * */
 static inline ErrorCode search_indices(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals,
-                                            int *i, int *j, int *k, double *xsi, double *eta, double *zeta, int sphere_mesh,
+                                            int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta, int sphere_mesh,
                                             GridCode gcode, int z4d,
                                             int ti, int tdim, double time, double t0, double t1)
 {
   switch(gcode){
     case RECTILINEAR_Z_GRID:
     case RECTILINEAR_S_GRID:
-      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, gcode, i, j, k, xsi, eta, zeta,
+      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, gcode, xi, yi, zi, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     case CURVILINEAR_Z_GRID:
     case CURVILINEAR_S_GRID:
-      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, gcode, i, j, k, xsi, eta, zeta,
+      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, gcode, xi, yi, zi, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     default:
@@ -373,79 +374,81 @@ static inline ErrorCode search_indices(float x, float y, float z, int xdim, int 
 }
 
 /* Local linear search to update time index */
-static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *index, int time_periodic)
+static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *ti, int time_periodic)
 {
+  if (*ti < 0)
+    *ti = 0;
   if (time_periodic == 1){
     if (*t < tvals[0]){
-      *index = size-1;      
+      *ti = size-1;
       int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
       *t -= periods * (tvals[size-1]-tvals[0]);
-      search_time_index(t, size, tvals, index, time_periodic);
+      search_time_index(t, size, tvals, ti, time_periodic);
     }  
     else if (*t > tvals[size-1]){
-      *index = 0;      
+      *ti = 0;
       int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
       *t -= periods * (tvals[size-1]-tvals[0]);
-      search_time_index(t, size, tvals, index, time_periodic);
+      search_time_index(t, size, tvals, ti, time_periodic);
     }  
   }          
-  while (*index < size-1 && *t >= tvals[*index+1]) ++(*index);
-  while (*index > 0 && *t < tvals[*index]) --(*index);
+  while (*ti < size-1 && *t >= tvals[*ti+1]) ++(*ti);
+  while (*ti > 0 && *t < tvals[*ti]) --(*ti);
   return SUCCESS;
 }
 
 /* Bilinear interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, int i, int j, int xdim, float **f_data, float *value)
+static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, int xi, int yi, int xdim, float **f_data, float *value)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
-  *value = (1-xsi)*(1-eta) * data[j  ][i  ]
-         +    xsi *(1-eta) * data[j  ][i+1]
-         +    xsi *   eta  * data[j+1][i+1]
-         + (1-xsi)*   eta  * data[j+1][i  ];
+  *value = (1-xsi)*(1-eta) * data[yi  ][xi  ]
+         +    xsi *(1-eta) * data[yi  ][xi+1]
+         +    xsi *   eta  * data[yi+1][xi+1]
+         + (1-xsi)*   eta  * data[yi+1][xi  ];
   return SUCCESS;
 }
 
 /* Trilinear interpolation routine for 3D grid */
-static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, double zeta, int i, int j, int k,
+static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, double zeta, int xi, int yi, int zi,
                                                         int xdim, int ydim, float **f_data, float *value)
 {
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   float f0, f1;
-  f0 = (1-xsi)*(1-eta) * data[k  ][j  ][i  ]
-     +    xsi *(1-eta) * data[k  ][j  ][i+1]
-     +    xsi *   eta  * data[k  ][j+1][i+1]
-     + (1-xsi)*   eta  * data[k  ][j+1][i  ];
-  f1 = (1-xsi)*(1-eta) * data[k+1][j  ][i  ]
-     +    xsi *(1-eta) * data[k+1][j  ][i+1]
-     +    xsi *   eta  * data[k+1][j+1][i+1]
-     + (1-xsi)*   eta  * data[k+1][j+1][i  ];
+  f0 = (1-xsi)*(1-eta) * data[zi  ][yi  ][xi  ]
+     +    xsi *(1-eta) * data[zi  ][yi  ][xi+1]
+     +    xsi *   eta  * data[zi  ][yi+1][xi+1]
+     + (1-xsi)*   eta  * data[zi  ][yi+1][xi  ];
+  f1 = (1-xsi)*(1-eta) * data[zi+1][yi  ][xi  ]
+     +    xsi *(1-eta) * data[zi+1][yi  ][xi+1]
+     +    xsi *   eta  * data[zi+1][yi+1][xi+1]
+     + (1-xsi)*   eta  * data[zi+1][yi+1][xi  ];
   *value = (1-zeta) * f0 + zeta * f1;
   return SUCCESS;
 }
 
 /* Nearest neighbour interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta, int i, int j, int xdim,
+static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta, int xi, int yi, int xdim,
                                                         float **f_data, float *value)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   float (*data)[xdim] = (float (*)[xdim]) f_data;
   int ii, jj;
-  if (xsi < .5) {ii = i;} else {ii = i + 1;}
-  if (eta < .5) {jj = j;} else {jj = j + 1;}
+  if (xsi < .5) {ii = xi;} else {ii = xi + 1;}
+  if (eta < .5) {jj = yi;} else {jj = yi + 1;}
   *value = data[jj][ii];
   return SUCCESS;
 }
 
 /* Nearest neighbour interpolation routine for 3D grid */
-static inline ErrorCode spatial_interpolation_nearest3D(double xsi, double eta, double zeta, int i, int j, int k,
+static inline ErrorCode spatial_interpolation_nearest3D(double xsi, double eta, double zeta, int xi, int yi, int zi,
                                                         int xdim, int ydim, float **f_data, float *value)
 {
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
   int ii, jj, kk;
-  if (xsi < .5) {ii = i;} else {ii = i + 1;}
-  if (eta < .5) {jj = j;} else {jj = j + 1;}
-  if (zeta < .5) {kk = k;} else {kk = k + 1;}
+  if (xsi < .5) {ii = xi;} else {ii = xi + 1;}
+  if (eta < .5) {jj = yi;} else {jj = yi + 1;}
+  if (zeta < .5) {kk = zi;} else {kk = zi + 1;}
   *value = data[kk][jj][ii];
   return SUCCESS;
 }
@@ -471,30 +474,31 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
 
   if (gridIndex->ti < grid->tdim-1 && time > grid->time[gridIndex->ti]) {
     float f0, f1;
-    double t0 = grid->time[gridIndex->ti]; double t1 = grid->time[gridIndex->ti+1];
+    int ti = gridIndex->ti;
+    double t0 = grid->time[ti]; double t1 = grid->time[ti+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, gcode, grid->z4d, gridIndex->ti, grid->tdim, time, t0, t1); CHECKERROR(err);
-    int i = gridIndex->xi;
-    int j = gridIndex->yi;
-    int k = gridIndex->zi;
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, gcode, grid->z4d, ti, grid->tdim, time, t0, t1); CHECKERROR(err);
+    int xi = gridIndex->xi;
+    int yi = gridIndex->yi;
+    int zi = gridIndex->zi;
     if (interp_method == LINEAR){
       if (grid->zdim==1){
-        err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti+1]), &f1);
+        err = spatial_interpolation_bilinear(xsi, eta, xi, yi, grid->xdim, (float**)(data[ti]), &f0);
+        err = spatial_interpolation_bilinear(xsi, eta, xi, yi, grid->xdim, (float**)(data[ti+1]), &f1);
       } else {
-        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim, (float**)(data[gridIndex->ti+1]), &f1);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi, yi, zi, grid->xdim, grid->ydim, (float**)(data[ti]), &f0);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi, yi, zi, grid->xdim, grid->ydim, (float**)(data[ti+1]), &f1);
       }
     }
     else if  (interp_method == NEAREST){
       if (grid->zdim==1){
-        err = spatial_interpolation_nearest2D(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_nearest2D(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti+1]), &f1);
+        err = spatial_interpolation_nearest2D(xsi, eta, xi, yi, grid->xdim, (float**)(data[ti]), &f0);
+        err = spatial_interpolation_nearest2D(xsi, eta, xi, yi, grid->xdim, (float**)(data[ti+1]), &f1);
       } else {
-        err = spatial_interpolation_nearest3D(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
-                                              (float**)(data[gridIndex->ti]), &f0);
-        err = spatial_interpolation_nearest3D(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
-                                              (float**)(data[gridIndex->ti+1]), &f1);
+        err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi, yi, zi, grid->xdim, grid->ydim,
+                                              (float**)(data[ti]), &f0);
+        err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi, yi, zi, grid->xdim, grid->ydim,
+                                              (float**)(data[ti+1]), &f1);
       }
     }
     else {
@@ -503,24 +507,25 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     *value = f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
     return SUCCESS;
   } else {
-    double t0 = grid->time[gridIndex->ti];
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, gcode, grid->z4d, gridIndex->ti, grid->tdim, t0, t0, t0+1); CHECKERROR(err);
-    int i = gridIndex->xi;
-    int j = gridIndex->yi;
-    int k = gridIndex->zi;
+    int ti = gridIndex->ti;
+    double t0 = grid->time[ti];
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, gcode, grid->z4d, ti, grid->tdim, t0, t0, t0+1); CHECKERROR(err);
+    int xi = gridIndex->xi;
+    int yi = gridIndex->yi;
+    int zi = gridIndex->zi;
     if (interp_method == LINEAR){
       if (grid->zdim==1)
-        err = spatial_interpolation_bilinear(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), value);
+        err = spatial_interpolation_bilinear(xsi, eta, xi, yi, grid->xdim, (float**)(data[ti]), value);
       else
-        err = spatial_interpolation_trilinear(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
-                                             (float**)(data[gridIndex->ti]), value);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi, yi, zi, grid->xdim, grid->ydim,
+                                             (float**)(data[ti]), value);
     }
     else if (interp_method == NEAREST){
       if (grid->zdim==1)
-        err = spatial_interpolation_nearest2D(xsi, eta, i, j, grid->xdim, (float**)(data[gridIndex->ti]), value);
+        err = spatial_interpolation_nearest2D(xsi, eta, xi, yi, grid->xdim, (float**)(data[ti]), value);
       else {
-        err = spatial_interpolation_nearest3D(xsi, eta, zeta, i, j, k, grid->xdim, grid->ydim,
-                                             (float**)(data[gridIndex->ti]), value);
+        err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi, yi, zi, grid->xdim, grid->ydim,
+                                             (float**)(data[ti]), value);
       }
     }
     else {
@@ -590,7 +595,7 @@ static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float
 /*   Random number generation (RNG) functions     */
 /**************************************************/
 
-static void parcels_seed(int seed)
+static inline void parcels_seed(int seed)
 {
   srand(seed);
 }
@@ -617,7 +622,6 @@ static inline float parcels_normalvariate(float loc, float scale)
 /*     this software for any application provided this copyright notice is preserved.       */
 {
   float x1, x2, w, y1;
-  static float y2;
 
   do {
     x1 = 2.0 * (float)rand()/(float)(RAND_MAX) - 1.0;
@@ -627,7 +631,6 @@ static inline float parcels_normalvariate(float loc, float scale)
 
   w = sqrt( (-2.0 * log( w ) ) / w );
   y1 = x1 * w;
-  y2 = x2 * w;
   return( loc + y1 * scale );
 }
 #ifdef __cplusplus
