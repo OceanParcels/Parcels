@@ -10,23 +10,27 @@ matrix:
       env:
           - PY_VERSION=2
           - MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
+          - TRAVIS_RUN_EXAMPLES = "both"
       sudo: required
     - os: linux
       language: generic
       env:
           - PY_VERSION=3
           - MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
+          - TRAVIS_RUN_EXAMPLES = "python"
       sudo: required
     - os: osx
       language: generic
       env:
           - PY_VERSION=2
           - MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
+          - TRAVIS_RUN_EXAMPLES = "no"
     - os: osx
       language: generic
       env:
           - PY_VERSION=3
           - MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
+          - TRAVIS_RUN_EXAMPLES = "no"
 
 install:
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
@@ -64,11 +68,11 @@ script:
       fi
     - |
       # evaluate example scripts and notebooks on linux w python2
-      if [[ "${TRAVIS_PYTHON_VERSION:0:1}" == "2" ]]; then
+      if [[ "${TRAVIS_RUN_EXAMPLES}" = "both" ]]; then
         py.test -v -s --nbval-lax examples/;
       fi
     - |
       # evaluate example scripts on linux w python3
-      if [[ "${TRAVIS_PYTHON_VERSION:0:1}" == "3" ]]; then
+      if [[ "{TRAVIS_RUN_EXAMPLES}" = "python" ]]; then
         py.test -v -s examples/;
       fi
