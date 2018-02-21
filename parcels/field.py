@@ -6,6 +6,7 @@ import numpy as np
 import xarray
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 from netCDF4 import Dataset, num2date
+import dask.array as da
 from math import cos, pi
 from datetime import timedelta, datetime
 from dateutil.parser import parse
@@ -208,12 +209,13 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
 
-        # Ensure that field data is the right data type
-        if not self.data.dtype == np.float32:
-            logger.warning_once("Casting field data to np.float32")
-            self.data = self.data.astype(np.float32)
-        if transpose:
-            self.data = np.transpose(self.data)
+        if not isinstance(self.data, da.core.Array):
+            # Ensure that field data is the right data type
+            if not self.data.dtype == np.float32:
+                logger.warning_once("Casting field data to np.float32")
+                self.data = self.data.astype(np.float32)
+            if transpose:
+                self.data = np.transpose(self.data)
 
         if self.grid.tdim == 1:
             if len(self.data.shape) < 4:
@@ -226,13 +228,23 @@ class Field(object):
         else:
             assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim)
 
-        # Hack around the fact that NaN and ridiculously large values
-        # propagate in SciPy's interpolators
-        if vmin is not None:
-            self.data[self.data < vmin] = 0.
-        if vmax is not None:
-            self.data[self.data > vmax] = 0.
-        self.data[np.isnan(self.data)] = 0.
+        if not isinstance(self.data, da.core.Array):
+            # Hack around the fact that NaN and ridiculously large values
+            # propagate in SciPy's interpolators
+            if vmin is not None:
+                self.data[self.data < vmin] = 0.
+            if vmax is not None:
+                self.data[self.data > vmax] = 0.
+            self.data[np.isnan(self.data)] = 0.
+            self.dataDask = None
+        else:
+            self.dataDask = self.data
+            self.grid.timeFull = self.grid.time
+            self.data = np.empty(sum(((3,), self.dataDask.shape[1:]), ()), np.float32)
+            if self.grid.tdim == 1: # To temporarily support advanceTime
+                self.data = self.dataDask[0:, :].compute()
+                self.data = self.data.astype(np.float32)
+            self.grid.timeInd = -1
 
         # Variable names in JIT code
         self.ccode_data = self.name
@@ -296,10 +308,11 @@ class Field(object):
                 time_origin = parse(str(time_origin))
 
         # Pre-allocate data before reading files into buffer
-        depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
+        #depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+        #latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        #londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        #data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
+        data_list = []
         ti = 0
         for tslice, fname in zip(timeslices, filenames):
             with FileBuffer(fname, dimensions) as filebuffer:
@@ -319,13 +332,16 @@ class Field(object):
                 else:
                     filebuffer.name = name
 
-                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
-                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
-                else:
-                    data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
+                #if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                #    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
+                #elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                #    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                #else:
+                #    data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
+                data_list.append(filebuffer.data)
             ti += len(tslice)
+        dataDask = da.concatenate(data_list, axis=0)
+        data = dataDask  # dataDask[:].compute()
         # Time indexing after the fact only
         if 'time' in indices:
             time = time[indices['time']]
@@ -951,7 +967,8 @@ class FileBuffer(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.dataset.close()
+        return 
+        #self.dataset.close()
 
     def subset(self, dim, dimname, indices):
         if len(dim.shape) == 1:  # RectilinearZGrid
@@ -992,16 +1009,28 @@ class FileBuffer(object):
 
     @property
     def data(self):
-        if len(self.dataset[self.name].shape) == 2:
-            data = self.dataset[self.name][self.indslat, self.indslon]
-        elif len(self.dataset[self.name].shape) == 3:
-            data = self.dataset[self.name][:, self.indslat, self.indslon]
+        datas = self.dataset[self.name]
+        if len(datas.shape) == 2:
+            data = da.from_array(datas, chunks=datas.shape)
         else:
-            data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
+            data = da.from_array(datas, chunks=sum(((1,), datas.shape[1:]), ()))
 
-        if np.ma.is_masked(data):  # convert masked array to ndarray
-            data = np.ma.filled(data, np.nan)
+        lat0, lat1 = self.indslat[0], self.indslat[-1]+1
+        lon0, lon1 = self.indslon[0], self.indslon[-1]+1
+        depth0, depth1 = self.indsdepth[0], self.indsdepth[-1]+1
+        if len(data.shape) == 2:
+            #data = data[self.indslat, self.indslon]
+            data = data[lat0:lat1, lon0:lon1]
+        elif len(data.shape) == 3:
+            #data = data[:, self.indslat, self.indslon]
+            data = data[:, lat0:lat1, lon0:lon1]
+        else:
+            #data = data[:, self.indsdepth, self.indslat, self.indslon]
+            data = data[:, depth0:depth1, lat0:lat1, lon0:lon1]
         return data
+
+        #if np.ma.is_masked(data):  # convert masked array to ndarray
+        #    data = np.ma.filled(data, np.nan)
 
     @property
     def time(self):

@@ -4,6 +4,7 @@ from parcels.grid import RectilinearZGrid
 from parcels.scripts import compute_curvilinearGrid_rotationAngles
 from parcels.loggers import logger
 import numpy as np
+import dask.array as da
 from os import path
 from glob import glob
 from copy import deepcopy
@@ -332,3 +333,36 @@ class FieldSet(object):
                 advance = advance2
                 gnew.advanced = True
             f.advancetime(fnew, advance == 1)
+
+    def computeChunk(self, time, signdt):
+        if not isinstance(self.U.dataDask, da.core.Array):
+            return np.infty * signdt
+        if  self.U.grid.timeInd == -1:
+            for g in self.gridset.grids:
+                g.timeInd = 0
+                g.time = g.timeFull[0:3]
+                g.tdim = 3
+            for f in self.fields:
+                if f.name == 'UV':
+                    continue
+                f.data = f.dataDask[0:3, :].compute()
+                f.data = f.data.astype(np.float32)
+        for g in self.gridset.grids:
+            g.advanced = 0
+        nextTime = np.infty
+
+        for f in self.fields:
+            if f.name == 'UV':
+                continue
+            g = f.grid
+            if g.advanced == 0:
+                if (time-g.time[1]) > 0:
+                    g.timeInd += 1
+                    g.time = g.timeFull[g.timeInd:g.timeInd+3]
+                    g.advanced = 1
+            nextTime = min(nextTime, g.time[2])
+            if g.advanced == 1:
+                f.data[0:2, :] = f.data[1:3, :]
+                f.data[2, :] = f.dataDask[g.timeInd+2, :].compute()
+                f.data = f.data.astype(np.float32)
+        return nextTime

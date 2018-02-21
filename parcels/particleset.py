@@ -314,7 +314,7 @@ class ParticleSet(object):
             next_prelease = np.infty * np.sign(dt)
         next_output = time + outputdt * np.sign(dt)
         next_movie = time + moviedt * np.sign(dt)
-        next_input = np.infty * np.sign(dt)  # Not used yet
+        next_input = self.fieldset.computeChunk(time, np.sign(dt))
 
         tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
@@ -329,7 +329,7 @@ class ParticleSet(object):
                                      pclass=self.repeatpclass))
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_input) < tol:
-                continue
+                next_input = self.fieldset.computeChunk(time, np.sign(dt))
             if abs(time-next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
