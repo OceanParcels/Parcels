@@ -222,9 +222,15 @@ class Field(object):
             if len(self.data.shape) == 4:
                 self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
         if len(self.data.shape) == 4:
-            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)
+            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
+                                      ('Field %s expect a data shape of a [tdim, zdim, ydim, xdim] = [%d %d %d %d], but data is [%d %d %d %d]' %
+                                       (self.name, self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim,
+                                        self.data.shape[0], self.data.shape[1], self.data.shape[2], self.data.shape[3]))
         else:
-            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim)
+            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
+                                      ('Field %s expect a data shape of a [tdim, ydim, xdim] = [%d %d %d], but data is [%d %d %d]' %
+                                       (self.name, self.grid.tdim, self.grid.ydim, self.grid.xdim,
+                                        self.data.shape[0], self.data.shape[1], self.data.shape[2]))
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
