@@ -143,7 +143,12 @@ class Field(object):
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
-    :param data: 2D, 3D or 4D numpy array of field data
+    :param data: 2D, 3D or 4D numpy array of field data.
+           1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
+              Use the flag transpose=True
+           2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+              Use the flat transpose=False
+           3. If data has any other shape, you first need to reorder it
     :param lon: Longitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param lat: Latitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param depth: Depth coordinates (numpy vector or array) of the field (only if grid is None)
