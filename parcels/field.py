@@ -143,7 +143,12 @@ class Field(object):
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
-    :param data: 2D, 3D or 4D numpy array of field data
+    :param data: 2D, 3D or 4D numpy array of field data.
+           1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
+              whichever is relevant for the dataset, use the flag transpose=True
+           2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+              use the flag transpose=False
+           3. If data has any other shape, you first need to reorder it
     :param lon: Longitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param lat: Latitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param depth: Depth coordinates (numpy vector or array) of the field (only if grid is None)
@@ -222,9 +227,11 @@ class Field(object):
             if len(self.data.shape) == 4:
                 self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
         if len(self.data.shape) == 4:
-            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)
+            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
+                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
         else:
-            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim)
+            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
+                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators

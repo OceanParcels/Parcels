@@ -9,8 +9,8 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 @pytest.fixture
 def fieldset(xdim=40, ydim=100):
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
     lat = np.linspace(-60, 60, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)

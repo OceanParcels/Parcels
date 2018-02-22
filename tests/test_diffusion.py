@@ -14,8 +14,8 @@ def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
     lat = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, ydim, dtype=np.float32)
 
     dimensions = {'lon': lon, 'lat': lat}
-    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
-            'V': np.zeros((xdim, ydim), dtype=np.float32)}
+    data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
+            'V': np.zeros((ydim, xdim), dtype=np.float32)}
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 

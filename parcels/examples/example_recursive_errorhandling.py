@@ -24,8 +24,8 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
 
     dimensions = {'lon': np.linspace(0., 1., xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1., ydim, dtype=np.float32)}
-    data = {'U': np.zeros((xdim, ydim), dtype=np.float32),
-            'V': np.zeros((xdim, ydim), dtype=np.float32)}
+    data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
+            'V': np.zeros((ydim, xdim), dtype=np.float32)}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     # Set minimum value for valid longitudes (i.e. all longitudes < minlon are 'land')
