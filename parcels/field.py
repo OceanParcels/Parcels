@@ -145,8 +145,7 @@ class Field(object):
     :param name: Name of the field
     :param data: 2D, 3D or 4D numpy array of field data.
            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-              whichever is relevant for the dataset,
-              use the flag transpose=True
+              whichever is relevant for the dataset, use the flag transpose=True
            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
               use the flag transpose=False
            3. If data has any other shape, you first need to reorder it

@@ -41,8 +41,7 @@ class FieldSet(object):
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given
                1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-                  whichever is relevant for the dataset,
-                  use the flag transpose=True
+                  whichever is relevant for the dataset, use the flag transpose=True
                2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
                   use the flag transpose=False (default value)
                3. If data has any other shape, you first need to reorder it
