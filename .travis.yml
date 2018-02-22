@@ -6,31 +6,13 @@ notifications:
 matrix:
   include:
     - os: linux
-      language: generic
-      env:
-          - PY_VERSION=2
-          - MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
-          - TRAVIS_RUN_EXAMPLES = "both"
-      sudo: required
+      env: PY_VERSION=2 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh TRAVIS_RUN_EXAMPLES = "both"
     - os: linux
-      language: generic
-      env:
-          - PY_VERSION=3
-          - MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
-          - TRAVIS_RUN_EXAMPLES = "python"
-      sudo: required
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh TRAVIS_RUN_EXAMPLES = "python"
     - os: osx
-      language: generic
-      env:
-          - PY_VERSION=2
-          - MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
-          - TRAVIS_RUN_EXAMPLES = "no"
+      env: PY_VERSION=2 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh TRAVIS_RUN_EXAMPLES = "no"
     - os: osx
-      language: generic
-      env:
-          - PY_VERSION=3
-          - MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
-          - TRAVIS_RUN_EXAMPLES = "no"
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh TRAVIS_RUN_EXAMPLES = "no"
 
 install:
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
@@ -66,9 +48,6 @@ script:
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         make linkcheck -C docs;
       fi
-    - echo "${TRAVIS_RUN_EXAMPLES}"
-    - echo "$TRAVIS_RUN_EXAMPLES"
-    - echo $TRAVIS_RUN_EXAMPLES
     - |
       # evaluate example scripts and notebooks on linux w python2
       if [[ "${TRAVIS_RUN_EXAMPLES}" = "both" ]]; then
