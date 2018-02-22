@@ -61,7 +61,7 @@ def stommel_fieldset(xdim=200, ydim=200):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 def UpdateP(particle, fieldset, time, dt):

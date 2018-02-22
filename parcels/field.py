@@ -145,9 +145,10 @@ class Field(object):
     :param name: Name of the field
     :param data: 2D, 3D or 4D numpy array of field data.
            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
-              Use the flag transpose=True
+              whichever is relevant for the dataset,
+              use the flag transpose=True
            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
-              Use the flat transpose=False
+              use the flag transpose=False
            3. If data has any other shape, you first need to reorder it
     :param lon: Longitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param lat: Latitude coordinates (numpy vector or array) of the field (only if grid is None)
@@ -228,14 +229,10 @@ class Field(object):
                 self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
         if len(self.data.shape) == 4:
             assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
-                                      ('Field %s expect a data shape of a [tdim, zdim, ydim, xdim] = [%d %d %d %d], but data is [%d %d %d %d]' %
-                                       (self.name, self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim,
-                                        self.data.shape[0], self.data.shape[1], self.data.shape[2], self.data.shape[3]))
+                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
         else:
             assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
-                                      ('Field %s expect a data shape of a [tdim, ydim, xdim] = [%d %d %d], but data is [%d %d %d]' %
-                                       (self.name, self.grid.tdim, self.grid.ydim, self.grid.xdim,
-                                        self.data.shape[0], self.data.shape[1], self.data.shape[2]))
+                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
