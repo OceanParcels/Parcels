@@ -6,13 +6,13 @@ notifications:
 matrix:
   include:
     - os: linux
-      env: PY_VERSION=2 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh TRAVIS_RUN_EXAMPLES = "both"
+      env: PY_VERSION=2 MINICONDA_NAME=Miniconda2-latest-Linux-x86_64.sh
     - os: linux
-      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh TRAVIS_RUN_EXAMPLES = "python"
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
     - os: osx
-      env: PY_VERSION=2 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh TRAVIS_RUN_EXAMPLES = "no"
+      env: PY_VERSION=2 MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
     - os: osx
-      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh TRAVIS_RUN_EXAMPLES = "no"
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
 
 install:
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
@@ -49,12 +49,12 @@ script:
         make linkcheck -C docs;
       fi
     - |
-      # evaluate example scripts and notebooks on linux w python2
-      if [[ "${TRAVIS_RUN_EXAMPLES}" = "both" ]]; then
+      # evaluate example scripts and notebooks on python2
+      if [[ "${PY_VERSION}" = 2 ]]; then
         py.test -v -s --nbval-lax examples/;
       fi
     - |
-      # evaluate example scripts on linux w python3
-      if [[ "{TRAVIS_RUN_EXAMPLES}" = "python" ]]; then
+      # evaluate example scripts and notebooks on python2
+      if [[ "${PY_VERSION}" = 3 ]]; then
         py.test -v -s examples/;
       fi
