@@ -16,8 +16,8 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
     x0 = 30.                                   # Define the origin to be the centre of the Field.
     y0 = 30.
 
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
 
     T = delta(days=1)
     omega = 2*np.pi/T.total_seconds()          # Define the rotational period as 1 day.
@@ -32,8 +32,8 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
             theta = math.atan2((lat[j]-y0), (lon[i]-x0))  # Define the polar angle.
             assert(abs(theta) <= np.pi)
 
-            U[i, j] = r * math.sin(theta) * omega
-            V[i, j] = -r * math.cos(theta) * omega
+            U[j, i] = r * math.sin(theta) * omega
+            V[j, i] = -r * math.cos(theta) * omega
 
     data = {'U': U, 'V': V}
     dimensions = {'lon': lon, 'lat': lat}

@@ -26,7 +26,7 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
 def test_fieldset_from_data(xdim, ydim):
     """ Simple test for fieldset initialisation from data. """
     data, dimensions = generate_fieldset(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions, transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions)
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
     assert np.allclose(fieldset.U.data[0, :], data['U'], rtol=1e-12)
@@ -51,7 +51,7 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
                   'V': {'lat': lat, 'lon': lon},
                   'P': {'lat': lat[0::2], 'lon': lon[0::2], 'depth': depth, 'time': time}}
 
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data, dimensions, transpose=True)
     assert len(fieldset.U.data.shape) == 3
     assert len(fieldset.V.data.shape) == 3
     assert len(fieldset.P.data.shape) == 4
@@ -67,7 +67,7 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     """ Simple test for fieldset initialisation from Parcels FieldSet file format. """
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
-    fieldset_out = FieldSet.from_data(data, dimensions, transpose=False)
+    fieldset_out = FieldSet.from_data(data, dimensions)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath)
     assert len(fieldset.U.data.shape) == 3  # Will be 4 once we use depth
@@ -82,7 +82,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
-    fieldsetfull = FieldSet.from_data(data, dimensions, transpose=False)
+    fieldsetfull = FieldSet.from_data(data, dimensions)
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
@@ -110,7 +110,7 @@ def test_moving_eddies_file_subsettime(indstime):
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     filepath = tmpdir.join(filename)
     data, dimensions = generate_fieldset(xdim, ydim)
-    fieldset = FieldSet.from_data(data, dimensions, transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions)
     field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
@@ -120,7 +120,7 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh, transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
 
     fieldset.U.calc_cell_edge_sizes()
     D_meridional = fieldset.U.cell_edge_sizes['y']
@@ -153,7 +153,7 @@ def test_fieldset_celledgesizes_curvilinear(dx, dy):
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_cellareas(mesh):
     data, dimensions = generate_fieldset(10, 7)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh, transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
     cell_areas = fieldset.V.cell_areas()
     if mesh == 'flat':
         assert np.allclose(cell_areas.flatten(), cell_areas[0, 0], rtol=1e-3)
@@ -166,7 +166,7 @@ def test_fieldset_cellareas(mesh):
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_gradient(mesh):
     data, dimensions = generate_fieldset(5, 3)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh, transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
 
     # Calculate field gradients for testing against numpy gradients.
     dFdx, dFdy = fieldset.V.gradient()
@@ -190,7 +190,7 @@ def addConst(particle, fieldset, time, dt):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_constant(mode):
     data, dimensions = generate_fieldset(100, 100)
-    fieldset = FieldSet.from_data(data, dimensions, transpose=False)
+    fieldset = FieldSet.from_data(data, dimensions)
     westval = -0.2
     eastval = 0.3
     fieldset.add_constant('movewest', westval)
@@ -226,7 +226,7 @@ def test_periodic(mode, time_periodic, dt_sign):
 
     data = {'U': U, 'V': V, 'W': W, 'temp': temp}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True)
 
     def sampleTemp(particle, fieldset, time, dt):
         # Note that fieldset.temp is interpolated at time=time+dt.

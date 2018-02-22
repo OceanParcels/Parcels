@@ -34,12 +34,17 @@ class FieldSet(object):
             self.add_field(field)
 
     @classmethod
-    def from_data(cls, data, dimensions, transpose=True, mesh='spherical',
+    def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=True, time_periodic=False, **kwargs):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given
+               1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
+                  whichever is relevant for the dataset, use the flag transpose=True
+               2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+                  use the flag transpose=False (default value)
+               3. If data has any other shape, you first need to reorder it
         :param dimensions: Dictionary mapping field dimensions (lon,
                lat, depth, time) to numpy arrays.
                Note that dimensions can also be a dictionary of dictionaries if
