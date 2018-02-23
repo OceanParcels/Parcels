@@ -102,6 +102,8 @@ class ParticleFile(object):
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
 
+        self.idx = np.empty(shape=0)
+
     def __del__(self):
         self.dataset.close()
 
@@ -129,12 +131,7 @@ class ParticleFile(object):
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
 
-                inds = [p.fileid for p in pset]
-
-                if hasattr(self, 'idx'):
-                    self.idx = np.append(self.idx, np.zeros(len(first_write)))
-                else:
-                    self.idx = np.zeros(len(first_write))
+                self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
                 for p in pset:
                     i = p.fileid
@@ -147,9 +144,7 @@ class ParticleFile(object):
                         getattr(self, var)[i, self.idx[i]] = getattr(p, var)
                 for p in first_write:
                     for var in self.user_vars_once:
-                        vals = getattr(p, var)
-                        newinds = p.fileid
-                        getattr(self, var)[newinds] = np.array(vals)
+                        getattr(self, var)[p.fileid] = getattr(p, var)
             else:
                 logger.warning("ParticleSet is empty on writing as array")
 
