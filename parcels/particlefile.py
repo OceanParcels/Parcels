@@ -102,8 +102,6 @@ class ParticleFile(object):
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
 
-        self.idx = 0
-
     def __del__(self):
         self.dataset.close()
 
@@ -133,17 +131,24 @@ class ParticleFile(object):
 
                 inds = [p.fileid for p in pset]
 
-                self.id[inds, self.idx] = [p.id for p in pset]
-                self.time[inds, self.idx] = time
-                self.lat[inds, self.idx] = np.array([p.lat for p in pset])
-                self.lon[inds, self.idx] = np.array([p.lon for p in pset])
-                self.z[inds, self.idx] = np.array([p.depth for p in pset])
-                for var in self.user_vars:
-                    getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
-                for var in self.user_vars_once:
-                    if np.any(first_write):
-                        vals = [getattr(p, var) for p in first_write]
-                        newinds = [p.fileid for p in first_write]
+                if hasattr(self, 'idx'):
+                    self.idx = np.append(self.idx, np.zeros(len(first_write)))
+                else:
+                    self.idx = np.zeros(len(first_write))
+
+                for p in pset:
+                    i = p.fileid
+                    self.id[i, self.idx[i]] = p.id
+                    self.time[i, self.idx[i]] = time
+                    self.lat[i, self.idx[i]] = p.lat
+                    self.lon[i, self.idx[i]] = p.lon
+                    self.z[i, self.idx[i]] = p.depth
+                    for var in self.user_vars:
+                        getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                for p in first_write:
+                    for var in self.user_vars_once:
+                        vals = getattr(p, var)
+                        newinds = p.fileid
                         getattr(self, var)[newinds] = np.array(vals)
             else:
                 logger.warning("ParticleSet is empty on writing as array")

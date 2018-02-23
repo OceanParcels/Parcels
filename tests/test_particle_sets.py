@@ -82,7 +82,9 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
-def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, tmpdir, dt, npart=10):
+@pytest.mark.parametrize('maxvar', [2, 4, 10])
+def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt, tmpdir, dt, maxvar, npart=10):
+    fieldset.maxvar = maxvar
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
@@ -91,6 +93,8 @@ def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, tmpdir, 
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
+        if particle.sample_var > fieldset.maxvar:
+            particle.delete()
     for i in range(npart):
         assert len(pset) == (i // repeatdt) + 1
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
