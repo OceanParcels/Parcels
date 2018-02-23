@@ -299,9 +299,6 @@ class ParticleSet(object):
         for p in self:
             p.dt = dt
 
-        # First write output_file, because particles could have been added
-        if output_file:
-            output_file.write(self, _starttime)
         if moviedt:
             self.show(field=movie_background_field, show_time=_starttime)
 
@@ -322,18 +319,24 @@ class ParticleSet(object):
                 time = min(next_prelease, next_input, next_output, next_movie, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, endtime)
+            # First write output_file, because particles could have been added
+            if abs(time-next_output) < tol:
+                output_file.write(self, time)
+                next_output += outputdt * np.sign(dt)
+
+            # Execute the ParticleSet
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
+
+            # Add new particles if releasedt
             if abs(time-next_prelease) < tol:
-                self.add(ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
-                                     lat=self.repeatlat, depth=self.repeatdepth,
-                                     pclass=self.repeatpclass))
+                new_set = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                                      lat=self.repeatlat, depth=self.repeatdepth,
+                                      pclass=self.repeatpclass)
+                self.add(new_set)
                 next_prelease += self.repeatdt * np.sign(dt)
+
             if abs(time-next_input) < tol:
                 continue
-            if abs(time-next_output) < tol:
-                if output_file:
-                    output_file.write(self, time)
-                next_output += outputdt * np.sign(dt)
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time)
                 next_movie += moviedt * np.sign(dt)
