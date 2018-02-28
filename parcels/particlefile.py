@@ -123,7 +123,6 @@ class ParticleFile(object):
             time = time.total_seconds()
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
-            self.lasttime_written = time
             if pset.size > 0:
 
                 first_write = [p for p in pset if p.fileid < 0]
@@ -148,7 +147,9 @@ class ParticleFile(object):
             else:
                 logger.warning("ParticleSet is empty on writing as array")
 
-            self.idx += 1
+            if not deleted_only:
+                self.idx += 1
+                self.lasttime_written = time
 
         if sync:
             self.sync()
