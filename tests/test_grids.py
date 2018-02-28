@@ -113,26 +113,27 @@ def test_avoid_repeated_grids():
 def test_multigrids_pointer(mode):
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
-    depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+    depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
 
     def bath_func(lon):
         return lon / 1000. + 10
     bath = bath_func(lon_g0)
 
-    for i in range(depth_g0.shape[0]):
-        for k in range(depth_g0.shape[2]):
-            depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+    zdim = depth_g0.shape[0]
+    for i in range(lon_g0.size):
+        for k in range(zdim):
+            depth_g0[k, :, i] = bath[i] * k / (zdim-1)
 
     grid_0 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
     grid_1 = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 
-    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    w_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
+    u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    w_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
 
-    u_field = Field('U', u_data, grid=grid_0, transpose=True)
-    v_field = Field('V', v_data, grid=grid_0, transpose=True)
-    w_field = Field('W', w_data, grid=grid_1, transpose=True)
+    u_field = Field('U', u_data, grid=grid_0)
+    v_field = Field('V', v_data, grid=grid_0)
+    w_field = Field('W', w_data, grid=grid_1)
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
     assert(u_field.grid == v_field.grid)
@@ -151,9 +152,9 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
     time_g0 = np.linspace(0, 1000, 2, dtype=np.float64)
     if z4d:
-        depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5, time_g0.size), dtype=np.float32)
+        depth_g0 = np.zeros((time_g0.size, 5, lat_g0.size, lon_g0.size), dtype=np.float32)
     else:
-        depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+        depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
 
     def bath_func(lon):
         bath = (lon <= -2e4) * 20.
@@ -162,23 +163,24 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
         return bath
     bath = bath_func(lon_g0)
 
-    for i in range(depth_g0.shape[0]):
-        for k in range(depth_g0.shape[2]):
+    zdim = depth_g0.shape[-3]
+    for i in range(depth_g0.shape[-1]):
+        for k in range(zdim):
             if z4d:
-                depth_g0[i, :, k, :] = bath[i] * k / (depth_g0.shape[2]-1)
+                depth_g0[:, k, :, i] = bath[i] * k / (zdim-1)
             else:
-                depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+                depth_g0[k, :, i] = bath[i] * k / (zdim-1)
 
     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0, time=time_g0)
 
-    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
-    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
-    temp_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2], time_g0.size), dtype=np.float32)
-    for k in range(1, depth_g0.shape[2]):
-        temp_data[:, :, k, :] = k / (depth_g0.shape[2]-1.)
-    u_field = Field('U', u_data, grid=grid, transpose=True)
-    v_field = Field('V', v_data, grid=grid, transpose=True)
-    temp_field = Field('temp', temp_data, grid=grid, transpose=True)
+    u_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+    v_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+    temp_data = np.zeros((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+    for k in range(1, zdim):
+        temp_data[:, k, :, :] = k / (zdim-1.)
+    u_field = Field('U', u_data, grid=grid)
+    v_field = Field('V', v_data, grid=grid)
+    temp_field = Field('temp', temp_data, grid=grid)
 
     other_fields = {}
     other_fields['temp'] = temp_field
@@ -213,20 +215,22 @@ def test_rectilinear_s_grids_advect1(mode):
     for i in range(depth_g0.shape[0]):
         for k in range(depth_g0.shape[2]):
             depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+    depth_g0 = depth_g0.transpose()  # we don't change it on purpose, to check if the transpose op if fixed in jit
 
     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 
-    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    w_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    for i in range(depth_g0.shape[0]):
-        u_data[i, :, :] = 1 * 10 / bath[i]
-        for k in range(depth_g0.shape[2]):
-            w_data[i, :, k] = u_data[i, :, k] * depth_g0[i, :, k] / bath[i] * 1e-3
+    zdim = depth_g0.shape[0]
+    u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    w_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    for i in range(lon_g0.size):
+        u_data[:, :, i] = 1 * 10 / bath[i]
+        for k in range(zdim):
+            w_data[k, :, i] = u_data[k, :, i] * depth_g0[k, :, i] / bath[i] * 1e-3
 
-    u_field = Field('U', u_data, grid=grid, transpose=True)
-    v_field = Field('V', v_data, grid=grid, transpose=True)
-    w_field = Field('W', w_data, grid=grid, transpose=True)
+    u_field = Field('U', u_data, grid=grid)
+    v_field = Field('V', v_data, grid=grid)
+    w_field = Field('W', w_data, grid=grid)
 
     field_set = FieldSet(u_field, v_field, fields={'W': w_field})
 
@@ -245,27 +249,28 @@ def test_rectilinear_s_grids_advect2(mode):
     # Move particle towards the east, check relative depth evolution
     lon_g0 = np.linspace(0, 1e4, 21, dtype=np.float32)
     lat_g0 = np.linspace(0, 1000, 2, dtype=np.float32)
-    depth_g0 = np.zeros((lon_g0.size, lat_g0.size, 5), dtype=np.float32)
+    depth_g0 = np.zeros((5, lat_g0.size, lon_g0.size), dtype=np.float32)
 
     def bath_func(lon):
         return lon / 1000. + 10
     bath = bath_func(lon_g0)
 
-    for i in range(depth_g0.shape[0]):
-        for k in range(depth_g0.shape[2]):
-            depth_g0[i, :, k] = bath[i] * k / (depth_g0.shape[2]-1)
+    zdim = depth_g0.shape[0]
+    for i in range(lon_g0.size):
+        for k in range(zdim):
+            depth_g0[k, :, i] = bath[i] * k / (zdim-1)
 
     grid = RectilinearSGrid(lon_g0, lat_g0, depth=depth_g0)
 
-    u_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    v_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    rel_depth_data = np.zeros((lon_g0.size, lat_g0.size, depth_g0.shape[2]), dtype=np.float32)
-    for k in range(1, depth_g0.shape[2]):
-        rel_depth_data[:, :, k] = k / (depth_g0.shape[2]-1.)
+    u_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    v_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    rel_depth_data = np.zeros((zdim, lat_g0.size, lon_g0.size), dtype=np.float32)
+    for k in range(1, zdim):
+        rel_depth_data[k, :, :] = k / (zdim-1.)
 
-    u_field = Field('U', u_data, grid=grid, transpose=True)
-    v_field = Field('V', v_data, grid=grid, transpose=True)
-    rel_depth_field = Field('relDepth', rel_depth_data, grid=grid, transpose=True)
+    u_field = Field('U', u_data, grid=grid)
+    v_field = Field('V', v_data, grid=grid)
+    rel_depth_field = Field('relDepth', rel_depth_data, grid=grid)
     field_set = FieldSet(u_field, v_field, fields={'relDepth': rel_depth_field})
 
     class MyParticle(ptype[mode]):
