@@ -169,11 +169,11 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
   }
   else{
     float xvals0 = xvals[0];
-    if (xvals0 < x - 180) xvals0 += 360;
-    if (xvals0 > x + 180) xvals0 -= 360;
     float xvalsEnd = xvals[xdim-1];
-    if (xvalsEnd < x - 180) xvalsEnd += 360;
-    if (xvalsEnd > x + 180) xvalsEnd -= 360;
+    if ((xvals0 < x - 180) && (xvals[0] > xvals[xdim-1])) xvals0 += 360;
+    if ((xvals0 > x + 180) && (xvals[0] > xvals[xdim-1])) xvals0 -= 360;
+    if ((xvalsEnd < x - 180) && (xvals[0] > xvals[xdim-1])) xvalsEnd += 360;
+    if ((xvalsEnd > x + 180) && (xvals[0] > xvals[xdim-1])) xvalsEnd -= 360;
     if ( xvals0 < xvalsEnd && (x < xvals0 || x > xvalsEnd) ) return ERROR_OUT_OF_BOUNDS;
     if ( xvals0 > xvalsEnd && x < xvals0 && x > xvalsEnd ) return ERROR_OUT_OF_BOUNDS;
 
@@ -184,7 +184,7 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
     if (xvalsi < x - 180) xvalsi += 360;
     if (xvalsi > x + 180) xvalsi -= 360;
 
-    int itMax = 1000;
+    int itMax = 10000;
     int it = 0;
     while ( (xvalsi > x) || (xvalsi1 < x) ){
       if (xvalsi1 < x)
