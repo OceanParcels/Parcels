@@ -462,23 +462,23 @@ class Field(object):
         grid = self.grid
         if grid.z4d:
             if ti == len(grid.time)-1:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
+                    xsi*(1-eta) * grid.depth[-1, :, yi, xi+1] + \
+                    xsi*eta * grid.depth[-1, :, yi+1, xi+1] + \
+                    (1-xsi)*eta * grid.depth[-1, :, yi+1, xi]
             else:
-                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, ti:ti+2] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, ti:ti+2] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, ti:ti+2] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, ti:ti+2]
+                dv2 = (1-xsi)*(1-eta) * grid.depth[ti:ti+2, :, yi, xi] + \
+                    xsi*(1-eta) * grid.depth[ti:ti+2, :, yi, xi+1] + \
+                    xsi*eta * grid.depth[ti:ti+2, :, yi+1, xi+1] + \
+                    (1-xsi)*eta * grid.depth[ti:ti+2, :, yi+1, xi]
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
-                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+                depth_vector = dv2[0, :] + (dv2[1, :]-dv2[0, :]) * (time - t0) / (t1 - t0)
         else:
-            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-                xsi*eta * grid.depth[xi+1, yi+1, :] + \
-                (1-xsi)*eta * grid.depth[xi, yi+1, :]
+            depth_vector = (1-xsi)*(1-eta) * grid.depth[:, yi, xi] + \
+                xsi*(1-eta) * grid.depth[:, yi, xi+1] + \
+                xsi*eta * grid.depth[:, yi+1, xi+1] + \
+                (1-xsi)*eta * grid.depth[:, yi+1, xi]
         z = np.float32(z)
         depth_index = depth_vector <= z
         if z >= depth_vector[-1]:

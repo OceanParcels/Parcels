@@ -191,8 +191,15 @@ class RectilinearSGrid(RectilinearGrid):
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
-        self.zdim = self.depth.shape[2]
+        self.zdim = self.depth.shape[-3]
         self.z4d = len(self.depth.shape) == 4
+        if self.z4d:
+            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        else:
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
@@ -350,8 +357,15 @@ class CurvilinearSGrid(CurvilinearGrid):
 
         self.gtype = GridCode.CurvilinearSGrid
         self.depth = depth
-        self.zdim = self.depth.shape[2]
+        self.zdim = self.depth.shape[-3]
         self.z4d = len(self.depth.shape) == 4
+        if self.z4d:
+            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        else:
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
