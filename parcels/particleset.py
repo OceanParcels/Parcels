@@ -324,15 +324,15 @@ class ParticleSet(object):
                 time = max(next_prelease, next_input, next_output, next_movie, endtime)
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
             if abs(time-next_prelease) < tol:
-                new_set = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
-                                      lat=self.repeatlat, depth=self.repeatdepth,
-                                      pclass=self.repeatpclass)
-                self.add(new_set)
+                self.add(ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                                     lat=self.repeatlat, depth=self.repeatdepth,
+                                     pclass=self.repeatpclass))
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_input) < tol:
                 continue
             if abs(time-next_output) < tol:
-                output_file.write(self, time)
+                if output_file:
+                    output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time)
