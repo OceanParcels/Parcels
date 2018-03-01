@@ -143,7 +143,12 @@ class Field(object):
     """Class that encapsulates access to field data.
 
     :param name: Name of the field
-    :param data: 2D, 3D or 4D numpy array of field data
+    :param data: 2D, 3D or 4D numpy array of field data.
+           1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
+              whichever is relevant for the dataset, use the flag transpose=True
+           2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
+              use the flag transpose=False
+           3. If data has any other shape, you first need to reorder it
     :param lon: Longitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param lat: Latitude coordinates (numpy vector or array) of the field (only if grid is None)
     :param depth: Depth coordinates (numpy vector or array) of the field (only if grid is None)
@@ -222,9 +227,11 @@ class Field(object):
             if len(self.data.shape) == 4:
                 self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
         if len(self.data.shape) == 4:
-            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)
+            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
+                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
         else:
-            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim)
+            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
+                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -455,23 +462,23 @@ class Field(object):
         grid = self.grid
         if grid.z4d:
             if ti == len(grid.time)-1:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
+                    xsi*(1-eta) * grid.depth[-1, :, yi, xi+1] + \
+                    xsi*eta * grid.depth[-1, :, yi+1, xi+1] + \
+                    (1-xsi)*eta * grid.depth[-1, :, yi+1, xi]
             else:
-                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, ti:ti+2] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, ti:ti+2] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, ti:ti+2] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, ti:ti+2]
+                dv2 = (1-xsi)*(1-eta) * grid.depth[ti:ti+2, :, yi, xi] + \
+                    xsi*(1-eta) * grid.depth[ti:ti+2, :, yi, xi+1] + \
+                    xsi*eta * grid.depth[ti:ti+2, :, yi+1, xi+1] + \
+                    (1-xsi)*eta * grid.depth[ti:ti+2, :, yi+1, xi]
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
-                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+                depth_vector = dv2[0, :] + (dv2[1, :]-dv2[0, :]) * (time - t0) / (t1 - t0)
         else:
-            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-                xsi*eta * grid.depth[xi+1, yi+1, :] + \
-                (1-xsi)*eta * grid.depth[xi, yi+1, :]
+            depth_vector = (1-xsi)*(1-eta) * grid.depth[:, yi, xi] + \
+                xsi*(1-eta) * grid.depth[:, yi, xi+1] + \
+                xsi*eta * grid.depth[:, yi+1, xi+1] + \
+                (1-xsi)*eta * grid.depth[:, yi+1, xi]
         z = np.float32(z)
         depth_index = depth_vector <= z
         if z >= depth_vector[-1]:

@@ -9,8 +9,8 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 @pytest.fixture
 def fieldset(xdim=40, ydim=100):
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
     lat = np.linspace(-60, 60, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)
@@ -101,7 +101,12 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
     assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
-    assert samplevar.shape == (runtime // repeatdt, min(maxvar+1, runtime))
+    assert samplevar.shape == (runtime // repeatdt+1, runtime+1)
+    if repeatdt == 0:
+        # test whether samplevar[i, i+k] = k for k=range(maxvar)
+        for k in range(maxvar):
+            for i in range(runtime-k):
+                assert(samplevar[i, i+k] == k)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

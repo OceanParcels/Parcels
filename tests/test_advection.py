@@ -43,7 +43,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
               'V': np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
-    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical')
+    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
@@ -52,7 +52,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
 
     dimensions['depth'] = depth
-    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical')
+    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical', transpose=True)
     pset3D = ParticleSet(fieldset3D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32),
@@ -69,7 +69,7 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
             'V': np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(-60, 60, npart, dtype=np.float32),
@@ -90,7 +90,7 @@ def test_advection_3D(mode, npart=11):
     data = {'U': np.ones((xdim, ydim, zdim), dtype=np.float32),
             'V': np.zeros((xdim, ydim, zdim), dtype=np.float32)}
     data['U'][:, :, 0] = 0.
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart, dtype=np.float32),
@@ -107,7 +107,7 @@ def periodicfields(xdim, ydim, uvel, vvel):
 
     data = {'U': uvel * np.ones((xdim, ydim), dtype=np.float32),
             'V': vvel * np.ones((xdim, ydim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh='spherical')
+    return FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
 
 def periodicBC(particle, fieldset, time, dt):
@@ -171,7 +171,7 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -209,7 +209,7 @@ def test_stationary_eddy_vertical(mode, npart=1):
 
     dimensions = {'lon': lon_data, 'lat': lat_data, 'time': time_data}
     data = {'U': fld1, 'V': fldzero, 'W': fld2}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon,
                        lat=lat, depth=depth)
@@ -221,7 +221,7 @@ def test_stationary_eddy_vertical(mode, npart=1):
     assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
 
     data = {'U': fldzero, 'V': fld2, 'W': fld1}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon,
                        lat=lat, depth=depth)
@@ -252,7 +252,7 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -296,7 +296,7 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

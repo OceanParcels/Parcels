@@ -66,7 +66,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    return FieldSet.from_data(data, dimensions)
+    return FieldSet.from_data(data, dimensions, transpose=True)
 
 
 def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,

@@ -40,17 +40,17 @@ def peninsula_fieldset(xdim, ydim):
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
-    W = np.zeros((xdim, ydim), dtype=np.float32)
-    P = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
+    W = np.zeros((ydim, xdim), dtype=np.float32)
+    P = np.zeros((ydim, xdim), dtype=np.float32)
 
     u0 = 1
     x0 = 50.
     R = 0.32 * 50.
 
     # Create the fields
-    x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
+    x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
     P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
     U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
     V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)

@@ -25,7 +25,7 @@ def fieldset(xdim=20, ydim=20):
     U, V = np.meshgrid(lat, lon)
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
     dimensions = {'lat': lat, 'lon': lon}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
