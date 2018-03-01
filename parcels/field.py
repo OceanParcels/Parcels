@@ -518,12 +518,14 @@ class Field(object):
                 xi = lon_index.argmin() - 1 if lon_index.any() else 0
             xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
         else:
-            lon_fixed = grid.lon
-            lon_fixed = np.where(grid.lon < grid.lon[0], lon_fixed + 360, lon_fixed)
+            lon_fixed = grid.lon.copy()
+            indices = lon_fixed >= lon_fixed[0]
+            if not indices.all():
+                lon_fixed[indices.argmin():] += 360
             if x < lon_fixed[0]:
                 lon_fixed -= 360
             if x < lon_fixed[0] or x > lon_fixed[-1]:
-                raise FieldSamplingError(x, y, z, field=self)
+                raise FieldSamplingError(x, y, z, field=self)  # TO CHANGE HERE
             lon_index = lon_fixed <= x
             if lon_index.all():
                 xi = len(lon_fixed) - 2
@@ -569,8 +571,10 @@ class Field(object):
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
             if grid.mesh == 'spherical':
-                px = np.where(px - x > 180, px-360, px)
-                px = np.where(-px + x > 180, px+360, px)
+                px[0] = px[0]+360 if px[0] < x-225 else px[0]
+                px[0] = px[0]-360 if px[0] > x+225 else px[0]
+                px[1:] = np.where(px[1:] - x > 180, px[1:]-360, px[1:])
+                px[1:] = np.where(-px[1:] + x > 180, px[1:]+360, px[1:])
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)

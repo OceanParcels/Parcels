@@ -102,7 +102,7 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_polar_with_halo(fieldset_geometric_polar, mode):
     fieldset_geometric_polar.add_periodic_halo(zonal=5)
-    pset = ParticleSet(fieldset_geometric_polar, JITParticle, lon=0, lat=0)
+    pset = ParticleSet(fieldset_geometric_polar, pclass=pclass(mode), lon=0, lat=0)
     pset.execute(runtime=1)
     assert(pset[0].lon == 0.)
 

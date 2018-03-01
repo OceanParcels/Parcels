@@ -168,21 +168,22 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
     *xsi = (x - xvals[*xi]) / (xvals[*xi+1] - xvals[*xi]);
   }
   else{
-    float xvals0 = xvals[0];
-    float xvalsEnd = xvals[xdim-1];
-    if ((xvals0 < x - 180) && (xvals[0] > xvals[xdim-1])) xvals0 += 360;
-    if ((xvals0 > x + 180) && (xvals[0] > xvals[xdim-1])) xvals0 -= 360;
-    if ((xvalsEnd < x - 180) && (xvals[0] > xvals[xdim-1])) xvalsEnd += 360;
-    if ((xvalsEnd > x + 180) && (xvals[0] > xvals[xdim-1])) xvalsEnd -= 360;
-    if ( xvals0 < xvalsEnd && (x < xvals0 || x > xvalsEnd) ) return ERROR_OUT_OF_BOUNDS;
-    if ( xvals0 > xvalsEnd && x < xvals0 && x > xvalsEnd ) return ERROR_OUT_OF_BOUNDS;
+    // still needs to fix this part
+    //float xvals0 = xvals[0];
+    //float xvalsEnd = xvals[xdim-1];
+    //if ((xvals0 < x - 270) && (xvals[0] > xvals[xdim-1])) xvals0 += 360;
+    //if ((xvals0 > x + 270) && (xvals[0] > xvals[xdim-1])) xvals0 -= 360;
+    //if ((xvalsEnd < x - 270) && (xvals[0] > xvals[xdim-1])) xvalsEnd += 360;
+    //if ((xvalsEnd > x + 270) && (xvals[0] > xvals[xdim-1])) xvalsEnd -= 360;
+    //if ( xvals0 < xvalsEnd && (x < xvals0 || x > xvalsEnd) ) return ERROR_OUT_OF_BOUNDS;
+    //if ( xvals0 > xvalsEnd && x < xvals0 && x > xvalsEnd ) return ERROR_OUT_OF_BOUNDS;
 
-    float xvalsi1 = xvals[*xi+1];
-    if (xvalsi1 < x - 180) xvalsi1 += 360;
-    if (xvalsi1 > x + 180) xvalsi1 -= 360;
     float xvalsi = xvals[*xi];
-    if (xvalsi < x - 180) xvalsi += 360;
-    if (xvalsi > x + 180) xvalsi -= 360;
+    if (xvalsi < x - 225) xvalsi += 360;
+    if (xvalsi > x + 225) xvalsi -= 360;
+    float xvalsi1 = xvals[*xi+1];
+    if (xvalsi1 < xvalsi - 180) xvalsi1 += 360;
+    if (xvalsi1 > xvalsi + 180) xvalsi1 -= 360;
 
     int itMax = 10000;
     int it = 0;
@@ -192,12 +193,12 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
       else if (xvalsi > x)
         --(*xi);
       fix_1d_index(xi, xdim, 1);
-      xvalsi1 = xvals[*xi+1];
-      if (xvalsi1 < x - 180) xvalsi1 += 360;
-      if (xvalsi1 > x + 180) xvalsi1 -= 360;
       xvalsi = xvals[*xi];
-      if (xvalsi < x - 180) xvalsi += 360;
-      if (xvalsi > x + 180) xvalsi -= 360;
+      if (xvalsi < x - 225) xvalsi += 360;
+      if (xvalsi > x + 225) xvalsi -= 360;
+      xvalsi1 = xvals[*xi+1];
+      if (xvalsi1 < xvalsi - 180) xvalsi1 += 360;
+      if (xvalsi1 > xvalsi + 180) xvalsi1 -= 360;
       it++;
       if (it > itMax){
         return ERROR_OUT_OF_BOUNDS;
@@ -257,9 +258,11 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     float xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
     if (sphere_mesh){ //we are on the sphere
       int i4;
-      for (i4 = 0; i4 < 4; ++i4){
-        if (xgrid_loc[i4] < x - 180) xgrid_loc[i4] += 360;
-        if (xgrid_loc[i4] > x + 180) xgrid_loc[i4] -= 360;
+      if (xgrid_loc[0] < x - 225) xgrid_loc[0] += 360;
+      if (xgrid_loc[0] > x + 225) xgrid_loc[0] -= 360;
+      for (i4 = 1; i4 < 4; ++i4){
+        if (xgrid_loc[i4] < xgrid_loc[0] - 180) xgrid_loc[i4] += 360;
+        if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
       }
     }
 
