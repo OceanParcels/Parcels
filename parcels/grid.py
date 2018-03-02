@@ -87,11 +87,15 @@ class RectilinearGrid(Grid):
         """
         if zonal:
             lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            if not np.allclose(self.lon[1]-self.lon[0], self.lon[-1]-self.lon[-2]):
+                logger.warning_once("To zonal halo is located at the east and west of current grid, with a dx = lon[1]-lon[0] between the last nodes of the original grid and the first ones of the halo. In your grid, lon[1]-lon[0] != lon[-1]-lon[-2]. Is the halo computed as you expect?")
             self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
                                       self.lon, self.lon[0:halosize] + lonshift))
             self.xdim = self.lon.size
             self.zonal_periodic = True
         if meridional:
+            if not np.allclose(self.lat[1]-self.lat[0], self.lat[-1]-self.lat[-2]):
+                logger.warning_once("To meridional halo is located at the north and south of current grid, with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?")
             latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
             self.lat = np.concatenate((self.lat[-halosize:] - latshift,
                                       self.lat, self.lat[0:halosize] + latshift))
@@ -257,6 +261,8 @@ class CurvilinearGrid(Grid):
         """
         if zonal:
             lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
+            if not np.allclose(self.lon[:, 1]-self.lon[:, 0], self.lon[:, -1]-self.lon[:, -2]):
+                logger.warning_once("To zonal halo is located at the east and west of current grid, with a dx = lon[:,1]-lon[:,0] between the last nodes of the original grid and the first ones of the halo. In your grid, lon[:,1]-lon[:,0] != lon[:,-1]-lon[:,-2]. Is the halo computed as you expect?")
             self.lon = np.concatenate((self.lon[:, -halosize:] - lonshift[:, np.newaxis],
                                        self.lon, self.lon[:, 0:halosize] + lonshift[:, np.newaxis]),
                                       axis=len(self.lon.shape)-1)
@@ -267,6 +273,8 @@ class CurvilinearGrid(Grid):
             self.ydim = self.lat.shape[0]
             self.zonal_periodic = True
         if meridional:
+            if not np.allclose(self.lat[1, :]-self.lat[0, :], self.lat[-1, :]-self.lat[-2, :]):
+                logger.warning_once("To meridional halo is located at the north and south of current grid, with a dy = lat[1,:]-lat[0,:] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1,:]-lat[0,:] != lat[-1,:]-lat[-2,:]. Is the halo computed as you expect?")
             latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
             self.lat = np.concatenate((self.lat[-halosize:, :] - latshift[np.newaxis, :],
                                        self.lat, self.lat[0:halosize, :] + latshift[np.newaxis, :]),
