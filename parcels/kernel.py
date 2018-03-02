@@ -170,6 +170,9 @@ class Kernel(object):
         for f in self.field_args.values():
             if not f.data.flags.c_contiguous:
                 f.data = f.data.copy()
+        for g in pset.fieldset.gridset.grids:
+            if not g.depth.flags.c_contiguous:
+                g.depth = g.depth.copy()
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)

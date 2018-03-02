@@ -76,31 +76,31 @@ static inline ErrorCode search_indices_vertical_s(float z, int xdim, int ydim, i
   float zcol[zdim];
   int zii;
   if (z4d == 1){
-    float (*zvalstab)[ydim][zdim][tdim] = (float (*)[ydim][zdim][tdim]) zvals;
+    float (*zvalstab)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) zvals;
     int ti1 = ti;
     if (ti < tdim-1)
        ti1= ti+1;
     double zt0, zt1;
     for (zii=0; zii < zdim; zii++){
-      zt0 = (1-xsi)*(1-eta) * zvalstab[xi  ][yi  ][zii][ti]
-          + (  xsi)*(1-eta) * zvalstab[xi+1][yi  ][zii][ti]
-          + (  xsi)*(  eta) * zvalstab[xi+1][yi+1][zii][ti]
-          + (1-xsi)*(  eta) * zvalstab[xi  ][yi+1][zii][ti];
-      zt1 = (1-xsi)*(1-eta) * zvalstab[xi  ][yi  ][zii][ti1]
-          + (  xsi)*(1-eta) * zvalstab[xi+1][yi  ][zii][ti1]
-          + (  xsi)*(  eta) * zvalstab[xi+1][yi+1][zii][ti1]
-          + (1-xsi)*(  eta) * zvalstab[xi  ][yi+1][zii][ti1];
+      zt0 = (1-xsi)*(1-eta) * zvalstab[ti ][zii][yi  ][xi  ]
+          + (  xsi)*(1-eta) * zvalstab[ti ][zii][yi  ][xi+1]
+          + (  xsi)*(  eta) * zvalstab[ti ][zii][yi+1][xi+1]
+          + (1-xsi)*(  eta) * zvalstab[ti ][zii][yi+1][xi  ];
+      zt1 = (1-xsi)*(1-eta) * zvalstab[ti1][zii][yi  ][xi  ]
+          + (  xsi)*(1-eta) * zvalstab[ti1][zii][yi  ][xi+1]
+          + (  xsi)*(  eta) * zvalstab[ti1][zii][yi+1][xi+1]
+          + (1-xsi)*(  eta) * zvalstab[ti1][zii][yi+1][xi  ];
       zcol[zii] = zt0 + (zt1 - zt0) * (float)((time - t0) / (t1 - t0));
     }
 
   }
   else{
-    float (*zvalstab)[ydim][zdim] = (float (*)[ydim][zdim]) zvals;
+    float (*zvalstab)[ydim][xdim] = (float (*)[ydim][xdim]) zvals;
     for (zii=0; zii < zdim; zii++){
-      zcol[zii] = (1-xsi)*(1-eta) * zvalstab[xi  ][yi  ][zii]
-                + (  xsi)*(1-eta) * zvalstab[xi+1][yi  ][zii]
-                + (  xsi)*(  eta) * zvalstab[xi+1][yi+1][zii]
-                + (1-xsi)*(  eta) * zvalstab[xi  ][yi+1][zii];
+      zcol[zii] = (1-xsi)*(1-eta) * zvalstab[zii][yi  ][xi  ]
+                + (  xsi)*(1-eta) * zvalstab[zii][yi  ][xi+1]
+                + (  xsi)*(  eta) * zvalstab[zii][yi+1][xi+1]
+                + (1-xsi)*(  eta) * zvalstab[zii][yi+1][xi  ];
     }
   }
 
