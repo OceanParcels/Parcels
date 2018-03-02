@@ -194,7 +194,7 @@ class Field(object):
             # lat has to be in ascending order
             self.grid.lat = np.flip(self.grid.lat, axis=0)
             # if we flip lat, we need to flip data too
-            self.data = np.flip(self.data, axis=1)
+            self.data = np.flip(self.data, axis=2)
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
