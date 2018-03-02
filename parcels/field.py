@@ -524,8 +524,12 @@ class Field(object):
                 lon_fixed[indices.argmin():] += 360
             if x < lon_fixed[0]:
                 lon_fixed -= 360
-            if x < lon_fixed[0] or x > lon_fixed[-1]:
-                raise FieldSamplingError(x, y, z, field=self)  # TO CHANGE HERE
+            if not grid.zonal_periodic:
+                if (grid.lon[0] < grid.lon[-1]) and (x < grid.lon[0] or x > grid.lon[-1]):
+                    raise FieldSamplingError(x, y, z, field=self)
+                elif (grid.lon[0] >= grid.lon[-1]) and (x < grid.lon[0] and x > grid.lon[-1]):
+                    raise FieldSamplingError(x, y, z, field=self)
+
             lon_index = lon_fixed <= x
             if lon_index.all():
                 xi = len(lon_fixed) - 2
@@ -568,6 +572,12 @@ class Field(object):
                          [1, -1, 1, -1]])
         maxIterSearch = 1e6
         it = 0
+        if not grid.zonal_periodic or grid.mesh == 'flat':
+            if (grid.lon[0, 0] < grid.lon[0, -1]) and (x < grid.lon[0, 0] or x > grid.lon[0, -1]):
+                raise FieldSamplingError(x, y, z, field=self)
+            elif (grid.lon[0, 0] >= grid.lon[0, -1]) and (x < grid.lon[0, 0] and x > grid.lon[0, -1]):
+                raise FieldSamplingError(x, y, z, field=self)
+
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
             if grid.mesh == 'spherical':

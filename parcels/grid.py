@@ -75,6 +75,7 @@ class RectilinearGrid(Grid):
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes = {}
+        self.zonal_periodic = False
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -89,6 +90,7 @@ class RectilinearGrid(Grid):
             self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
                                       self.lon, self.lon[0:halosize] + lonshift))
             self.xdim = self.lon.size
+            self.zonal_periodic = True
         if meridional:
             latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
             self.lat = np.concatenate((self.lat[-halosize:] - latshift,
@@ -107,6 +109,14 @@ class RectilinearGrid(Grid):
         else:
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
+    def check_zonal_periodic(self):
+        if self.zonal_periodic or self.mesh == 'flat':
+            return
+        dx = self.lon[1:] - self.lon[:-1]
+        dx = np.where(dx < -180, dx+360, dx)
+        dx = np.where(dx > 180, dx-360, dx)
+        self.zonal_periodic = sum(dx) > 360
+
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
@@ -115,7 +125,8 @@ class RectilinearGrid(Grid):
         class CStructuredGrid(Structure):
             # z4d is only to have same cstruct as RectilinearSGrid
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_int),
+                        ('tdim', c_int), ('z4d', c_int),
+                        ('mesh_spherical', c_int), ('zonal_periodic', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
@@ -123,7 +134,8 @@ class RectilinearGrid(Grid):
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
-                                           self.tdim, self.z4d, self.mesh == 'spherical',
+                                           self.tdim, self.z4d,
+                                           self.mesh == 'spherical', self.zonal_periodic is True,
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
@@ -233,6 +245,7 @@ class CurvilinearGrid(Grid):
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
         self.cell_edge_sizes = {}
+        self.zonal_periodic = False
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -252,6 +265,7 @@ class CurvilinearGrid(Grid):
                                       axis=len(self.lat.shape)-1)
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
+            self.zonal_periodic = True
         if meridional:
             latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
             self.lat = np.concatenate((self.lat[-halosize:, :] - latshift[np.newaxis, :],
@@ -275,6 +289,14 @@ class CurvilinearGrid(Grid):
         else:
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
+    def check_zonal_periodic(self):
+        if self.zonal_periodic or self.mesh == 'flat':
+            return
+        dx = self.lon[0, 1:] - self.lon[0, :-1]
+        dx = np.where(dx < -180, dx+360, dx)
+        dx = np.where(dx > 180, dx-360, dx)
+        self.zonal_periodic = sum(dx) > 360
+
     @property
     def child_ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
@@ -282,7 +304,8 @@ class CurvilinearGrid(Grid):
 
         class CStructuredGrid(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int), ('min_lon_source', c_int),
+                        ('tdim', c_int), ('z4d', c_int),
+                        ('mesh_spherical', c_int), ('zonal_periodic', c_int),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
@@ -290,7 +313,8 @@ class CurvilinearGrid(Grid):
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
-                                           self.tdim, self.z4d, self.mesh == 'spherical',
+                                           self.tdim, self.z4d,
+                                           self.mesh == 'spherical', self.zonal_periodic is True,
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),

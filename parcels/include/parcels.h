@@ -34,7 +34,7 @@ typedef struct
 typedef struct
 {
   int xdim, ydim, zdim, tdim, z4d;
-  int sphere_mesh;
+  int sphere_mesh, zonal_periodic;
   float *lon, *lat, *depth;
   double *time;
 } CStructuredGrid;
@@ -157,7 +157,7 @@ static inline void fix_2d_indices(int *xi, int *yi, int xdim, int ydim, int sphe
 
 
 static inline ErrorCode search_indices_rectilinear(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals, int sphere_mesh, GridCode gcode,
+                                            float *xvals, float *yvals, float *zvals, int sphere_mesh, int zonal_periodic, GridCode gcode,
                                             int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
@@ -168,15 +168,10 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
     *xsi = (x - xvals[*xi]) / (xvals[*xi+1] - xvals[*xi]);
   }
   else{
-    // still needs to fix this part
-    //float xvals0 = xvals[0];
-    //float xvalsEnd = xvals[xdim-1];
-    //if ((xvals0 < x - 270) && (xvals[0] > xvals[xdim-1])) xvals0 += 360;
-    //if ((xvals0 > x + 270) && (xvals[0] > xvals[xdim-1])) xvals0 -= 360;
-    //if ((xvalsEnd < x - 270) && (xvals[0] > xvals[xdim-1])) xvalsEnd += 360;
-    //if ((xvalsEnd > x + 270) && (xvals[0] > xvals[xdim-1])) xvalsEnd -= 360;
-    //if ( xvals0 < xvalsEnd && (x < xvals0 || x > xvalsEnd) ) return ERROR_OUT_OF_BOUNDS;
-    //if ( xvals0 > xvalsEnd && x < xvals0 && x > xvalsEnd ) return ERROR_OUT_OF_BOUNDS;
+    if (zonal_periodic == 0){
+      if ((xvals[0] < xvals[xdim-1]) && (x < xvals[0] || x > xvals[xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
+      else if ((xvals[0] >= xvals[xdim-1]) && (x < xvals[0] && x > xvals[xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
+    }
 
     float xvalsi = xvals[*xi];
     if (xvalsi < x - 225) xvalsi += 360;
@@ -242,13 +237,18 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
 
 
 static inline ErrorCode search_indices_curvilinear(float x, float y, float z, int xdim, int ydim, int zdim,
-                                            float *xvals, float *yvals, float *zvals, int sphere_mesh, GridCode gcode,
+                                            float *xvals, float *yvals, float *zvals, int sphere_mesh, int zonal_periodic, GridCode gcode,
                                             int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                             int z4d, int ti, int tdim, double time, double t0, double t1)
 {
   // NEMO convention
   float (* xgrid)[xdim] = (float (*)[xdim]) xvals;
   float (* ygrid)[xdim] = (float (*)[xdim]) yvals;
+
+  if (zonal_periodic == 0 || sphere_mesh == 0) {
+    if ((xgrid[0][0] < xgrid[0][xdim-1]) && (x < xgrid[0][0] || x > xgrid[0][xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
+    else if ((xgrid[0][0] >= xgrid[0][xdim-1]) && (x < xgrid[0][0] && x > xgrid[0][xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
+  }
 
   double a[4], b[4];
 
@@ -355,19 +355,20 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
  * */
 static inline ErrorCode search_indices(float x, float y, float z, int xdim, int ydim, int zdim,
                                             float *xvals, float *yvals, float *zvals,
-                                            int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta, int sphere_mesh,
+                                            int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
+                                            int sphere_mesh, int zonal_periodic,
                                             GridCode gcode, int z4d,
                                             int ti, int tdim, double time, double t0, double t1)
 {
   switch(gcode){
     case RECTILINEAR_Z_GRID:
     case RECTILINEAR_S_GRID:
-      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, gcode, xi, yi, zi, xsi, eta, zeta,
+      return search_indices_rectilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, zonal_periodic, gcode, xi, yi, zi, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     case CURVILINEAR_Z_GRID:
     case CURVILINEAR_S_GRID:
-      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, gcode, xi, yi, zi, xsi, eta, zeta,
+      return search_indices_curvilinear(x, y, z, xdim, ydim, zdim, xvals, yvals, zvals, sphere_mesh, zonal_periodic, gcode, xi, yi, zi, xsi, eta, zeta,
                                    z4d, ti, tdim, time, t0, t1);
       break;
     default:
@@ -480,7 +481,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     int ti = gridIndex->ti;
     double t0 = grid->time[ti]; double t1 = grid->time[ti+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, gcode, grid->z4d, ti, grid->tdim, time, t0, t1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti, grid->tdim, time, t0, t1); CHECKERROR(err);
     int xi = gridIndex->xi;
     int yi = gridIndex->yi;
     int zi = gridIndex->zi;
@@ -512,7 +513,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   } else {
     int ti = gridIndex->ti;
     double t0 = grid->time[ti];
-    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, gcode, grid->z4d, ti, grid->tdim, t0, t0, t0+1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &gridIndex->xi, &gridIndex->yi, &gridIndex->zi, &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti, grid->tdim, t0, t0, t0+1); CHECKERROR(err);
     int xi = gridIndex->xi;
     int yi = gridIndex->yi;
     int zi = gridIndex->zi;
