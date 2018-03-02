@@ -119,7 +119,7 @@ class RectilinearGrid(Grid):
         dx = self.lon[1:] - self.lon[:-1]
         dx = np.where(dx < -180, dx+360, dx)
         dx = np.where(dx > 180, dx-360, dx)
-        self.zonal_periodic = sum(dx) > 360
+        self.zonal_periodic = sum(dx) > 359.9
 
     @property
     def child_ctypes_struct(self):
@@ -139,7 +139,7 @@ class RectilinearGrid(Grid):
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
-                                           self.mesh == 'spherical', self.zonal_periodic is True,
+                                           self.mesh == 'spherical', self.zonal_periodic,
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
@@ -303,7 +303,7 @@ class CurvilinearGrid(Grid):
         dx = self.lon[0, 1:] - self.lon[0, :-1]
         dx = np.where(dx < -180, dx+360, dx)
         dx = np.where(dx > 180, dx-360, dx)
-        self.zonal_periodic = sum(dx) > 360
+        self.zonal_periodic = sum(dx) > 359.9
 
     @property
     def child_ctypes_struct(self):
@@ -322,7 +322,7 @@ class CurvilinearGrid(Grid):
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
-                                           self.mesh == 'spherical', self.zonal_periodic is True,
+                                           self.mesh == 'spherical', self.zonal_periodic,
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
