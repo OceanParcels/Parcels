@@ -572,11 +572,13 @@ class Field(object):
                          [1, -1, 1, -1]])
         maxIterSearch = 1e6
         it = 0
-        if not grid.zonal_periodic or grid.mesh == 'flat':
+        if (not grid.zonal_periodic) or grid.mesh == 'flat':
             if (grid.lon[0, 0] < grid.lon[0, -1]) and (x < grid.lon[0, 0] or x > grid.lon[0, -1]):
                 raise FieldSamplingError(x, y, z, field=self)
             elif (grid.lon[0, 0] >= grid.lon[0, -1]) and (x < grid.lon[0, 0] and x > grid.lon[0, -1]):
                 raise FieldSamplingError(x, y, z, field=self)
+        if y < np.min(grid.lat) or y > np.max(grid.lat):
+            raise FieldSamplingError(x, y, z, field=self)
 
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
