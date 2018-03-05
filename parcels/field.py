@@ -190,8 +190,6 @@ class Field(object):
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
-        if self.grid.lat_flipped:
-            self.data = np.flip(self.data, axis=-2)
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
@@ -221,6 +219,9 @@ class Field(object):
             self.data = self.data.astype(np.float32)
         if transpose:
             self.data = np.transpose(self.data)
+
+        if self.grid.lat_flipped:
+            self.data = np.flip(self.data, axis=-2)
 
         if self.grid.tdim == 1:
             if len(self.data.shape) < 4:

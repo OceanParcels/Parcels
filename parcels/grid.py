@@ -208,7 +208,7 @@ class RectilinearSGrid(RectilinearGrid):
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
-        if self.grid.lat_flipped:
+        if self.lat_flipped:
             self.depth = np.flip(self.depth, axis=-2)
 
 
@@ -381,7 +381,7 @@ class CurvilinearSGrid(CurvilinearGrid):
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
-        if self.grid.lat_flipped:
+        if self.lat_flipped:
             self.depth = np.flip(self.depth, axis=-2)
 
 
