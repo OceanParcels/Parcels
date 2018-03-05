@@ -496,8 +496,9 @@ class ParticleSet(object):
 
         :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
                       on. Default is `fieldset.U`
-        :param particle_val: Optional numpy-array of values to weigh each particle with.
-                             Default is 1 for each particle
+        :param particle_val: Optional numpy-array of values to weigh each particle with,
+                             or string name of particle variable to use weigh particles with.
+                             Default is None, resulting in a value of 1 for each particle
         :param relative: Boolean to control whether the density is scaled by the total
                          weight of all particles. Default is False
         :param area_scale: Boolean to control whether the density is scaled by the area
@@ -505,7 +506,10 @@ class ParticleSet(object):
         """
 
         field = field if field else self.fieldset.U
-        particle_val = particle_val if particle_val else np.ones(len(self.particles))
+        if isinstance(particle_val, str):
+            particle_val = [getattr(p, particle_val) for p in self.particles]
+        else:
+            particle_val = particle_val if particle_val else np.ones(len(self.particles))
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
         for pi, p in enumerate(self.particles):
