@@ -92,6 +92,8 @@ class FieldSet(object):
     def check_complete(self):
         assert(self.U), ('U field is not defined')
         assert(self.V), ('V field is not defined')
+        for g in self.gridset.grids:
+            g.check_zonal_periodic()
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
