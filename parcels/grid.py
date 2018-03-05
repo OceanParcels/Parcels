@@ -58,6 +58,11 @@ class RectilinearGrid(Grid):
 
         self.lon = lon
         self.lat = lat
+        self.lat_flipped = False
+        if self.lat[-1] < self.lat[0]:
+            self.lat = np.flip(self.lat, axis=0)
+            self.lat_flipped = True
+            logger.warning_once("Flipping lat data from North-South to South-North")
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
@@ -203,6 +208,8 @@ class RectilinearSGrid(RectilinearGrid):
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
+        if self.grid.lat_flipped:
+            self.depth = np.flip(self.depth, axis=-2)
 
 
 class CurvilinearGrid(Grid):
@@ -216,6 +223,11 @@ class CurvilinearGrid(Grid):
 
         self.lon = lon.squeeze()
         self.lat = lat.squeeze()
+        self.lat_flipped = False
+        if np.all(self.lat[-1, :] < self.lat[0, :]):
+            self.lat = np.flip(self.lat, axis=0)
+            self.lat_flipped = True
+            logger.warning_once("Flipping lat data from North-South to South-North")
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
@@ -369,6 +381,8 @@ class CurvilinearSGrid(CurvilinearGrid):
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
+        if self.grid.lat_flipped:
+            self.depth = np.flip(self.depth, axis=-2)
 
 
 class GVariable(object):
