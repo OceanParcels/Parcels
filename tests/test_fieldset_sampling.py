@@ -100,6 +100,14 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_polar_with_halo(fieldset_geometric_polar, mode):
+    fieldset_geometric_polar.add_periodic_halo(zonal=5)
+    pset = ParticleSet(fieldset_geometric_polar, pclass=pclass(mode), lon=0, lat=0)
+    pset.execute(runtime=1)
+    assert(pset[0].lon == 0.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_from_field(mode, npart=9):
     dims = (2, 2)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
@@ -184,16 +192,28 @@ def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldset_sample_particle(fieldset, mode, k_sample_uv, npart=120):
+@pytest.mark.parametrize('lat_flip', [False, True])
+def test_fieldset_sample_particle(mode, k_sample_uv, lat_flip, npart=120):
     """ Sample the fieldset using an array of particles.
 
     Note that the low tolerances (1.e-6) are due to the first-order
     interpolation in JIT mode and give an indication of the
     corresponding sampling error.
     """
+
+    lon = np.linspace(-180, 180, 200, dtype=np.float32)
+    if lat_flip:
+        lat = np.linspace(90, -90, 100, dtype=np.float32)
+    else:
+        lat = np.linspace(-90, 90, 100, dtype=np.float32)
+    U, V = np.meshgrid(lat, lon)
+    data = {'U': U, 'V': V}
+    dimensions = {'lon': lon, 'lat': lat}
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+
     lon = np.linspace(-170, 170, npart, dtype=np.float32)
     lat = np.linspace(-80, 80, npart, dtype=np.float32)
-
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart, dtype=np.float32) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
