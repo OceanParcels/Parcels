@@ -220,6 +220,9 @@ class Field(object):
         if transpose:
             self.data = np.transpose(self.data)
 
+        if self.grid.lat_flipped:
+            self.data = np.flip(self.data, axis=-2)
+
         if self.grid.tdim == 1:
             if len(self.data.shape) < 4:
                 self.data = self.data.reshape(sum(((1,), self.data.shape), ()))
