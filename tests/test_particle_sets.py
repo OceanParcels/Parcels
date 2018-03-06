@@ -101,7 +101,7 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
     assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
-    assert samplevar.shape == (runtime // repeatdt+1, runtime+1)
+    assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
     if repeatdt == 0:
         # test whether samplevar[i, i+k] = k for k=range(maxvar)
         for k in range(maxvar):
