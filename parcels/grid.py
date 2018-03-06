@@ -247,10 +247,6 @@ class CurvilinearGrid(Grid):
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
-        if np.all(self.lat[-1, :] < self.lat[0, :]):
-            self.lat = np.flip(self.lat, axis=0)
-            self.lat_flipped = True
-            logger.warning_once("Flipping lat data from North-South to South-North")
 
     def add_periodic_halo(self, zonal, meridional, halosize=5):
         """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
@@ -358,8 +354,6 @@ class CurvilinearSGrid(CurvilinearGrid):
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
-        if self.lat_flipped:
-            self.depth = np.flip(self.depth, axis=-2)
 
 
 class GVariable(object):
