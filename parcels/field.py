@@ -3,12 +3,10 @@ from scipy.interpolate import RegularGridInterpolator
 from collections import Iterable
 from py import path
 import numpy as np
-import xarray
 from ctypes import Structure, c_int, c_float, POINTER, pointer
-from netCDF4 import Dataset, num2date
+import xarray as xr
 from math import cos, pi
-from datetime import timedelta, datetime
-from dateutil.parser import parse
+from datetime import timedelta
 import math
 from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                   CurvilinearSGrid, CGrid, GridCode)
@@ -273,9 +271,6 @@ class Field(object):
         with FileBuffer(filenames[0], dimensions) as filebuffer:
             lon, lat = filebuffer.read_lonlat(indices)
             depth = filebuffer.read_depth(indices)
-            # Assign time_units if the time dimension has units and calendar
-            time_units = filebuffer.time_units
-            calendar = filebuffer.calendar
             if name in ['cosU', 'sinU', 'cosV', 'sinV']:
                 warning = False
                 try:
@@ -295,15 +290,11 @@ class Field(object):
                 timeslices.append(filebuffer.time)
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
-        if time_units is None:
-            time_origin = 0
+        if isinstance(time[0], np.datetime64):
+            time_origin = time[0]
+            time = (time - time_origin) / np.timedelta64(1, 's')
         else:
-            time_origin = num2date(0, time_units, calendar)
-            if type(time_origin) is not datetime:
-                # num2date in some cases returns a 'phony' datetime. In that case,
-                # parse it as a string.
-                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
-                time_origin = parse(str(time_origin))
+            time_origin = 0
 
         # Pre-allocate data before reading files into buffer
         depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
@@ -941,18 +932,18 @@ class Field(object):
         # Create DataArray objects for file I/O
         t, d, x, y = (self.grid.time.size, self.grid.depth.size,
                       self.grid.lon.size, self.grid.lat.size)
-        nav_lon = xarray.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
-                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        nav_lat = xarray.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        vardata = xarray.DataArray(self.data.reshape((t, d, y, x)),
-                                   coords=[('time_counter', self.grid.time),
-                                           (vname_depth, self.grid.depth),
-                                           ('y', self.grid.lat), ('x', self.grid.lon)])
+        nav_lon = xr.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
+                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
+                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
+                               coords=[('time_counter', self.grid.time),
+                                       (vname_depth, self.grid.depth),
+                                       ('y', self.grid.lat), ('x', self.grid.lon)])
         # Create xarray Dataset and output to netCDF format
-        dset = xarray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
-                                                          'nav_lat': nav_lat,
-                                                          vname_depth: self.grid.depth})
+        dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
+                                                      'nav_lat': nav_lat,
+                                                      vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
@@ -973,7 +964,7 @@ class FileBuffer(object):
         self.dataset = None
 
     def __enter__(self):
-        self.dataset = Dataset(str(self.filename), 'r', format="NETCDF4")
+        self.dataset = xr.open_dataset(str(self.filename))
         return self
 
     def __exit__(self, type, value, traceback):
@@ -994,33 +985,34 @@ class FileBuffer(object):
             elif len(dim.shape) == 4:  # SGrid
                 inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
                 dim_inds = dim[:, inds_depth, inds_lat, inds_lon]
-        return dim_inds
+        return np.array(dim_inds)
 
     def read_lonlat(self, indices):
-        lon = self.dataset[self.dimensions['lon']]
-        lat = self.dataset[self.dimensions['lat']]
-        if len(lon.shape) > 1:
-            londim = lon.shape[0]
-            latdim = lat.shape[1]
-            if np.allclose(lon[0, :], lon[int(londim/2), :]) and np.allclose(lat[:, 0], lat[:, int(latdim/2)]):
-                lon = lon[0, :]
-                lat = lat[:, 0]
+        lon = getattr(self.dataset, self.dimensions['lon'])
+        lat = getattr(self.dataset, self.dimensions['lat'])
         lon_subset = self.subset(lon, 'lon', indices)
         lat_subset = self.subset(lat, 'lat', indices)
+        if len(lon_subset.shape) > 1:
+            londim = lon_subset.shape[0]
+            latdim = lat_subset.shape[1]
+            if np.allclose(lon_subset[0, :], lon_subset[int(londim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(latdim/2)]):
+                lon_subset = lon_subset[0, :]
+                lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
 
     def read_depth(self, indices):
         if 'depth' in self.dimensions:
-            depth = self.dataset[self.dimensions['depth']]
+            depth = getattr(self.dataset, self.dimensions['depth'])
             return self.subset(depth, 'depth', indices)
         else:
             return np.zeros(1)
 
     @property
     def data(self):
-        if len(self.dataset[self.name].shape) == 2:
-            data = self.dataset[self.name][self.indslat, self.indslon]
-        elif len(self.dataset[self.name].shape) == 3:
+        data = getattr(self.dataset, self.name)
+        if len(data.shape) == 2:
+            data = data[self.indslat, self.indslon]
+        elif len(data.shape) == 3:
             data = self.dataset[self.name][:, self.indslat, self.indslon]
         else:
             data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
@@ -1031,45 +1023,14 @@ class FileBuffer(object):
 
     @property
     def time(self):
-        if self.time_units is not None:
-            dt = num2date(self.dataset[self.dimensions['time']][:],
-                          self.time_units, self.calendar)
-            offset = num2date(0, self.time_units, self.calendar)
-            if type(offset) is datetime:
-                dt -= offset
-            else:
-                # num2date in some cases returns a 'phony' datetime. In that case,
-                # parse it as a string.
-                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
-                dt -= parse(str(offset))
-            return list(map(timedelta.total_seconds, dt))
-        else:
-            try:
-                return self.dataset[self.dimensions['time']][:]
-            except:
-                return [None]
-
-    @property
-    def time_units(self):
-        """ Derive time_units if the time dimension has units """
         try:
-            return self.dataset[self.dimensions['time']].units
+            time = getattr(self.dataset, self.dimensions['time'])
+            if isinstance(time[0], np.datetime64) or 'Unit' not in time.attrs:
+                return np.array(time)
+            time.attrs['units'] = time.attrs['Unit']
+            ds = xr.decode_cf(self.dataset)
+            time = getattr(ds, self.dimensions['time'])
+            time_arr = np.array(time)
+            return time_arr
         except:
-            try:
-                return self.dataset[self.dimensions['time']].Unit
-            except:
-                return None
-
-    @property
-    def calendar(self):
-        """ Derive calendar if the time dimension has calendar """
-        try:
-            calendar = self.dataset[self.dimensions['time']].calendar
-            if calendar is ('proleptic_gregorian' or 'standard' or 'gregorian'):
-                return calendar
-            else:
-                # Other calendars means the time can't be converted to datetime object
-                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
-                return 'standard'
-        except:
-            return 'standard'
+            return np.array([None])

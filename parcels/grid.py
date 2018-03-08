@@ -89,6 +89,7 @@ class Grid(object):
         return lon
 
     def advancetime(self, grid_new):
+        grid_new.time = grid_new.time + (grid_new.time_origin - self.time_origin) / np.timedelta64(1, 's')
         if len(grid_new.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
         if grid_new.time > self.time[-1]:  # forward in time, so appending at end
