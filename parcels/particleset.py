@@ -9,6 +9,7 @@ import numpy as np
 import bisect
 from collections import Iterable
 from datetime import timedelta as delta
+import pandas as pd
 from datetime import datetime
 
 __all__ = ['ParticleSet']
@@ -50,7 +51,7 @@ class ParticleSet(object):
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
         time = [t.total_seconds() if isinstance(t, delta) else t for t in time]
-        time = [(t - fieldset.U.grid.time_origin).total_seconds() if isinstance(t, datetime) else t for t in time]
+        time = [((np.datetime64(t) - fieldset.U.grid.time_origin) / np.timedelta64(1, 's')) if isinstance(t, datetime) else t for t in time]
 
         assert len(lon) == len(time)
 
@@ -370,7 +371,9 @@ class ParticleSet(object):
         plat = np.array([p.lat for p in self])
         show_time = self[0].time if show_time is None else show_time
         if isinstance(show_time, datetime):
-            show_time = (show_time - self.fieldset.U.grid.time_origin).total_seconds()
+            show_time = np.datetime64(show_time)
+        if isinstance(show_time, np.datetime64):
+            show_time = (show_time - self.fieldset.U.grid.time_origin) / np.timedelta64(1, 's')
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
         if np.isnan(show_time):
@@ -467,7 +470,7 @@ class ParticleSet(object):
         if time_origin is 0:
             timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
         else:
-            timestr = ' on ' + str(time_origin + delta(seconds=show_time))
+            timestr = ' on ' + str(time_origin + pd.Timedelta(show_time, 's'))
 
         if particles:
             if field:
