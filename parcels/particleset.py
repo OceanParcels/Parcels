@@ -9,7 +9,6 @@ import numpy as np
 import bisect
 from collections import Iterable
 from datetime import timedelta as delta
-import pandas as pd
 from datetime import datetime
 
 __all__ = ['ParticleSet']
@@ -470,7 +469,8 @@ class ParticleSet(object):
         if time_origin is 0:
             timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
         else:
-            timestr = ' on ' + str(time_origin + pd.Timedelta(show_time, 's'))
+            date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
+            timestr = ' on ' + date_str[:10] + ' ' + date_str[11:19]
 
         if particles:
             if field is None:
