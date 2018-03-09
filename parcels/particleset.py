@@ -473,7 +473,7 @@ class ParticleSet(object):
             timestr = ' on ' + str(time_origin + pd.Timedelta(show_time, 's'))
 
         if particles:
-            if field:
+            if field is None:
                 plt.title('Particles' + timestr)
             elif field is 'vector':
                 plt.title('Particles and velocity field' + timestr)
