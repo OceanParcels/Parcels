@@ -268,9 +268,9 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
-        with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon, lat = filebuffer.read_lonlat(indices)
-            depth = filebuffer.read_depth(indices)
+        with FileBuffer(filenames[0], dimensions, indices) as filebuffer:
+            lon, lat = filebuffer.read_lonlat
+            depth = filebuffer.read_depth
             if name in ['cosU', 'sinU', 'cosV', 'sinV']:
                 warning = False
                 try:
@@ -286,7 +286,7 @@ class Field(object):
         # across multiple files
         timeslices = []
         for fname in filenames:
-            with FileBuffer(fname, dimensions) as filebuffer:
+            with FileBuffer(fname, dimensions, indices) as filebuffer:
                 timeslices.append(filebuffer.time)
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
@@ -304,7 +304,7 @@ class Field(object):
         data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
         ti = 0
         for tslice, fname in zip(timeslices, filenames):
-            with FileBuffer(fname, dimensions) as filebuffer:
+            with FileBuffer(fname, dimensions, indices) as filebuffer:
                 depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
                 latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
                 lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
@@ -334,8 +334,6 @@ class Field(object):
             data = data[indices['time'], :, :, :]
         if time.size == 1 and time[0] is None:
             time[0] = 0
-        if len(depth.shape) == 4:
-            raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
         if len(lon.shape) == 1:
             if len(depth.shape) == 1:
                 grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
@@ -961,41 +959,43 @@ class Field(object):
 class FileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
-    def __init__(self, filename, dimensions):
+    def __init__(self, filename, dimensions, indices):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keyes for file data
+        self.indices = indices
         self.dataset = None
 
     def __enter__(self):
         self.dataset = xr.open_dataset(str(self.filename))
+        lon = getattr(self.dataset, self.dimensions['lon'])
+        lat = getattr(self.dataset, self.dimensions['lat'])
+        latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(lonsize)
+        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(latsize)
+        if 'depth' in self.dimensions:
+            depth = getattr(self.dataset, self.dimensions['depth'])
+            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+            self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
         return self
 
     def __exit__(self, type, value, traceback):
         self.dataset.close()
 
-    def subset(self, dim, dimname, indices):
-        if len(dim.shape) == 1:  # RectilinearZGrid
-            inds = indices[dimname] if dimname in indices else range(dim.size)
-            dim_inds = dim[inds]
-        else:
-            inds_lon = indices['lon'] if 'lon' in indices else range(dim.shape[-1])
-            inds_lat = indices['lat'] if 'lat' in indices else range(dim.shape[-2])
-            if len(dim.shape) == 2:  # CurvilinearGrid
-                dim_inds = dim[inds_lat, inds_lon]
-            elif len(dim.shape) == 3:  # SGrid
-                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
-                dim_inds = dim[inds_depth, inds_lat, inds_lon]
-            elif len(dim.shape) == 4:  # SGrid
-                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
-                dim_inds = dim[:, inds_depth, inds_lat, inds_lon]
-        return np.array(dim_inds)
-
-    def read_lonlat(self, indices):
+    @property
+    def read_lonlat(self):
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
-        lon_subset = self.subset(lon, 'lon', indices)
-        lat_subset = self.subset(lat, 'lat', indices)
-        if len(lon_subset.shape) > 1:
+        if len(lon.shape) == 1:
+            lon_subset = np.array(lon[self.indslon])
+            lat_subset = np.array(lat[self.indslat])
+        elif len(lon.shape) == 2:
+            lon_subset = np.array(lon[self.indslat, self.indslon])
+            lat_subset = np.array(lat[self.indslat, self.indslon])
+        elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+            lon_subset = np.array(lon[0, self.indslat, self.indslon])
+            lat_subset = np.array(lat[0, self.indslat, self.indslon])
+        if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
             londim = lon_subset.shape[0]
             latdim = lat_subset.shape[1]
             if np.allclose(lon_subset[0, :], lon_subset[int(londim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(latdim/2)]):
@@ -1003,10 +1003,17 @@ class FileBuffer(object):
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
 
-    def read_depth(self, indices):
+    @property
+    def read_depth(self):
         if 'depth' in self.dimensions:
             depth = getattr(self.dataset, self.dimensions['depth'])
-            return self.subset(depth, 'depth', indices)
+            if len(depth.shape) == 1:
+                return np.array(depth[self.indsdepth])
+            elif len(depth.shape) == 3:
+                return np.array(depth[self.indsdepth, self.indslat, self.indslon])
+            elif len(depth.shape) == 4:
+                raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
+                return np.array(depth[:, self.indsdepth, self.indslat, self.indslon])
         else:
             return np.zeros(1)
 
@@ -1016,9 +1023,9 @@ class FileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indslat, self.indslon]
         elif len(data.shape) == 3:
-            data = self.dataset[self.name][:, self.indslat, self.indslon]
+            data = data[:, self.indslat, self.indslon]
         else:
-            data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
+            data = data[:, self.indsdepth, self.indslat, self.indslon]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
