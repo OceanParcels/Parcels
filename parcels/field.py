@@ -334,6 +334,8 @@ class Field(object):
             data = data[indices['time'], :, :, :]
         if time.size == 1 and time[0] is None:
             time[0] = 0
+        if len(depth.shape) == 4:
+            raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
         if len(lon.shape) == 1:
             if len(depth.shape) == 1:
                 grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
