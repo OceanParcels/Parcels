@@ -295,6 +295,7 @@ class Field(object):
             time = (time - time_origin) / np.timedelta64(1, 's')
         else:
             time_origin = 0
+        assert(np.all((time[1:]-time[:-1]) > 0))
 
         # Pre-allocate data before reading files into buffer
         depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
