@@ -212,7 +212,7 @@ class RectilinearSGrid(RectilinearGrid):
 
     def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
         RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
+        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
