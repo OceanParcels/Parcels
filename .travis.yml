@@ -51,12 +51,8 @@ script:
         make linkcheck -C docs;
       fi
     - |
-      # evaluate example scripts and notebooks on linux python2
-      if [[ "${PY_VERSION}" = 2 ]] && [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+      # evaluate example scripts and notebooks on linux only
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         py.test -v -s --nbval-lax examples/;
-      fi
-    - |
-      # evaluate example scripts only on linux python2
-      if [[ "${PY_VERSION}" = 3 ]] && [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         py.test -v -s examples/;
       fi
