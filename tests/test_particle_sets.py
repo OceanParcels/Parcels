@@ -82,7 +82,10 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
-def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, tmpdir, dt, npart=10):
+@pytest.mark.parametrize('maxvar', [2, 4, 10])
+def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+    fieldset.maxvar = maxvar
+
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
@@ -91,13 +94,19 @@ def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, tmpdir, 
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
-    for i in range(npart):
-        assert len(pset) == (i // repeatdt) + 1
+        if particle.sample_var > fieldset.maxvar:
+            particle.delete()
+    for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
-    assert np.allclose([p.sample_var for p in pset], np.arange(npart, -1, -repeatdt))
+    assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
-    assert samplevar.shape == (len(pset), npart+1)
+    assert samplevar.shape == (runtime // repeatdt+1, runtime+1)
+    if repeatdt == 0:
+        # test whether samplevar[i, i+k] = k for k=range(maxvar)
+        for k in range(maxvar):
+            for i in range(runtime-k):
+                assert(samplevar[i, i+k] == k)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

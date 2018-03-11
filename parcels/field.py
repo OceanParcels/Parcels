@@ -220,6 +220,9 @@ class Field(object):
         if transpose:
             self.data = np.transpose(self.data)
 
+        if self.grid.lat_flipped:
+            self.data = np.flip(self.data, axis=-2)
+
         if self.grid.tdim == 1:
             if len(self.data.shape) < 4:
                 self.data = self.data.reshape(sum(((1,), self.data.shape), ()))
@@ -462,23 +465,23 @@ class Field(object):
         grid = self.grid
         if grid.z4d:
             if ti == len(grid.time)-1:
-                depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, -1] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, -1] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, -1] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, -1]
+                depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
+                    xsi*(1-eta) * grid.depth[-1, :, yi, xi+1] + \
+                    xsi*eta * grid.depth[-1, :, yi+1, xi+1] + \
+                    (1-xsi)*eta * grid.depth[-1, :, yi+1, xi]
             else:
-                dv2 = (1-xsi)*(1-eta) * grid.depth[xi, yi, :, ti:ti+2] + \
-                    xsi*(1-eta) * grid.depth[xi+1, yi, :, ti:ti+2] + \
-                    xsi*eta * grid.depth[xi+1, yi+1, :, ti:ti+2] + \
-                    (1-xsi)*eta * grid.depth[xi, yi+1, :, ti:ti+2]
+                dv2 = (1-xsi)*(1-eta) * grid.depth[ti:ti+2, :, yi, xi] + \
+                    xsi*(1-eta) * grid.depth[ti:ti+2, :, yi, xi+1] + \
+                    xsi*eta * grid.depth[ti:ti+2, :, yi+1, xi+1] + \
+                    (1-xsi)*eta * grid.depth[ti:ti+2, :, yi+1, xi]
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
-                depth_vector = dv2[:, 0] + (dv2[:, 1]-dv2[:, 0]) * (time - t0) / (t1 - t0)
+                depth_vector = dv2[0, :] + (dv2[1, :]-dv2[0, :]) * (time - t0) / (t1 - t0)
         else:
-            depth_vector = (1-xsi)*(1-eta) * grid.depth[xi, yi, :] + \
-                xsi*(1-eta) * grid.depth[xi+1, yi, :] + \
-                xsi*eta * grid.depth[xi+1, yi+1, :] + \
-                (1-xsi)*eta * grid.depth[xi, yi+1, :]
+            depth_vector = (1-xsi)*(1-eta) * grid.depth[:, yi, xi] + \
+                xsi*(1-eta) * grid.depth[:, yi, xi+1] + \
+                xsi*eta * grid.depth[:, yi+1, xi+1] + \
+                (1-xsi)*eta * grid.depth[:, yi+1, xi]
         z = np.float32(z)
         depth_index = depth_vector <= z
         if z >= depth_vector[-1]:
@@ -518,12 +521,18 @@ class Field(object):
                 xi = lon_index.argmin() - 1 if lon_index.any() else 0
             xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
         else:
-            lon_fixed = grid.lon
-            lon_fixed = np.where(grid.lon < grid.lon[0], lon_fixed + 360, lon_fixed)
+            lon_fixed = grid.lon.copy()
+            indices = lon_fixed >= lon_fixed[0]
+            if not indices.all():
+                lon_fixed[indices.argmin():] += 360
             if x < lon_fixed[0]:
                 lon_fixed -= 360
-            if x < lon_fixed[0] or x > lon_fixed[-1]:
-                raise FieldSamplingError(x, y, z, field=self)
+            if not grid.zonal_periodic:
+                if (grid.lon[0] < grid.lon[-1]) and (x < grid.lon[0] or x > grid.lon[-1]):
+                    raise FieldSamplingError(x, y, z, field=self)
+                elif (grid.lon[0] >= grid.lon[-1]) and (x < grid.lon[0] and x > grid.lon[-1]):
+                    raise FieldSamplingError(x, y, z, field=self)
+
             lon_index = lon_fixed <= x
             if lon_index.all():
                 xi = len(lon_fixed) - 2
@@ -566,11 +575,21 @@ class Field(object):
                          [1, -1, 1, -1]])
         maxIterSearch = 1e6
         it = 0
+        if (not grid.zonal_periodic) or grid.mesh == 'flat':
+            if (grid.lon[0, 0] < grid.lon[0, -1]) and (x < grid.lon[0, 0] or x > grid.lon[0, -1]):
+                raise FieldSamplingError(x, y, z, field=self)
+            elif (grid.lon[0, 0] >= grid.lon[0, -1]) and (x < grid.lon[0, 0] and x > grid.lon[0, -1]):
+                raise FieldSamplingError(x, y, z, field=self)
+        if y < np.min(grid.lat) or y > np.max(grid.lat):
+            raise FieldSamplingError(x, y, z, field=self)
+
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
             if grid.mesh == 'spherical':
-                px = np.where(px - x > 180, px-360, px)
-                px = np.where(-px + x > 180, px+360, px)
+                px[0] = px[0]+360 if px[0] < x-225 else px[0]
+                px[0] = px[0]-360 if px[0] > x+225 else px[0]
+                px[1:] = np.where(px[1:] - x > 180, px[1:]-360, px[1:])
+                px[1:] = np.where(-px[1:] + x > 180, px[1:]+360, px[1:])
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
