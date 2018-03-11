@@ -283,9 +283,9 @@ def test_density(fieldset, mode, area_scale):
     else:
         assert(np.sum(arr) == lons.size)  # check conservation of particles
         inds = np.where(arr)
-        for i in range(len(inds)):  # check locations (low atol because of coarse grid)
-            assert np.allclose(fieldset.U.lon[inds[i][1]], pset[i].lon, atol=fieldset.U.lon[1]-fieldset.U.lon[0])
-            assert np.allclose(fieldset.U.lat[inds[i][0]], pset[i].lat, atol=fieldset.U.lat[1]-fieldset.U.lat[0])
+        for i in range(len(inds[0])):  # check locations (low atol because of coarse grid)
+            assert np.allclose(fieldset.U.lon[inds[1][i]], pset[i].lon, atol=fieldset.U.lon[1]-fieldset.U.lon[0])
+            assert np.allclose(fieldset.U.lat[inds[0][i]], pset[i].lat, atol=fieldset.U.lat[1]-fieldset.U.lat[0])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
