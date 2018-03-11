@@ -52,11 +52,11 @@ script:
       fi
     - |
       # evaluate example scripts and notebooks on linux python2
-      if [[ "${PY_VERSION}" = 2 and "${TRAVIS_OS_NAME}" = "linux" ]]; then
+      if [[ "${PY_VERSION}" = 2 ]] && [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         py.test -v -s --nbval-lax examples/;
       fi
     - |
       # evaluate example scripts only on linux python2
-      if [[ "${PY_VERSION}" = 3 and "${TRAVIS_OS_NAME}" = "linux" ]]; then
+      if [[ "${PY_VERSION}" = 3 ]] && [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         py.test -v -s examples/;
       fi
