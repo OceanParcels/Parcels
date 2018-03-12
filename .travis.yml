@@ -20,7 +20,7 @@ install:
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
-    - conda env create --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
+    - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
     - conda install --yes sphinx
     - python setup.py install
