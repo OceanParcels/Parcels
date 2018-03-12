@@ -111,7 +111,7 @@ def test_while_if_break(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.xfail(sys.version_info > (3, 0), reason="py.test FD capturing does not work for jit on python3")
-@pytest.mark.xfail(sys.platform == 'win32')
+@pytest.mark.xfail(sys.platform == 'win32', reason="capturing std out for jit does not work on windows")
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
     class TestParticle(ptype[mode]):
