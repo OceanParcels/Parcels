@@ -3,12 +3,10 @@ from scipy.interpolate import RegularGridInterpolator
 from collections import Iterable
 from py import path
 import numpy as np
-import xarray
 from ctypes import Structure, c_int, c_float, POINTER, pointer
-from netCDF4 import Dataset, num2date
+import xarray as xr
 from math import cos, pi
-from datetime import timedelta, datetime
-from dateutil.parser import parse
+from datetime import timedelta
 import math
 from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                   CurvilinearSGrid, CGrid, GridCode)
@@ -270,12 +268,9 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
-        with FileBuffer(filenames[0], dimensions) as filebuffer:
-            lon, lat = filebuffer.read_lonlat(indices)
-            depth = filebuffer.read_depth(indices)
-            # Assign time_units if the time dimension has units and calendar
-            time_units = filebuffer.time_units
-            calendar = filebuffer.calendar
+        with FileBuffer(filenames[0], dimensions, indices) as filebuffer:
+            lon, lat = filebuffer.read_lonlat
+            depth = filebuffer.read_depth
             if name in ['cosU', 'sinU', 'cosV', 'sinV']:
                 warning = False
                 try:
@@ -291,19 +286,16 @@ class Field(object):
         # across multiple files
         timeslices = []
         for fname in filenames:
-            with FileBuffer(fname, dimensions) as filebuffer:
+            with FileBuffer(fname, dimensions, indices) as filebuffer:
                 timeslices.append(filebuffer.time)
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
-        if time_units is None:
-            time_origin = 0
+        if isinstance(time[0], np.datetime64):
+            time_origin = time[0]
+            time = (time - time_origin) / np.timedelta64(1, 's')
         else:
-            time_origin = num2date(0, time_units, calendar)
-            if type(time_origin) is not datetime:
-                # num2date in some cases returns a 'phony' datetime. In that case,
-                # parse it as a string.
-                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
-                time_origin = parse(str(time_origin))
+            time_origin = 0
+        assert(np.all((time[1:]-time[:-1]) > 0))
 
         # Pre-allocate data before reading files into buffer
         depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
@@ -312,7 +304,7 @@ class Field(object):
         data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
         ti = 0
         for tslice, fname in zip(timeslices, filenames):
-            with FileBuffer(fname, dimensions) as filebuffer:
+            with FileBuffer(fname, dimensions, indices) as filebuffer:
                 depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
                 latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
                 lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
@@ -332,7 +324,10 @@ class Field(object):
                 if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                     data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
                 elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                    if filebuffer.depthdim > 1:
+                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
+                    else:
+                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
             ti += len(tslice)
@@ -941,18 +936,18 @@ class Field(object):
         # Create DataArray objects for file I/O
         t, d, x, y = (self.grid.time.size, self.grid.depth.size,
                       self.grid.lon.size, self.grid.lat.size)
-        nav_lon = xarray.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
-                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        nav_lat = xarray.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        vardata = xarray.DataArray(self.data.reshape((t, d, y, x)),
-                                   coords=[('time_counter', self.grid.time),
-                                           (vname_depth, self.grid.depth),
-                                           ('y', self.grid.lat), ('x', self.grid.lon)])
+        nav_lon = xr.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
+                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
+                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
+                               coords=[('time_counter', self.grid.time),
+                                       (vname_depth, self.grid.depth),
+                                       ('y', self.grid.lat), ('x', self.grid.lon)])
         # Create xarray Dataset and output to netCDF format
-        dset = xarray.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
-                                                          'nav_lat': nav_lat,
-                                                          vname_depth: self.grid.depth})
+        dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
+                                                      'nav_lat': nav_lat,
+                                                      vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
@@ -967,63 +962,79 @@ class Field(object):
 class FileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
-    def __init__(self, filename, dimensions):
+    def __init__(self, filename, dimensions, indices):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keyes for file data
+        self.indices = indices
         self.dataset = None
 
     def __enter__(self):
-        self.dataset = Dataset(str(self.filename), 'r', format="NETCDF4")
+        self.dataset = xr.open_dataset(str(self.filename))
+        lon = getattr(self.dataset, self.dimensions['lon'])
+        lat = getattr(self.dataset, self.dimensions['lat'])
+        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(londim)
+        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(latdim)
+        if 'depth' in self.dimensions:
+            depth = getattr(self.dataset, self.dimensions['depth'])
+            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+            self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            self.depthdim = len(self.indsdepth)
+        else:
+            self.depthdim = 0
         return self
 
     def __exit__(self, type, value, traceback):
         self.dataset.close()
 
-    def subset(self, dim, dimname, indices):
-        if len(dim.shape) == 1:  # RectilinearZGrid
-            inds = indices[dimname] if dimname in indices else range(dim.size)
-            dim_inds = dim[inds]
-        else:
-            inds_lon = indices['lon'] if 'lon' in indices else range(dim.shape[-1])
-            inds_lat = indices['lat'] if 'lat' in indices else range(dim.shape[-2])
-            if len(dim.shape) == 2:  # CurvilinearGrid
-                dim_inds = dim[inds_lat, inds_lon]
-            elif len(dim.shape) == 3:  # SGrid
-                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
-                dim_inds = dim[inds_depth, inds_lat, inds_lon]
-            elif len(dim.shape) == 4:  # SGrid
-                inds_depth = indices['depth'] if 'depth' in indices else range(dim.shape[0])
-                dim_inds = dim[:, inds_depth, inds_lat, inds_lon]
-        return dim_inds
-
-    def read_lonlat(self, indices):
-        lon = self.dataset[self.dimensions['lon']]
-        lat = self.dataset[self.dimensions['lat']]
-        if len(lon.shape) > 1:
-            londim = lon.shape[0]
-            latdim = lat.shape[1]
-            if np.allclose(lon[0, :], lon[int(londim/2), :]) and np.allclose(lat[:, 0], lat[:, int(latdim/2)]):
-                lon = lon[0, :]
-                lat = lat[:, 0]
-        lon_subset = self.subset(lon, 'lon', indices)
-        lat_subset = self.subset(lat, 'lat', indices)
+    @property
+    def read_lonlat(self):
+        lon = getattr(self.dataset, self.dimensions['lon'])
+        lat = getattr(self.dataset, self.dimensions['lat'])
+        if len(lon.shape) == 1:
+            lon_subset = np.array(lon[self.indslon])
+            lat_subset = np.array(lat[self.indslat])
+        elif len(lon.shape) == 2:
+            lon_subset = np.array(lon[self.indslat, self.indslon])
+            lat_subset = np.array(lat[self.indslat, self.indslon])
+        elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
+            lon_subset = np.array(lon[0, self.indslat, self.indslon])
+            lat_subset = np.array(lat[0, self.indslat, self.indslon])
+        if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
+            londim = lon_subset.shape[0]
+            latdim = lat_subset.shape[1]
+            if np.allclose(lon_subset[0, :], lon_subset[int(londim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(latdim/2)]):
+                lon_subset = lon_subset[0, :]
+                lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
 
-    def read_depth(self, indices):
+    @property
+    def read_depth(self):
         if 'depth' in self.dimensions:
-            depth = self.dataset[self.dimensions['depth']]
-            return self.subset(depth, 'depth', indices)
+            depth = getattr(self.dataset, self.dimensions['depth'])
+            if len(depth.shape) == 1:
+                return np.array(depth[self.indsdepth])
+            elif len(depth.shape) == 3:
+                return np.array(depth[self.indsdepth, self.indslat, self.indslon])
+            elif len(depth.shape) == 4:
+                raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
+                return np.array(depth[:, self.indsdepth, self.indslat, self.indslon])
         else:
             return np.zeros(1)
 
     @property
     def data(self):
-        if len(self.dataset[self.name].shape) == 2:
-            data = self.dataset[self.name][self.indslat, self.indslon]
-        elif len(self.dataset[self.name].shape) == 3:
-            data = self.dataset[self.name][:, self.indslat, self.indslon]
+        data = getattr(self.dataset, self.name)
+        if len(data.shape) == 2:
+            data = data[self.indslat, self.indslon]
+        elif len(data.shape) == 3:
+            if self.depthdim > 1:
+                data = data[self.indsdepth, self.indslat, self.indslon]
+            else:
+                data = data[:, self.indslat, self.indslon]
         else:
-            data = self.dataset[self.name][:, self.indsdepth, self.indslat, self.indslon]
+            data = data[:, self.indsdepth, self.indslat, self.indslon]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
@@ -1031,45 +1042,14 @@ class FileBuffer(object):
 
     @property
     def time(self):
-        if self.time_units is not None:
-            dt = num2date(self.dataset[self.dimensions['time']][:],
-                          self.time_units, self.calendar)
-            offset = num2date(0, self.time_units, self.calendar)
-            if type(offset) is datetime:
-                dt -= offset
-            else:
-                # num2date in some cases returns a 'phony' datetime. In that case,
-                # parse it as a string.
-                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
-                dt -= parse(str(offset))
-            return list(map(timedelta.total_seconds, dt))
-        else:
-            try:
-                return self.dataset[self.dimensions['time']][:]
-            except:
-                return [None]
-
-    @property
-    def time_units(self):
-        """ Derive time_units if the time dimension has units """
         try:
-            return self.dataset[self.dimensions['time']].units
+            time = getattr(self.dataset, self.dimensions['time'])
+            if isinstance(time[0], np.datetime64) or 'Unit' not in time.attrs:
+                return np.array(time)
+            time.attrs['units'] = time.attrs['Unit']
+            ds = xr.decode_cf(self.dataset)
+            time = getattr(ds, self.dimensions['time'])
+            time_arr = np.array(time)
+            return time_arr
         except:
-            try:
-                return self.dataset[self.dimensions['time']].Unit
-            except:
-                return None
-
-    @property
-    def calendar(self):
-        """ Derive calendar if the time dimension has calendar """
-        try:
-            calendar = self.dataset[self.dimensions['time']].calendar
-            if calendar is ('proleptic_gregorian' or 'standard' or 'gregorian'):
-                return calendar
-            else:
-                # Other calendars means the time can't be converted to datetime object
-                # See http://unidata.github.io/netcdf4-python/#netCDF4.num2date
-                return 'standard'
-        except:
-            return 'standard'
+            return np.array([None])
