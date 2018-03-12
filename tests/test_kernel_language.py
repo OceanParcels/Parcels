@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import random as py_random
 from os import path
+import sys
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -108,7 +109,15 @@ def test_while_if_break(fieldset, mode):
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize(
+    'mode',
+    ['scipy',
+     pytest.mark.skipif(
+         (sys.version_info >= (3, 0)) or (sys.platform == 'win32'),
+         reason="py.test FD capturing does not work for jit on python3 or Win"
+     )(
+         'jit'
+     )])
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
     class TestParticle(ptype[mode]):

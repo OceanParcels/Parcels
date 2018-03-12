@@ -92,8 +92,12 @@ class FieldSet(object):
     def check_complete(self):
         assert(self.U), ('U field is not defined')
         assert(self.V), ('V field is not defined')
+        ugrid = self.U.grid
         for g in self.gridset.grids:
             g.check_zonal_periodic()
+            if g is not ugrid and g.time_origin != 0:
+                g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time_origin = ugrid.time_origin
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
@@ -289,7 +293,7 @@ class FieldSet(object):
 
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
-        for attr, value in self.__dict__.iteritems():
+        for attr, value in iter(self.__dict__.items()):
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
 

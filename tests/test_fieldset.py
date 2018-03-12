@@ -45,7 +45,7 @@ def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
     time = np.zeros(tdim, dtype=np.float64)
     U = np.zeros((xdim, ydim), dtype=np.float32)
     V = np.ones((xdim, ydim), dtype=np.float32)
-    P = 2 * np.ones((xdim/2, ydim/2, zdim, tdim), dtype=np.float32)
+    P = 2 * np.ones((int(xdim/2), int(ydim/2), zdim, tdim), dtype=np.float32)
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'U': {'lat': lat, 'lon': lon},
                   'V': {'lat': lat, 'lon': lon},
