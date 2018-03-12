@@ -109,9 +109,14 @@ def test_while_if_break(fieldset, mode):
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
 
 
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.xfail(sys.version_info > (3, 0), reason="py.test FD capturing does not work for jit on python3")
-@pytest.mark.xfail(sys.platform == 'win32', reason="capturing std out for jit does not work on windows")
+@pytest.mark.parametrize(
+    'mode',
+    ['scipy',
+     pytest.mark.skipif(
+        "sys.version_info >= (3,0) or sys.platform == 'win32'"
+     )(
+        'jit'
+     )])
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
     class TestParticle(ptype[mode]):
@@ -119,7 +124,8 @@ def test_print(fieldset, mode, capfd):
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
     def kernel(particle, fieldset, time, dt):
-        particle.p = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+        particle.p = fieldset.U[time, particle.lon, particle.lat,
+                                particle.depth]
         print("%d %f" % (particle.id, particle.p))
     pset.execute(kernel, endtime=1., dt=1.)
     out, err = capfd.readouterr()
