@@ -126,7 +126,8 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
-            map(remove, [self.src_file, self.lib_file, self.log_file]) if path.isfile(self.lib_file) else None
+            if path.isfile(self.lib_file):
+                [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
 
     @property
     def _cache_key(self):
@@ -144,7 +145,7 @@ class Kernel(object):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
-            map(remove, [self.src_file, self.lib_file, self.log_file])
+            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')

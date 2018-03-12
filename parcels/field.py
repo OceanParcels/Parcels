@@ -8,8 +8,8 @@ import xarray as xr
 from math import cos, pi
 from datetime import timedelta
 import math
-from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
-                  CurvilinearSGrid, CGrid, GridCode)
+from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
+                   CurvilinearSGrid, CGrid, GridCode)
 
 
 __all__ = ['Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
@@ -312,8 +312,8 @@ class Field(object):
                 filebuffer.indslon = indices['lon'] if 'lon' in indices else range(lonsize)
                 filebuffer.indsdepth = indices['depth'] if 'depth' in indices else range(depthsize)
                 for inds in [filebuffer.indslat, filebuffer.indslon, filebuffer.indsdepth]:
-                    if not isinstance(inds, list):
-                        raise RuntimeError('Indices sur field subsetting need to be a list')
+                    if type(inds) not in [list, range]:
+                        raise RuntimeError('Indices for field subsetting need to be a list')
                 if 'data' in dimensions:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
