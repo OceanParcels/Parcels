@@ -5,13 +5,19 @@ environment:
     - PYTHON: "C:\\Python27-miniconda"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "64"
+      ENV_NAME: "environment_py2_win.yml"
+
+    - PYTHON: "C:\\Python36-miniconda"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "64"
+      ENV_NAME: "environment_py3_win.yml"
 
 install:
   - "powershell ./appveyor/install_miniconda.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "conda update --yes conda"
-  - "conda env create -f environment_win.yml -n py2_parcels"
-  - "activate py2_parcels"
+  - "conda env create -f %ENV_NAME% -n parcels"
+  - "activate parcels"
   - "python setup.py install"
 
 build: false
