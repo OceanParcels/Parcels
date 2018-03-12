@@ -1,4 +1,4 @@
-name: parcels
+name: py3_parcels
 channels:
   - defaults
   - conda-forge
