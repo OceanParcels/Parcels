@@ -116,7 +116,7 @@ def test_while_if_break(fieldset, mode):
          (sys.version_info >= (3, 0)) or (sys.platform == 'win32'),
          reason="py.test FD capturing does not work for jit on python3 or Win"
      )(
-        'jit'
+         'jit'
      )])
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
