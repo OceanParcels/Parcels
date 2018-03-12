@@ -1,4 +1,4 @@
-/from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable
 from parcels import random as parcels_random
 import numpy as np
 import pytest
