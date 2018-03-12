@@ -23,9 +23,6 @@ install:
 build: false
 
 test_script:
-  - "flake8 parcels"
-  - "flake8 tests"
-  - "flake8 examples"
-  - "parcels_get_examples examples/"
   - "py.test -v -s tests/"
+  - "parcels_get_examples examples/"
   - "py.test -v -s --nbval-lax examples/"
