@@ -324,7 +324,10 @@ class Field(object):
                 if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                     data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
                 elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                    if filebuffer.depthdim > 1:
+                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
+                    else:
+                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
                 else:
                     data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
             ti += len(tslice)
@@ -969,14 +972,17 @@ class FileBuffer(object):
         self.dataset = xr.open_dataset(str(self.filename))
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
-        latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(lonsize)
-        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(latsize)
+        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(londim)
+        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(latdim)
         if 'depth' in self.dimensions:
             depth = getattr(self.dataset, self.dimensions['depth'])
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            self.depthdim = len(self.indsdepth)
+        else:
+            self.depthdim = 0
         return self
 
     def __exit__(self, type, value, traceback):
@@ -1023,7 +1029,10 @@ class FileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indslat, self.indslon]
         elif len(data.shape) == 3:
-            data = data[:, self.indslat, self.indslon]
+            if self.depthdim > 1:
+                data = data[self.indsdepth, self.indslat, self.indslon]
+            else:
+                data = data[:, self.indslat, self.indslon]
         else:
             data = data[:, self.indsdepth, self.indslat, self.indslon]
 
