@@ -1,4 +1,4 @@
-from parcels.field import Field
+from parcels.field import Field, NetcdfFileBuffer
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.scripts import compute_curvilinearGrid_rotationAngles
@@ -343,3 +343,81 @@ class FieldSet(object):
                 advance = advance2
                 gnew.advanced = True
             f.advancetime(fnew, advance == 1)
+
+    def computeTimeChunk(self, time, dt):
+        signdt = np.sign(dt)
+        nextTime = np.infty * signdt
+
+        for g in self.gridset.grids:
+            g.advanced = 0
+        for f in self.fields:
+            if f.name == 'UV' or not f.grid.time_partial_load:
+                continue
+            g = f.grid
+            if g.advanced == 0:
+                if g.ti == -1:
+                    g.time = g.time_full
+                    g.tdim = 3
+                    g.ti, _ = f.time_index(time)
+                    if g.ti > 0 and signdt == -1:
+                        if g.ti == len(g.time_full)-1:
+                            g.ti -= 2
+                        else:
+                            g.ti -= 1
+                    g.time = g.time_full[g.ti:g.ti+3]
+                    g.advanced = 2
+                else:
+                    if signdt == 1 and time >= g.time[1]:
+                        g.ti += 1
+                        g.time = g.time_full[g.ti:g.ti+3]
+                        g.advanced = 1
+                    if signdt == -1 and time <= g.time[1]:
+                        g.ti -= 1
+                        g.time = g.time_full[g.ti:g.ti+3]
+                        g.advanced = 1
+            nextTime = min(nextTime, g.time[2]) if signdt == 1 else max(nextTime, g.time[0])
+
+        for f in self.fields:
+            if f.name == 'UV' or not f.grid.time_partial_load:
+                continue
+            g = f.grid
+            if f.grid.advanced == 2:  # First load of data
+                if g.zdim > 1:
+                    f.data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
+                else:
+                    f.data = np.empty((g.tdim, g.ydim, g.xdim), dtype=np.float32)
+                for tindex in range(3):
+                    with NetcdfFileBuffer(f.timeFiles[g.ti+tindex], f.dimensions, f.indices) as filebuffer:
+                        # shapes here can be wrong
+                        # if filebuffer.data has various timesteps, it is wrong here
+                        filebuffer.name = f.dimensions['data'] if 'data' in f.dimensions else f.name
+                        if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                            f.data[tindex, :, :] = filebuffer.data[:, :]
+                        elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                            f.data[tindex, :, :] = filebuffer.data[0, :, :]
+                        elif len(filebuffer.dataset[filebuffer.name].shape) == 4:
+                            f.data[tindex, :, :, :] = filebuffer.data[0, 0, :, :]
+                        else:
+                            print 'Error'
+            elif f.grid.advanced == 1:
+                if signdt == 1:
+                    f.data[:2, :, :] = f.data[1:, :, :]
+                    tindex = 2
+                else:
+                    f.data[1:, :, :] = f.data[:2, :, :]
+                    tindex = 0
+                with NetcdfFileBuffer(f.timeFiles[g.ti+tindex], f.dimensions, f.indices) as filebuffer:
+                    filebuffer.name = f.dimensions['data'] if 'data' in f.dimensions else f.name
+                    if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                        f.data[tindex, :, :] = filebuffer.data[:, :]
+                    elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                        f.data[tindex, :, :] = filebuffer.data[0, :, :]
+                    elif len(filebuffer.dataset[filebuffer.name].shape) == 4:
+                        f.data[tindex, :, :, :] = filebuffer.data[0, 0, :, :]
+                    else:
+                        print 'Error'
+            if not f.data.dtype == np.float32:
+                f.data = f.data.astype(np.float32)
+
+        # do something such that nextTime arrives at int number of dt
+        return nextTime

@@ -176,7 +176,7 @@ class Field(object):
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  transpose=False, vmin=None, vmax=None, time_origin=0,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         if self.name == 'UV':
             return
@@ -244,6 +244,9 @@ class Field(object):
 
         # Variable names in JIT code
         self.ccode_data = self.name
+        self.dimensions = kwargs.pop('dimensions', None)
+        self.indices = kwargs.pop('indices', None)
+        self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
@@ -268,7 +271,7 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
-        with FileBuffer(filenames[0], dimensions, indices) as filebuffer:
+        with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
             if name in ['cosU', 'sinU', 'cosV', 'sinV']:
@@ -285,11 +288,14 @@ class Field(object):
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = []
+        timeFiles = []
         for fname in filenames:
-            with FileBuffer(fname, dimensions, indices) as filebuffer:
+            with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 timeslices.append(filebuffer.time)
+                timeFiles.append([fname for i in range(len(filebuffer.time))])
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
+        timeFiles = np.concatenate(np.array(timeFiles))
         if isinstance(time[0], np.datetime64):
             time_origin = time[0]
             time = (time - time_origin) / np.timedelta64(1, 's')
@@ -297,44 +303,6 @@ class Field(object):
             time_origin = 0
         assert(np.all((time[1:]-time[:-1]) > 0))
 
-        # Pre-allocate data before reading files into buffer
-        depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
-        ti = 0
-        for tslice, fname in zip(timeslices, filenames):
-            with FileBuffer(fname, dimensions, indices) as filebuffer:
-                depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-                latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-                lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-                filebuffer.indslat = indices['lat'] if 'lat' in indices else range(latsize)
-                filebuffer.indslon = indices['lon'] if 'lon' in indices else range(lonsize)
-                filebuffer.indsdepth = indices['depth'] if 'depth' in indices else range(depthsize)
-                for inds in [filebuffer.indslat, filebuffer.indslon, filebuffer.indsdepth]:
-                    if not isinstance(inds, list):
-                        raise RuntimeError('Indices sur field subsetting need to be a list')
-                if 'data' in dimensions:
-                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
-                    # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = dimensions['data']
-                else:
-                    filebuffer.name = name
-
-                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
-                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                    if filebuffer.depthdim > 1:
-                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
-                    else:
-                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
-                else:
-                    data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
-            ti += len(tslice)
-        # Time indexing after the fact only
-        if 'time' in indices:
-            time = time[indices['time']]
-            data = data[indices['time'], :, :, :]
         if time.size == 1 and time[0] is None:
             time[0] = 0
         if len(lon.shape) == 1:
@@ -347,8 +315,43 @@ class Field(object):
                 grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
                 grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+
+        if time.size <= 4:
+            # Pre-allocate data before reading files into buffer
+            data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+            ti = 0
+            for tslice, fname in zip(timeslices, filenames):
+                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+                    # In that case, assume that 'name' is the data dimension
+                    filebuffer.name = dimensions['data'] if 'data' in dimensions else name
+
+                    if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
+                    elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                        if filebuffer.depthdim > 1:
+                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
+                        else:
+                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                    else:
+                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
+                ti += len(tslice)
+            if 'time' in indices:
+                grid.time = grid.time[indices['time']]
+                grid.tdim = grid.time.size
+                data = data[indices['time'], :, :, :]
+        else:
+            grid.time_partial_load = True
+            grid.time_full = grid.time
+            grid.ti = -1
+            data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
+        kwargs['dimensions'] = dimensions.copy()
+        kwargs['indices'] = indices
+        kwargs['timeFiles'] = timeFiles
+
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
@@ -959,7 +962,7 @@ class Field(object):
             self.time = self.grid.time
 
 
-class FileBuffer(object):
+class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
     def __init__(self, filename, dimensions, indices):
@@ -983,6 +986,10 @@ class FileBuffer(object):
             self.depthdim = len(self.indsdepth)
         else:
             self.depthdim = 0
+            self.indsdepth = []
+        for inds in [self.indslat, self.indslon, self.indsdepth]:
+            if not isinstance(inds, list):
+                raise RuntimeError('Indices sur field subsetting need to be a list')
         return self
 
     def __exit__(self, type, value, traceback):

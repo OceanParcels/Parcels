@@ -42,6 +42,7 @@ class Grid(object):
         self.cell_edge_sizes = {}
         self.zonal_periodic = False
         self.lat_flipped = False
+        self.time_partial_load = False
 
     @property
     def ctypes_struct(self):
