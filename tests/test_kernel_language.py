@@ -112,7 +112,7 @@ def test_while_if_break(fieldset, mode):
 @pytest.mark.parametrize(
     'mode',
     ['scipy',
-     pytest.mark.skipif(
+     pytest.mark.xfail(
          (sys.version_info >= (3, 0)) or (sys.platform == 'win32'),
          reason="py.test FD capturing does not work for jit on python3 or Win"
      )(
