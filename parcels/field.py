@@ -221,18 +221,7 @@ class Field(object):
         if self.grid.lat_flipped:
             self.data = np.flip(self.data, axis=-2)
 
-        if self.grid.tdim == 1:
-            if len(self.data.shape) < 4:
-                self.data = self.data.reshape(sum(((1,), self.data.shape), ()))
-        if self.grid.zdim == 1:
-            if len(self.data.shape) == 4:
-                self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
-        if len(self.data.shape) == 4:
-            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
-                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
-        else:
-            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
-                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+        self.data = self.cleanShape(self.data)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -329,7 +318,7 @@ class Field(object):
                     if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
                     elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                        if filebuffer.depthdim > 1:
+                        if filebuffer.zdim > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
                         else:
                             data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
@@ -354,6 +343,21 @@ class Field(object):
 
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+
+    def cleanShape(self, data):
+        if self.grid.tdim == 1:
+            if len(data.shape) < 4:
+                data = data.reshape(sum(((1,), data.shape), ()))
+        if self.grid.zdim == 1:
+            if len(data.shape) == 4:
+                data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
+        if len(data.shape) == 4:
+            assert data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
+                                 ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+        else:
+            assert data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
+                                 ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+        return data
 
     def getUV(self, time, x, y, z):
         fieldset = self.fieldset
@@ -975,17 +979,17 @@ class NetcdfFileBuffer(object):
         self.dataset = xr.open_dataset(str(self.filename))
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
-        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(londim)
-        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(latdim)
+        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(xdim)
+        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(ydim)
         if 'depth' in self.dimensions:
             depth = getattr(self.dataset, self.dimensions['depth'])
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            self.depthdim = len(self.indsdepth)
+            self.zdim = len(self.indsdepth)
         else:
-            self.depthdim = 0
+            self.zdim = 0
             self.indsdepth = []
         for inds in [self.indslat, self.indslon, self.indsdepth]:
             if not isinstance(inds, list):
@@ -1009,9 +1013,9 @@ class NetcdfFileBuffer(object):
             lon_subset = np.array(lon[0, self.indslat, self.indslon])
             lat_subset = np.array(lat[0, self.indslat, self.indslon])
         if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
-            londim = lon_subset.shape[0]
-            latdim = lat_subset.shape[1]
-            if np.allclose(lon_subset[0, :], lon_subset[int(londim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(latdim/2)]):
+            xdim = lon_subset.shape[0]
+            ydim = lat_subset.shape[1]
+            if np.allclose(lon_subset[0, :], lon_subset[int(xdim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(ydim/2)]):
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
@@ -1036,7 +1040,7 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indslat, self.indslon]
         elif len(data.shape) == 3:
-            if self.depthdim > 1:
+            if self.zdim > 1:
                 data = data[self.indsdepth, self.indslat, self.indslon]
             else:
                 data = data[:, self.indslat, self.indslon]
