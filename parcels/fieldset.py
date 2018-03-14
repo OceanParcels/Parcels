@@ -368,7 +368,7 @@ class FieldSet(object):
                     g.time = g.time_full[g.ti:g.ti+3]
                     g.advanced = 2
                 else:
-                    if signdt == 1 and time >= g.time[1] and g.ti < len(g.time_full)-3:
+                    if signdt >= 0 and time >= g.time[1] and g.ti < len(g.time_full)-3:
                         g.ti += 1
                         g.time = g.time_full[g.ti:g.ti+3]
                         g.advanced = 1
@@ -380,7 +380,7 @@ class FieldSet(object):
                         g.advanced = 1
                         if g.ti != 0:
                             nextTime_loc = g.time[0]
-            nextTime = min(nextTime, nextTime_loc) if signdt == 1 else max(nextTime, nextTime_loc)
+            nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
             if f.name == 'UV' or not f.grid.time_partial_load:
@@ -406,7 +406,7 @@ class FieldSet(object):
                             data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
                 f.data = f.cleanShape(data)
             elif g.advanced == 1:
-                if signdt == 1:
+                if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
                     tindex = 2
                 else:
@@ -432,5 +432,8 @@ class FieldSet(object):
             if not f.data.dtype == np.float32:
                 f.data = f.data.astype(np.float32)
 
-        # do something such that nextTime arrives at int number of dt
-        return nextTime
+        if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
+            return nextTime
+        else:
+            nSteps = int((nextTime - time) / dt)
+            return time + nSteps * dt
