@@ -1,6 +1,6 @@
 """Collection of pre-built recovery kernels"""
 from enum import IntEnum
-from datetime import timedelta
+from numpy import timedelta64
 
 
 __all__ = ['ErrorCode', 'KernelError', 'OutOfBoundsError', 'recovery_map']
@@ -31,7 +31,7 @@ class KernelError(RuntimeError):
 def parse_particletime(time, fieldset):
     if fieldset is not None and fieldset.U.grid.time_origin != 0:
         # TODO assuming that error was thrown on U field
-        time = fieldset.U.grid.time_origin + timedelta(seconds=time)
+        time = fieldset.U.grid.time_origin + timedelta64(seconds=time)
     return time
 
 
