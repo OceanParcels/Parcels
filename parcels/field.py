@@ -221,7 +221,7 @@ class Field(object):
         if self.grid.lat_flipped:
             self.data = np.flip(self.data, axis=-2)
 
-        self.data = self.cleanShape(self.data)
+        self.data = self.reshape(self.data)
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
@@ -305,6 +305,9 @@ class Field(object):
             else:
                 grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
 
+        if 'time' in indices:
+            logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
+
         if time.size <= 4:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
@@ -325,10 +328,6 @@ class Field(object):
                     else:
                         data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
                 ti += len(tslice)
-            if 'time' in indices:
-                grid.time = grid.time[indices['time']]
-                grid.tdim = grid.time.size
-                data = data[indices['time'], :, :, :]
         else:
             grid.time_partial_load = True
             grid.time_full = grid.time
@@ -344,7 +343,7 @@ class Field(object):
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
-    def cleanShape(self, data):
+    def reshape(self, data):
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
                 data = data.reshape(sum(((1,), data.shape), ()))
@@ -965,6 +964,26 @@ class Field(object):
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
             self.time = self.grid.time
 
+    def computeTimeChunk(self, data, tindex):
+        g = self.grid
+        with NetcdfFileBuffer(self.timeFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
+            filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
+            time_data = filebuffer.time
+            if isinstance(time_data[0], np.datetime64):
+                time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
+            ti = (time_data <= g.time[tindex]).argmin() - 1
+            if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                data[tindex, 0, :, :] = filebuffer.data[:, :]
+            elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                if g.zdim > 1:
+                    data[tindex, :, :, :] = filebuffer.data[:, :, :]
+                else:
+                    data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
+            else:
+                data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
+        data[np.isnan(data)] = 0.
+        return data
+
 
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
@@ -993,7 +1012,7 @@ class NetcdfFileBuffer(object):
             self.indsdepth = []
         for inds in [self.indslat, self.indslon, self.indsdepth]:
             if not isinstance(inds, list):
-                raise RuntimeError('Indices sur field subsetting need to be a list')
+                raise RuntimeError('Indices for field subsetting need to be a list')
         return self
 
     def __exit__(self, type, value, traceback):

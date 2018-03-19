@@ -1,4 +1,4 @@
-from parcels.field import Field, NetcdfFileBuffer
+from parcels.field import Field
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.scripts import compute_curvilinearGrid_rotationAngles
@@ -349,86 +349,55 @@ class FieldSet(object):
         nextTime = np.infty * signdt
 
         for g in self.gridset.grids:
-            g.advanced = 0
+            g.update_status = 'no_update'
         for f in self.fields:
             if f.name == 'UV' or not f.grid.time_partial_load:
                 continue
             g = f.grid
             nextTime_loc = np.infty * signdt
-            if g.advanced == 0:
+            if g.update_status == 'no_update':
                 if g.ti == -1:
                     g.time = g.time_full
-                    g.tdim = 3
                     g.ti, _ = f.time_index(time)
                     if g.ti > 0 and signdt == -1:
-                        if g.ti == len(g.time_full)-1:
-                            g.ti -= 2
-                        else:
-                            g.ti -= 1
+                        g.ti = g.ti-2 if len(g.time_full)-1 else g.ti-1
                     g.time = g.time_full[g.ti:g.ti+3]
-                    g.advanced = 2
+                    g.tdim = 3
+                    g.update_status = 'first_update'
                 else:
                     if signdt >= 0 and time >= g.time[1] and g.ti < len(g.time_full)-3:
                         g.ti += 1
                         g.time = g.time_full[g.ti:g.ti+3]
-                        g.advanced = 1
-                        if g.ti != len(g.time_full)-3:
-                            nextTime_loc = g.time[2]
-                    if signdt == -1 and time <= g.time[1] and g.ti > 0:
+                        g.update_status = 'update'
+                    elif signdt == -1 and time <= g.time[1] and g.ti > 0:
                         g.ti -= 1
                         g.time = g.time_full[g.ti:g.ti+3]
-                        g.advanced = 1
-                        if g.ti != 0:
-                            nextTime_loc = g.time[0]
+                        g.update_status = 'update'
+                if signdt >= 0 and g.ti < len(g.time_full)-3:
+                    nextTime_loc = g.time[2]
+                elif signdt == -1 and g.ti > 0:
+                    nextTime_loc = g.time[0]
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
             if f.name == 'UV' or not f.grid.time_partial_load:
                 continue
             g = f.grid
-            if g.advanced == 2:  # First load of data
+            if g.update_status == 'first_update':  # First load of data
                 data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
                 for tindex in range(3):
-                    with NetcdfFileBuffer(f.timeFiles[g.ti+tindex], f.dimensions, f.indices) as filebuffer:
-                        filebuffer.name = f.dimensions['data'] if 'data' in f.dimensions else f.name
-                        time_data = filebuffer.time
-                        if isinstance(time_data[0], np.datetime64):
-                            time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
-                        ti = (time_data <= g.time[tindex]).argmin() - 1
-                        if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                            data[tindex, 0, :, :] = filebuffer.data[:, :]
-                        elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                            if g.zdim > 1:
-                                data[tindex, :, :, :] = filebuffer.data[:, :, :]
-                            else:
-                                data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
-                        else:
-                            data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
-                f.data = f.cleanShape(data)
-            elif g.advanced == 1:
+                    data = f.computeTimeChunk(data, tindex)
+                f.data = f.reshape(data)
+            elif g.update_status == 'update':
+                data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
                     tindex = 2
                 else:
                     f.data[1:, :] = f.data[:2, :]
                     tindex = 0
-                with NetcdfFileBuffer(f.timeFiles[g.ti+tindex], f.dimensions, f.indices) as filebuffer:
-                    data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
-                    filebuffer.name = f.dimensions['data'] if 'data' in f.dimensions else f.name
-                    time_data = filebuffer.time
-                    if isinstance(time_data[0], np.datetime64):
-                        time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
-                    ti = (time_data <= g.time[tindex]).argmin() - 1
-                    if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                        data[tindex, 0, :, :] = filebuffer.data[:, :]
-                    elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                        if g.zdim > 1:
-                            data[tindex, :, :, :] = filebuffer.data[:, :, :]
-                        else:
-                            data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
-                    else:
-                        data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
-                    f.data[tindex, :] = f.cleanShape(data)[tindex, :]
+                data = f.computeTimeChunk(data, tindex)
+                f.data[tindex, :] = f.reshape(data)[tindex, :]
             if not f.data.dtype == np.float32:
                 f.data = f.data.astype(np.float32)
 
@@ -436,4 +405,7 @@ class FieldSet(object):
             return nextTime
         else:
             nSteps = int((nextTime - time) / dt)
-            return time + nSteps * dt
+            if nSteps == 0:
+                return nextTime
+            else:
+                return time + nSteps * dt
