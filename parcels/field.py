@@ -239,7 +239,7 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
-                    allow_time_extrapolation=False, mesh='flat', **kwargs):
+                    allow_time_extrapolation=False, mesh='flat', full_load=False, **kwargs):
         """Create field from netCDF file
 
         :param name: Name of the field to create
@@ -256,6 +256,10 @@ class Field(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however necessary for plotting the fields.
         """
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
@@ -308,7 +312,7 @@ class Field(object):
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
 
-        if time.size <= 4:
+        if time.size <= 4 or full_load:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0

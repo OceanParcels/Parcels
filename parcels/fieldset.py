@@ -101,7 +101,7 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
-                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, **kwargs):
+                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -127,6 +127,10 @@ class FieldSet(object):
                (i.e. beyond the last available time snapshot)
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however necessary for plotting the fields.
         """
 
         fields = {}
@@ -149,7 +153,7 @@ class FieldSet(object):
 
             fields[var] = Field.from_netcdf(var, dims, paths, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, **kwargs)
+                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -229,7 +233,7 @@ class FieldSet(object):
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
-                     allow_time_extrapolation=False, time_periodic=False, **kwargs):
+                     allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -242,6 +246,10 @@ class FieldSet(object):
                (i.e. beyond the last available time snapshot)
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however necessary for plotting the fields.
         """
 
         dimensions = {}
@@ -255,7 +263,7 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, **kwargs)
+                               time_periodic=time_periodic, full_load=full_load, **kwargs)
 
     @property
     def fields(self):
