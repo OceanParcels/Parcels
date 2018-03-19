@@ -96,15 +96,6 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
-@pytest.mark.parametrize('indstime', [range(2, 8), [4]])
-def test_moving_eddies_file_subsettime(indstime):
-    fieldsetfile = path.join(path.dirname(__file__), 'test_data', 'testfields')
-    fieldsetfull = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'})
-    fieldsetsub = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, indices={'time': indstime})
-    assert np.allclose(fieldsetsub.P.time, fieldsetfull.P.time[indstime])
-    assert np.allclose(fieldsetsub.P.data, fieldsetfull.P.data[indstime, :, :])
-
-
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
