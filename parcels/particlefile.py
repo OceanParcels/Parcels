@@ -102,7 +102,7 @@ class ParticleFile(object):
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
 
-        self.idx = 0
+        self.idx = np.empty(shape=0)
 
     def __del__(self):
         self.dataset.close()
@@ -125,25 +125,25 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if p.fileid < 0]
+                first_write = [p for p in pset if p.fileid < 0 or len(self.idx) == 0]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
 
-                inds = [p.fileid for p in pset]
+                self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
-                self.id[inds, self.idx] = [p.id for p in pset]
-                self.time[inds, self.idx] = time
-                self.lat[inds, self.idx] = np.array([p.lat for p in pset])
-                self.lon[inds, self.idx] = np.array([p.lon for p in pset])
-                self.z[inds, self.idx] = np.array([p.depth for p in pset])
-                for var in self.user_vars:
-                    getattr(self, var)[inds, self.idx] = np.array([getattr(p, var) for p in pset])
-                for var in self.user_vars_once:
-                    if np.any(first_write):
-                        vals = [getattr(p, var) for p in first_write]
-                        newinds = [p.fileid for p in first_write]
-                        getattr(self, var)[newinds] = np.array(vals)
+                for p in pset:
+                    i = p.fileid
+                    self.id[i, self.idx[i]] = p.id
+                    self.time[i, self.idx[i]] = time
+                    self.lat[i, self.idx[i]] = p.lat
+                    self.lon[i, self.idx[i]] = p.lon
+                    self.z[i, self.idx[i]] = p.depth
+                    for var in self.user_vars:
+                        getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                for p in first_write:
+                    for var in self.user_vars_once:
+                        getattr(self, var)[p.fileid] = getattr(p, var)
             else:
                 logger.warning("ParticleSet is empty on writing as array")
 

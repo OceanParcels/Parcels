@@ -8,8 +8,8 @@ import xarray as xr
 from math import cos, pi
 from datetime import timedelta
 import math
-from grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
-                  CurvilinearSGrid, CGrid, GridCode)
+from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
+                   CurvilinearSGrid, CGrid, GridCode)
 
 
 __all__ = ['Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
@@ -1011,7 +1011,7 @@ class NetcdfFileBuffer(object):
             self.zdim = 0
             self.indsdepth = []
         for inds in [self.indslat, self.indslon, self.indsdepth]:
-            if not isinstance(inds, list):
+            if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
         return self
 

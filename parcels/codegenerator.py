@@ -6,7 +6,7 @@ from collections import OrderedDict
 import math
 import random
 import numpy as np
-from grid import GridCode
+from .grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
@@ -86,6 +86,11 @@ class ErrorCodeNode(IntrinsicNode):
                                  % attr)
 
 
+class PrintNode(IntrinsicNode):
+    def __init__(self):
+        self.obj = 'print'
+
+
 class ParticleAttributeNode(IntrinsicNode):
     def __init__(self, obj, attr):
         self.obj = obj
@@ -139,6 +144,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = MathNode(math, ccode='')
         elif node.id == 'random':
             node = RandomNode(math, ccode='')
+        elif node.id == 'print':
+            node = PrintNode()
         return node
 
     def visit_Attribute(self, node):
@@ -301,23 +308,42 @@ class KernelGenerator(ast.NodeVisitor):
         note that starred and keyword arguments are currently not
         supported."""
         pointer_args = False
-        for a in node.args:
-            self.visit(a)
-            if a.ccode == 'pointer_args':
-                pointer_args = True
-                continue
-            if isinstance(a, FieldNode):
-                a.ccode = a.obj.name
-            elif isinstance(a, ParticleNode):
-                continue
-            elif pointer_args:
-                a.ccode = "&%s" % a.ccode
-        ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
-        try:
-            self.visit(node.func)
-            node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
-        except:
-            raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
+        if isinstance(node.func, PrintNode):
+            if hasattr(node.args[0], 's'):
+                node.ccode = str(c.Statement('printf("%s\\n")' % (node.args[0].s)))
+                return
+            if isinstance(node.args[0], ast.BinOp):
+                if hasattr(node.args[0].right, 'ccode'):
+                    args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'elts'):
+                    args = [a.ccode for a in node.args[0].right.elts]
+                s = 'printf("%s\\n"' % node.args[0].left.s
+                if isinstance(args, str):
+                    s = s + (", %s)" % args)
+                else:
+                    for arg in args:
+                        s = s + (", %s" % arg)
+                    s = s + ")"
+                node.ccode = str(c.Statement(s))
+                return
+        else:
+            for a in node.args:
+                self.visit(a)
+                if a.ccode == 'pointer_args':
+                    pointer_args = True
+                    continue
+                if isinstance(a, FieldNode):
+                    a.ccode = a.obj.name
+                elif isinstance(a, ParticleNode):
+                    continue
+                elif pointer_args:
+                    a.ccode = "&%s" % a.ccode
+            ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
+            try:
+                self.visit(node.func)
+                node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+            except:
+                raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as

@@ -101,7 +101,7 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
     assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
-    assert samplevar.shape == (runtime // repeatdt+1, runtime+1)
+    assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
     if repeatdt == 0:
         # test whether samplevar[i, i+k] = k for k=range(maxvar)
         for k in range(maxvar):
@@ -282,10 +282,10 @@ def test_density(fieldset, mode, area_scale):
         assert np.allclose(arr, 1 / fieldset.U.cell_areas(), rtol=1e-3)  # check that density equals 1/area
     else:
         assert(np.sum(arr) == lons.size)  # check conservation of particles
-        inds = zip(*np.where(arr))
-        for i in range(len(inds)):  # check locations (low atol because of coarse grid)
-            assert np.allclose(fieldset.U.lon[inds[i][1]], pset[i].lon, atol=fieldset.U.lon[1]-fieldset.U.lon[0])
-            assert np.allclose(fieldset.U.lat[inds[i][0]], pset[i].lat, atol=fieldset.U.lat[1]-fieldset.U.lat[0])
+        inds = np.where(arr)
+        for i in range(len(inds[0])):  # check locations (low atol because of coarse grid)
+            assert np.allclose(fieldset.U.lon[inds[1][i]], pset[i].lon, atol=fieldset.U.lon[1]-fieldset.U.lon[0])
+            assert np.allclose(fieldset.U.lat[inds[0][i]], pset[i].lat, atol=fieldset.U.lat[1]-fieldset.U.lat[0])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
