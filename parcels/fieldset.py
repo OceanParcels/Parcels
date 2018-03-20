@@ -395,8 +395,8 @@ class FieldSet(object):
                 data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
                 for tindex in range(3):
                     data = f.computeTimeChunk(data, tindex)
-                if not np.allclose(f.scaling_factor, 1):
-                    data *= f.scaling_factor
+                if f._scaling_factor:
+                    data *= f._scaling_factor
                 f.data = f.reshape(data)
             elif g.update_status == 'update':
                 data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
@@ -407,8 +407,8 @@ class FieldSet(object):
                     f.data[1:, :] = f.data[:2, :]
                     tindex = 0
                 data = f.computeTimeChunk(data, tindex)
-                if not np.allclose(f.scaling_factor, 1):
-                    data *= f.scaling_factor
+                if f._scaling_factor:
+                    data *= f._scaling_factor
                 f.data[tindex, :] = f.reshape(data)[tindex, :]
             if not f.data.dtype == np.float32:
                 f.data = f.data.astype(np.float32)

@@ -230,7 +230,7 @@ class Field(object):
         if vmax is not None:
             self.data[self.data > vmax] = 0.
         self.data[np.isnan(self.data)] = 0.
-        self.scaling_factor = 1.
+        self._scaling_factor = None
 
         # Variable names in JIT code
         self.ccode_data = self.name
@@ -362,6 +362,17 @@ class Field(object):
             assert data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
                                  ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
         return data
+
+    def set_scaling_factor(self, factor):
+        """Scales the field data by some constant factor.
+
+        :param factor: scaling factor
+        """
+
+        if self._scaling_factor:
+            raise NotImplementedError(('Scaling factor for field %s already defined.' % self.name))
+        self._scaling_factor = factor
+        self.data *= factor
 
     def getUV(self, time, x, y, z):
         fieldset = self.fieldset
