@@ -9,14 +9,14 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices={}):
+def set_globcurrent_fieldset(filename=None, indices={}, full_load=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     filenames = {'U': filename, 'V': filename}
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
-    return FieldSet.from_netcdf(filenames, variables, dimensions, indices)
+    return FieldSet.from_netcdf(filenames, variables, dimensions, indices, full_load=full_load)
 
 
 def test_globcurrent_fieldset():
@@ -46,10 +46,10 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
                          '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     files = sorted(glob(str(basepath)))
 
-    fieldsetsub = set_globcurrent_fieldset(files[substart:subend])
+    fieldsetsub = set_globcurrent_fieldset(files[0:10])
     psetsub = ParticleSet.from_list(fieldset=fieldsetsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
 
-    fieldsetall = set_globcurrent_fieldset(files[0:10])
+    fieldsetall = set_globcurrent_fieldset(files[0:10], full_load=True)
     psetall = ParticleSet.from_list(fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
     if dt < 0:
         psetsub[0].time = fieldsetsub.U.time[-1]
@@ -57,8 +57,6 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
 
     for i in irange:
         psetsub.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
-        fieldsetsub.advancetime(set_globcurrent_fieldset(files[i]))
-
         psetall.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
