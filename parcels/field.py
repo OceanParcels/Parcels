@@ -230,6 +230,7 @@ class Field(object):
         if vmax is not None:
             self.data[self.data > vmax] = 0.
         self.data[np.isnan(self.data)] = 0.
+        self.scaling_factor = 1.
 
         # Variable names in JIT code
         self.ccode_data = self.name
