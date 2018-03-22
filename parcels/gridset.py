@@ -34,6 +34,7 @@ class GridSet(object):
         if not existing_grid:
             self.grids.append(grid)
             self.size += 1
+        field.iGrid = self.grids.index(field.grid)
 
 
 class GridIndexSet(object):
