@@ -207,10 +207,10 @@ class JITParticle(ScipyParticle):
 
     """
 
-    cxis = Variable('cxis', dtype=np.dtype(c_void_p), to_write=False)
-    cyis = Variable('cyis', dtype=np.dtype(c_void_p), to_write=False)
-    czis = Variable('czis', dtype=np.dtype(c_void_p), to_write=False)
-    ctis = Variable('ctis', dtype=np.dtype(c_void_p), to_write=False)
+    cxi = Variable('cxi', dtype=np.dtype(c_void_p), to_write=False)
+    cyi = Variable('cyi', dtype=np.dtype(c_void_p), to_write=False)
+    czi = Variable('czi', dtype=np.dtype(c_void_p), to_write=False)
+    cti = Variable('cti', dtype=np.dtype(c_void_p), to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -221,18 +221,13 @@ class JITParticle(ScipyParticle):
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
-        self.xis = np.zeros((fieldset.gridset.size), dtype=np.int32)
-        self.xisp = self.xis.ctypes.data_as(c_void_p)
-        self.cxis = self.xisp.value
-        self.yis = np.zeros((fieldset.gridset.size), dtype=np.int32)
-        self.yisp = self.yis.ctypes.data_as(c_void_p)
-        self.cyis = self.yisp.value
-        self.zis = np.zeros((fieldset.gridset.size), dtype=np.int32)
-        self.zisp = self.zis.ctypes.data_as(c_void_p)
-        self.czis = self.zisp.value
-        self.tis = -1 * np.ones((fieldset.gridset.size), dtype=np.int32)
-        self.tisp = self.tis.ctypes.data_as(c_void_p)
-        self.ctis = self.tisp.value
+        for index in ['xi', 'yi', 'zi', 'ti']:
+            if index is not 'ti':
+                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+            else:
+                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+            setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
+            setattr(self, 'c'+index, getattr(self, index+'p').value)
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)

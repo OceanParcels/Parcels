@@ -185,7 +185,7 @@ class Field(object):
             self.grid = grid
         else:
             self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-        self.iGrid = -1
+        self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
@@ -785,16 +785,16 @@ class Field(object):
     def ccode_evalUV(self, varU, varV, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
         if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-            return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->cxis, particle->cyis, particle->czis, particle->ctis, &%s, &%s, %s)" \
+            return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                 % (x, y, z, t, varU, varV, self.fieldset.U.interp_method.upper())
         else:
-            return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->cxis, particle->cyis, particle->czis, particle->ctis, &%s, &%s, %s)" \
+            return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                 % (x, y, z, t,
                    varU, varV, self.fieldset.U.interp_method.upper())
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxis, particle->cyis, particle->czis, particle->ctis, &%s, %s)" \
+        return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
             % (x, y, z, t, self.name, var, self.interp_method.upper())
 
     def ccode_convert(self, _, x, y, z):
@@ -808,7 +808,7 @@ class Field(object):
         # Ctypes struct corresponding to the type definition in parcels.h
         class CField(Structure):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('iGrid', c_int),
+                        ('tdim', c_int), ('igrid', c_int),
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
                         ('data', POINTER(POINTER(c_float))),
@@ -818,7 +818,7 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
-                         self.grid.tdim, self.iGrid, allow_time_extrapolation, time_periodic,
+                         self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
                          self.data.ctypes.data_as(POINTER(POINTER(c_float))),
                          pointer(self.grid.ctypes_struct))
         return cstruct
