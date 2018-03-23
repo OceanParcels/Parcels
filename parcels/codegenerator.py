@@ -5,7 +5,6 @@ import cgen as c
 from collections import OrderedDict
 import math
 import random
-import numpy as np
 from .grid import GridCode
 
 
@@ -590,10 +589,7 @@ class LoopGenerator(object):
         # Generate type definition for particle type
         vdecl = []
         for v in self.ptype.variables:
-            if v.name is 'CGridIndexSet':
-                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
-            else:
-                vdecl.append(c.POD(v.dtype, v.name))
+            vdecl.append(c.POD(v.dtype, v.name))
 
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
