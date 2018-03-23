@@ -3,8 +3,7 @@ from parcels.field import Field
 from parcels.loggers import logger
 from operator import attrgetter
 import numpy as np
-from parcels.gridset import GridIndexSet
-from ctypes import cast, pointer, c_void_p
+from ctypes import c_void_p
 
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
@@ -48,7 +47,7 @@ class Variable(object):
     def is64bit(self):
         """Check whether variable is 64-bit"""
         return True if self.dtype == np.float64 or self.dtype == np.int64 \
-                       or self.name in ['CGridIndexSet', 'cxis', 'cyis', 'czis', 'ctis'] else False
+                       or self.dtype == c_void_p else False
 
 
 class ParticleType(object):
@@ -132,7 +131,7 @@ class _Particle(object):
             else:
                 initial = v.initial
             # Enforce type of initial value
-            if v.name not in ['CGridIndexSet', 'cxis', 'cyis', 'czis', 'ctis']:
+            if v.dtype != c_void_p:
                 setattr(self, v.name, v.dtype(initial))
 
         # Placeholder for explicit error handling
@@ -208,7 +207,6 @@ class JITParticle(ScipyParticle):
 
     """
 
-    CGridIndexSet = Variable('CGridIndexSet', dtype=np.dtype(c_void_p), to_write=False)
     cxis = Variable('cxis', dtype=np.dtype(c_void_p), to_write=False)
     cyis = Variable('cyis', dtype=np.dtype(c_void_p), to_write=False)
     czis = Variable('czis', dtype=np.dtype(c_void_p), to_write=False)
@@ -223,9 +221,6 @@ class JITParticle(ScipyParticle):
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
-        self.gridIndexSet = GridIndexSet(self.id, fieldset.gridset)
-        self.CGridIndexSetptr = cast(pointer(self.gridIndexSet.ctypes_struct), c_void_p)
-        self.CGridIndexSet = self.CGridIndexSetptr.value
         self.xis = np.zeros((fieldset.gridset.size), dtype=np.int32)
         self.xisp = self.xis.ctypes.data_as(c_void_p)
         self.cxis = self.xisp.value

@@ -46,18 +46,6 @@ typedef struct
   CGrid *grid;
 } CField;
 
-typedef struct
-{
-  int xi, yi, zi, ti;
-} CGridIndex;  
-
-typedef struct
-{ 
-  int size;
-  CGridIndex *gridIndices;
-} CGridIndexSet;  
-
-
 static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *zi, double *zeta)
 {
   if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
@@ -459,7 +447,7 @@ static inline ErrorCode spatial_interpolation_nearest3D(double xsi, double eta, 
 
 /* Linear interpolation along the time axis */
 static inline ErrorCode temporal_interpolation_structured_grid(float x, float y, float z, double time, CField *f, 
-                                                               GridCode gcode, int *xis, int *yis, int *zis, int *tis, CGridIndex *gridIndex,
+                                                               GridCode gcode, int *xis, int *yis, int *zis, int *tis,
                                                                float *value, int interp_method)
 {
   ErrorCode err;
@@ -535,19 +523,17 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
 }
 
 static inline ErrorCode temporal_interpolation(float x, float y, float z, double time, CField *f, 
-                                               void *vxis, void *vyis, void *vzis, void *vtis, void *gridIndexSet, float *value, int interp_method)
+                                               void *vxis, void *vyis, void *vzis, void *vtis, float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
-  CGridIndexSet *giset = (CGridIndexSet *) gridIndexSet;
-  CGridIndex *gridIndex = &giset->gridIndices[f->iGrid];
   int *xis = (int *) vxis;
   int *yis = (int *) vyis;
   int *zis = (int *) vzis;
   int *tis = (int *) vtis;
 
   if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_Z_GRID || gcode == CURVILINEAR_S_GRID)
-    return temporal_interpolation_structured_grid(x, y, z, time, f, gcode, xis, yis, zis, tis, gridIndex, value, interp_method);
+    return temporal_interpolation_structured_grid(x, y, z, time, f, gcode, xis, yis, zis, tis, value, interp_method);
   else{
     printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID, CURVILINEAR_Z_GRID and CURVILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;
@@ -555,30 +541,30 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
 }
 
 static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
-                                                 CField *U, CField *V, void *xis, void *yis, void *zis, void *tis, void *gridIndexSet,
+                                                 CField *U, CField *V, void *xis, void *yis, void *zis, void *tis,
                                                  float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
 
-  err = temporal_interpolation(x, y, z, time, U, xis, yis, zis, tis, gridIndexSet, valueU, interp_method); CHECKERROR(err);
-  err = temporal_interpolation(x, y, z, time, V, xis, yis, zis, tis, gridIndexSet, valueV, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, U, xis, yis, zis, tis, valueU, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, V, xis, yis, zis, tis, valueV, interp_method); CHECKERROR(err);
 
   return SUCCESS;
 }
 
 static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float z, double time,
                                                  CField *U, CField *V, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
-                                                 void *xis, void *yis, void *zis, void *tis, void *gridIndexSet, float *valueU, float *valueV, int interp_method)
+                                                 void *xis, void *yis, void *zis, void *tis, float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
 
   float u_val, v_val, cosU_val, sinU_val, cosV_val, sinV_val;
-  err = temporal_interpolation(x, y, z, time, U, xis, yis, zis, tis, gridIndexSet, &u_val, interp_method); CHECKERROR(err);
-  err = temporal_interpolation(x, y, z, time, V, xis, yis, zis, tis, gridIndexSet, &v_val, interp_method); CHECKERROR(err);
-  err = temporal_interpolation(x, y, z, time, cosU, xis, yis, zis, tis, gridIndexSet, &cosU_val, interp_method); CHECKERROR(err);
-  err = temporal_interpolation(x, y, z, time, sinU, xis, yis, zis, tis, gridIndexSet, &sinU_val, interp_method); CHECKERROR(err);
-  err = temporal_interpolation(x, y, z, time, cosV, xis, yis, zis, tis, gridIndexSet, &cosV_val, interp_method); CHECKERROR(err);
-  err = temporal_interpolation(x, y, z, time, sinV, xis, yis, zis, tis, gridIndexSet, &sinV_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, U, xis, yis, zis, tis, &u_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, V, xis, yis, zis, tis, &v_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, cosU, xis, yis, zis, tis, &cosU_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, sinU, xis, yis, zis, tis, &sinU_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, cosV, xis, yis, zis, tis, &cosV_val, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, sinV, xis, yis, zis, tis, &sinV_val, interp_method); CHECKERROR(err);
 
   *valueU = u_val * cosU_val - v_val * sinV_val;
   *valueV = u_val * sinU_val + v_val * cosV_val;
