@@ -334,6 +334,10 @@ class FieldSet(object):
         """Replace oldest time on FieldSet with new FieldSet
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
+        logger.warning_once("Fieldset.advancetime() is deprecated.\n \
+                             Parcels deals automatically with loading only 3 time steps simustaneously\
+                             such that the total allocated memory remains limited.")
+
         advance = 0
         for gnew in fieldset_new.gridset.grids:
             gnew.advanced = False
