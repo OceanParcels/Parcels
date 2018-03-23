@@ -3,7 +3,7 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 
-__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'GridIndex', 'CGrid']
+__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
 
 
 class GridCode(IntEnum):
@@ -356,38 +356,3 @@ class CurvilinearSGrid(CurvilinearGrid):
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
-
-
-class GVariable(object):
-    def __init__(self, name):
-        self.name = name
-
-    def __get__(self, instance, cls):
-        return instance._cptr.__getitem__(self.name)
-
-    def __set__(self, instance, value):
-        instance._cptr.__setitem__(self.name, value)
-
-
-class GridIndex(object):
-    """GridIndex class that defines the indices of the particle in the grid
-
-    :param grid: grid related to this grid index
-
-    """
-    xi = GVariable('xi')
-    yi = GVariable('yi')
-    zi = GVariable('zi')
-    ti = GVariable('ti')
-
-    def __init__(self, grid, *args, **kwargs):
-        self._cptr = kwargs.pop('cptr', None)
-        self.xi = 0
-        self.yi = 0
-        self.zi = 0
-        self.ti = -1   # -1 means that ti has not been computed yet
-
-    @classmethod
-    def dtype(cls):
-        type_list = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('ti', np.int32)]
-        return np.dtype(type_list)

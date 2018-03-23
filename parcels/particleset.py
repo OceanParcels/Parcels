@@ -515,11 +515,11 @@ class ParticleSet(object):
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
         for pi, p in enumerate(self.particles):
-            try:  # breaks if either p.gridIndexSet does not exist (in scipy) or field not in fieldset
-                if p.gridIndexSet[field.grid].ti < 0:  # xi, yi, ti, not initialised
+            try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
+                if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
                     raise('error')
-                xi = p.gridIndexSet[field.grid].xi
-                yi = p.gridIndexSet[field.grid].yi
+                xi = p.xi[field.igrid]
+                yi = p.yi[field.igrid]
             except:
                 _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
             density[yi, xi] += particle_val[pi]
