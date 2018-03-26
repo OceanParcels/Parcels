@@ -114,14 +114,13 @@ class Grid(object):
         nextTime_loc = np.infty * signdt
         if self.update_status == 'no_update':
             if self.ti >= 0:
-                if signdt >= 0 and (time < self.time[0] or time > self.time[2]):
+                if signdt >= 0 and ((time < self.time[0] and self.ti > 0)
+                   or (time > self.time[2] and self.ti < len(self.time_full)-3)):
                     self.ti = -1  # reset
                 elif signdt >= 0 and time >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'update'
-                elif signdt == -1 and (time > self.time[2] or time < self.time[0]):
-                    self.ti = -1  # reset
                 elif signdt == -1 and time <= self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
