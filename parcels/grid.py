@@ -110,6 +110,36 @@ class Grid(object):
         dx = np.where(dx > 180, dx-360, dx)
         self.zonal_periodic = sum(dx) > 359.9
 
+    def computeTimeChunk(self, f, time, signdt):
+        nextTime_loc = np.infty * signdt
+        if self.update_status == 'no_update':
+            if self.ti >= 0:
+                if signdt >= 0 and (time < self.time[0] or time > self.time[2]):
+                    self.ti = -1  # reset
+                elif signdt >= 0 and time >= self.time[1] and self.ti < len(self.time_full)-3:
+                    self.ti += 1
+                    self.time = self.time_full[self.ti:self.ti+3]
+                    self.update_status = 'update'
+                elif signdt == -1 and (time > self.time[2] or time < self.time[0]):
+                    self.ti = -1  # reset
+                elif signdt == -1 and time <= self.time[1] and self.ti > 0:
+                    self.ti -= 1
+                    self.time = self.time_full[self.ti:self.ti+3]
+                    self.update_status = 'update'
+            if self.ti == -1:
+                self.time = self.time_full
+                self.ti, _ = f.time_index(time)
+                if self.ti > 0 and signdt == -1:
+                    self.ti = self.ti-2 if len(self.time_full)-1 else self.ti-1
+                self.time = self.time_full[self.ti:self.ti+3]
+                self.tdim = 3
+                self.update_status = 'first_update'
+            if signdt >= 0 and self.ti < len(self.time_full)-3:
+                nextTime_loc = self.time[2]
+            elif signdt == -1 and self.ti > 0:
+                nextTime_loc = self.time[0]
+        return nextTime_loc
+
 
 class RectilinearGrid(Grid):
     """Rectilinear Grid

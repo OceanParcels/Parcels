@@ -261,7 +261,7 @@ class Field(object):
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
-               full_load is however necessary for plotting the fields.
+               full_load is however sometimes necessary for plotting the fields.
         """
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
@@ -864,6 +864,7 @@ class Field(object):
 
         if with_particles or (not animation):
             show_time = self.grid.time[0] if show_time is None else show_time
+            self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
             if self.grid.time.size > 1:

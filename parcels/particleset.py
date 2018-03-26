@@ -419,6 +419,7 @@ class ParticleSet(object):
             time_origin = self.fieldset.U.grid.time_origin
         else:
             time_origin = self.fieldset.U.grid.time_origin
+            self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.fieldset.U.time_index(show_time)
             show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
             U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))

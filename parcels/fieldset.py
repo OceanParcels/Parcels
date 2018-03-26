@@ -130,7 +130,7 @@ class FieldSet(object):
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
-               full_load is however necessary for plotting the fields.
+               full_load is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
@@ -249,7 +249,7 @@ class FieldSet(object):
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
-               full_load is however necessary for plotting the fields.
+               full_load is however sometimes necessary for plotting the fields.
         """
 
         dimensions = {}
@@ -365,30 +365,8 @@ class FieldSet(object):
         for f in self.fields:
             if f.name == 'UV' or not f.grid.time_partial_load:
                 continue
-            g = f.grid
-            nextTime_loc = np.infty * signdt
-            if g.update_status == 'no_update':
-                if g.ti == -1:
-                    g.time = g.time_full
-                    g.ti, _ = f.time_index(time)
-                    if g.ti > 0 and signdt == -1:
-                        g.ti = g.ti-2 if len(g.time_full)-1 else g.ti-1
-                    g.time = g.time_full[g.ti:g.ti+3]
-                    g.tdim = 3
-                    g.update_status = 'first_update'
-                else:
-                    if signdt >= 0 and time >= g.time[1] and g.ti < len(g.time_full)-3:
-                        g.ti += 1
-                        g.time = g.time_full[g.ti:g.ti+3]
-                        g.update_status = 'update'
-                    elif signdt == -1 and time <= g.time[1] and g.ti > 0:
-                        g.ti -= 1
-                        g.time = g.time_full[g.ti:g.ti+3]
-                        g.update_status = 'update'
-                if signdt >= 0 and g.ti < len(g.time_full)-3:
-                    nextTime_loc = g.time[2]
-                elif signdt == -1 and g.ti > 0:
-                    nextTime_loc = g.time[0]
+            if f.grid.update_status == 'no_update':
+                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
