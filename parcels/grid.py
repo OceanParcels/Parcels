@@ -41,6 +41,8 @@ class Grid(object):
         self.cstruct = None
         self.cell_edge_sizes = {}
         self.zonal_periodic = False
+        self.zonal_halo = 0
+        self.meridional_halo = 0
         self.lat_flipped = False
         self.time_partial_load = False
 
@@ -178,6 +180,7 @@ class RectilinearGrid(Grid):
                                       self.lon, self.lon[0:halosize] + lonshift))
             self.xdim = self.lon.size
             self.zonal_periodic = True
+            self.zonal_halo = halosize
         if meridional:
             if not np.allclose(self.lat[1]-self.lat[0], self.lat[-1]-self.lat[-2]):
                 logger.warning_once("The meridional halo is located at the north and south of current grid, with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?")
@@ -185,6 +188,7 @@ class RectilinearGrid(Grid):
             self.lat = np.concatenate((self.lat[-halosize:] - latshift,
                                       self.lat, self.lat[0:halosize] + latshift))
             self.ydim = self.lat.size
+            self.meridional_halo = halosize
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -300,6 +304,7 @@ class CurvilinearGrid(Grid):
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
             self.zonal_periodic = True
+            self.zonal_halo = halosize
         if meridional:
             if not np.allclose(self.lat[1, :]-self.lat[0, :], self.lat[-1, :]-self.lat[-2, :]):
                 logger.warning_once("The meridional halo is located at the north and south of current grid, with a dy = lat[1,:]-lat[0,:] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1,:]-lat[0,:] != lat[-1,:]-lat[-2,:]. Is the halo computed as you expect?")
@@ -312,6 +317,7 @@ class CurvilinearGrid(Grid):
                                       axis=len(self.lon.shape)-2)
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
+            self.meridional_halo = halosize
 
 
 class CurvilinearZGrid(CurvilinearGrid):

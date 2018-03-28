@@ -374,14 +374,14 @@ class FieldSet(object):
                 continue
             g = f.grid
             if g.update_status == 'first_update':  # First load of data
-                data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
+                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 for tindex in range(3):
                     data = f.computeTimeChunk(data, tindex)
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 f.data = f.reshape(data)
             elif g.update_status == 'update':
-                data = np.empty((g.tdim, g.zdim, g.ydim, g.xdim), dtype=np.float32)
+                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
                     tindex = 2

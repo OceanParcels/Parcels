@@ -357,11 +357,13 @@ class Field(object):
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            assert data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
+            assert data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
                                  ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
         else:
-            assert data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
+            assert data.shape == (self.grid.tdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
                                  ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+        if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
+            data = self.add_periodic_halo(zonal=self.grid.zonal_halo > 0, meridional=self.grid.meridional_halo > 0, halosize=max(self.grid.meridional_halo, self.grid.zonal_halo), data=data)
         return data
 
     def set_scaling_factor(self, factor):
@@ -898,7 +900,7 @@ class Field(object):
             plt.close()
             return anim
 
-    def add_periodic_halo(self, zonal, meridional, halosize=5):
+    def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
@@ -906,30 +908,37 @@ class Field(object):
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
+        :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
         if self.name == 'UV':
             return
+        dataNone = not isinstance(data, np.ndarray)
+        data = self.data if dataNone else data
         if zonal:
-            if len(self.data.shape) is 3:
-                self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
-                                            self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
-                assert self.data.shape[2] == self.grid.xdim
+            if len(data.shape) is 3:
+                data = np.concatenate((data[:, :, -halosize:], data,
+                                       data[:, :, 0:halosize]), axis=len(data.shape)-1)
+                assert data.shape[2] == self.grid.xdim
             else:
-                self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
-                                            self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
-                assert self.data.shape[3] == self.grid.xdim
+                data = np.concatenate((data[:, :, :, -halosize:], data,
+                                       data[:, :, :, 0:halosize]), axis=len(data.shape) - 1)
+                assert data.shape[3] == self.grid.xdim
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
-            if len(self.data.shape) is 3:
-                self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
-                                            self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
-                assert self.data.shape[1] == self.grid.ydim
+            if len(data.shape) is 3:
+                data = np.concatenate((data[:, -halosize:, :], data,
+                                       data[:, 0:halosize, :]), axis=len(data.shape)-2)
+                assert data.shape[1] == self.grid.ydim
             else:
-                self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
-                                            self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
-                assert self.data.shape[2] == self.grid.ydim
+                data = np.concatenate((data[:, :, -halosize:, :], data,
+                                       data[:, :, 0:halosize, :]), axis=len(data.shape) - 2)
+                assert data.shape[2] == self.grid.ydim
             self.lat = self.grid.lat
+        if dataNone:
+            self.data = data
+        else:
+            return data
 
     def write(self, filename, varname=None):
         """Write a :class:`Field` to a netcdf file
