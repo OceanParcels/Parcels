@@ -150,7 +150,8 @@ def test_moving_eddies_file(fieldsetfile, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_periodic_and_computeTimeChunk_eddies(mode):
-    fieldset = FieldSet.from_parcels("MovingEddies_data/moving_eddies")
+    filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
+    fieldset = FieldSet.from_parcels(filename)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     pset = ParticleSet.from_list(fieldset=fieldset,
                                  pclass=ptype[mode],
