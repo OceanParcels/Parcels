@@ -230,7 +230,8 @@ class Field(object):
             self.data[self.data < vmin] = 0.
         if vmax is not None:
             self.data[self.data > vmax] = 0.
-        self.data[np.isnan(self.data)] = 0.
+        if not hasattr(self.grid, 'ti') or self.grid.ti > 0:
+            self.data[np.isnan(self.data)] = 0.
         self._scaling_factor = None
 
         # Variable names in JIT code
@@ -916,23 +917,39 @@ class Field(object):
         data = self.data if dataNone else data
         if zonal:
             if len(data.shape) is 3:
-                data = np.concatenate((data[:, :, -halosize:], data,
-                                       data[:, :, 0:halosize]), axis=len(data.shape)-1)
+                if hasattr(self.grid, 'ti') and self.grid.ti == -1:
+                    data = np.empty((data.shape[0], data.shape[1], data.shape[2]+2*halosize),
+                                    dtype=np.float32)
+                else:
+                    data = np.concatenate((data[:, :, -halosize:], data,
+                                           data[:, :, 0:halosize]), axis=len(data.shape)-1)
                 assert data.shape[2] == self.grid.xdim
             else:
-                data = np.concatenate((data[:, :, :, -halosize:], data,
-                                       data[:, :, :, 0:halosize]), axis=len(data.shape) - 1)
+                if hasattr(self.grid, 'ti') and self.grid.ti == -1:
+                    data = np.empty((data.shape[0], data.shape[1], data.shape[2],
+                                     data.shape[3]+2*halosize), dtype=np.float32)
+                else:
+                    data = np.concatenate((data[:, :, :, -halosize:], data,
+                                           data[:, :, :, 0:halosize]), axis=len(data.shape) - 1)
                 assert data.shape[3] == self.grid.xdim
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
             if len(data.shape) is 3:
-                data = np.concatenate((data[:, -halosize:, :], data,
-                                       data[:, 0:halosize, :]), axis=len(data.shape)-2)
+                if hasattr(self.grid, 'ti') and self.grid.ti == -1:
+                    data = np.empty((data.shape[0], data.shape[1]+2*halosize, data.shape[2]),
+                                    dtype=np.float32)
+                else:
+                    data = np.concatenate((data[:, -halosize:, :], data,
+                                           data[:, 0:halosize, :]), axis=len(data.shape)-2)
                 assert data.shape[1] == self.grid.ydim
             else:
-                data = np.concatenate((data[:, :, -halosize:, :], data,
-                                       data[:, :, 0:halosize, :]), axis=len(data.shape) - 2)
+                if hasattr(self.grid, 'ti') and self.grid.ti == -1:
+                    data = np.empty((data.shape[0], data.shape[1], data.shape[2]+2*halosize,
+                                     data.shape[3]), dtype=np.float32)
+                else:
+                    data = np.concatenate((data[:, :, -halosize:, :], data,
+                                           data[:, :, 0:halosize, :]), axis=len(data.shape) - 2)
                 assert data.shape[2] == self.grid.ydim
             self.lat = self.grid.lat
         if dataNone:
