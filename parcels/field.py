@@ -226,12 +226,12 @@ class Field(object):
 
         # Hack around the fact that NaN and ridiculously large values
         # propagate in SciPy's interpolators
-        if vmin is not None:
-            self.data[self.data < vmin] = 0.
-        if vmax is not None:
-            self.data[self.data > vmax] = 0.
         if not hasattr(self.grid, 'ti') or self.grid.ti > 0:
             self.data[np.isnan(self.data)] = 0.
+            if vmin is not None:
+                self.data[self.data < vmin] = 0.
+            if vmax is not None:
+                self.data[self.data > vmax] = 0.
         self._scaling_factor = None
 
         # Variable names in JIT code
