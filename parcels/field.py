@@ -212,26 +212,20 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
 
-        # Ensure that field data is the right data type
-        if not self.data.dtype == np.float32:
-            logger.warning_once("Casting field data to np.float32")
-            self.data = self.data.astype(np.float32)
-        if transpose:
-            self.data = np.transpose(self.data)
+        self.vmin = vmin
+        self.vmax = vmax
 
-        if self.grid.lat_flipped:
-            self.data = np.flip(self.data, axis=-2)
+        if not self.grid.time_partial_load:
+            self.data = self.reshape(self.data, transpose)
 
-        self.data = self.reshape(self.data)
-
-        # Hack around the fact that NaN and ridiculously large values
-        # propagate in SciPy's interpolators
-        if not hasattr(self.grid, 'ti') or self.grid.ti > 0:
+            # Hack around the fact that NaN and ridiculously large values
+            # propagate in SciPy's interpolators
             self.data[np.isnan(self.data)] = 0.
-            if vmin is not None:
-                self.data[self.data < vmin] = 0.
-            if vmax is not None:
-                self.data[self.data > vmax] = 0.
+            if self.vmin is not None:
+                self.data[self.data < self.vmin] = 0.
+            if self.vmax is not None:
+                self.data[self.data > self.vmax] = 0.
+
         self._scaling_factor = None
 
         # Variable names in JIT code
@@ -339,7 +333,7 @@ class Field(object):
             grid.time_partial_load = True
             grid.time_full = grid.time
             grid.ti = -1
-            data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+            data = None
 
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
@@ -350,7 +344,17 @@ class Field(object):
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
-    def reshape(self, data):
+    def reshape(self, data, transpose=False):
+
+        # Ensure that field data is the right data type
+        if not data.dtype == np.float32:
+            logger.warning_once("Casting field data to np.float32")
+            data = data.astype(np.float32)
+        if transpose:
+            data = np.transpose(data)
+        if self.grid.lat_flipped:
+            data = np.flip(data, axis=-2)
+
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
                 data = data.reshape(sum(((1,), data.shape), ()))
@@ -911,9 +915,9 @@ class Field(object):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
-        if self.name == 'UV':
-            return
         dataNone = not isinstance(data, np.ndarray)
+        if self.name == 'UV' or (self.grid.time_partial_load and dataNone):
+            return
         data = self.data if dataNone else data
         if zonal:
             if len(data.shape) is 3:
@@ -1013,6 +1017,11 @@ class Field(object):
             else:
                 data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
         data[np.isnan(data)] = 0.
+        if self.vmin is not None:
+            data[data < self.vmin] = 0.
+        if self.vmax is not None:
+            data[data > self.vmax] = 0.
+
         return data
 
 

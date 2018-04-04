@@ -23,10 +23,8 @@ def test_globcurrent_fieldset():
     fieldset = set_globcurrent_fieldset()
     assert(fieldset.U.lon.size == 81)
     assert(fieldset.U.lat.size == 41)
-    assert(fieldset.U.data.shape == (365, 41, 81))
     assert(fieldset.V.lon.size == 81)
     assert(fieldset.V.lat.size == 41)
-    assert(fieldset.V.data.shape == (365, 41, 81))
 
     indices = {'lon': [5], 'lat': range(20, 30)}
     fieldsetsub = set_globcurrent_fieldset(indices=indices)

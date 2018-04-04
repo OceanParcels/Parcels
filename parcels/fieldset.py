@@ -392,8 +392,6 @@ class FieldSet(object):
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 f.data[tindex, :] = f.reshape(data)[tindex, :]
-            if not f.data.dtype == np.float32:
-                f.data = f.data.astype(np.float32)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
