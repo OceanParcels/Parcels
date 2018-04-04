@@ -153,7 +153,7 @@ def test_peninsula_fieldset(mode, mesh):
 def fieldsetfile():
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
-    fieldset = peninsula_fieldset(100, 501, mesh='spherical')
+    fieldset = peninsula_fieldset(100, 50, mesh='spherical')
     fieldset.write(filename)
     return filename
 
