@@ -11,12 +11,18 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_fieldset(xdim, ydim):
+def peninsula_fieldset(xdim, ydim, mesh):
     """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
     :param xdim: Horizontal dimension of the generated fieldset
     :param xdim: Vertical dimension of the generated fieldset
+    :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
 
     The original test description can be found in Fig. 2.2.3 in:
     North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
@@ -61,13 +67,20 @@ def peninsula_fieldset(xdim, ydim):
     V[landpoints] = np.nan
     W[landpoints] = np.nan
 
-    # Convert from km to lat/lon
-    lon = La / 1.852 / 60.
-    lat = Wa / 1.852 / 60.
+    if mesh == 'spherical':
+        # Convert from km to lat/lon
+        lon = La / 1.852 / 60.
+        lat = Wa / 1.852 / 60.
+    elif mesh == 'flat':
+        # Convert from km to m
+        lon = La * 1000.
+        lat = Wa * 1000.
+    else:
+        raise RuntimeError('Mesh %s is not a valid option' % mesh)
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    return FieldSet.from_data(data, dimensions)
+    return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
 def UpdateP(particle, fieldset, time, dt):
@@ -96,7 +109,10 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
                                                           self.p, self.p_start)
 
     # Initialise particles
-    x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
+    if fieldset.U.grid.mesh == 'flat':
+        x = 3000  # 3 km offset from boundary
+    else:
+        x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)  # latitude range, including offsets
     pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
                                  start=(x, y[0]), finish=(x, y[1]), time=0)
@@ -120,9 +136,10 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_fieldset(mode):
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_fieldset(mode, mesh):
     """Execute peninsula test from fieldset generated in memory"""
-    fieldset = peninsula_fieldset(100, 50)
+    fieldset = peninsula_fieldset(100, 50, mesh)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -136,7 +153,7 @@ def test_peninsula_fieldset(mode):
 def fieldsetfile():
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
-    fieldset = peninsula_fieldset(100, 50)
+    fieldset = peninsula_fieldset(100, 50, mesh='spherical')
     fieldset.write(filename)
     return filename
 
@@ -177,7 +194,7 @@ Example of particle advection around an idealised peninsula""")
 
     if args.fieldset is not None:
         filename = 'peninsula'
-        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1])
+        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='spherical')
         fieldset.write(filename)
 
     # Open fieldset file set
