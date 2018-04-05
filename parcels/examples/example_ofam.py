@@ -16,16 +16,6 @@ def set_ofam_fieldset():
     return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True)
 
 
-def test_ofam_fieldset():
-    fieldset = set_ofam_fieldset()
-    assert(fieldset.U.lon.size == 2001)
-    assert(fieldset.U.lat.size == 601)
-    assert(fieldset.U.data.shape == (4, 601, 2001))
-    assert(fieldset.V.lon.size == 2001)
-    assert(fieldset.V.lat.size == 601)
-    assert(fieldset.V.data.shape == (4, 601, 2001))
-
-
 def test_ofam_fieldset_fillvalues():
     fieldset = set_ofam_fieldset()
     # V.data[0, 0, 150] is a landpoint, that makes NetCDF4 generate a masked array, instead of an ndarray
