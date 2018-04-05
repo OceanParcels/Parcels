@@ -22,7 +22,6 @@ install:
     - export PATH="$HOME/miniconda/bin:$PATH"
     - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
-    - conda install --yes sphinx
     - python setup.py install
 
 script:
@@ -44,11 +43,6 @@ script:
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
         flake8 parcels;
         flake8 tests;
-      fi
-    - |
-      # run link checks only on linux
-      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        make linkcheck -C docs;
       fi
     - |
       # evaluate example scripts and notebooks on linux only
