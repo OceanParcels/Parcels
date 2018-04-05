@@ -44,7 +44,7 @@ class Grid(object):
         self.zonal_halo = 0
         self.meridional_halo = 0
         self.lat_flipped = False
-        self.time_partial_load = False
+        self.defer_load = False
 
     @property
     def ctypes_struct(self):

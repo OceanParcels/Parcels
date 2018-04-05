@@ -215,7 +215,7 @@ class Field(object):
         self.vmin = vmin
         self.vmax = vmax
 
-        if not self.grid.time_partial_load:
+        if not self.grid.defer_load:
             self.data = self.reshape(self.data, transpose)
 
             # Hack around the fact that NaN and ridiculously large values
@@ -330,7 +330,7 @@ class Field(object):
                         data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
                 ti += len(tslice)
         else:
-            grid.time_partial_load = True
+            grid.defer_load = True
             grid.time_full = grid.time
             grid.ti = -1
             data = None
@@ -916,7 +916,7 @@ class Field(object):
         :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
         dataNone = not isinstance(data, np.ndarray)
-        if self.name == 'UV' or (self.grid.time_partial_load and dataNone):
+        if self.name == 'UV' or (self.grid.defer_load and dataNone):
             return
         data = self.data if dataNone else data
         if zonal:

@@ -363,14 +363,14 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'no_update'
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.time_partial_load:
+            if f.name == 'UV' or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'no_update':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.time_partial_load:
+            if f.name == 'UV' or not f.grid.defer_load:
                 continue
             g = f.grid
             if g.update_status == 'first_update':  # First load of data
