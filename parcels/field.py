@@ -176,7 +176,7 @@ class Field(object):
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  transpose=False, vmin=None, vmax=None, time_origin=0,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         if self.name == 'UV':
             return
@@ -212,43 +212,31 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
 
-        # Ensure that field data is the right data type
-        if not self.data.dtype == np.float32:
-            logger.warning_once("Casting field data to np.float32")
-            self.data = self.data.astype(np.float32)
-        if transpose:
-            self.data = np.transpose(self.data)
+        self.vmin = vmin
+        self.vmax = vmax
 
-        if self.grid.lat_flipped:
-            self.data = np.flip(self.data, axis=-2)
+        if not self.grid.defer_load:
+            self.data = self.reshape(self.data, transpose)
 
-        if self.grid.tdim == 1:
-            if len(self.data.shape) < 4:
-                self.data = self.data.reshape(sum(((1,), self.data.shape), ()))
-        if self.grid.zdim == 1:
-            if len(self.data.shape) == 4:
-                self.data = self.data.reshape(sum(((self.data.shape[0],), self.data.shape[2:]), ()))
-        if len(self.data.shape) == 4:
-            assert self.data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim), \
-                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
-        else:
-            assert self.data.shape == (self.grid.tdim, self.grid.ydim, self.grid.xdim), \
-                                      ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+            # Hack around the fact that NaN and ridiculously large values
+            # propagate in SciPy's interpolators
+            self.data[np.isnan(self.data)] = 0.
+            if self.vmin is not None:
+                self.data[self.data < self.vmin] = 0.
+            if self.vmax is not None:
+                self.data[self.data > self.vmax] = 0.
 
-        # Hack around the fact that NaN and ridiculously large values
-        # propagate in SciPy's interpolators
-        if vmin is not None:
-            self.data[self.data < vmin] = 0.
-        if vmax is not None:
-            self.data[self.data > vmax] = 0.
-        self.data[np.isnan(self.data)] = 0.
+        self._scaling_factor = None
 
         # Variable names in JIT code
         self.ccode_data = self.name
+        self.dimensions = kwargs.pop('dimensions', None)
+        self.indices = kwargs.pop('indices', None)
+        self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
-                    allow_time_extrapolation=False, mesh='flat', **kwargs):
+                    allow_time_extrapolation=False, mesh='flat', full_load=False, **kwargs):
         """Create field from netCDF file
 
         :param name: Name of the field to create
@@ -265,11 +253,15 @@ class Field(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however sometimes necessary for plotting the fields.
         """
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
-        with FileBuffer(filenames[0], dimensions, indices) as filebuffer:
+        with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
             if name in ['cosU', 'sinU', 'cosV', 'sinV']:
@@ -286,11 +278,14 @@ class Field(object):
         # Concatenate time variable to determine overall dimension
         # across multiple files
         timeslices = []
+        timeFiles = []
         for fname in filenames:
-            with FileBuffer(fname, dimensions, indices) as filebuffer:
+            with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 timeslices.append(filebuffer.time)
+                timeFiles.append([fname for i in range(len(filebuffer.time))])
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
+        timeFiles = np.concatenate(np.array(timeFiles))
         if isinstance(time[0], np.datetime64):
             time_origin = time[0]
             time = (time - time_origin) / np.timedelta64(1, 's')
@@ -298,44 +293,6 @@ class Field(object):
             time_origin = 0
         assert(np.all((time[1:]-time[:-1]) > 0))
 
-        # Pre-allocate data before reading files into buffer
-        depthdim = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        data = np.empty((time.size, depthdim, latdim, londim), dtype=np.float32)
-        ti = 0
-        for tslice, fname in zip(timeslices, filenames):
-            with FileBuffer(fname, dimensions, indices) as filebuffer:
-                depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-                latsize = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-                lonsize = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-                filebuffer.indslat = indices['lat'] if 'lat' in indices else range(latsize)
-                filebuffer.indslon = indices['lon'] if 'lon' in indices else range(lonsize)
-                filebuffer.indsdepth = indices['depth'] if 'depth' in indices else range(depthsize)
-                for inds in [filebuffer.indslat, filebuffer.indslon, filebuffer.indsdepth]:
-                    if type(inds) not in [list, range]:
-                        raise RuntimeError('Indices for field subsetting need to be a list')
-                if 'data' in dimensions:
-                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
-                    # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = dimensions['data']
-                else:
-                    filebuffer.name = name
-
-                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                    data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
-                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                    if filebuffer.depthdim > 1:
-                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
-                    else:
-                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
-                else:
-                    data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
-            ti += len(tslice)
-        # Time indexing after the fact only
-        if 'time' in indices:
-            time = time[indices['time']]
-            data = data[indices['time'], :, :, :]
         if time.size == 1 and time[0] is None:
             time[0] = 0
         if len(lon.shape) == 1:
@@ -348,10 +305,82 @@ class Field(object):
                 grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
                 grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+
+        if 'time' in indices:
+            logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
+
+        if time.size <= 3 or full_load:
+            # Pre-allocate data before reading files into buffer
+            data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+            ti = 0
+            for tslice, fname in zip(timeslices, filenames):
+                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                    # If Field.from_netcdf is called directly, it may not have a 'data' dimension
+                    # In that case, assume that 'name' is the data dimension
+                    filebuffer.name = dimensions['data'] if 'data' in dimensions else name
+
+                    if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
+                    elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                        if filebuffer.zdim > 1:
+                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
+                        else:
+                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                    else:
+                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
+                ti += len(tslice)
+        else:
+            grid.defer_load = True
+            grid.time_full = grid.time
+            grid.ti = -1
+            data = None
+
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
+        kwargs['dimensions'] = dimensions.copy()
+        kwargs['indices'] = indices
+        kwargs['timeFiles'] = timeFiles
+
         return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+
+    def reshape(self, data, transpose=False):
+
+        # Ensure that field data is the right data type
+        if not data.dtype == np.float32:
+            logger.warning_once("Casting field data to np.float32")
+            data = data.astype(np.float32)
+        if transpose:
+            data = np.transpose(data)
+        if self.grid.lat_flipped:
+            data = np.flip(data, axis=-2)
+
+        if self.grid.tdim == 1:
+            if len(data.shape) < 4:
+                data = data.reshape(sum(((1,), data.shape), ()))
+        if self.grid.zdim == 1:
+            if len(data.shape) == 4:
+                data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
+        if len(data.shape) == 4:
+            assert data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
+                                 ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+        else:
+            assert data.shape == (self.grid.tdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
+                                 ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.')
+        if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
+            data = self.add_periodic_halo(zonal=self.grid.zonal_halo > 0, meridional=self.grid.meridional_halo > 0, halosize=max(self.grid.meridional_halo, self.grid.zonal_halo), data=data)
+        return data
+
+    def set_scaling_factor(self, factor):
+        """Scales the field data by some constant factor.
+
+        :param factor: scaling factor
+        """
+
+        if self._scaling_factor:
+            raise NotImplementedError(('Scaling factor for field %s already defined.' % self.name))
+        self._scaling_factor = factor
+        self.data *= factor
 
     def getUV(self, time, x, y, z):
         fieldset = self.fieldset
@@ -842,6 +871,7 @@ class Field(object):
 
         if with_particles or (not animation):
             show_time = self.grid.time[0] if show_time is None else show_time
+            self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
             if self.grid.time.size > 1:
@@ -875,7 +905,7 @@ class Field(object):
             plt.close()
             return anim
 
-    def add_periodic_halo(self, zonal, meridional, halosize=5):
+    def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
@@ -883,30 +913,37 @@ class Field(object):
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
+        :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
-        if self.name == 'UV':
+        dataNone = not isinstance(data, np.ndarray)
+        if self.name == 'UV' or (self.grid.defer_load and dataNone):
             return
+        data = self.data if dataNone else data
         if zonal:
-            if len(self.data.shape) is 3:
-                self.data = np.concatenate((self.data[:, :, -halosize:], self.data,
-                                            self.data[:, :, 0:halosize]), axis=len(self.data.shape)-1)
-                assert self.data.shape[2] == self.grid.xdim
+            if len(data.shape) is 3:
+                data = np.concatenate((data[:, :, -halosize:], data,
+                                       data[:, :, 0:halosize]), axis=len(data.shape)-1)
+                assert data.shape[2] == self.grid.xdim
             else:
-                self.data = np.concatenate((self.data[:, :, :, -halosize:], self.data,
-                                            self.data[:, :, :, 0:halosize]), axis=len(self.data.shape) - 1)
-                assert self.data.shape[3] == self.grid.xdim
+                data = np.concatenate((data[:, :, :, -halosize:], data,
+                                       data[:, :, :, 0:halosize]), axis=len(data.shape) - 1)
+                assert data.shape[3] == self.grid.xdim
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
-            if len(self.data.shape) is 3:
-                self.data = np.concatenate((self.data[:, -halosize:, :], self.data,
-                                            self.data[:, 0:halosize, :]), axis=len(self.data.shape)-2)
-                assert self.data.shape[1] == self.grid.ydim
+            if len(data.shape) is 3:
+                data = np.concatenate((data[:, -halosize:, :], data,
+                                       data[:, 0:halosize, :]), axis=len(data.shape)-2)
+                assert data.shape[1] == self.grid.ydim
             else:
-                self.data = np.concatenate((self.data[:, :, -halosize:, :], self.data,
-                                            self.data[:, :, 0:halosize, :]), axis=len(self.data.shape) - 2)
-                assert self.data.shape[2] == self.grid.ydim
+                data = np.concatenate((data[:, :, -halosize:, :], data,
+                                       data[:, :, 0:halosize, :]), axis=len(data.shape) - 2)
+                assert data.shape[2] == self.grid.ydim
             self.lat = self.grid.lat
+        if dataNone:
+            self.data = data
+        else:
+            return data
 
     def write(self, filename, varname=None):
         """Write a :class:`Field` to a netcdf file
@@ -946,8 +983,33 @@ class Field(object):
             self.data = np.concatenate((field_new.data[:, :, :], self.data[:-1, :, :]), 0)
             self.time = self.grid.time
 
+    def computeTimeChunk(self, data, tindex):
+        g = self.grid
+        with NetcdfFileBuffer(self.timeFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
+            filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
+            time_data = filebuffer.time
+            if isinstance(time_data[0], np.datetime64):
+                time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
+            ti = (time_data <= g.time[tindex]).argmin() - 1
+            if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                data[tindex, 0, :, :] = filebuffer.data[:, :]
+            elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                if g.zdim > 1:
+                    data[tindex, :, :, :] = filebuffer.data[:, :, :]
+                else:
+                    data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
+            else:
+                data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
+        data[np.isnan(data)] = 0.
+        if self.vmin is not None:
+            data[data < self.vmin] = 0.
+        if self.vmax is not None:
+            data[data > self.vmax] = 0.
 
-class FileBuffer(object):
+        return data
+
+
+class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
     def __init__(self, filename, dimensions, indices):
@@ -960,17 +1022,21 @@ class FileBuffer(object):
         self.dataset = xr.open_dataset(str(self.filename))
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
-        londim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        latdim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(londim)
-        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(latdim)
+        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(xdim)
+        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(ydim)
         if 'depth' in self.dimensions:
             depth = getattr(self.dataset, self.dimensions['depth'])
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            self.depthdim = len(self.indsdepth)
+            self.zdim = len(self.indsdepth)
         else:
-            self.depthdim = 0
+            self.zdim = 0
+            self.indsdepth = []
+        for inds in [self.indslat, self.indslon, self.indsdepth]:
+            if type(inds) not in [list, range]:
+                raise RuntimeError('Indices for field subsetting need to be a list')
         return self
 
     def __exit__(self, type, value, traceback):
@@ -990,9 +1056,9 @@ class FileBuffer(object):
             lon_subset = np.array(lon[0, self.indslat, self.indslon])
             lat_subset = np.array(lat[0, self.indslat, self.indslon])
         if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
-            londim = lon_subset.shape[0]
-            latdim = lat_subset.shape[1]
-            if np.allclose(lon_subset[0, :], lon_subset[int(londim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(latdim/2)]):
+            xdim = lon_subset.shape[0]
+            ydim = lat_subset.shape[1]
+            if np.allclose(lon_subset[0, :], lon_subset[int(xdim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(ydim/2)]):
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
@@ -1017,7 +1083,7 @@ class FileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indslat, self.indslon]
         elif len(data.shape) == 3:
-            if self.depthdim > 1:
+            if self.zdim > 1:
                 data = data[self.indsdepth, self.indslat, self.indslon]
             else:
                 data = data[:, self.indslat, self.indslon]

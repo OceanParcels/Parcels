@@ -101,7 +101,7 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
-                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, **kwargs):
+                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -127,6 +127,10 @@ class FieldSet(object):
                (i.e. beyond the last available time snapshot)
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
@@ -149,7 +153,7 @@ class FieldSet(object):
 
             fields[var] = Field.from_netcdf(var, dims, paths, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, **kwargs)
+                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -229,7 +233,7 @@ class FieldSet(object):
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
-                     allow_time_extrapolation=False, time_periodic=False, **kwargs):
+                     allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -242,6 +246,10 @@ class FieldSet(object):
                (i.e. beyond the last available time snapshot)
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however sometimes necessary for plotting the fields.
         """
 
         dimensions = {}
@@ -255,7 +263,7 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, **kwargs)
+                               time_periodic=time_periodic, full_load=full_load, **kwargs)
 
     @property
     def fields(self):
@@ -326,6 +334,10 @@ class FieldSet(object):
         """Replace oldest time on FieldSet with new FieldSet
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
+        logger.warning_once("Fieldset.advancetime() is deprecated.\n \
+                             Parcels deals automatically with loading only 3 time steps simustaneously\
+                             such that the total allocated memory remains limited.")
+
         advance = 0
         for gnew in fieldset_new.gridset.grids:
             gnew.advanced = False
@@ -343,3 +355,49 @@ class FieldSet(object):
                 advance = advance2
                 gnew.advanced = True
             f.advancetime(fnew, advance == 1)
+
+    def computeTimeChunk(self, time, dt):
+        signdt = np.sign(dt)
+        nextTime = np.infty * signdt
+
+        for g in self.gridset.grids:
+            g.update_status = 'no_update'
+        for f in self.fields:
+            if f.name == 'UV' or not f.grid.defer_load:
+                continue
+            if f.grid.update_status == 'no_update':
+                nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+            nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
+
+        for f in self.fields:
+            if f.name == 'UV' or not f.grid.defer_load:
+                continue
+            g = f.grid
+            if g.update_status == 'first_update':  # First load of data
+                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                for tindex in range(3):
+                    data = f.computeTimeChunk(data, tindex)
+                if f._scaling_factor:
+                    data *= f._scaling_factor
+                f.data = f.reshape(data)
+            elif g.update_status == 'update':
+                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                if signdt >= 0:
+                    f.data[:2, :] = f.data[1:, :]
+                    tindex = 2
+                else:
+                    f.data[1:, :] = f.data[:2, :]
+                    tindex = 0
+                data = f.computeTimeChunk(data, tindex)
+                if f._scaling_factor:
+                    data *= f._scaling_factor
+                f.data[tindex, :] = f.reshape(data)[tindex, :]
+
+        if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
+            return nextTime
+        else:
+            nSteps = int((nextTime - time) / dt)
+            if nSteps == 0:
+                return nextTime
+            else:
+                return time + nSteps * dt

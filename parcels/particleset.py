@@ -314,7 +314,7 @@ class ParticleSet(object):
             next_prelease = np.infty * np.sign(dt)
         next_output = time + outputdt * np.sign(dt)
         next_movie = time + moviedt * np.sign(dt)
-        next_input = np.infty * np.sign(dt)  # Not used yet
+        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
@@ -328,8 +328,6 @@ class ParticleSet(object):
                                      lat=self.repeatlat, depth=self.repeatdepth,
                                      pclass=self.repeatpclass))
                 next_prelease += self.repeatdt * np.sign(dt)
-            if abs(time-next_input) < tol:
-                continue
             if abs(time-next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
@@ -337,6 +335,7 @@ class ParticleSet(object):
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time)
                 next_movie += moviedt * np.sign(dt)
+            next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
 
@@ -420,6 +419,7 @@ class ParticleSet(object):
             time_origin = self.fieldset.U.grid.time_origin
         else:
             time_origin = self.fieldset.U.grid.time_origin
+            self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.fieldset.U.time_index(show_time)
             show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
             U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))

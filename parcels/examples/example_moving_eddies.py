@@ -148,6 +148,34 @@ def test_moving_eddies_file(fieldsetfile, mode):
     assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_periodic_and_computeTimeChunk_eddies(mode):
+    filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
+    fieldset = FieldSet.from_parcels(filename)
+    fieldset.add_periodic_halo(zonal=True, meridional=True)
+    pset = ParticleSet.from_list(fieldset=fieldset,
+                                 pclass=ptype[mode],
+                                 lon=[3.3, 3.3],
+                                 lat=[46.0, 47.8])
+
+    def periodicBC(particle, fieldset, time, dt):
+        if particle.lon < fieldset.halo_west:
+            particle.lon += fieldset.halo_east - fieldset.halo_west
+        elif particle.lon > fieldset.halo_east:
+            particle.lon -= fieldset.halo_east - fieldset.halo_west
+        if particle.lat < fieldset.halo_south:
+            particle.lat += fieldset.halo_north - fieldset.halo_south
+        elif particle.lat > fieldset.halo_north:
+            particle.lat -= fieldset.halo_north - fieldset.halo_south
+
+    def slowlySouthWestward(particle, fieldset, time, dt):
+        particle.lon = particle.lon - 5 * dt / 1e5
+        particle.lat -= 3 * dt / 1e5
+
+    kernels = pset.Kernel(AdvectionRK4)+slowlySouthWestward+periodicBC
+    pset.execute(kernels, runtime=delta(days=6), dt=delta(hours=1))
+
+
 if __name__ == "__main__":
     p = ArgumentParser(description="""
 Example of particle advection around an idealised peninsula""")
