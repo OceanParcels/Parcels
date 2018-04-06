@@ -459,6 +459,8 @@ class ParticleSet(object):
                 # plotting velocity vector field
                 vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, latlon=True)
                 m.colorbar(vecs, "right", size="5%", pad="2%")
+            elif field is not None:
+                logger.warning('Plotting of both a field and land=True is not supported in this version of Parcels')
             # plotting particle data
             if particles:
                 xs, ys = m(plon, plat)
