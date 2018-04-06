@@ -1,15 +1,16 @@
-name: py2_parcels
+name: py3_parcels
 channels:
+  - defaults
   - conda-forge
 dependencies:
-  - python=2.7
+  - python>=3.4
   - cachetools>=1.0.0
   - cgen
-  - enum34
-  - ffmpeg
+  - coverage
+  - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
+  - gcc_linux-64
   - git
-  - gcc
   - jupyter
   - matplotlib=2.0.2
   - netcdf4>=1.1.9
@@ -19,7 +20,7 @@ dependencies:
   - pymbolic
   - python-dateutil
   - scipy>=0.16.0
-  - six>=1.10.0
+  - six >=1.10.0
   - xarray>=0.5.1
   - pip:
       - pytest>=2.7.0

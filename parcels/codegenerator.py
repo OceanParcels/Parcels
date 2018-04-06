@@ -5,7 +5,7 @@ import cgen as c
 from collections import OrderedDict
 import math
 import random
-import numpy as np
+from .grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
@@ -30,10 +30,11 @@ class FieldNode(IntrinsicNode):
 
 
 class FieldEvalNode(IntrinsicNode):
-    def __init__(self, field, args, var):
+    def __init__(self, field, args, var, var2=None):
         self.field = field
         self.args = args
-        self.var = var
+        self.var = var  # the variable in which the interpolated field is written
+        self.var2 = var2  # second variable for UV interpolation
 
 
 class ConstNode(IntrinsicNode):
@@ -83,6 +84,11 @@ class ErrorCodeNode(IntrinsicNode):
         else:
             raise AttributeError("""Unknown math function encountered: %s"""
                                  % attr)
+
+
+class PrintNode(IntrinsicNode):
+    def __init__(self):
+        self.obj = 'print'
 
 
 class ParticleAttributeNode(IntrinsicNode):
@@ -138,6 +144,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = MathNode(math, ccode='')
         elif node.id == 'random':
             node = RandomNode(math, ccode='')
+        elif node.id == 'print':
+            node = PrintNode()
         return node
 
     def visit_Attribute(self, node):
@@ -155,10 +163,11 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # temporary variable and put the evaluation call on the stack.
         if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
+            tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
+            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp, tmp2)]
             # .. and return the name of the temporary that will be populated
-            return ast.Name(id=tmp)
+            return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load()) if tmp2 else ast.Name(id=tmp)
         else:
             return node
 
@@ -230,12 +239,12 @@ class KernelGenerator(ast.NodeVisitor):
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
-        # Untangle Pythonic tuple-assignment statements
-        py_ast = TupleSplitter().visit(py_ast)
-
         # Replace occurences of intrinsic objects in Python AST
         transformer = IntrinsicTransformer(self.fieldset, self.ptype)
         py_ast = transformer.visit(py_ast)
+
+        # Untangle Pythonic tuple-assignment statements
+        py_ast = TupleSplitter().visit(py_ast)
 
         # Generate C-code for all nodes in the Python AST
         self.visit(py_ast)
@@ -272,8 +281,20 @@ class KernelGenerator(ast.NodeVisitor):
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
-        for field, _ in self.field_args.items():
-            args += [c.Pointer(c.Value("CField", "%s" % field))]
+        for field_name, field in self.field_args.items():
+            if field_name != 'UV':
+                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+        for field_name, field in self.field_args.items():
+            if field_name == 'UV':
+                fieldset = field.fieldset
+                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
+                    try:
+                        getattr(fieldset, f)
+                        if f not in self.field_args:
+                            args += [c.Pointer(c.Value("CField", "%s" % f))]
+                    except:
+                        if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+                            raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
@@ -286,13 +307,43 @@ class KernelGenerator(ast.NodeVisitor):
         """Generate C code for simple C-style function calls. Please
         note that starred and keyword arguments are currently not
         supported."""
-        for a in node.args:
-            self.visit(a)
-        ccode_args = ", ".join([a.ccode for a in node.args])
-        try:
-            node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
-        except:
-            raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
+        pointer_args = False
+        if isinstance(node.func, PrintNode):
+            if hasattr(node.args[0], 's'):
+                node.ccode = str(c.Statement('printf("%s\\n")' % (node.args[0].s)))
+                return
+            if isinstance(node.args[0], ast.BinOp):
+                if hasattr(node.args[0].right, 'ccode'):
+                    args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'elts'):
+                    args = [a.ccode for a in node.args[0].right.elts]
+                s = 'printf("%s\\n"' % node.args[0].left.s
+                if isinstance(args, str):
+                    s = s + (", %s)" % args)
+                else:
+                    for arg in args:
+                        s = s + (", %s" % arg)
+                    s = s + ")"
+                node.ccode = str(c.Statement(s))
+                return
+        else:
+            for a in node.args:
+                self.visit(a)
+                if a.ccode == 'pointer_args':
+                    pointer_args = True
+                    continue
+                if isinstance(a, FieldNode):
+                    a.ccode = a.obj.name
+                elif isinstance(a, ParticleNode):
+                    continue
+                elif pointer_args:
+                    a.ccode = "&%s" % a.ccode
+            ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
+            try:
+                self.visit(node.func)
+                node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+            except:
+                raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
@@ -478,11 +529,18 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
-        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+        if node.var2:  # evaluation UV Field
+            ccode_eval = node.field.obj.ccode_evalUV(node.var, node.var2, *node.args.ccode)
+            ccode_conv1 = node.field.obj.fieldset.U.ccode_convert(*node.args.ccode)
+            ccode_conv2 = node.field.obj.fieldset.V.ccode_convert(*node.args.ccode)
+            conv_stat = c.Block([c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                                 c.Statement("%s *= %s" % (node.var2, ccode_conv2))])
+        else:
+            ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
         node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              c.Statement("%s *= %s" % (node.var, ccode_conv)),
-                              c.Statement("CHECKERROR(err)")])
+                              conv_stat, c.Statement("CHECKERROR(err)")])
 
     def visit_Return(self, node):
         self.visit(node.value)
@@ -522,7 +580,7 @@ class LoopGenerator(object):
         self.fieldset = fieldset
         self.ptype = ptype
 
-    def generate(self, funcname, field_args, const_args, kernel_ast):
+    def generate(self, funcname, field_args, const_args, kernel_ast, c_include):
         ccode = []
 
         # Add include for Parcels and math header
@@ -532,12 +590,12 @@ class LoopGenerator(object):
         # Generate type definition for particle type
         vdecl = []
         for v in self.ptype.variables:
-            if v.name is 'CGridIndexSet':
-                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
-            else:
-                vdecl.append(c.POD(v.dtype, v.name))
+            vdecl.append(c.POD(v.dtype, v.name))
 
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
+
+        if c_include:
+            ccode += [c_include]
 
         # Insert kernel code
         ccode += [str(kernel_ast)]

@@ -43,21 +43,21 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
               'V': np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
-    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical')
+    fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32))
-    pset2D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
 
     dimensions['depth'] = depth
-    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical')
+    fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical', transpose=True)
     pset3D = ParticleSet(fieldset3D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
                          lat=np.linspace(0, 80, npart, dtype=np.float32),
                          depth=np.zeros(npart, dtype=np.float32) + 10.)
-    pset3D.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(np.array([p.lon for p in pset3D])) > 1.e-4).all()
 
 
@@ -69,13 +69,13 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
             'V': np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(-60, 60, npart, dtype=np.float32),
                        lat=np.linspace(0, 30, npart, dtype=np.float32))
     delta_lat = np.diff(np.array([p.lat for p in pset]))
-    pset.execute(AdvectionRK4, endtime=delta(hours=2), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
 
 
@@ -90,14 +90,14 @@ def test_advection_3D(mode, npart=11):
     data = {'U': np.ones((xdim, ydim, zdim), dtype=np.float32),
             'V': np.zeros((xdim, ydim, zdim), dtype=np.float32)}
     data['U'][:, :, 0] = 0.
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart, dtype=np.float32),
                        lat=np.zeros(npart, dtype=np.float32) + 1e2,
                        depth=np.linspace(0, 1, npart, dtype=np.float32))
     time = delta(hours=2).total_seconds()
-    pset.execute(AdvectionRK4, endtime=time, dt=delta(seconds=30))
+    pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
     assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], atol=1.e-1)
 
 
@@ -107,7 +107,7 @@ def periodicfields(xdim, ydim, uvel, vvel):
 
     data = {'U': uvel * np.ones((xdim, ydim), dtype=np.float32),
             'V': vvel * np.ones((xdim, ydim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh='spherical')
+    return FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
 
 def periodicBC(particle, fieldset, time, dt):
@@ -122,7 +122,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
     assert(len(fieldset.U.lon) == xdim + 2 * halosize)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lon - 0.15) < 0.1
 
 
@@ -133,7 +133,7 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lat - 0.15) < 0.1
 
 
@@ -147,7 +147,7 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
-    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), endtime=delta(hours=20), dt=delta(seconds=30))
+    pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset[0].lon - 0.05) < 0.1
     assert abs(pset[0].lat - 0.15) < 0.1
 
@@ -171,7 +171,7 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -209,7 +209,7 @@ def test_stationary_eddy_vertical(mode, npart=1):
 
     dimensions = {'lon': lon_data, 'lat': lat_data, 'time': time_data}
     data = {'U': fld1, 'V': fldzero, 'W': fld2}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon,
                        lat=lat, depth=depth)
@@ -221,7 +221,7 @@ def test_stationary_eddy_vertical(mode, npart=1):
     assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
 
     data = {'U': fldzero, 'V': fld2, 'W': fld1}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon,
                        lat=lat, depth=depth)
@@ -252,7 +252,7 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g + (u_0 - u_g) * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -296,7 +296,7 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
                   'time': time}
     data = {'U': np.ones((xdim, ydim, 1), dtype=np.float32) * u_g * np.exp(-gamma_g * time) + (u_0 - u_g) * np.exp(-gamma * time) * np.cos(f * time),
             'V': np.ones((xdim, ydim, 1), dtype=np.float32) * -(u_0 - u_g) * np.exp(-gamma * time) * np.sin(f * time)}
-    return FieldSet.from_data(data, dimensions, mesh='flat')
+    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -347,6 +347,6 @@ Example of particle advection around an idealised peninsula""")
                        lat=np.linspace(12500, 12500, npart, dtype=np.float32))
     if args.verbose:
         print("Initial particle positions:\n%s" % pset)
-    pset.execute(kernel[args.method], dt=delta(minutes=3), endtime=delta(hours=6))
+    pset.execute(kernel[args.method], dt=delta(minutes=3), runtime=delta(hours=6))
     if args.verbose:
         print("Final particle positions:\n%s" % pset)

@@ -31,12 +31,12 @@ def decaying_moving_eddy_fieldset(xdim=2, ydim=2):  # Define 2D flat, square fie
     lon = np.linspace(0, 20000, xdim, dtype=np.float32)
     lat = np.linspace(5000, 12000, ydim, dtype=np.float32)
 
-    U = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
+    U = np.zeros((time.size, lat.size, lon.size), dtype=np.float32)
+    V = np.zeros((time.size, lat.size, lon.size), dtype=np.float32)
 
     for t in range(time.size):
-        U[:, :, t] = u_g*np.exp(-gamma_g*time[t]) + (u_0-u_g)*np.exp(-gamma*time[t])*np.cos(f*time[t])
-        V[:, :, t] = -(u_0-u_g)*np.exp(-gamma*time[t])*np.sin(f*time[t])
+        U[t, :, :] = u_g*np.exp(-gamma_g*time[t]) + (u_0-u_g)*np.exp(-gamma*time[t])*np.cos(f*time[t])
+        V[t, :, :] = -(u_0-u_g)*np.exp(-gamma*time[t])*np.sin(f*time[t])
 
     data = {'U': U, 'V': V}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
@@ -53,12 +53,12 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
 def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
-    endtime = delta(days=2)
+    runtime = delta(days=2)
     dt = delta(minutes=5)
-    interval = delta(hours=1)
+    outputdt = delta(hours=1)
 
-    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="DecayingMovingParticle"), show_movie=False)
+    pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
+                 output_file=pset.ParticleFile(name="DecayingMovingParticle.nc", outputdt=outputdt))
 
     return pset
 

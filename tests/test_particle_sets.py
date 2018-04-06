@@ -1,4 +1,5 @@
-from parcels import FieldSet, ParticleSet, Field, ScipyParticle, JITParticle, Variable
+from parcels import (FieldSet, ParticleSet, Field, ScipyParticle, JITParticle,
+                     Variable, ErrorCode)
 import numpy as np
 import pytest
 from netCDF4 import Dataset
@@ -7,9 +8,9 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 @pytest.fixture
-def fieldset(xdim=100, ydim=100):
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
+def fieldset(xdim=40, ydim=100):
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
     lat = np.linspace(-60, 60, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)
@@ -42,7 +43,7 @@ def test_pset_create_field(fieldset, mode, npart=100):
     np.random.seed(123456)
     shape = (fieldset.U.lon.size, fieldset.U.lat.size)
     K = Field('K', lon=fieldset.U.lon, lat=fieldset.U.lat,
-              data=np.ones(shape, dtype=np.float32))
+              data=np.ones(shape, dtype=np.float32), transpose=True)
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode], start_field=K)
     assert (np.array([p.lon for p in pset]) <= K.lon[-1]).all()
     assert (np.array([p.lon for p in pset]) >= K.lon[0]).all()
@@ -74,24 +75,38 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
 
     def IncrLon(particle, fieldset, time, dt):
         particle.lon += 1.
-    pset.execute(IncrLon, dt=1., runtime=npart, interval=1)
+    pset.execute(IncrLon, dt=1., runtime=npart)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
-def test_pset_repeated_release_delayed_adding(fieldset, mode, repeatdt, npart=10):
+@pytest.mark.parametrize('dt', [-1, 1])
+@pytest.mark.parametrize('maxvar', [2, 4, 10])
+def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+    fieldset.maxvar = maxvar
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
+    outfilepath = tmpdir.join("pfile_repeatdt")
+    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
-    for i in range(npart):
-        assert len(pset) == (i // repeatdt) + 1
-        pset.execute(IncrLon, dt=1., runtime=1.)
-    assert np.allclose([p.sample_var for p in pset], np.arange(npart, -1, -repeatdt))
+        if particle.sample_var > fieldset.maxvar:
+            particle.delete()
+    for i in range(runtime):
+        pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
+    assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
+    ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
+    samplevar = ncfile.variables['sample_var'][:]
+    assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
+    if repeatdt == 0:
+        # test whether samplevar[i, i+k] = k for k=range(maxvar)
+        for k in range(maxvar):
+            for i in range(runtime-k):
+                assert(samplevar[i, i+k] == k)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -258,26 +273,19 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_density(fieldset, mode):
-    lons, lats = np.meshgrid(fieldset.U.lon[0], fieldset.U.lat)
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=lons,
-                       lat=lats)
-    arr = pset.density(area_scale=False)  # Not scaling by area
-    assert(np.sum(arr) == fieldset.U.lat.size)  # check conservation of particles
-    inds = zip(*np.where(arr))
-    for i in range(len(inds)):  # check locations (low rtol because of coarse grid)
-        assert np.allclose(fieldset.U.lon[inds[i][0]], pset[i].lon, rtol=1e-1)
-        assert np.allclose(fieldset.U.lat[inds[i][1]], pset[i].lat, rtol=1e-1)
-    arr = pset.density(area_scale=True)  # Scaling by area
-    area = np.zeros(np.shape(fieldset.U.data[0, :, 0]), dtype=np.float32)
-    U = fieldset.U
-    V = fieldset.V
-    dy = (V.lon[1] - V.lon[0])/V.units.to_target(1, V.lon[0], V.lat[0], V.depth[0])
-    for y in range(len(U.lat)):
-        dx = (U.lon[1] - U.lon[0])/U.units.to_target(1, U.lon[0], U.lat[y], V.depth[0])
-        area[y] = dy * dx
-    assert ((arr[0, :] - (1/area)) == 0).all()  # check that density equals 1/area
+@pytest.mark.parametrize('area_scale', [True, False])
+def test_density(fieldset, mode, area_scale):
+    lons, lats = np.meshgrid(np.linspace(0.05, 0.95, 10), np.linspace(-30, 30, 20))
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats)
+    arr = pset.density(area_scale=area_scale)
+    if area_scale:
+        assert np.allclose(arr, 1 / fieldset.U.cell_areas(), rtol=1e-3)  # check that density equals 1/area
+    else:
+        assert(np.sum(arr) == lons.size)  # check conservation of particles
+        inds = np.where(arr)
+        for i in range(len(inds[0])):  # check locations (low atol because of coarse grid)
+            assert np.allclose(fieldset.U.lon[inds[1][i]], pset[i].lon, atol=fieldset.U.lon[1]-fieldset.U.lon[0])
+            assert np.allclose(fieldset.U.lat[inds[0][i]], pset[i].lat, atol=fieldset.U.lat[1]-fieldset.U.lat[0])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -293,14 +301,13 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pfile_type', ['array', 'indexed'])
-def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, pfile_type, npart=10):
+def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
 
     filepath = tmpdir.join("pfile_array_remove_particles")
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=0.5*np.ones(npart, dtype=np.float32))
-    pfile = pset.ParticleFile(filepath, type=pfile_type)
+    pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
     for _ in range(npart):
         pset.remove(-1)
@@ -315,16 +322,46 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 
     def Update_v(particle, fieldset, time, dt):
         particle.v_once += 1.
+        particle.age += dt
 
     class MyParticle(ptype[mode]):
-        v_once = Variable('v_once', dtype=np.float32, initial=1., to_write='once')
+        v_once = Variable('v_once', dtype=np.float32, initial=0., to_write='once')
+        age = Variable('age', dtype=np.float32, initial=0.)
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat)
-    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, interval=0.2,
-                 output_file=pset.ParticleFile(name=filepath))
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, repeatdt=0.1)
+    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
+                 output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
+    assert np.allclose([p.v_once - p.age * 10 for p in pset], 0, atol=1e-5)
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
-    V_once = ncfile.variables['v_once'][:]
-    assert np.all([p.v_once == 11.0 for p in pset])
-    assert (V_once.shape == (npart, ))
-    assert (V_once[0] == 1.)
+    vfile = ncfile.variables['v_once'][:]
+    assert (vfile.shape == (npart*11, ))
+    assert [v == 0 for v in vfile]
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
+    filepath = tmpdir.join("pfile_on_delete_written_variables")
+
+    def move_west(particle, fieldset, time, dt):
+        tmp = fieldset.U[time, particle.lon, particle.lat, particle.depth]  # to trigger out-of-bounds error
+        particle.lon -= 0.1 + tmp
+
+    def DeleteP(particle, fieldset, time, dt):
+        particle.delete()
+
+    lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
+    lat = np.linspace(0.95, 0.05, npart, dtype=np.float32)
+
+    (dt, runtime) = (0.1, 0.8)
+    lon_end = lon - runtime/dt*0.1
+    noutside = len(lon_end[lon_end < 0])
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
+
+    outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
+    pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
+    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    lon = ncfile.variables['lon'][:]
+    assert (lon.size == noutside)

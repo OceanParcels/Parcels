@@ -16,8 +16,8 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
     x0 = 30.                                   # Define the origin to be the centre of the Field.
     y0 = 30.
 
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
 
     T = delta(days=1)
     omega = 2*np.pi/T.total_seconds()          # Define the rotational period as 1 day.
@@ -32,8 +32,8 @@ def radial_rotation_fieldset(xdim=200, ydim=200):  # Define 2D flat, square fiel
             theta = math.atan2((lat[j]-y0), (lon[i]-x0))  # Define the polar angle.
             assert(abs(theta) <= np.pi)
 
-            U[i, j] = r * math.sin(theta) * omega
-            V[i, j] = -r * math.cos(theta) * omega
+            U[j, i] = r * math.sin(theta) * omega
+            V[j, i] = -r * math.cos(theta) * omega
 
     data = {'U': U, 'V': V}
     dimensions = {'lon': lon, 'lat': lat}
@@ -55,12 +55,12 @@ def rotation_example(fieldset, mode='jit', method=AdvectionRK4):
                                  start=(30., 30.),
                                  finish=(30., 50.))  # One particle in centre, one on periphery of Field.
 
-    endtime = delta(hours=17)
+    runtime = delta(hours=17)
     dt = delta(minutes=5)
-    interval = delta(hours=1)
+    outputdt = delta(hours=1)
 
-    pset.execute(method, endtime=endtime, dt=dt, interval=interval,
-                 output_file=pset.ParticleFile(name="RadialParticle"), show_movie=False)
+    pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
+                 output_file=pset.ParticleFile(name="RadialParticle", outputdt=outputdt))
 
     return pset
 

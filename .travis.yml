@@ -1,35 +1,51 @@
+language: python
+
 notifications:
   email: false
 
-language: python
-python:
-    - "2.7"
-
-sudo: false
-
-before_install:
-    # Setup anaconda
-    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-    - chmod +x miniconda.sh
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export PATH="$HOME/miniconda/bin:$PATH"
-    - conda update --yes conda
+matrix:
+  include:
+    - os: linux
+      env: PY_VERSION=2 MINICONDA_NAME=Miniconda2-latest-Linux-x86_64.sh
+    - os: linux
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
+    - os: osx
+      language: generic
+      env: PY_VERSION=2 MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
+    - os: osx
+      language: generic
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
 
 install:
-    - conda env create --file environment.yml
-    - source activate py2_parcels
-    - conda install --yes sphinx
-    - pip install -e .
-
-before_script: # configure a headless display to test  plot generation
-    - "export DISPLAY=:99.0"
-    - "sh -e /etc/init.d/xvfb start"
-    - sleep 3 # give xvfb some time to start
+    - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
+    - source activate parcels
+    - python setup.py install
 
 script:
-    - flake8 parcels
-    - flake8 tests
-    - parcels_get_examples examples/
+    - |
+      # Set up display to be able to plot in linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        export DISPLAY=:99.0;
+        sh -e /etc/init.d/xvfb start;
+        sleep 3;
+      fi
     - py.test -v -s tests/
-    - py.test -v -s --nbval-lax examples/
-    - make linkcheck -C docs
+    - |
+      # only get examples on linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        parcels_get_examples examples/;
+      fi
+    - |
+      # run linter on linux
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        flake8 parcels;
+        flake8 tests;
+      fi
+    - |
+      # evaluate example scripts and notebooks on linux only
+      if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
+        py.test -v -s --nbval-lax examples/;
+      fi

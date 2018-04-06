@@ -32,15 +32,10 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         return
 
     pfile = Dataset(filename, 'r')
-    lon = pfile.variables['lon']
-    lat = pfile.variables['lat']
-    z = pfile.variables['z']
-    time = pfile.variables['time'][:]
-    if len(lon.shape) == 1:
-        type = 'indexed'
-        id = pfile.variables['trajectory'][:]
-    else:
-        type = 'array'
+    lon = np.ma.filled(pfile.variables['lon'], np.nan)
+    lat = np.ma.filled(pfile.variables['lat'], np.nan)
+    time = np.ma.filled(pfile.variables['time'], np.nan)
+    z = np.ma.filled(pfile.variables['z'], np.nan)
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
@@ -56,51 +51,31 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         from mpl_toolkits.mplot3d import Axes3D  # noqa
         fig = plt.figure(1)
         ax = fig.gca(projection='3d')
-        if type == 'array':
-            for p in range(len(lon)):
-                ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
-        elif type == 'indexed':
-            for t in np.unique(id):
-                ax.plot(lon[id == t], lat[id == t],
-                        z[id == t], '.-')
+        for p in range(len(lon)):
+            ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
     elif mode == '2d':
-        if type == 'array':
-            plt.plot(np.transpose(lon), np.transpose(lat), '.-')
-        elif type == 'indexed':
-            for t in np.unique(id):
-                plt.plot(lon[id == t], lat[id == t], '.-')
+        plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
     elif mode == 'movie2d' or 'movie2d_notebook':
-        if type == 'array' and any(time[:, 0] != time[0, 0]):
-            # since particles don't start at the same time, treat as indexed
-            type = 'indexed'
-            id = pfile.variables['trajectory'][:].flatten()
-            lon = lon[:].flatten()
-            lat = lat[:].flatten()
-            time = time.flatten()
-
         fig = plt.figure()
-        ax = plt.axes(xlim=(np.amin(lon), np.amax(lon)), ylim=(np.amin(lat), np.amax(lat)))
-        if type == 'array':
-            scat = ax.scatter(lon[:, 0], lat[:, 0], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
-            frames = np.arange(1, lon.shape[1])
-        elif type == 'indexed':
-            mintime = min(time)
-            scat = ax.scatter(lon[time == mintime], lat[time == mintime],
-                              s=60, cmap=plt.get_cmap('autumn'))
-            frames = np.unique(time[~np.isnan(time)])
+        ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
+        plottimes = np.unique(time)
+        plottimes = plottimes[~np.isnan(plottimes)]
+        b = time == plottimes[0]
+        scat = ax.scatter(lon[b], lat[b], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
+        ttl = ax.set_title('Particle at time ' + str(plottimes[0]))
+        frames = np.arange(1, len(plottimes))
 
         def animate(t):
-            if type == 'array':
-                scat.set_offsets(np.matrix((lon[:, t], lat[:, t])).transpose())
-            elif type == 'indexed':
-                scat.set_offsets(np.matrix((lon[time == t], lat[time == t])).transpose())
+            b = time == plottimes[t]
+            scat.set_offsets(np.matrix((lon[b], lat[b])).transpose())
+            ttl.set_text('Particle at time ' + str(plottimes[t]))
             if recordedvar is not None:
-                scat.set_array(record[:, t])
+                scat.set_array(record[b])
             return scat,
 
         rc('animation', html='html5')

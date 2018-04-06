@@ -11,12 +11,18 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_fieldset(xdim, ydim):
+def peninsula_fieldset(xdim, ydim, mesh):
     """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
     :param xdim: Horizontal dimension of the generated fieldset
     :param xdim: Vertical dimension of the generated fieldset
+    :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
 
     The original test description can be found in Fig. 2.2.3 in:
     North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
@@ -25,12 +31,10 @@ def peninsula_fieldset(xdim, ydim):
     ICES Cooperative Research Report No. 295. 111 pp.
     http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
 
-    Note that the problem is defined on an A-grid while NEMO
-    normally returns C-grids. However, to avoid accuracy
-    problems with interpolation from A-grid to C-grid, we
-    return NetCDF files that are on an A-grid.
+    To avoid accuracy problems with interpolation from A-grid
+    to C-grid, we return NetCDF files that are on an A-grid.
     """
-    # Set NEMO fieldset variables
+    # Set Parcels FieldSet variables
     depth = np.zeros(1, dtype=np.float32)
     time = np.zeros(1, dtype=np.float64)
 
@@ -42,17 +46,17 @@ def peninsula_fieldset(xdim, ydim):
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
-    U = np.zeros((xdim, ydim), dtype=np.float32)
-    V = np.zeros((xdim, ydim), dtype=np.float32)
-    W = np.zeros((xdim, ydim), dtype=np.float32)
-    P = np.zeros((xdim, ydim), dtype=np.float32)
+    U = np.zeros((ydim, xdim), dtype=np.float32)
+    V = np.zeros((ydim, xdim), dtype=np.float32)
+    W = np.zeros((ydim, xdim), dtype=np.float32)
+    P = np.zeros((ydim, xdim), dtype=np.float32)
 
     u0 = 1
     x0 = 50.
     R = 0.32 * 50.
 
     # Create the fields
-    x, y = np.meshgrid(La, Wa, sparse=True, indexing='ij')
+    x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
     P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
     U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
     V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
@@ -63,13 +67,20 @@ def peninsula_fieldset(xdim, ydim):
     V[landpoints] = np.nan
     W[landpoints] = np.nan
 
-    # Convert from km to lat/lon
-    lon = La / 1.852 / 60.
-    lat = Wa / 1.852 / 60.
+    if mesh == 'spherical':
+        # Convert from km to lat/lon
+        lon = La / 1.852 / 60.
+        lat = Wa / 1.852 / 60.
+    elif mesh == 'flat':
+        # Convert from km to m
+        lon = La * 1000.
+        lat = Wa * 1000.
+    else:
+        raise RuntimeError('Mesh %s is not a valid option' % mesh)
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    return FieldSet.from_data(data, dimensions)
+    return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
 def UpdateP(particle, fieldset, time, dt):
@@ -98,7 +109,10 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
                                                           self.p, self.p_start)
 
     # Initialise particles
-    x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
+    if fieldset.U.grid.mesh == 'flat':
+        x = 3000  # 3 km offset from boundary
+    else:
+        x = 3. * (1. / 1.852 / 60)  # 3 km offset from boundary
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)  # latitude range, including offsets
     pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
                                  start=(x, y[0]), finish=(x, y[1]), time=0)
@@ -111,10 +125,9 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
     dt = delta(minutes=5)
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    out = pset.ParticleFile(name="MyParticle") if output else None
-    interval = delta(hours=1) if output else -1
+    out = pset.ParticleFile(name="MyParticle", outputdt=delta(hours=1)) if output else None
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
-    pset.execute(k_adv + k_p, endtime=time, dt=dt, output_file=out, interval=interval)
+    pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -123,9 +136,10 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_fieldset(mode):
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_fieldset(mode, mesh):
     """Execute peninsula test from fieldset generated in memory"""
-    fieldset = peninsula_fieldset(100, 50)
+    fieldset = peninsula_fieldset(100, 50, mesh)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -139,7 +153,7 @@ def test_peninsula_fieldset(mode):
 def fieldsetfile():
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
-    fieldset = peninsula_fieldset(100, 50)
+    fieldset = peninsula_fieldset(100, 50, mesh='spherical')
     fieldset.write(filename)
     return filename
 
@@ -147,7 +161,7 @@ def fieldsetfile():
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_peninsula_file(fieldsetfile, mode):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_nemo(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -180,11 +194,11 @@ Example of particle advection around an idealised peninsula""")
 
     if args.fieldset is not None:
         filename = 'peninsula'
-        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1])
+        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='spherical')
         fieldset.write(filename)
 
     # Open fieldset file set
-    fieldset = FieldSet.from_nemo('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
 
     if args.profiling:
         from cProfile import runctx

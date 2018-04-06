@@ -48,7 +48,7 @@ class Kernel(object):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None):
+                 funccode=None, py_ast=None, funcvars=None, c_include=""):
         self.fieldset = fieldset
         self.ptype = ptype
 
@@ -93,10 +93,24 @@ class Kernel(object):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
+            if 'UV' in self.field_args:
+                fieldset = self.field_args['UV'].fieldset
+                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
+                    if f not in self.field_args:
+                        try:
+                            self.field_args[f] = getattr(fieldset, f)
+                        except:
+                            continue
+                del self.field_args['UV']
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
+            if path.isfile(c_include):
+                with open(c_include, 'r') as f:
+                    c_include_str = f.read()
+            else:
+                c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
-                                          kernel_ccode)
+                                          kernel_ccode, c_include_str)
 
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
@@ -112,7 +126,8 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
-            map(remove, [self.src_file, self.lib_file, self.log_file]) if path.isfile(self.lib_file) else None
+            if path.isfile(self.lib_file):
+                [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
 
     @property
     def _cache_key(self):
@@ -130,7 +145,7 @@ class Kernel(object):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
-            map(remove, [self.src_file, self.lib_file, self.log_file])
+            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
             basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
@@ -151,6 +166,18 @@ class Kernel(object):
         """Invokes JIT engine to perform the core update loop"""
         for g in pset.fieldset.gridset.grids:
             g.cstruct = None  # This force to point newly the grids from Python to C
+        # Make a copy of the transposed array to enforce
+        # C-contiguous memory layout for JIT mode.
+        for f in self.field_args.values():
+            if not f.data.flags.c_contiguous:
+                f.data = f.data.copy()
+        for g in pset.fieldset.gridset.grids:
+            if not g.depth.flags.c_contiguous:
+                g.depth = g.depth.copy()
+            if not g.lon.flags.c_contiguous:
+                g.lon = g.lon.copy()
+            if not g.lat.flags.c_contiguous:
+                g.lat = g.lat.copy()
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
@@ -197,13 +224,15 @@ class Kernel(object):
                 else:
                     break  # Failure - stop time loop
 
-    def execute(self, pset, endtime, dt, recovery=None):
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
             indices = [i for i, p in enumerate(pset.particles)
                        if p.state in [ErrorCode.Delete]]
+            if len(indices) > 0 and output_file is not None:
+                output_file.write(pset[indices], endtime, deleted_only=True)
             pset.remove(indices)
 
         if recovery is None:

@@ -3,13 +3,14 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 
-__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'GridIndex', 'CGrid']
+__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
 
 
 class GridCode(IntEnum):
     RectilinearZGrid = 0
     RectilinearSGrid = 1
-    CurvilinearGrid = 2
+    CurvilinearZGrid = 2
+    CurvilinearSGrid = 3
 
 
 class CGrid(Structure):
@@ -22,27 +23,7 @@ class Grid(object):
 
     """
 
-    @property
-    def ctypes_struct(self):
-        self.cgrid = cast(pointer(self.child_ctypes_struct), c_void_p)
-        cstruct = CGrid(self.gtype, self.cgrid.value)
-        return cstruct
-
-
-class RectilinearGrid(Grid):
-    """Rectilinear Grid
-       Private base class for RectilinearZGrid and RectilinearSGrid
-
-    """
-
-    def __init__(self, name, lon, lat, time, time_origin, mesh):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
-        assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
-        if isinstance(time, np.ndarray):
-            assert(len(time.shape) == 1), 'time is not a vector'
-
-        self.name = name
+    def __init__(self, lon, lat, time, time_origin, mesh):
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -58,25 +39,60 @@ class RectilinearGrid(Grid):
         self.time_origin = time_origin
         self.mesh = mesh
         self.cstruct = None
+        self.cell_edge_sizes = {}
+        self.zonal_periodic = False
+        self.zonal_halo = 0
+        self.meridional_halo = 0
+        self.lat_flipped = False
+        self.defer_load = False
 
-    def add_periodic_halo(self, zonal, meridional, halosize=5):
-        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
-        similarly to the halo created for the Fields
+    @property
+    def ctypes_struct(self):
+        # This is unnecessary for the moment, but it could be useful when going will fully unstructured grids
+        self.cgrid = cast(pointer(self.child_ctypes_struct), c_void_p)
+        cstruct = CGrid(self.gtype, self.cgrid.value)
+        return cstruct
 
-        :param zonal: Create a halo in zonal direction (boolean)
-        :param meridional: Create a halo in meridional direction (boolean)
-        :param halosize: size of the halo (in grid points). Default is 5 grid points
-        """
-        if zonal:
-            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
-            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
-                                      self.lon, self.lon[0:halosize] + lonshift))
-        if meridional:
-            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
-            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
-                                      self.lat, self.lat[0:halosize] + latshift))
+    @property
+    def child_ctypes_struct(self):
+        """Returns a ctypes struct object containing all relevant
+        pointers and sizes for this grid."""
+
+        class CStructuredGrid(Structure):
+            # z4d is only to have same cstruct as RectilinearSGrid
+            _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
+                        ('tdim', c_int), ('z4d', c_int),
+                        ('mesh_spherical', c_int), ('zonal_periodic', c_int),
+                        ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
+                        ('depth', POINTER(c_float)), ('time', POINTER(c_double))
+                        ]
+
+        # Create and populate the c-struct object
+        if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+            self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
+                                           self.tdim, self.z4d,
+                                           self.mesh == 'spherical', self.zonal_periodic,
+                                           self.lon.ctypes.data_as(POINTER(c_float)),
+                                           self.lat.ctypes.data_as(POINTER(c_float)),
+                                           self.depth.ctypes.data_as(POINTER(c_float)),
+                                           self.time.ctypes.data_as(POINTER(c_double)))
+        return self.cstruct
+
+    def lon_grid_to_target(self):
+        if self.lon_remapping:
+            self.lon = self.lon_remapping.to_target(self.lon)
+
+    def lon_grid_to_source(self):
+        if self.lon_remapping:
+            self.lon = self.lon_remapping.to_source(self.lon)
+
+    def lon_particle_to_target(self, lon):
+        if self.lon_remapping:
+            return self.lon_remapping.particle_to_target(lon)
+        return lon
 
     def advancetime(self, grid_new):
+        grid_new.time = grid_new.time + (grid_new.time_origin - self.time_origin) / np.timedelta64(1, 's')
         if len(grid_new.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
         if grid_new.time > self.time[-1]:  # forward in time, so appending at end
@@ -88,35 +104,96 @@ class RectilinearGrid(Grid):
         else:
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
-    @property
-    def child_ctypes_struct(self):
-        """Returns a ctypes struct object containing all relevant
-        pointers and sizes for this grid."""
+    def check_zonal_periodic(self):
+        if self.zonal_periodic or self.mesh == 'flat':
+            return
+        dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
+        dx = np.where(dx < -180, dx+360, dx)
+        dx = np.where(dx > 180, dx-360, dx)
+        self.zonal_periodic = sum(dx) > 359.9
 
-        class CRectilinearGrid(Structure):
-            # z4d is only to have same cstruct as RectilinearSGrid
-            _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
-                        ('tdim', c_int), ('z4d', c_int),
-                        ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
-                        ('depth', POINTER(c_float)), ('time', POINTER(c_double))
-                        ]
+    def computeTimeChunk(self, f, time, signdt):
+        nextTime_loc = np.infty * signdt
+        if self.update_status == 'no_update':
+            if self.ti >= 0:
+                if signdt >= 0 and ((time < self.time[0] and self.ti > 0)
+                   or (time > self.time[2] and self.ti < len(self.time_full)-3)):
+                    self.ti = -1  # reset
+                elif signdt >= 0 and time >= self.time[1] and self.ti < len(self.time_full)-3:
+                    self.ti += 1
+                    self.time = self.time_full[self.ti:self.ti+3]
+                    self.update_status = 'update'
+                elif signdt == -1 and time <= self.time[1] and self.ti > 0:
+                    self.ti -= 1
+                    self.time = self.time_full[self.ti:self.ti+3]
+                    self.update_status = 'update'
+            if self.ti == -1:
+                self.time = self.time_full
+                self.ti, _ = f.time_index(time)
+                if self.ti > 0 and signdt == -1:
+                    self.ti = self.ti-2 if len(self.time_full)-1 else self.ti-1
+                self.time = self.time_full[self.ti:self.ti+3]
+                self.tdim = 3
+                self.update_status = 'first_update'
+            if signdt >= 0 and self.ti < len(self.time_full)-3:
+                nextTime_loc = self.time[2]
+            elif signdt == -1 and self.ti > 0:
+                nextTime_loc = self.time[0]
+        return nextTime_loc
 
-        # Create and populate the c-struct object
-        if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
-            depthSize = self.depth.size if self.gtype == GridCode.RectilinearZGrid else self.depth.shape[2]
-            self.cstruct = CRectilinearGrid(self.lon.size, self.lat.size, depthSize,
-                                            self.time.size, self.z4d,
-                                            self.lon.ctypes.data_as(POINTER(c_float)),
-                                            self.lat.ctypes.data_as(POINTER(c_float)),
-                                            self.depth.ctypes.data_as(POINTER(c_float)),
-                                            self.time.ctypes.data_as(POINTER(c_double)))
-        return self.cstruct
+
+class RectilinearGrid(Grid):
+    """Rectilinear Grid
+       Private base class for RectilinearZGrid and RectilinearSGrid
+
+    """
+
+    def __init__(self, lon, lat, time, time_origin, mesh):
+        assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
+        assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
+        assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
+        if isinstance(time, np.ndarray):
+            assert(len(time.shape) == 1), 'time is not a vector'
+
+        Grid.__init__(self, lon, lat, time, time_origin, mesh)
+        self.xdim = self.lon.size
+        self.ydim = self.lat.size
+        self.tdim = self.time.size
+        if self.lat[-1] < self.lat[0]:
+            self.lat = np.flip(self.lat, axis=0)
+            self.lat_flipped = True
+            logger.warning_once("Flipping lat data from North-South to South-North")
+
+    def add_periodic_halo(self, zonal, meridional, halosize=5):
+        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
+        similarly to the halo created for the Fields
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+        if zonal:
+            lonshift = (self.lon[-1] - 2 * self.lon[0] + self.lon[1])
+            if not np.allclose(self.lon[1]-self.lon[0], self.lon[-1]-self.lon[-2]):
+                logger.warning_once("The zonal halo is located at the east and west of current grid, with a dx = lon[1]-lon[0] between the last nodes of the original grid and the first ones of the halo. In your grid, lon[1]-lon[0] != lon[-1]-lon[-2]. Is the halo computed as you expect?")
+            self.lon = np.concatenate((self.lon[-halosize:] - lonshift,
+                                      self.lon, self.lon[0:halosize] + lonshift))
+            self.xdim = self.lon.size
+            self.zonal_periodic = True
+            self.zonal_halo = halosize
+        if meridional:
+            if not np.allclose(self.lat[1]-self.lat[0], self.lat[-1]-self.lat[-2]):
+                logger.warning_once("The meridional halo is located at the north and south of current grid, with a dy = lat[1]-lat[0] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1]-lat[0] != lat[-1]-lat[-2]. Is the halo computed as you expect?")
+            latshift = (self.lat[-1] - 2 * self.lat[0] + self.lat[1])
+            self.lat = np.concatenate((self.lat[-halosize:] - latshift,
+                                      self.lat, self.lat[0:halosize] + latshift))
+            self.ydim = self.lat.size
+            self.meridional_halo = halosize
 
 
 class RectilinearZGrid(RectilinearGrid):
     """Rectilinear Z Grid
 
-    :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
@@ -131,13 +208,14 @@ class RectilinearZGrid(RectilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
-        RectilinearGrid.__init__(self, name, lon, lat, time, time_origin, mesh)
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
+        RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.zdim = self.depth.size
         self.z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
@@ -148,7 +226,6 @@ class RectilinearSGrid(RectilinearGrid):
     """Rectilinear S Grid. Same horizontal discretisation as a rectilinear z grid,
        but with s vertical coordinates
 
-    :param name: Name of the grid
     :param lon: Vector containing the longitude coordinates of the grid
     :param lat: Vector containing the latitude coordinates of the grid
     :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
@@ -168,49 +245,149 @@ class RectilinearSGrid(RectilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, name, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
-        RectilinearGrid.__init__(self, name, lon, lat, time, time_origin, mesh)
-        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
+    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
+        RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
         self.depth = depth
-        self.z4d = len(depth.shape) == 4
+        self.zdim = self.depth.shape[-3]
+        self.z4d = len(self.depth.shape) == 4
+        if self.z4d:
+            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        else:
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
+        if not self.depth.dtype == np.float32:
+            logger.warning_once("Casting depth data to np.float32")
+            self.depth = self.depth.astype(np.float32)
+        if self.lat_flipped:
+            self.depth = np.flip(self.depth, axis=-2)
+
+
+class CurvilinearGrid(Grid):
+
+    def __init__(self, lon, lat, time=None, time_origin=0, mesh='flat'):
+        assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
+        assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
+        assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
+        if isinstance(time, np.ndarray):
+            assert(len(time.shape) == 1), 'time is not a vector'
+
+        lon = lon.squeeze()
+        lat = lat.squeeze()
+        Grid.__init__(self, lon, lat, time, time_origin, mesh)
+        self.xdim = self.lon.shape[1]
+        self.ydim = self.lon.shape[0]
+        self.tdim = self.time.size
+
+    def add_periodic_halo(self, zonal, meridional, halosize=5):
+        """Add a 'halo' to the Grid, through extending the Grid (and lon/lat)
+        similarly to the halo created for the Fields
+
+        :param zonal: Create a halo in zonal direction (boolean)
+        :param meridional: Create a halo in meridional direction (boolean)
+        :param halosize: size of the halo (in grid points). Default is 5 grid points
+        """
+        if zonal:
+            lonshift = self.lon[:, -1] - 2 * self.lon[:, 0] + self.lon[:, 1]
+            if not np.allclose(self.lon[:, 1]-self.lon[:, 0], self.lon[:, -1]-self.lon[:, -2]):
+                logger.warning_once("The zonal halo is located at the east and west of current grid, with a dx = lon[:,1]-lon[:,0] between the last nodes of the original grid and the first ones of the halo. In your grid, lon[:,1]-lon[:,0] != lon[:,-1]-lon[:,-2]. Is the halo computed as you expect?")
+            self.lon = np.concatenate((self.lon[:, -halosize:] - lonshift[:, np.newaxis],
+                                       self.lon, self.lon[:, 0:halosize] + lonshift[:, np.newaxis]),
+                                      axis=len(self.lon.shape)-1)
+            self.lat = np.concatenate((self.lat[:, -halosize:],
+                                       self.lat, self.lat[:, 0:halosize]),
+                                      axis=len(self.lat.shape)-1)
+            self.xdim = self.lon.shape[1]
+            self.ydim = self.lat.shape[0]
+            self.zonal_periodic = True
+            self.zonal_halo = halosize
+        if meridional:
+            if not np.allclose(self.lat[1, :]-self.lat[0, :], self.lat[-1, :]-self.lat[-2, :]):
+                logger.warning_once("The meridional halo is located at the north and south of current grid, with a dy = lat[1,:]-lat[0,:] between the last nodes of the original grid and the first ones of the halo. In your grid, lat[1,:]-lat[0,:] != lat[-1,:]-lat[-2,:]. Is the halo computed as you expect?")
+            latshift = self.lat[-1, :] - 2 * self.lat[0, :] + self.lat[1, :]
+            self.lat = np.concatenate((self.lat[-halosize:, :] - latshift[np.newaxis, :],
+                                       self.lat, self.lat[0:halosize, :] + latshift[np.newaxis, :]),
+                                      axis=len(self.lat.shape)-2)
+            self.lon = np.concatenate((self.lon[-halosize:, :],
+                                       self.lon, self.lon[0:halosize, :]),
+                                      axis=len(self.lon.shape)-2)
+            self.xdim = self.lon.shape[1]
+            self.ydim = self.lat.shape[0]
+            self.meridional_halo = halosize
+
+
+class CurvilinearZGrid(CurvilinearGrid):
+    """Curvilinear Z Grid.
+
+    :param lon: 2D array containing the longitude coordinates of the grid
+    :param lat: 2D array containing the latitude coordinates of the grid
+    :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
+           The depth of the different layers is thus constant.
+    :param time: Vector containing the time coordinates of the grid
+    :param time_origin: Time origin of the time axis
+    :param mesh: String indicating the type of mesh coordinates and
+           units used during velocity interpolation:
+
+           1. spherical (default): Lat and lon in degree, with a
+              correction for zonal velocity U near the poles.
+           2. flat: No conversion, lat/lon are assumed to be in m.
+    """
+
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
+        CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        if isinstance(depth, np.ndarray):
+            assert(len(depth.shape) == 1), 'depth is not a vector'
+
+        self.gtype = GridCode.CurvilinearZGrid
+        self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
+        self.zdim = self.depth.size
+        self.z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
             logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
 
 
-class GVariable(object):
-    def __init__(self, name):
-        self.name = name
+class CurvilinearSGrid(CurvilinearGrid):
+    """Curvilinear S Grid.
 
-    def __get__(self, instance, cls):
-        return instance._cptr.__getitem__(self.name)
+    :param lon: 2D array containing the longitude coordinates of the grid
+    :param lat: 2D array containing the latitude coordinates of the grid
+    :param depth: 4D (time-evolving) or 3D (time-independent) array containing the vertical coordinates of the grid,
+           which are s-coordinates.
+           s-coordinates can be terrain-following (sigma) or iso-density (rho) layers,
+           or any generalised vertical discretisation.
+           The depth of each node depends then on the horizontal position (lon, lat),
+           the number of the layer and the time is depth is a 4D array.
+           depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
+    :param time: Vector containing the time coordinates of the grid
+    :param time_origin: Time origin of the time axis
+    :param mesh: String indicating the type of mesh coordinates and
+           units used during velocity interpolation:
 
-    def __set__(self, instance, value):
-        instance._cptr.__setitem__(self.name, value)
-
-
-class GridIndex(object):
-    """GridIndex class that defines the indices of the particle in the grid
-
-    :param grid: grid related to this grid index
-
+           1. spherical (default): Lat and lon in degree, with a
+              correction for zonal velocity U near the poles.
+           2. flat: No conversion, lat/lon are assumed to be in m.
     """
-    xi = GVariable('xi')
-    yi = GVariable('yi')
-    zi = GVariable('zi')
-    ti = GVariable('ti')
 
-    def __init__(self, grid, *args, **kwargs):
-        self._cptr = kwargs.pop('cptr', None)
-        self.name = grid.name
-        self.xi = 0
-        self.yi = 0
-        self.zi = 0
-        self.ti = 0
+    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
+        CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
-    @classmethod
-    def dtype(cls):
-        type_list = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('ti', np.int32)]
-        return np.dtype(type_list)
+        self.gtype = GridCode.CurvilinearSGrid
+        self.depth = depth
+        self.zdim = self.depth.shape[-3]
+        self.z4d = len(self.depth.shape) == 4
+        if self.z4d:
+            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+        else:
+            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
+        if not self.depth.dtype == np.float32:
+            logger.warning_once("Casting depth data to np.float32")
+            self.depth = self.depth.astype(np.float32)

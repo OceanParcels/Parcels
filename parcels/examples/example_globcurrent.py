@@ -9,24 +9,22 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices={}):
+def set_globcurrent_fieldset(filename=None, indices={}, full_load=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     filenames = {'U': filename, 'V': filename}
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
-    return FieldSet.from_netcdf(filenames, variables, dimensions, indices)
+    return FieldSet.from_netcdf(filenames, variables, dimensions, indices, full_load=full_load)
 
 
 def test_globcurrent_fieldset():
     fieldset = set_globcurrent_fieldset()
     assert(fieldset.U.lon.size == 81)
     assert(fieldset.U.lat.size == 41)
-    assert(fieldset.U.data.shape == (365, 41, 81))
     assert(fieldset.V.lon.size == 81)
     assert(fieldset.V.lat.size == 41)
-    assert(fieldset.V.data.shape == (365, 41, 81))
 
     indices = {'lon': [5], 'lat': range(20, 30)}
     fieldsetsub = set_globcurrent_fieldset(indices=indices)
@@ -46,10 +44,10 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
                          '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     files = sorted(glob(str(basepath)))
 
-    fieldsetsub = set_globcurrent_fieldset(files[substart:subend])
+    fieldsetsub = set_globcurrent_fieldset(files[0:10])
     psetsub = ParticleSet.from_list(fieldset=fieldsetsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
 
-    fieldsetall = set_globcurrent_fieldset(files[0:10])
+    fieldsetall = set_globcurrent_fieldset(files[0:10], full_load=True)
     psetall = ParticleSet.from_list(fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
     if dt < 0:
         psetsub[0].time = fieldsetsub.U.time[-1]
@@ -57,8 +55,6 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
 
     for i in irange:
         psetsub.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
-        fieldsetsub.advancetime(set_globcurrent_fieldset(files[i]))
-
         psetall.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
@@ -73,8 +69,7 @@ def test_globcurrent_particles(mode):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5),
-                 interval=delta(hours=1))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
 
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
@@ -88,5 +83,4 @@ def test_globcurrent_time_extrapolation_error(mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35],
                        time=fieldset.U.time[0]-delta(days=1).total_seconds())
 
-    pset.execute(AdvectionRK4, runtime=delta(days=1),
-                 dt=delta(minutes=5), interval=delta(hours=1))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))

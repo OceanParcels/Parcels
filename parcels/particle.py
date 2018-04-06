@@ -3,8 +3,7 @@ from parcels.field import Field
 from parcels.loggers import logger
 from operator import attrgetter
 import numpy as np
-from parcels.gridset import GridIndexSet
-from ctypes import cast, pointer, c_void_p
+from ctypes import c_void_p
 
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
@@ -48,7 +47,7 @@ class Variable(object):
     def is64bit(self):
         """Check whether variable is 64-bit"""
         return True if self.dtype == np.float64 or self.dtype == np.int64 \
-                       or self.name == 'CGridIndexSet' else False
+                       or self.dtype == c_void_p else False
 
 
 class ParticleType(object):
@@ -132,7 +131,7 @@ class _Particle(object):
             else:
                 initial = v.initial
             # Enforce type of initial value
-            if v.name != 'CGridIndexSet':
+            if v.dtype != c_void_p:
                 setattr(self, v.name, v.dtype(initial))
 
         # Placeholder for explicit error handling
@@ -166,6 +165,7 @@ class ScipyParticle(_Particle):
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
+    fileid = Variable('fileid', dtype=np.int32, to_write=False)
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
@@ -179,6 +179,7 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).id.initial = lastID
         lastID += 1
+        type(self).fileid.initial = -1  # -1 means particle is not written yet
         type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()
 
@@ -206,7 +207,10 @@ class JITParticle(ScipyParticle):
 
     """
 
-    CGridIndexSet = Variable('CGridIndexSet', dtype=np.dtype(c_void_p), to_write=False)
+    cxi = Variable('cxi', dtype=np.dtype(c_void_p), to_write=False)
+    cyi = Variable('cyi', dtype=np.dtype(c_void_p), to_write=False)
+    czi = Variable('czi', dtype=np.dtype(c_void_p), to_write=False)
+    cti = Variable('cti', dtype=np.dtype(c_void_p), to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -217,9 +221,13 @@ class JITParticle(ScipyParticle):
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
-        self.gridIndexSet = GridIndexSet(self.id, fieldset.gridset)
-        self.CGridIndexSetptr = cast(pointer(self.gridIndexSet.ctypes_struct), c_void_p)
-        self.CGridIndexSet = self.CGridIndexSetptr.value
+        for index in ['xi', 'yi', 'zi', 'ti']:
+            if index is not 'ti':
+                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+            else:
+                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+            setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
+            setattr(self, 'c'+index, getattr(self, index+'p').value)
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
