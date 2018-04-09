@@ -90,7 +90,7 @@ def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
 
     lats = np.array([p.lat for p in pset])
     lons = np.array([p.lon for p in pset])
-    tol = 1000*mesh_conversion  # effectively 1000 m errors
+    tol = 2000*mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
     assert np.allclose(np.mean(lons), 0, atol=tol)
     assert np.allclose(np.mean(lats), 0, atol=tol)
     assert(stats.skew(lons) > stats.skew(lats))
