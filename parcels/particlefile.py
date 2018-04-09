@@ -96,7 +96,7 @@ class ParticleFile(object):
                     setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
                     self.user_vars += [v.name]
                 elif v.to_write == 'once':
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "trajectory", fill_value=np.nan))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan))
                     self.user_vars_once += [v.name]
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
