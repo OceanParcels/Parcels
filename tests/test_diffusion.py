@@ -94,3 +94,27 @@ def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
     assert np.allclose(np.mean(lons), 0, atol=tol)
     assert np.allclose(np.mean(lats), 0, atol=tol)
     assert(stats.skew(lons) > stats.skew(lats))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('lambd', [1, 5])
+def test_randomexponential(mode, lambd, npart=1000):
+    fieldset = zeros_fieldset()
+
+    # Rate parameter for random.expovariate
+    fieldset.lambd = lambd
+
+    # Set random seed
+    random.seed(1234)
+
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
+
+    def vertical_randomexponential(particle, fieldset, time, dt):
+        # Kernel for random exponential variable in depth direction
+        particle.depth = random.expovariate(fieldset.lambd)
+
+    pset.execute(vertical_randomexponential, runtime=1, dt=1)
+
+    depth = np.array([particle.depth for particle in pset.particles])
+    expected_mean = 1./fieldset.lambd
+    assert np.allclose(np.mean(depth), expected_mean, rtol=.1)
