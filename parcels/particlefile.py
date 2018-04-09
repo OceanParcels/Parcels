@@ -41,8 +41,8 @@ class ParticleFile(object):
         fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
-        self.dataset.createDimension("trajectory", None)
-        coords = ("trajectory", "obs")
+        self.dataset.createDimension("traj", None)
+        coords = ("traj", "obs")
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
