@@ -380,7 +380,8 @@ class Field(object):
         if self._scaling_factor:
             raise NotImplementedError(('Scaling factor for field %s already defined.' % self.name))
         self._scaling_factor = factor
-        self.data *= factor
+        if not self.grid.defer_load:
+            self.data *= factor
 
     def getUV(self, time, x, y, z):
         fieldset = self.fieldset
