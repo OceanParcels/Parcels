@@ -617,6 +617,14 @@ static inline float parcels_normalvariate(float loc, float scale)
   y1 = x1 * w;
   return( loc + y1 * scale );
 }
+
+static inline float parcels_expovariate(float lamb)
+//Function to create an exponentially distributed random variable 
+{
+  float u;
+  u = (float)rand()/((float)(RAND_MAX) + 1.0);
+  return (-log(1.0-u)/lamb);
+}
 #ifdef __cplusplus
 }
 #endif
