@@ -41,8 +41,8 @@ class ParticleFile(object):
         fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
-        self.dataset.createDimension("trajectory", None)
-        coords = ("trajectory", "obs")
+        self.dataset.createDimension("traj", None)
+        coords = ("traj", "obs")
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
@@ -96,7 +96,7 @@ class ParticleFile(object):
                     setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
                     self.user_vars += [v.name]
                 elif v.to_write == 'once':
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "trajectory", fill_value=np.nan))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan))
                     self.user_vars_once += [v.name]
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
