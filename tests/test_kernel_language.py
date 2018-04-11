@@ -109,6 +109,22 @@ def test_while_if_break(fieldset, mode):
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_if_withfield(fieldset, mode):
+    """Test combination of if and Field sampling commands"""
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0.)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
+
+    def kernel(particle, fieldset, time, dt):
+        u = fieldset.U[time, 1., 0, 0]
+        if fieldset.U[time, 1., 0, 0] == u:
+            particle.p = 1
+
+    pset.execute(kernel, endtime=1., dt=1.)
+    assert np.allclose(np.array([p.p for p in pset]), 1., rtol=1e-12)
+
+
 @pytest.mark.parametrize(
     'mode',
     ['scipy',
