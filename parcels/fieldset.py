@@ -361,11 +361,11 @@ class FieldSet(object):
         nextTime = np.infty * signdt
 
         for g in self.gridset.grids:
-            g.update_status = 'no_update'
+            g.update_status = 'not_updated'
         for f in self.fields:
             if f.name == 'UV' or not f.grid.defer_load:
                 continue
-            if f.grid.update_status == 'no_update':
+            if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
@@ -373,14 +373,14 @@ class FieldSet(object):
             if f.name == 'UV' or not f.grid.defer_load:
                 continue
             g = f.grid
-            if g.update_status == 'first_update':  # First load of data
+            if g.update_status == 'first_updated':  # First load of data
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 for tindex in range(3):
                     data = f.computeTimeChunk(data, tindex)
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 f.data = f.reshape(data)
-            elif g.update_status == 'update':
+            elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
