@@ -521,7 +521,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
 }
 
 static inline ErrorCode temporal_interpolation(float x, float y, float z, double time, CField *f, 
-                                               void *vxi, void *vyi, void *vzi, void *vti, float *value, int interp_method)
+                                               unsigned long vxi, unsigned long vyi, unsigned long vzi, unsigned long vti, float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
@@ -539,7 +539,7 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
 }
 
 static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
-                                                 CField *U, CField *V, void *xi, void *yi, void *zi, void *ti,
+                                                 CField *U, CField *V, unsigned long xi, unsigned long yi, unsigned long zi, unsigned long ti,
                                                  float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
@@ -552,7 +552,7 @@ static inline ErrorCode temporal_interpolationUV(float x, float y, float z, doub
 
 static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float z, double time,
                                                  CField *U, CField *V, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
-                                                 void *xi, void *yi, void *zi, void *ti, float *valueU, float *valueV, int interp_method)
+                                                 unsigned long xi, unsigned long yi, unsigned long zi, unsigned long ti, float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
 
