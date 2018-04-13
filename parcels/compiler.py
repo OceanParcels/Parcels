@@ -28,13 +28,14 @@ class Compiler(object):
         environment variable ``CC``).
     :arg ld: Linker executable (optional, if ``None``, we assume the compiler
         can build object files and link in a single invocation, can be
-        overridden by exporting the environment variable ``LDSHARED``).
+        overridden by exporting the environment variables ``LDSHARED`` or
+        ``LD``).
     :arg cppargs: A list of arguments to the C compiler (optional).
     :arg ldargs: A list of arguments to the linker (optional)."""
 
     def __init__(self, cc, ld=None, cppargs=[], ldargs=[]):
         self._cc = environ.get('CC', cc)
-        self._ld = environ.get('LDSHARED', ld)
+        self._ld = environ.get('LDSHARED', environ.get('LD', ld))
         self._cppargs = cppargs
         self._ldargs = ldargs
 
