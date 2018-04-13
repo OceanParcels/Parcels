@@ -15,6 +15,10 @@ matrix:
     - os: osx
       language: generic
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
+    - os: osx
+      osx_image: xcode9.3
+      language: generic
+      env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
 
 install:
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
