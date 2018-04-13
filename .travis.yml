@@ -27,8 +27,11 @@ install:
     - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
     - python setup.py install
+    - echo "${CC} -B ${HOME}
     - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # put desired linker to the env's bin
-    - export CC="${CC} -B ${HOME}/miniconda/envs/parcels/bin/"  # override clang's search path
+    - echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$\*" > ccall
+    - chmod 755 ccall
+    - export CC=$(pwd)/ccall
 
 script:
     - |
