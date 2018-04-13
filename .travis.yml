@@ -29,7 +29,7 @@ install:
     - python setup.py install
     - echo "${CC} -B ${HOME}
     - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # put desired linker to the env's bin
-    - echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$\*" > ccall
+    - 'echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$\*" > ccall'
     - chmod 755 ccall
     - export CC=$(pwd)/ccall
 
