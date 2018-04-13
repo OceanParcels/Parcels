@@ -21,13 +21,13 @@ matrix:
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
 
 install:
+    - echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$*"
     - wget http://repo.continuum.io/miniconda/${MINICONDA_NAME} -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
     - python setup.py install
-    - echo "${CC} -B ${HOME}
     - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # put desired linker to the env's bin
     - echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$*" > ccall
     - chmod 755 ccall
