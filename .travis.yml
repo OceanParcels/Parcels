@@ -16,7 +16,7 @@ matrix:
       language: generic
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
     - os: osx
-      osx_image: xcode9.2
+      osx_image: xcode9.3
       language: generic
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
 
@@ -27,8 +27,7 @@ install:
     - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
     - python setup.py install
-    - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # workaround avoiding os linker
-    - which ld
+    - export CC=${CC} -B ${HOME}/miniconda/envs/parcels/bin/  # override clang's search path
 
 script:
     - |
