@@ -16,7 +16,7 @@ matrix:
       language: generic
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
     - os: osx
-      osx_image: xcode9.3
+      osx_image: xcode9.2
       language: generic
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh
 
