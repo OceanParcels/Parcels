@@ -27,7 +27,8 @@ install:
     - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
     - python setup.py install
-    - ln -s ${LD} ${HOME}/miniconda/bin/ld # workaround avoiding os linker
+    - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # workaround avoiding os linker
+    - which ld
 
 script:
     - |
