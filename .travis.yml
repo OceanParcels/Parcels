@@ -28,7 +28,7 @@ install:
     - source activate parcels
     - python setup.py install
     - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # put desired linker to the env's bin
-    - export CC=${CC} -B ${HOME}/miniconda/envs/parcels/bin/  # override clang's search path
+    - export CC="${CC} -B ${HOME}/miniconda/envs/parcels/bin/"  # override clang's search path
 
 script:
     - |
