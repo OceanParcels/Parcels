@@ -29,8 +29,10 @@ install:
     - source activate parcels
     - python setup.py install
     - ln -s ${LD} ${HOME}/miniconda/envs/parcels/bin/ld # put desired linker to the env's bin
-    - echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$*" > ccall
+    - echo "#!/bin/bash" > ccall
+    - echo "${CC} -B ${HOME}/miniconda/envs/parcels/bin/ \$*" >> ccall
     - chmod 755 ccall
+    - cat ccall
     - export CC=$(pwd)/ccall
 
 script:
