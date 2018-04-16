@@ -179,7 +179,7 @@ class ScipyParticle(_Particle):
         type(self).id.initial = lastID
         lastID += 1
         type(self).fileid.initial = -1  # -1 means particle is not written yet
-        type(self).dt.initial = np.nan
+        type(self).dt.initial = None  # np.nan
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
