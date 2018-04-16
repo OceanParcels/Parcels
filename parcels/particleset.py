@@ -324,9 +324,12 @@ class ParticleSet(object):
                 time = max(next_prelease, next_input, next_output, next_movie, endtime)
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
             if abs(time-next_prelease) < tol:
-                self.add(ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
-                                     lat=self.repeatlat, depth=self.repeatdepth,
-                                     pclass=self.repeatpclass))
+                pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                                       lat=self.repeatlat, depth=self.repeatdepth,
+                                       pclass=self.repeatpclass)
+                for p in pset_new:
+                    p.dt = dt
+                self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_output) < tol:
                 if output_file:

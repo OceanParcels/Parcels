@@ -114,7 +114,7 @@ class Grid(object):
 
     def computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.infty * signdt
-        if self.update_status == 'no_update':
+        if self.update_status == 'not_updated':
             if self.ti >= 0:
                 if signdt >= 0 and ((time < self.time[0] and self.ti > 0)
                    or (time > self.time[2] and self.ti < len(self.time_full)-3)):
@@ -122,11 +122,11 @@ class Grid(object):
                 elif signdt >= 0 and time >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
-                    self.update_status = 'update'
+                    self.update_status = 'updated'
                 elif signdt == -1 and time <= self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
-                    self.update_status = 'update'
+                    self.update_status = 'updated'
             if self.ti == -1:
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)
@@ -134,7 +134,7 @@ class Grid(object):
                     self.ti = self.ti-2 if len(self.time_full)-1 else self.ti-1
                 self.time = self.time_full[self.ti:self.ti+3]
                 self.tdim = 3
-                self.update_status = 'first_update'
+                self.update_status = 'first_updated'
             if signdt >= 0 and self.ti < len(self.time_full)-3:
                 nextTime_loc = self.time[2]
             elif signdt == -1 and self.ti > 0:
