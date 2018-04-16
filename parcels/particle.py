@@ -154,7 +154,6 @@ class ScipyParticle(_Particle):
     :param lat: Initial latitude of particle
     :param depth: Initial depth of particle
     :param fieldset: :mod:`parcels.fieldset.FieldSet` object to track this particle on
-    :param dt: Execution timestep for this particle
     :param time: Current time of the particle
 
     Additional Variables can be added via the :Class Variable: objects
@@ -169,7 +168,7 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, fieldset, depth=0., dt=1., time=0., cptr=None):
+    def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
         global lastID
 
         # Enforce default values through Variable descriptor
@@ -180,7 +179,7 @@ class ScipyParticle(_Particle):
         type(self).id.initial = lastID
         lastID += 1
         type(self).fileid.initial = -1  # -1 means particle is not written yet
-        type(self).dt.initial = dt
+        type(self).dt.initial = None
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
