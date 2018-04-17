@@ -396,7 +396,7 @@ class ParticleSet(object):
             lonW = nearest_index(self.fieldset.U.lon, domain[3])
         else:
             latN, latS, lonE, lonW = (-1, 0, -1, 0)
-        if field is not 'vector':
+        if field is not 'vector' and not land:
             plt.ion()
             plt.clf()
             if particles:
@@ -405,13 +405,11 @@ class ParticleSet(object):
                 axes = plt.gca()
                 axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
-                namestr = ''
                 time_origin = self.fieldset.U.grid.time_origin
             else:
                 if not isinstance(field, Field):
                     field = getattr(self.fieldset, field)
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
-                namestr = field.name
                 time_origin = field.grid.time_origin
             xlbl = 'Zonal distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Longitude [degrees]'
             ylbl = 'Meridional distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
@@ -425,14 +423,10 @@ class ParticleSet(object):
             self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.fieldset.U.time_index(show_time)
             show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
-            U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))
-            V = np.array(self.fieldset.V.temporal_interpolate_fullfield(idx, show_time))
             lon = self.fieldset.U.lon
             lat = self.fieldset.U.lat
             lon = lon[lonW:lonE]
             lat = lat[latS:latN]
-            U = U[latS:latN, lonW:lonE]
-            V = V[latS:latN, lonW:lonE]
 
             # configuring plot
             lat_median = np.median(lat)
@@ -442,28 +436,34 @@ class ParticleSet(object):
                         resolution='h', area_thresh=100,
                         llcrnrlon=lon[0], llcrnrlat=lat[0],
                         urcrnrlon=lon[-1], urcrnrlat=lat[-1])
-            if land:
-                m.drawcoastlines()
-                m.fillcontinents(color='burlywood')
             parallels = np.arange(lat[0], lat[-1], abs(lat[0]-lat[-1])/5)
             parallels = np.around(parallels, 2)
             m.drawparallels(parallels, labels=[1, 0, 0, 0])
             meridians = np.arange(lon[0], lon[-1], abs(lon[0]-lon[-1])/5)
             meridians = np.around(meridians, 2)
             m.drawmeridians(meridians, labels=[0, 0, 0, 1])
+            if land:
+                m.drawcoastlines()
+                m.fillcontinents(color='burlywood')
+            if field is 'vector':
+                # formating velocity data for quiver plotting
+                U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))
+                V = np.array(self.fieldset.V.temporal_interpolate_fullfield(idx, show_time))
+                U = U[latS:latN, lonW:lonE]
+                V = V[latS:latN, lonW:lonE]
+                U = np.array([U[y, x] for x in range(len(lon)) for y in range(len(lat))])
+                V = np.array([V[y, x] for x in range(len(lon)) for y in range(len(lat))])
+                speed = np.sqrt(U**2 + V**2)
+                normU = U/speed
+                normV = V/speed
+                x = np.repeat(lon, len(lat))
+                y = np.tile(lat, len(lon))
 
-            # formating velocity data for quiver plotting
-            U = np.array([U[y, x] for x in range(len(lon)) for y in range(len(lat))])
-            V = np.array([V[y, x] for x in range(len(lon)) for y in range(len(lat))])
-            speed = np.sqrt(U**2 + V**2)
-            normU = U/speed
-            normV = V/speed
-            x = np.repeat(lon, len(lat))
-            y = np.tile(lat, len(lon))
-
-            # plotting velocity vector field
-            vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, latlon=True)
-            m.colorbar(vecs, "right", size="5%", pad="2%")
+                # plotting velocity vector field
+                vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, latlon=True)
+                m.colorbar(vecs, "right", size="5%", pad="2%")
+            elif field is not None:
+                logger.warning('Plotting of both a field and land=True is not supported in this version of Parcels')
             # plotting particle data
             if particles:
                 xs, ys = m(plon, plat)
@@ -481,12 +481,12 @@ class ParticleSet(object):
             elif field is 'vector':
                 plt.title('Particles and velocity field' + timestr)
             else:
-                plt.title('Particles and '+namestr + timestr)
+                plt.title('Particles and '+field.name + timestr)
         else:
             if field is 'vector':
                 plt.title('Velocity field' + timestr)
             else:
-                plt.title(namestr + timestr)
+                plt.title(field.name + timestr)
 
         if savefile is None:
             plt.show()
