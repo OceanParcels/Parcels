@@ -1034,7 +1034,7 @@ class NetcdfFileBuffer(object):
             self.zdim = len(self.indsdepth)
         else:
             self.zdim = 0
-            self.indsdepth = []
+            self.indsdepth = [0]
         for inds in [self.indslat, self.indslon, self.indsdepth]:
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
