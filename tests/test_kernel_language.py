@@ -118,11 +118,20 @@ def test_if_withfield(fieldset, mode):
 
     def kernel(particle, fieldset, time, dt):
         u = fieldset.U[time, 1., 0, 0]
+        particle.p = 0
         if fieldset.U[time, 1., 0, 0] == u:
-            particle.p = 1
+            particle.p += 1
+        if fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0]:
+            particle.p += 1
+        if True:
+            particle.p += 1
+        if fieldset.U[time, 1., 0, 0] == u and 1 == 1:
+            particle.p += 1
+        if fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0] and fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0]:
+            particle.p += 1
 
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), 1., rtol=1e-12)
+    assert np.allclose(np.array([p.p for p in pset]), 5., rtol=1e-12)
 
 
 @pytest.mark.parametrize(
