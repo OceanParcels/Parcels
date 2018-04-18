@@ -109,6 +109,15 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
                 assert(samplevar[i, i+k] == k)
 
 
+def test_pset_repeatdt_check_dt(fieldset):
+    pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
+
+    def IncrLon(particle, fieldset, time, dt):
+        particle.lon = 1.
+    pset.execute(IncrLon, dt=2, runtime=21)
+    assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
