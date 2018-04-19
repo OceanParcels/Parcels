@@ -18,7 +18,8 @@ def BrownianMotion2D(particle, fieldset, time, dt):
 
 def SpatiallyVaryingBrownianMotion2D(particle, fieldset, time, dt):
     # Diffusion equations for particles in non-uniform diffusivity fields
-    # from Ross & Sharples 2004 and Spagnol et al. 2002
+    # from Ross & Sharples (2004, doi:10.4319/lom.2004.2.289)
+    # and Spagnol et al. (2002, doi:10.3354/meps235299)
 
     # regular Brownian motion step
     r = 1/3.
