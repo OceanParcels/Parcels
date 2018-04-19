@@ -191,7 +191,7 @@ def AdvectionAnalytical_C(particle, fieldset, time, dt):
     if B_x == 0 and delta_x == 0:
         ds_x = float('inf')
     elif B_x == 0:
-        ds_x = (1. - rx) / delta_x
+        ds_x = (rx_target. - rx) / delta_x
     elif Fu_r1 * Fu_r0 < 0:
         ds_x = float('inf')
     else:
@@ -201,7 +201,7 @@ def AdvectionAnalytical_C(particle, fieldset, time, dt):
     if B_y == 0 and delta_y == 0:
         ds_y = float('inf')
     elif B_y == 0:
-        ds_y = (1. - ry) / delta_y
+        ds_y = (ry_target. - ry) / delta_y
     elif Fv_r1 * Fv_r0 < 0:
         ds_y = float('inf')
     else:
@@ -327,7 +327,7 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
     if B_x == 0 and delta_x == 0:
         ds_x = float('inf')
     elif B_x == 0:
-        ds_x = (1. - rx) / delta_x
+        ds_x = (rx_target - rx) / delta_x
     elif Fu_r1 * Fu_r0 < 0:
         ds_x = float('inf')
     else:
@@ -337,7 +337,7 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
     if B_y == 0 and delta_y == 0:
         ds_y = float('inf')
     elif B_y == 0:
-        ds_y = (1. - ry) / delta_y
+        ds_y = (ry_target - ry) / delta_y
     elif Fv_r1 * Fv_r0 < 0:
         ds_y = float('inf')
     else:
