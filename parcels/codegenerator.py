@@ -399,9 +399,14 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(b)
         for b in node.orelse:
             self.visit(b)
-        body = c.Block([b.ccode for b in node.body])
+        # field evals are replaced by a tmp variable is added to the stack.
+        # Here it means field evals passes from node.test to node.body. We take it out manually
+        fieldInTestCount = node.test.ccode.count('tmp')
+        body0 = c.Block([b.ccode for b in node.body[:fieldInTestCount]])
+        body = c.Block([b.ccode for b in node.body[fieldInTestCount:]])
         orelse = c.Block([b.ccode for b in node.orelse]) if len(node.orelse) > 0 else None
-        node.ccode = c.If(node.test.ccode, body, orelse)
+        ifcode = c.If(node.test.ccode, body, orelse)
+        node.ccode = c.Block([body0, ifcode])
 
     def visit_Compare(self, node):
         self.visit(node.left)
