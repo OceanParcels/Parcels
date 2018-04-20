@@ -51,7 +51,7 @@ class ParticleSet(object):
         time = [time] * len(lat) if not isinstance(time, list) else time
         time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
         self.time_origin = fieldset.U.grid.time_origin
-        if len(time) > 0 and isinstance(time[0], np.timedelta64) and not isinstance(self.time_origin, np.timedelta64):
+        if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, time of a particle must be a double')
         time = [((t - self.time_origin) / np.timedelta64(1, 's')) if isinstance(t, np.datetime64) else t for t in time]
 
@@ -261,7 +261,7 @@ class ParticleSet(object):
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
         if isinstance(endtime, np.datetime64):
-            if not isinstance(self.time_origin, np.timedelta64):
+            if not self.time_origin:
                 raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, execution endtime must be a double')
             endtime = (endtime - self.time_origin) / np.timedelta64(1, 's')
         if isinstance(runtime, delta):
@@ -380,7 +380,7 @@ class ParticleSet(object):
         if isinstance(show_time, datetime):
             show_time = np.datetime64(show_time)
         if isinstance(show_time, np.datetime64):
-            if not isinstance(self.time_origin, np.timedelta64):
+            if not self.time_origin:
                 raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, showtime cannot be a date in particleset.show()')
             show_time = (show_time - self.time_origin) / np.timedelta64(1, 's')
         if isinstance(show_time, delta):

@@ -33,7 +33,7 @@ class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling"""
 
     def __init__(self, time, field=None):
-        if field is not None and isinstance(field.grid.time_origin, np.timedelta64):
+        if field is not None and field.grid.time_origin:
             time = field.grid.time_origin + np.timedelta64(int(time), 's')
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
@@ -991,6 +991,7 @@ class Field(object):
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
+                assert isinstance(time_data[0], type(g.time_origin))
                 time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:

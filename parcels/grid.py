@@ -2,6 +2,7 @@ from parcels.loggers import logger
 import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
+import datetime
 
 __all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
 
@@ -37,6 +38,10 @@ class Grid(object):
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
+        if self.time_origin:
+            if isinstance(self.time_origin, datetime.datetime):
+                self.time_origin = np.datetime64(self.time_origin)
+            assert isinstance(self.time_origin, np.datetime64)
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes = {}
@@ -92,8 +97,8 @@ class Grid(object):
         return lon
 
     def advancetime(self, grid_new):
-        assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time origins of different grids must be or always doubles, or always dates'
-        if isinstance(grid_new.time_origin, np.datetime64):
+        assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time_origin of new and old grids must be either both None or both a date'
+        if self.time_origin:
             grid_new.time = grid_new.time + (grid_new.time_origin - self.time_origin) / np.timedelta64(1, 's')
         if len(grid_new.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')

@@ -29,7 +29,7 @@ class KernelError(RuntimeError):
 
 
 def parse_particletime(time, fieldset):
-    if fieldset is not None and isinstance(fieldset.U.grid.time_origin, np.timedelta64):
+    if fieldset is not None and fieldset.U.grid.time_origin:
         time = fieldset.U.grid.time_origin + np.timedelta64(int(time), 's')
     return time
 
