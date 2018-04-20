@@ -95,9 +95,12 @@ class FieldSet(object):
         ugrid = self.U.grid
         for g in self.gridset.grids:
             g.check_zonal_periodic()
-            if g is not ugrid and g.time_origin != 0:
+            if g is ugrid or len(g.time) == 1:
+                continue
+            assert isinstance(g.time_origin, type(ugrid.time_origin)), 'time origins of different grids must be have the same type'
+            if isinstance(g.time_origin, np.datetime64):
                 g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
-                g.time_origin = ugrid.time_origin
+            g.time_origin = ugrid.time_origin
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},

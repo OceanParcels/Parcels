@@ -92,7 +92,9 @@ class Grid(object):
         return lon
 
     def advancetime(self, grid_new):
-        grid_new.time = grid_new.time + (grid_new.time_origin - self.time_origin) / np.timedelta64(1, 's')
+        assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time origins of different grids must be or always doubles, or always dates'
+        if isinstance(grid_new.time_origin, np.datetime64):
+            grid_new.time = grid_new.time + (grid_new.time_origin - self.time_origin) / np.timedelta64(1, 's')
         if len(grid_new.time) is not 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
         if grid_new.time > self.time[-1]:  # forward in time, so appending at end
@@ -199,7 +201,7 @@ class RectilinearZGrid(RectilinearGrid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
            The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin of the time axis
+    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -208,7 +210,7 @@ class RectilinearZGrid(RectilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
@@ -236,7 +238,7 @@ class RectilinearSGrid(RectilinearGrid):
            the number of the layer and the time is depth is a 4D array.
            depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin of the time axis
+    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -245,7 +247,7 @@ class RectilinearSGrid(RectilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
+    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
         RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
@@ -269,7 +271,7 @@ class RectilinearSGrid(RectilinearGrid):
 
 class CurvilinearGrid(Grid):
 
-    def __init__(self, lon, lat, time=None, time_origin=0, mesh='flat'):
+    def __init__(self, lon, lat, time=None, time_origin=None, mesh='flat'):
         assert(isinstance(lon, np.ndarray) and len(lon.squeeze().shape) == 2), 'lon is not a 2D numpy array'
         assert(isinstance(lat, np.ndarray) and len(lat.squeeze().shape) == 2), 'lat is not a 2D numpy array'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
@@ -328,7 +330,7 @@ class CurvilinearZGrid(CurvilinearGrid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
            The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin of the time axis
+    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -337,7 +339,7 @@ class CurvilinearZGrid(CurvilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth=None, time=None, time_origin=0, mesh='flat'):
+    def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
@@ -364,7 +366,7 @@ class CurvilinearSGrid(CurvilinearGrid):
            the number of the layer and the time is depth is a 4D array.
            depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin of the time axis
+    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -373,7 +375,7 @@ class CurvilinearSGrid(CurvilinearGrid):
            2. flat: No conversion, lat/lon are assumed to be in m.
     """
 
-    def __init__(self, lon, lat, depth, time=None, time_origin=0, mesh='flat'):
+    def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
         CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
