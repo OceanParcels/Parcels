@@ -1,6 +1,7 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D, RectilinearZGrid
 from parcels.field import Field
 from datetime import timedelta as delta
+import datetime
 import numpy as np
 import math
 import pytest
@@ -15,7 +16,11 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
     lat = np.linspace(0., 10., ydim, dtype=np.float32)
     depth = np.zeros(zdim, dtype=np.float32)
     time = np.zeros(tdim, dtype=np.float64)
-    U, V = np.meshgrid(lon, lat)
+    if zdim == 1 and tdim == 1:
+        U, V = np.meshgrid(lon, lat)
+    else:
+        U = np.ones((tdim, zdim, ydim, xdim))
+        V = np.ones((tdim, zdim, ydim, xdim))
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
     dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
     return (data, dimensions)
@@ -242,3 +247,44 @@ def test_periodic(mode, time_periodic, dt_sign):
     elif dt_sign == -1:
         temp_theo = temp_vec[0]
     assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)
+
+
+def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, filename='test_parcels_defer_loading'):
+    filepath = tmpdir.join(filename)
+    data0, dims0 = generate_fieldset(10, 10, 1, 10)
+    dims0['time'] = np.arange(0, 10, 1) * 3600
+    fieldset_out = FieldSet.from_data(data0, dims0)
+    fieldset_out.U.grid.time_origin = np.datetime64('2018-04-20')
+    data1, dims1 = generate_fieldset(10, 10, 1, 10)
+    dims1['time'] = np.arange(0, 10, 1) * 1800 + (24+25)*3600
+    gridW = RectilinearZGrid(dims1['lon'], dims1['lat'], dims1['depth'], dims1['time'])
+    fieldW = Field('W', np.zeros(data1['U'].shape), grid=gridW)
+    fieldW.grid.time_origin = np.datetime64('2018-04-18')
+    fieldset_out.add_field(fieldW)
+    fieldset_out.write(filepath)
+    fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
+    pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
+                                 # time=[np.datetime64('2018-04-20 01:00')])
+                                 time=[datetime.datetime(2018, 4, 20, 1)])
+    pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
+
+
+@pytest.mark.xfail(strict=True)
+def test_fieldset_defer_loading_with_diff_time_origin_should_fail(tmpdir, filename='test_parcels_defer_loading2'):
+    filepath = tmpdir.join(filename)
+    data0, dims0 = generate_fieldset(10, 10, 1, 10)
+    dims0['time'] = np.arange(0, 10, 1) * 3600
+    fieldset_out = FieldSet.from_data(data0, dims0)
+    fieldset_out.U.grid.time_origin = np.datetime64('2018-04-20')
+    data1, dims1 = generate_fieldset(10, 10, 1, 10)
+    dims1['time'] = np.arange(0, 10, 1) * 3600
+    gridW = RectilinearZGrid(dims1['lon'], dims1['lat'], dims1['depth'], dims1['time'])
+    fieldW = Field('W', np.zeros(data1['U'].shape), grid=gridW)
+    fieldW.grid.time_origin = np.datetime64('2018-04-22')
+    fieldset_out.add_field(fieldW)
+    fieldset_out.write(filepath)
+    fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
+    pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
+                                 # time=[np.datetime64('2018-04-20 01:00')])
+                                 time=[datetime.datetime(2018, 4, 20, 1)])
+    pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))

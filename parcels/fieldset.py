@@ -97,6 +97,8 @@ class FieldSet(object):
             g.check_zonal_periodic()
             if g is not ugrid and g.time_origin != 0:
                 g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                if g.defer_load:
+                    g.time_full = g.time
                 g.time_origin = ugrid.time_origin
 
     @classmethod
