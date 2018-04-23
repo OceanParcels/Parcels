@@ -138,7 +138,7 @@ class Grid(object):
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)
                 if self.ti > 0 and signdt == -1:
-                    self.ti = self.ti-2 if len(self.time_full)-1 else self.ti-1
+                    self.ti = self.ti-2 if self.ti == len(self.time_full)-1 else self.ti-1
                 self.time = self.time_full[self.ti:self.ti+3]
                 self.tdim = 3
                 self.update_status = 'first_updated'
