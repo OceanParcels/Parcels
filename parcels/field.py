@@ -967,13 +967,16 @@ class Field(object):
                                coords=[('y', self.grid.lat), ('x', self.grid.lon)])
         nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
                                coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
+        time_counter = xr.DataArray(self.grid.time,
+                                    dims=['time_counter'],
+                                    attrs=attrs)
         vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
-                               coords=[('time_counter', self.grid.time),
-                                       (vname_depth, self.grid.depth),
-                                       ('y', self.grid.lat), ('x', self.grid.lon)])
+                               dims=['time_counter', vname_depth, 'y', 'x'])
         # Create xarray Dataset and output to netCDF format
         dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                       'nav_lat': nav_lat,
+                                                      'time_counter': time_counter,
                                                       vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
