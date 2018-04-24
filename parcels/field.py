@@ -283,7 +283,7 @@ class Field(object):
             with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 ftime = filebuffer.time
                 timeslices.append(ftime)
-                timeFiles.append([fname for i in range(len(ftime))])
+                timeFiles.append([fname] * len(ftime))
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
         timeFiles = np.concatenate(np.array(timeFiles))
@@ -994,7 +994,7 @@ class Field(object):
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
-                assert isinstance(time_data[0], type(g.time_origin))
+                assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
                 time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:
@@ -1118,7 +1118,7 @@ class NetcdfFileBuffer(object):
                 ds = xr.decode_cf(ds)
                 time = np.array(getattr(ds, self.dimensions['time']))
             if isinstance(time[0], datetime.datetime):
-                raise NotImplementedError('Parcels does currently only parses date ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. A larger time range could be implemented on demand.')
+                raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
             return time
         except:
             return np.array([None])
