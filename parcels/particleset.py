@@ -49,8 +49,11 @@ class ParticleSet(object):
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
-        time = [t.total_seconds() if isinstance(t, delta) else t for t in time]
-        time = [((np.datetime64(t) - fieldset.U.grid.time_origin) / np.timedelta64(1, 's')) if isinstance(t, datetime) else t for t in time]
+        time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
+        self.time_origin = fieldset.U.grid.time_origin
+        if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
+            raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, time of a particle must be a double')
+        time = [((t - self.time_origin) / np.timedelta64(1, 's')) if isinstance(t, np.datetime64) else t for t in time]
 
         assert len(lon) == len(time)
 
@@ -70,7 +73,6 @@ class ParticleSet(object):
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
-        self.time_origin = fieldset.U.grid.time_origin
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
@@ -257,7 +259,11 @@ class ParticleSet(object):
         if isinstance(endtime, delta):
             raise RuntimeError('endtime must be either a datetime or a double')
         if isinstance(endtime, datetime):
-            endtime = (endtime - self.time_origin).total_seconds()
+            endtime = np.datetime64(endtime)
+        if isinstance(endtime, np.datetime64):
+            if not self.time_origin:
+                raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, execution endtime must be a double')
+            endtime = (endtime - self.time_origin) / np.timedelta64(1, 's')
         if isinstance(runtime, delta):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):
@@ -374,7 +380,9 @@ class ParticleSet(object):
         if isinstance(show_time, datetime):
             show_time = np.datetime64(show_time)
         if isinstance(show_time, np.datetime64):
-            show_time = (show_time - self.fieldset.U.grid.time_origin) / np.timedelta64(1, 's')
+            if not self.time_origin:
+                raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, showtime cannot be a date in particleset.show()')
+            show_time = (show_time - self.time_origin) / np.timedelta64(1, 's')
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
         if np.isnan(show_time):
@@ -405,21 +413,17 @@ class ParticleSet(object):
                 axes = plt.gca()
                 axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
-                time_origin = self.fieldset.U.grid.time_origin
             else:
                 if not isinstance(field, Field):
                     field = getattr(self.fieldset, field)
                 field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
-                time_origin = field.grid.time_origin
             xlbl = 'Zonal distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Longitude [degrees]'
             ylbl = 'Meridional distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
             plt.xlabel(xlbl)
             plt.ylabel(ylbl)
         elif Basemap is None:
             logger.info("Visualisation is not possible. Basemap not found.")
-            time_origin = self.fieldset.U.grid.time_origin
         else:
-            time_origin = self.fieldset.U.grid.time_origin
             self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.fieldset.U.time_index(show_time)
             show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
@@ -469,10 +473,10 @@ class ParticleSet(object):
                 xs, ys = m(plon, plat)
                 m.scatter(xs, ys, color='black')
 
-        if time_origin is 0:
+        if not self.time_origin:
             timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
         else:
-            date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
+            date_str = str(self.time_origin + np.timedelta64(int(show_time), 's'))
             timestr = ' on ' + date_str[:10] + ' ' + date_str[11:19]
 
         if particles:
