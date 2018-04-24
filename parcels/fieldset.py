@@ -99,9 +99,9 @@ class FieldSet(object):
                 continue
             assert isinstance(g.time_origin, type(ugrid.time_origin)), 'time origins of different grids must be have the same type'
             if g.time_origin:
-                g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time += (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
                 if g.defer_load:
-                    g.time_full = g.time
+                    g.time_full += (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = ugrid.time_origin
 
     @classmethod
