@@ -309,9 +309,9 @@ class KernelGenerator(ast.NodeVisitor):
         supported."""
         pointer_args = False
         if isinstance(node.func, PrintNode):
+            # Write our own Print parser because Python3-AST does not seem to have one
             if hasattr(node.args[0], 's'):
                 node.ccode = str(c.Statement('printf("%s\\n")' % (node.args[0].s)))
-                return
             if isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, 'ccode'):
                     args = node.args[0].right.ccode
@@ -327,7 +327,8 @@ class KernelGenerator(ast.NodeVisitor):
                         s = s + (", %s" % arg)
                     s = s + ")"
                 node.ccode = str(c.Statement(s))
-                return
+            elif isinstance(node.args[0], ast.Name):
+                node.ccode = str(c.Statement('printf("%%f\\n", %s)' % (node.args[0].id)))
         else:
             for a in node.args:
                 self.visit(a)
