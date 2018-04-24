@@ -317,6 +317,8 @@ class KernelGenerator(ast.NodeVisitor):
                     args = node.args[0].right.ccode
                 elif hasattr(node.args[0].right, 'elts'):
                     args = [a.ccode for a in node.args[0].right.elts]
+                else:
+                    args = []
                 s = 'printf("%s\\n"' % node.args[0].left.s
                 if isinstance(args, str):
                     s = s + (", %s)" % args)
