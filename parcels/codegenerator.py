@@ -607,7 +607,7 @@ class LoopGenerator(object):
         vdecl = []
         for v in self.ptype.variables:
             if v.dtype == np.uint64:
-                vdecl.append(c.Pointer(c.POD(np.void, v.name))) 
+                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
             else:
                 vdecl.append(c.POD(v.dtype, v.name))
 
