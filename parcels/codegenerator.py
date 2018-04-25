@@ -310,13 +310,20 @@ class KernelGenerator(ast.NodeVisitor):
         pointer_args = False
         if isinstance(node.func, PrintNode):
             # Write our own Print parser because Python3-AST does not seem to have one
-            if hasattr(node.args[0], 's'):
+            if isinstance(node.args[0], ast.Str):
                 node.ccode = str(c.Statement('printf("%s\\n")' % (node.args[0].s)))
-            if isinstance(node.args[0], ast.BinOp):
+            elif isinstance(node.args[0], ast.Name):
+                node.ccode = str(c.Statement('printf("%%f\\n", %s)' % (node.args[0].id)))
+            elif isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, 'ccode'):
                     args = node.args[0].right.ccode
                 elif hasattr(node.args[0].right, 'elts'):
-                    args = [a.ccode for a in node.args[0].right.elts]
+                    args = []
+                    for a in node.args[0].right.elts:
+                        if hasattr(a, 'ccode'):
+                            args.append(a.ccode)
+                        elif hasattr(a, 'id'):
+                            args.append(a.id)
                 else:
                     args = []
                 s = 'printf("%s\\n"' % node.args[0].left.s
@@ -327,8 +334,8 @@ class KernelGenerator(ast.NodeVisitor):
                         s = s + (", %s" % arg)
                     s = s + ")"
                 node.ccode = str(c.Statement(s))
-            elif isinstance(node.args[0], ast.Name):
-                node.ccode = str(c.Statement('printf("%%f\\n", %s)' % (node.args[0].id)))
+            else:
+                raise RuntimeError("This print statement is not supported in Python3 version of Parcels")
         else:
             for a in node.args:
                 self.visit(a)
