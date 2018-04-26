@@ -32,9 +32,10 @@ class ParticleFile(object):
                        See e.g. https://www.unidata.ucar.edu/blogs/developer/entry/chunking_data_choosing_shapes
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=[1, 1]):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=None):
 
         self.name = name
+        chunksizes = [len(particleset), 1] if chunksizes is None else chunksizes
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written

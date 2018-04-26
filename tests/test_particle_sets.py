@@ -91,7 +91,7 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
         sample_var = Variable('sample_var', initial=0.)
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     outfilepath = tmpdir.join("pfile_repeatdt")
-    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunksizes=[1, 1])
+    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunksizes=[len(pset), 1])
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
@@ -108,7 +108,7 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
         for k in range(maxvar):
             for i in range(runtime-k):
                 assert(samplevar[i, i+k] == k)
-    filesize = os.path.getsize(outfilepath+".nc")
+    filesize = os.path.getsize(str(outfilepath+".nc"))
     assert filesize < 1024 * 60  # test that chunking leads to filesize less than 60KB
 
 
