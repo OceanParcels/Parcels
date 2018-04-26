@@ -35,7 +35,7 @@ class ParticleFile(object):
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=None):
 
         self.name = name
-        chunksizes = [len(particleset), 1] if chunksizes is None else chunksizes
+        chunksizes = [max([len(particleset), 1]), 1] if chunksizes is None else chunksizes
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written
