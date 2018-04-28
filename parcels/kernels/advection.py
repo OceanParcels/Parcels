@@ -123,10 +123,6 @@ def AdvectionAnalytical_C(particle, fieldset, time, dt):
     dx = lons_p[xi + 1] - lons_p[xi]
     dy = lats_p[yi + 1] - lats_p[yi]
 
-    # make the rx, ry calculation
-    rx_ = (particle.lon - lons_p[xi]) / dx
-    ry_ = (particle.lat - lats_p[yi]) / dy
-
     # request velocity at particle position
     up, vp = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
 
@@ -191,7 +187,7 @@ def AdvectionAnalytical_C(particle, fieldset, time, dt):
     if B_x == 0 and delta_x == 0:
         ds_x = float('inf')
     elif B_x == 0:
-        ds_x = (rx_target. - rx) / delta_x
+        ds_x = (rx_target - rx) / delta_x
     elif Fu_r1 * Fu_r0 < 0:
         ds_x = float('inf')
     else:
@@ -201,7 +197,7 @@ def AdvectionAnalytical_C(particle, fieldset, time, dt):
     if B_y == 0 and delta_y == 0:
         ds_y = float('inf')
     elif B_y == 0:
-        ds_y = (ry_target. - ry) / delta_y
+        ds_y = (ry_target - ry) / delta_y
     elif Fv_r1 * Fv_r0 < 0:
         ds_y = float('inf')
     else:
@@ -237,7 +233,7 @@ def AdvectionAnalytical_C(particle, fieldset, time, dt):
     particle.lon = round(particle.lon + dlon, 8)
 
     # feedback the passed time to main loop (does not actually work as intended)
-    s_min_real  = s_min * (dx * dy)
+    s_min_real = s_min * (dx * dy)
     particle.dt = s_min_real
 
 
@@ -270,7 +266,7 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
     else:
         b1, b2 = -1, 0
         ry = 1.
-        
+
     ry_target = 1. if vp >= 0. else 0.
     rx_target = 1. if up >= 0. else 0.
 
@@ -345,8 +341,7 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
 
     # take the minimum travel time
     s_min = min(ds_x, ds_y)
-    
-    
+
     # calculate end position in time s_min
     if ds_y == float('inf'):
         rs_x = rx_target
@@ -368,11 +363,11 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
     # calculate the change in position in cartesian coordinates
     dlon = (rs_x - rx) * dx
     dlat = (rs_y - ry) * dy
-    
+
     # set new position (round to 8th decimal, due to floating point precision issues)
     particle.lat = round(particle.lat + dlat, 8)
     particle.lon = round(particle.lon + dlon, 8)
 
     # feedback the passed time to main loop (does not work as intended)
-    s_min_real  = s_min * (dx * dy)
+    s_min_real = s_min * (dx * dy)
     particle.dt = s_min_real
