@@ -95,8 +95,13 @@ class FieldSet(object):
         ugrid = self.U.grid
         for g in self.gridset.grids:
             g.check_zonal_periodic()
-            if g is not ugrid and g.time_origin != 0:
+            if g is ugrid or len(g.time) == 1:
+                continue
+            assert isinstance(g.time_origin, type(ugrid.time_origin)), 'time origins of different grids must be have the same type'
+            if g.time_origin:
                 g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                if g.defer_load:
+                    g.time_full = g.time_full + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = ugrid.time_origin
 
     @classmethod
@@ -358,7 +363,7 @@ class FieldSet(object):
 
     def computeTimeChunk(self, time, dt):
         signdt = np.sign(dt)
-        nextTime = np.infty * signdt
+        nextTime = np.infty if dt > 0 else -np.infty
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
