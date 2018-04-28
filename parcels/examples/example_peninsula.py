@@ -1,5 +1,5 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
+from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45, AdvectionAnalytical
 from argparse import ArgumentParser
 import numpy as np
 import math  # NOQA
@@ -147,6 +147,17 @@ def test_peninsula_fieldset(mode, mesh):
     # Test Field sampling accuracy by comparing kernel against Field sampling
     err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
+
+
+@pytest.mark.parametrize('grid_type', ['A', pytest.mark.xfail(reason='C grid not implemented')('C')])
+def test_peninsula_fieldset_AnalyticalAdvection(grid_type):
+    """Execute peninsula test using Analytical Advection on A grid"""
+    fieldset = peninsula_fieldset(100, 50, 'flat')
+    fieldset.grid_type = grid_type
+    pset = pensinsula_example(fieldset, npart=10, mode='scipy', method=AdvectionAnalytical)
+    # Test advection accuracy by comparing streamline values
+    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    assert(err_adv <= 1.e-3).all()
 
 
 @pytest.fixture(scope='module')
