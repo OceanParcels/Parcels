@@ -109,6 +109,31 @@ def test_while_if_break(fieldset, mode):
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_if_withfield(fieldset, mode):
+    """Test combination of if and Field sampling commands"""
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0.)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
+
+    def kernel(particle, fieldset, time, dt):
+        u = fieldset.U[time, 1., 0, 0]
+        particle.p = 0
+        if fieldset.U[time, 1., 0, 0] == u:
+            particle.p += 1
+        if fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0]:
+            particle.p += 1
+        if True:
+            particle.p += 1
+        if fieldset.U[time, 1., 0, 0] == u and 1 == 1:
+            particle.p += 1
+        if fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0] and fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0]:
+            particle.p += 1
+
+    pset.execute(kernel, endtime=1., dt=1.)
+    assert np.allclose(np.array([p.p for p in pset]), 5., rtol=1e-12)
+
+
 @pytest.mark.parametrize(
     'mode',
     ['scipy',
@@ -126,11 +151,12 @@ def test_print(fieldset, mode, capfd):
 
     def kernel(particle, fieldset, time, dt):
         particle.p = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-        print("%d %f" % (particle.id, particle.p))
+        tmp = 5
+        print("%d %f %f" % (particle.id, particle.p, tmp))
     pset.execute(kernel, endtime=1., dt=1.)
     out, err = capfd.readouterr()
     lst = out.split(' ')
-    assert float(lst[0]) == pset[0].id and float(lst[1]) == pset[0].p
+    assert float(lst[0]) == pset[0].id and float(lst[1]) == pset[0].p and float(lst[2]) == 5
 
 
 def random_series(npart, rngfunc, rngargs, mode):

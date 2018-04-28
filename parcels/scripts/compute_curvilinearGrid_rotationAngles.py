@@ -41,7 +41,7 @@ def compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filena
                       'V': {'lon': 'glamv', 'lat': 'gphiv'},
                       'F': {'lon': 'glamf', 'lat': 'gphif'}}
 
-    dataset = xr.open_dataset(mesh_filename, decode_times=False)
+    dataset = xr.open_dataset(mesh_filename, decode_times=False, decode_cf=False)
     lonU = np.squeeze(getattr(dataset, dimensions['U']['lon']).values)
     latU = np.squeeze(getattr(dataset, dimensions['U']['lat']).values)
     lonV = np.squeeze(getattr(dataset, dimensions['V']['lon']).values)

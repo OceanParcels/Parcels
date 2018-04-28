@@ -6,7 +6,7 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 from math import cos, pi
-from datetime import timedelta
+import datetime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
@@ -33,8 +33,8 @@ class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling"""
 
     def __init__(self, time, field=None):
-        if field is not None and field.grid.time_origin != 0:
-            time = field.grid.time_origin + timedelta(seconds=time)
+        if field is not None and field.grid.time_origin:
+            time = field.grid.time_origin + np.timedelta64(int(time), 's')
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
         message += " Try setting allow_time_extrapolation to True"
@@ -162,7 +162,7 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
-    :param time_origin: Time origin (datetime object) of the time axis (only if grid is None)
+    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis (only if grid is None)
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
@@ -175,7 +175,7 @@ class Field(object):
                       'Kh_meridional': GeographicSquare()}
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
-                 transpose=False, vmin=None, vmax=None, time_origin=0,
+                 transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         if self.name == 'UV':
@@ -281,8 +281,9 @@ class Field(object):
         timeFiles = []
         for fname in filenames:
             with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
-                timeslices.append(filebuffer.time)
-                timeFiles.append([fname for i in range(len(filebuffer.time))])
+                ftime = filebuffer.time
+                timeslices.append(ftime)
+                timeFiles.append([fname] * len(ftime))
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
         timeFiles = np.concatenate(np.array(timeFiles))
@@ -290,7 +291,7 @@ class Field(object):
             time_origin = time[0]
             time = (time - time_origin) / np.timedelta64(1, 's')
         else:
-            time_origin = 0
+            time_origin = None
         assert(np.all((time[1:]-time[:-1]) > 0))
 
         if time.size == 1 and time[0] is None:
@@ -966,13 +967,16 @@ class Field(object):
                                coords=[('y', self.grid.lat), ('x', self.grid.lon)])
         nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
                                coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
+        time_counter = xr.DataArray(self.grid.time,
+                                    dims=['time_counter'],
+                                    attrs=attrs)
         vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
-                               coords=[('time_counter', self.grid.time),
-                                       (vname_depth, self.grid.depth),
-                                       ('y', self.grid.lat), ('x', self.grid.lon)])
+                               dims=['time_counter', vname_depth, 'y', 'x'])
         # Create xarray Dataset and output to netCDF format
         dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                       'nav_lat': nav_lat,
+                                                      'time_counter': time_counter,
                                                       vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
@@ -990,6 +994,7 @@ class Field(object):
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
+                assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
                 time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:
@@ -1020,7 +1025,12 @@ class NetcdfFileBuffer(object):
         self.dataset = None
 
     def __enter__(self):
-        self.dataset = xr.open_dataset(str(self.filename))
+        try:
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True)
+            self.dataset['decoded'] = True
+        except:
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False)
+            self.dataset['decoded'] = False
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
         xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
@@ -1034,7 +1044,7 @@ class NetcdfFileBuffer(object):
             self.zdim = len(self.indsdepth)
         else:
             self.zdim = 0
-            self.indsdepth = []
+            self.indsdepth = [0]
         for inds in [self.indslat, self.indslon, self.indsdepth]:
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
@@ -1098,13 +1108,17 @@ class NetcdfFileBuffer(object):
     @property
     def time(self):
         try:
-            time = getattr(self.dataset, self.dimensions['time'])
-            if isinstance(time[0], np.datetime64) or 'Unit' not in time.attrs:
-                return np.array(time)
-            time.attrs['units'] = time.attrs['Unit']
-            ds = xr.decode_cf(self.dataset)
-            time = getattr(ds, self.dimensions['time'])
-            time_arr = np.array(time)
-            return time_arr
+            time_da = getattr(self.dataset, self.dimensions['time'])
+            if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
+                time = np.array(time_da)
+            else:
+                if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
+                    time_da.attrs['units'] = time_da.attrs['Unit']
+                ds = xr.Dataset({self.dimensions['time']: time_da})
+                ds = xr.decode_cf(ds)
+                time = np.array(getattr(ds, self.dimensions['time']))
+            if isinstance(time[0], datetime.datetime):
+                raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
+            return time
         except:
             return np.array([None])
