@@ -53,8 +53,8 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
 def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
-    runtime = delta(days=2)
     dt = delta(minutes=5)
+    runtime = delta(days=2) - dt  # stop before end of time dimension
     outputdt = delta(hours=1)
 
     pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
