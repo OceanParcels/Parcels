@@ -363,7 +363,7 @@ class FieldSet(object):
 
     def computeTimeChunk(self, time, dt):
         signdt = np.sign(dt)
-        nextTime = np.infty * signdt
+        nextTime = np.infty if dt > 0 else -np.infty
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'

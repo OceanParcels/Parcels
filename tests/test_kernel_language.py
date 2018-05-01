@@ -151,11 +151,12 @@ def test_print(fieldset, mode, capfd):
 
     def kernel(particle, fieldset, time, dt):
         particle.p = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-        print("%d %f" % (particle.id, particle.p))
+        tmp = 5
+        print("%d %f %f" % (particle.id, particle.p, tmp))
     pset.execute(kernel, endtime=1., dt=1.)
     out, err = capfd.readouterr()
     lst = out.split(' ')
-    assert float(lst[0]) == pset[0].id and float(lst[1]) == pset[0].p
+    assert float(lst[0]) == pset[0].id and float(lst[1]) == pset[0].p and float(lst[2]) == 5
 
 
 def random_series(npart, rngfunc, rngargs, mode):

@@ -317,9 +317,9 @@ class ParticleSet(object):
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
-            next_prelease = np.infty * np.sign(dt)
-        next_output = time + outputdt * np.sign(dt)
-        next_movie = time + moviedt * np.sign(dt)
+            next_prelease = np.infty if dt > 0 else - np.infty
+        next_output = time + outputdt if dt > 0 else time - outputdt
+        next_movie = time + moviedt if dt > 0 else time - moviedt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
