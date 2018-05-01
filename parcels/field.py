@@ -236,7 +236,7 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, name, dimensions, filenames, indices={},
-                    allow_time_extrapolation=False, mesh='flat', full_load=False, **kwargs):
+                    allow_time_extrapolation=None, mesh='flat', full_load=False, **kwargs):
         """Create field from netCDF file
 
         :param name: Name of the field to create
@@ -246,7 +246,8 @@ class Field(object):
         :param indices: dictionary mapping indices for each dimension to read from file.
                This can be used for reading in only a subregion of the NetCDF file
         :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-               (i.e. beyond the last available time snapshot
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -335,6 +336,9 @@ class Field(object):
             grid.time_full = grid.time
             grid.ti = -1
             data = None
+
+        if allow_time_extrapolation is None:
+            allow_time_extrapolation = False if 'time' in dimensions else True
 
         if name in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
