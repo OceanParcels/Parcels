@@ -284,13 +284,13 @@ def truth_decaying(x_0, y_0, t):
 
 
 @pytest.fixture
-def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=7)):
+def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     """Generate a FieldSet encapsulating the flow field of a decaying eddy.
 
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
+    time = np.arange(0., maxtime.total_seconds()+1e-5, 60., dtype=np.float64)
     dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
                   'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
                   'time': time}
