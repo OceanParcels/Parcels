@@ -806,7 +806,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti-1])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
