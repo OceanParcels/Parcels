@@ -236,7 +236,7 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices={},
-                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Create field from netCDF file
 
         :param filenames: list of filenames to read for the field.
@@ -252,7 +252,8 @@ class Field(object):
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-               (i.e. beyond the last available time snapshot
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
@@ -337,6 +338,9 @@ class Field(object):
             grid.time_full = grid.time
             grid.ti = -1
             data = None
+
+        if allow_time_extrapolation is None:
+            allow_time_extrapolation = False if 'time' in dimensions else True
 
         if variable in ['cosU', 'sinU', 'cosV', 'sinV']:
             allow_time_extrapolation = True
@@ -809,7 +813,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti-1])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)

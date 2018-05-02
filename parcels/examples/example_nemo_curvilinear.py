@@ -18,7 +18,7 @@ def run_nemo_curvilinear(mode, outfile):
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
                   'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'}}
-    field_set = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True)
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # Now run particles as normal
     npart = 20

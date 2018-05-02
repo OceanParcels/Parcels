@@ -35,7 +35,7 @@ class FieldSet(object):
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
-                  allow_time_extrapolation=True, time_periodic=False, **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
@@ -59,6 +59,7 @@ class FieldSet(object):
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
@@ -67,6 +68,9 @@ class FieldSet(object):
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
+
+            if allow_time_extrapolation is None:
+                allow_time_extrapolation = False if 'time' in dims else True
 
             lon = dims['lon']
             lat = dims['lat']
@@ -106,7 +110,7 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices={},
-                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -130,6 +134,7 @@ class FieldSet(object):
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
@@ -165,7 +170,7 @@ class FieldSet(object):
 
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices={}, mesh='spherical',
-                  allow_time_extrapolation=False, time_periodic=False, **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
         Note that this assumes the following default values for the mesh_mask:
         variables['mesh_mask'] = {'cosU': 'cosU',
@@ -197,6 +202,7 @@ class FieldSet(object):
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
@@ -238,7 +244,7 @@ class FieldSet(object):
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
-                     allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
+                     allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -249,6 +255,7 @@ class FieldSet(object):
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
