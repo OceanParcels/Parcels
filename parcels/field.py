@@ -342,8 +342,6 @@ class Field(object):
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if 'time' in dimensions else True
 
-        if variable in ['cosU', 'sinU', 'cosV', 'sinV']:
-            allow_time_extrapolation = True
         kwargs['dimensions'] = dimensions.copy()
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
