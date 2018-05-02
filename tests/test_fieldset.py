@@ -18,11 +18,13 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
     time = np.zeros(tdim, dtype=np.float64)
     if zdim == 1 and tdim == 1:
         U, V = np.meshgrid(lon, lat)
+        dimensions = {'lat': lat, 'lon': lon}
     else:
         U = np.ones((tdim, zdim, ydim, xdim))
         V = np.ones((tdim, zdim, ydim, xdim))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
-    dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+
     return (data, dimensions)
 
 
@@ -222,7 +224,7 @@ def test_periodic(mode, time_periodic, dt_sign):
 
     data = {'U': U, 'V': V, 'W': W, 'temp': temp}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
     def sampleTemp(particle, fieldset, time, dt):
         # Note that fieldset.temp is interpolated at time=time+dt.
