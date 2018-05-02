@@ -27,7 +27,7 @@ def decaying_moving_eddy_fieldset(xdim=2, ydim=2):  # Define 2D flat, square fie
     http://amsdottorato.unibo.it/1733/1/Fabbroni_Nicoletta_Tesi.pdf
     """
     depth = np.zeros(1, dtype=np.float32)
-    time = np.arange(0., 2. * 86400., 60.*5., dtype=np.float64)
+    time = np.arange(0., 2. * 86400.+1e-5, 60.*5., dtype=np.float64)
     lon = np.linspace(0, 20000, xdim, dtype=np.float32)
     lat = np.linspace(5000, 12000, ydim, dtype=np.float32)
 
@@ -54,7 +54,7 @@ def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
     dt = delta(minutes=5)
-    runtime = delta(days=2) - dt  # stop before end of time dimension
+    runtime = delta(days=2)
     outputdt = delta(hours=1)
 
     pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
