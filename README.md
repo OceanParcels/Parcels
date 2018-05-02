@@ -1,9 +1,6 @@
 ## Parcels
 
-**Parcels** (**P**robably **A** **R**eally **C**omputationally
-**E**fficient **L**agrangian **S**imulator) is an experimental
-prototype framework aimed at exploring novel approaches for Lagrangian
-tracking of virtual ocean particles in the petascale age.
+**Parcels** (**P**robably **A** **R**eally **C**omputationally **E**fficient **L**agrangian **S**imulator) is a set of Python classes and methods to create customisable particle tracking simulations using output from Ocean Circulation models. Parcels can be used to track passive and active particulates such as water, plankton, plastic and fish.
 
 ![AgulhasParticles](http://oceanparcels.org/animated-gifs/globcurrent_fullyseeded.gif)
 
@@ -17,4 +14,4 @@ The manuscript detailing the first release of Parcels, version 0.9, has been pub
 
 ### Further information
 
-See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing-parcels-on-linux-and-macos) and [running](http://oceanparcels.org/#parcels-tutorials) the Parcels code, as well as extended [documentation](http://oceanparcels.org/parcels.html) of the methods and classes.
+See [oceanparcels.org](http://oceanparcels.org/) for further information about [installing](http://oceanparcels.org/#installing) and [running](http://oceanparcels.org/#tutorials) the Parcels code, as well as extended [documentation](http://oceanparcels.org/parcels.html) of the methods and classes.
