@@ -235,24 +235,27 @@ class Field(object):
         self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, indices={},
-                    allow_time_extrapolation=False, mesh='flat', full_load=False, **kwargs):
+    def from_netcdf(cls, filenames, variable, dimensions, indices={},
+                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Create field from netCDF file
 
-        :param name: Name of the field to create
-        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param filenames: list of filenames to read for the field.
                Note that wildcards ('*') are also allowed
+        :param variable: Name of the field to create. Note that this has to be a string
+        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
                This can be used for reading in only a subregion of the NetCDF file
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-               (i.e. beyond the last available time snapshot
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
@@ -264,7 +267,7 @@ class Field(object):
         with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
-            if name in ['cosU', 'sinU', 'cosV', 'sinV']:
+            if variable in ['cosU', 'sinU', 'cosV', 'sinV']:
                 warning = False
                 try:
                     source = filebuffer.dataset.source
@@ -318,7 +321,7 @@ class Field(object):
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = dimensions['data'] if 'data' in dimensions else name
+                    filebuffer.name = dimensions['data'] if 'data' in dimensions else variable
 
                     if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
@@ -336,13 +339,15 @@ class Field(object):
             grid.ti = -1
             data = None
 
-        if name in ['cosU', 'sinU', 'cosV', 'sinV']:
-            allow_time_extrapolation = True
+        if allow_time_extrapolation is None:
+            allow_time_extrapolation = False if 'time' in dimensions else True
+
         kwargs['dimensions'] = dimensions.copy()
         kwargs['indices'] = indices
+        kwargs['time_periodic'] = time_periodic
         kwargs['timeFiles'] = timeFiles
 
-        return cls(name, data, grid=grid,
+        return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def reshape(self, data, transpose=False):
@@ -806,7 +811,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti-1])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)

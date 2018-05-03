@@ -165,7 +165,7 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
+    time = np.arange(0., maxtime.total_seconds()+1e-5, 60., dtype=np.float64)
     dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
                   'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
                   'time': time}
@@ -202,7 +202,7 @@ def test_stationary_eddy_vertical(mode, npart=1):
     xdim = ydim = 100
     lon_data = np.linspace(0, 25000, xdim, dtype=np.float32)
     lat_data = np.linspace(0, 25000, ydim, dtype=np.float32)
-    time_data = np.arange(0., 6*3600, 60., dtype=np.float64)
+    time_data = np.arange(0., 6*3600+1e-5, 60., dtype=np.float64)
     fld1 = np.ones((xdim, ydim, 1), dtype=np.float32) * u_0 * np.cos(f * time_data)
     fld2 = np.ones((xdim, ydim, 1), dtype=np.float32) * -u_0 * np.sin(f * time_data)
     fldzero = np.zeros((xdim, ydim, 1), dtype=np.float32) * time_data
@@ -246,7 +246,7 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
+    time = np.arange(0., maxtime.total_seconds()+1e-5, 60., dtype=np.float64)
     dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
                   'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
                   'time': time}
@@ -290,7 +290,7 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     Reference: N. Fabbroni, 2009, "Numerical simulations of passive
     tracers dispersion in the sea"
     """
-    time = np.arange(0., maxtime.total_seconds(), 60., dtype=np.float64)
+    time = np.arange(0., maxtime.total_seconds()+1e-5, 60., dtype=np.float64)
     dimensions = {'lon': np.linspace(0, 25000, xdim, dtype=np.float32),
                   'lat': np.linspace(0, 25000, ydim, dtype=np.float32),
                   'time': time}

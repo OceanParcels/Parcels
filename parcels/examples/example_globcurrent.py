@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable
 from datetime import timedelta as delta
 from os import path
 from glob import glob
@@ -84,3 +84,16 @@ def test_globcurrent_time_extrapolation_error(mode):
                        time=fieldset.U.time[0]-delta(days=1).total_seconds())
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_variable_fromfield(mode, dt):
+    fieldset = set_globcurrent_fieldset()
+
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=fieldset.U)
+    time = fieldset.U.time[0] if dt > 0 else fieldset.U.time[-1]
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
+
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
