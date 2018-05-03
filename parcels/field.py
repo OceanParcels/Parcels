@@ -202,7 +202,7 @@ class Field(object):
         self.interp_method = interp_method
         self.fieldset = None
         if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if time is None else False
+            self.allow_time_extrapolation = True if len(self.grid.time) == 0 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
