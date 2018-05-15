@@ -40,6 +40,7 @@ class FieldSet(object):
 
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given
+
                1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
                   whichever is relevant for the dataset, use the flag transpose=True
                2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
@@ -173,13 +174,10 @@ class FieldSet(object):
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
         Note that this assumes the following default values for the mesh_mask:
-        variables['mesh_mask'] = {'cosU': 'cosU',
-                                  'sinU': 'sinU',
-                                  'cosV': 'cosV',
-                                  'sinV': 'sinV'}
-        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                                   'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                                   'F': {'lon': 'glamf', 'lat': 'gphif'}}
+
+        variables['mesh_mask'] = {'cosU': 'cosU', 'sinU': 'sinU', 'cosV': 'cosV', 'sinV': 'sinV'}
+
+        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'}, 'V': {'lon': 'glamv', 'lat': 'gphiv'}, 'F': {'lon': 'glamf', 'lat': 'gphif'}}
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
