@@ -287,6 +287,10 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
         *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
       }
     }
+
+//    if (it > 5e5){ 
+//                 printf("[%d %d]: (%g %g)\n", *yi, *xi, *xsi, *eta);}
+
     if ( (*xsi < 0) && (*eta < 0) && (*xi == 0) && (*yi == 0) )
       return ERROR_OUT_OF_BOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
