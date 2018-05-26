@@ -154,9 +154,11 @@ class ParticleSet(object):
         if mode == 'monte_carlo':
             p = np.reshape(start_field.data, (1, start_field.data.size))
             inds = np.random.choice(start_field.data.size, size, replace=True, p=p[0] / np.sum(p))
-            lat, lon = np.unravel_index(inds, start_field.data[0, :, :].shape)
-            lon = fieldset.U.grid.lon[lon]
-            lat = fieldset.U.grid.lat[lat]
+            j, i = np.unravel_index(inds, start_field.data[0, :, :].shape)
+            if fieldset.U.grid.lat.ndim == 1:
+                lat, lon = fieldset.U.grid.lat[j], fieldset.U.grid.lon[i]
+            else:
+                lat, lon = fieldset.U.grid.lat[j, i], fieldset.U.grid.lon[j, i]
             for i in range(lon.size):
                 lon[i] = add_jitter(lon[i], lonwidth, start_field.grid.lon[0], start_field.grid.lon[-1])
                 lat[i] = add_jitter(lat[i], latwidth, start_field.grid.lat[0], start_field.grid.lat[-1])

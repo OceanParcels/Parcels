@@ -355,6 +355,9 @@ def test_nemo_grid(mode):
 
     field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical')
 
+    # test ParticleSet.from_field on curvilinear grids
+    ParticleSet.from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
+
     def sampleVel(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
 
