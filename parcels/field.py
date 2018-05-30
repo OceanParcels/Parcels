@@ -498,7 +498,7 @@ class Field(object):
     def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
         if time < grid.time[ti]:
-            ti -=1
+            ti -= 1
         if grid.z4d:
             if ti == len(grid.time)-1:
                 depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
