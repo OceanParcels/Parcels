@@ -142,6 +142,7 @@ class Field(object):
 
     :param name: Name of the field
     :param data: 2D, 3D or 4D numpy array of field data.
+
            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
               whichever is relevant for the dataset, use the flag transpose=True
            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
@@ -626,8 +627,8 @@ class Field(object):
             if grid.mesh == 'spherical':
                 px[0] = px[0]+360 if px[0] < x-225 else px[0]
                 px[0] = px[0]-360 if px[0] > x+225 else px[0]
-                px[1:] = np.where(px[1:] - x > 180, px[1:]-360, px[1:])
-                px[1:] = np.where(-px[1:] + x > 180, px[1:]+360, px[1:])
+                px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+                px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
