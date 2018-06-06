@@ -142,6 +142,7 @@ class Field(object):
 
     :param name: Name of the field
     :param data: 2D, 3D or 4D numpy array of field data.
+
            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
               whichever is relevant for the dataset, use the flag transpose=True
            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
@@ -201,8 +202,10 @@ class Field(object):
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
         self.fieldset = None
-        if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if time is None else False
+        if self.name in ['cosU', 'sinU', 'cosV', 'sinV']:
+            self.allow_time_extrapolation = True
+        elif allow_time_extrapolation is None:
+            self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
@@ -495,6 +498,8 @@ class Field(object):
 
     def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
+        if time < grid.time[ti]:
+            ti -= 1
         if grid.z4d:
             if ti == len(grid.time)-1:
                 depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
@@ -506,9 +511,9 @@ class Field(object):
                     xsi*(1-eta) * grid.depth[ti:ti+2, :, yi, xi+1] + \
                     xsi*eta * grid.depth[ti:ti+2, :, yi+1, xi+1] + \
                     (1-xsi)*eta * grid.depth[ti:ti+2, :, yi+1, xi]
-                t0 = grid.time[ti]
-                t1 = grid.time[ti + 1]
-                depth_vector = dv2[0, :] + (dv2[1, :]-dv2[0, :]) * (time - t0) / (t1 - t0)
+                tt = (time-grid.time[ti]) / (grid.time[ti+1]-grid.time[ti])
+                assert tt >= 0 and tt <= 1, 'Vertical s grid is being wrongly interpolated in time'
+                depth_vector = dv2[0, :] * (1-tt) + dv2[1, :] * tt
         else:
             depth_vector = (1-xsi)*(1-eta) * grid.depth[:, yi, xi] + \
                 xsi*(1-eta) * grid.depth[:, yi, xi+1] + \
@@ -620,8 +625,8 @@ class Field(object):
             if grid.mesh == 'spherical':
                 px[0] = px[0]+360 if px[0] < x-225 else px[0]
                 px[0] = px[0]-360 if px[0] > x+225 else px[0]
-                px[1:] = np.where(px[1:] - x > 180, px[1:]-360, px[1:])
-                px[1:] = np.where(-px[1:] + x > 180, px[1:]+360, px[1:])
+                px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+                px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)

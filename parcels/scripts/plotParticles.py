@@ -11,11 +11,11 @@ except:
 
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
-                         tracerlon='x', tracerlat='y', recordedvar=None, show_plt=True):
+                         tracerlon='x', tracerlat='y', recordedvar=None, bins=20, show_plt=True):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
-    :param mode: Type of plot to show. Supported are '2d', '3d'
+    :param mode: Type of plot to show. Supported are '2d', '3d', 'hist2d',
                 'movie2d' and 'movie2d_notebook'. The latter two give animations,
                 with 'movie2d_notebook' specifically designed for jupyter notebooks
     :param tracerfile: Name of NetCDF file to show as background
@@ -24,6 +24,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param tracerlat: Name of latitude dimension of variable to show as background
     :param recordedvar: Name of variable used to color particles in scatter-plot.
                 Only works in 'movie2d' or 'movie2d_notebook' mode.
+    :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
@@ -60,7 +61,12 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         plt.plot(np.transpose(lon), np.transpose(lat), '.-')
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
-    elif mode == 'movie2d' or 'movie2d_notebook':
+    elif mode == 'hist2d':
+        plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
+        plt.colorbar()
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+    elif mode in ('movie2d', 'movie2d_notebook'):
         fig = plt.figure()
         ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
         plottimes = np.unique(time)
@@ -81,6 +87,9 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         rc('animation', html='html5')
         anim = animation.FuncAnimation(fig, animate, frames=frames,
                                        interval=100, blit=False)
+    else:
+        raise RuntimeError('mode %s not known' % mode)
+
     if mode == 'movie2d_notebook':
         plt.close()
         return anim
@@ -92,7 +101,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""Quick and simple plotting of Parcels trajectories""")
-    p.add_argument('mode', choices=('2d', '3d', 'movie2d', 'movie2d_notebook'), nargs='?',
+    p.add_argument('mode', choices=('2d', '3d', 'hist2d', 'movie2d', 'movie2d_notebook'), nargs='?',
                    default='movie2d', help='Type of display')
     p.add_argument('-p', '--particlefile', type=str, default='MyParticle.nc',
                    help='Name of particle file')
@@ -106,9 +115,11 @@ if __name__ == "__main__":
                    help='Name of field in tracer file')
     p.add_argument('-r', '--recordedvar', type=str, default=None,
                    help='Name of a variable recorded along trajectory')
+    p.add_argument('-bins', type=int, default=20,
+                   help='Number of bins for mode=hist2d')
     args = p.parse_args()
 
     plotTrajectoriesFile(args.particlefile, mode=args.mode, tracerfile=args.tracerfile,
                          tracerfield=args.tracerfilefield, tracerlon=args.tracerfilelon,
                          tracerlat=args.tracerfilelat, recordedvar=args.recordedvar,
-                         show_plt=True)
+                         bins=args.bins, show_plt=True)
