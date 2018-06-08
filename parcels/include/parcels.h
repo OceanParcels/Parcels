@@ -265,29 +265,16 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     b[3] =  ygrid_loc[0]    - ygrid_loc[1]      + ygrid_loc[2]        - ygrid_loc[3];
 
     double aa = a[3]*b[2] - a[2]*b[3];
-    if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
-      if( fabs(ygrid[*yi+1][*xi] - ygrid[*yi][*xi]) >  fabs(ygrid[*yi][*xi+1] - ygrid[*yi][*xi]) ){ // well-oriented cell, like in mid latitudes in NEMO
-        *xsi = ( (x-xgrid_loc[0]) / (xgrid_loc[1]-xgrid_loc[0])
-             +   (x-xgrid_loc[3]) / (xgrid_loc[2]-xgrid_loc[3]) ) * .5;
-        *eta = ( (y-ygrid[*yi][*xi  ]) / (ygrid[*yi+1][*xi  ]-ygrid[*yi][*xi  ])
-             +   (y-ygrid[*yi][*xi+1]) / (ygrid[*yi+1][*xi+1]-ygrid[*yi][*xi+1]) ) * .5;
-      }
-      else{ // miss-oriented cell, like in the arctic in NEMO
-        *xsi = ( (y-ygrid[*yi  ][*xi]) / (ygrid[*yi  ][*xi+1]-ygrid[*yi  ][*xi])
-             +   (y-ygrid[*yi+1][*xi]) / (ygrid[*yi+1][*xi+1]-ygrid[*yi+1][*xi]) ) * .5;
-        *eta = ( (x-xgrid_loc[0]) / (xgrid_loc[3]-xgrid_loc[0])
-             +   (x-xgrid_loc[1]) / (xgrid_loc[2]-xgrid_loc[1]) ) * .5;
-      }
-    }
+    double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
+    double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
+    if (fabs(aa) < 1e-12)  // Rectilinear  cell, or quasi
+      *eta = -cc / bb;
     else{
-      double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
-      double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
       double det = sqrt(bb*bb-4*aa*cc);
-      if (det == det){  // so, if det is nan we keep the xsi, eta from previous iter
+      if (det == det)  // so, if det is nan we keep the xsi, eta from previous iter
         *eta = (-bb+det)/(2*aa);
-        *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
-      }
     }
+    *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
     if ( (*xsi < 0) && (*eta < 0) && (*xi == 0) && (*yi == 0) )
       return ERROR_OUT_OF_BOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
