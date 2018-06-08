@@ -243,7 +243,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    float xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
+    double xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
     if (sphere_mesh){ //we are on the sphere
       int i4;
       if (xgrid_loc[0] < x - 225) xgrid_loc[0] += 360;
@@ -253,15 +253,16 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
         if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
       }
     }
+    double ygrid_loc[4] = {ygrid[*yi][*xi], ygrid[*yi][*xi+1], ygrid[*yi+1][*xi+1], ygrid[*yi+1][*xi]};
 
     a[0] =  xgrid_loc[0];
     a[1] = -xgrid_loc[0]    + xgrid_loc[1];
     a[2] = -xgrid_loc[0]                                              + xgrid_loc[3];
     a[3] =  xgrid_loc[0]    - xgrid_loc[1]      + xgrid_loc[2]        - xgrid_loc[3];
-    b[0] =  ygrid[*yi][*xi];
-    b[1] = -ygrid[*yi][*xi] + ygrid[*yi][*xi+1];
-    b[2] = -ygrid[*yi][*xi]                                           + ygrid[*yi+1][*xi];
-    b[3] =  ygrid[*yi][*xi] - ygrid[*yi][*xi+1] + ygrid[*yi+1][*xi+1] - ygrid[*yi+1][*xi];
+    b[0] =  ygrid_loc[0];
+    b[1] = -ygrid_loc[0]    + ygrid_loc[1];
+    b[2] = -ygrid_loc[0]                                              + ygrid_loc[3];
+    b[3] =  ygrid_loc[0]    - ygrid_loc[1]      + ygrid_loc[2]        - ygrid_loc[3];
 
     double aa = a[3]*b[2] - a[2]*b[3];
     if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
