@@ -245,3 +245,17 @@ def test_update_kernel_in_script(fieldset, mode):
     pset.execute(pset.Kernel(MoveEast), endtime=1., dt=1.)
     pset.execute(pset.Kernel(MoveWest), endtime=2., dt=1.)
     assert np.allclose([p.lon for p in pset], 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
+
+
+@pytest.mark.parametrize('mode', ['scipy'])  # , 'jit'])
+@pytest.mark.xfail(strict=True)
+def test_errorcode_repeat(fieldset, mode):
+    def simpleKernel(particle, fieldset, time, dt):
+        if particle.lon == .6:
+            return ErrorCode.Success  # We don't want this. We want p.lon to stay at .5 until max repeats are reached and it fails
+        add_lon = 0.1
+        particle.lon += add_lon
+        return ErrorCode.Repeat
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)

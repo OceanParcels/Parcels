@@ -187,7 +187,14 @@ class Kernel(object):
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
+
+        # back up variables in case of ErrorCode.Repeat
+        p_var_back = {}
+
+        repeat_it = 0
+        repeat_max = 10
         for p in pset.particles:
+            ptype = p.getPType()
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
             if (sign_end_part != sign_dt) and (dt != 0):
@@ -196,6 +203,8 @@ class Kernel(object):
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
             while dt_pos > 1e-6 or dt == 0:
+                for var in ptype.variables:
+                    p_var_back[var.name] = getattr(p, var.name)
                 try:
                     res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
                 except FieldSamplingError as fse:
@@ -214,12 +223,19 @@ class Kernel(object):
                     # Update time and repeat
                     p.time += sign_dt * dt_pos
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    repeat_it = 0
                     if dt == 0:
                         break
                     continue
                 elif res == ErrorCode.Repeat:
+                    repeat_it += 1
+                    if repeat_it > repeat_max:
+                        p.state = ErrorCode.Error
+                        break
                     # Try again without time update
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    for var in ptype.variables:
+                        setattr(p, var.name, p_var_back[var.name])
                     continue
                 else:
                     break  # Failure - stop time loop
