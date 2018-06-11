@@ -267,6 +267,8 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
+        # since indices will be modified through filebuffer.indices, we need to make a copy
+        # (especially nasty with default argument ({}) )
         indices = indices.copy()
         with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
