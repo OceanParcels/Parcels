@@ -880,7 +880,8 @@ class Field(object):
 
         if with_particles or (not animation):
             show_time = self.grid.time[0] if show_time is None else show_time
-            self.fieldset.computeTimeChunk(show_time, 1)
+            if self.grid.defer_load:
+                self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
             if self.grid.time.size > 1:
