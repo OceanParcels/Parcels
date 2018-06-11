@@ -632,19 +632,16 @@ class Field(object):
             b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
+            bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
+            cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
             if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
-                xsi = ((x-px[0]) / (px[1]-px[0])
-                       + (x-px[3]) / (px[2]-px[3])) * .5
-                eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])
-                       + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1])) * .5
+                eta = -cc / bb
             else:
-                bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
-                cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
                 det2 = bb*bb-4*aa*cc
                 if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
                     det = np.sqrt(det2)
                     eta = (-bb+det)/(2*aa)
-                    xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+            xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
