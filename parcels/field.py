@@ -1041,7 +1041,7 @@ class NetcdfFileBuffer(object):
         except:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False)
             self.dataset['decoded'] = False
-        for inds in self.indices.itervalues():
+        for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
         return self
