@@ -191,8 +191,6 @@ class Kernel(object):
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
 
-        repeat_it = 0
-        repeat_max = 10
         for p in pset.particles:
             ptype = p.getPType()
             # Don't execute particles that aren't started yet
@@ -223,20 +221,15 @@ class Kernel(object):
                     # Update time and repeat
                     p.time += sign_dt * dt_pos
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    repeat_it = 0
                     if dt == 0:
                         break
                     continue
                 elif res == ErrorCode.Repeat:
-                    repeat_it += 1
-                    if repeat_it > repeat_max:
-                        p.state = ErrorCode.Error
-                        break
                     # Try again without time update
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     for var in ptype.variables:
                         setattr(p, var.name, p_var_back[var.name])
-                    continue
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    break
                 else:
                     break  # Failure - stop time loop
 
