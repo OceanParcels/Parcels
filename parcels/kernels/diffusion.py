@@ -1,3 +1,4 @@
+"""Collection of pre-built diffusion kernels"""
 from parcels import rng as random
 import math
 
@@ -6,8 +7,8 @@ __all__ = ['BrownianMotion2D', 'SpatiallyVaryingBrownianMotion2D']
 
 
 def BrownianMotion2D(particle, fieldset, time, dt):
-    # Kernel for simple Brownian particle diffusion in zonal and meridional direction.
-    # Assumes that fieldset has fields Kh_zonal and Kh_meridional
+    """Kernel for simple Brownian particle diffusion in zonal and meridional direction.
+    Assumes that fieldset has fields Kh_zonal and Kh_meridional"""
 
     r = 1/3.
     kh_meridional = fieldset.Kh_meridional[time, particle.lon, particle.lat, particle.depth]
@@ -17,9 +18,9 @@ def BrownianMotion2D(particle, fieldset, time, dt):
 
 
 def SpatiallyVaryingBrownianMotion2D(particle, fieldset, time, dt):
-    # Diffusion equations for particles in non-uniform diffusivity fields
-    # from Ross & Sharples (2004, doi:10.4319/lom.2004.2.289)
-    # and Spagnol et al. (2002, doi:10.3354/meps235299)
+    """Diffusion equations for particles in non-uniform diffusivity fields
+    from Ross & Sharples (2004, doi:10.4319/lom.2004.2.289)
+    and Spagnol et al. (2002, doi:10.3354/meps235299)"""
 
     # regular Brownian motion step
     r = 1/3.
