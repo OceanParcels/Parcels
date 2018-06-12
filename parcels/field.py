@@ -450,8 +450,11 @@ class Field(object):
                 of the original Field"""
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
-        dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
-        dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
+        if self.grid.defer_load and self.data is None:
+            (dFdx, dFdy) = (None, None)
+        else:
+            dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
+            dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
         dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
         dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
         return dFdx_fld, dFdy_fld
