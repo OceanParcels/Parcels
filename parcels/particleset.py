@@ -7,6 +7,7 @@ from parcels.particlefile import ParticleFile
 from parcels.loggers import logger
 import numpy as np
 import bisect
+import progressbar
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
@@ -214,7 +215,8 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
-                moviedt=None, recovery=None, output_file=None, movie_background_field=None):
+                moviedt=None, recovery=None, output_file=None, movie_background_field=None,
+                verbose_progress=True):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -239,6 +241,7 @@ class ParticleSet(object):
                          kernel errors.
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
+        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
 
         """
 
@@ -323,6 +326,8 @@ class ParticleSet(object):
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
+        if verbose_progress:
+            pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime))
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if dt > 0:
                 time = min(next_prelease, next_input, next_output, next_movie, endtime)
@@ -347,9 +352,13 @@ class ParticleSet(object):
             next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
+            if verbose_progress:
+                pbar.update(abs(time - _starttime))
 
         if output_file:
             output_file.write(self, time)
+        if verbose_progress:
+            pbar.finish()
 
     def show(self, particles=True, show_time=None, field=None, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
