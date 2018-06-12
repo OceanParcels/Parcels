@@ -238,7 +238,7 @@ class Field(object):
         self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
-    def from_netcdf(cls, filenames, variable, dimensions, indices={},
+    def from_netcdf(cls, filenames, variable, dimensions, indices=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Create field from netCDF file
 
@@ -265,6 +265,8 @@ class Field(object):
                full_load is however sometimes necessary for plotting the fields.
         """
 
+        if indices is None:
+            indices = {}
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:

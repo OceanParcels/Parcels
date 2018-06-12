@@ -32,7 +32,12 @@ class Compiler(object):
     :arg cppargs: A list of arguments to the C compiler (optional).
     :arg ldargs: A list of arguments to the linker (optional)."""
 
-    def __init__(self, cc, ld=None, cppargs=[], ldargs=[]):
+    def __init__(self, cc, ld=None, cppargs=None, ldargs=None):
+        if cppargs is None:
+            cppargs = []
+        if ldargs is None:
+            ldargs = []
+
         self._cc = environ.get('CC', cc)
         self._ld = environ.get('LDSHARED', ld)
         self._cppargs = cppargs
@@ -65,7 +70,12 @@ class GNUCompiler(Compiler):
     :arg cppargs: A list of arguments to pass to the C compiler
          (optional).
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
-    def __init__(self, cppargs=[], ldargs=[]):
+    def __init__(self, cppargs=None, ldargs=None):
+        if cppargs is None:
+            cppargs = []
+        if ldargs is None:
+            ldargs = []
+
         opt_flags = ['-g', '-O3']
         arch_flag = ['-m64' if calcsize("P") is 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs

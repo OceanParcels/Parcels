@@ -19,7 +19,10 @@ class FieldSet(object):
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, fields={}):
+    def __init__(self, U, V, fields=None):
+        if fields is None:
+            fields = {}
+
         self.gridset = GridSet()
         if U:
             self.add_field(U)
@@ -110,7 +113,7 @@ class FieldSet(object):
                 g.time_origin = ugrid.time_origin
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices={},
+    def from_netcdf(cls, filenames, variables, dimensions, indices=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
@@ -143,6 +146,8 @@ class FieldSet(object):
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
         """
+        if indices is None:
+            indices = {}
 
         fields = {}
         for var, name in variables.items():
@@ -170,7 +175,7 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_nemo(cls, filenames, variables, dimensions, indices={}, mesh='spherical',
+    def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
         Note that this assumes the following default values for the mesh_mask:
@@ -204,6 +209,8 @@ class FieldSet(object):
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
+        if indices is None:
+            indices = {}
 
         if 'mesh_mask' not in variables:
             variables['mesh_mask'] = {'cosU': 'cosU',
@@ -241,7 +248,7 @@ class FieldSet(object):
                                allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     @classmethod
-    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
+    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
                      allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
@@ -261,6 +268,11 @@ class FieldSet(object):
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
         """
+
+        if indices is None:
+            indices = {}
+        if extra_fields is None:
+            extra_fields = {}
 
         dimensions = {}
         default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
