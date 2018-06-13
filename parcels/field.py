@@ -1033,6 +1033,13 @@ class Field(object):
         newfld.data = self.data + fld2.data
         return newfld
 
+    def __sub__(self, fld2):
+        if self.grid is not fld2.grid:
+            raise RuntimeError('Fields to be subtracted need to be on the same grid')
+        newfld = deepcopy(self)
+        newfld.data = self.data - fld2.data
+        return newfld
+
 
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
