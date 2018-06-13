@@ -6,7 +6,7 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 from math import cos, pi
-from datetime import timedelta
+import datetime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
@@ -33,8 +33,8 @@ class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling"""
 
     def __init__(self, time, field=None):
-        if field is not None and field.grid.time_origin != 0:
-            time = field.grid.time_origin + timedelta(seconds=time)
+        if field is not None and field.grid.time_origin:
+            time = field.grid.time_origin + np.timedelta64(int(time), 's')
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
         message += " Try setting allow_time_extrapolation to True"
@@ -142,6 +142,7 @@ class Field(object):
 
     :param name: Name of the field
     :param data: 2D, 3D or 4D numpy array of field data.
+
            1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
               whichever is relevant for the dataset, use the flag transpose=True
            2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
@@ -162,7 +163,7 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
-    :param time_origin: Time origin (datetime object) of the time axis (only if grid is None)
+    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis (only if grid is None)
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
@@ -175,7 +176,7 @@ class Field(object):
                       'Kh_meridional': GeographicSquare()}
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
-                 transpose=False, vmin=None, vmax=None, time_origin=0,
+                 transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         if self.name == 'UV':
@@ -201,8 +202,10 @@ class Field(object):
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
         self.fieldset = None
-        if allow_time_extrapolation is None:
-            self.allow_time_extrapolation = True if time is None else False
+        if self.name in ['cosU', 'sinU', 'cosV', 'sinV']:
+            self.allow_time_extrapolation = True
+        elif allow_time_extrapolation is None:
+            self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
 
@@ -235,24 +238,27 @@ class Field(object):
         self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
-    def from_netcdf(cls, name, dimensions, filenames, indices={},
-                    allow_time_extrapolation=False, mesh='flat', full_load=False, **kwargs):
+    def from_netcdf(cls, filenames, variable, dimensions, indices=None,
+                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Create field from netCDF file
 
-        :param name: Name of the field to create
-        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param filenames: list of filenames to read for the field.
                Note that wildcards ('*') are also allowed
+        :param variable: Name of the field to create. Note that this has to be a string
+        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
                This can be used for reading in only a subregion of the NetCDF file
-        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
-               (i.e. beyond the last available time snapshot
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
@@ -261,10 +267,13 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
+        if indices is None:
+            indices = {}
         with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
-            if name in ['cosU', 'sinU', 'cosV', 'sinV']:
+            indices = filebuffer.indices
+            if variable in ['cosU', 'sinU', 'cosV', 'sinV']:
                 warning = False
                 try:
                     source = filebuffer.dataset.source
@@ -281,8 +290,9 @@ class Field(object):
         timeFiles = []
         for fname in filenames:
             with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
-                timeslices.append(filebuffer.time)
-                timeFiles.append([fname for i in range(len(filebuffer.time))])
+                ftime = filebuffer.time
+                timeslices.append(ftime)
+                timeFiles.append([fname] * len(ftime))
         timeslices = np.array(timeslices)
         time = np.concatenate(timeslices)
         timeFiles = np.concatenate(np.array(timeFiles))
@@ -290,7 +300,7 @@ class Field(object):
             time_origin = time[0]
             time = (time - time_origin) / np.timedelta64(1, 's')
         else:
-            time_origin = 0
+            time_origin = None
         assert(np.all((time[1:]-time[:-1]) > 0))
 
         if time.size == 1 and time[0] is None:
@@ -317,12 +327,12 @@ class Field(object):
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = dimensions['data'] if 'data' in dimensions else name
+                    filebuffer.name = dimensions['data'] if 'data' in dimensions else variable
 
                     if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
                     elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                        if filebuffer.zdim > 1:
+                        if len(filebuffer.indices['depth']) > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
                         else:
                             data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
@@ -335,13 +345,15 @@ class Field(object):
             grid.ti = -1
             data = None
 
-        if name in ['cosU', 'sinU', 'cosV', 'sinV']:
-            allow_time_extrapolation = True
+        if allow_time_extrapolation is None:
+            allow_time_extrapolation = False if 'time' in dimensions else True
+
         kwargs['dimensions'] = dimensions.copy()
         kwargs['indices'] = indices
+        kwargs['time_periodic'] = time_periodic
         kwargs['timeFiles'] = timeFiles
 
-        return cls(name, data, grid=grid,
+        return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def reshape(self, data, transpose=False):
@@ -489,6 +501,8 @@ class Field(object):
 
     def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
+        if time < grid.time[ti]:
+            ti -= 1
         if grid.z4d:
             if ti == len(grid.time)-1:
                 depth_vector = (1-xsi)*(1-eta) * grid.depth[-1, :, yi, xi] + \
@@ -500,9 +514,9 @@ class Field(object):
                     xsi*(1-eta) * grid.depth[ti:ti+2, :, yi, xi+1] + \
                     xsi*eta * grid.depth[ti:ti+2, :, yi+1, xi+1] + \
                     (1-xsi)*eta * grid.depth[ti:ti+2, :, yi+1, xi]
-                t0 = grid.time[ti]
-                t1 = grid.time[ti + 1]
-                depth_vector = dv2[0, :] + (dv2[1, :]-dv2[0, :]) * (time - t0) / (t1 - t0)
+                tt = (time-grid.time[ti]) / (grid.time[ti+1]-grid.time[ti])
+                assert tt >= 0 and tt <= 1, 'Vertical s grid is being wrongly interpolated in time'
+                depth_vector = dv2[0, :] * (1-tt) + dv2[1, :] * tt
         else:
             depth_vector = (1-xsi)*(1-eta) * grid.depth[:, yi, xi] + \
                 xsi*(1-eta) * grid.depth[:, yi, xi+1] + \
@@ -614,26 +628,23 @@ class Field(object):
             if grid.mesh == 'spherical':
                 px[0] = px[0]+360 if px[0] < x-225 else px[0]
                 px[0] = px[0]-360 if px[0] > x+225 else px[0]
-                px[1:] = np.where(px[1:] - x > 180, px[1:]-360, px[1:])
-                px[1:] = np.where(-px[1:] + x > 180, px[1:]+360, px[1:])
+                px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+                px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
             py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
             a = np.dot(invA, px)
             b = np.dot(invA, py)
 
             aa = a[3]*b[2] - a[2]*b[3]
+            bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
+            cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
             if abs(aa) < 1e-12:  # Rectilinear cell, or quasi
-                xsi = ((x-px[0]) / (px[1]-px[0])
-                       + (x-px[3]) / (px[2]-px[3])) * .5
-                eta = ((y-grid.lat[yi, xi]) / (grid.lat[yi+1, xi]-grid.lat[yi, xi])
-                       + (y-grid.lat[yi, xi+1]) / (grid.lat[yi+1, xi+1]-grid.lat[yi, xi+1])) * .5
+                eta = -cc / bb
             else:
-                bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3]
-                cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1]
                 det2 = bb*bb-4*aa*cc
                 if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
                     det = np.sqrt(det2)
                     eta = (-bb+det)/(2*aa)
-                    xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+            xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
@@ -805,7 +816,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti-1])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
@@ -872,7 +883,8 @@ class Field(object):
 
         if with_particles or (not animation):
             show_time = self.grid.time[0] if show_time is None else show_time
-            self.fieldset.computeTimeChunk(show_time, 1)
+            if self.grid.defer_load:
+                self.fieldset.computeTimeChunk(show_time, 1)
             (idx, periods) = self.time_index(show_time)
             show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
             if self.grid.time.size > 1:
@@ -966,13 +978,16 @@ class Field(object):
                                coords=[('y', self.grid.lat), ('x', self.grid.lon)])
         nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
                                coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
+        time_counter = xr.DataArray(self.grid.time,
+                                    dims=['time_counter'],
+                                    attrs=attrs)
         vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
-                               coords=[('time_counter', self.grid.time),
-                                       (vname_depth, self.grid.depth),
-                                       ('y', self.grid.lat), ('x', self.grid.lon)])
+                               dims=['time_counter', vname_depth, 'y', 'x'])
         # Create xarray Dataset and output to netCDF format
         dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                       'nav_lat': nav_lat,
+                                                      'time_counter': time_counter,
                                                       vname_depth: self.grid.depth})
         dset.to_netcdf(filepath)
 
@@ -990,6 +1005,7 @@ class Field(object):
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
+                assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
                 time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:
@@ -1020,22 +1036,13 @@ class NetcdfFileBuffer(object):
         self.dataset = None
 
     def __enter__(self):
-        self.dataset = xr.open_dataset(str(self.filename))
-        lon = getattr(self.dataset, self.dimensions['lon'])
-        lat = getattr(self.dataset, self.dimensions['lat'])
-        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(xdim)
-        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(ydim)
-        if 'depth' in self.dimensions:
-            depth = getattr(self.dataset, self.dimensions['depth'])
-            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-            self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            self.zdim = len(self.indsdepth)
-        else:
-            self.zdim = 0
-            self.indsdepth = [0]
-        for inds in [self.indslat, self.indslon, self.indsdepth]:
+        try:
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True)
+            self.dataset['decoded'] = True
+        except:
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False)
+            self.dataset['decoded'] = False
+        for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
         return self
@@ -1047,15 +1054,22 @@ class NetcdfFileBuffer(object):
     def read_lonlat(self):
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
+        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
+        self.indices['lat'] = self.indices['lat'] if 'lat' in self.indices else range(ydim)
         if len(lon.shape) == 1:
-            lon_subset = np.array(lon[self.indslon])
-            lat_subset = np.array(lat[self.indslat])
+            lon_subset = np.array(lon[self.indices['lon']])
+            lat_subset = np.array(lat[self.indices['lat']])
         elif len(lon.shape) == 2:
-            lon_subset = np.array(lon[self.indslat, self.indslon])
-            lat_subset = np.array(lat[self.indslat, self.indslon])
+            lon_subset = np.array(lon[self.indices['lat'], self.indices['lon']])
+            lat_subset = np.array(lat[self.indices['lat'], self.indices['lon']])
         elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-            lon_subset = np.array(lon[0, self.indslat, self.indslon])
-            lat_subset = np.array(lat[0, self.indslat, self.indslon])
+            lon_subset = np.array(lon[0, self.indices['lat'], self.indices['lon']])
+            lat_subset = np.array(lat[0, self.indices['lat'], self.indices['lon']])
+        elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
+            lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
+            lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
         if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
             xdim = lon_subset.shape[0]
             ydim = lat_subset.shape[1]
@@ -1068,28 +1082,31 @@ class NetcdfFileBuffer(object):
     def read_depth(self):
         if 'depth' in self.dimensions:
             depth = getattr(self.dataset, self.dimensions['depth'])
+            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
             if len(depth.shape) == 1:
-                return np.array(depth[self.indsdepth])
+                return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
-                return np.array(depth[self.indsdepth, self.indslat, self.indslon])
+                return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
             elif len(depth.shape) == 4:
                 raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
-                return np.array(depth[:, self.indsdepth, self.indslat, self.indslon])
+                return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
         else:
+            self.indices['depth'] = [0]
             return np.zeros(1)
 
     @property
     def data(self):
         data = getattr(self.dataset, self.name)
         if len(data.shape) == 2:
-            data = data[self.indslat, self.indslon]
+            data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if self.zdim > 1:
-                data = data[self.indsdepth, self.indslat, self.indslon]
+            if len(self.indices['depth']) > 1:
+                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
-                data = data[:, self.indslat, self.indslon]
+                data = data[:, self.indices['lat'], self.indices['lon']]
         else:
-            data = data[:, self.indsdepth, self.indslat, self.indslon]
+            data = data[:, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
@@ -1098,13 +1115,17 @@ class NetcdfFileBuffer(object):
     @property
     def time(self):
         try:
-            time = getattr(self.dataset, self.dimensions['time'])
-            if isinstance(time[0], np.datetime64) or 'Unit' not in time.attrs:
-                return np.array(time)
-            time.attrs['units'] = time.attrs['Unit']
-            ds = xr.decode_cf(self.dataset)
-            time = getattr(ds, self.dimensions['time'])
-            time_arr = np.array(time)
-            return time_arr
+            time_da = getattr(self.dataset, self.dimensions['time'])
+            if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
+                time = np.array(time_da)
+            else:
+                if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
+                    time_da.attrs['units'] = time_da.attrs['Unit']
+                ds = xr.Dataset({self.dimensions['time']: time_da})
+                ds = xr.decode_cf(ds)
+                time = np.array(getattr(ds, self.dimensions['time']))
+            if isinstance(time[0], datetime.datetime):
+                raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
+            return time
         except:
             return np.array([None])

@@ -243,7 +243,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
   while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
-    float xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
+    double xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
     if (sphere_mesh){ //we are on the sphere
       int i4;
       if (xgrid_loc[0] < x - 225) xgrid_loc[0] += 360;
@@ -253,40 +253,28 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
         if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
       }
     }
+    double ygrid_loc[4] = {ygrid[*yi][*xi], ygrid[*yi][*xi+1], ygrid[*yi+1][*xi+1], ygrid[*yi+1][*xi]};
 
     a[0] =  xgrid_loc[0];
     a[1] = -xgrid_loc[0]    + xgrid_loc[1];
     a[2] = -xgrid_loc[0]                                              + xgrid_loc[3];
     a[3] =  xgrid_loc[0]    - xgrid_loc[1]      + xgrid_loc[2]        - xgrid_loc[3];
-    b[0] =  ygrid[*yi][*xi];
-    b[1] = -ygrid[*yi][*xi] + ygrid[*yi][*xi+1];
-    b[2] = -ygrid[*yi][*xi]                                           + ygrid[*yi+1][*xi];
-    b[3] =  ygrid[*yi][*xi] - ygrid[*yi][*xi+1] + ygrid[*yi+1][*xi+1] - ygrid[*yi+1][*xi];
+    b[0] =  ygrid_loc[0];
+    b[1] = -ygrid_loc[0]    + ygrid_loc[1];
+    b[2] = -ygrid_loc[0]                                              + ygrid_loc[3];
+    b[3] =  ygrid_loc[0]    - ygrid_loc[1]      + ygrid_loc[2]        - ygrid_loc[3];
 
     double aa = a[3]*b[2] - a[2]*b[3];
-    if (fabs(aa) < 1e-12){  // Rectilinear  cell, or quasi
-      if( fabs(ygrid[*yi+1][*xi] - ygrid[*yi][*xi]) >  fabs(ygrid[*yi][*xi+1] - ygrid[*yi][*xi]) ){ // well-oriented cell, like in mid latitudes in NEMO
-        *xsi = ( (x-xgrid_loc[0]) / (xgrid_loc[1]-xgrid_loc[0])
-             +   (x-xgrid_loc[3]) / (xgrid_loc[2]-xgrid_loc[3]) ) * .5;
-        *eta = ( (y-ygrid[*yi][*xi  ]) / (ygrid[*yi+1][*xi  ]-ygrid[*yi][*xi  ])
-             +   (y-ygrid[*yi][*xi+1]) / (ygrid[*yi+1][*xi+1]-ygrid[*yi][*xi+1]) ) * .5;
-      }
-      else{ // miss-oriented cell, like in the arctic in NEMO
-        *xsi = ( (y-ygrid[*yi  ][*xi]) / (ygrid[*yi  ][*xi+1]-ygrid[*yi  ][*xi])
-             +   (y-ygrid[*yi+1][*xi]) / (ygrid[*yi+1][*xi+1]-ygrid[*yi+1][*xi]) ) * .5;
-        *eta = ( (x-xgrid_loc[0]) / (xgrid_loc[3]-xgrid_loc[0])
-             +   (x-xgrid_loc[1]) / (xgrid_loc[2]-xgrid_loc[1]) ) * .5;
-      }
-    }
+    double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
+    double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
+    if (fabs(aa) < 1e-12)  // Rectilinear  cell, or quasi
+      *eta = -cc / bb;
     else{
-      double bb = a[3]*b[0] - a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + x*b[3] - y*a[3];
-      double cc = a[1]*b[0] - a[0]*b[1] + x*b[1] - y*a[1];
       double det = sqrt(bb*bb-4*aa*cc);
-      if (det == det){  // so, if det is nan we keep the xsi, eta from previous iter
+      if (det == det)  // so, if det is nan we keep the xsi, eta from previous iter
         *eta = (-bb+det)/(2*aa);
-        *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
-      }
     }
+    *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
     if ( (*xsi < 0) && (*eta < 0) && (*xi == 0) && (*yi == 0) )
       return ERROR_OUT_OF_BOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
@@ -521,7 +509,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
 }
 
 static inline ErrorCode temporal_interpolation(float x, float y, float z, double time, CField *f, 
-                                               unsigned long vxi, unsigned long vyi, unsigned long vzi, unsigned long vti, float *value, int interp_method)
+                                                void * vxi,  void * vyi,  void * vzi,  void * vti, float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
@@ -539,7 +527,7 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
 }
 
 static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
-                                                 CField *U, CField *V, unsigned long xi, unsigned long yi, unsigned long zi, unsigned long ti,
+                                                 CField *U, CField *V,  void * xi,  void * yi,  void * zi,  void * ti,
                                                  float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
@@ -552,7 +540,7 @@ static inline ErrorCode temporal_interpolationUV(float x, float y, float z, doub
 
 static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float z, double time,
                                                  CField *U, CField *V, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
-                                                 unsigned long xi, unsigned long yi, unsigned long zi, unsigned long ti, float *valueU, float *valueV, int interp_method)
+                                                  void * xi,  void * yi,  void * zi,  void * ti, float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
 

@@ -17,6 +17,8 @@ class GridSet(object):
         existing_grid = False
         for g in self.grids:
             sameGrid = True
+            if grid.time_origin != g.time_origin:
+                continue
             for attr in ['lon', 'lat', 'depth', 'time']:
                 gattr = getattr(g, attr)
                 gridattr = getattr(grid, attr)
