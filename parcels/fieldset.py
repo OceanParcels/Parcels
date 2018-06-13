@@ -20,9 +20,6 @@ class FieldSet(object):
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
     def __init__(self, U, V, fields=None):
-        if fields is None:
-            fields = {}
-
         self.gridset = GridSet()
         if U:
             self.add_field(U)
@@ -33,8 +30,9 @@ class FieldSet(object):
         self.UV = UV
 
         # Add additional fields as attributes
-        for name, field in fields.items():
-            self.add_field(field)
+        if fields:
+            for name, field in fields.items():
+                self.add_field(field)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
