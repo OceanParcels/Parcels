@@ -146,8 +146,6 @@ class FieldSet(object):
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
         """
-        if indices is None:
-            indices = {}
 
         fields = {}
         for var, name in variables.items():
@@ -209,8 +207,6 @@ class FieldSet(object):
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
-        if indices is None:
-            indices = {}
 
         if 'mesh_mask' not in variables:
             variables['mesh_mask'] = {'cosU': 'cosU',
