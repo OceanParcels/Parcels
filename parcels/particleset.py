@@ -364,9 +364,9 @@ class ParticleSet(object):
             logger.info("Visualisation is not possible. Matplotlib not found.")
             return
         try:
-            from mpl_toolkits.basemap import Basemap
+            import cartopy
         except:
-            Basemap = None
+            cartopy = None
 
         plon = np.array([p.lon for p in self])
         plat = np.array([p.lat for p in self])
@@ -415,8 +415,8 @@ class ParticleSet(object):
             ylbl = 'Meridional distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
             plt.xlabel(xlbl)
             plt.ylabel(ylbl)
-        elif Basemap is None:
-            logger.info("Visualisation is not possible. Basemap not found.")
+        elif cartopy is None:
+            logger.info("Visualisation is not possible. Cartopy not found.")
             time_origin = self.fieldset.U.grid.time_origin
         else:
             time_origin = self.fieldset.U.grid.time_origin
@@ -428,46 +428,24 @@ class ParticleSet(object):
             lon = lon[lonW:lonE]
             lat = lat[latS:latN]
 
-            # configuring plot
-            lat_median = np.median(lat)
-            lon_median = np.median(lon)
             plt.figure()
-            m = Basemap(projection='merc', lat_0=lat_median, lon_0=lon_median,
-                        resolution='h', area_thresh=100,
-                        llcrnrlon=lon[0], llcrnrlat=lat[0],
-                        urcrnrlon=lon[-1], urcrnrlat=lat[-1])
-            parallels = np.arange(lat[0], lat[-1], abs(lat[0]-lat[-1])/5)
-            parallels = np.around(parallels, 2)
-            m.drawparallels(parallels, labels=[1, 0, 0, 0])
-            meridians = np.arange(lon[0], lon[-1], abs(lon[0]-lon[-1])/5)
-            meridians = np.around(meridians, 2)
-            m.drawmeridians(meridians, labels=[0, 0, 0, 1])
+            ax = plt.axes(projection=cartopy.crs.PlateCarree())
+
             if land:
-                m.drawcoastlines()
-                m.fillcontinents(color='burlywood')
+                ax.add_feature(cartopy.feature.LAND, zorder=10, edgecolor='black')
             if field is 'vector':
                 # formating velocity data for quiver plotting
-                U = np.array(self.fieldset.U.temporal_interpolate_fullfield(idx, show_time))
-                V = np.array(self.fieldset.V.temporal_interpolate_fullfield(idx, show_time))
-                U = U[latS:latN, lonW:lonE]
-                V = V[latS:latN, lonW:lonE]
-                U = np.array([U[y, x] for x in range(len(lon)) for y in range(len(lat))])
-                V = np.array([V[y, x] for x in range(len(lon)) for y in range(len(lat))])
+                U = self.fieldset.U.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
+                V = self.fieldset.V.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
                 speed = np.sqrt(U**2 + V**2)
-                normU = U/speed
-                normV = V/speed
-                x = np.repeat(lon, len(lat))
-                y = np.tile(lat, len(lon))
+                x, y = np.meshgrid(lon, lat)
+                plt.quiver(x, y, U/speed, V/speed, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
 
-                # plotting velocity vector field
-                vecs = m.quiver(x, y, normU, normV, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, latlon=True)
-                m.colorbar(vecs, "right", size="5%", pad="2%")
             elif field is not None:
                 logger.warning('Plotting of both a field and land=True is not supported in this version of Parcels')
             # plotting particle data
             if particles:
-                xs, ys = m(plon, plat)
-                m.scatter(xs, ys, color='black')
+                plt.scatter(plon, plat, s=10, color='black')
 
         if time_origin is 0:
             timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
