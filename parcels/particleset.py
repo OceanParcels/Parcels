@@ -438,9 +438,12 @@ class ParticleSet(object):
 
             plt.figure()
             ax = plt.axes(projection=cartopy.crs.PlateCarree())
+            ax.gridlines()
 
             if land:
-                ax.add_feature(cartopy.feature.LAND, zorder=10, edgecolor='black')
+                ax.add_feature(cartopy.feature.LAND, zorder=0, edgecolor='black')
+                ax.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
+                ax.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
             if field is 'vector':
                 # formating velocity data for quiver plotting
                 U = self.fieldset.U.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
