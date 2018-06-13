@@ -165,7 +165,7 @@ class FieldSet(object):
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             dims['data'] = name
-            inds = indices[var] if var in indices else indices
+            inds = indices[var] if (indices and var in indices) else indices
 
             fields[var] = Field.from_netcdf(paths, var, dims, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
