@@ -6,6 +6,7 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 from math import cos, pi
+from copy import deepcopy
 import datetime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
@@ -1024,6 +1025,11 @@ class Field(object):
             data[data > self.vmax] = 0.
 
         return data
+
+    def __add__(self, fld2):
+        newfld = deepcopy(self)
+        newfld.data = self.data + fld2.data
+        return newfld
 
 
 class NetcdfFileBuffer(object):

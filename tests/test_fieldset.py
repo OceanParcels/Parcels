@@ -115,6 +115,15 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     fieldset.write(filepath)
 
 
+@pytest.mark.parametrize('xdim', [100, 200])
+@pytest.mark.parametrize('ydim', [100, 200])
+def test_add_fields(xdim, ydim):
+    data, dimensions = generate_fieldset(xdim, ydim)
+    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset.new = fieldset.U + fieldset.V
+    assert np.allclose(fieldset.new.data, fieldset.U.data+fieldset.V.data)
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)
