@@ -40,7 +40,7 @@ def run_nemo_curvilinear(mode, outfile):
 def make_plot(trajfile):
     from netCDF4 import Dataset
     import matplotlib.pyplot as plt
-    from mpl_toolkits.basemap import Basemap
+    import cartopy
 
     class ParticleData(object):
         def __init__(self):
@@ -55,14 +55,8 @@ def make_plot(trajfile):
         return T
 
     T = load_particles_file(trajfile, ['lon', 'lat', 'time'])
-    m = Basemap(projection='cyl')
-    m.drawparallels(np.arange(-90, 91, 30), labels=[True, False, False, False])
-    m.drawmeridians(np.arange(-180, 181, 60), labels=[False, False, False, True])
-
-    T.lon[T.lon > 180] -= 360
-
-    xs, ys = m(T.lon, T.lat)
-    m.scatter(xs, ys, c=T.time, s=5)
+    plt.axes(projection=cartopy.crs.PlateCarree())
+    plt.scatter(T.lon, T.lat, s=10)
     plt.show()
 
 
