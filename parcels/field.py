@@ -265,8 +265,6 @@ class Field(object):
                full_load is however sometimes necessary for plotting the fields.
         """
 
-        if indices is None:
-            indices = {}
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         if indices is None:

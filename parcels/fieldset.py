@@ -269,8 +269,6 @@ class FieldSet(object):
                full_load is however sometimes necessary for plotting the fields.
         """
 
-        if indices is None:
-            indices = {}
         if extra_fields is None:
             extra_fields = {}
 
