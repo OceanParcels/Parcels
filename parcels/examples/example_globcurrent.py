@@ -9,7 +9,7 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices={}, full_load=False):
+def set_globcurrent_fieldset(filename=None, indices=None, full_load=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')

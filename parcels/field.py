@@ -238,7 +238,7 @@ class Field(object):
         self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
-    def from_netcdf(cls, filenames, variable, dimensions, indices={},
+    def from_netcdf(cls, filenames, variable, dimensions, indices=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Create field from netCDF file
 
@@ -267,9 +267,12 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
+        if indices is None:
+            indices = {}
         with NetcdfFileBuffer(filenames[0], dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
+            indices = filebuffer.indices
             if variable in ['cosU', 'sinU', 'cosV', 'sinV']:
                 warning = False
                 try:
@@ -329,7 +332,7 @@ class Field(object):
                     if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
                     elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                        if filebuffer.zdim > 1:
+                        if len(filebuffer.indices['depth']) > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
                         else:
                             data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
@@ -1046,21 +1049,7 @@ class NetcdfFileBuffer(object):
         except:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False)
             self.dataset['decoded'] = False
-        lon = getattr(self.dataset, self.dimensions['lon'])
-        lat = getattr(self.dataset, self.dimensions['lat'])
-        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        self.indslon = self.indices['lon'] if 'lon' in self.indices else range(xdim)
-        self.indslat = self.indices['lat'] if 'lat' in self.indices else range(ydim)
-        if 'depth' in self.dimensions:
-            depth = getattr(self.dataset, self.dimensions['depth'])
-            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-            self.indsdepth = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            self.zdim = len(self.indsdepth)
-        else:
-            self.zdim = 0
-            self.indsdepth = [0]
-        for inds in [self.indslat, self.indslon, self.indsdepth]:
+        for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
         return self
@@ -1072,15 +1061,22 @@ class NetcdfFileBuffer(object):
     def read_lonlat(self):
         lon = getattr(self.dataset, self.dimensions['lon'])
         lat = getattr(self.dataset, self.dimensions['lat'])
+        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
+        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
+        self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
+        self.indices['lat'] = self.indices['lat'] if 'lat' in self.indices else range(ydim)
         if len(lon.shape) == 1:
-            lon_subset = np.array(lon[self.indslon])
-            lat_subset = np.array(lat[self.indslat])
+            lon_subset = np.array(lon[self.indices['lon']])
+            lat_subset = np.array(lat[self.indices['lat']])
         elif len(lon.shape) == 2:
-            lon_subset = np.array(lon[self.indslat, self.indslon])
-            lat_subset = np.array(lat[self.indslat, self.indslon])
+            lon_subset = np.array(lon[self.indices['lat'], self.indices['lon']])
+            lat_subset = np.array(lat[self.indices['lat'], self.indices['lon']])
         elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-            lon_subset = np.array(lon[0, self.indslat, self.indslon])
-            lat_subset = np.array(lat[0, self.indslat, self.indslon])
+            lon_subset = np.array(lon[0, self.indices['lat'], self.indices['lon']])
+            lat_subset = np.array(lat[0, self.indices['lat'], self.indices['lon']])
+        elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
+            lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
+            lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
         if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
             xdim = lon_subset.shape[0]
             ydim = lat_subset.shape[1]
@@ -1093,28 +1089,31 @@ class NetcdfFileBuffer(object):
     def read_depth(self):
         if 'depth' in self.dimensions:
             depth = getattr(self.dataset, self.dimensions['depth'])
+            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
             if len(depth.shape) == 1:
-                return np.array(depth[self.indsdepth])
+                return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
-                return np.array(depth[self.indsdepth, self.indslat, self.indslon])
+                return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
             elif len(depth.shape) == 4:
                 raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
-                return np.array(depth[:, self.indsdepth, self.indslat, self.indslon])
+                return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
         else:
+            self.indices['depth'] = [0]
             return np.zeros(1)
 
     @property
     def data(self):
         data = getattr(self.dataset, self.name)
         if len(data.shape) == 2:
-            data = data[self.indslat, self.indslon]
+            data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if self.zdim > 1:
-                data = data[self.indsdepth, self.indslat, self.indslon]
+            if len(self.indices['depth']) > 1:
+                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
-                data = data[:, self.indslat, self.indslon]
+                data = data[:, self.indices['lat'], self.indices['lon']]
         else:
-            data = data[:, self.indsdepth, self.indslat, self.indslon]
+            data = data[:, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)

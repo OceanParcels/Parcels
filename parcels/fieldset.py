@@ -19,7 +19,7 @@ class FieldSet(object):
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, fields={}):
+    def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         if U:
             self.add_field(U)
@@ -30,8 +30,9 @@ class FieldSet(object):
         self.UV = UV
 
         # Add additional fields as attributes
-        for name, field in fields.items():
-            self.add_field(field)
+        if fields:
+            for name, field in fields.items():
+                self.add_field(field)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
@@ -110,7 +111,7 @@ class FieldSet(object):
                 g.time_origin = ugrid.time_origin
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices={},
+    def from_netcdf(cls, filenames, variables, dimensions, indices=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
@@ -160,7 +161,7 @@ class FieldSet(object):
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             dims['data'] = name
-            inds = indices[var] if var in indices else indices
+            inds = indices[var] if (indices and var in indices) else indices
 
             fields[var] = Field.from_netcdf(paths, var, dims, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
@@ -170,7 +171,7 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_nemo(cls, filenames, variables, dimensions, indices={}, mesh='spherical',
+    def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
         Note that this assumes the following default values for the mesh_mask:
@@ -241,7 +242,7 @@ class FieldSet(object):
                                allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     @classmethod
-    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
+    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
                      allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
@@ -261,6 +262,9 @@ class FieldSet(object):
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
         """
+
+        if extra_fields is None:
+            extra_fields = {}
 
         dimensions = {}
         default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
