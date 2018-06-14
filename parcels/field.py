@@ -399,7 +399,7 @@ class Field(object):
         fieldset = self.fieldset
         U = fieldset.U.eval(time, x, y, z, False)
         V = fieldset.V.eval(time, x, y, z, False)
-        if fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+        if fieldset.ugrid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
             zonal = U
             meridional = V
         else:
@@ -825,7 +825,7 @@ class Field(object):
 
     def ccode_evalUV(self, varU, varV, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+        if self.fieldset.ugrid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
             return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                 % (x, y, z, t, varU, varV, self.fieldset.U.interp_method.upper())
         else:

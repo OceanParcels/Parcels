@@ -101,7 +101,7 @@ def test_avoid_repeated_grids():
     temp0_field = Field('temp', u_data, lon=lon_g0, lat=lat_g0, time=time_g0, transpose=True)
 
     other_fields = {}
-    other_fields['temp0'] = temp0_field
+    other_fields['temp'] = temp0_field
 
     field_set = FieldSet(u_field, v_field, fields=other_fields)
     assert field_set.gridset.size == 2

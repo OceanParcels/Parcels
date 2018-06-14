@@ -22,9 +22,10 @@ class FieldSet(object):
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         if U:
-            self.add_field(U)
+            self.add_field(U, 'U')
+            self.ugrid = self.U.grid if isinstance(self.U, Field) else self.U[0].grid
         if V:
-            self.add_field(V)
+            self.add_field(V, 'V')
         UV = Field('UV', None)
         UV.fieldset = self
         self.UV = UV
@@ -32,7 +33,7 @@ class FieldSet(object):
         # Add additional fields as attributes
         if fields:
             for name, field in fields.items():
-                self.add_field(field)
+                self.add_field(field, name)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
@@ -86,29 +87,36 @@ class FieldSet(object):
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
-    def add_field(self, field):
+    def add_field(self, field, name=None):
         """Add a :class:`parcels.field.Field` object to the FieldSet
 
         :param field: :class:`parcels.field.Field` object to be added
+        :param name: Name of the :class:`parcels.field.Field` object to be added
         """
-        setattr(self, field.name, field)
-        self.gridset.add_grid(field)
-        field.fieldset = self
+        name = field.name if name is None else name
+        if isinstance(field, list):
+            setattr(self, name, FieldList(field))
+            for fld in field:
+                self.gridset.add_grid(fld)
+                fld.fieldset = self
+        else:
+            setattr(self, name, field)
+            self.gridset.add_grid(field)
+            field.fieldset = self
 
     def check_complete(self):
         assert(self.U), ('U field is not defined')
         assert(self.V), ('V field is not defined')
-        ugrid = self.U.grid
         for g in self.gridset.grids:
             g.check_zonal_periodic()
-            if g is ugrid or len(g.time) == 1:
+            if g is self.ugrid or len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin, type(ugrid.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(g.time_origin, type(self.ugrid.time_origin)), 'time origins of different grids must be have the same type'
             if g.time_origin:
-                g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time = g.time + (g.time_origin - self.ugrid.time_origin) / np.timedelta64(1, 's')
                 if g.defer_load:
-                    g.time_full = g.time_full + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
-                g.time_origin = ugrid.time_origin
+                    g.time_full = g.time_full + (g.time_origin - self.ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time_origin = self.ugrid.time_origin
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
@@ -304,14 +312,13 @@ class FieldSet(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
-
         # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
         if zonal:
-            self.add_constant('halo_west', self.U.grid.lon[0])
-            self.add_constant('halo_east', self.U.grid.lon[-1])
+            self.add_constant('halo_west', self.ugrid.lon[0])
+            self.add_constant('halo_east', self.ugrid.lon[-1])
         if meridional:
-            self.add_constant('halo_south', self.U.grid.lat[0])
-            self.add_constant('halo_north', self.U.grid.lat[-1])
+            self.add_constant('halo_south', self.ugrid.lat[0])
+            self.add_constant('halo_north', self.ugrid.lat[-1])
 
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
@@ -415,3 +422,17 @@ class FieldSet(object):
                 return nextTime
             else:
                 return time + nSteps * dt
+
+
+class FieldList(list):
+    def eval(self, time, x, y, z, applyConversion=True):
+        tmp = 0
+        for fld in self:
+            tmp += fld.eval(time, x, y, z, applyConversion)
+        return tmp
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
