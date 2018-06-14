@@ -409,8 +409,14 @@ class Field(object):
             sinV = fieldset.sinV.eval(time, x, y, z, False)
             zonal = U * cosU - V * sinV
             meridional = U * sinU + V * cosV
-        zonal = fieldset.U.units.to_target(zonal, x, y, z)
-        meridional = fieldset.V.units.to_target(meridional, x, y, z)
+        if isinstance(fieldset.U, Field):
+            zonal = fieldset.U.units.to_target(zonal, x, y, z)
+        else:
+            zonal = fieldset.U[0].units.to_target(zonal, x, y, z)
+        if isinstance(fieldset.V, Field):
+            meridional = fieldset.V.units.to_target(meridional, x, y, z)
+        else:
+            meridional = fieldset.V[0].units.to_target(meridional, x, y, z)
         return (zonal, meridional)
 
     def __getitem__(self, key):
