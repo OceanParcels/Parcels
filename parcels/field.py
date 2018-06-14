@@ -6,7 +6,6 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 from math import cos, pi
-from copy import deepcopy
 import datetime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
@@ -1029,16 +1028,14 @@ class Field(object):
     def __add__(self, fld2):
         if self.grid is not fld2.grid:
             raise RuntimeError('Fields to be added need to be on the same grid')
-        newfld = deepcopy(self)
-        newfld.data = self.data + fld2.data
-        return newfld
+        return Field('(%s+%s)' % (self.name, fld2.name), self.data + fld2.data,
+                     grid=self.grid)
 
     def __sub__(self, fld2):
         if self.grid is not fld2.grid:
             raise RuntimeError('Fields to be subtracted need to be on the same grid')
-        newfld = deepcopy(self)
-        newfld.data = self.data - fld2.data
-        return newfld
+        return Field('(%s-%s)' % (self.name, fld2.name), self.data - fld2.data,
+                     grid=self.grid)
 
 
 class NetcdfFileBuffer(object):
