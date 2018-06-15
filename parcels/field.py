@@ -462,7 +462,7 @@ class Field(object):
             dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
         dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
         dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
-        (self.gradientx, self.gradienty) = (dFdx, dFdy)
+        (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
         return dFdx_fld, dFdy_fld
 
     def interpolator2D_scipy(self, ti, z_idx=None):

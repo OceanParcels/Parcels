@@ -108,4 +108,4 @@ def test_globcurrent_deferred_fieldset_gradient(full_load):
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(days=1))
 
     tdim = 365 if full_load else 3
-    assert(dUdx.data.shape == (tdim, 41, 81))
+    assert(fieldset.U.gradientx.data.shape == (tdim, 41, 81))
