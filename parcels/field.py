@@ -450,10 +450,12 @@ class Field(object):
 
     def gradient(self):
         """Method to calculate horizontal gradients of Field.
-                Returns two Fields: the zonal and meridional gradients,
+                Adds two Fields to the Fieldset: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method
                 Names of these grids are dNAME_dx and dNAME_dy, where NAME is the name
-                of the original Field"""
+                of the original Field
+                If Field is not part of a Fieldset, the two Fields are returned
+                """
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
         if self.grid.defer_load and self.data is None:
@@ -466,8 +468,11 @@ class Field(object):
         dFdx_fld.is_gradient = True
         dFdy_fld.is_gradient = True
         (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
-        self.fieldset.add_field(dFdx_fld)
-        self.fieldset.add_field(dFdy_fld)
+        if self.fieldset:
+            self.fieldset.add_field(dFdx_fld)
+            self.fieldset.add_field(dFdy_fld)
+        else:
+            return (dFdx_fld, dFdy_fld)
 
     def interpolator2D_scipy(self, ti, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
