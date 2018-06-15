@@ -265,12 +265,12 @@ class Kernel(object):
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
-                if p.state != ErrorCode.Repeat:
+                if p.state == ErrorCode.Repeat:
+                    p.state = ErrorCode.Success
+                else:
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time, dt)
-                else:
-                    p.state = ErrorCode.Success
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
