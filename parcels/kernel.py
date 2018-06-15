@@ -227,7 +227,8 @@ class Kernel(object):
                 elif res == ErrorCode.Repeat:
                     # Try again without time update
                     for var in ptype.variables:
-                        setattr(p, var.name, p_var_back[var.name])
+                        if var.name not in ['dt', 'state']:
+                            setattr(p, var.name, p_var_back[var.name])
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     break
                 else:
@@ -258,15 +259,18 @@ class Kernel(object):
         # Remove all particles that signalled deletion
         remove_deleted(pset)
 
-        # Idenitify particles that threw errors
+        # Identify particles that threw errors
         error_particles = [p for p in pset.particles
-                           if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
+                           if p.state != ErrorCode.Success]
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
-                recovery_kernel = recovery_map[p.state]
-                p.state = ErrorCode.Success
-                recovery_kernel(p, self.fieldset, p.time, dt)
+                if p.state != ErrorCode.Repeat:
+                    recovery_kernel = recovery_map[p.state]
+                    p.state = ErrorCode.Success
+                    recovery_kernel(p, self.fieldset, p.time, dt)
+                else:
+                    p.state = ErrorCode.Success
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
@@ -278,7 +282,7 @@ class Kernel(object):
                 self.execute_python(pset, endtime, dt)
 
             error_particles = [p for p in pset.particles
-                               if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
+                               if p.state != ErrorCode.Success]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
