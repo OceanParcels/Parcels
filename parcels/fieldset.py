@@ -406,6 +406,8 @@ class FieldSet(object):
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 f.data[tindex, :] = f.reshape(data)[tindex, :]
+            if f.gradientx is not None and g.update_status in ['first_updated', 'updated']:
+                (f.gradientx, f.gradienty) = f.gradient()
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
