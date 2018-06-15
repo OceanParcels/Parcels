@@ -448,14 +448,12 @@ class Field(object):
             self.calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
 
-    def gradient(self):
+    def gradient(self, update=False):
         """Method to calculate horizontal gradients of Field.
-                Adds two Fields to the Fieldset: the zonal and meridional gradients,
+                Returns two Fields: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method
                 Names of these grids are dNAME_dx and dNAME_dy, where NAME is the name
-                of the original Field
-                If Field is not part of a Fieldset, the two Fields are returned
-                """
+                of the original Field"""
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
         if self.grid.defer_load and self.data is None:
@@ -463,15 +461,15 @@ class Field(object):
         else:
             dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
             dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
-        dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
-        dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
-        dFdx_fld.is_gradient = True
-        dFdy_fld.is_gradient = True
-        (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
-        if self.fieldset:
-            self.fieldset.add_field(dFdx_fld)
-            self.fieldset.add_field(dFdy_fld)
+        if update:
+            self.gradientx.data = dFdx
+            self.gradienty.data = dFdy
         else:
+            dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
+            dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
+            dFdx_fld.is_gradient = True
+            dFdy_fld.is_gradient = True
+            (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
             return (dFdx_fld, dFdy_fld)
 
     def interpolator2D_scipy(self, ti, z_idx=None):

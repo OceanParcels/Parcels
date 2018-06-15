@@ -407,7 +407,7 @@ class FieldSet(object):
                     data *= f._scaling_factor
                 f.data[tindex, :] = f.reshape(data)[tindex, :]
             if f.gradientx is not None and g.update_status in ['first_updated', 'updated']:
-                f.gradient()
+                f.gradient(update=True)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
