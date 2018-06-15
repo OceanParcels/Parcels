@@ -406,7 +406,7 @@ def test_sampling_multiple_grid_sizes(mode):
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_list_of_fields(mode):
+def test_list_of_fields(mode, k_sample_p):
     xdim = 10
     ydim = 20
     gf = 10  # factor by which the resolution of grid1 is higher than of grid2
@@ -423,6 +423,12 @@ def test_list_of_fields(mode):
     assert np.allclose(fieldset.U.eval(0, 0, 0, 0), 0.3)
     assert np.allclose(fieldset.U[0, 0, 0, 0], 0.3)
 
+    P1 = Field('P1', 30*np.ones((ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
+    P2 = Field('P2', 20*np.ones((ydim, xdim), dtype=np.float32), grid=U2.grid)
+    fieldset.add_field([P1, P2], name='P')
+    assert np.allclose(fieldset.P[0, 0, 0, 0], 50)
+
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[0.9])
-    pset.execute(AdvectionRK4, runtime=2, dt=1)
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
+    assert np.isclose(pset[0].p, 50)
     assert np.isclose(pset[0].lon, 0.6)
