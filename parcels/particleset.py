@@ -29,7 +29,7 @@ class ParticleSet(object):
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -40,6 +40,10 @@ class ParticleSet(object):
             elif isinstance(var, np.ndarray):
                 return var.flatten()
             return var
+        if lon is None:
+            lon = []
+        if lat is None:
+            lat = []
 
         lon = convert_to_list(lon)
         lat = convert_to_list(lat)
