@@ -384,7 +384,7 @@ class FieldSet(object):
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load:
+            if f.name == 'UV' or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
@@ -407,7 +407,7 @@ class FieldSet(object):
                     data *= f._scaling_factor
                 f.data[tindex, :] = f.reshape(data)[tindex, :]
             if f.gradientx is not None and g.update_status in ['first_updated', 'updated']:
-                (f.gradientx, f.gradienty) = f.gradient()
+                f.gradient()
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

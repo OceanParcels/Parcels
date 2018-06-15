@@ -231,6 +231,7 @@ class Field(object):
 
         self._scaling_factor = None
         (self.gradientx, self.gradienty) = (None, None)  # to store if Field is a gradient() of another field
+        self.is_gradient = False
 
         # Variable names in JIT code
         self.ccode_data = self.name
@@ -462,8 +463,11 @@ class Field(object):
             dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
         dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
         dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
+        dFdx_fld.is_gradient = True
+        dFdy_fld.is_gradient = True
         (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
-        return dFdx_fld, dFdy_fld
+        self.fieldset.add_field(dFdx_fld)
+        self.fieldset.add_field(dFdy_fld)
 
     def interpolator2D_scipy(self, ti, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation

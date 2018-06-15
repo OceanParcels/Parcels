@@ -102,10 +102,11 @@ def test_globcurrent_variable_fromfield(mode, dt):
 @pytest.mark.parametrize('full_load', [True, False])
 def test_globcurrent_deferred_fieldset_gradient(full_load):
     fieldset = set_globcurrent_fieldset(full_load=full_load)
-    (dUdx, dUdy) = fieldset.U.gradient()
+    fieldset.U.gradient()
 
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=25, lat=-35)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(days=1))
 
     tdim = 365 if full_load else 3
-    assert(fieldset.U.gradientx.data.shape == (tdim, 41, 81))
+    assert(fieldset.dU_dx.data.shape == (tdim, 41, 81))
+    assert(fieldset.dU_dx is fieldset.U.gradientx)
