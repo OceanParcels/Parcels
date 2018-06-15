@@ -250,12 +250,14 @@ def test_update_kernel_in_script(fieldset, mode):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_errorcode_repeat(fieldset, mode):
     def simpleKernel(particle, fieldset, time, dt):
-        if particle.lon > .51:
+        if particle.lon > .51 and time < 1.49:
             return ErrorCode.Error
         add_lon = 0.1
         particle.lon += add_lon
+        if dt > 1.49:
+            return ErrorCode.Success
+        particle.dt += .1
         return ErrorCode.Repeat
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)
-    assert pset[0].lon == .5
