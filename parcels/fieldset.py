@@ -9,7 +9,7 @@ from glob import glob
 from copy import deepcopy
 
 
-__all__ = ['FieldSet']
+__all__ = ['FieldSet', 'FieldList']
 
 
 class FieldSet(object):
