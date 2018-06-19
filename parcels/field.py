@@ -230,6 +230,8 @@ class Field(object):
                 self.data[self.data > self.vmax] = 0.
 
         self._scaling_factor = None
+        (self.gradientx, self.gradienty) = (None, None)  # to store if Field is a gradient() of another field
+        self.is_gradient = False
 
         # Variable names in JIT code
         self.ccode_data = self.name
@@ -452,15 +454,29 @@ class Field(object):
             self.calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
 
-    def gradient(self):
+    def gradient(self, update=False):
         """Method to calculate horizontal gradients of Field.
-                Returns two numpy arrays: the zonal and meridional gradients,
-                on the same Grid as the original Field, using numpy.gradient() method"""
+                Returns two Fields: the zonal and meridional gradients,
+                on the same Grid as the original Field, using numpy.gradient() method
+                Names of these grids are dNAME_dx and dNAME_dy, where NAME is the name
+                of the original Field"""
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
-        dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
-        dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
-        return dFdx, dFdy
+        if self.grid.defer_load and self.data is None:
+            (dFdx, dFdy) = (None, None)
+        else:
+            dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
+            dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
+        if update:
+            self.gradientx.data = dFdx
+            self.gradienty.data = dFdy
+        else:
+            dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
+            dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
+            dFdx_fld.is_gradient = True
+            dFdy_fld.is_gradient = True
+            (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
+            return (dFdx_fld, dFdy_fld)
 
     def interpolator2D_scipy(self, ti, z_idx=None):
         """Provide a SciPy interpolator for spatial interpolation
