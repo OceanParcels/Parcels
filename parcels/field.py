@@ -849,11 +849,11 @@ class Field(object):
         # Casting interp_methd to int as easier to pass on in C-code
         if self.fieldset.ugrid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
             return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t, varU, varV, self.fieldset.U[0].interp_method.upper())
+                % (x, y, z, t, varU, varV, self.fieldset.U.interp_method.upper())
         else:
             return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                 % (x, y, z, t,
-                   varU, varV, self.fieldset.U[0].interp_method.upper())
+                   varU, varV, self.fieldset.U.interp_method.upper())
 
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
