@@ -1,4 +1,5 @@
 from parcels.field import Field
+from parcels.fieldset import FieldList
 from parcels.loggers import logger
 import ast
 import cgen as c
@@ -20,6 +21,9 @@ class FieldSetNode(IntrinsicNode):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
                              ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), FieldList) or isinstance(getattr(self.obj, attr), list):
+            return FieldListNode(getattr(self.obj, attr),
+                                 ccode="%s->%s" % (self.ccode, attr))
         else:
             return ConstNode(getattr(self.obj, attr),
                              ccode="%s" % (attr))
@@ -33,6 +37,19 @@ class FieldNode(IntrinsicNode):
 class FieldEvalNode(IntrinsicNode):
     def __init__(self, field, args, var, var2=None):
         self.field = field
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
+        self.var2 = var2  # second variable for UV interpolation
+
+
+class FieldListNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return FieldListEvalNode(self.obj, attr)
+
+
+class FieldListEvalNode(IntrinsicNode):
+    def __init__(self, fields, args, var, var2=None):
+        self.fields = fields
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
@@ -162,7 +179,14 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
         # If we encounter field evaluation we replace it with a
         # temporary variable and put the evaluation call on the stack.
-        if isinstance(node.value, FieldNode):
+        if isinstance(node.value, FieldListNode):
+            tmp = [self.get_tmp() for _ in node.value.obj]
+            tmp2 = [self.get_tmp() if obj.name == 'UV' else None for obj in node.value.obj]
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [FieldListEvalNode(node.value, node.slice, tmp, tmp2)]
+            # .. and return the name of the temporary that will be populated
+            return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2))], ast.Load()) if tmp2[0] else ast.Name(id='+'.join(tmp))
+        elif isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
             tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
             # Insert placeholder node for field eval ...
@@ -539,6 +563,11 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_FieldListNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        for fld in node.obj:
+            self.field_args[fld.name] = fld
+
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
 
@@ -557,6 +586,25 @@ class KernelGenerator(ast.NodeVisitor):
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
         node.ccode = c.Block([c.Assign("err", ccode_eval),
                               conv_stat, c.Statement("CHECKERROR(err)")])
+
+    def visit_FieldListEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        for fld, var, var2 in zip(node.fields.obj, node.var, node.var2):
+            if var2:  # evaluation UV Field
+                ccode_eval = fld.ccode_evalUV(var, var2, *node.args.ccode)
+                # HACK using convertors from first field in fieldset!
+                ccode_conv1 = fld.fieldset.U[0].ccode_convert(*node.args.ccode)
+                ccode_conv2 = fld.fieldset.V[0].ccode_convert(*node.args.ccode)
+                conv_stat = c.Block([c.Statement("%s *= %s" % (var, ccode_conv1)),
+                                     c.Statement("%s *= %s" % (var2, ccode_conv2))])
+            else:
+                ccode_eval = fld.ccode_eval(var, *node.args.ccode)
+                ccode_conv = fld.ccode_convert(*node.args.ccode)
+                conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKERROR(err)")]
+        node.ccode = c.Block(cstat)
 
     def visit_Return(self, node):
         self.visit(node.value)
