@@ -7,7 +7,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "random_parcels.h"
+#include "random.h"
 #include "index_search.h"
 
 typedef enum
