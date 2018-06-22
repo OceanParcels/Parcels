@@ -1,5 +1,5 @@
-#ifndef _RANDOM_H
-#define _RANDOM_H
+#ifndef _PARCELS_RANDOM_H
+#define _PARCELS_RANDOM_H
 #ifdef __cplusplus
 extern "C" {
 #endif
