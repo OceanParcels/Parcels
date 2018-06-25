@@ -307,7 +307,7 @@ class KernelGenerator(ast.NodeVisitor):
             if isinstance(field, Field):
                 args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.field_args.items():
-            if not isinstance(field, Field):
+            if isinstance(field, VectorField):
                 fieldset = field.fieldset
                 for f in [field.U.name, field.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
                     try:
