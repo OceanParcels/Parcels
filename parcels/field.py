@@ -1029,7 +1029,7 @@ class Field(object):
         return data
 
 
-class VectorField(Field):
+class VectorField(object):
     def __init__(self, name, U, V, W=None):
         self.name = name
         self.type = 'vector2D' if W is None else 'vector3D'
