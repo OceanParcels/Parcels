@@ -1,4 +1,4 @@
-from parcels.field import Field
+from parcels.field import Field, VectorField
 from parcels.loggers import logger
 import ast
 import cgen as c
@@ -20,6 +20,9 @@ class FieldSetNode(IntrinsicNode):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
                              ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), VectorField):
+            return VectorFieldNode(getattr(self.obj, attr),
+                                   ccode="%s->%s" % (self.ccode, attr))
         else:
             return ConstNode(getattr(self.obj, attr),
                              ccode="%s" % (attr))
@@ -31,6 +34,18 @@ class FieldNode(IntrinsicNode):
 
 
 class FieldEvalNode(IntrinsicNode):
+    def __init__(self, field, args, var, var2=None):
+        self.field = field
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
+
+
+class VectorFieldNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return VectorFieldEvalNode(self.obj, attr)
+
+
+class VectorFieldEvalNode(IntrinsicNode):
     def __init__(self, field, args, var, var2=None):
         self.field = field
         self.args = args
@@ -164,11 +179,17 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # temporary variable and put the evaluation call on the stack.
         if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
-            tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp, tmp2)]
+            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
             # .. and return the name of the temporary that will be populated
-            return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load()) if tmp2 else ast.Name(id=tmp)
+            return ast.Name(id=tmp)
+        elif isinstance(node.value, VectorFieldNode):
+            tmp = self.get_tmp()
+            tmp2 = self.get_tmp()
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [VectorFieldEvalNode(node.value, node.slice, tmp, tmp2)]
+            # .. and return the name of the temporary that will be populated
+            return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load())
         else:
             return node
 
@@ -237,6 +258,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.field_args = OrderedDict()
         # Hack alert: JIT requires U field to update fieldset indexes
         self.field_args['U'] = fieldset.U
+        self.vector_field_args = OrderedDict()
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
@@ -283,19 +305,17 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if field_name != 'UV':
-                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
-        for field_name, field in self.field_args.items():
-            if field_name == 'UV':
-                fieldset = field.fieldset
-                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
-                    try:
-                        getattr(fieldset, f)
-                        if f not in self.field_args:
-                            args += [c.Pointer(c.Value("CField", "%s" % f))]
-                    except:
-                        if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
-                            raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
+            args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+        for field_name, field in self.vector_field_args.items():
+            fieldset = field.fieldset
+            for f in [field.U.name, field.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
+                try:
+                    getattr(fieldset, f)
+                    if f not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f))]
+                except:
+                    if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+                        raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
@@ -343,7 +363,7 @@ class KernelGenerator(ast.NodeVisitor):
                 if a.ccode == 'pointer_args':
                     pointer_args = True
                     continue
-                if isinstance(a, FieldNode):
+                if isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
                     a.ccode = a.obj.name
                 elif isinstance(a, ParticleNode):
                     continue
@@ -445,7 +465,7 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Subscript(self, node):
         self.visit(node.value)
         self.visit(node.slice)
-        if isinstance(node.value, FieldNode):
+        if isinstance(node.value, FieldNode) or isinstance(node.value, VectorFieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError("Subscript not implemented for object type %s"
@@ -539,22 +559,32 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_VectorFieldNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        self.vector_field_args[node.obj.name] = node.obj
+
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
 
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-        if node.var2:  # evaluation UV Field
-            ccode_eval = node.field.obj.ccode_evalUV(node.var, node.var2, *node.args.ccode)
-            ccode_conv1 = node.field.obj.fieldset.U.ccode_convert(*node.args.ccode)
-            ccode_conv2 = node.field.obj.fieldset.V.ccode_convert(*node.args.ccode)
-            conv_stat = c.Block([c.Statement("%s *= %s" % (node.var, ccode_conv1)),
-                                 c.Statement("%s *= %s" % (node.var2, ccode_conv2))])
-        else:
-            ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
-            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
-            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+        conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+        node.ccode = c.Block([c.Assign("err", ccode_eval),
+                              conv_stat, c.Statement("CHECKERROR(err)")])
+
+    def visit_VectorFieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, node.var2,
+                                               node.field.obj.U, node.field.obj.V,
+                                               *node.args.ccode)
+        ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
+        ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
+        conv_stat = c.Block([c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                             c.Statement("%s *= %s" % (node.var2, ccode_conv2))])
         node.ccode = c.Block([c.Assign("err", ccode_eval),
                               conv_stat, c.Statement("CHECKERROR(err)")])
 

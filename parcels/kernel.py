@@ -89,19 +89,19 @@ class Kernel(object):
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
             kernelgen = KernelGenerator(fieldset, ptype)
-            self.field_args = kernelgen.field_args
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
-            if 'UV' in self.field_args:
-                fieldset = self.field_args['UV'].fieldset
-                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
-                    if f not in self.field_args:
+            self.vector_field_args = kernelgen.vector_field_args
+            fieldset = self.fieldset
+            for fname in self.vector_field_args:
+                f = getattr(fieldset, fname)
+                for sF in [f.U.name, f.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
+                    if sF not in self.field_args:
                         try:
-                            self.field_args[f] = getattr(fieldset, f)
+                            self.field_args[sF] = getattr(fieldset, sF)
                         except:
                             continue
-                del self.field_args['UV']
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
