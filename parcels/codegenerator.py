@@ -259,8 +259,6 @@ class KernelGenerator(ast.NodeVisitor):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = OrderedDict()
-        # Hack alert: JIT requires U field to update fieldset indexes
-        self.field_args['U'] = fieldset.U
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
