@@ -258,6 +258,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.field_args = OrderedDict()
         # Hack alert: JIT requires U field to update fieldset indexes
         self.field_args['U'] = fieldset.U
+        self.vector_field_args = OrderedDict()
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
@@ -304,19 +305,17 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if isinstance(field, Field):
-                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
-        for field_name, field in self.field_args.items():
-            if isinstance(field, VectorField):
-                fieldset = field.fieldset
-                for f in [field.U.name, field.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
-                    try:
-                        getattr(fieldset, f)
-                        if f not in self.field_args:
-                            args += [c.Pointer(c.Value("CField", "%s" % f))]
-                    except:
-                        if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
-                            raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
+            args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+        for field_name, field in self.vector_field_args.items():
+            fieldset = field.fieldset
+            for f in [field.U.name, field.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
+                try:
+                    getattr(fieldset, f)
+                    if f not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f))]
+                except:
+                    if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+                        raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
@@ -562,7 +561,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_VectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
-        self.field_args[node.obj.name] = node.obj
+        self.vector_field_args[node.obj.name] = node.obj
 
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj

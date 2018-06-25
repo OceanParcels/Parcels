@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import VectorField, FieldSamplingError
+from parcels.field import FieldSamplingError
 from parcels.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -89,17 +89,12 @@ class Kernel(object):
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
             kernelgen = KernelGenerator(fieldset, ptype)
-            self.field_args = kernelgen.field_args
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
+            self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
-            vectFields = []
-            for fname in self.field_args:
-                f = getattr(fieldset, fname)
-                if isinstance(f, VectorField):
-                    vectFields.append(fname)
-            for fname in vectFields:
+            for fname in self.vector_field_args:
                 f = getattr(fieldset, fname)
                 for sF in [f.U.name, f.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
                     if sF not in self.field_args:
@@ -107,7 +102,6 @@ class Kernel(object):
                             self.field_args[sF] = getattr(fieldset, sF)
                         except:
                             continue
-                del self.field_args[fname]
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
