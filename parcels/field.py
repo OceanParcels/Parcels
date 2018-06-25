@@ -415,8 +415,6 @@ class Field(object):
         return (zonal, meridional)
 
     def __getitem__(self, key):
-        if self.type in ['vector2D', 'vector3D']:
-            return self.getUV(*key)
         return self.eval(*key)
 
     def calc_cell_edge_sizes(self):
@@ -838,16 +836,6 @@ class Field(object):
         else:
             return value
 
-    def ccode_evalUV(self, varU, varV, U, V, t, x, y, z):
-        # Casting interp_methd to int as easier to pass on in C-code
-        if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t, U.name, V.name, varU, varV, self.fieldset.U.interp_method.upper())
-        else:
-            return "temporal_interpolationUVrotation(%s, %s, %s, %s, %s, %s, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t, U.name, V.name,
-                   varU, varV, self.fieldset.U.interp_method.upper())
-
     def ccode_eval(self, var, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
         return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
@@ -1050,6 +1038,37 @@ class VectorField(Field):
         if W is not None:
             self.W = W
             raise NotImplementedError('3D Vector Fields are not implemented yet')
+
+    def eval(self, time, x, y, z):
+        fieldset = self.fieldset
+        U = self.U.eval(time, x, y, z, False)
+        V = self.V.eval(time, x, y, z, False)
+        if self.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            zonal = U
+            meridional = V
+        else:
+            cosU = fieldset.cosU.eval(time, x, y, z, False)
+            sinU = fieldset.sinU.eval(time, x, y, z, False)
+            cosV = fieldset.cosV.eval(time, x, y, z, False)
+            sinV = fieldset.sinV.eval(time, x, y, z, False)
+            zonal = U * cosU - V * sinV
+            meridional = U * sinU + V * cosV
+        zonal = fieldset.U.units.to_target(zonal, x, y, z)
+        meridional = fieldset.V.units.to_target(meridional, x, y, z)
+        return (zonal, meridional)
+
+    def __getitem__(self, key):
+        return self.eval(*key)
+
+    def ccode_eval(self, varU, varV, U, V, t, x, y, z):
+        # Casting interp_methd to int as easier to pass on in C-code
+        if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                % (x, y, z, t, U.name, V.name, varU, varV, self.fieldset.U.interp_method.upper())
+        else:
+            return "temporal_interpolationUVrotation(%s, %s, %s, %s, %s, %s, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                % (x, y, z, t, U.name, V.name,
+                   varU, varV, self.fieldset.U.interp_method.upper())
 
 
 class NetcdfFileBuffer(object):
