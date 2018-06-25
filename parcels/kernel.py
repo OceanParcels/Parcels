@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldSamplingError
+from parcels.field import Field, FieldSamplingError
 from parcels.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -93,15 +93,18 @@ class Kernel(object):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
-            if 'UV' in self.field_args:
-                fieldset = self.field_args['UV'].fieldset
-                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
-                    if f not in self.field_args:
+            fieldset = self.fieldset
+            for fname in self.field_args:
+                f = getattr(fieldset, fname)
+                if isinstance(f, Field):
+                    continue
+                for sF in [f.U.name, f.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
+                    if sF not in self.field_args:
                         try:
-                            self.field_args[f] = getattr(fieldset, f)
+                            self.field_args[sF] = getattr(fieldset, sF)
                         except:
                             continue
-                del self.field_args['UV']
+                del self.field_args[fname]
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
