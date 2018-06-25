@@ -90,9 +90,16 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
-        if isinstance(field, Field):
-            self.gridset.add_grid(field)
+        self.gridset.add_grid(field)
         field.fieldset = self
+
+    def add_vector_field(self, vfield):
+        """Add a :class:`parcels.field.VectorField` object to the FieldSet
+
+        :param vfield: :class:`parcels.field.VectorField` object to be added
+        """
+        setattr(self, vfield.name, vfield)
+        vfield.fieldset = self
 
     def check_complete(self):
         assert(self.U), ('U field is not defined')
@@ -109,7 +116,7 @@ class FieldSet(object):
                     g.time_full = g.time_full + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = ugrid.time_origin
         if getattr(self, 'UV') is None:
-            self.add_field(VectorField('UV', self.U, self.V))
+            self.add_vector_field(VectorField('UV', self.U, self.V))
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,

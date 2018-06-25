@@ -202,8 +202,8 @@ def test_fieldset_constant(mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('reverse', [False, True])
-def test_vector_fields(mode, reverse):
+@pytest.mark.parametrize('swapUV', [False, True])
+def test_vector_fields(mode, swapUV):
     lon = np.linspace(0., 10., 12, dtype=np.float32)
     lat = np.linspace(0., 10., 10, dtype=np.float32)
     U = np.ones((10, 12), dtype=np.float32)
@@ -212,14 +212,14 @@ def test_vector_fields(mode, reverse):
     dimensions = {'U': {'lat': lat, 'lon': lon},
                   'V': {'lat': lat, 'lon': lon}}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    if reverse:  # we test that we can freely edit whatever UV field
+    if swapUV:  # we test that we can freely edit whatever UV field
         UV = VectorField('UV', fieldset.V, fieldset.U)
-        fieldset.add_field(UV)
+        fieldset.add_vector_field(UV)
 
     pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
-    if reverse:
+    if swapUV:
         assert pset[0].lon == .5
         assert pset[0].lat == 1.5
     else:

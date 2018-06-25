@@ -1027,6 +1027,14 @@ class Field(object):
 
 
 class VectorField(object):
+    """Class VectorField stores 2 or 3 fields which defines together a vector field.
+    This enables to interpolate them as one single vector field in the kernels.
+
+    :param name: Name of the vector field
+    :param U: field defining the zonal component
+    :param V: field defining the meridional component
+    :param W: field defining the vertical component (default: None)
+    """
     def __init__(self, name, U, V, W=None):
         self.name = name
         self.U = U
