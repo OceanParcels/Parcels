@@ -164,7 +164,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         # temporary variable and put the evaluation call on the stack.
         if isinstance(node.value, FieldNode):
             tmp = self.get_tmp()
-            tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
+            tmp2 = self.get_tmp() if node.value.obj.type in ['vector2D', 'vector3D'] else None
             # Insert placeholder node for field eval ...
             self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp, tmp2)]
             # .. and return the name of the temporary that will be populated

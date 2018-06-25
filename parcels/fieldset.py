@@ -1,4 +1,4 @@
-from parcels.field import Field
+from parcels.field import Field, VectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.scripts import compute_curvilinearGrid_rotationAngles
@@ -25,9 +25,8 @@ class FieldSet(object):
             self.add_field(U)
         if V:
             self.add_field(V)
-        UV = Field('UV', None)
-        UV.fieldset = self
-        self.UV = UV
+        UV = VectorField('UV', U, V)
+        self.add_field(UV)
 
         # Add additional fields as attributes
         if fields:
@@ -92,7 +91,8 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
-        self.gridset.add_grid(field)
+        if field.type == 'scalar':
+            self.gridset.add_grid(field)
         field.fieldset = self
 
     def check_complete(self):
@@ -357,7 +357,7 @@ class FieldSet(object):
             gnew.advanced = False
 
         for fnew in fieldset_new.fields:
-            if fnew.name == 'UV':
+            if fnew.type != 'scalar':
                 continue
             f = getattr(self, fnew.name)
             gnew = fnew.grid
@@ -377,14 +377,14 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load:
+            if f.type != 'scalar' or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load or f.is_gradient:
+            if f.type != 'scalar' or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data

@@ -12,7 +12,7 @@ from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['Field', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
+__all__ = ['Field', 'VectorField', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
 
 
 class FieldSamplingError(RuntimeError):
@@ -179,8 +179,7 @@ class Field(object):
                  transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
-        if self.name == 'UV':
-            return
+        self.type = 'scalar'
         self.data = data
         if grid:
             self.grid = grid
@@ -416,7 +415,7 @@ class Field(object):
         return (zonal, meridional)
 
     def __getitem__(self, key):
-        if self.name == 'UV':
+        if self.type in ['vector2D', 'vector3D']:
             return self.getUV(*key)
         return self.eval(*key)
 
@@ -945,7 +944,7 @@ class Field(object):
         :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
         dataNone = not isinstance(data, np.ndarray)
-        if self.name == 'UV' or (self.grid.defer_load and dataNone):
+        if self.type != 'scalar' or (self.grid.defer_load and dataNone):
             return
         data = self.data if dataNone else data
         if zonal:
@@ -979,7 +978,7 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
-        if self.name == 'UV':
+        if self.type != 'scalar':
             return
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
@@ -1040,6 +1039,14 @@ class Field(object):
             data[data > self.vmax] = 0.
 
         return data
+
+
+class VectorField(Field):
+    def __init__(self, name, U, V):
+        self.name = name
+        self.type = 'vector2D'
+        self.U = U
+        self.V = V
 
 
 class NetcdfFileBuffer(object):
