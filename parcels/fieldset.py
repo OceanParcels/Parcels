@@ -90,7 +90,7 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         """
         setattr(self, field.name, field)
-        if field.type == 'scalar':
+        if isinstance(field, Field):
             self.gridset.add_grid(field)
         field.fieldset = self
 
@@ -358,7 +358,7 @@ class FieldSet(object):
             gnew.advanced = False
 
         for fnew in fieldset_new.fields:
-            if fnew.type != 'scalar':
+            if not isinstance(fnew, Field):
                 continue
             f = getattr(self, fnew.name)
             gnew = fnew.grid
@@ -378,14 +378,14 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.fields:
-            if f.type != 'scalar' or not f.grid.defer_load:
+            if not isinstance(f, Field) or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
-            if f.type != 'scalar' or not f.grid.defer_load or f.is_gradient:
+            if not isinstance(f, Field) or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data

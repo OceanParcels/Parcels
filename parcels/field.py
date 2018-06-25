@@ -179,7 +179,6 @@ class Field(object):
                  transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
-        self.type = 'scalar'
         self.data = data
         if grid:
             self.grid = grid
@@ -932,7 +931,7 @@ class Field(object):
         :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
         dataNone = not isinstance(data, np.ndarray)
-        if self.type != 'scalar' or (self.grid.defer_load and dataNone):
+        if self.grid.defer_load and dataNone:
             return
         data = self.data if dataNone else data
         if zonal:
@@ -966,8 +965,6 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
-        if self.type != 'scalar':
-            return
         filepath = str(path.local('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
@@ -1032,7 +1029,6 @@ class Field(object):
 class VectorField(object):
     def __init__(self, name, U, V, W=None):
         self.name = name
-        self.type = 'vector2D' if W is None else 'vector3D'
         self.U = U
         self.V = V
         if W is not None:

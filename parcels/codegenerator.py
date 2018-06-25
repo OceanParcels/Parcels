@@ -22,7 +22,7 @@ class FieldSetNode(IntrinsicNode):
                              ccode="%s->%s" % (self.ccode, attr))
         elif isinstance(getattr(self.obj, attr), VectorField):
             return VectorFieldNode(getattr(self.obj, attr),
-                             ccode="%s->%s" % (self.ccode, attr))
+                                   ccode="%s->%s" % (self.ccode, attr))
         else:
             return ConstNode(getattr(self.obj, attr),
                              ccode="%s" % (attr))
@@ -304,10 +304,10 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if field.type == 'scalar':
+            if isinstance(field, Field):
                 args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.field_args.items():
-            if field.type != 'scalar':
+            if not isinstance(field, Field):
                 fieldset = field.fieldset
                 for f in [field.U.name, field.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
                     try:
