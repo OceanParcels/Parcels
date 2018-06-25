@@ -96,7 +96,7 @@ class Kernel(object):
             fieldset = self.fieldset
             for fname in self.vector_field_args:
                 f = getattr(fieldset, fname)
-                for sF in [f.U.name, f.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
+                for sF in [f.U.name, f.V.name, f.Wname, 'cosU', 'sinU', 'cosV', 'sinV']:
                     if sF not in self.field_args:
                         try:
                             self.field_args[sF] = getattr(fieldset, sF)

@@ -25,7 +25,6 @@ class FieldSet(object):
             self.add_field(U)
         if V:
             self.add_field(V)
-        self.UV = None
 
         # Add additional fields as attributes
         if fields:
@@ -115,8 +114,10 @@ class FieldSet(object):
                 if g.defer_load:
                     g.time_full = g.time_full + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = ugrid.time_origin
-        if getattr(self, 'UV') is None:
+        if not hasattr(self, 'UV'):
             self.add_vector_field(VectorField('UV', self.U, self.V))
+        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
+            self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
