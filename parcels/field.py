@@ -1042,11 +1042,14 @@ class Field(object):
 
 
 class VectorField(Field):
-    def __init__(self, name, U, V):
+    def __init__(self, name, U, V, W=None):
         self.name = name
-        self.type = 'vector2D'
+        self.type = 'vector2D' if W is None else 'vector3D'
         self.U = U
         self.V = V
+        if W is not None:
+            self.W = W
+            raise NotImplementedError('3D Vector Fields are not implemented yet')
 
 
 class NetcdfFileBuffer(object):
