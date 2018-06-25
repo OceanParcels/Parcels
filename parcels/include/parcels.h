@@ -217,6 +217,31 @@ static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float
   return SUCCESS;
 }
 
+static inline ErrorCode temporal_interpolationUVW(float x, float y, float z, double time,
+                                                 CField *U, CField *V, CField *W,  void * xi,  void * yi,  void * zi,  void * ti,
+                                                 float *valueU, float *valueV, float *valueW, int interp_method)
+{
+  ErrorCode err;
+
+  temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method);
+  err = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method); CHECKERROR(err);
+
+  return SUCCESS;
+}
+
+static inline ErrorCode temporal_interpolationUVWrotation(float x, float y, float z, double time,
+                                                 CField *U, CField *V, CField *W, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
+                                                  void * xi,  void * yi,  void * zi,  void * ti, float *valueU, float *valueV, float *valueW, int interp_method)
+{
+  ErrorCode err;
+
+
+  temporal_interpolationUVrotation(x, y, z, time, U, V, cosU, sinU, cosV, sinV, xi, yi, zi, ti, valueU, valueV, interp_method);
+  err = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method); CHECKERROR(err);
+
+  return SUCCESS;
+}
+
 
 #ifdef __cplusplus
 }

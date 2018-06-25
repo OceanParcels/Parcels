@@ -395,24 +395,6 @@ class Field(object):
         if not self.grid.defer_load:
             self.data *= factor
 
-    def getUV(self, time, x, y, z):
-        fieldset = self.fieldset
-        U = fieldset.U.eval(time, x, y, z, False)
-        V = fieldset.V.eval(time, x, y, z, False)
-        if fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-            zonal = U
-            meridional = V
-        else:
-            cosU = fieldset.cosU.eval(time, x, y, z, False)
-            sinU = fieldset.sinU.eval(time, x, y, z, False)
-            cosV = fieldset.cosV.eval(time, x, y, z, False)
-            sinV = fieldset.sinV.eval(time, x, y, z, False)
-            zonal = U * cosU - V * sinV
-            meridional = U * sinU + V * cosV
-        zonal = fieldset.U.units.to_target(zonal, x, y, z)
-        meridional = fieldset.V.units.to_target(meridional, x, y, z)
-        return (zonal, meridional)
-
     def __getitem__(self, key):
         return self.eval(*key)
 
@@ -1039,9 +1021,8 @@ class VectorField(object):
         self.name = name
         self.U = U
         self.V = V
-        if W is not None:
-            self.W = W
-            raise NotImplementedError('3D Vector Fields are not implemented yet')
+        self.W = W
+        self.Wname = W.name if W else 'non_defined'
 
     def eval(self, time, x, y, z):
         fieldset = self.fieldset
@@ -1057,22 +1038,37 @@ class VectorField(object):
             sinV = fieldset.sinV.eval(time, x, y, z, False)
             zonal = U * cosU - V * sinV
             meridional = U * sinU + V * cosV
-        zonal = fieldset.U.units.to_target(zonal, x, y, z)
-        meridional = fieldset.V.units.to_target(meridional, x, y, z)
-        return (zonal, meridional)
+        zonal = self.U.units.to_target(zonal, x, y, z)
+        meridional = self.V.units.to_target(meridional, x, y, z)
+
+        if self.W is not None:
+            vertical = self.W.eval(time, x, y, z, False)
+            vertical = self.W.units.to_target(vertical, x, y, z)
+            return (zonal, meridional, vertical)
+        else:
+            return (zonal, meridional)
 
     def __getitem__(self, key):
         return self.eval(*key)
 
-    def ccode_eval(self, varU, varV, U, V, t, x, y, z):
+    def ccode_eval(self, varU, varV, varW, U, V, Wname, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t, U.name, V.name, varU, varV, self.fieldset.U.interp_method.upper())
+        if U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+            if varW:
+                return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
+                    % (x, y, z, t, U.name, V.name, Wname, varU, varV, varW, U.interp_method.upper())
+            else:
+                return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                    % (x, y, z, t, U.name, V.name, varU, varV, U.interp_method.upper())
         else:
-            return "temporal_interpolationUVrotation(%s, %s, %s, %s, %s, %s, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t, U.name, V.name,
-                   varU, varV, self.fieldset.U.interp_method.upper())
+            if varW:
+                return "temporal_interpolationUVWrotation(%s, %s, %s, %s, %s, %s, %s, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
+                    % (x, y, z, t, U.name, V.name, Wname,
+                       varU, varV, varW, U.interp_method.upper())
+            else:
+                return "temporal_interpolationUVrotation(%s, %s, %s, %s, %s, %s, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                    % (x, y, z, t, U.name, V.name,
+                       varU, varV, U.interp_method.upper())
 
 
 class NetcdfFileBuffer(object):
