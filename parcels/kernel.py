@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import Field, FieldSamplingError
+from parcels.field import VectorField, FieldSamplingError
 from parcels.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -94,10 +94,13 @@ class Kernel(object):
                                               self.funcvars)
             self.field_args = kernelgen.field_args
             fieldset = self.fieldset
+            vectFields = []
             for fname in self.field_args:
                 f = getattr(fieldset, fname)
-                if isinstance(f, Field):
-                    continue
+                if isinstance(f, VectorField):
+                    vectFields.append(fname)
+            for fname in vectFields:
+                f = getattr(fieldset, fname)
                 for sF in [f.U.name, f.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
                     if sF not in self.field_args:
                         try:
