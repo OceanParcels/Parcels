@@ -1,5 +1,5 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D, RectilinearZGrid
-from parcels.field import Field
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid
+from parcels.field import Field, VectorField
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -199,6 +199,32 @@ def test_fieldset_constant(mode):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('reverse', [False, True])
+def test_vector_fields(mode, reverse):
+    lon = np.linspace(0., 10., 12, dtype=np.float32)
+    lat = np.linspace(0., 10., 10, dtype=np.float32)
+    U = np.ones((10, 12), dtype=np.float32)
+    V = np.zeros((10, 12), dtype=np.float32)
+    data = {'U': U, 'V': V}
+    dimensions = {'U': {'lat': lat, 'lon': lon},
+                  'V': {'lat': lat, 'lon': lon}}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    if reverse:  # we test that we can freely edit whatever UV field
+        UV = VectorField('UV', fieldset.V, fieldset.U)
+        fieldset.add_field(UV)
+
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
+                                 start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset.execute(AdvectionRK4, dt=1, runtime=1)
+    if reverse:
+        assert pset[0].lon == .5
+        assert pset[0].lat == 1.5
+    else:
+        assert pset[0].lon == 1.5
+        assert pset[0].lat == .5
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
