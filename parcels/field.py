@@ -838,14 +838,14 @@ class Field(object):
         else:
             return value
 
-    def ccode_evalUV(self, varU, varV, t, x, y, z):
+    def ccode_evalUV(self, varU, varV, U, V, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
         if self.fieldset.U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-            return "temporal_interpolationUV(%s, %s, %s, %s, U, V, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t, varU, varV, self.fieldset.U.interp_method.upper())
+            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                % (x, y, z, t, U.name, V.name, varU, varV, self.fieldset.U.interp_method.upper())
         else:
-            return "temporal_interpolationUVrotation(%s, %s, %s, %s, U, V, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                % (x, y, z, t,
+            return "temporal_interpolationUVrotation(%s, %s, %s, %s, %s, %s, cosU, sinU, cosV, sinV, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                % (x, y, z, t, U.name, V.name,
                    varU, varV, self.fieldset.U.interp_method.upper())
 
     def ccode_eval(self, var, t, x, y, z):

@@ -283,12 +283,12 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if field_name != 'UV':
+            if field.type == 'scalar':
                 args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.field_args.items():
-            if field_name == 'UV':
+            if field.type != 'scalar':
                 fieldset = field.fieldset
-                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
+                for f in [field.U.name, field.V.name, 'cosU', 'sinU', 'cosV', 'sinV']:
                     try:
                         getattr(fieldset, f)
                         if f not in self.field_args:
@@ -546,9 +546,11 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
         if node.var2:  # evaluation UV Field
-            ccode_eval = node.field.obj.ccode_evalUV(node.var, node.var2, *node.args.ccode)
-            ccode_conv1 = node.field.obj.fieldset.U.ccode_convert(*node.args.ccode)
-            ccode_conv2 = node.field.obj.fieldset.V.ccode_convert(*node.args.ccode)
+            ccode_eval = node.field.obj.ccode_evalUV(node.var, node.var2,
+                                                     node.field.obj.U, node.field.obj.V,
+                                                     *node.args.ccode)
+            ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
             conv_stat = c.Block([c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                                  c.Statement("%s *= %s" % (node.var2, ccode_conv2))])
         else:
