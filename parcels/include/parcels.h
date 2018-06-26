@@ -12,7 +12,7 @@ extern "C" {
 
 typedef enum
   {
-    LINEAR=0, NEAREST=1
+    LINEAR=0, NEAREST=1, CGRID_LINEAR=2
   } InterpCode;
 
 typedef struct

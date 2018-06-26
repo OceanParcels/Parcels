@@ -1,7 +1,6 @@
 from parcels.field import Field, VectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
-from parcels.scripts import compute_curvilinearGrid_rotationAngles
 from parcels.loggers import logger
 import numpy as np
 from os import path
@@ -215,40 +214,11 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        if 'mesh_mask' not in variables:
-            variables['mesh_mask'] = {'cosU': 'cosU',
-                                      'sinU': 'sinU',
-                                      'cosV': 'cosV',
-                                      'sinV': 'sinV'}
-            dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                                       'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                                       'F': {'lon': 'glamf', 'lat': 'gphif'}}
-
-        rotation_angles_filename = path.join(path.dirname(filenames['mesh_mask']), 'rotation_angles.nc').replace('/', '_')
-        compute_curvilinearGrid_rotationAngles(filenames['mesh_mask'], rotation_angles_filename,
-                                               variables=variables['mesh_mask'], dimensions=dimensions['mesh_mask'])
-
-        if 'cosU' not in filenames:
-            filenames['cosU'] = rotation_angles_filename
-            filenames['sinU'] = rotation_angles_filename
-            filenames['cosV'] = rotation_angles_filename
-            filenames['sinV'] = rotation_angles_filename
-
-            variables['cosU'] = 'cosU'
-            variables['sinU'] = 'sinU'
-            variables['cosV'] = 'cosV'
-            variables['sinV'] = 'sinV'
-
-            dimensions['cosU'] = {'lon': 'glamu', 'lat': 'gphiu'}
-            dimensions['sinU'] = {'lon': 'glamu', 'lat': 'gphiu'}
-            dimensions['cosV'] = {'lon': 'glamv', 'lat': 'gphiv'}
-            dimensions['sinV'] = {'lon': 'glamv', 'lat': 'gphiv'}
-
-        variables.pop('mesh_mask')
-        dimensions.pop('mesh_mask')
+        dimension_filename = filenames.pop('mesh_mask')
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method='cgrid_linear',
+                               dimension_filename=dimension_filename, **kwargs)
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,

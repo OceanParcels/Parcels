@@ -16,8 +16,7 @@ def run_nemo_curvilinear(mode, outfile):
                  'V': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4',
                  'mesh_mask': data_path + 'mesh_mask.nc4'}
     variables = {'U': 'U', 'V': 'V'}
-    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
-                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'}}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # Now run particles as normal
