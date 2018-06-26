@@ -168,7 +168,8 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
 }
 
 static inline ErrorCode temporal_interpolation(float x, float y, float z, double time, CField *f, 
-                                                void * vxi,  void * vyi,  void * vzi,  void * vti, float *value, int interp_method)
+                                               void *vxi, void *vyi, void *vzi, void *vti,
+                                               float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
@@ -186,7 +187,8 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
 }
 
 static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
-                                                 CField *U, CField *V,  void * xi,  void * yi,  void * zi,  void * ti,
+                                                 CField *U, CField *V,
+                                                 void *xi, void *yi, void *zi, void *ti,
                                                  float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
@@ -198,8 +200,10 @@ static inline ErrorCode temporal_interpolationUV(float x, float y, float z, doub
 }
 
 static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float z, double time,
-                                                 CField *U, CField *V, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
-                                                  void * xi,  void * yi,  void * zi,  void * ti, float *valueU, float *valueV, int interp_method)
+                                                         CField *U, CField *V,
+                                                         CField *cosU, CField *sinU, CField *cosV, CField *sinV,
+                                                         void *xi, void *yi, void *zi, void *ti,
+                                                         float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
 
@@ -218,27 +222,25 @@ static inline ErrorCode temporal_interpolationUVrotation(float x, float y, float
 }
 
 static inline ErrorCode temporal_interpolationUVW(float x, float y, float z, double time,
-                                                 CField *U, CField *V, CField *W,  void * xi,  void * yi,  void * zi,  void * ti,
-                                                 float *valueU, float *valueV, float *valueW, int interp_method)
+                                                  CField *U, CField *V, CField *W,
+                                                  void *xi, void *yi, void *zi, void *ti,
+                                                  float *valueU, float *valueV, float *valueW, int interp_method)
 {
   ErrorCode err;
-
   temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method);
   err = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method); CHECKERROR(err);
-
   return SUCCESS;
 }
 
 static inline ErrorCode temporal_interpolationUVWrotation(float x, float y, float z, double time,
-                                                 CField *U, CField *V, CField *W, CField *cosU, CField *sinU, CField *cosV, CField *sinV,
-                                                  void * xi,  void * yi,  void * zi,  void * ti, float *valueU, float *valueV, float *valueW, int interp_method)
+                                                          CField *U, CField *V, CField *W,
+                                                          CField *cosU, CField *sinU, CField *cosV, CField *sinV,
+                                                          void *xi, void *yi, void *zi, void *ti,
+                                                          float *valueU, float *valueV, float *valueW, int interp_method)
 {
   ErrorCode err;
-
-
   temporal_interpolationUVrotation(x, y, z, time, U, V, cosU, sinU, cosV, sinV, xi, yi, zi, ti, valueU, valueV, interp_method);
   err = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method); CHECKERROR(err);
-
   return SUCCESS;
 }
 
