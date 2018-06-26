@@ -1,4 +1,4 @@
-from parcels.field import Field
+from parcels.field import Field, VectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.scripts import compute_curvilinearGrid_rotationAngles
@@ -26,9 +26,6 @@ class FieldSet(object):
             self.ugrid = self.U.grid if isinstance(self.U, Field) else self.U[0].grid
         if V:
             self.add_field(V, 'V')
-        UV = Field('UV', None)
-        UV.fieldset = self
-        self.UV = UV
 
         # Add additional fields as attributes
         if fields:
@@ -104,6 +101,14 @@ class FieldSet(object):
             self.gridset.add_grid(field)
             field.fieldset = self
 
+    def add_vector_field(self, vfield):
+        """Add a :class:`parcels.field.VectorField` object to the FieldSet
+
+        :param vfield: :class:`parcels.field.VectorField` object to be added
+        """
+        setattr(self, vfield.name, vfield)
+        vfield.fieldset = self
+
     def check_complete(self):
         assert(self.U), ('U field is not defined')
         assert(self.V), ('V field is not defined')
@@ -117,6 +122,10 @@ class FieldSet(object):
                 if g.defer_load:
                     g.time_full = g.time_full + (g.time_origin - self.ugrid.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = self.ugrid.time_origin
+        if not hasattr(self, 'UV'):
+            self.add_vector_field(VectorField('UV', self.U, self.V))
+        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
+            self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
@@ -364,7 +373,7 @@ class FieldSet(object):
             gnew.advanced = False
 
         for fnew in fieldset_new.fields:
-            if fnew.name == 'UV':
+            if isinstance(fnew, VectorField):
                 continue
             f = getattr(self, fnew.name)
             gnew = fnew.grid
@@ -384,14 +393,14 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load:
+            if isinstance(f, VectorField) or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load or f.is_gradient:
+            if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
