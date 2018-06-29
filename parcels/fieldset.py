@@ -123,9 +123,15 @@ class FieldSet(object):
                     g.time_full = g.time_full + (g.time_origin - self.ugrid.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = self.ugrid.time_origin
         if not hasattr(self, 'UV'):
-            self.add_vector_field(VectorField('UV', self.U, self.V))
+            if isinstance(self.U, FieldList):
+                self.add_vector_field(VectorFieldList('UV', self.U, self.V))
+            else:
+                self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+            if isinstance(self.U, FieldList):
+                self.add_vector_field(VectorFieldList('UVW', self.U, self.V, self.W))
+            else:
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
@@ -441,6 +447,49 @@ class FieldList(list):
         for fld in self:
             tmp += fld.eval(time, x, y, z, applyConversion)
         return tmp
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
+
+
+class VectorFieldList(list):
+    """Class VectorFieldList stores 2 or 3 FieldLists which defines together a vector field.
+    This enables to interpolate them as one single vector FieldList in the kernels.
+
+    :param name: Name of the vector field
+    :param U: FieldList defining the zonal component
+    :param V: FieldList defining the meridional component
+    :param W: FieldList defining the vertical component (default: None)
+    """
+
+    def __init__(self, name, U, V, W=None):
+        self.name = name
+        self.U = U
+        self.V = V
+        self.W = W
+
+    def eval(self, time, x, y, z):
+        zonal = meridional = vertical = 0
+        if self.W is not None:
+            for (U, V, W) in zip(self.U, self.V, self.W):
+                vfld = VectorField(self.name, U, V, W)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+                vertical += tmp3
+            return (zonal, meridional, vertical)
+        else:
+            for (U, V) in zip(self.U, self.V):
+                vfld = VectorField(self.name, U, V)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+            return (zonal, meridional)
 
     def __getitem__(self, key):
         if isinstance(key, int):
