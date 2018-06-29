@@ -110,8 +110,8 @@ class FieldSet(object):
         vfield.fieldset = self
 
     def check_complete(self):
-        assert(self.U), ('U field is not defined')
-        assert(self.V), ('V field is not defined')
+        assert self.U, 'FieldSet does not have a Field named "U"'
+        assert self.V, 'FieldSet does not have a Field named "V"'
         for g in self.gridset.grids:
             g.check_zonal_periodic()
             if g is self.ugrid or len(g.time) == 1:
