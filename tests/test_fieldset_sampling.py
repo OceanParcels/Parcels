@@ -1,4 +1,5 @@
-from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Geographic, AdvectionRK4, Variable
+from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Geographic,
+                     AdvectionRK4, AdvectionRK4_3D, Variable)
 import numpy as np
 import pytest
 from math import cos, pi
@@ -406,29 +407,42 @@ def test_sampling_multiple_grid_sizes(mode):
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_list_of_fields(mode, k_sample_p):
+@pytest.mark.parametrize('with_W', [True, False])
+def test_list_of_fields(mode, with_W, k_sample_p):
     xdim = 10
     ydim = 20
+    zdim = 4
     gf = 10  # factor by which the resolution of grid1 is higher than of grid2
-    U1 = Field('U1', 0.2*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
+    U1 = Field('U1', 0.2*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32),
                lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
-    U2 = Field('U2', 0.1*np.ones((ydim, xdim), dtype=np.float32),
+               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32),
+               depth=np.linspace(0., 20., zdim*gf, dtype=np.float32))
+    U2 = Field('U2', 0.1*np.ones((zdim, ydim, xdim), dtype=np.float32),
                lon=np.linspace(0., 1., xdim, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim, dtype=np.float32))
-    V1 = Field('V1', np.zeros((ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
-    V2 = Field('V2', np.zeros((ydim, xdim), dtype=np.float32), grid=U2.grid)
+               lat=np.linspace(0., 1., ydim, dtype=np.float32),
+               depth=np.linspace(0., 20., zdim, dtype=np.float32))
+    V1 = Field('V1', np.zeros((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
+    V2 = Field('V2', np.zeros((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
     fieldset = FieldSet([U1, U2], [V1, V2])
 
     assert np.allclose(fieldset.U.eval(0, 0, 0, 0), 0.3)
     assert np.allclose(fieldset.U[0, 0, 0, 0], 0.3)
 
-    P1 = Field('P1', 30*np.ones((ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
-    P2 = Field('P2', 20*np.ones((ydim, xdim), dtype=np.float32), grid=U2.grid)
+    P1 = Field('P1', 30*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
+    P2 = Field('P2', 20*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
     fieldset.add_field([P1, P2], name='P')
     assert np.allclose(fieldset.P[0, 0, 0, 0], 50)
 
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[0.9])
-    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
+    if with_W:
+        W1 = Field('W1', 2*np.ones((zdim * gf, ydim * gf, xdim * gf), dtype=np.float32), grid=U1.grid)
+        W2 = Field('W2', np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
+        fieldset.add_field([W1, W2], name='W')
+        pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[0.9])
+        pset.execute(AdvectionRK4_3D+pset.Kernel(k_sample_p), runtime=2, dt=1)
+        assert np.isclose(pset[0].depth, 6)
+    else:
+        pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[0.9])
+        pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
     assert np.isclose(pset[0].p, 50)
     assert np.isclose(pset[0].lon, 0.6)
+    assert np.isclose(pset[0].lat, 0.9)
