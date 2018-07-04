@@ -1166,30 +1166,16 @@ class VectorField(object):
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, x, y, z):
         # Casting interp_methd to int as easier to pass on in C-code
-        if U.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-            if varW:
-                return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-                       % (x, y, z, t, U.name, V.name, W.name) + \
-                       "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
-                       % (varU, varV, varW, U.interp_method.upper())
-            else:
-                return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-                       % (x, y, z, t, U.name, V.name) + \
-                       "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                       % (varU, varV, U.interp_method.upper())
+        if varW:
+            return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
+                   % (x, y, z, t, U.name, V.name, W.name) + \
+                   "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
+                   % (varU, varV, varW, U.interp_method.upper())
         else:
-            if varW:
-                return "temporal_interpolationUVWrotation(%s, %s, %s, %s, %s, %s, %s, " \
-                       % (x, y, z, t, U.name, V.name, W.name) + \
-                       "cosU, sinU, cosV, sinV, " + \
-                       "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
-                       % (varU, varV, varW, U.interp_method.upper())
-            else:
-                return "temporal_interpolationUVrotation(%s, %s, %s, %s, %s, %s, " \
-                       % (x, y, z, t, U.name, V.name) + \
-                       "cosU, sinU, cosV, sinV, " + \
-                       "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-                       % (varU, varV, U.interp_method.upper())
+            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
+                   % (x, y, z, t, U.name, V.name) + \
+                   "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                   % (varU, varV, U.interp_method.upper())
 
 
 class NetcdfFileBuffer(object):

@@ -6,7 +6,6 @@ from collections import OrderedDict
 import math
 import numpy as np
 import random
-from .grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
@@ -314,14 +313,14 @@ class KernelGenerator(ast.NodeVisitor):
         for field_name, field in self.vector_field_args.items():
             fieldset = field.fieldset
             Wname = field.W.name if field.W else 'not_defined'
-            for f in [field.U.name, field.V.name, Wname, 'cosU', 'sinU', 'cosV', 'sinV']:
+            for f in [field.U.name, field.V.name, Wname]:
                 try:
                     getattr(fieldset, f)
                     if f not in self.field_args:
                         args += [c.Pointer(c.Value("CField", "%s" % f))]
                 except:
-                    if f != Wname and fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
-                        raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
+                    if f != Wname:
+                        raise RuntimeError("Field %s needed by a VectorField but it does not exist" % f)
                     else:
                         pass
         for const, _ in self.const_args.items():
@@ -589,10 +588,13 @@ class KernelGenerator(ast.NodeVisitor):
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
                                                node.field.obj.U, node.field.obj.V, node.field.obj.W,
                                                *node.args.ccode)
-        ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
-        ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
-        statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
-                      c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+        if node.field.obj.U.interp_method != 'cgrid_linear':
+            ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
+            statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                          c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+        else:
+            statements = []
         if node.var3:
             ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
