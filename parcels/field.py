@@ -1118,7 +1118,12 @@ class VectorField(object):
         return (u, v)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
-        raise NotImplementedError('not done yet')
+        if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
+            raise NotImplementedError('C staggered grid with a s vertical discretisation are not available')
+        (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
+        w = self.W.eval(time, x, y, z, False)
+        w = self.W.units.to_target(w, x, y, z)
+        return (u, v, w)
 
     def eval(self, time, x, y, z):
         if self.U.interp_method != 'cgrid_linear':

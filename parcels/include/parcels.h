@@ -324,19 +324,19 @@ static inline ErrorCode temporal_interpolationUV(float x, float y, float z, doub
 {
   ErrorCode err;
   if (interp_method == CGRID_LINEAR){
-     CGrid *_grid = U->grid;
-     GridCode gcode = _grid->gtype;
-     int *xi = (int *) vxi;
-     int *yi = (int *) vyi;
-     int *zi = (int *) vzi;
-     int *ti = (int *) vti;
-     err = temporal_interpolation_UV_c_grid(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV); CHECKERROR(err);
-     return SUCCESS;
+    CGrid *_grid = U->grid;
+    GridCode gcode = _grid->gtype;
+    int *xi = (int *) vxi;
+    int *yi = (int *) vyi;
+    int *zi = (int *) vzi;
+    int *ti = (int *) vti;
+    err = temporal_interpolation_UV_c_grid(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV); CHECKERROR(err);
+    return SUCCESS;
   }
   else{
-     err = temporal_interpolation(x, y, z, time, U, vxi, vyi, vzi, vti, valueU, interp_method); CHECKERROR(err);
-     err = temporal_interpolation(x, y, z, time, V, vxi, vyi, vzi, vti, valueV, interp_method); CHECKERROR(err);
-     return SUCCESS;
+    err = temporal_interpolation(x, y, z, time, U, vxi, vyi, vzi, vti, valueU, interp_method); CHECKERROR(err);
+    err = temporal_interpolation(x, y, z, time, V, vxi, vyi, vzi, vti, valueV, interp_method); CHECKERROR(err);
+    return SUCCESS;
   }
 }
 
@@ -347,13 +347,16 @@ static inline ErrorCode temporal_interpolationUVW(float x, float y, float z, dou
 {
   ErrorCode err;
   if (interp_method == CGRID_LINEAR){
-    return ERROR;
+    CGrid *_grid = U->grid;
+    GridCode gcode = _grid->gtype;
+    if (gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_S_GRID){
+      printf("C staggered grid with a s vertical discretisation are not available\n");
+      return ERROR;
+    }
   }
-  else{
-    temporal_interpolationUV(x, y, z, time, U, V, vxi, vyi, vzi, vti, valueU, valueV, interp_method);
-    err = temporal_interpolation(x, y, z, time, W, vxi, vyi, vzi, vti, valueW, interp_method); CHECKERROR(err);
-    return SUCCESS;
-  }
+  temporal_interpolationUV(x, y, z, time, U, V, vxi, vyi, vzi, vti, valueU, valueV, interp_method);
+  err = temporal_interpolation(x, y, z, time, W, vxi, vyi, vzi, vti, valueW, interp_method); CHECKERROR(err);
+  return SUCCESS;
 }
 
 
