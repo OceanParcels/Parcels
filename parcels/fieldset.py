@@ -112,6 +112,10 @@ class FieldSet(object):
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
         assert self.V, 'FieldSet does not have a Field named "V"'
+        for attr, value in vars(self).items():
+            if type(value) is Field:
+                assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
+
         for g in self.gridset.grids:
             g.check_zonal_periodic()
             if g is self.ugrid or len(g.time) == 1:
