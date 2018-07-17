@@ -117,6 +117,11 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti[igrid], grid->tdim, time, t0, t1); CHECKERROR(err);
+    if (interp_method == CGRID_LINEAR){
+      xsi = 0.;
+      eta = 0.;
+      interp_method = LINEAR;
+    }
     if (interp_method == LINEAR){
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
@@ -145,6 +150,11 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   } else {
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti[igrid], grid->tdim, t0, t0, t0+1); CHECKERROR(err);
+    if (interp_method == CGRID_LINEAR){
+      xsi = 0.;
+      eta = 0.;
+      interp_method = LINEAR;
+    }
     if (interp_method == LINEAR){
       if (grid->zdim==1)
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value);

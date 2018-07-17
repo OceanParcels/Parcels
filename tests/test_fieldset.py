@@ -220,11 +220,11 @@ def test_vector_fields(mode, swapUV):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
     if swapUV:
-        assert pset[0].lon == .5
-        assert pset[0].lat == 1.5
+        assert abs(pset[0].lon - .5) < 1e-9
+        assert abs(pset[0].lat - 1.5) < 1e-9
     else:
-        assert pset[0].lon == 1.5
-        assert pset[0].lat == .5
+        assert abs(pset[0].lon - 1.5) < 1e-9
+        assert abs(pset[0].lat - .5) < 1e-9
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

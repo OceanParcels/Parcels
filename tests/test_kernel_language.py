@@ -164,7 +164,8 @@ def test_print(fieldset, mode, capfd):
     pset.execute(kernel, endtime=1., dt=1.)
     out, err = capfd.readouterr()
     lst = out.split(' ')
-    assert float(lst[0]) == pset[0].id and float(lst[1]) == pset[0].p and float(lst[2]) == 5
+    tol = 1e-8
+    assert abs(float(lst[0]) - pset[0].id) < tol and abs(float(lst[1]) - pset[0].p) < tol and abs(float(lst[2]) - 5) < tol
 
 
 def random_series(npart, rngfunc, rngargs, mode):

@@ -578,7 +578,7 @@ class Field(object):
                 elif (grid.lon[0] >= grid.lon[-1]) and (x < grid.lon[0] and x > grid.lon[-1]):
                     raise FieldSamplingError(x, y, z, field=self)
 
-            lon_index = lon_fixed <= x
+            lon_index = lon_fixed < x
             if lon_index.all():
                 xi = len(lon_fixed) - 2
             else:
@@ -587,7 +587,7 @@ class Field(object):
 
         if y < grid.lat[0] or y > grid.lat[-1]:
             raise FieldSamplingError(x, y, z, field=self)
-        lat_index = grid.lat <= y
+        lat_index = grid.lat < y
         if lat_index.all():
             yi = len(grid.lat) - 2
         else:
@@ -717,6 +717,11 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
+        elif self.interp_method is 'c_grid_linear':
+            # evaluating W velocity in c_grid
+            f0 = self.data[ti, zi, yi, xi]
+            f1 = self.data[ti, zi+1, yi, xi]
+            return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'linear':
             data = self.data[ti, zi, :, :]
             f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
@@ -749,18 +754,18 @@ class Field(object):
     def spatial_interpolation(self, ti, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
 
-        if self.grid.gtype is GridCode.RectilinearZGrid:  # The only case where we use scipy interpolation
+        if False:  # self.grid.gtype is GridCode.RectilinearZGrid:  # The only case where we use scipy interpolation
             if self.grid.zdim == 1:
                 val = self.interpolator2D_scipy(ti)((y, x))
             else:
                 val = self.interpolator3D_rectilinear_z(ti, z, y, x)
-        elif self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+        else:  # self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
             if self.grid.zdim == 1:
                 val = self.interpolator2D(ti, z, y, x)
             else:
                 val = self.interpolator3D(ti, z, y, x, time)
-        else:
-            raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
+        # else:
+        #     raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldSamplingError(x, y, z, field=self)
