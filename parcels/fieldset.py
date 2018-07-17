@@ -23,7 +23,7 @@ class FieldSet(object):
         self.gridset = GridSet()
         if U:
             self.add_field(U, 'U')
-            self.ugrid = self.U.grid if isinstance(self.U, Field) else self.U[0].grid
+            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
         if V:
             self.add_field(V, 'V')
 
@@ -118,14 +118,14 @@ class FieldSet(object):
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
-            if g is self.ugrid or len(g.time) == 1:
+            if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin, type(self.ugrid.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
             if g.time_origin:
-                g.time = g.time + (g.time_origin - self.ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time = g.time + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
                 if g.defer_load:
-                    g.time_full = g.time_full + (g.time_origin - self.ugrid.time_origin) / np.timedelta64(1, 's')
-                g.time_origin = self.ugrid.time_origin
+                    g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
             if isinstance(self.U, FieldList):
                 self.add_vector_field(VectorFieldList('UV', self.U, self.V))
@@ -333,11 +333,13 @@ class FieldSet(object):
         """
         # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
         if zonal:
-            self.add_constant('halo_west', self.ugrid.lon[0])
-            self.add_constant('halo_east', self.ugrid.lon[-1])
+            maxlonwest, minloneast = self.gridset.dimrange('lon')
+            self.add_constant('halo_west', maxlonwest)
+            self.add_constant('halo_east', minloneast)
         if meridional:
-            self.add_constant('halo_south', self.ugrid.lat[0])
-            self.add_constant('halo_north', self.ugrid.lat[-1])
+            maxlatsouth, minlatnorth = self.gridset.dimrange('lat')
+            self.add_constant('halo_south', maxlatsouth)
+            self.add_constant('halo_north', minlatnorth)
 
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
