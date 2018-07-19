@@ -1057,7 +1057,7 @@ class VectorField(object):
         self.V = V
         self.W = W
         if self.U.interp_method == 'cgrid_linear':
-            assert self.U.interp_method == 'cgrid_linear'
+            assert self.V.interp_method == 'cgrid_linear'
             assert self.U.grid is self.V.grid
             if W:
                 assert self.W.interp_method == 'cgrid_linear'

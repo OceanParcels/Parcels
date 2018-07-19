@@ -315,6 +315,7 @@ class KernelGenerator(ast.NodeVisitor):
             Wname = field.W.name if field.W else 'not_defined'
             for f in [field.U.name, field.V.name, Wname]:
                 try:
+                    # Next line will break for example if field.U was created but not added to the fieldset
                     getattr(fieldset, f)
                     if f not in self.field_args:
                         args += [c.Pointer(c.Value("CField", "%s" % f))]
