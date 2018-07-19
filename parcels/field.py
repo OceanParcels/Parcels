@@ -554,17 +554,22 @@ class Field(object):
     def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, search2D=False):
         grid = self.grid
         xi = yi = -1
-        lon_index = grid.lon <= x
 
         if grid.mesh is not 'spherical':
             if x < grid.lon[0] or x > grid.lon[-1]:
                 raise FieldSamplingError(x, y, z, field=self)
-            lon_index = grid.lon <= x
+            lon_index = grid.lon < x
             if lon_index.all():
                 xi = len(grid.lon) - 2
             else:
                 xi = lon_index.argmin() - 1 if lon_index.any() else 0
             xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+            if xsi < 0:
+                xi -= 1
+                xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+            elif xsi > 1:
+                xi += 1
+                xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
         else:
             lon_fixed = grid.lon.copy()
             indices = lon_fixed >= lon_fixed[0]
@@ -584,6 +589,12 @@ class Field(object):
             else:
                 xi = lon_index.argmin() - 1 if lon_index.any() else 0
             xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+            if xsi < 0:
+                xi -= 1
+                xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+            elif xsi > 1:
+                xi += 1
+                xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
 
         if y < grid.lat[0] or y > grid.lat[-1]:
             raise FieldSamplingError(x, y, z, field=self)
@@ -594,6 +605,12 @@ class Field(object):
             yi = lat_index.argmin() - 1 if lat_index.any() else 0
 
         eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+        if eta < 0:
+            yi -= 1
+            eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+        elif eta > 1:
+            yi += 1
+            eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
 
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
