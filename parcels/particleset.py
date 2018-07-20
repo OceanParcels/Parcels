@@ -148,26 +148,20 @@ class ParticleSet(object):
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
-        lonwidth = (start_field.grid.lon[1] - start_field.grid.lon[0]) / 2
-        latwidth = (start_field.grid.lat[1] - start_field.grid.lat[0]) / 2
-
-        def add_jitter(pos, width, min, max):
-            value = pos + np.random.uniform(-width, width)
-            while not (min <= value <= max):
-                value = pos + np.random.uniform(-width, width)
-            return value
 
         if mode == 'monte_carlo':
-            p = np.reshape(start_field.data, (1, start_field.data.size))
-            inds = np.random.choice(start_field.data.size, size, replace=True, p=p[0] / np.sum(p))
-            j, i = np.unravel_index(inds, start_field.data[0, :, :].shape)
-            if fieldset.U.grid.lat.ndim == 1:
-                lat, lon = fieldset.U.grid.lat[j], fieldset.U.grid.lon[i]
+            p_interior = np.squeeze(start_field.data[:, :-1, :-1])
+            p = np.reshape(p_interior, (1, p_interior.size))
+            inds = np.random.choice(p_interior.size, size, replace=True, p=p[0] / np.sum(p))
+            xsi = np.random.uniform(size=len(inds))
+            eta = np.random.uniform(size=len(inds))
+            j, i = np.unravel_index(inds, p_interior.shape)
+            if start_field.grid.lat.ndim == 1:
+                lon = start_field.grid.lon[i] + xsi * (start_field.grid.lon[i + 1] - start_field.grid.lon[i])
+                lat = start_field.grid.lat[j] + eta * (start_field.grid.lat[j + 1] - start_field.grid.lat[j])
             else:
-                lat, lon = fieldset.U.grid.lat[j, i], fieldset.U.grid.lon[j, i]
-            for i in range(lon.size):
-                lon[i] = add_jitter(lon[i], lonwidth, start_field.grid.lon[0], start_field.grid.lon[-1])
-                lat[i] = add_jitter(lat[i], latwidth, start_field.grid.lat[0], start_field.grid.lat[-1])
+                lon = start_field.grid.lon[j, i] + xsi * (start_field.grid.lon[j, i + 1] - start_field.grid.lon[j, i])
+                lat = start_field.grid.lat[j, i] + eta * (start_field.grid.lat[j + 1, i] - start_field.grid.lat[j, i])
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
