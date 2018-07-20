@@ -9,7 +9,7 @@ from glob import glob
 from copy import deepcopy
 
 
-__all__ = ['FieldSet']
+__all__ = ['FieldSet', 'FieldList']
 
 
 class FieldSet(object):
@@ -22,14 +22,15 @@ class FieldSet(object):
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         if U:
-            self.add_field(U)
+            self.add_field(U, 'U')
+            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
         if V:
-            self.add_field(V)
+            self.add_field(V, 'V')
 
         # Add additional fields as attributes
         if fields:
             for name, field in fields.items():
-                self.add_field(field)
+                self.add_field(field, name)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
@@ -83,14 +84,22 @@ class FieldSet(object):
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
-    def add_field(self, field):
+    def add_field(self, field, name=None):
         """Add a :class:`parcels.field.Field` object to the FieldSet
 
         :param field: :class:`parcels.field.Field` object to be added
+        :param name: Name of the :class:`parcels.field.Field` object to be added
         """
-        setattr(self, field.name, field)
-        self.gridset.add_grid(field)
-        field.fieldset = self
+        name = field.name if name is None else name
+        if isinstance(field, list):
+            setattr(self, name, FieldList(field))
+            for fld in field:
+                self.gridset.add_grid(fld)
+                fld.fieldset = self
+        else:
+            setattr(self, name, field)
+            self.gridset.add_grid(field)
+            field.fieldset = self
 
     def add_vector_field(self, vfield):
         """Add a :class:`parcels.field.VectorField` object to the FieldSet
@@ -101,23 +110,32 @@ class FieldSet(object):
         vfield.fieldset = self
 
     def check_complete(self):
-        assert(self.U), ('U field is not defined')
-        assert(self.V), ('V field is not defined')
-        ugrid = self.U.grid
+        assert self.U, 'FieldSet does not have a Field named "U"'
+        assert self.V, 'FieldSet does not have a Field named "V"'
+        for attr, value in vars(self).items():
+            if type(value) is Field:
+                assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
+
         for g in self.gridset.grids:
             g.check_zonal_periodic()
-            if g is ugrid or len(g.time) == 1:
+            if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin, type(ugrid.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
             if g.time_origin:
-                g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time = g.time + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
                 if g.defer_load:
-                    g.time_full = g.time_full + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
-                g.time_origin = ugrid.time_origin
+                    g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
-            self.add_vector_field(VectorField('UV', self.U, self.V))
+            if isinstance(self.U, FieldList):
+                self.add_vector_field(VectorFieldList('UV', self.U, self.V))
+            else:
+                self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
+            if isinstance(self.U, FieldList):
+                self.add_vector_field(VectorFieldList('UVW', self.U, self.V, self.W))
+            else:
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
@@ -314,14 +332,6 @@ class FieldSet(object):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
 
-        # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
-        if zonal:
-            self.add_constant('halo_west', self.U.grid.lon[0])
-            self.add_constant('halo_east', self.U.grid.lon[-1])
-        if meridional:
-            self.add_constant('halo_south', self.U.grid.lat[0])
-            self.add_constant('halo_north', self.U.grid.lat[-1])
-
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
         for attr, value in iter(self.__dict__.items()):
@@ -426,3 +436,60 @@ class FieldSet(object):
                 return nextTime
             else:
                 return time + nSteps * dt
+
+
+class FieldList(list):
+    def eval(self, time, x, y, z, applyConversion=True):
+        tmp = 0
+        for fld in self:
+            tmp += fld.eval(time, x, y, z, applyConversion)
+        return tmp
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
+
+
+class VectorFieldList(list):
+    """Class VectorFieldList stores 2 or 3 FieldLists which defines together a vector field.
+    This enables to interpolate them as one single vector FieldList in the kernels.
+
+    :param name: Name of the vector field
+    :param U: FieldList defining the zonal component
+    :param V: FieldList defining the meridional component
+    :param W: FieldList defining the vertical component (default: None)
+    """
+
+    def __init__(self, name, U, V, W=None):
+        self.name = name
+        self.U = U
+        self.V = V
+        self.W = W
+
+    def eval(self, time, x, y, z):
+        zonal = meridional = vertical = 0
+        if self.W is not None:
+            for (U, V, W) in zip(self.U, self.V, self.W):
+                vfld = VectorField(self.name, U, V, W)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+                vertical += tmp3
+            return (zonal, meridional, vertical)
+        else:
+            for (U, V) in zip(self.U, self.V):
+                vfld = VectorField(self.name, U, V)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+            return (zonal, meridional)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
