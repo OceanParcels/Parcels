@@ -75,8 +75,7 @@ static inline ErrorCode search_indices_vertical_s(float z, int xdim, int ydim, i
   return SUCCESS;
 }
 
-
-static inline void fix_1d_index(int *xi, int xdim, int sphere_mesh)
+static inline void reconnect_bnd_indices(int *xi, int *yi, int xdim, int ydim, int onlyX, int sphere_mesh)
 {
   if (*xi < 0){
     if (sphere_mesh)
@@ -90,30 +89,15 @@ static inline void fix_1d_index(int *xi, int xdim, int sphere_mesh)
     else
       (*xi) = xdim-2;
   }
-}
-
-
-static inline void fix_2d_indices(int *xi, int *yi, int xdim, int ydim, int sphere_mesh)
-{
-  if (*xi < 0){
-    if (sphere_mesh)
-      (*xi) = xdim-2;
-    else
-      (*xi) = 0;
-  }
-  if (*xi > xdim-2){
-    if (sphere_mesh)
-      (*xi) = 0;
-    else
-      (*xi) = xdim-2;
-  }
-  if (*yi < 0){
-    (*yi) = 0;
-  }
-  if (*yi > ydim-2){
-    (*yi) = ydim-2;
-    if (sphere_mesh)
-      (*xi) = xdim - (*xi);
+  if (onlyX == 0){
+    if (*yi < 0){
+      (*yi) = 0;
+    }
+    if (*yi > ydim-2){
+      (*yi) = ydim-2;
+      if (sphere_mesh)
+        (*xi) = xdim - (*xi);
+    }
   }
 }
 
@@ -149,7 +133,7 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
         ++(*xi);
       else if (xvalsi > x)
         --(*xi);
-      fix_1d_index(xi, xdim, 1);
+      reconnect_bnd_indices(xi, yi, xdim, ydim, 1, 1);
       xvalsi = xvals[*xi];
       if (xvalsi < x - 225) xvalsi += 360;
       if (xvalsi > x + 225) xvalsi -= 360;
@@ -261,7 +245,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
       (*yi)--;
     if (*eta > 1)
       (*yi)++;
-    fix_2d_indices(xi, yi, xdim, ydim, sphere_mesh);
+    reconnect_bnd_indices(xi, yi, xdim, ydim, 0, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
       printf("Correct cell not found after %d iterations\n", maxIterSearch);

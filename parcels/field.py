@@ -1,5 +1,4 @@
 from parcels.loggers import logger
-from scipy.interpolate import RegularGridInterpolator
 from collections import Iterable
 from py import path
 import numpy as np
@@ -442,38 +441,6 @@ class Field(object):
             (self.gradientx, self.gradienty) = (dFdx_fld, dFdy_fld)
             return (dFdx_fld, dFdy_fld)
 
-    def interpolator2D_scipy(self, ti, z_idx=None):
-        """Provide a SciPy interpolator for spatial interpolation
-
-        Note that the interpolator is configured to return NaN for
-        out-of-bounds coordinates.
-        """
-        if z_idx is None:
-            data = self.data[ti, :]
-        else:
-            data = self.data[ti, z_idx, :]
-        return RegularGridInterpolator((self.grid.lat, self.grid.lon), data,
-                                       bounds_error=False, fill_value=np.nan,
-                                       method=self.interp_method)
-
-    def interpolator3D_rectilinear_z(self, idx, z, y, x):
-        """Scipy implementation of 3D interpolation, by first interpolating
-        in horizontal, then in the vertical"""
-
-        zdx = self.depth_index(z, y, x)
-        f0 = self.interpolator2D_scipy(idx, z_idx=zdx)((y, x))
-        f1 = self.interpolator2D_scipy(idx, z_idx=zdx + 1)((y, x))
-        z0 = self.grid.depth[zdx]
-        z1 = self.grid.depth[zdx + 1]
-        if z < z0 or z > z1:
-            raise FieldSamplingError(x, y, z, field=self)
-        if self.interp_method is 'nearest':
-            return f0 if z - z0 < z1 - z else f1
-        elif self.interp_method is 'linear':
-            return f0 + (f1 - f0) * ((z - z0) / (z1 - z0))
-        else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
-
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
@@ -519,20 +486,7 @@ class Field(object):
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
-    def fix_i_index(self, xi, dim, sphere_mesh):
-        if xi < 0:
-            if sphere_mesh:
-                xi = dim-2
-            else:
-                xi = 0
-        if xi > dim-2:
-            if sphere_mesh:
-                xi = 0
-            else:
-                xi = dim-2
-        return xi
-
-    def fix_2d_indices(self, xi, yi, xdim, ydim, sphere_mesh):
+    def reconnect_bnd_indices(self, xi, yi, xdim, ydim, sphere_mesh):
         if xi < 0:
             if sphere_mesh:
                 xi = xdim-2
@@ -679,9 +633,7 @@ class Field(object):
                 yi -= 1
             elif eta > 1:
                 yi += 1
-            # xi = self.fix_i_index(xi, grid.xdim, grid.mesh == 'spherical')
-            # yi = self.fix_i_index(yi, grid.ydim, False)
-            (xi, yi) = self.fix_2d_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
+            (xi, yi) = self.reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
             it += 1
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
@@ -771,18 +723,10 @@ class Field(object):
     def spatial_interpolation(self, ti, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
 
-        if False:  # self.grid.gtype is GridCode.RectilinearZGrid:  # The only case where we use scipy interpolation
-            if self.grid.zdim == 1:
-                val = self.interpolator2D_scipy(ti)((y, x))
-            else:
-                val = self.interpolator3D_rectilinear_z(ti, z, y, x)
-        else:  # self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
-            if self.grid.zdim == 1:
-                val = self.interpolator2D(ti, z, y, x)
-            else:
-                val = self.interpolator3D(ti, z, y, x, time)
-        # else:
-        #     raise RuntimeError("Only RectilinearZGrid, RectilinearSGrid and CRectilinearGrid grids are currently implemented")
+        if self.grid.zdim == 1:
+            val = self.interpolator2D(ti, z, y, x)
+        else:
+            val = self.interpolator3D(ti, z, y, x, time)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldSamplingError(x, y, z, field=self)
@@ -1065,22 +1009,14 @@ class VectorField(object):
 
     def lonlatdist(self, lon1, lon2, lat1, lat2):
         r = 360*60*1852/2/np.pi
-        planar = True
         rad = np.pi/180.
-        if not planar:
-            dlat = rad * (lat2-lat1)
-            dlon = rad * (lon2-lon1)
-            a = np.sin(dlat/2)**2 + np.cos(lat1*rad) * np.cos(lat2*rad) * np.sin(dlon/2)**2
-            c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
-            return r * c
-        else:
-            x1 = r*np.cos(rad*lon1) * np.cos(rad*lat1)
-            y1 = r*np.sin(rad*lon1) * np.cos(rad*lat1)
-            z1 = r*np.sin(rad*lat1)
-            x2 = r*np.cos(rad*lon2) * np.cos(rad*lat2)
-            y2 = r*np.sin(rad*lon2) * np.cos(rad*lat2)
-            z2 = r*np.sin(rad*lat2)
-            return np.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
+        x1 = r*np.cos(rad*lon1) * np.cos(rad*lat1)
+        y1 = r*np.sin(rad*lon1) * np.cos(rad*lat1)
+        z1 = r*np.sin(rad*lat1)
+        x2 = r*np.cos(rad*lon2) * np.cos(rad*lat2)
+        y2 = r*np.sin(rad*lon2) * np.cos(rad*lat2)
+        z2 = r*np.sin(rad*lat2)
+        return np.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
 
     def jacobian(self, xsi, eta, px, py):
         dphidxsi = [eta-1, 1-eta, eta, -eta]
