@@ -152,6 +152,10 @@ def test_moving_eddies_file(fieldsetfile, mode):
 def test_periodic_and_computeTimeChunk_eddies(mode):
     filename = path.join(path.dirname(__file__), 'MovingEddies_data', 'moving_eddies')
     fieldset = FieldSet.from_parcels(filename)
+    fieldset.add_constant('halo_west', fieldset.U.grid.lon[0])
+    fieldset.add_constant('halo_east', fieldset.U.grid.lon[-1])
+    fieldset.add_constant('halo_south', fieldset.U.grid.lat[0])
+    fieldset.add_constant('halo_north', fieldset.U.grid.lat[-1])
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     pset = ParticleSet.from_list(fieldset=fieldset,
                                  pclass=ptype[mode],

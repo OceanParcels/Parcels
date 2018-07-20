@@ -245,3 +245,20 @@ def test_update_kernel_in_script(fieldset, mode):
     pset.execute(pset.Kernel(MoveEast), endtime=1., dt=1.)
     pset.execute(pset.Kernel(MoveWest), endtime=2., dt=1.)
     assert np.allclose([p.lon for p in pset], 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_errorcode_repeat(fieldset, mode):
+    def simpleKernel(particle, fieldset, time, dt):
+        if particle.lon > .1 and time < 1.:
+            # if particle.lon is not re-setted before kernel repetition, it will break here
+            return ErrorCode.Error
+        particle.lon += 0.1
+        if dt > 1.49:
+            # dt is used to leave the repetition loop (dt is the only variable not re-setted)
+            return ErrorCode.Success
+        particle.dt += .1
+        return ErrorCode.Repeat
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.], lat=[0.])
+    pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)

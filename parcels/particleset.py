@@ -30,7 +30,7 @@ class ParticleSet(object):
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=[], lat=[], depth=None, time=None, repeatdt=None):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -41,19 +41,25 @@ class ParticleSet(object):
             elif isinstance(var, np.ndarray):
                 return var.flatten()
             return var
+        if lon is None:
+            lon = []
+        if lat is None:
+            lat = []
 
         lon = convert_to_list(lon)
         lat = convert_to_list(lat)
-        depth = np.ones(len(lon)) * fieldset.U.grid.depth[0] if depth is None else depth
+        if depth is None:
+            mindepth, _ = self.fieldset.gridset.dimrange('depth')
+            depth = np.ones(len(lon)) * mindepth
         depth = convert_to_list(depth)
         assert len(lon) == len(lat) and len(lon) == len(depth)
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
         time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
-        self.time_origin = fieldset.U.grid.time_origin
+        self.time_origin = fieldset.time_origin
         if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
-            raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, time of a particle must be a double')
+            raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = [((t - self.time_origin) / np.timedelta64(1, 's')) if isinstance(t, np.datetime64) else t for t in time]
 
         assert len(lon) == len(time)
@@ -156,8 +162,8 @@ class ParticleSet(object):
             p = np.reshape(start_field.data, (1, start_field.data.size))
             inds = np.random.choice(start_field.data.size, size, replace=True, p=p[0] / np.sum(p))
             lat, lon = np.unravel_index(inds, start_field.data[0, :, :].shape)
-            lon = fieldset.U.grid.lon[lon]
-            lat = fieldset.U.grid.lat[lat]
+            lon = start_field.grid.lon[lon]
+            lat = start_field.grid.lat[lat]
             for i in range(lon.size):
                 lon[i] = add_jitter(lon[i], lonwidth, start_field.grid.lon[0], start_field.grid.lon[-1])
                 lat[i] = add_jitter(lat[i], latwidth, start_field.grid.lat[0], start_field.grid.lat[-1])
@@ -265,7 +271,7 @@ class ParticleSet(object):
             endtime = np.datetime64(endtime)
         if isinstance(endtime, np.datetime64):
             if not self.time_origin:
-                raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, execution endtime must be a double')
+                raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
             endtime = (endtime - self.time_origin) / np.timedelta64(1, 's')
         if isinstance(runtime, delta):
             runtime = runtime.total_seconds()
@@ -284,7 +290,8 @@ class ParticleSet(object):
         # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
         for p in self:
             if np.isnan(p.time):
-                p.time = self.fieldset.U.grid.time[0] if dt >= 0 else self.fieldset.U.grid.time[-1]
+                mintime, maxtime = self.fieldset.gridset.dimrange('time')
+                p.time = mintime if dt >= 0 else maxtime
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
@@ -295,7 +302,8 @@ class ParticleSet(object):
         if runtime is not None:
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
-            endtime = self.fieldset.U.grid.time[-1] if dt >= 0 else self.fieldset.U.grid.time[0]
+            mintime, maxtime = self.fieldset.gridset.dimrange('time')
+            endtime = maxtime if dt >= 0 else mintime
 
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
@@ -390,12 +398,12 @@ class ParticleSet(object):
             show_time = np.datetime64(show_time)
         if isinstance(show_time, np.datetime64):
             if not self.time_origin:
-                raise NotImplementedError('If fieldset.U.grid.time_origin is not a date, showtime cannot be a date in particleset.show()')
+                raise NotImplementedError('If fieldset.time_origin is not a date, showtime cannot be a date in particleset.show()')
             show_time = (show_time - self.time_origin) / np.timedelta64(1, 's')
         if isinstance(show_time, delta):
             show_time = show_time.total_seconds()
         if np.isnan(show_time):
-            show_time = self.fieldset.U.grid.time[0]
+            show_time, _ = self.fieldset.gridset.dimrange('time')
         if domain is not None:
             def nearest_index(array, value):
                 """returns index of the nearest value in array using O(log n) bisection method"""
