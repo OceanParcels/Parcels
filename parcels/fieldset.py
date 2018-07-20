@@ -331,15 +331,6 @@ class FieldSet(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
-        # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
-        if zonal:
-            maxlonwest, minloneast = self.gridset.dimrange('lon')
-            self.add_constant('halo_west', maxlonwest)
-            self.add_constant('halo_east', minloneast)
-        if meridional:
-            maxlatsouth, minlatnorth = self.gridset.dimrange('lat')
-            self.add_constant('halo_south', maxlatsouth)
-            self.add_constant('halo_north', minlatnorth)
 
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
