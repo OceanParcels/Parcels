@@ -159,6 +159,8 @@ class Field(object):
            2. flat: No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
+    :param fieldtype: Type of Field to be used for UnitConverter when using FieldLists
+           (either 'U', 'V', 'Kh_zonal', 'Kh_Meridional' or None)
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
@@ -175,7 +177,7 @@ class Field(object):
                       'Kh_meridional': GeographicSquare()}
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
-                 transpose=False, vmin=None, vmax=None, time_origin=None,
+                 fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         self.data = data
@@ -191,10 +193,11 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.time = self.grid.time
-        if self.grid.mesh is 'flat' or (name not in self.unitconverters.keys()):
+        fieldtype = self.name if fieldtype is None else fieldtype
+        if self.grid.mesh is 'flat' or (fieldtype not in self.unitconverters.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh is 'spherical':
-            self.units = self.unitconverters[name]
+            self.units = self.unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method
