@@ -1,6 +1,5 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
-from parcels import compute_curvilinearGrid_rotationAngles
 import numpy as np
 import math
 import pytest
@@ -101,7 +100,7 @@ def test_avoid_repeated_grids():
     temp0_field = Field('temp', u_data, lon=lon_g0, lat=lat_g0, time=time_g0, transpose=True)
 
     other_fields = {}
-    other_fields['temp0'] = temp0_field
+    other_fields['temp'] = temp0_field
 
     field_set = FieldSet(u_field, v_field, fields=other_fields)
     assert field_set.gridset.size == 2
@@ -329,31 +328,12 @@ def test_curvilinear_grids(mode):
 def test_nemo_grid(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
-    mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
-    rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
-    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename)
-
     filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
                  'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
-                 'cosU': rotation_angles_filename,
-                 'sinU': rotation_angles_filename,
-                 'cosV': rotation_angles_filename,
-                 'sinV': rotation_angles_filename}
-    variables = {'U': 'U',
-                 'V': 'V',
-                 'cosU': 'cosU',
-                 'sinU': 'sinU',
-                 'cosV': 'cosV',
-                 'sinV': 'sinV'}
-
-    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
-                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
-                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
-
-    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical')
+                 'mesh_mask': data_path + 'mask_nemo_cross_180lon.nc'}
+    variables = {'U': 'U', 'V': 'V'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # test ParticleSet.from_field on curvilinear grids
     ParticleSet.from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
@@ -379,38 +359,12 @@ def test_nemo_grid(mode):
 def test_advect_nemo(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
-    mesh_filename = data_path + 'mask_nemo_cross_180lon.nc'
-    rotation_angles_filename = data_path + 'rotation_angles_nemo_cross_180lon.nc'
-    variables = {'cosU': 'cosU',
-                 'sinU': 'sinU',
-                 'cosV': 'cosV',
-                 'sinV': 'sinV'}
-    dimensions = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'F': {'lon': 'glamf', 'lat': 'gphif'}}
-    compute_curvilinearGrid_rotationAngles(mesh_filename, rotation_angles_filename, variables, dimensions)
-
     filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
                  'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
-                 'cosU': rotation_angles_filename,
-                 'sinU': rotation_angles_filename,
-                 'cosV': rotation_angles_filename,
-                 'sinV': rotation_angles_filename}
-    variables = {'U': 'U',
-                 'V': 'V',
-                 'cosU': 'cosU',
-                 'sinU': 'sinU',
-                 'cosV': 'cosV',
-                 'sinV': 'sinV'}
-
-    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
-                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'},
-                  'cosU': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'sinU': {'lon': 'glamu', 'lat': 'gphiu'},
-                  'cosV': {'lon': 'glamv', 'lat': 'gphiv'},
-                  'sinV': {'lon': 'glamv', 'lat': 'gphiv'}}
-
-    field_set = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='spherical', allow_time_extrapolation=True)
+                 'mesh_mask': data_path + 'mask_nemo_cross_180lon.nc'}
+    variables = {'U': 'U', 'V': 'V'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
     lonp = 175.5
     latp = 81.5

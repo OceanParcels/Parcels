@@ -16,8 +16,7 @@ def run_nemo_curvilinear(mode, outfile):
                  'V': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4',
                  'mesh_mask': data_path + 'mesh_mask.nc4'}
     variables = {'U': 'U', 'V': 'V'}
-    dimensions = {'U': {'lon': 'nav_lon_u', 'lat': 'nav_lat_u'},
-                  'V': {'lon': 'nav_lon_v', 'lat': 'nav_lat_v'}}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
     # Now run particles as normal
@@ -34,7 +33,7 @@ def run_nemo_curvilinear(mode, outfile):
     kernels = pset.Kernel(AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
                  output_file=pfile)
-    assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=1e-3)
+    assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
 
 
 def make_plot(trajfile):
