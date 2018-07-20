@@ -1076,6 +1076,16 @@ class VectorField(object):
         return (u, v)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
+        """
+          __ V1 __
+        |          |
+        U0         U1
+        | __ V0 __ |
+        The interpolation is done in the following by
+        interpolating linearly U depending on the longitude coordinate and
+        interpolating linearly V depending on the latitude coordinate.
+        Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
+        """
         if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
             raise NotImplementedError('C staggered grid with a s vertical discretisation are not available')
         (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
