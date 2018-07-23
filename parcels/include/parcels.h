@@ -10,6 +10,9 @@ extern "C" {
 #include "random.h"
 #include "index_search.h"
 
+#define min(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define max(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 typedef enum
   {
     LINEAR=0, NEAREST=1, CGRID_LINEAR=2
@@ -177,52 +180,62 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   }
 }
 
-static double lonlatdist(float lon1, float lon2, float lat1, float lat2)
+static double dist(float lon1, float lon2, float lat1, float lat2, int sphere_mesh)
 {
-  double r = 360*60*1852 / (2*M_PI);
-  double rad = M_PI / 180.;
-  double dist;
-  int planar = 1;
-  if (planar == 0){
-    double dlat = rad * (lat2-lat1);
-    double dlon = rad * (lon2-lon1);
-    double a = sin(dlat/2)*sin(dlat/2) + cos(rad*lat1) * cos(rad*lat2) * sin(dlon/2) * sin(dlon/2);
-    dist = r * 2 * atan2(sqrt(a),sqrt(1-a));
-  }
-  else{
+  if (sphere_mesh == 1){
+    double r = 360*60*1852 / (2*M_PI);
+    double rad = M_PI / 180.;
     double x1 = r*cos(rad*lon1) * cos(rad*lat1);
     double y1 = r*sin(rad*lon1) * cos(rad*lat1);
     double z1 = r*sin(rad*lat1);
     double x2 = r*cos(rad*lon2) * cos(rad*lat2);
     double y2 = r*sin(rad*lon2) * cos(rad*lat2);
     double z2 = r*sin(rad*lat2);
-    dist = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
+    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1));
   }
-  return dist;
+  else{
+    return sqrt((lon2-lon1)*(lon2-lon1) + (lat2-lat1)*(lat2-lat1));
+  }
 }
 
 /* Linear interpolation routine for 2D C grid */
-static inline ErrorCode spatial_interpolation_UV_c_grid(double xsi, double eta, int xi, int yi, CStructuredGrid *grid, float **u_data, float **v_data, float *u, float *v)
+static inline ErrorCode spatial_interpolation_UV_c_grid(double xsi, double eta, int xi, int yi, CStructuredGrid *grid,
+                                                        GridCode gcode, float **u_data, float **v_data, float *u, float *v)
 {
   /* Cast data array into data[lat][lon] as per NEMO convention */
   int xdim = grid->xdim;
-  float (* xgrid)[xdim] = (float (*)[xdim]) grid->lon;
-  float (* ygrid)[xdim] = (float (*)[xdim]) grid->lat;
   float (*dataU)[xdim] = (float (*)[xdim]) u_data;
   float (*dataV)[xdim] = (float (*)[xdim]) v_data;
 
-  float xgrid_loc[4] = {xgrid[yi][xi], xgrid[yi][xi+1], xgrid[yi+1][xi+1], xgrid[yi+1][xi]};
-  float ygrid_loc[4] = {ygrid[yi][xi], ygrid[yi][xi+1], ygrid[yi+1][xi+1], ygrid[yi+1][xi]};
+  float xgrid_loc[4];
+  float ygrid_loc[4];
+  int iN;
+  if( (gcode == RECTILINEAR_Z_GRID) || (gcode == RECTILINEAR_S_GRID) ){
+    float *xgrid = grid->lon;
+    float *ygrid = grid->lat;
+    for (iN=0; iN < 4; ++iN){
+      xgrid_loc[iN] = xgrid[xi+min(1, (iN%3))];
+      ygrid_loc[iN] = ygrid[yi+iN/2];
+    }
+  }
+  else{
+    float (* xgrid)[xdim] = (float (*)[xdim]) grid->lon;
+    float (* ygrid)[xdim] = (float (*)[xdim]) grid->lat;
+    for (iN=0; iN < 4; ++iN){
+      xgrid_loc[iN] = xgrid[yi+iN/2][xi+min(1, (iN%3))];
+      ygrid_loc[iN] = ygrid[yi+iN/2][xi+min(1, (iN%3))];
+    }
+  }
   int i4;
   for (i4 = 1; i4 < 4; ++i4){
     if (xgrid_loc[i4] < xgrid_loc[0] - 180) xgrid_loc[i4] += 360;
     if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
   }
 
-  double U0 = dataU[yi+1][xi]   * lonlatdist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0]);
-  double U1 = dataU[yi+1][xi+1] * lonlatdist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2]);
-  double V0 = dataV[yi][xi+1]   * lonlatdist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1]);
-  double V1 = dataV[yi+1][xi+1] * lonlatdist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3]);
+  double U0 = dataU[yi+1][xi]   * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh);
+  double U1 = dataU[yi+1][xi+1] * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh);
+  double V0 = dataV[yi][xi+1]   * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh);
+  double V1 = dataV[yi+1][xi+1] * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh);
   double U = (1-xsi) * U0 + xsi * U1;
   double V = (1-eta) * V0 + eta * V1;
 
@@ -237,13 +250,18 @@ static inline ErrorCode spatial_interpolation_UV_c_grid(double xsi, double eta, 
     dydxsi += ygrid_loc[i] *dphidxsi[i];
     dydeta += ygrid_loc[i] *dphideta[i];
   }
-  double deg2m = 1852 * 60.;
-  double rad = M_PI / 180.;
-  double lat = (1-xsi) * (1-eta) * ygrid_loc[0]+
-                  xsi  * (1-eta) * ygrid_loc[1]+
-                  xsi  *    eta  * ygrid_loc[2]+
-               (1-xsi) *    eta  * ygrid_loc[3];
-  double jac = (dxdxsi*dydeta - dxdeta * dydxsi) * deg2m * deg2m * cos(rad * lat);
+  double meshJac = 1;
+  if (grid->sphere_mesh == 1){
+    double deg2m = 1852 * 60.;
+    double rad = M_PI / 180.;
+    double lat = (1-xsi) * (1-eta) * ygrid_loc[0]+
+                    xsi  * (1-eta) * ygrid_loc[1]+
+                    xsi  *    eta  * ygrid_loc[2]+
+                 (1-xsi) *    eta  * ygrid_loc[3];
+    meshJac = deg2m * deg2m * cos(rad * lat);
+
+  }
+  double jac = (dxdxsi*dydeta - dxdeta * dydxsi) * meshJac;
 
   *u = ( (-(1-eta) * U - (1-xsi) * V ) * xgrid_loc[0] +
          ( (1-eta) * U -  xsi    * V ) * xgrid_loc[1] +
@@ -285,11 +303,11 @@ static inline ErrorCode temporal_interpolation_UV_c_grid(float x, float y, float
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti[igrid], grid->tdim, time, t0, t1); CHECKERROR(err);
     if (grid->zdim==1){
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0);
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1);
     } else {
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]),   &u0, &v0);
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, (float**)(dataU[ti[igrid]+1][zi[igrid]]), (float**)(dataV[ti[igrid]+1][zi[igrid]]), &u1, &v1);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]),   &u0, &v0);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1][zi[igrid]]), (float**)(dataV[ti[igrid]+1][zi[igrid]]), &u1, &v1);
     }
     *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
     *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
@@ -298,10 +316,10 @@ static inline ErrorCode temporal_interpolation_UV_c_grid(float x, float y, float
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti[igrid], grid->tdim, t0, t0, t0+1); CHECKERROR(err);
     if (grid->zdim==1){
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v);
     }
     else{
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), &u, &v);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), &u, &v);
     }
     return SUCCESS;
   }
