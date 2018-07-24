@@ -162,6 +162,7 @@ class ParticleSet(object):
             else:
                 lon = start_field.grid.lon[j, i] + xsi * (start_field.grid.lon[j, i + 1] - start_field.grid.lon[j, i])
                 lat = start_field.grid.lat[j, i] + eta * (start_field.grid.lat[j + 1, i] - start_field.grid.lat[j, i])
+                raise NotImplementedError('ParticelSet.from_field not correctly implemented')
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
