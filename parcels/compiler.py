@@ -24,11 +24,7 @@ def get_cache_dir():
 class Compiler(object):
     """A compiler object for creating and loading shared libraries.
 
-    :arg cc: C compiler executable (can be overriden by exporting the
-        environment variable ``CC``).
-    :arg ld: Linker executable (optional, if ``None``, we assume the compiler
-        can build object files and link in a single invocation, can be
-        overridden by exporting the environment variable ``LDSHARED``).
+    :arg cc: C compiler executable (uses environment variable ``CC`` if not provided).
     :arg cppargs: A list of arguments to the C compiler (optional).
     :arg ldargs: A list of arguments to the linker (optional)."""
 
