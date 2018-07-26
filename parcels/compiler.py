@@ -1,5 +1,5 @@
 import subprocess
-from os import path, environ, makedirs
+from os import path, getenv, makedirs
 from tempfile import gettempdir
 from struct import calcsize
 try:
@@ -32,13 +32,13 @@ class Compiler(object):
     :arg cppargs: A list of arguments to the C compiler (optional).
     :arg ldargs: A list of arguments to the linker (optional)."""
 
-    def __init__(self, cc, cppargs=None, ldargs=None):
+    def __init__(self, cc=None, cppargs=None, ldargs=None):
         if cppargs is None:
             cppargs = []
         if ldargs is None:
             ldargs = []
 
-        self._cc = environ.get('CC', cc)
+        self._cc = getenv('CC') if cc is None else cc
         self._cppargs = cppargs
         self._ldargs = ldargs
 
