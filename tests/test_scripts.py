@@ -18,7 +18,7 @@ def create_outputfiles(dir):
     y = (fieldset.U.lat[0] + x, fieldset.U.lat[-1] - x)
     lat = np.linspace(y[0], y[1], npart, dtype=np.float32)
 
-    fp = dir.join("DelayParticle")
+    fp = dir.join("DelayParticle.nc")
     output_file = pset.ParticleFile(name=fp, outputdt=delaytime)
 
     for t in range(npart):
@@ -32,7 +32,7 @@ def create_outputfiles(dir):
     return fp
 
 
-@pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d'])
+@pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d', 'hist2d'])
 def test_plotting(mode, tmpdir):
     fp = create_outputfiles(tmpdir)
-    plotTrajectoriesFile(fp+'.nc', mode=mode, show_plt=False)
+    plotTrajectoriesFile(fp, mode=mode, show_plt=False)

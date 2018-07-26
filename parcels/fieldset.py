@@ -1,7 +1,6 @@
-from parcels.field import Field
+from parcels.field import Field, VectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
-from parcels.scripts import compute_curvilinearGrid_rotationAngles
 from parcels.loggers import logger
 import numpy as np
 from os import path
@@ -9,7 +8,7 @@ from glob import glob
 from copy import deepcopy
 
 
-__all__ = ['FieldSet']
+__all__ = ['FieldSet', 'FieldList']
 
 
 class FieldSet(object):
@@ -19,27 +18,27 @@ class FieldSet(object):
     :param V: :class:`parcels.field.Field` object for meridional velocity component
     :param fields: Dictionary of additional :class:`parcels.field.Field` objects
     """
-    def __init__(self, U, V, fields={}):
+    def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
         if U:
-            self.add_field(U)
+            self.add_field(U, 'U')
+            self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
         if V:
-            self.add_field(V)
-        UV = Field('UV', None)
-        UV.fieldset = self
-        self.UV = UV
+            self.add_field(V, 'V')
 
         # Add additional fields as attributes
-        for name, field in fields.items():
-            self.add_field(field)
+        if fields:
+            for name, field in fields.items():
+                self.add_field(field, name)
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
-                  allow_time_extrapolation=True, time_periodic=False, **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
                Note that at least a 'U' and 'V' numpy array need to be given
+
                1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
                   whichever is relevant for the dataset, use the flag transpose=True
                2. If data shape is [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim] or [tdim, zdim, ydim, xdim],
@@ -59,6 +58,7 @@ class FieldSet(object):
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
@@ -67,6 +67,9 @@ class FieldSet(object):
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
+
+            if allow_time_extrapolation is None:
+                allow_time_extrapolation = False if 'time' in dims else True
 
             lon = dims['lon']
             lat = dims['lat']
@@ -80,33 +83,62 @@ class FieldSet(object):
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
-    def add_field(self, field):
+    def add_field(self, field, name=None):
         """Add a :class:`parcels.field.Field` object to the FieldSet
 
         :param field: :class:`parcels.field.Field` object to be added
+        :param name: Name of the :class:`parcels.field.Field` object to be added
         """
-        setattr(self, field.name, field)
-        self.gridset.add_grid(field)
-        field.fieldset = self
+        name = field.name if name is None else name
+        if isinstance(field, list):
+            setattr(self, name, FieldList(field))
+            for fld in field:
+                self.gridset.add_grid(fld)
+                fld.fieldset = self
+        else:
+            setattr(self, name, field)
+            self.gridset.add_grid(field)
+            field.fieldset = self
+
+    def add_vector_field(self, vfield):
+        """Add a :class:`parcels.field.VectorField` object to the FieldSet
+
+        :param vfield: :class:`parcels.field.VectorField` object to be added
+        """
+        setattr(self, vfield.name, vfield)
+        vfield.fieldset = self
 
     def check_complete(self):
-        assert(self.U), ('U field is not defined')
-        assert(self.V), ('V field is not defined')
-        ugrid = self.U.grid
+        assert self.U, 'FieldSet does not have a Field named "U"'
+        assert self.V, 'FieldSet does not have a Field named "V"'
+        for attr, value in vars(self).items():
+            if type(value) is Field:
+                assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
+
         for g in self.gridset.grids:
             g.check_zonal_periodic()
-            if g is ugrid or len(g.time) == 1:
+            if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin, type(ugrid.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
             if g.time_origin:
-                g.time = g.time + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
+                g.time = g.time + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
                 if g.defer_load:
-                    g.time_full = g.time_full + (g.time_origin - ugrid.time_origin) / np.timedelta64(1, 's')
-                g.time_origin = ugrid.time_origin
+                    g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                g.time_origin = self.time_origin
+        if not hasattr(self, 'UV'):
+            if isinstance(self.U, FieldList):
+                self.add_vector_field(VectorFieldList('UV', self.U, self.V))
+            else:
+                self.add_vector_field(VectorField('UV', self.U, self.V))
+        if not hasattr(self, 'UVW') and hasattr(self, 'W'):
+            if isinstance(self.U, FieldList):
+                self.add_vector_field(VectorFieldList('UVW', self.U, self.V, self.W))
+            else:
+                self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices={},
-                    mesh='spherical', allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
+    def from_netcdf(cls, filenames, variables, dimensions, indices=None,
+                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -130,6 +162,7 @@ class FieldSet(object):
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
@@ -154,9 +187,9 @@ class FieldSet(object):
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             dims['data'] = name
-            inds = indices[var] if var in indices else indices
+            inds = indices[var] if (indices and var in indices) else indices
 
-            fields[var] = Field.from_netcdf(var, dims, paths, inds, mesh=mesh,
+            fields[var] = Field.from_netcdf(paths, var, dims, inds, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
@@ -164,17 +197,14 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     @classmethod
-    def from_nemo(cls, filenames, variables, dimensions, indices={}, mesh='spherical',
-                  allow_time_extrapolation=False, time_periodic=False, **kwargs):
+    def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
         Note that this assumes the following default values for the mesh_mask:
-        variables['mesh_mask'] = {'cosU': 'cosU',
-                                  'sinU': 'sinU',
-                                  'cosV': 'cosV',
-                                  'sinV': 'sinV'}
-        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                                   'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                                   'F': {'lon': 'glamf', 'lat': 'gphif'}}
+
+        variables['mesh_mask'] = {'cosU': 'cosU', 'sinU': 'sinU', 'cosV': 'cosV', 'sinV': 'sinV'}
+
+        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'}, 'V': {'lon': 'glamv', 'lat': 'gphiv'}, 'F': {'lon': 'glamf', 'lat': 'gphif'}}
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
@@ -197,48 +227,20 @@ class FieldSet(object):
                2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        if 'mesh_mask' not in variables:
-            variables['mesh_mask'] = {'cosU': 'cosU',
-                                      'sinU': 'sinU',
-                                      'cosV': 'cosV',
-                                      'sinV': 'sinV'}
-            dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'},
-                                       'V': {'lon': 'glamv', 'lat': 'gphiv'},
-                                       'F': {'lon': 'glamf', 'lat': 'gphif'}}
-
-        rotation_angles_filename = path.join(path.dirname(filenames['mesh_mask']), 'rotation_angles.nc').replace('/', '_')
-        compute_curvilinearGrid_rotationAngles(filenames['mesh_mask'], rotation_angles_filename,
-                                               variables=variables['mesh_mask'], dimensions=dimensions['mesh_mask'])
-
-        if 'cosU' not in filenames:
-            filenames['cosU'] = rotation_angles_filename
-            filenames['sinU'] = rotation_angles_filename
-            filenames['cosV'] = rotation_angles_filename
-            filenames['sinV'] = rotation_angles_filename
-
-            variables['cosU'] = 'cosU'
-            variables['sinU'] = 'sinU'
-            variables['cosV'] = 'cosV'
-            variables['sinV'] = 'sinV'
-
-            dimensions['cosU'] = {'lon': 'glamu', 'lat': 'gphiu'}
-            dimensions['sinU'] = {'lon': 'glamu', 'lat': 'gphiu'}
-            dimensions['cosV'] = {'lon': 'glamv', 'lat': 'gphiv'}
-            dimensions['sinV'] = {'lon': 'glamv', 'lat': 'gphiv'}
-
-        variables.pop('mesh_mask')
-        dimensions.pop('mesh_mask')
+        dimension_filename = filenames.pop('mesh_mask')
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method='cgrid_linear',
+                               dimension_filename=dimension_filename, **kwargs)
 
     @classmethod
-    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices={}, extra_fields={},
-                     allow_time_extrapolation=False, time_periodic=False, full_load=False, **kwargs):
+    def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
+                     allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -249,6 +251,7 @@ class FieldSet(object):
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
@@ -256,6 +259,9 @@ class FieldSet(object):
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
         """
+
+        if extra_fields is None:
+            extra_fields = {}
 
         dimensions = {}
         default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
@@ -295,14 +301,6 @@ class FieldSet(object):
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         """
-
-        # setting FieldSet constants for use in PeriodicBC kernel. Note using U-Field values
-        if zonal:
-            self.add_constant('halo_west', self.U.grid.lon[0])
-            self.add_constant('halo_east', self.U.grid.lon[-1])
-        if meridional:
-            self.add_constant('halo_south', self.U.grid.lat[0])
-            self.add_constant('halo_north', self.U.grid.lat[-1])
 
         for grid in self.gridset.grids:
             grid.add_periodic_halo(zonal, meridional, halosize)
@@ -348,7 +346,7 @@ class FieldSet(object):
             gnew.advanced = False
 
         for fnew in fieldset_new.fields:
-            if fnew.name == 'UV':
+            if isinstance(fnew, VectorField):
                 continue
             f = getattr(self, fnew.name)
             gnew = fnew.grid
@@ -368,14 +366,14 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load:
+            if isinstance(f, VectorField) or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.fields:
-            if f.name == 'UV' or not f.grid.defer_load:
+            if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
@@ -397,6 +395,8 @@ class FieldSet(object):
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 f.data[tindex, :] = f.reshape(data)[tindex, :]
+            if f.gradientx is not None and g.update_status in ['first_updated', 'updated']:
+                f.gradient(update=True)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
@@ -406,3 +406,60 @@ class FieldSet(object):
                 return nextTime
             else:
                 return time + nSteps * dt
+
+
+class FieldList(list):
+    def eval(self, time, x, y, z, applyConversion=True):
+        tmp = 0
+        for fld in self:
+            tmp += fld.eval(time, x, y, z, applyConversion)
+        return tmp
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
+
+
+class VectorFieldList(list):
+    """Class VectorFieldList stores 2 or 3 FieldLists which defines together a vector field.
+    This enables to interpolate them as one single vector FieldList in the kernels.
+
+    :param name: Name of the vector field
+    :param U: FieldList defining the zonal component
+    :param V: FieldList defining the meridional component
+    :param W: FieldList defining the vertical component (default: None)
+    """
+
+    def __init__(self, name, U, V, W=None):
+        self.name = name
+        self.U = U
+        self.V = V
+        self.W = W
+
+    def eval(self, time, x, y, z):
+        zonal = meridional = vertical = 0
+        if self.W is not None:
+            for (U, V, W) in zip(self.U, self.V, self.W):
+                vfld = VectorField(self.name, U, V, W)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+                vertical += tmp3
+            return (zonal, meridional, vertical)
+        else:
+            for (U, V) in zip(self.U, self.V):
+                vfld = VectorField(self.name, U, V)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+            return (zonal, meridional)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)

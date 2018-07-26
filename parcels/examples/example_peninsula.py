@@ -35,8 +35,6 @@ def peninsula_fieldset(xdim, ydim, mesh):
     to C-grid, we return NetCDF files that are on an A-grid.
     """
     # Set Parcels FieldSet variables
-    depth = np.zeros(1, dtype=np.float32)
-    time = np.zeros(1, dtype=np.float64)
 
     # Generate the original test setup on A-grid in km
     dx = 100. / xdim / 2.
@@ -79,7 +77,7 @@ def peninsula_fieldset(xdim, ydim, mesh):
         raise RuntimeError('Mesh %s is not a valid option' % mesh)
 
     data = {'U': U, 'V': V, 'P': P}
-    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    dimensions = {'lon': lon, 'lat': lat}
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 

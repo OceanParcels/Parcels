@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable
 from datetime import timedelta as delta
 from os import path
 from glob import glob
@@ -9,7 +9,7 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices={}, full_load=False):
+def set_globcurrent_fieldset(filename=None, indices=None, full_load=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
@@ -84,3 +84,31 @@ def test_globcurrent_time_extrapolation_error(mode):
                        time=fieldset.U.time[0]-delta(days=1).total_seconds())
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_variable_fromfield(mode, dt):
+    fieldset = set_globcurrent_fieldset()
+
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=fieldset.U)
+    time = fieldset.U.time[0] if dt > 0 else fieldset.U.time[-1]
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
+
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+
+
+@pytest.mark.parametrize('full_load', [True, False])
+def test_globcurrent_deferred_fieldset_gradient(full_load):
+    fieldset = set_globcurrent_fieldset(full_load=full_load)
+    (dU_dx, dU_dy) = fieldset.U.gradient()
+    fieldset.add_field(dU_dy)
+
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=25, lat=-35)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(days=1))
+
+    tdim = 365 if full_load else 3
+    assert(dU_dx.data.shape == (tdim, 41, 81))
+    assert(fieldset.dU_dy.data.shape == (tdim, 41, 81))
+    assert(dU_dx is fieldset.U.gradientx)

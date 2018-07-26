@@ -14,9 +14,8 @@ def fieldset(xdim=40, ydim=100):
     lon = np.linspace(0, 1, xdim, dtype=np.float32)
     lat = np.linspace(-60, 60, ydim, dtype=np.float32)
     depth = np.zeros(1, dtype=np.float32)
-    time = np.zeros(1, dtype=np.float64)
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
-    dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+    dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
     return FieldSet.from_data(data, dimensions)
 
 

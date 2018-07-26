@@ -1,5 +1,5 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4_3D, RectilinearZGrid
-from parcels.field import Field
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid
+from parcels.field import Field, VectorField
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -18,11 +18,13 @@ def generate_fieldset(xdim, ydim, zdim=1, tdim=1):
     time = np.zeros(tdim, dtype=np.float64)
     if zdim == 1 and tdim == 1:
         U, V = np.meshgrid(lon, lat)
+        dimensions = {'lat': lat, 'lon': lon}
     else:
         U = np.ones((tdim, zdim, ydim, xdim))
         V = np.ones((tdim, zdim, ydim, xdim))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
-    dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+
     return (data, dimensions)
 
 
@@ -175,8 +177,8 @@ def test_fieldset_gradient(mesh):
         for y in range(np_dFdx.shape[0]):
             np_dFdx[:, y] /= math.cos(fieldset.V.grid.lat[y] * math.pi / 180.)
 
-    assert np.allclose(dFdx, np_dFdx, rtol=5e-2)  # Field gradient dx.
-    assert np.allclose(dFdy, np_dFdy, rtol=5e-2)  # Field gradient dy.
+    assert np.allclose(dFdx.data, np_dFdx, rtol=5e-2)  # Field gradient dx.
+    assert np.allclose(dFdy.data, np_dFdy, rtol=5e-2)  # Field gradient dy.
 
 
 def addConst(particle, fieldset, time, dt):
@@ -197,6 +199,32 @@ def test_fieldset_constant(mode):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
     assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('swapUV', [False, True])
+def test_vector_fields(mode, swapUV):
+    lon = np.linspace(0., 10., 12, dtype=np.float32)
+    lat = np.linspace(0., 10., 10, dtype=np.float32)
+    U = np.ones((10, 12), dtype=np.float32)
+    V = np.zeros((10, 12), dtype=np.float32)
+    data = {'U': U, 'V': V}
+    dimensions = {'U': {'lat': lat, 'lon': lon},
+                  'V': {'lat': lat, 'lon': lon}}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    if swapUV:  # we test that we can freely edit whatever UV field
+        UV = VectorField('UV', fieldset.V, fieldset.U)
+        fieldset.add_vector_field(UV)
+
+    pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
+                                 start=(0.5, 0.5), finish=(0.5, 0.5))
+    pset.execute(AdvectionRK4, dt=1, runtime=1)
+    if swapUV:
+        assert abs(pset[0].lon - .5) < 1e-9
+        assert abs(pset[0].lat - 1.5) < 1e-9
+    else:
+        assert abs(pset[0].lon - 1.5) < 1e-9
+        assert abs(pset[0].lat - .5) < 1e-9
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -222,7 +250,7 @@ def test_periodic(mode, time_periodic, dt_sign):
 
     data = {'U': U, 'V': V, 'W': W, 'temp': temp}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
     def sampleTemp(particle, fieldset, time, dt):
         # Note that fieldset.temp is interpolated at time=time+dt.
