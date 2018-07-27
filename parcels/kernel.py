@@ -89,19 +89,20 @@ class Kernel(object):
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
             kernelgen = KernelGenerator(fieldset, ptype)
-            self.field_args = kernelgen.field_args
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
                                               self.funcvars)
             self.field_args = kernelgen.field_args
-            if 'UV' in self.field_args:
-                fieldset = self.field_args['UV'].fieldset
-                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
-                    if f not in self.field_args:
+            self.vector_field_args = kernelgen.vector_field_args
+            fieldset = self.fieldset
+            for fname in self.vector_field_args:
+                f = getattr(fieldset, fname)
+                Wname = f.W.name if f.W else 'not_defined'
+                for sF in [f.U.name, f.V.name, Wname, 'cosU', 'sinU', 'cosV', 'sinV']:
+                    if sF not in self.field_args:
                         try:
-                            self.field_args[f] = getattr(fieldset, f)
+                            self.field_args[sF] = getattr(fieldset, sF)
                         except:
                             continue
-                del self.field_args['UV']
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
@@ -187,7 +188,12 @@ class Kernel(object):
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
+
+        # back up variables in case of ErrorCode.Repeat
+        p_var_back = {}
+
         for p in pset.particles:
+            ptype = p.getPType()
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
             if (sign_end_part != sign_dt) and (dt != 0):
@@ -196,6 +202,8 @@ class Kernel(object):
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
             while dt_pos > 1e-6 or dt == 0:
+                for var in ptype.variables:
+                    p_var_back[var.name] = getattr(p, var.name)
                 try:
                     res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
                 except FieldSamplingError as fse:
@@ -219,8 +227,11 @@ class Kernel(object):
                     continue
                 elif res == ErrorCode.Repeat:
                     # Try again without time update
+                    for var in ptype.variables:
+                        if var.name not in ['dt', 'state']:
+                            setattr(p, var.name, p_var_back[var.name])
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    continue
+                    break
                 else:
                     break  # Failure - stop time loop
 
@@ -249,15 +260,18 @@ class Kernel(object):
         # Remove all particles that signalled deletion
         remove_deleted(pset)
 
-        # Idenitify particles that threw errors
+        # Identify particles that threw errors
         error_particles = [p for p in pset.particles
-                           if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
+                           if p.state != ErrorCode.Success]
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
-                recovery_kernel = recovery_map[p.state]
-                p.state = ErrorCode.Success
-                recovery_kernel(p, self.fieldset, p.time, dt)
+                if p.state == ErrorCode.Repeat:
+                    p.state = ErrorCode.Success
+                else:
+                    recovery_kernel = recovery_map[p.state]
+                    p.state = ErrorCode.Success
+                    recovery_kernel(p, self.fieldset, p.time, dt)
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
@@ -269,7 +283,7 @@ class Kernel(object):
                 self.execute_python(pset, endtime, dt)
 
             error_particles = [p for p in pset.particles
-                               if p.state not in [ErrorCode.Success, ErrorCode.Repeat]]
+                               if p.state != ErrorCode.Success]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

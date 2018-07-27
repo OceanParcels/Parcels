@@ -1,4 +1,5 @@
-from parcels.field import Field
+from parcels.field import Field, VectorField
+from parcels.fieldset import FieldList, VectorFieldList
 from parcels.loggers import logger
 import ast
 import cgen as c
@@ -6,7 +7,6 @@ from collections import OrderedDict
 import math
 import numpy as np
 import random
-from .grid import GridCode
 
 
 class IntrinsicNode(ast.AST):
@@ -20,6 +20,15 @@ class FieldSetNode(IntrinsicNode):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
                              ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), VectorFieldList):
+            return VectorFieldListNode(getattr(self.obj, attr),
+                                       ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), FieldList) or isinstance(getattr(self.obj, attr), list):
+            return FieldListNode(getattr(self.obj, attr),
+                                 ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), VectorField):
+            return VectorFieldNode(getattr(self.obj, attr),
+                                   ccode="%s->%s" % (self.ccode, attr))
         else:
             return ConstNode(getattr(self.obj, attr),
                              ccode="%s" % (attr))
@@ -35,7 +44,46 @@ class FieldEvalNode(IntrinsicNode):
         self.field = field
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
+
+
+class VectorFieldNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return VectorFieldEvalNode(self.obj, attr)
+
+
+class VectorFieldEvalNode(IntrinsicNode):
+    def __init__(self, field, args, var, var2, var3):
+        self.field = field
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
+        self.var3 = var3  # third variable for UVW interpolation
+
+
+class FieldListNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return FieldListEvalNode(self.obj, attr)
+
+
+class FieldListEvalNode(IntrinsicNode):
+    def __init__(self, fields, args, var):
+        self.fields = fields
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
+
+
+class VectorFieldListNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return VectorFieldListEvalNode(self.obj, attr)
+
+
+class VectorFieldListEvalNode(IntrinsicNode):
+    def __init__(self, field, args, var, var2, var3):
+        self.field = field
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
+        self.var2 = var2  # second variable for UV interpolation
+        self.var3 = var3  # third variable for UVW interpolation
 
 
 class ConstNode(IntrinsicNode):
@@ -162,13 +210,40 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
         # If we encounter field evaluation we replace it with a
         # temporary variable and put the evaluation call on the stack.
-        if isinstance(node.value, FieldNode):
-            tmp = self.get_tmp()
-            tmp2 = self.get_tmp() if node.value.obj.name == 'UV' else None
+        if isinstance(node.value, FieldListNode):
+            tmp = [self.get_tmp() for _ in node.value.obj]
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp, tmp2)]
+            self.stmt_stack += [FieldListEvalNode(node.value, node.slice, tmp)]
             # .. and return the name of the temporary that will be populated
-            return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load()) if tmp2 else ast.Name(id=tmp)
+            return ast.Name(id='+'.join(tmp))
+        elif isinstance(node.value, VectorFieldListNode):
+            tmp = [self.get_tmp() for _ in node.value.obj.U]
+            tmp2 = [self.get_tmp() for _ in node.value.obj.U]
+            tmp3 = [self.get_tmp() if node.value.obj.W else None for _ in node.value.obj.U]
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [VectorFieldListEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
+            # .. and return the name of the temporary that will be populated
+            if all(tmp3):
+                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2)), ast.Name(id='+'.join(tmp3))], ast.Load())
+            else:
+                return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2))], ast.Load())
+        elif isinstance(node.value, FieldNode):
+            tmp = self.get_tmp()
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [FieldEvalNode(node.value, node.slice, tmp)]
+            # .. and return the name of the temporary that will be populated
+            return ast.Name(id=tmp)
+        elif isinstance(node.value, VectorFieldNode):
+            tmp = self.get_tmp()
+            tmp2 = self.get_tmp()
+            tmp3 = self.get_tmp() if node.value.obj.W else None
+            # Insert placeholder node for field eval ...
+            self.stmt_stack += [VectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
+            # .. and return the name of the temporary that will be populated
+            if tmp3:
+                return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
+            else:
+                return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load())
         else:
             return node
 
@@ -235,8 +310,7 @@ class KernelGenerator(ast.NodeVisitor):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = OrderedDict()
-        # Hack alert: JIT requires U field to update fieldset indexes
-        self.field_args['U'] = fieldset.U
+        self.vector_field_args = OrderedDict()
         self.const_args = OrderedDict()
 
     def generate(self, py_ast, funcvars):
@@ -283,19 +357,21 @@ class KernelGenerator(ast.NodeVisitor):
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
                 c.Value("double", "time"), c.Value("float", "dt")]
         for field_name, field in self.field_args.items():
-            if field_name != 'UV':
-                args += [c.Pointer(c.Value("CField", "%s" % field_name))]
-        for field_name, field in self.field_args.items():
-            if field_name == 'UV':
-                fieldset = field.fieldset
-                for f in ['U', 'V', 'cosU', 'sinU', 'cosV', 'sinV']:
-                    try:
-                        getattr(fieldset, f)
-                        if f not in self.field_args:
-                            args += [c.Pointer(c.Value("CField", "%s" % f))]
-                    except:
-                        if fieldset.U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
-                            raise RuntimeError("cosU, sinU, cosV and sinV fields must be defined for a proper rotation of U, V fields in curvilinear grids")
+            args += [c.Pointer(c.Value("CField", "%s" % field_name))]
+        for field_name, field in self.vector_field_args.items():
+            fieldset = field.fieldset
+            Wname = field.W.name if field.W else 'not_defined'
+            for f in [field.U.name, field.V.name, Wname]:
+                try:
+                    # Next line will break for example if field.U was created but not added to the fieldset
+                    getattr(fieldset, f)
+                    if f not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f))]
+                except:
+                    if f != Wname:
+                        raise RuntimeError("Field %s needed by a VectorField but it does not exist" % f)
+                    else:
+                        pass
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
@@ -343,7 +419,7 @@ class KernelGenerator(ast.NodeVisitor):
                 if a.ccode == 'pointer_args':
                     pointer_args = True
                     continue
-                if isinstance(a, FieldNode):
+                if isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
                     a.ccode = a.obj.name
                 elif isinstance(a, ParticleNode):
                     continue
@@ -445,7 +521,7 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Subscript(self, node):
         self.visit(node.value)
         self.visit(node.slice)
-        if isinstance(node.value, FieldNode):
+        if isinstance(node.value, FieldNode) or isinstance(node.value, VectorFieldNode):
             node.ccode = node.value.__getitem__(node.slice.ccode).ccode
         elif isinstance(node.value, IntrinsicNode):
             raise NotImplementedError("Subscript not implemented for object type %s"
@@ -539,24 +615,89 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
+    def visit_FieldListNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        for fld in node.obj:
+            self.field_args[fld.name] = fld
+
+    def visit_VectorFieldNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        self.vector_field_args[node.obj.name] = node.obj
+
+    def visit_VectorFieldListNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        for fld in node.obj.U:
+            self.field_args[fld.name] = fld
+        for fld in node.obj.V:
+            self.field_args[fld.name] = fld
+        if hasattr(node.obj, 'W') and node.obj.W:
+            for fld in node.obj.W:
+                self.field_args[fld.name] = fld
+
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
 
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-        if node.var2:  # evaluation UV Field
-            ccode_eval = node.field.obj.ccode_evalUV(node.var, node.var2, *node.args.ccode)
-            ccode_conv1 = node.field.obj.fieldset.U.ccode_convert(*node.args.ccode)
-            ccode_conv2 = node.field.obj.fieldset.V.ccode_convert(*node.args.ccode)
-            conv_stat = c.Block([c.Statement("%s *= %s" % (node.var, ccode_conv1)),
-                                 c.Statement("%s *= %s" % (node.var2, ccode_conv2))])
-        else:
-            ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
-            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
-            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+        conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
         node.ccode = c.Block([c.Assign("err", ccode_eval),
                               conv_stat, c.Statement("CHECKERROR(err)")])
+
+    def visit_VectorFieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
+                                               node.field.obj.U, node.field.obj.V, node.field.obj.W,
+                                               *node.args.ccode)
+        if node.field.obj.U.interp_method != 'cgrid_linear':
+            ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
+            statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                          c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+        else:
+            statements = []
+        if node.var3:
+            ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
+            statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
+        conv_stat = c.Block(statements)
+        node.ccode = c.Block([c.Assign("err", ccode_eval),
+                              conv_stat, c.Statement("CHECKERROR(err)")])
+
+    def visit_FieldListEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        for fld, var in zip(node.fields.obj, node.var):
+            ccode_eval = fld.ccode_eval(var, *node.args.ccode)
+            ccode_conv = fld.ccode_convert(*node.args.ccode)
+            conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKERROR(err)")]
+        node.ccode = c.Block(cstat)
+
+    def visit_VectorFieldListEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        cstat = []
+        if node.field.obj.W:
+            Wlist = node.field.obj.W
+        else:
+            Wlist = [None] * len(node.field.obj.U)
+        for U, V, W, var, var2, var3 in zip(node.field.obj.U, node.field.obj.V, Wlist, node.var, node.var2, node.var3):
+            vfld = VectorField(node.field.obj.name, U, V, W)
+            ccode_eval = vfld.ccode_eval(var, var2, var3, U, V, W, *node.args.ccode)
+            ccode_conv1 = U.ccode_convert(*node.args.ccode)
+            ccode_conv2 = V.ccode_convert(*node.args.ccode)
+            statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
+                          c.Statement("%s *= %s" % (var2, ccode_conv2))]
+            if var3:
+                ccode_conv3 = W.ccode_convert(*node.args.ccode)
+                statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
+            conv_stat = c.Block(statements)
+            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKERROR(err)")]
+        node.ccode = c.Block(cstat)
 
     def visit_Return(self, node):
         self.visit(node.value)
@@ -613,6 +754,30 @@ class LoopGenerator(object):
 
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
+        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
+                c.Pointer(c.Value(self.ptype.name, "particle"))]
+        p_back_set_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "set_particle_backup"),
+                                                         spec='inline')), args)
+        body = []
+        for v in self.ptype.variables:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+                body += [c.Assign(("particle_backup->%s" % v.name), ("particle->%s" % v.name))]
+        p_back_set_body = c.Block(body)
+        p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
+        ccode += [p_back_set]
+
+        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
+                c.Pointer(c.Value(self.ptype.name, "particle"))]
+        p_back_get_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "get_particle_backup"),
+                                                         spec='inline')), args)
+        body = []
+        for v in self.ptype.variables:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+                body += [c.Assign(("particle->%s" % v.name), ("particle_backup->%s" % v.name))]
+        p_back_get_body = c.Block(body)
+        p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
+        ccode += [p_back_get]
+
         if c_include:
             ccode += [c_include]
 
@@ -631,24 +796,27 @@ class LoopGenerator(object):
                               + list(const_args.keys()))
         # Inner loop nest for forward runs
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
+        particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
-        body = [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
+        body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
+        body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
                                                  dt_pos, dt_0_break, c.Statement("continue")]))]
-        body += [c.If("res == REPEAT", c.Block([dt_pos, c.Statement("continue")]),
-                      c.Statement("break"))]
+        body += [c.If("res == REPEAT",
+                 c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
+                         dt_pos, c.Statement("break")]), c.Statement("break"))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
                          c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
-                         sign_dt, part_loop])
+                         sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)

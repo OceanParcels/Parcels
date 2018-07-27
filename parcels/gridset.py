@@ -35,3 +35,15 @@ class GridSet(object):
             self.grids.append(grid)
             self.size += 1
         field.igrid = self.grids.index(field.grid)
+
+    def dimrange(self, dim):
+        """Returns maximum value of a dimension (lon, lat, depth or time)
+           on 'left' side and minimum value on 'right' side for all grids
+           in a gridset. Useful for finding e.g. longitude range that
+           overlaps on all grids in a gridset"""
+
+        maxleft, minright = (0, np.infty)
+        for g in self.grids:
+            maxleft = max(maxleft, getattr(g, dim)[0])
+            minright = min(minright, getattr(g, dim)[-1])
+        return maxleft, minright
