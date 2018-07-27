@@ -11,7 +11,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_fieldset(xdim, ydim, mesh):
+def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
     """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
@@ -23,6 +23,7 @@ def peninsula_fieldset(xdim, ydim, mesh):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+    :param grid_type: Option whether grid is either Arakawa A (default) or C
 
     The original test description can be found in Fig. 2.2.3 in:
     North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
@@ -31,23 +32,14 @@ def peninsula_fieldset(xdim, ydim, mesh):
     ICES Cooperative Research Report No. 295. 111 pp.
     http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
 
-    To avoid accuracy problems with interpolation from A-grid
-    to C-grid, we return NetCDF files that are on an A-grid.
     """
     # Set Parcels FieldSet variables
 
-    # Generate the original test setup on A-grid in km
-    dx = 100. / xdim / 2.
-    dy = 50. / ydim / 2.
+    # Generate the original test setup for pressure field in km
+    dx = 100. / xdim
+    dy = 50. / ydim
     La = np.linspace(dx, 100.-dx, xdim, dtype=np.float32)
     Wa = np.linspace(dy, 50.-dy, ydim, dtype=np.float32)
-
-    # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
-    # surface height) all on A-grid
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
-    W = np.zeros((ydim, xdim), dtype=np.float32)
-    P = np.zeros((ydim, xdim), dtype=np.float32)
 
     u0 = 1
     x0 = 50.
@@ -56,14 +48,26 @@ def peninsula_fieldset(xdim, ydim, mesh):
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
     P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
-    U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-    V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+
+    if grid_type is 'A':
+        U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+        V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+    elif grid_type is 'C':
+        U = np.zeros(P.shape)
+        V = np.zeros(P.shape)
+        V[:, 1:-1] = (P[:, 2:] - P[:, :-2]) / (2 * dx)
+        V[:, 0] = (P[:, 1] - P[:, 0]) / dx
+        V[:, -1] = (P[:, -1] - P[:, -2]) / dx
+        U[1:-1, :] = -(P[2:, :] - P[:-2, :]) / (2 * dy)
+        U[0, :] = -(P[1, :] - P[0, :]) / dy
+        U[-1, :] = -(P[-1, :] - P[-2, :]) / dy
+    else:
+        raise RuntimeError('Grid_type %s is not a valid option' % grid_type)
 
     # Set land points to NaN
     landpoints = P >= 0.
     U[landpoints] = np.nan
     V[landpoints] = np.nan
-    W[landpoints] = np.nan
 
     if mesh == 'spherical':
         # Convert from km to lat/lon
@@ -147,11 +151,11 @@ def test_peninsula_fieldset(mode, mesh):
     assert(err_smpl <= 1.e-3).all()
 
 
-@pytest.mark.parametrize('grid_type', ['A', pytest.mark.xfail(reason='C grid not implemented')('C')])
-def test_peninsula_fieldset_AnalyticalAdvection(grid_type):
-    """Execute peninsula test using Analytical Advection on A grid"""
-    fieldset = peninsula_fieldset(100, 50, 'flat')
-    fieldset.grid_type = grid_type
+def test_peninsula_fieldset_AnalyticalAdvection():
+    """Execute peninsula test using Analytical Advection on C grid"""
+    fieldset = peninsula_fieldset(100, 50, 'flat', grid_type='C')
+    fieldset.U.interp_method = 'cgrid_linear'
+    fieldset.V.interp_method = 'cgrid_linear'
     pset = pensinsula_example(fieldset, npart=10, mode='scipy', method=AdvectionAnalytical)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
