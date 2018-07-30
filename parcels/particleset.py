@@ -440,8 +440,7 @@ class ParticleSet(object):
             lon = lon[lonW:lonE]
             lat = lat[latS:latN]
 
-            plt.figure()
-            ax = plt.axes(projection=cartopy.crs.PlateCarree())
+            fig, ax = plt.subplots(1, 1, subplot_kw={'projection': cartopy.crs.PlateCarree()})
             ax.gridlines()
 
             if land:
@@ -454,13 +453,26 @@ class ParticleSet(object):
                 V = self.fieldset.V.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
                 speed = np.sqrt(U**2 + V**2)
                 x, y = np.meshgrid(lon, lat)
-                plt.quiver(x, y, U/speed, V/speed, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
+                fld = ax.quiver(x, y, U/speed, V/speed, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
+
+                cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
+                fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
+                plt.colorbar(fld, cax=cbar_ax)
+
+                def resize_colorbar(event):
+                    plt.draw()
+                    posn = ax.get_position()
+                    cbar_ax.set_position([posn.x0 + posn.width + 0.01, posn.y0, 0.04, posn.height])
+
+                fig.canvas.mpl_connect('resize_event', resize_colorbar)
+                resize_colorbar(None)
 
             elif field is not None:
                 logger.warning('Plotting of both a field and land=True is not supported in this version of Parcels')
+
             # plotting particle data
             if particles:
-                plt.scatter(plon, plat, s=10, color='black')
+                ax.scatter(plon, plat, s=20, color='black')
 
         if not self.time_origin:
             timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
@@ -472,7 +484,7 @@ class ParticleSet(object):
             if field is None:
                 plt.title('Particles' + timestr)
             elif field is 'vector':
-                plt.title('Particles and velocity field' + timestr)
+                ax.set_title('Particles and velocity field' + timestr)
             else:
                 plt.title('Particles and '+field.name + timestr)
         else:
