@@ -666,7 +666,7 @@ class Field(object):
     def interpolator2D(self, ti, z, y, x):
         xi = 0
         yi = 0
-        (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
+        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -678,7 +678,7 @@ class Field(object):
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
         else:
-            raise RuntimeError(self.interp_method+"is not implemented for 2D grids")
+            raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
     def interpolator3D(self, ti, z, y, x, time):
         xi = int(self.grid.xdim / 2)
@@ -689,7 +689,7 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'c_grid_linear':
+        elif self.interp_method is 'cgrid_linear':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
@@ -707,7 +707,7 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+            raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, ti, time):
         """Calculate the data of a field between two snapshots,
