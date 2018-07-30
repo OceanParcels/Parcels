@@ -448,12 +448,17 @@ class ParticleSet(object):
                 ax.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
                 ax.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
             if field is 'vector':
-                # formating velocity data for quiver plotting
+                # formatting velocity data for quiver plotting
                 U = self.fieldset.U.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
                 V = self.fieldset.V.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
                 speed = np.sqrt(U**2 + V**2)
                 x, y = np.meshgrid(lon, lat)
-                fld = ax.quiver(x, y, U/speed, V/speed, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
+
+                nonzerospd = speed != 0
+                u, v = (np.zeros_like(U) * np.nan, np.zeros_like(U) * np.nan)
+                np.place(u, nonzerospd, U[nonzerospd] / speed[nonzerospd])
+                np.place(v, nonzerospd, V[nonzerospd] / speed[nonzerospd])
+                fld = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
 
                 cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
                 fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
@@ -489,7 +494,7 @@ class ParticleSet(object):
                 plt.title('Particles and '+field.name + timestr)
         else:
             if field is 'vector':
-                plt.title('Velocity field' + timestr)
+                ax.title('Velocity field' + timestr)
             else:
                 plt.title(field.name + timestr)
 
