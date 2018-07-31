@@ -1,12 +1,10 @@
 from parcels.kernel import Kernel
-from parcels.field import Field, UnitConverter
 from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.loggers import logger
 import numpy as np
-import bisect
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
@@ -359,11 +357,11 @@ class ParticleSet(object):
         if output_file:
             output_file.write(self, time)
 
-    def show(self, particles=True, show_time=None, field=None, domain=None,
+    def show(self, with_particles=True, show_time=None, field=None, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
         """Method to 'show' a Parcels ParticleSet
 
-        :param particles: Boolean whether to show particles
+        :param with_particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
@@ -372,139 +370,9 @@ class ParticleSet(object):
         :param vmax: maximum colour scale (only in single-plot mode)
         :param savefile: Name of a file to save the plot to
         """
-        try:
-            import matplotlib.pyplot as plt
-        except:
-            logger.info("Visualisation is not possible. Matplotlib not found.")
-            return
-        try:
-            import cartopy
-        except:
-            cartopy = None
-
-        plon = np.array([p.lon for p in self])
-        plat = np.array([p.lat for p in self])
-        show_time = self[0].time if show_time is None else show_time
-        if isinstance(show_time, datetime):
-            show_time = np.datetime64(show_time)
-        if isinstance(show_time, np.datetime64):
-            if not self.time_origin:
-                raise NotImplementedError('If fieldset.time_origin is not a date, showtime cannot be a date in particleset.show()')
-            show_time = (show_time - self.time_origin) / np.timedelta64(1, 's')
-        if isinstance(show_time, delta):
-            show_time = show_time.total_seconds()
-        if np.isnan(show_time):
-            show_time, _ = self.fieldset.gridset.dimrange('time')
-        if domain is not None:
-            def nearest_index(array, value):
-                """returns index of the nearest value in array using O(log n) bisection method"""
-                y = bisect.bisect(array, value)
-                if y == len(array):
-                    return y - 1
-                elif (abs(array[y - 1] - value) < abs(array[y] - value)):
-                    return y - 1
-                else:
-                    return y
-
-            latN = nearest_index(self.fieldset.U.lat, domain[0])
-            latS = nearest_index(self.fieldset.U.lat, domain[1])
-            lonE = nearest_index(self.fieldset.U.lon, domain[2])
-            lonW = nearest_index(self.fieldset.U.lon, domain[3])
-        else:
-            latN, latS, lonE, lonW = (-1, 0, -1, 0)
-        if field is not 'vector' and not land:
-            plt.ion()
-            plt.clf()
-            if particles:
-                plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
-            if field is None:
-                axes = plt.gca()
-                axes.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
-                axes.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
-            else:
-                if not isinstance(field, Field):
-                    field = getattr(self.fieldset, field)
-                field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
-            xlbl = 'Zonal distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Longitude [degrees]'
-            ylbl = 'Meridional distance [m]' if type(self.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
-            plt.xlabel(xlbl)
-            plt.ylabel(ylbl)
-        elif cartopy is None:
-            logger.info("Visualisation is not possible. Cartopy not found.")
-        else:
-            self.fieldset.computeTimeChunk(show_time, 1)
-            (idx, periods) = self.fieldset.U.time_index(show_time)
-            show_time -= periods*(self.fieldset.U.time[-1]-self.fieldset.U.time[0])
-            lon = self.fieldset.U.lon
-            lat = self.fieldset.U.lat
-            lon = lon[lonW:lonE]
-            lat = lat[latS:latN]
-
-            fig, ax = plt.subplots(1, 1, subplot_kw={'projection': cartopy.crs.PlateCarree()})
-            ax.gridlines()
-
-            if land:
-                ax.add_feature(cartopy.feature.LAND, zorder=0, edgecolor='black')
-                ax.set_xlim([self.fieldset.U.lon[lonW], self.fieldset.U.lon[lonE]])
-                ax.set_ylim([self.fieldset.U.lat[latS], self.fieldset.U.lat[latN]])
-            if field is 'vector':
-                # formatting velocity data for quiver plotting
-                U = self.fieldset.U.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
-                V = self.fieldset.V.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
-                speed = np.sqrt(U**2 + V**2)
-                x, y = np.meshgrid(lon, lat)
-
-                nonzerospd = speed != 0
-                u, v = (np.zeros_like(U) * np.nan, np.zeros_like(U) * np.nan)
-                np.place(u, nonzerospd, U[nonzerospd] / speed[nonzerospd])
-                np.place(v, nonzerospd, V[nonzerospd] / speed[nonzerospd])
-                fld = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
-
-                cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
-                fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
-                plt.colorbar(fld, cax=cbar_ax)
-
-                def resize_colorbar(event):
-                    plt.draw()
-                    posn = ax.get_position()
-                    cbar_ax.set_position([posn.x0 + posn.width + 0.01, posn.y0, 0.04, posn.height])
-
-                fig.canvas.mpl_connect('resize_event', resize_colorbar)
-                resize_colorbar(None)
-
-            elif field is not None:
-                logger.warning('Plotting of both a field and land=True is not supported in this version of Parcels')
-
-            # plotting particle data
-            if particles:
-                ax.scatter(plon, plat, s=20, color='black')
-
-        if not self.time_origin:
-            timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
-        else:
-            date_str = str(self.time_origin + np.timedelta64(int(show_time), 's'))
-            timestr = ' on ' + date_str[:10] + ' ' + date_str[11:19]
-
-        if particles:
-            if field is None:
-                plt.title('Particles' + timestr)
-            elif field is 'vector':
-                ax.set_title('Particles and velocity field' + timestr)
-            else:
-                plt.title('Particles and '+field.name + timestr)
-        else:
-            if field is 'vector':
-                ax.title('Velocity field' + timestr)
-            else:
-                plt.title(field.name + timestr)
-
-        if savefile is None:
-            plt.show()
-            plt.pause(0.0001)
-        else:
-            plt.savefig(savefile)
-            logger.info('Plot saved to '+savefile+'.png')
-            plt.close()
+        from plotting import plotparticles
+        plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
+                      land=land, vmin=vmin, vmax=vmax, savefile=savefile)
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,

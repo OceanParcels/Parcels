@@ -830,7 +830,7 @@ class Field(object):
         return cstruct
 
     def show(self, with_particles=False, animation=False, show_time=None, vmin=None, vmax=None):
-        """Method to 'show' a :class:`Field` using matplotlib
+        """Method to 'show' a Parcels Field
 
         :param with_particles: Boolean whether particles are also plotted on Field
         :param animation: Boolean whether result is a single plot, or an animation
@@ -838,50 +838,9 @@ class Field(object):
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
         """
-        try:
-            import matplotlib.pyplot as plt
-            import matplotlib.animation as animation_plt
-            from matplotlib import rc
-        except:
-            logger.info("Visualisation is not possible. Matplotlib not found.")
-            return
-
-        if with_particles or (not animation):
-            show_time = self.grid.time[0] if show_time is None else show_time
-            if self.grid.defer_load:
-                self.fieldset.computeTimeChunk(show_time, 1)
-            (idx, periods) = self.time_index(show_time)
-            show_time -= periods*(self.grid.time[-1]-self.grid.time[0])
-            if self.grid.time.size > 1:
-                data = np.squeeze(self.temporal_interpolate_fullfield(idx, show_time))
-            else:
-                data = np.squeeze(self.data)
-
-            vmin = data.min() if vmin is None else vmin
-            vmax = data.max() if vmax is None else vmax
-            cs = plt.contourf(self.grid.lon, self.grid.lat, data,
-                              levels=np.linspace(vmin, vmax, 256))
-            cs.cmap.set_over('k')
-            cs.cmap.set_under('w')
-            cs.set_clim(vmin, vmax)
-            plt.colorbar(cs)
-            if not with_particles:
-                plt.show()
-        else:
-            fig = plt.figure()
-            ax = plt.axes(xlim=(self.grid.lon[0], self.grid.lon[-1]), ylim=(self.grid.lat[0], self.grid.lat[-1]))
-
-            def animate(i):
-                data = np.squeeze(self.data[i, :, :])
-                cont = ax.contourf(self.grid.lon, self.grid.lat, data,
-                                   levels=np.linspace(data.min(), data.max(), 256))
-                return cont
-
-            rc('animation', html='html5')
-            anim = animation_plt.FuncAnimation(fig, animate, frames=np.arange(1, self.data.shape[0]),
-                                               interval=100, blit=False)
-            plt.close()
-            return anim
+        from plotting import plotfield
+        plotfield(self, with_particles=with_particles, animation=animation, show_time=show_time,
+                  vmin=vmin, vmax=vmax)
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
