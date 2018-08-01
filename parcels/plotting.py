@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, UnitConverter
+from parcels.field import Field, VectorField
 from parcels.loggers import logger
 import numpy as np
 import bisect
@@ -35,8 +35,10 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         show_time, _ = particles.fieldset.gridset.dimrange('time')
 
     if field is None:
-        geomap = False if type(particles.fieldset.U.units) is UnitConverter else True
+        geomap = True if particles.fieldset.U.grid.mesh == 'spherical' else False
         plt, fig, ax = create_parcelsfig_axis(geomap, land)
+        if plt is None:
+            return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U, show_time))
         latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
         ax.set_xlim(particles.fieldset.U.grid.lon[lonW], particles.fieldset.U.grid.lon[lonE])
@@ -49,6 +51,8 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
 
         plt, fig, ax = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
                                  land=land, vmin=vmin, vmax=vmax, savefile=None, titlestr='Particles and ')
+        if plt is None:
+            return  # creating axes was not possible
 
     if with_particles:
         plon = np.array([p.lon for p in particles])
@@ -80,17 +84,19 @@ def plotfield(field, show_time=None, domain=None, land=None,
     """
 
     if type(field) is VectorField:
-        geomap = False if type(field.U.units) is UnitConverter else True
+        geomap = True if field.U.grid.mesh == 'spherical' else False
         field = [field.U, field.V]
         plottype = 'vector'
     elif type(field) is Field:
-        geomap = False if type(field.units) is UnitConverter else True
+        geomap = True if field.grid.mesh == 'spherical' else False
         field = [field]
         plottype = 'scalar'
     else:
         raise RuntimeError('field needs to be a Field or VectorField object')
 
     plt, fig, ax = create_parcelsfig_axis(geomap, land)
+    if plt is None:
+        return None, None, None # creating axes was not possible
 
     data = {}
     for i, fld in enumerate(field):
@@ -168,14 +174,14 @@ def create_parcelsfig_axis(geomap, land=None):
         import matplotlib.pyplot as plt
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
-        return
+        return  None, None, None  # creating axes was not possible
 
     if geomap:
         try:
             import cartopy
         except:
-            logger.info("Visualisation of field with geographic coordinates not possible. Cartopy not found.")
-            return
+            logger.info("Visualisation of field with geographic coordinates is not possible. Cartopy not found.")
+            return None, None, None  # creating axes was not possible
 
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': cartopy.crs.PlateCarree()})
         gl = ax.gridlines(draw_labels=True)
