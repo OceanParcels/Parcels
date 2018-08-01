@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None,
-                  land=False, vmin=None, vmax=None, savefile=None):
+                  land=None, vmin=None, vmax=None, savefile=None, animation=False):
     """Function to plot a Parcels ParticleSet
 
     :param show_time: Time at which to show the ParticleSet
@@ -18,6 +18,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     :param vmin: minimum colour scale (only in single-plot mode)
     :param vmax: maximum colour scale (only in single-plot mode)
     :param savefile: Name of a file to save the plot to
+    :param animation: Boolean whether result is a single plot, or an animation
     """
 
     show_time = particles[0].time if show_time is None else show_time
@@ -32,8 +33,6 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         show_time = show_time.total_seconds()
     if np.isnan(show_time):
         show_time, _ = particles.fieldset.gridset.dimrange('time')
-
-    animation = False# TODO fix
 
     if field is None:
         geomap = False if type(particles.fieldset.U.units) is UnitConverter else True
@@ -56,25 +55,28 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plat = np.array([p.lat for p in particles])
         ax.scatter(plon, plat, s=20, color='black', zorder=20)
 
-    if savefile is None:
-        plt.show()
+    if animation:
+        plt.draw()
         plt.pause(0.0001)
+    elif savefile is None:
+        plt.show()
     else:
         plt.savefig(savefile)
         logger.info('Plot saved to ' + savefile + '.png')
         plt.close()
 
 
-def plotfield(field, animation=False, show_time=None, domain=None,
-              land=False, vmin=None, vmax=None, savefile=None, **kwargs):
+def plotfield(field, show_time=None, domain=None, land=None,
+              vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
     """Function to plot a Parcels Field
 
-    :param animation: Boolean whether result is a single plot, or an animation
-    :param show_time: Time at which to show the Field (only in single-plot mode)
+    :param show_time: Time at which to show the Field
     :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
     :param land: Boolean whether to show land
     :param vmin: minimum colour scale (only in single-plot mode)
     :param vmax: maximum colour scale (only in single-plot mode)
+    :param savefile: Name of a file to save the plot to
+    :param animation: Boolean whether result is a single plot, or an animation
     """
 
     if type(field) is VectorField:
@@ -161,11 +163,9 @@ def plotfield(field, animation=False, show_time=None, domain=None,
     return plt, fig, ax
 
 
-def create_parcelsfig_axis(geomap, land):
+def create_parcelsfig_axis(geomap, land=None):
     try:
         import matplotlib.pyplot as plt
-        import matplotlib.animation as animation_plt
-        from matplotlib import rc
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
         return
@@ -182,12 +182,12 @@ def create_parcelsfig_axis(geomap, land):
         gl.xlabels_top, gl.ylabels_right = (False, False)
         gl.xformatter = cartopy.mpl.gridliner.LONGITUDE_FORMATTER
         gl.yformatter = cartopy.mpl.gridliner.LATITUDE_FORMATTER
-        if land:
+        if land is not False:
             ax.coastlines()
     else:
         fig, ax = plt.subplots(1, 1)
         ax.grid()
-        if land:
+        if land is True:
             logger.info('Land can only be shown for Fields with geographic coordinates')
     return plt, fig, ax
 

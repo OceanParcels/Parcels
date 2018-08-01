@@ -315,7 +315,7 @@ class ParticleSet(object):
         if output_file:
             output_file.write(self, _starttime)
         if moviedt:
-            self.show(field=movie_background_field, show_time=_starttime)
+            self.show(field=movie_background_field, show_time=_starttime, animation=True)
 
         if moviedt is None:
             moviedt = np.infty
@@ -348,7 +348,7 @@ class ParticleSet(object):
                     output_file.write(self, time)
                 next_output += outputdt * np.sign(dt)
             if abs(time-next_movie) < tol:
-                self.show(field=movie_background_field, show_time=time)
+                self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
             next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
@@ -358,7 +358,7 @@ class ParticleSet(object):
             output_file.write(self, time)
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None,
-             land=False, vmin=None, vmax=None, savefile=None):
+             land=None, vmin=None, vmax=None, savefile=None, animation=False):
         """Method to 'show' a Parcels ParticleSet
 
         :param with_particles: Boolean whether to show particles
@@ -369,10 +369,11 @@ class ParticleSet(object):
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
         :param savefile: Name of a file to save the plot to
+        :param animation: Boolean whether result is a single plot, or an animation
         """
         from plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      land=land, vmin=vmin, vmax=vmax, savefile=savefile)
+                      land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
