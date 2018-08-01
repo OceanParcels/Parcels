@@ -829,18 +829,21 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, with_particles=False, animation=False, show_time=None, vmin=None, vmax=None):
+    def show(self, animation=False, show_time=None, domain=None, land=False, vmin=None, vmax=None,
+             savefile=None, **kwargs):
         """Method to 'show' a Parcels Field
 
-        :param with_particles: Boolean whether particles are also plotted on Field
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
+        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param land: Boolean whether to show land
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
+        :param savefile: Name of a file to save the plot to
         """
         from plotting import plotfield
-        plotfield(self, with_particles=with_particles, animation=animation, show_time=show_time,
-                  vmin=vmin, vmax=vmax)
+        plotfield(self, animation=animation, show_time=show_time, domain=domain,
+                  land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)

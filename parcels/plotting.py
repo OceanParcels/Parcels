@@ -1,4 +1,4 @@
-from parcels.field import Field, UnitConverter
+from parcels.field import Field, VectorField, UnitConverter
 from parcels.loggers import logger
 import numpy as np
 import bisect
@@ -10,28 +10,16 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
                   land=False, vmin=None, vmax=None, savefile=None):
     """Function to plot a Parcels ParticleSet
 
-    :param with_particles: Boolean whether to show particles
     :param show_time: Time at which to show the ParticleSet
+    :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
     :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
-    :param land: Boolean whether to show land (in field='vector' mode only)
+    :param land: Boolean whether to show land
     :param vmin: minimum colour scale (only in single-plot mode)
     :param vmax: maximum colour scale (only in single-plot mode)
     :param savefile: Name of a file to save the plot to
     """
 
-    try:
-        import matplotlib.pyplot as plt
-    except:
-        logger.info("Visualisation is not possible. Matplotlib not found.")
-        return
-    try:
-        import cartopy
-    except:
-        cartopy = None
-
-    plon = np.array([p.lon for p in particles])
-    plat = np.array([p.lat for p in particles])
     show_time = particles[0].time if show_time is None else show_time
     if isinstance(show_time, datetime):
         show_time = np.datetime64(show_time)
@@ -44,6 +32,167 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         show_time = show_time.total_seconds()
     if np.isnan(show_time):
         show_time, _ = particles.fieldset.gridset.dimrange('time')
+
+    animation = False# TODO fix
+
+    if field is None:
+        geomap = False if type(particles.fieldset.U.units) is UnitConverter else True
+        plt, fig, ax = create_parcelsfig_axis(geomap, land)
+        ax.set_title('Particles' + parsetimestr(particles.fieldset.U, show_time))
+        latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
+        ax.set_xlim(particles.fieldset.U.grid.lon[lonW], particles.fieldset.U.grid.lon[lonE])
+        ax.set_ylim(particles.fieldset.U.grid.lat[latS], particles.fieldset.U.grid.lat[latN])
+    else:
+        if field is 'vector':
+            field = particles.fieldset.UV
+        elif not isinstance(field, Field):
+            field = getattr(particles.fieldset, field)
+
+        plt, fig, ax = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
+                                 land=land, vmin=vmin, vmax=vmax, savefile=None, titlestr='Particles and ')
+
+    if with_particles:
+        plon = np.array([p.lon for p in particles])
+        plat = np.array([p.lat for p in particles])
+        ax.scatter(plon, plat, s=20, color='black', zorder=20)
+
+    if savefile is None:
+        plt.show()
+        plt.pause(0.0001)
+    else:
+        plt.savefig(savefile)
+        logger.info('Plot saved to ' + savefile + '.png')
+        plt.close()
+
+
+def plotfield(field, animation=False, show_time=None, domain=None,
+              land=False, vmin=None, vmax=None, savefile=None, **kwargs):
+    """Function to plot a Parcels Field
+
+    :param animation: Boolean whether result is a single plot, or an animation
+    :param show_time: Time at which to show the Field (only in single-plot mode)
+    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param land: Boolean whether to show land
+    :param vmin: minimum colour scale (only in single-plot mode)
+    :param vmax: maximum colour scale (only in single-plot mode)
+    """
+
+    if type(field) is VectorField:
+        geomap = False if type(field.U.units) is UnitConverter else True
+        field = [field.U, field.V]
+        plottype = 'vector'
+    elif type(field) is Field:
+        geomap = False if type(field.units) is UnitConverter else True
+        field = [field]
+        plottype = 'scalar'
+    else:
+        raise RuntimeError('field needs to be a Field or VectorField object')
+
+    plt, fig, ax = create_parcelsfig_axis(geomap, land)
+
+    data = {}
+    for i, fld in enumerate(field):
+        show_time = fld.grid.time[0] if show_time is None else show_time
+        if fld.grid.defer_load:
+            fld.fieldset.computeTimeChunk(show_time, 1)
+        (idx, periods) = fld.time_index(show_time)
+        show_time -= periods * (fld.grid.time[-1] - fld.grid.time[0])
+
+        latN, latS, lonE, lonW = parsedomain(domain, fld)
+        plotlon = fld.grid.lon[lonW:lonE]
+        plotlat = fld.grid.lat[latS:latN]
+
+        if fld.grid.time.size > 1:
+            data[i] = np.squeeze(fld.temporal_interpolate_fullfield(idx, show_time))[latS:latN, lonW:lonE]
+        else:
+            data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
+
+    if plottype is 'vector':
+        speed = np.sqrt(data[0] ** 2 + data[1] ** 2)
+        vmin = speed.min() if vmin is None else vmin
+        vmax = speed.max() if vmax is None else vmax
+        x, y = np.meshgrid(plotlon, plotlat)
+        nonzerospd = speed != 0
+        u, v = (np.zeros_like(data[0]) * np.nan, np.zeros_like(data[1]) * np.nan)
+        np.place(u, nonzerospd, data[0][nonzerospd] / speed[nonzerospd])
+        np.place(v, nonzerospd, data[1][nonzerospd] / speed[nonzerospd])
+        cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
+    else:
+        vmin = data[0].min() if vmin is None else vmin
+        vmax = data[0].max() if vmax is None else vmax
+        cs = ax.contourf(plotlon, plotlat, data[0], levels=np.linspace(vmin, vmax, 256))
+
+    ax.set_xlim(plotlon[0], plotlon[-1])
+    ax.set_ylim(plotlat[0], plotlat[-1])
+    cs.cmap.set_over('k')
+    cs.cmap.set_under('w')
+    cs.set_clim(vmin, vmax)
+
+    cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
+    fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
+    plt.colorbar(cs, cax=cbar_ax)
+
+    def resize_colorbar(event):
+        plt.draw()
+        posn = ax.get_position()
+        cbar_ax.set_position([posn.x0 + posn.width + 0.01, posn.y0, 0.04, posn.height])
+
+    fig.canvas.mpl_connect('resize_event', resize_colorbar)
+    resize_colorbar(None)
+
+    timestr = parsetimestr(field[0], show_time)
+    titlestr = kwargs.pop('titlestr', '')
+    if plottype is 'vector':
+        ax.set_title(titlestr + 'Velocity field' + timestr)
+    else:
+        ax.set_title(titlestr + field[0].name + timestr)
+
+    if not geomap:
+        ax.set_xlabel('Zonal distance [m]')
+        ax.set_ylabel('Meridional distance [m]')
+
+    plt.draw()
+
+    if savefile:
+        plt.savefig(savefile)
+        logger.info('Plot saved to ' + savefile + '.png')
+        plt.close()
+
+    return plt, fig, ax
+
+
+def create_parcelsfig_axis(geomap, land):
+    try:
+        import matplotlib.pyplot as plt
+        import matplotlib.animation as animation_plt
+        from matplotlib import rc
+    except:
+        logger.info("Visualisation is not possible. Matplotlib not found.")
+        return
+
+    if geomap:
+        try:
+            import cartopy
+        except:
+            logger.info("Visualisation of field with geographic coordinates not possible. Cartopy not found.")
+            return
+
+        fig, ax = plt.subplots(1, 1, subplot_kw={'projection': cartopy.crs.PlateCarree()})
+        gl = ax.gridlines(draw_labels=True)
+        gl.xlabels_top, gl.ylabels_right = (False, False)
+        gl.xformatter = cartopy.mpl.gridliner.LONGITUDE_FORMATTER
+        gl.yformatter = cartopy.mpl.gridliner.LATITUDE_FORMATTER
+        if land:
+            ax.coastlines()
+    else:
+        fig, ax = plt.subplots(1, 1)
+        ax.grid()
+        if land:
+            logger.info('Land can only be shown for Fields with geographic coordinates')
+    return plt, fig, ax
+
+
+def parsedomain(domain, field):
     if domain is not None:
         def nearest_index(array, value):
             """returns index of the nearest value in array using O(log n) bisection method"""
@@ -55,163 +204,18 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
             else:
                 return y
 
-        latN = nearest_index(particles.fieldset.U.lat, domain[0])
-        latS = nearest_index(particles.fieldset.U.lat, domain[1])
-        lonE = nearest_index(particles.fieldset.U.lon, domain[2])
-        lonW = nearest_index(particles.fieldset.U.lon, domain[3])
+        latN = nearest_index(field.lat, domain[0])
+        latS = nearest_index(field.lat, domain[1])
+        lonE = nearest_index(field.lon, domain[2])
+        lonW = nearest_index(field.lon, domain[3])
+        return latN, latS, lonE, lonW
     else:
-        latN, latS, lonE, lonW = (-1, 0, -1, 0)
+        return -1, 0, -1, 0
 
-    if field is not 'vector' and not land:
-        plt.ion()
-        plt.clf()
-        if with_particles:
-            plt.plot(np.transpose(plon), np.transpose(plat), 'ko')
-        if field is None:
-            axes = plt.gca()
-            axes.set_xlim([particles.fieldset.U.lon[lonW], particles.fieldset.U.lon[lonE]])
-            axes.set_ylim([particles.fieldset.U.lat[latS], particles.fieldset.U.lat[latN]])
-        else:
-            if not isinstance(field, Field):
-                field = getattr(particles.fieldset, field)
-            field.show(with_particles=True, show_time=show_time, vmin=vmin, vmax=vmax)
-        xlbl = 'Zonal distance [m]' if type(particles.fieldset.U.units) is UnitConverter else 'Longitude [degrees]'
-        ylbl = 'Meridional distance [m]' if type(particles.fieldset.U.units) is UnitConverter else 'Latitude [degrees]'
-        plt.xlabel(xlbl)
-        plt.ylabel(ylbl)
-    elif cartopy is None:
-        logger.info("Visualisation is not possible. Cartopy not found.")
+
+def parsetimestr(field, show_time):
+    if not field.grid.time_origin:
+        return ' after ' + str(delta(seconds=show_time)) + ' hours'
     else:
-        particles.fieldset.computeTimeChunk(show_time, 1)
-        (idx, periods) = particles.fieldset.U.time_index(show_time)
-        show_time -= periods * (particles.fieldset.U.time[-1] - particles.fieldset.U.time[0])
-        lon = particles.fieldset.U.lon
-        lat = particles.fieldset.U.lat
-        lon = lon[lonW:lonE]
-        lat = lat[latS:latN]
-
-        fig, ax = plt.subplots(1, 1, subplot_kw={'projection': cartopy.crs.PlateCarree()})
-        ax.gridlines()
-
-        if land:
-            ax.add_feature(cartopy.feature.LAND, zorder=0, edgecolor='black')
-            ax.set_xlim([particles.fieldset.U.lon[lonW], particles.fieldset.U.lon[lonE]])
-            ax.set_ylim([particles.fieldset.U.lat[latS], particles.fieldset.U.lat[latN]])
-        if field is 'vector':
-            # formatting velocity data for quiver plotting
-            U = particles.fieldset.U.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
-            V = particles.fieldset.V.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
-            speed = np.sqrt(U ** 2 + V ** 2)
-            x, y = np.meshgrid(lon, lat)
-
-            nonzerospd = speed != 0
-            u, v = (np.zeros_like(U) * np.nan, np.zeros_like(U) * np.nan)
-            np.place(u, nonzerospd, U[nonzerospd] / speed[nonzerospd])
-            np.place(v, nonzerospd, V[nonzerospd] / speed[nonzerospd])
-            fld = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
-
-            cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
-            fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
-            plt.colorbar(fld, cax=cbar_ax)
-
-            def resize_colorbar(event):
-                plt.draw()
-                posn = ax.get_position()
-                cbar_ax.set_position([posn.x0 + posn.width + 0.01, posn.y0, 0.04, posn.height])
-
-            fig.canvas.mpl_connect('resize_event', resize_colorbar)
-            resize_colorbar(None)
-
-        elif field is not None:
-            data = field.temporal_interpolate_fullfield(idx, show_time)[latS:latN, lonW:lonE]
-
-            vmin = data.min() if vmin is None else vmin
-            vmax = data.max() if vmax is None else vmax
-            fld = ax.contourf(lon, lat, data, levels=np.linspace(vmin, vmax, 256))
-
-        # plotting particle data
-        if with_particles:
-            ax.scatter(plon, plat, s=20, color='black')
-
-    if not particles.time_origin:
-        timestr = ' after ' + str(delta(seconds=show_time)) + ' hours'
-    else:
-        date_str = str(particles.time_origin + np.timedelta64(int(show_time), 's'))
-        timestr = ' on ' + date_str[:10] + ' ' + date_str[11:19]
-
-    if with_particles:
-        if field is None:
-            plt.title('Particles' + timestr)
-        elif field is 'vector':
-            ax.set_title('Particles and velocity field' + timestr)
-        else:
-            plt.title('Particles and ' + field.name + timestr)
-    else:
-        if field is 'vector':
-            ax.title('Velocity field' + timestr)
-        else:
-            plt.title(field.name + timestr)
-
-    if savefile is None:
-        plt.show()
-        plt.pause(0.0001)
-    else:
-        plt.savefig(savefile)
-        logger.info('Plot saved to ' + savefile + '.png')
-        plt.close()
-
-
-def plotfield(field, with_particles=False, animation=False, show_time=None, vmin=None, vmax=None):
-    """Function to plot a Parcels Field
-
-    :param with_particles: Boolean whether particles are also plotted on Field
-    :param animation: Boolean whether result is a single plot, or an animation
-    :param show_time: Time at which to show the Field (only in single-plot mode)
-    :param vmin: minimum colour scale (only in single-plot mode)
-    :param vmax: maximum colour scale (only in single-plot mode)
-    """
-
-    try:
-        import matplotlib.pyplot as plt
-        import matplotlib.animation as animation_plt
-        from matplotlib import rc
-    except:
-        logger.info("Visualisation is not possible. Matplotlib not found.")
-        return
-
-    if with_particles or (not animation):
-        show_time = field.grid.time[0] if show_time is None else show_time
-        if field.grid.defer_load:
-            field.fieldset.computeTimeChunk(show_time, 1)
-        (idx, periods) = field.time_index(show_time)
-        show_time -= periods * (field.grid.time[-1] - field.grid.time[0])
-        if field.grid.time.size > 1:
-            data = np.squeeze(field.temporal_interpolate_fullfield(idx, show_time))
-        else:
-            data = np.squeeze(field.data)
-
-        vmin = data.min() if vmin is None else vmin
-        vmax = data.max() if vmax is None else vmax
-        cs = plt.contourf(field.grid.lon, field.grid.lat, data,
-                          levels=np.linspace(vmin, vmax, 256))
-        cs.cmap.set_over('k')
-        cs.cmap.set_under('w')
-        cs.set_clim(vmin, vmax)
-        plt.colorbar(cs)
-        if not with_particles:
-            plt.show()
-    else:
-        fig = plt.figure()
-        ax = plt.axes(xlim=(field.grid.lon[0], field.grid.lon[-1]), ylim=(field.grid.lat[0], field.grid.lat[-1]))
-
-        def animate(i):
-            data = np.squeeze(field.data[i, :, :])
-            cont = ax.contourf(field.grid.lon, field.grid.lat, data,
-                               levels=np.linspace(data.min(), data.max(), 256))
-            return cont
-
-        rc('animation', html='html5')
-        anim = animation_plt.FuncAnimation(fig, animate, frames=np.arange(1, field.data.shape[0]),
-                                           interval=100, blit=False)
-        plt.close()
-        return anim
+        date_str = str(field.grid.time_origin + np.timedelta64(int(show_time), 's'))
+        return ' on ' + date_str[:10] + ' ' + date_str[11:19]
