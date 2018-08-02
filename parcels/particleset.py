@@ -371,7 +371,7 @@ class ParticleSet(object):
         :param savefile: Name of a file to save the plot to
         :param animation: Boolean whether result is a single plot, or an animation
         """
-        from plotting import plotparticles
+        from parcels.plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
                       land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
 

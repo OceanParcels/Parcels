@@ -841,7 +841,7 @@ class Field(object):
         :param vmax: maximum colour scale (only in single-plot mode)
         :param savefile: Name of a file to save the plot to
         """
-        from plotting import plotfield
+        from parcels.plotting import plotfield
         plotfield(self, animation=animation, show_time=show_time, domain=domain,
                   land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
 
