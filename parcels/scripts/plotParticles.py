@@ -2,12 +2,13 @@
 from netCDF4 import Dataset
 import numpy as np
 from argparse import ArgumentParser
+from parcels import Field
+from parcels.plotting import create_parcelsfig_axis, plotfield
 try:
-    import matplotlib.pyplot as plt
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
-    plt = None
+    anim = None
 
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
@@ -28,10 +29,6 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
-    if plt is None:
-        print("Visualisation is not possible. Matplotlib not found.")
-        return
-
     pfile = Dataset(filename, 'r')
     lon = np.ma.filled(pfile.variables['lon'], np.nan)
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
@@ -41,52 +38,56 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
 
-    if tracerfile is not None:
-        tfile = Dataset(tracerfile, 'r')
-        X = tfile.variables[tracerlon]
-        Y = tfile.variables[tracerlat]
-        P = tfile.variables[tracerfield]
-        plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
+    if tracerfile is not None and mode is not 'hist2d':
+        tracerfld = Field.from_netcdf(tracerfile, tracerfield, {'lon': tracerlon, 'lat': tracerlat})
+        plt, fig, ax = plotfield(tracerfld)
+        titlestr = ' and ' + tracerfield
+    else:
+        geomap = False if mode is '3d' else True
+        plt, fig, ax = create_parcelsfig_axis(geomap=geomap, land=geomap)
+        ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
+        ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
+        titlestr = ''
+
+    if plt is None:
+        return  # creating axes was not possible
 
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
-        fig = plt.figure(1)
+        plt.clf()  # clear the figure
         ax = fig.gca(projection='3d')
         for p in range(len(lon)):
             ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
+        ax.set_title('Particle trajectories')
     elif mode == '2d':
-        plt.plot(np.transpose(lon), np.transpose(lat), '.-')
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
+        ax.plot(np.transpose(lon), np.transpose(lat), '.-')
+        ax.set_title('Particle trajectories' + titlestr)
     elif mode == 'hist2d':
         plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
         plt.colorbar()
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
+        ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
-        fig = plt.figure()
-        ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
+        # ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
         plottimes = np.unique(time)
         plottimes = plottimes[~np.isnan(plottimes)]
         b = time == plottimes[0]
-        scat = ax.scatter(lon[b], lat[b], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
-        ttl = ax.set_title('Particle at time ' + str(plottimes[0]))
+        scat = ax.scatter(lon[b], lat[b], s=60, color='k')
+        ttl = ax.set_title('Particle' + titlestr + ' at time ' + str(plottimes[0]))
         frames = np.arange(1, len(plottimes))
 
         def animate(t):
             b = time == plottimes[t]
-            scat.set_offsets(np.matrix((lon[b], lat[b])).transpose())
-            ttl.set_text('Particle at time ' + str(plottimes[t]))
+            scat.set_offsets(np.vstack((lon[b], lat[b])).transpose())
+            ttl.set_text('Particle' + titlestr + ' at time ' + str(plottimes[t]))
             if recordedvar is not None:
                 scat.set_array(record[b])
             return scat,
 
         rc('animation', html='html5')
-        anim = animation.FuncAnimation(fig, animate, frames=frames,
-                                       interval=100, blit=False)
+        anim = animation.FuncAnimation(fig, animate, frames=frames, interval=100, blit=False)
     else:
         raise RuntimeError('mode %s not known' % mode)
 
