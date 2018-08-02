@@ -158,7 +158,7 @@ def test_fieldset_write_curvilinear(tmpdir):
     newfile = tmpdir.join('curv_field')
     fieldset.write(newfile)
 
-    fieldset2 = FieldSet.from_netcdf(filenames={'dx': newfile+'dx.nc'}, variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
 
     for var in ['lon', 'lat', 'data']:
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))

@@ -174,10 +174,9 @@ class FieldSet(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            if isinstance(filenames[var], list):
-                paths = filenames[var]
-            else:
-                paths = sorted(glob(str(filenames[var])))
+            paths = filenames[var] if type(filenames) is dict else filenames
+            if not isinstance(paths, list):
+                paths = sorted(glob(str(paths)))
             if len(paths) == 0:
                 raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
