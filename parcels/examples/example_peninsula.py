@@ -133,18 +133,19 @@ def test_peninsula_fieldset(mode, mesh):
 
 
 @pytest.fixture(scope='module')
-def fieldsetfile():
+def fieldsetfile(mesh):
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
-    fieldset = peninsula_fieldset(100, 50, mesh='spherical')
+    fieldset = peninsula_fieldset(100, 50, mesh=mesh)
     fieldset.write(filename)
     return filename
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_file(fieldsetfile, mode):
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_file(mode, mesh):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])

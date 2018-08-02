@@ -194,9 +194,9 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh is 'flat' or (fieldtype not in self.unitconverters.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in self.unitconverters.keys()):
             self.units = UnitConverter()
-        elif self.grid.mesh is 'spherical':
+        elif self.grid.mesh == 'spherical':
             self.units = self.unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
@@ -277,6 +277,9 @@ class Field(object):
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
             indices = filebuffer.indices
+            # Check if parcels_mesh has been explicitly set in file
+            if 'parcels_mesh' in filebuffer.dataset.attrs:
+                mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         # Concatenate time variable to determine overall dimension
         # across multiple files
@@ -948,10 +951,11 @@ class Field(object):
         vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
                                dims=['time_counter', vname_depth, 'y', 'x'])
         # Create xarray Dataset and output to netCDF format
+        attrs = {'parcels_mesh': self.grid.mesh}
         dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                       'nav_lat': nav_lat,
                                                       'time_counter': time_counter,
-                                                      vname_depth: self.grid.depth})
+                                                      vname_depth: self.grid.depth}, attrs=attrs)
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
