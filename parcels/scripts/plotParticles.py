@@ -41,16 +41,17 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     if tracerfile is not None and mode is not 'hist2d':
         tracerfld = Field.from_netcdf(tracerfile, tracerfield, {'lon': tracerlon, 'lat': tracerlat})
         plt, fig, ax = plotfield(tracerfld)
+        if plt is None:
+            return  # creating axes was not possible
         titlestr = ' and ' + tracerfield
     else:
         geomap = False if mode is '3d' else True
         plt, fig, ax = create_parcelsfig_axis(geomap=geomap, land=geomap)
+        if plt is None:
+            return  # creating axes was not possible
         ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
         ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         titlestr = ''
-
-    if plt is None:
-        return  # creating axes was not possible
 
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
