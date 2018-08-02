@@ -96,9 +96,11 @@ def plotfield(field, show_time=None, domain=None, land=None,
 
     plt, fig, ax = create_parcelsfig_axis(geomap, land)
     if plt is None:
-        return None, None, None # creating axes was not possible
+        return None, None, None  # creating axes was not possible
 
     data = {}
+    plotlon = {}
+    plotlat = {}
     for i, fld in enumerate(field):
         show_time = fld.grid.time[0] if show_time is None else show_time
         if fld.grid.defer_load:
@@ -107,9 +109,10 @@ def plotfield(field, show_time=None, domain=None, land=None,
         show_time -= periods * (fld.grid.time[-1] - fld.grid.time[0])
 
         latN, latS, lonE, lonW = parsedomain(domain, fld)
-        plotlon = fld.grid.lon[lonW:lonE]
-        plotlat = fld.grid.lat[latS:latN]
-
+        plotlon[i] = fld.grid.lon[lonW:lonE]
+        plotlat[i] = fld.grid.lat[latS:latN]
+        if i > 0 and not np.allclose(plotlon[i], plotlon[0]):
+            raise RuntimeError('VectorField needs to be on an A-grid for plotting')
         if fld.grid.time.size > 1:
             data[i] = np.squeeze(fld.temporal_interpolate_fullfield(idx, show_time))[latS:latN, lonW:lonE]
         else:
@@ -119,7 +122,7 @@ def plotfield(field, show_time=None, domain=None, land=None,
         speed = np.sqrt(data[0] ** 2 + data[1] ** 2)
         vmin = speed.min() if vmin is None else vmin
         vmax = speed.max() if vmax is None else vmax
-        x, y = np.meshgrid(plotlon, plotlat)
+        x, y = np.meshgrid(plotlon[0], plotlat[0])
         nonzerospd = speed != 0
         u, v = (np.zeros_like(data[0]) * np.nan, np.zeros_like(data[1]) * np.nan)
         np.place(u, nonzerospd, data[0][nonzerospd] / speed[nonzerospd])
@@ -128,10 +131,10 @@ def plotfield(field, show_time=None, domain=None, land=None,
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
-        cs = ax.contourf(plotlon, plotlat, data[0], levels=np.linspace(vmin, vmax, 256))
+        cs = ax.contourf(plotlon[0], plotlat[0], data[0], levels=np.linspace(vmin, vmax, 256))
 
-    ax.set_xlim(plotlon[0], plotlon[-1])
-    ax.set_ylim(plotlat[0], plotlat[-1])
+    ax.set_xlim(plotlon[0][0], plotlon[0][-1])
+    ax.set_ylim(plotlat[0][0], plotlat[0][-1])
     cs.cmap.set_over('k')
     cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
@@ -174,7 +177,7 @@ def create_parcelsfig_axis(geomap, land=None):
         import matplotlib.pyplot as plt
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
-        return  None, None, None  # creating axes was not possible
+        return None, None, None  # creating axes was not possible
 
     if geomap:
         try:
