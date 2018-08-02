@@ -148,6 +148,22 @@ def test_fieldset_celledgesizes_curvilinear(dx, dy):
     assert np.allclose(A, fieldset.dx.data * fieldset.dy.data)
 
 
+def test_fieldset_write_curvilinear(tmpdir):
+    fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+    filenames = {'dx': fname, 'mesh_mask': fname}
+    variables = {'dx': 'e1u'}
+    dimensions = {'lon': 'glamu', 'lat': 'gphiu'}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    newfile = tmpdir.join('curv_field')
+    fieldset.write(newfile)
+
+    fieldset2 = FieldSet.from_netcdf(filenames={'dx': newfile+'dx.nc'}, variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+
+    for var in ['lon', 'lat', 'data']:
+        assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_cellareas(mesh):
     data, dimensions = generate_fieldset(10, 7)

@@ -935,12 +935,20 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        t, d, x, y = (self.grid.time.size, self.grid.depth.size,
-                      self.grid.lon.size, self.grid.lat.size)
-        nav_lon = xr.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
-                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        t, d = (self.grid.time.size, self.grid.depth.size)
+        if type(self.grid) is RectilinearZGrid:
+            x, y = (self.grid.lon.size, self.grid.lat.size)
+            nav_lon = xr.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+            nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        elif type(self.grid) is CurvilinearZGrid:
+            y, x = self.grid.lat.shape
+            nav_lon = xr.DataArray(self.grid.lon, coords=[('y', range(y)), ('x', range(x))])
+            nav_lat = xr.DataArray(self.grid.lat, coords=[('y', range(y)), ('x', range(x))])
+        else:
+            raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
+
         attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
         time_counter = xr.DataArray(self.grid.time,
                                     dims=['time_counter'],

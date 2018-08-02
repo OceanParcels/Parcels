@@ -326,8 +326,10 @@ class FieldSet(object):
         :param filename: Basename of the output fileset"""
         logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        self.U.write(filename, varname='vozocrtx')
-        self.V.write(filename, varname='vomecrty')
+        if hasattr(self, 'U'):
+            self.U.write(filename, varname='vozocrtx')
+        if hasattr(self, 'V'):
+            self.V.write(filename, varname='vomecrty')
 
         for v in self.fields:
             if (v.name is not 'U') and (v.name is not 'V'):
