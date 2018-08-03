@@ -1010,16 +1010,19 @@ class VectorField(object):
                 assert self.W.interp_method == 'cgrid_linear'
                 assert self.U.grid is self.W.grid
 
-    def lonlatdist(self, lon1, lon2, lat1, lat2):
-        r = 360*60*1852/2/np.pi
-        rad = np.pi/180.
-        x1 = r*np.cos(rad*lon1) * np.cos(rad*lat1)
-        y1 = r*np.sin(rad*lon1) * np.cos(rad*lat1)
-        z1 = r*np.sin(rad*lat1)
-        x2 = r*np.cos(rad*lon2) * np.cos(rad*lat2)
-        y2 = r*np.sin(rad*lon2) * np.cos(rad*lat2)
-        z2 = r*np.sin(rad*lat2)
-        return np.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
+    def dist(self, lon1, lon2, lat1, lat2, mesh):
+        if mesh == 'spherical':
+            r = 360*60*1852/2/np.pi
+            rad = np.pi/180.
+            x1 = r*np.cos(rad*lon1) * np.cos(rad*lat1)
+            y1 = r*np.sin(rad*lon1) * np.cos(rad*lat1)
+            z1 = r*np.sin(rad*lat1)
+            x2 = r*np.cos(rad*lon2) * np.cos(rad*lat2)
+            y2 = r*np.sin(rad*lon2) * np.cos(rad*lat2)
+            z2 = r*np.sin(rad*lat2)
+            return np.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
+        else:
+            return np.sqrt((lon2-lon1)**2 + (lat2-lat1)**2)
 
     def jacobian(self, xsi, eta, px, py):
         dphidxsi = [eta-1, 1-eta, eta, -eta]
@@ -1038,19 +1041,24 @@ class VectorField(object):
         yi = int(grid.ydim / 2)
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
 
-        px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+        if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+            px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
+            py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
+        else:
+            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
+
         if grid.mesh == 'spherical':
             px[0] = px[0]+360 if px[0] < x-225 else px[0]
             px[0] = px[0]-360 if px[0] > x+225 else px[0]
             px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
-        py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
         xx = (1-xsi)*(1-eta) * px[0] + xsi*(1-eta) * px[1] + xsi*eta * px[2] + (1-xsi)*eta * px[3]
         assert abs(xx-x) < 1e-4
-        c1 = self.lonlatdist(px[0], px[1], py[0], py[1])
-        c2 = self.lonlatdist(px[1], px[2], py[1], py[2])
-        c3 = self.lonlatdist(px[2], px[3], py[2], py[3])
-        c4 = self.lonlatdist(px[3], px[0], py[3], py[0])
+        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh)
+        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh)
+        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh)
+        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh)
         if grid.zdim == 1:
             U0 = self.U.data[ti, yi+1, xi] * c4
             U1 = self.U.data[ti, yi+1, xi+1] * c2
@@ -1065,8 +1073,8 @@ class VectorField(object):
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
         deg2m = 1852 * 60.
-        jac = self.jacobian(xsi, eta, px, py) * deg2m * deg2m * cos(rad * y)
-        assert grid.mesh == 'spherical', 'planar to be implemented'
+        meshJac = (deg2m * deg2m * cos(rad * y)) if grid.mesh == 'spherical' else 1
+        jac = self.jacobian(xsi, eta, px, py) * meshJac
 
         u = ((-(1-eta) * U - (1-xsi) * V) * px[0] +
              ((1-eta) * U - xsi * V) * px[1] +
