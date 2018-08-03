@@ -671,7 +671,9 @@ class Field(object):
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
             return self.data[ti, yii, xii]
-        elif self.interp_method is 'linear':
+        elif self.interp_method is 'cgrid_linear' and self.name == 'W':
+            return self.data[ti, yi, xi]
+        elif self.interp_method in ['linear', 'cgrid_linear']:
             val = (1-xsi)*(1-eta) * self.data[ti, yi, xi] + \
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
@@ -689,12 +691,12 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'cgrid_linear':
+        elif self.interp_method is 'cgrid_linear' and self.name == 'W':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method is 'linear':
+        elif self.interp_method in ['linear', 'cgrid_linear']:
             data = self.data[ti, zi, :, :]
             f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
