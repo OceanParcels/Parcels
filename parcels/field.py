@@ -829,20 +829,21 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, animation=False, show_time=None, domain=None, land=None, vmin=None, vmax=None,
-             savefile=None, **kwargs):
+    def show(self, animation=False, show_time=None, domain=None, projection=None, land=None,
+             vmin=None, vmax=None, savefile=None, **kwargs):
         """Method to 'show' a Parcels Field
 
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
         :param savefile: Name of a file to save the plot to
         """
         from parcels.plotting import plotfield
-        plotfield(self, animation=animation, show_time=show_time, domain=domain,
+        plotfield(self, animation=animation, show_time=show_time, domain=domain, projection=projection,
                   land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):

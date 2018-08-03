@@ -357,7 +357,7 @@ class ParticleSet(object):
         if output_file:
             output_file.write(self, time)
 
-    def show(self, with_particles=True, show_time=None, field=None, domain=None,
+    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=None, vmin=None, vmax=None, savefile=None, animation=False):
         """Method to 'show' a Parcels ParticleSet
 
@@ -365,6 +365,7 @@ class ParticleSet(object):
         :param show_time: Time at which to show the ParticleSet
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land (in field='vector' mode only)
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
@@ -373,7 +374,7 @@ class ParticleSet(object):
         """
         from parcels.plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
