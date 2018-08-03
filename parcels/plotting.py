@@ -1,7 +1,7 @@
 from parcels.field import Field, VectorField
+from parcels.grid import CurvilinearGrid
 from parcels.loggers import logger
 import numpy as np
-import bisect
 from datetime import timedelta as delta
 from datetime import datetime
 
@@ -40,9 +40,18 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         if plt is None:
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U, show_time))
-        latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
-        ax.set_xlim(particles.fieldset.U.grid.lon[lonW], particles.fieldset.U.grid.lon[lonE])
-        ax.set_ylim(particles.fieldset.U.grid.lat[latS], particles.fieldset.U.grid.lat[latN])
+        if domain is not None:
+            latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
+            if isinstance(particles.fieldset.U.grid, CurvilinearGrid):
+                ax.set_xlim(particles.fieldset.U.grid.lon[latS, lonW], particles.fieldset.U.grid.lon[latN, lonE])
+                ax.set_ylim(particles.fieldset.U.grid.lat[latS, lonW], particles.fieldset.U.grid.lat[latN, lonE])
+            else:
+                ax.set_xlim(particles.fieldset.U.grid.lon[lonW], particles.fieldset.U.grid.lon[lonE])
+                ax.set_ylim(particles.fieldset.U.grid.lat[latS], particles.fieldset.U.grid.lat[latN])
+        else:
+            ax.set_xlim(np.nanmin(particles.fieldset.U.grid.lon), np.nanmax(particles.fieldset.U.grid.lon))
+            ax.set_ylim(np.nanmin(particles.fieldset.U.grid.lat), np.nanmax(particles.fieldset.U.grid.lat))
+
     else:
         if field is 'vector':
             field = particles.fieldset.UV
@@ -109,8 +118,12 @@ def plotfield(field, show_time=None, domain=None, land=None,
         show_time -= periods * (fld.grid.time[-1] - fld.grid.time[0])
 
         latN, latS, lonE, lonW = parsedomain(domain, fld)
-        plotlon[i] = fld.grid.lon[lonW:lonE]
-        plotlat[i] = fld.grid.lat[latS:latN]
+        if isinstance(fld.grid, CurvilinearGrid):
+            plotlon[i] = fld.grid.lon[latS:latN, lonW:lonE]
+            plotlat[i] = fld.grid.lat[latS:latN, lonW:lonE]
+        else:
+            plotlon[i] = fld.grid.lon[lonW:lonE]
+            plotlat[i] = fld.grid.lat[latS:latN]
         if i > 0 and not np.allclose(plotlon[i], plotlon[0]):
             raise RuntimeError('VectorField needs to be on an A-grid for plotting')
         if fld.grid.time.size > 1:
@@ -119,10 +132,14 @@ def plotfield(field, show_time=None, domain=None, land=None,
             data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
 
     if plottype is 'vector':
-        speed = np.sqrt(data[0] ** 2 + data[1] ** 2)
+        spd = data[0] ** 2 + data[1] ** 2
+        speed = np.sqrt(spd, where=spd > 0)
         vmin = speed.min() if vmin is None else vmin
         vmax = speed.max() if vmax is None else vmax
-        x, y = np.meshgrid(plotlon[0], plotlat[0])
+        if isinstance(field[0].grid, CurvilinearGrid):
+            x, y = plotlon[0], plotlat[0]
+        else:
+            x, y = np.meshgrid(plotlon[0], plotlat[0])
         nonzerospd = speed != 0
         u, v = (np.zeros_like(data[0]) * np.nan, np.zeros_like(data[1]) * np.nan)
         np.place(u, nonzerospd, data[0][nonzerospd] / speed[nonzerospd])
@@ -131,10 +148,10 @@ def plotfield(field, show_time=None, domain=None, land=None,
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
-        cs = ax.contourf(plotlon[0], plotlat[0], data[0], levels=np.linspace(vmin, vmax, 256))
+        cs = ax.pcolormesh(plotlon[0], plotlat[0], data[0])
 
-    ax.set_xlim(plotlon[0][0], plotlon[0][-1])
-    ax.set_ylim(plotlat[0][0], plotlat[0][-1])
+    ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
+    ax.set_ylim(np.nanmin(plotlat[0]), np.nanmax(plotlat[0]))
     cs.cmap.set_over('k')
     cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
@@ -202,21 +219,10 @@ def create_parcelsfig_axis(geomap, land=None):
 
 
 def parsedomain(domain, field):
+    field.grid.check_zonal_periodic()
     if domain is not None:
-        def nearest_index(array, value):
-            """returns index of the nearest value in array using O(log n) bisection method"""
-            y = bisect.bisect(array, value)
-            if y == len(array):
-                return y - 1
-            elif (abs(array[y - 1] - value) < abs(array[y] - value)):
-                return y - 1
-            else:
-                return y
-
-        latN = nearest_index(field.lat, domain[0])
-        latS = nearest_index(field.lat, domain[1])
-        lonE = nearest_index(field.lon, domain[2])
-        lonW = nearest_index(field.lon, domain[3])
+        _, _, _, lonW, latS, _ = field.search_indices(domain[3], domain[1], 0, 0, 0, search2D=True)
+        _, _, _, lonE, latN, _ = field.search_indices(domain[2], domain[0], 0, 0, 0, search2D=True)
         return latN, latS, lonE, lonW
     else:
         return -1, 0, -1, 0
