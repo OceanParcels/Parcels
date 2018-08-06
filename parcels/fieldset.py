@@ -200,17 +200,14 @@ class FieldSet(object):
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-        Note that this assumes the following default values for the mesh_mask:
-
-        variables['mesh_mask'] = {'cosU': 'cosU', 'sinU': 'sinU', 'cosV': 'cosV', 'sinV': 'sinV'}
-
-        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'}, 'V': {'lon': 'glamv', 'lat': 'gphiv'}, 'F': {'lon': 'glamf', 'lat': 'gphif'}}
+        Note that this assumes there is a variable mesh_mask that is used for the dimensions
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
                or be a list of file. At least a 'mesh_mask' needs to be present
         :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
+               names in the netCDF file(s). Must include a variable 'mesh_mask' that
+               holds the dimensions
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
