@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from netCDF4 import Dataset
+import xarray as xr
 import numpy as np
 from argparse import ArgumentParser
 from parcels import Field
@@ -12,7 +12,8 @@ except:
 
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
-                         tracerlon='x', tracerlat='y', recordedvar=None, bins=20, show_plt=True):
+                         tracerlon='x', tracerlat='y', recordedvar=None, movie_forward=True,
+                         bins=20, show_plt=True):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
@@ -25,11 +26,15 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param tracerlat: Name of latitude dimension of variable to show as background
     :param recordedvar: Name of variable used to color particles in scatter-plot.
                 Only works in 'movie2d' or 'movie2d_notebook' mode.
+    :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
     :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
-    pfile = Dataset(filename, 'r')
+    try:
+        pfile = xr.open_dataset(str(filename), decode_cf=True)
+    except:
+        pfile = xr.open_dataset(str(filename), decode_cf=False)
     lon = np.ma.filled(pfile.variables['lon'], np.nan)
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
     time = np.ma.filled(pfile.variables['time'], np.nan)
@@ -71,9 +76,13 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         plt.colorbar()
         ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
-        # ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
         plottimes = np.unique(time)
-        plottimes = plottimes[~np.isnan(plottimes)]
+        if not movie_forward:
+            plottimes = np.flip(plottimes, 0)
+        if isinstance(plottimes[0], np.datetime64):
+            plottimes = plottimes[~np.isnat(plottimes)]
+        else:
+            plottimes = plottimes[~np.isnan(plottimes)]
         b = time == plottimes[0]
         scat = ax.scatter(lon[b], lat[b], s=60, color='k')
         ttl = ax.set_title('Particle' + titlestr + ' at time ' + str(plottimes[0]))

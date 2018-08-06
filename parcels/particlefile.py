@@ -60,7 +60,7 @@ class ParticleFile(object):
             self.time.units = "seconds"
         else:
             self.time.units = "seconds since " + str(particleset.time_origin)
-            self.time.calendar = "julian"
+            self.time.calendar = "standard"
         self.time.axis = "T"
 
         self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan)

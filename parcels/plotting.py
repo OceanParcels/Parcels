@@ -40,7 +40,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt, fig, ax, cartopy = create_parcelsfig_axis(geomap, land, projection)
         if plt is None:
             return  # creating axes was not possible
-        ax.set_title('Particles' + parsetimestr(particles.fieldset.U, show_time))
+        ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
         latN, latS, lonE, lonW = parsedomain(domain, particles.fieldset.U)
         if cartopy is None or projection is None:
             if domain is not None:
@@ -159,7 +159,10 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
-        cs = ax.pcolormesh(plotlon[0], plotlat[0], data[0], transform=cartopy.crs.PlateCarree())
+        if cartopy:
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], data[0], transform=cartopy.crs.PlateCarree())
+        else:
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], data[0])
 
     if cartopy is None or projection is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
@@ -182,7 +185,7 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     fig.canvas.mpl_connect('resize_event', resize_colorbar)
     resize_colorbar(None)
 
-    timestr = parsetimestr(field[0], show_time)
+    timestr = parsetimestr(field[0].grid.time_origin, show_time)
     titlestr = kwargs.pop('titlestr', '')
     if plottype is 'vector':
         ax.set_title(titlestr + 'Velocity field' + timestr)
@@ -251,9 +254,9 @@ def parsedomain(domain, field):
         return -1, 0, -1, 0
 
 
-def parsetimestr(field, show_time):
-    if not field.grid.time_origin:
+def parsetimestr(time_origin, show_time):
+    if not time_origin:
         return ' after ' + str(delta(seconds=show_time)) + ' hours'
     else:
-        date_str = str(field.grid.time_origin + np.timedelta64(int(show_time), 's'))
+        date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
         return ' on ' + date_str[:10] + ' ' + date_str[11:19]
