@@ -282,6 +282,8 @@ class Field(object):
         # across multiple files
         timeslices = []
         timeFiles = []
+        if len(filenames) > 0 and 'time' not in dimensions:
+            raise RuntimeError('Multiple files given but no time dimension specified')
         for fname in filenames:
             with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                 ftime = filebuffer.time
