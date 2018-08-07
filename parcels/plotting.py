@@ -90,7 +90,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
 
 
 def plotfield(field, show_time=None, domain=None, projection=None, land=None,
-              vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
+              vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
     :param show_time: Time at which to show the Field
