@@ -845,7 +845,8 @@ class Field(object):
         from parcels.plotting import plotfield
         plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, projection=projection,
                                  land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
-        plt.show()
+        if plt:
+            plt.show()
 
     def add_periodic_halo(self, zonal, meridional, halosize=5, data=None):
         """Add a 'halo' to all Fields in a FieldSet, through extending the Field (and lon/lat)
