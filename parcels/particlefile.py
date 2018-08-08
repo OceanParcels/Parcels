@@ -128,7 +128,7 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if p.fileid < 0 or len(self.idx) == 0]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and p.dt*p.time <= p.dt*time]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
@@ -136,14 +136,15 @@ class ParticleFile(object):
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
                 for p in pset:
-                    i = p.fileid
-                    self.id[i, self.idx[i]] = p.id
-                    self.time[i, self.idx[i]] = time
-                    self.lat[i, self.idx[i]] = p.lat
-                    self.lon[i, self.idx[i]] = p.lon
-                    self.z[i, self.idx[i]] = p.depth
-                    for var in self.user_vars:
-                        getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                    if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
+                        i = p.fileid
+                        self.id[i, self.idx[i]] = p.id
+                        self.time[i, self.idx[i]] = time
+                        self.lat[i, self.idx[i]] = p.lat
+                        self.lon[i, self.idx[i]] = p.lon
+                        self.z[i, self.idx[i]] = p.depth
+                        for var in self.user_vars:
+                            getattr(self, var)[i, self.idx[i]] = getattr(p, var)
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
