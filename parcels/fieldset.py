@@ -189,7 +189,15 @@ class FieldSet(object):
             dims['data'] = name
             inds = indices[var] if (indices and var in indices) else indices
 
-            fields[var] = Field.from_netcdf(paths, var, dims, inds, mesh=mesh,
+            grid = None
+            # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
+            for procvar, _ in fields.items():
+                procdims = dimensions[procvar] if procvar in dimensions else dimensions
+                procinds = indices[procvar] if (indices and procvar in indices) else indices
+                if filenames[procvar] == filenames[var] and procdims == dims and procinds == inds:
+                    grid = fields[procvar].grid
+                    break
+            fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)

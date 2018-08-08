@@ -240,7 +240,7 @@ class Field(object):
         self.timeFiles = kwargs.pop('timeFiles', None)
 
     @classmethod
-    def from_netcdf(cls, filenames, variable, dimensions, indices=None,
+    def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False,
                     full_load=False, dimension_filename=None, **kwargs):
         """Create field from netCDF file
@@ -278,37 +278,44 @@ class Field(object):
             depth = filebuffer.read_depth
             indices = filebuffer.indices
 
-        # Concatenate time variable to determine overall dimension
-        # across multiple files
-        timeslices = []
-        timeFiles = []
-        for fname in filenames:
-            with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
-                ftime = filebuffer.time
-                timeslices.append(ftime)
-                timeFiles.append([fname] * len(ftime))
-        timeslices = np.array(timeslices)
-        time = np.concatenate(timeslices)
-        timeFiles = np.concatenate(np.array(timeFiles))
-        if isinstance(time[0], np.datetime64):
-            time_origin = time[0]
-            time = (time - time_origin) / np.timedelta64(1, 's')
-        else:
-            time_origin = None
-        assert(np.all((time[1:]-time[:-1]) > 0))
+        if grid is None:
+            # Concatenate time variable to determine overall dimension
+            # across multiple files
+            timeslices = []
+            timeFiles = []
+            for fname in filenames:
+                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                    ftime = filebuffer.time
+                    timeslices.append(ftime)
+                    timeFiles.append([fname] * len(ftime))
+            timeslices = np.array(timeslices)
+            time = np.concatenate(timeslices)
+            timeFiles = np.concatenate(np.array(timeFiles))
+            if isinstance(time[0], np.datetime64):
+                time_origin = time[0]
+                time = (time - time_origin) / np.timedelta64(1, 's')
+            else:
+                time_origin = None
+            assert(np.all((time[1:]-time[:-1]) > 0))
 
-        if time.size == 1 and time[0] is None:
-            time[0] = 0
-        if len(lon.shape) == 1:
-            if len(depth.shape) == 1:
-                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            if time.size == 1 and time[0] is None:
+                time[0] = 0
+            if len(lon.shape) == 1:
+                if len(depth.shape) == 1:
+                    grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                else:
+                    grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                if len(depth.shape) == 1:
+                    grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                else:
+                    grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid.timeslices = timeslices
+            grid.timeFiles = timeFiles
         else:
-            if len(depth.shape) == 1:
-                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-            else:
-                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            time = grid.time
+            timeslices = grid.timeslices
+            timeFiles = grid.timeFiles
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
