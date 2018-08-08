@@ -54,10 +54,10 @@ def stommel_fieldset(xdim=200, ydim=200):
                 P[i, j, t] = A * (c1*math.exp(l1*xi) + c2*math.exp(l2*xi) + 1) * math.sin(math.pi * yi)
         for i in range(lon.size-2):
             for j in range(lat.size):
-                V[i+1, j, t] = (P[i+2, j, t] - P[i, j, t]) / (2 * a / xdim)
+                V[i+1, j, t] = (P[i+2, j, t] - P[i, j, t]) / (2 * a / (xdim-1))
         for i in range(lon.size):
             for j in range(lat.size-2):
-                U[i, j+1, t] = -(P[i, j+2, t] - P[i, j, t]) / (2 * b / ydim)
+                U[i, j+1, t] = -(P[i, j+2, t] - P[i, j, t]) / (2 * b / (ydim-1))
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}

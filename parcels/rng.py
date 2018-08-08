@@ -3,6 +3,7 @@ from parcels.loggers import logger
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
+import uuid
 
 
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate']
@@ -42,9 +43,10 @@ extern float pcls_expovariate(float lamb){
 """
     ccode = stmt_import + fnct_seed
     ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate + fnct_expovariate
-    src_file = path.join(get_cache_dir(), "random.c")
-    lib_file = path.join(get_cache_dir(), "random.so")
-    log_file = path.join(get_cache_dir(), "random.log")
+    basename = path.join(get_cache_dir(), 'parcels_random_%s' % uuid.uuid4())
+    src_file = "%s.c" % basename
+    lib_file = "%s.so" % basename
+    log_file = "%s.log" % basename
 
     def __init__(self):
         self._lib = None
