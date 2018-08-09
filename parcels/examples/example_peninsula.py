@@ -82,7 +82,7 @@ def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
-    return FieldSet.from_data(data, dimensions, mesh=mesh)
+    return FieldSet.from_data(data, dimensions, mesh=mesh,grid_type = grid_type)
 
 
 def UpdateP(particle, fieldset, time, dt):
