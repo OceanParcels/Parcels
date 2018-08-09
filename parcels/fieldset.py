@@ -196,6 +196,7 @@ class FieldSet(object):
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
                 if filenames[procvar] == filenames[var] and procdims == dims and procinds == inds:
                     grid = fields[procvar].grid
+                    kwargs['timeFiles'] = fields[procvar].timeFiles
                     break
             fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
