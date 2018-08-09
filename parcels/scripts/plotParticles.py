@@ -3,6 +3,7 @@ import xarray as xr
 import numpy as np
 from argparse import ArgumentParser
 from parcels import Field
+from os import environ
 from parcels.plotting import create_parcelsfig_axis, plotfield
 try:
     import matplotlib.animation as animation
@@ -31,6 +32,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
+    environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
     try:
         pfile = xr.open_dataset(str(filename), decode_cf=True)
     except:
