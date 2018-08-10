@@ -53,7 +53,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         titlestr = ' and ' + tracerfield
     else:
         geomap = False if mode is '3d' else True
-        plt, fig, ax, _ = create_parcelsfig_axis(geomap=geomap, land=geomap)
+        plt, fig, ax, _ = create_parcelsfig_axis(geomap=geomap, land=geomap, central_longitude=np.nanmean(lon))
         if plt is None:
             return  # creating axes was not possible
         ax.set_xlim(np.nanmin(lon), np.nanmax(lon))

@@ -206,7 +206,7 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(geomap, land=None, projection=None):
+def create_parcelsfig_axis(geomap, land=None, projection=None, central_longitude=0):
     try:
         import matplotlib.pyplot as plt
     except:
@@ -223,10 +223,10 @@ def create_parcelsfig_axis(geomap, land=None, projection=None):
             logger.info("Visualisation of field with geographic coordinates is not possible. Cartopy not found.")
             return None, None, None, None  # creating axes was not possible
 
-        projection = cartopy.crs.PlateCarree() if projection is None else projection
+        projection = cartopy.crs.PlateCarree(central_longitude) if projection is None else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
-            gl = ax.gridlines(draw_labels=True)
+            gl = ax.gridlines(crs=projection, draw_labels=True)
             gl.xlabels_top, gl.ylabels_right = (False, False)
             gl.xformatter = cartopy.mpl.gridliner.LONGITUDE_FORMATTER
             gl.yformatter = cartopy.mpl.gridliner.LATITUDE_FORMATTER
