@@ -4,7 +4,7 @@ import numpy as np
 from argparse import ArgumentParser
 from parcels import Field
 from os import environ
-from parcels.plotting import create_parcelsfig_axis, plotfield
+from parcels.plotting import create_parcelsfig_axis, plotfield, cartopy_colorbar
 try:
     import matplotlib.animation as animation
     from matplotlib import rc
@@ -74,8 +74,8 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         ax.plot(np.transpose(lon), np.transpose(lat), '.-')
         ax.set_title('Particle trajectories' + titlestr)
     elif mode == 'hist2d':
-        plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
-        plt.colorbar()
+        _, _, _, cs = plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
+        cartopy_colorbar(cs, plt, fig, ax)
         ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
         plottimes = np.unique(time)

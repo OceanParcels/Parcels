@@ -173,17 +173,7 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
 
-    cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
-    fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
-    plt.colorbar(cs, cax=cbar_ax)
-
-    def resize_colorbar(event):
-        plt.draw()
-        posn = ax.get_position()
-        cbar_ax.set_position([posn.x0 + posn.width + 0.01, posn.y0, 0.04, posn.height])
-
-    fig.canvas.mpl_connect('resize_event', resize_colorbar)
-    resize_colorbar(None)
+    cartopy_colorbar(cs, plt, fig, ax)
 
     timestr = parsetimestr(field[0].grid.time_origin, show_time)
     titlestr = kwargs.pop('titlestr', '')
@@ -260,3 +250,17 @@ def parsetimestr(time_origin, show_time):
     else:
         date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
         return ' on ' + date_str[:10] + ' ' + date_str[11:19]
+
+
+def cartopy_colorbar(cs, plt, fig, ax):
+    cbar_ax = fig.add_axes([0, 0, 0.1, 0.1])
+    fig.subplots_adjust(hspace=0, wspace=0, top=0.925, left=0.1)
+    plt.colorbar(cs, cax=cbar_ax)
+
+    def resize_colorbar(event):
+        plt.draw()
+        posn = ax.get_position()
+        cbar_ax.set_position([posn.x0 + posn.width + 0.01, posn.y0, 0.04, posn.height])
+
+    fig.canvas.mpl_connect('resize_event', resize_colorbar)
+    resize_colorbar(None)
