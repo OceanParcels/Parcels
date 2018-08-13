@@ -44,21 +44,24 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
+    pfile.close()
 
     if tracerfile is not None and mode is not 'hist2d':
         tracerfld = Field.from_netcdf(tracerfile, tracerfield, {'lon': tracerlon, 'lat': tracerlat})
-        plt, fig, ax, _ = plotfield(tracerfld)
+        plt, fig, ax, cartopy = plotfield(tracerfld)
         if plt is None:
             return  # creating axes was not possible
         titlestr = ' and ' + tracerfield
     else:
         geomap = False if mode is '3d' else True
-        plt, fig, ax, _ = create_parcelsfig_axis(geomap=geomap, land=geomap, central_longitude=np.nanmean(lon))
+        plt, fig, ax, cartopy = create_parcelsfig_axis(geomap=geomap, land=geomap)
         if plt is None:
             return  # creating axes was not possible
-        ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
-        ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         titlestr = ''
+
+    if cartopy:
+        for p in range(lon.shape[1]):
+            lon[:, p] = [ln if ln < 180 else ln - 360 for ln in lon[:, p]]
 
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
@@ -71,13 +74,15 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         ax.set_zlabel('Depth')
         ax.set_title('Particle trajectories')
     elif mode == '2d':
-        ax.plot(np.transpose(lon), np.transpose(lat), '.-')
+        ax.plot(np.transpose(lon), np.transpose(lat), '.-', transform=cartopy.crs.Geodetic())
         ax.set_title('Particle trajectories' + titlestr)
     elif mode == 'hist2d':
         _, _, _, cs = plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
         cartopy_colorbar(cs, plt, fig, ax)
         ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
+        ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
+        ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         plottimes = np.unique(time)
         if not movie_forward:
             plottimes = np.flip(plottimes, 0)
@@ -86,8 +91,8 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         else:
             plottimes = plottimes[~np.isnan(plottimes)]
         b = time == plottimes[0]
-        scat = ax.scatter(lon[b], lat[b], s=60, color='k')
-        ttl = ax.set_title('Particle' + titlestr + ' at time ' + str(plottimes[0]))
+        scat = ax.scatter(lon[b], lat[b], s=20, color='k')
+        ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
         frames = np.arange(1, len(plottimes))
 
         def animate(t):
