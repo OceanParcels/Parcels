@@ -99,6 +99,8 @@ class ParticleSet(object):
                 self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
                 # Set other Variables if provided
                 for kwvar in kwargs:
+                    if not hasattr(self.particles[i], kwvar):
+                        raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(self.particles[i], kwvar, kwargs[kwvar][i])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
