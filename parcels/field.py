@@ -200,7 +200,7 @@ class Field(object):
             self.units = self.unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self.interp_method = interp_method
+        self.interp_method = interp_method[name] if name in interp_method else interp_method
         self.fieldset = None
         if self.name in ['cosU', 'sinU', 'cosV', 'sinV']:
             self.allow_time_extrapolation = True
@@ -673,9 +673,7 @@ class Field(object):
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
             return self.data[ti, yii, xii]
-        elif self.interp_method is 'cgrid_linear' and self.name == 'W':
-            return self.data[ti, yi, xi]
-        elif self.interp_method in ['linear', 'cgrid_linear']:
+        elif self.interp_method is 'linear':
             val = (1-xsi)*(1-eta) * self.data[ti, yi, xi] + \
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
@@ -693,12 +691,12 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'cgrid_linear' and self.name == 'W':
+        elif self.interp_method is 'cgrid_linear':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method in ['linear', 'cgrid_linear']:
+        elif self.interp_method is 'linear':
             data = self.data[ti, zi, :, :]
             f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \

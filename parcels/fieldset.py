@@ -234,8 +234,15 @@ class FieldSet(object):
 
         dimension_filename = filenames.pop('mesh_mask')
 
+        interp_method = {}
+        for v in variables:
+            if v in ['U', 'V', 'W']:
+                interp_method[v] = 'cgrid_linear'
+            else:
+                interp_method[v] = 'linear'
+
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method='cgrid_linear',
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
                                dimension_filename=dimension_filename, **kwargs)
 
     @classmethod
