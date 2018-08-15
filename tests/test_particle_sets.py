@@ -38,6 +38,21 @@ def test_pset_create_line(fieldset, mode, npart=100):
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+
+    class MyParticle(ptype[mode]):
+        v = Variable('v')
+
+    v_vals = np.arange(npart)
+    pset = ParticleSet.from_list(fieldset, lon=lon, lat=lat, v=v_vals, pclass=MyParticle)
+    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
+    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+    assert np.allclose([p.v for p in pset], v_vals, rtol=1e-12)
+
+
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_pset_create_field(fieldset, mode, npart=100):
     np.random.seed(123456)

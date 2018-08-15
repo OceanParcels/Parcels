@@ -13,10 +13,9 @@ def set_globcurrent_fieldset(filename=None, indices=None, full_load=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
-    filenames = {'U': filename, 'V': filename}
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
-    return FieldSet.from_netcdf(filenames, variables, dimensions, indices, full_load=full_load)
+    return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load)
 
 
 def test_globcurrent_fieldset():

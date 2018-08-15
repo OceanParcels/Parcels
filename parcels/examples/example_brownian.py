@@ -7,20 +7,26 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def zeros_fieldset(xdim=2, ydim=2):
+def mesh_conversion(mesh):
+    return (1852. * 60) if mesh is 'spherical' else 1.
+
+
+def zeros_fieldset(xdim=2, ydim=2, mesh='flat'):
     """Generates a zero velocity field"""
-    lon = np.linspace(-20, 20, xdim, dtype=np.float32)
-    lat = np.linspace(-20, 20, ydim, dtype=np.float32)
+
+    lon = np.linspace(-2e5/mesh_conversion(mesh), 2e5/mesh_conversion(mesh), xdim, dtype=np.float32)
+    lat = np.linspace(-2e5/mesh_conversion(mesh), 2e5/mesh_conversion(mesh), ydim, dtype=np.float32)
 
     dimensions = {'lon': lon, 'lat': lat}
     data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
             'V': np.zeros((ydim, xdim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh='spherical')
+    return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_brownian_example(mode, npart=3000):
-    fieldset = zeros_fieldset()
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_brownian_example(mode, mesh, npart=3000):
+    fieldset = zeros_fieldset(mesh=mesh)
 
     # Set diffusion constants.
     kh_zonal = 100
@@ -45,9 +51,8 @@ def test_brownian_example(mode, npart=3000):
     expected_std_x = np.sqrt(2*kh_zonal*runtime.total_seconds())
     expected_std_y = np.sqrt(2*kh_meridional*runtime.total_seconds())
 
-    conversion = (1852 * 60)  # to convert from degrees to m
-    ys = np.array([p.lat for p in pset]) * conversion
-    xs = np.array([p.lon for p in pset]) * conversion  # since near equator, we do not need to care about curvature effect
+    ys = np.array([p.lat for p in pset]) * mesh_conversion(mesh)
+    xs = np.array([p.lon for p in pset]) * mesh_conversion(mesh)  # since near equator, we do not need to care about curvature effect
 
     tol = 200  # 200m tolerance
     assert np.allclose(np.std(xs), expected_std_x, atol=tol)
@@ -57,4 +62,4 @@ def test_brownian_example(mode, npart=3000):
 
 
 if __name__ == "__main__":
-    test_brownian_example('jit', npart=2000)
+    test_brownian_example('jit', 'spherical', npart=2000)

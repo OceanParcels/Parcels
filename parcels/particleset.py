@@ -7,6 +7,7 @@ from parcels.particlefile import ParticleFile
 from parcels.loggers import logger
 import numpy as np
 import bisect
+import progressbar
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime
@@ -27,9 +28,10 @@ class ParticleSet(object):
     :param depth: Optional list of initial depth values for particles. Default is 0m
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -96,11 +98,16 @@ class ParticleSet(object):
 
             for i in range(size):
                 self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
+                # Set other Variables if provided
+                for kwvar in kwargs:
+                    if not hasattr(self.particles[i], kwvar):
+                        raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+                    setattr(self.particles[i], kwvar, kwargs[kwvar][i])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None):
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, **kwargs):
         """Initialise the ParticleSet from lists of lon and lat
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -111,8 +118,9 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
        """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, **kwargs)
 
     @classmethod
     def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None):
@@ -220,7 +228,8 @@ class ParticleSet(object):
         return particles
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
-                moviedt=None, recovery=None, output_file=None, movie_background_field=None):
+                moviedt=None, recovery=None, output_file=None, movie_background_field=None,
+                verbose_progress=True):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -245,6 +254,7 @@ class ParticleSet(object):
                          kernel errors.
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
+        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
 
         """
 
@@ -331,6 +341,8 @@ class ParticleSet(object):
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
+        if verbose_progress:
+            pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime))
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if dt > 0:
                 time = min(next_prelease, next_input, next_output, next_movie, endtime)
@@ -355,9 +367,13 @@ class ParticleSet(object):
             next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
+            if verbose_progress:
+                pbar.update(abs(time - _starttime))
 
         if output_file:
             output_file.write(self, time)
+        if verbose_progress:
+            pbar.finish()
 
     def show(self, particles=True, show_time=None, field=None, domain=None,
              land=False, vmin=None, vmax=None, savefile=None):
