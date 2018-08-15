@@ -86,11 +86,6 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
         p = Variable('p', dtype=np.float32, initial=0.)
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
 
-        def __repr__(self):
-            """Custom print function which overrides the built-in"""
-            return "P(%.4f, %.4f)[p=%.5f, p_start=%f]" % (self.lon, self.lat,
-                                                          self.p, self.p_start)
-
     # Initialise particles
     if fieldset.U.grid.mesh == 'flat':
         x = 3000  # 3 km offset from boundary

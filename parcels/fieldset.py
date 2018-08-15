@@ -174,10 +174,9 @@ class FieldSet(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            if isinstance(filenames[var], list):
-                paths = filenames[var]
-            else:
-                paths = sorted(glob(str(filenames[var])))
+            paths = filenames[var] if type(filenames) is dict else filenames
+            if not isinstance(paths, list):
+                paths = sorted(glob(str(paths)))
             if len(paths) == 0:
                 raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
@@ -326,8 +325,10 @@ class FieldSet(object):
         :param filename: Basename of the output fileset"""
         logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        self.U.write(filename, varname='vozocrtx')
-        self.V.write(filename, varname='vomecrty')
+        if hasattr(self, 'U'):
+            self.U.write(filename, varname='vozocrtx')
+        if hasattr(self, 'V'):
+            self.V.write(filename, varname='vomecrty')
 
         for v in self.fields:
             if (v.name is not 'U') and (v.name is not 'V'):

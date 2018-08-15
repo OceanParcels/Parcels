@@ -938,17 +938,24 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        t, d, x, y = (self.grid.time.size, self.grid.depth.size,
-                      self.grid.lon.size, self.grid.lat.size)
-        nav_lon = xr.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
-                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        if type(self.grid) is RectilinearZGrid:
+            nav_lon = xr.DataArray(self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+            nav_lat = xr.DataArray(self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        elif type(self.grid) is CurvilinearZGrid:
+            nav_lon = xr.DataArray(self.grid.lon, coords=[('y', range(self.grid.ydim)),
+                                                          ('x', range(self.grid.xdim))])
+            nav_lat = xr.DataArray(self.grid.lat, coords=[('y', range(self.grid.ydim)),
+                                                          ('x', range(self.grid.xdim))])
+        else:
+            raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
+
         attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
         time_counter = xr.DataArray(self.grid.time,
                                     dims=['time_counter'],
                                     attrs=attrs)
-        vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
+        vardata = xr.DataArray(self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)),
                                dims=['time_counter', vname_depth, 'y', 'x'])
         # Create xarray Dataset and output to netCDF format
         attrs = {'parcels_mesh': self.grid.mesh}
