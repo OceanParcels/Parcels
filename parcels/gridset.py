@@ -10,7 +10,6 @@ class GridSet(object):
 
     def __init__(self):
         self.grids = []
-        self.size = 0
 
     def add_grid(self, field):
         grid = field.grid
@@ -33,7 +32,6 @@ class GridSet(object):
 
         if not existing_grid:
             self.grids.append(grid)
-            self.size += 1
         field.igrid = self.grids.index(field.grid)
 
     def dimrange(self, dim):
@@ -47,3 +45,7 @@ class GridSet(object):
             maxleft = max(maxleft, getattr(g, dim)[0])
             minright = min(minright, getattr(g, dim)[-1])
         return maxleft, minright
+
+    @property
+    def size(self):
+        return len(self.grids)
