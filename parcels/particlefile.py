@@ -37,13 +37,13 @@ class ParticleFile(object):
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written
         self.lasttime_written = None  # variable to check if time has been written already
-        extension = path.splitext(str(name))[1]
-        fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
 
         self.dataset = None
         self.particleset = particleset
 
     def open_dataset(self):
+        extension = path.splitext(str(self.name))[1]
+        fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
         self.dataset.createDimension("traj", None)
@@ -93,7 +93,7 @@ class ParticleFile(object):
         :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time.
         """
 
-        for v in particleset.ptype.variables:
+        for v in self.particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
             if v.to_write:
