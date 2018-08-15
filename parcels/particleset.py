@@ -28,9 +28,10 @@ class ParticleSet(object):
     :param depth: Optional list of initial depth values for particles. Default is 0m
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -97,11 +98,16 @@ class ParticleSet(object):
 
             for i in range(size):
                 self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
+                # Set other Variables if provided
+                for kwvar in kwargs:
+                    if not hasattr(self.particles[i], kwvar):
+                        raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+                    setattr(self.particles[i], kwvar, kwargs[kwvar][i])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None):
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, **kwargs):
         """Initialise the ParticleSet from lists of lon and lat
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -112,8 +118,9 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
        """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, **kwargs)
 
     @classmethod
     def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None):
