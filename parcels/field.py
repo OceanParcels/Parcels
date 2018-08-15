@@ -237,7 +237,7 @@ class Field(object):
         self.ccode_data = self.name
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
-        self.timeFiles = kwargs.pop('timeFiles', None)
+        self.dataFiles = kwargs.pop('dataFiles', None)
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -282,15 +282,15 @@ class Field(object):
             # Concatenate time variable to determine overall dimension
             # across multiple files
             timeslices = []
-            timeFiles = []
+            dataFiles = []
             for fname in filenames:
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
-                    timeFiles.append([fname] * len(ftime))
+                    dataFiles.append([fname] * len(ftime))
             timeslices = np.array(timeslices)
             time = np.concatenate(timeslices)
-            timeFiles = np.concatenate(np.array(timeFiles))
+            dataFiles = np.concatenate(np.array(dataFiles))
             if isinstance(time[0], np.datetime64):
                 time_origin = time[0]
                 time = (time - time_origin) / np.timedelta64(1, 's')
@@ -311,7 +311,7 @@ class Field(object):
                 else:
                     grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
-            kwargs['timeFiles'] = timeFiles
+            kwargs['dataFiles'] = dataFiles
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
@@ -966,7 +966,7 @@ class Field(object):
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid
-        with NetcdfFileBuffer(self.timeFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
