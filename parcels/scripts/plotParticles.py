@@ -92,10 +92,12 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     if mode == 'movie2d_notebook':
         plt.close()
+        pfile.close()
         return anim
     else:
         if show_plt:
             plt.show()
+        pfile.close()
         return plt
 
 
