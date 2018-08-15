@@ -11,7 +11,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_fieldset(xdim, ydim, mesh):
+def peninsula_fieldset(xdim, ydim, mesh='flat'):
     """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
@@ -20,9 +20,9 @@ def peninsula_fieldset(xdim, ydim, mesh):
     :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
-               1. spherical (default): Lat and lon in degree, with a
+               1. spherical: Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
+               2. flat  (default): No conversion, lat/lon are assumed to be in m.
 
     The original test description can be found in Fig. 2.2.3 in:
     North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
@@ -36,26 +36,19 @@ def peninsula_fieldset(xdim, ydim, mesh):
     """
     # Set Parcels FieldSet variables
 
-    # Generate the original test setup on A-grid in km
-    dx = 100. / xdim / 2.
-    dy = 50. / ydim / 2.
-    La = np.linspace(dx, 100.-dx, xdim, dtype=np.float32)
-    Wa = np.linspace(dy, 50.-dy, ydim, dtype=np.float32)
-
-    # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
-    # surface height) all on A-grid
-    U = np.zeros((ydim, xdim), dtype=np.float32)
-    V = np.zeros((ydim, xdim), dtype=np.float32)
-    W = np.zeros((ydim, xdim), dtype=np.float32)
-    P = np.zeros((ydim, xdim), dtype=np.float32)
+    # Generate the original test setup on A-grid in m
+    domainsizeX, domainsizeY = (1.e5, 5.e4)
+    dx, dy = domainsizeX / xdim, domainsizeY / ydim
+    La = np.linspace(dx, 1.e5-dx, xdim, dtype=np.float32)
+    Wa = np.linspace(dy, 5.e4-dy, ydim, dtype=np.float32)
 
     u0 = 1
-    x0 = 50.
-    R = 0.32 * 50.
+    x0 = domainsizeX / 2
+    R = 0.32 * domainsizeX / 2
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
-    P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+    P = u0*R**2*y/((x-x0)**2+y**2)-u0*y / 1e3
     U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
     V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
 
@@ -63,18 +56,10 @@ def peninsula_fieldset(xdim, ydim, mesh):
     landpoints = P >= 0.
     U[landpoints] = np.nan
     V[landpoints] = np.nan
-    W[landpoints] = np.nan
 
-    if mesh == 'spherical':
-        # Convert from km to lat/lon
-        lon = La / 1.852 / 60.
-        lat = Wa / 1.852 / 60.
-    elif mesh == 'flat':
-        # Convert from km to m
-        lon = La * 1000.
-        lat = Wa * 1000.
-    else:
-        raise RuntimeError('Mesh %s is not a valid option' % mesh)
+    # Convert from m to lat/lon for spherical meshes
+    lon = La / 1852. / 60. if mesh is 'spherical' else La
+    lat = Wa / 1852. / 60. if mesh is 'spherical' else Wa
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
@@ -143,18 +128,19 @@ def test_peninsula_fieldset(mode, mesh):
 
 
 @pytest.fixture(scope='module')
-def fieldsetfile():
+def fieldsetfile(mesh):
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
-    fieldset = peninsula_fieldset(100, 50, mesh='spherical')
+    fieldset = peninsula_fieldset(100, 50, mesh=mesh)
     fieldset.write(filename)
     return filename
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_file(fieldsetfile, mode):
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_file(mode, mesh):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
@@ -187,7 +173,7 @@ Example of particle advection around an idealised peninsula""")
 
     if args.fieldset is not None:
         filename = 'peninsula'
-        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='spherical')
+        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='flat')
         fieldset.write(filename)
 
     # Open fieldset file set
