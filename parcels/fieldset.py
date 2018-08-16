@@ -193,7 +193,8 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                if filenames[procvar] == filenames[var] and procdims == dims and procinds == inds:
+                if (type(filenames) is not dict or filenames[procvar] == filenames[var]) \
+                        and procdims == dims and procinds == inds:
                     grid = fields[procvar].grid
                     kwargs['dataFiles'] = fields[procvar].dataFiles
                     break
