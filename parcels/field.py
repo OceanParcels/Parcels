@@ -194,9 +194,9 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh is 'flat' or (fieldtype not in self.unitconverters.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in self.unitconverters.keys()):
             self.units = UnitConverter()
-        elif self.grid.mesh is 'spherical':
+        elif self.grid.mesh == 'spherical':
             self.units = self.unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
@@ -237,10 +237,10 @@ class Field(object):
         self.ccode_data = self.name
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
-        self.timeFiles = kwargs.pop('timeFiles', None)
+        self.dataFiles = kwargs.pop('dataFiles', None)
 
     @classmethod
-    def from_netcdf(cls, filenames, variable, dimensions, indices=None,
+    def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False,
                     full_load=False, dimension_filename=None, **kwargs):
         """Create field from netCDF file
@@ -277,49 +277,56 @@ class Field(object):
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
             indices = filebuffer.indices
+            # Check if parcels_mesh has been explicitly set in file
+            if 'parcels_mesh' in filebuffer.dataset.attrs:
+                mesh = filebuffer.dataset.attrs['parcels_mesh']
 
-        # Concatenate time variable to determine overall dimension
-        # across multiple files
-        timeslices = []
-        timeFiles = []
         if len(filenames) > 1 and 'time' not in dimensions:
             raise RuntimeError('Multiple files given but no time dimension specified')
-        for fname in filenames:
-            with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
-                ftime = filebuffer.time
-                timeslices.append(ftime)
-                timeFiles.append([fname] * len(ftime))
-        timeslices = np.array(timeslices)
-        time = np.concatenate(timeslices)
-        timeFiles = np.concatenate(np.array(timeFiles))
-        if isinstance(time[0], np.datetime64):
-            time_origin = time[0]
-            time = (time - time_origin) / np.timedelta64(1, 's')
-        else:
-            time_origin = None
-        assert(np.all((time[1:]-time[:-1]) > 0))
 
-        if time.size == 1 and time[0] is None:
-            time[0] = 0
-        if len(lon.shape) == 1:
-            if len(depth.shape) == 1:
-                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        if grid is None:
+            # Concatenate time variable to determine overall dimension
+            # across multiple files
+            timeslices = []
+            dataFiles = []
+            for fname in filenames:
+                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                    ftime = filebuffer.time
+                    timeslices.append(ftime)
+                    dataFiles.append([fname] * len(ftime))
+            timeslices = np.array(timeslices)
+            time = np.concatenate(timeslices)
+            dataFiles = np.concatenate(np.array(dataFiles))
+            if isinstance(time[0], np.datetime64):
+                time_origin = time[0]
+                time = (time - time_origin) / np.timedelta64(1, 's')
             else:
-                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-        else:
-            if len(depth.shape) == 1:
-                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                time_origin = None
+            assert(np.all((time[1:]-time[:-1]) > 0))
+
+            if time.size == 1 and time[0] is None:
+                time[0] = 0
+            if len(lon.shape) == 1:
+                if len(depth.shape) == 1:
+                    grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                else:
+                    grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                if len(depth.shape) == 1:
+                    grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                else:
+                    grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid.timeslices = timeslices
+            kwargs['dataFiles'] = dataFiles
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
 
-        if time.size <= 3 or full_load:
+        if grid.time.size <= 3 or full_load:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
-            for tslice, fname in zip(timeslices, filenames):
+            for tslice, fname in zip(grid.timeslices, filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -347,7 +354,6 @@ class Field(object):
         kwargs['dimensions'] = dimensions.copy()
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
-        kwargs['timeFiles'] = timeFiles
 
         return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
@@ -937,23 +943,31 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        t, d, x, y = (self.grid.time.size, self.grid.depth.size,
-                      self.grid.lon.size, self.grid.lat.size)
-        nav_lon = xr.DataArray(self.grid.lon + np.zeros((y, x), dtype=np.float32),
-                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        nav_lat = xr.DataArray(self.grid.lat.reshape(y, 1) + np.zeros(x, dtype=np.float32),
-                               coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        if type(self.grid) is RectilinearZGrid:
+            nav_lon = xr.DataArray(self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+            nav_lat = xr.DataArray(self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
+                                   coords=[('y', self.grid.lat), ('x', self.grid.lon)])
+        elif type(self.grid) is CurvilinearZGrid:
+            nav_lon = xr.DataArray(self.grid.lon, coords=[('y', range(self.grid.ydim)),
+                                                          ('x', range(self.grid.xdim))])
+            nav_lat = xr.DataArray(self.grid.lat, coords=[('y', range(self.grid.ydim)),
+                                                          ('x', range(self.grid.xdim))])
+        else:
+            raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
+
         attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
         time_counter = xr.DataArray(self.grid.time,
                                     dims=['time_counter'],
                                     attrs=attrs)
-        vardata = xr.DataArray(self.data.reshape((t, d, y, x)),
+        vardata = xr.DataArray(self.data.reshape((self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim)),
                                dims=['time_counter', vname_depth, 'y', 'x'])
         # Create xarray Dataset and output to netCDF format
+        attrs = {'parcels_mesh': self.grid.mesh}
         dset = xr.Dataset({varname: vardata}, coords={'nav_lon': nav_lon,
                                                       'nav_lat': nav_lat,
                                                       'time_counter': time_counter,
-                                                      vname_depth: self.grid.depth})
+                                                      vname_depth: self.grid.depth}, attrs=attrs)
         dset.to_netcdf(filepath)
 
     def advancetime(self, field_new, advanceForward):
@@ -966,7 +980,7 @@ class Field(object):
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid
-        with NetcdfFileBuffer(self.timeFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):

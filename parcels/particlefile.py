@@ -37,8 +37,13 @@ class ParticleFile(object):
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written
         self.lasttime_written = None  # variable to check if time has been written already
-        extension = path.splitext(str(name))[1]
-        fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
+
+        self.dataset = None
+        self.particleset = particleset
+
+    def open_dataset(self):
+        extension = path.splitext(str(self.name))[1]
+        fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
         self.dataset.createDimension("traj", None)
@@ -56,10 +61,10 @@ class ParticleFile(object):
         self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        if particleset.time_origin == 0:
+        if self.particleset.time_origin == 0:
             self.time.units = "seconds"
         else:
-            self.time.units = "seconds since " + str(particleset.time_origin)
+            self.time.units = "seconds since " + str(self.particleset.time_origin)
             self.time.calendar = "julian"
         self.time.axis = "T"
 
@@ -88,7 +93,7 @@ class ParticleFile(object):
         :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time.
         """
 
-        for v in particleset.ptype.variables:
+        for v in self.particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
             if v.to_write:
@@ -105,7 +110,8 @@ class ParticleFile(object):
         self.idx = np.empty(shape=0)
 
     def __del__(self):
-        self.dataset.close()
+        if self.dataset:
+            self.dataset.close()
 
     def sync(self):
         """Write all buffered data to disk"""
@@ -119,6 +125,8 @@ class ParticleFile(object):
         :param sync: Optional argument whether to write data to disk immediately. Default is True
 
         """
+        if self.dataset is None:
+            self.open_dataset()
         if isinstance(time, delta):
             time = time.total_seconds()
         if self.lasttime_written != time and \
