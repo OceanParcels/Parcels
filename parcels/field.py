@@ -200,11 +200,15 @@ class Field(object):
             self.units = self.unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self.interp_method = interp_method
+        if type(interp_method) is dict:
+            if name in interp_method:
+                self.interp_method = interp_method[name]
+            else:
+                raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
+        else:
+            self.interp_method = interp_method
         self.fieldset = None
-        if self.name in ['cosU', 'sinU', 'cosV', 'sinV']:
-            self.allow_time_extrapolation = True
-        elif allow_time_extrapolation is None:
+        if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
@@ -280,6 +284,9 @@ class Field(object):
             # Check if parcels_mesh has been explicitly set in file
             if 'parcels_mesh' in filebuffer.dataset.attrs:
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
+
+        if len(filenames) > 1 and 'time' not in dimensions:
+            raise RuntimeError('Multiple files given but no time dimension specified')
 
         if grid is None:
             # Concatenate time variable to determine overall dimension
@@ -671,7 +678,7 @@ class Field(object):
     def interpolator2D(self, ti, z, y, x):
         xi = 0
         yi = 0
-        (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
+        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -683,7 +690,7 @@ class Field(object):
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
         else:
-            raise RuntimeError(self.interp_method+"is not implemented for 2D grids")
+            raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
     def interpolator3D(self, ti, z, y, x, time):
         xi = int(self.grid.xdim / 2)
@@ -694,7 +701,7 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'c_grid_linear':
+        elif self.interp_method is 'cgrid_linear':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
@@ -712,7 +719,7 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+            raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, ti, time):
         """Calculate the data of a field between two snapshots,
