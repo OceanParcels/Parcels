@@ -207,7 +207,8 @@ class FieldSet(object):
 
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False,
+                  tracer_interp_method='linear', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
         Note that this assumes there is a variable mesh_mask that is used for the dimensions
 
@@ -235,6 +236,9 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. Either 'linear' or 'nearest'
+               Note that in the case of from_nemo(), the velocity fields are default to 'cgrid_linear'
+
         """
 
         dimension_filename = filenames.pop('mesh_mask')
@@ -244,7 +248,7 @@ class FieldSet(object):
             if v in ['U', 'V', 'W']:
                 interp_method[v] = 'cgrid_linear'
             else:
-                interp_method[v] = 'linear'
+                interp_method[v] = tracer_interp_method
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
