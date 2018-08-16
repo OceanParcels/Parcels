@@ -200,7 +200,13 @@ class Field(object):
             self.units = self.unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self.interp_method = interp_method[name] if name in interp_method else interp_method
+        if type(interp_method) is dict:
+            if name in interp_method:
+                self.interp_method = interp_method[name]
+            else:
+                raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
+        else:
+            self.interp_method = interp_method
         self.fieldset = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
