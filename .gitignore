@@ -18,3 +18,4 @@ Profile.prof
 parcels/examples/.ipynb_checkpoints/*
 .cache/*
 parcels/examples/particle*.png
+parcels/_version.py
