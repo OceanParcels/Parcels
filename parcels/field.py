@@ -202,9 +202,7 @@ class Field(object):
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.interp_method = interp_method[name] if name in interp_method else interp_method
         self.fieldset = None
-        if self.name in ['cosU', 'sinU', 'cosV', 'sinV']:
-            self.allow_time_extrapolation = True
-        elif allow_time_extrapolation is None:
+        if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
