@@ -296,7 +296,15 @@ class FieldSet(object):
     def fields(self):
         """Returns a list of all the :class:`parcels.field.Field` objects
         associated with this FieldSet"""
-        return [v for v in self.__dict__.values() if isinstance(v, Field)]
+        fields = []
+        for v in self.__dict__.values():
+            if isinstance(v, Field):
+                fields.append(v)
+            elif isinstance(v, FieldList):
+                for v2 in v:
+                    if v2 not in fields:
+                        fields.append(v2)
+        return fields
 
     def add_constant(self, name, value):
         """Add a constant to the FieldSet. Note that all constants are
