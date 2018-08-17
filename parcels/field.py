@@ -136,6 +136,11 @@ class GeographicPolarSquare(UnitConverter):
         return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
 
 
+unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
+                  'Kh_zonal': GeographicPolarSquare(),
+                  'Kh_meridional': GeographicSquare()}
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -172,10 +177,6 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
-                      'Kh_zonal': GeographicPolarSquare(),
-                      'Kh_meridional': GeographicSquare()}
-
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
@@ -194,10 +195,10 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in self.unitconverters.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = self.unitconverters[fieldtype]
+            self.units = unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:
