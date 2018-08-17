@@ -35,7 +35,7 @@ class ParticleFile(object):
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=None):
 
         self.name = name
-        chunksizes = [max([len(particleset), 1]), 1] if chunksizes is None else chunksizes
+        self.chunksizes = [max([len(particleset), 1]), 1] if chunksizes is None else chunksizes
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written
@@ -56,12 +56,12 @@ class ParticleFile(object):
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
 
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i4", coords, chunksizes=chunksizes)
+        self.id = self.dataset.createVariable("trajectory", "i4", coords, chunksizes=self.chunksizes)
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=chunksizes)
+        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.time.long_name = ""
         self.time.standard_name = "time"
         if self.particleset.time_origin == 0:
@@ -71,19 +71,19 @@ class ParticleFile(object):
             self.time.calendar = "julian"
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=chunksizes)
+        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan, chunksizes=chunksizes)
+        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan, chunksizes=chunksizes)
+        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"
@@ -101,10 +101,10 @@ class ParticleFile(object):
                 continue
             if v.to_write:
                 if v.to_write is True:
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=chunksizes))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes))
                     self.user_vars += [v.name]
                 elif v.to_write == 'once':
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[chunksizes[0]]))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[self.chunksizes[0]]))
                     self.user_vars_once += [v.name]
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
