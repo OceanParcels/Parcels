@@ -40,6 +40,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
+    pfile.close()
 
     if tracerfile is not None:
         tfile = Dataset(tracerfile, 'r')
@@ -47,6 +48,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         Y = tfile.variables[tracerlat]
         P = tfile.variables[tracerfield]
         plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
+        tfile.close()
 
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa

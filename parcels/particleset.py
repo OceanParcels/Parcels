@@ -10,7 +10,7 @@ import bisect
 import progressbar
 from collections import Iterable
 from datetime import timedelta as delta
-from datetime import datetime
+from datetime import datetime, date
 
 __all__ = ['ParticleSet']
 
@@ -58,6 +58,7 @@ class ParticleSet(object):
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
         time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
+        time = [np.datetime64(t) if isinstance(t, date) else t for t in time]
         self.time_origin = fieldset.time_origin
         if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')

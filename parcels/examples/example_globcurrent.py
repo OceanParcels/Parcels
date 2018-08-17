@@ -74,6 +74,22 @@ def test_globcurrent_particles(mode):
     assert(abs(pset[0].lat - -35.3) < 1)
 
 
+def test__particles_init_time():
+    fieldset = set_globcurrent_fieldset()
+
+    lonstart = [25]
+    latstart = [-35]
+
+    # tests the different ways of initialising the time of a particle
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.datetime64('2002-01-15'))
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=14*86400)
+    pset3 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.array([np.datetime64('2002-01-15')]))
+    pset4 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[np.datetime64('2002-01-15')])
+    assert pset[0].time - pset2[0].time == 0
+    assert pset[0].time - pset3[0].time == 0
+    assert pset[0].time - pset4[0].time == 0
+
+
 @pytest.mark.xfail(reason="Time extrapolation error expected to be thrown", strict=True)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_globcurrent_time_extrapolation_error(mode):

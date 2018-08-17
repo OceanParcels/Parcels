@@ -136,6 +136,11 @@ class GeographicPolarSquare(UnitConverter):
         return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
 
 
+unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
+                  'Kh_zonal': GeographicPolarSquare(),
+                  'Kh_meridional': GeographicSquare()}
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -172,10 +177,6 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
-                      'Kh_zonal': GeographicPolarSquare(),
-                      'Kh_meridional': GeographicSquare()}
-
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
@@ -194,17 +195,21 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in self.unitconverters.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = self.unitconverters[fieldtype]
+            self.units = unitconverters[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
-        self.interp_method = interp_method
+        if type(interp_method) is dict:
+            if name in interp_method:
+                self.interp_method = interp_method[name]
+            else:
+                raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
+        else:
+            self.interp_method = interp_method
         self.fieldset = None
-        if self.name in ['cosU', 'sinU', 'cosV', 'sinV']:
-            self.allow_time_extrapolation = True
-        elif allow_time_extrapolation is None:
+        if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
@@ -237,10 +242,10 @@ class Field(object):
         self.ccode_data = self.name
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
-        self.timeFiles = kwargs.pop('timeFiles', None)
+        self.dataFiles = kwargs.pop('dataFiles', None)
 
     @classmethod
-    def from_netcdf(cls, filenames, variable, dimensions, indices=None,
+    def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False,
                     full_load=False, dimension_filename=None, **kwargs):
         """Create field from netCDF file
@@ -281,46 +286,52 @@ class Field(object):
             if 'parcels_mesh' in filebuffer.dataset.attrs:
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
-        # Concatenate time variable to determine overall dimension
-        # across multiple files
-        timeslices = []
-        timeFiles = []
-        for fname in filenames:
-            with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
-                ftime = filebuffer.time
-                timeslices.append(ftime)
-                timeFiles.append([fname] * len(ftime))
-        timeslices = np.array(timeslices)
-        time = np.concatenate(timeslices)
-        timeFiles = np.concatenate(np.array(timeFiles))
-        if isinstance(time[0], np.datetime64):
-            time_origin = time[0]
-            time = (time - time_origin) / np.timedelta64(1, 's')
-        else:
-            time_origin = None
-        assert(np.all((time[1:]-time[:-1]) > 0))
+        if len(filenames) > 1 and 'time' not in dimensions:
+            raise RuntimeError('Multiple files given but no time dimension specified')
 
-        if time.size == 1 and time[0] is None:
-            time[0] = 0
-        if len(lon.shape) == 1:
-            if len(depth.shape) == 1:
-                grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        if grid is None:
+            # Concatenate time variable to determine overall dimension
+            # across multiple files
+            timeslices = []
+            dataFiles = []
+            for fname in filenames:
+                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                    ftime = filebuffer.time
+                    timeslices.append(ftime)
+                    dataFiles.append([fname] * len(ftime))
+            timeslices = np.array(timeslices)
+            time = np.concatenate(timeslices)
+            dataFiles = np.concatenate(np.array(dataFiles))
+            if isinstance(time[0], np.datetime64):
+                time_origin = time[0]
+                time = (time - time_origin) / np.timedelta64(1, 's')
             else:
-                grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-        else:
-            if len(depth.shape) == 1:
-                grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                time_origin = None
+            assert(np.all((time[1:]-time[:-1]) > 0))
+
+            if time.size == 1 and time[0] is None:
+                time[0] = 0
+            if len(lon.shape) == 1:
+                if len(depth.shape) == 1:
+                    grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                else:
+                    grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             else:
-                grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                if len(depth.shape) == 1:
+                    grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+                else:
+                    grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid.timeslices = timeslices
+            kwargs['dataFiles'] = dataFiles
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
 
-        if time.size <= 3 or full_load:
+        if grid.time.size <= 3 or full_load:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
-            for tslice, fname in zip(timeslices, filenames):
+            for tslice, fname in zip(grid.timeslices, filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -348,7 +359,6 @@ class Field(object):
         kwargs['dimensions'] = dimensions.copy()
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
-        kwargs['timeFiles'] = timeFiles
 
         return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
@@ -669,7 +679,7 @@ class Field(object):
     def interpolator2D(self, ti, z, y, x):
         xi = 0
         yi = 0
-        (xsi, eta, trash, xi, yi, trash) = self.search_indices(x, y, z, xi, yi)
+        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -681,7 +691,7 @@ class Field(object):
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
         else:
-            raise RuntimeError(self.interp_method+"is not implemented for 2D grids")
+            raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
     def interpolator3D(self, ti, z, y, x, time):
         xi = int(self.grid.xdim / 2)
@@ -692,7 +702,7 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'c_grid_linear':
+        elif self.interp_method is 'cgrid_linear':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
@@ -710,7 +720,7 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         else:
-            raise RuntimeError(self.interp_method+"is not implemented for 3D grids")
+            raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
     def temporal_interpolate_fullfield(self, ti, time):
         """Calculate the data of a field between two snapshots,
@@ -975,7 +985,7 @@ class Field(object):
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid
-        with NetcdfFileBuffer(self.timeFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
             filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
