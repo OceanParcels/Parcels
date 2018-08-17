@@ -302,7 +302,8 @@ class FieldSet(object):
                 fields.append(v)
             elif isinstance(v, FieldList):
                 for v2 in v:
-                    fields.append(v2)
+                    if v2 not in fields:
+                        fields.append(v2)
         return fields
 
     def add_constant(self, name, value):
