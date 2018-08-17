@@ -90,7 +90,7 @@ def test__particles_init_time():
     assert pset[0].time - pset4[0].time == 0
 
 
-@pytest.mark.xfail(reason="Time extrapolation error expected to be thrown")
+@pytest.mark.xfail(reason="Time extrapolation error expected to be thrown", strict=True)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_globcurrent_time_extrapolation_error(mode):
     fieldset = set_globcurrent_fieldset()
