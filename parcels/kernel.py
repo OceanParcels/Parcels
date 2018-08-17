@@ -97,7 +97,7 @@ class Kernel(object):
             for fname in self.vector_field_args:
                 f = getattr(fieldset, fname)
                 Wname = f.W.name if f.W else 'not_defined'
-                for sF in [f.U.name, f.V.name, Wname, 'cosU', 'sinU', 'cosV', 'sinV']:
+                for sF in [f.U.name, f.V.name, Wname]:
                     if sF not in self.field_args:
                         try:
                             self.field_args[sF] = getattr(fieldset, sF)

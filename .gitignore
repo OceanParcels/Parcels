@@ -17,4 +17,6 @@ Profile.prof
 */.ipynb_checkpoints/*
 parcels/examples/.ipynb_checkpoints/*
 .cache/*
+.pytest_cache/*
 parcels/examples/particle*.png
+parcels/_version.py

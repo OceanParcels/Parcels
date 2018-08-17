@@ -28,17 +28,25 @@ class ParticleFile(object):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+    :param chunksizes: 2d vector of sizes for NetCDF chunking. Lower values means smaller files, but also slower IO.
+                       See e.g. https://www.unidata.ucar.edu/blogs/developer/entry/chunking_data_choosing_shapes
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=None):
 
         self.name = name
+        self.chunksizes = [max([len(particleset), 1]), 1] if chunksizes is None else chunksizes
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written
         self.lasttime_written = None  # variable to check if time has been written already
-        extension = path.splitext(str(name))[1]
-        fname = name if extension in ['.nc', '.nc4'] else "%s.nc" % name
+
+        self.dataset = None
+        self.particleset = particleset
+
+    def open_dataset(self):
+        extension = path.splitext(str(self.name))[1]
+        fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
         self.dataset.createDimension("traj", None)
@@ -48,34 +56,34 @@ class ParticleFile(object):
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
 
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i4", coords)
+        self.id = self.dataset.createVariable("trajectory", "i4", coords, chunksizes=self.chunksizes)
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan)
+        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        if particleset.time_origin == 0:
+        if self.particleset.time_origin == 0:
             self.time.units = "seconds"
         else:
-            self.time.units = "seconds since " + str(particleset.time_origin)
+            self.time.units = "seconds since " + str(self.particleset.time_origin)
             self.time.calendar = "standard"
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan)
+        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan)
+        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan)
+        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"
@@ -88,15 +96,15 @@ class ParticleFile(object):
         :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time.
         """
 
-        for v in particleset.ptype.variables:
+        for v in self.particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
                 continue
             if v.to_write:
                 if v.to_write is True:
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes))
                     self.user_vars += [v.name]
                 elif v.to_write == 'once':
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[self.chunksizes[0]]))
                     self.user_vars_once += [v.name]
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
@@ -105,7 +113,8 @@ class ParticleFile(object):
         self.idx = np.empty(shape=0)
 
     def __del__(self):
-        self.dataset.close()
+        if self.dataset:
+            self.dataset.close()
 
     def sync(self):
         """Write all buffered data to disk"""
@@ -119,13 +128,15 @@ class ParticleFile(object):
         :param sync: Optional argument whether to write data to disk immediately. Default is True
 
         """
+        if self.dataset is None:
+            self.open_dataset()
         if isinstance(time, delta):
             time = time.total_seconds()
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if p.fileid < 0 or len(self.idx) == 0]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and p.dt*p.time <= p.dt*time]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
@@ -133,14 +144,15 @@ class ParticleFile(object):
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
                 for p in pset:
-                    i = p.fileid
-                    self.id[i, self.idx[i]] = p.id
-                    self.time[i, self.idx[i]] = time
-                    self.lat[i, self.idx[i]] = p.lat
-                    self.lon[i, self.idx[i]] = p.lon
-                    self.z[i, self.idx[i]] = p.depth
-                    for var in self.user_vars:
-                        getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                    if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
+                        i = p.fileid
+                        self.id[i, self.idx[i]] = p.id
+                        self.time[i, self.idx[i]] = time
+                        self.lat[i, self.idx[i]] = p.lat
+                        self.lon[i, self.idx[i]] = p.lon
+                        self.z[i, self.idx[i]] = p.depth
+                        for var in self.user_vars:
+                            getattr(self, var)[i, self.idx[i]] = getattr(p, var)
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
