@@ -174,10 +174,9 @@ class FieldSet(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            if isinstance(filenames[var], list):
-                paths = filenames[var]
-            else:
-                paths = sorted(glob(str(filenames[var])))
+            paths = filenames[var] if type(filenames) is dict else filenames
+            if not isinstance(paths, list):
+                paths = sorted(glob(str(paths)))
             if len(paths) == 0:
                 raise IOError("FieldSet files not found: %s" % str(filenames[var]))
             for fp in paths:
@@ -189,7 +188,17 @@ class FieldSet(object):
             dims['data'] = name
             inds = indices[var] if (indices and var in indices) else indices
 
-            fields[var] = Field.from_netcdf(paths, var, dims, inds, mesh=mesh,
+            grid = None
+            # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
+            for procvar, _ in fields.items():
+                procdims = dimensions[procvar] if procvar in dimensions else dimensions
+                procinds = indices[procvar] if (indices and procvar in indices) else indices
+                if (type(filenames) is not dict or filenames[procvar] == filenames[var]) \
+                        and procdims == dims and procinds == inds:
+                    grid = fields[procvar].grid
+                    kwargs['dataFiles'] = fields[procvar].dataFiles
+                    break
+            fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
@@ -198,13 +207,10 @@ class FieldSet(object):
 
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False, **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False,
+                  tracer_interp_method='linear', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-        Note that this assumes the following default values for the mesh_mask:
-
-        variables['mesh_mask'] = {'cosU': 'cosU', 'sinU': 'sinU', 'cosV': 'cosV', 'sinV': 'sinV'}
-
-        dimensions['mesh_mask'] = {'U': {'lon': 'glamu', 'lat': 'gphiu'}, 'V': {'lon': 'glamv', 'lat': 'gphiv'}, 'F': {'lon': 'glamf', 'lat': 'gphif'}}
+        Note that this assumes there is a variable mesh_mask that is used for the dimensions
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
@@ -230,12 +236,22 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. Either 'linear' or 'nearest'
+               Note that in the case of from_nemo(), the velocity fields are default to 'cgrid_linear'
+
         """
 
         dimension_filename = filenames.pop('mesh_mask')
 
+        interp_method = {}
+        for v in variables:
+            if v in ['U', 'V', 'W']:
+                interp_method[v] = 'cgrid_linear'
+            else:
+                interp_method[v] = tracer_interp_method
+
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method='cgrid_linear',
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
                                dimension_filename=dimension_filename, **kwargs)
 
     @classmethod
@@ -333,8 +349,10 @@ class FieldSet(object):
         :param filename: Basename of the output fileset"""
         logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        self.U.write(filename, varname='vozocrtx')
-        self.V.write(filename, varname='vomecrty')
+        if hasattr(self, 'U'):
+            self.U.write(filename, varname='vozocrtx')
+        if hasattr(self, 'V'):
+            self.V.write(filename, varname='vomecrty')
 
         for v in self.fields:
             if (v.name is not 'U') and (v.name is not 'V'):
