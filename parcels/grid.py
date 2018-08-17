@@ -35,7 +35,7 @@ class Grid(object):
             logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.time.dtype == np.float64:
-            assert isinstance(self.time[0], int) or isinstance(self.time[0], float), 'Time vector must be an array of int or floats'
+            assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
