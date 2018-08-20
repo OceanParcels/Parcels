@@ -76,7 +76,10 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     if with_particles:
         plon = np.array([p.lon for p in particles])
         plat = np.array([p.lat for p in particles])
-        ax.scatter(plon, plat, s=20, color='black', zorder=20, transform=cartopy.crs.PlateCarree())
+        if cartopy:
+            ax.scatter(plon, plat, s=20, color='black', zorder=20, transform=cartopy.crs.PlateCarree())
+        else:
+            ax.scatter(plon, plat, s=20, color='black', zorder=20)
 
     if animation:
         plt.draw()
@@ -155,7 +158,10 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
         u, v = (np.zeros_like(data[0]) * np.nan, np.zeros_like(data[1]) * np.nan)
         np.place(u, nonzerospd, data[0][nonzerospd] / speed[nonzerospd])
         np.place(v, nonzerospd, data[1][nonzerospd] / speed[nonzerospd])
-        cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
+        if cartopy:
+            cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
+        else:
+            cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax

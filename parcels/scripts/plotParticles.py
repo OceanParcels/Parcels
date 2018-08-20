@@ -41,6 +41,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
     time = np.ma.filled(pfile.variables['time'], np.nan)
     z = np.ma.filled(pfile.variables['z'], np.nan)
+    mesh = pfile.attrs['parcels_mesh'] if 'parcels_mesh' in pfile.attrs else 'spherical'
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
@@ -53,7 +54,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             return  # creating axes was not possible
         titlestr = ' and ' + tracerfield
     else:
-        geomap = False if mode is '3d' else True
+        geomap = False if mode is '3d' or mesh == 'flat' else True
         plt, fig, ax, cartopy = create_parcelsfig_axis(geomap=geomap, land=geomap)
         if plt is None:
             return  # creating axes was not possible
@@ -74,7 +75,10 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         ax.set_zlabel('Depth')
         ax.set_title('Particle trajectories')
     elif mode == '2d':
-        ax.plot(np.transpose(lon), np.transpose(lat), '.-', transform=cartopy.crs.Geodetic())
+        if cartopy:
+            ax.plot(np.transpose(lon), np.transpose(lat), '.-', transform=cartopy.crs.Geodetic())
+        else:
+            ax.plot(np.transpose(lon), np.transpose(lat), '.-')
         ax.set_title('Particle trajectories' + titlestr)
     elif mode == 'hist2d':
         _, _, _, cs = plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
@@ -91,7 +95,10 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         else:
             plottimes = plottimes[~np.isnan(plottimes)]
         b = time == plottimes[0]
-        scat = ax.scatter(lon[b], lat[b], s=20, color='k')
+        if cartopy:
+            scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
+        else:
+            scat = ax.scatter(lon[b], lat[b], s=20, color='k')
         ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
         frames = np.arange(1, len(plottimes))
 

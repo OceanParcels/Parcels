@@ -54,6 +54,7 @@ class ParticleFile(object):
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
+        self.dataset.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
 
         # Create ID variable according to CF conventions
         self.id = self.dataset.createVariable("trajectory", "i4", coords, chunksizes=self.chunksizes)
