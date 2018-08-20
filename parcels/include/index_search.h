@@ -232,7 +232,11 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
       if (det == det)  // so, if det is nan we keep the xsi, eta from previous iter
         *eta = (-bb+det)/(2*aa);
     }
-    *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
+    if ( fabs(a[1]+a[3]*(*eta)) < 1e-12 ) // this happens when recti cell rotated of 90deg
+      *xsi = ( (y-ygrid_loc[0]) / (ygrid_loc[1]-ygrid_loc[0]) +
+               (y-ygrid_loc[3]) / (ygrid_loc[2]-ygrid_loc[3]) ) * .5;
+    else
+      *xsi = (x-a[0]-a[2]* (*eta)) / (a[1]+a[3]* (*eta));
     if ( (*xsi < 0) && (*eta < 0) && (*xi == 0) && (*yi == 0) )
       return ERROR_OUT_OF_BOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
