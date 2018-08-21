@@ -8,6 +8,7 @@ from parcels.loggers import logger
 import numpy as np
 import bisect
 import progressbar
+import time as time_module
 from collections import Iterable
 from datetime import timedelta as delta
 from datetime import datetime, date
@@ -230,7 +231,7 @@ class ParticleSet(object):
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
-                verbose_progress=True):
+                verbose_progress=None):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -342,9 +343,15 @@ class ParticleSet(object):
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
+        if verbose_progress is None:
+            walltime_start = time_module.time()
         if verbose_progress:
             pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime))
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+            if verbose_progress is None and time_module.time() - walltime_start > 30:
+                # Showing progressbar if runtime > 30 seconds
+                pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime))
+                verbose_progress = True
             if dt > 0:
                 time = min(next_prelease, next_input, next_output, next_movie, endtime)
             else:
