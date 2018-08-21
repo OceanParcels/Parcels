@@ -55,7 +55,7 @@ def make_plot(trajfile):
 
     T = load_particles_file(trajfile, ['lon', 'lat', 'time'])
     plt.axes(projection=cartopy.crs.PlateCarree())
-    plt.scatter(T.lon, T.lat, s=10)
+    plt.scatter(T.lon, T.lat, c=T.time, s=10)
     plt.show()
 
 
