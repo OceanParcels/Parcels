@@ -216,7 +216,8 @@ class FieldSet(object):
                filepath may contain wildcards to indicate multiple files,
                or be a list of file. At least a 'mesh_mask' needs to be present
         :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
+               names in the netCDF file(s). Must include a variable 'mesh_mask' that
+               holds the dimensions
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
