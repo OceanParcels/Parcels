@@ -636,7 +636,10 @@ class Field(object):
                 if det2 > 0:  # so, if det is nan we keep the xsi, eta from previous iter
                     det = np.sqrt(det2)
                     eta = (-bb+det)/(2*aa)
-            xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
+            if abs(a[1]+a[3]*eta) < 1e-12:  # this happens when recti cell rotated of 90deg
+                xsi = ((y-py[0])/(py[1]-py[0]) + (y-py[3])/(py[2]-py[3])) * .5
+            else:
+                xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
                 raise FieldSamplingError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
