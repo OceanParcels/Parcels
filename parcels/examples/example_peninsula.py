@@ -48,12 +48,13 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
-    P = u0*R**2*y/((x-x0)**2+y**2)-u0*y / 1e3
+    P = (u0*R**2*y/((x-x0)**2+y**2)-u0*y) / 1e3
     U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
     V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
 
     # Set land points to NaN
     landpoints = P >= 0.
+    P[landpoints] = np.nan
     U[landpoints] = np.nan
     V[landpoints] = np.nan
 

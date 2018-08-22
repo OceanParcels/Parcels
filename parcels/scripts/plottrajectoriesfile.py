@@ -1,17 +1,20 @@
 #!/usr/bin/env python
-from netCDF4 import Dataset
+import xarray as xr
 import numpy as np
 from argparse import ArgumentParser
+from parcels import Field
+from os import environ
+from parcels.plotting import create_parcelsfig_axis, plotfield, cartopy_colorbar
 try:
-    import matplotlib.pyplot as plt
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
-    plt = None
+    anim = None
 
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
-                         tracerlon='x', tracerlat='y', recordedvar=None, bins=20, show_plt=True):
+                         tracerlon='x', tracerlat='y', recordedvar=None, movie_forward=True,
+                         bins=20, show_plt=True):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
@@ -24,71 +27,91 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param tracerlat: Name of latitude dimension of variable to show as background
     :param recordedvar: Name of variable used to color particles in scatter-plot.
                 Only works in 'movie2d' or 'movie2d_notebook' mode.
+    :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
     :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
     :param show_plt: Boolean whether plot should directly be show (for py.test)
     """
 
-    if plt is None:
-        print("Visualisation is not possible. Matplotlib not found.")
-        return
-
-    pfile = Dataset(filename, 'r')
+    environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
+    try:
+        pfile = xr.open_dataset(str(filename), decode_cf=True)
+    except:
+        pfile = xr.open_dataset(str(filename), decode_cf=False)
     lon = np.ma.filled(pfile.variables['lon'], np.nan)
     lat = np.ma.filled(pfile.variables['lat'], np.nan)
     time = np.ma.filled(pfile.variables['time'], np.nan)
     z = np.ma.filled(pfile.variables['z'], np.nan)
+    mesh = pfile.attrs['parcels_mesh'] if 'parcels_mesh' in pfile.attrs else 'spherical'
 
     if(recordedvar is not None):
         record = pfile.variables[recordedvar]
     pfile.close()
 
-    if tracerfile is not None:
-        tfile = Dataset(tracerfile, 'r')
-        X = tfile.variables[tracerlon]
-        Y = tfile.variables[tracerlat]
-        P = tfile.variables[tracerfield]
-        plt.contourf(np.squeeze(X), np.squeeze(Y), np.squeeze(P))
-        tfile.close()
+    if tracerfile is not None and mode is not 'hist2d':
+        tracerfld = Field.from_netcdf(tracerfile, tracerfield, {'lon': tracerlon, 'lat': tracerlat})
+        plt, fig, ax, cartopy = plotfield(tracerfld)
+        if plt is None:
+            return  # creating axes was not possible
+        titlestr = ' and ' + tracerfield
+    else:
+        spherical = False if mode is '3d' or mesh == 'flat' else True
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical)
+        if plt is None:
+            return  # creating axes was not possible
+        titlestr = ''
+
+    if cartopy:
+        for p in range(lon.shape[1]):
+            lon[:, p] = [ln if ln < 180 else ln - 360 for ln in lon[:, p]]
 
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
-        fig = plt.figure(1)
+        plt.clf()  # clear the figure
         ax = fig.gca(projection='3d')
         for p in range(len(lon)):
             ax.plot(lon[p, :], lat[p, :], z[p, :], '.-')
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
         ax.set_zlabel('Depth')
+        ax.set_title('Particle trajectories')
     elif mode == '2d':
-        plt.plot(np.transpose(lon), np.transpose(lat), '.-')
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
+        if cartopy:
+            ax.plot(np.transpose(lon), np.transpose(lat), '.-', transform=cartopy.crs.Geodetic())
+        else:
+            ax.plot(np.transpose(lon), np.transpose(lat), '.-')
+        ax.set_title('Particle trajectories' + titlestr)
     elif mode == 'hist2d':
-        plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
-        plt.colorbar()
-        plt.xlabel('Longitude')
-        plt.ylabel('Latitude')
+        _, _, _, cs = plt.hist2d(lon[~np.isnan(lon)], lat[~np.isnan(lat)], bins=bins)
+        cartopy_colorbar(cs, plt, fig, ax)
+        ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
-        fig = plt.figure()
-        ax = plt.axes(xlim=(np.nanmin(lon), np.nanmax(lon)), ylim=(np.nanmin(lat), np.nanmax(lat)))
+        ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
+        ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         plottimes = np.unique(time)
-        plottimes = plottimes[~np.isnan(plottimes)]
+        if not movie_forward:
+            plottimes = np.flip(plottimes, 0)
+        if isinstance(plottimes[0], np.datetime64):
+            plottimes = plottimes[~np.isnat(plottimes)]
+        else:
+            plottimes = plottimes[~np.isnan(plottimes)]
         b = time == plottimes[0]
-        scat = ax.scatter(lon[b], lat[b], s=60, cmap=plt.get_cmap('autumn'))  # cmaps not working?
-        ttl = ax.set_title('Particle at time ' + str(plottimes[0]))
+        if cartopy:
+            scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
+        else:
+            scat = ax.scatter(lon[b], lat[b], s=20, color='k')
+        ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
         frames = np.arange(1, len(plottimes))
 
         def animate(t):
             b = time == plottimes[t]
-            scat.set_offsets(np.matrix((lon[b], lat[b])).transpose())
-            ttl.set_text('Particle at time ' + str(plottimes[t]))
+            scat.set_offsets(np.vstack((lon[b], lat[b])).transpose())
+            ttl.set_text('Particle' + titlestr + ' at time ' + str(plottimes[t]))
             if recordedvar is not None:
                 scat.set_array(record[b])
             return scat,
 
         rc('animation', html='html5')
-        anim = animation.FuncAnimation(fig, animate, frames=frames,
-                                       interval=100, blit=False)
+        anim = animation.FuncAnimation(fig, animate, frames=frames, interval=100, blit=False)
     else:
         raise RuntimeError('mode %s not known' % mode)
 

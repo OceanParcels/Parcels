@@ -187,7 +187,7 @@ class ScipyParticle(_Particle):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in vars(type(self)):
-            if type(getattr(type(self), var)) is Variable:
+            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 str += "%s=%f, " % (var, getattr(self, var))
         return str + "time=%s)" % time_string
 
