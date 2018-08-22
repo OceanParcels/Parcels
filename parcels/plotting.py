@@ -36,8 +36,8 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         show_time, _ = particles.fieldset.gridset.dimrange('time')
 
     if field is None:
-        geomap = True if particles.fieldset.U.grid.mesh == 'spherical' else False
-        plt, fig, ax, cartopy = create_parcelsfig_axis(geomap, land, projection)
+        spherical = True if particles.fieldset.U.grid.mesh == 'spherical' else False
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection)
         if plt is None:
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
@@ -107,17 +107,17 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     """
 
     if type(field) is VectorField:
-        geomap = True if field.U.grid.mesh == 'spherical' else False
+        spherical = True if field.U.grid.mesh == 'spherical' else False
         field = [field.U, field.V]
         plottype = 'vector'
     elif type(field) is Field:
-        geomap = True if field.grid.mesh == 'spherical' else False
+        spherical = True if field.grid.mesh == 'spherical' else False
         field = [field]
         plottype = 'scalar'
     else:
         raise RuntimeError('field needs to be a Field or VectorField object')
 
-    plt, fig, ax, cartopy = create_parcelsfig_axis(geomap, land, projection=projection)
+    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection)
     if plt is None:
         return None, None, None, None  # creating axes was not possible
 
@@ -188,7 +188,7 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     else:
         ax.set_title(titlestr + field[0].name + timestr)
 
-    if not geomap:
+    if not spherical:
         ax.set_xlabel('Zonal distance [m]')
         ax.set_ylabel('Meridional distance [m]')
 
@@ -202,17 +202,17 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(geomap, land=None, projection=None, central_longitude=0):
+def create_parcelsfig_axis(spherical, land=None, projection=None, central_longitude=0):
     try:
         import matplotlib.pyplot as plt
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
         return None, None, None, None  # creating axes was not possible
 
-    if projection is not None and not geomap:
+    if projection is not None and not spherical:
         raise RuntimeError('projection not accepted when Field doesn''t have geographic coordinates')
 
-    if geomap:
+    if spherical:
         try:
             import cartopy
         except:
