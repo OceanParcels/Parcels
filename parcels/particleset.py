@@ -375,7 +375,7 @@ class ParticleSet(object):
             pbar.finish()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=None, vmin=None, vmax=None, savefile=None, animation=False):
+             land=True, vmin=None, vmax=None, savefile=None, animation=False):
         """Method to 'show' a Parcels ParticleSet
 
         :param with_particles: Boolean whether to show particles
@@ -383,7 +383,7 @@ class ParticleSet(object):
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
         :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land (in field='vector' mode only)
+        :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
         :param savefile: Name of a file to save the plot to

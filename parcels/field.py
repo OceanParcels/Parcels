@@ -842,7 +842,7 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, animation=False, show_time=None, domain=None, projection=None, land=None,
+    def show(self, animation=False, show_time=None, domain=None, projection=None, land=True,
              vmin=None, vmax=None, savefile=None, **kwargs):
         """Method to 'show' a Parcels Field
 
@@ -850,7 +850,7 @@ class Field(object):
         :param show_time: Time at which to show the Field (only in single-plot mode)
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
         :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land
+        :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
         :param vmax: maximum colour scale (only in single-plot mode)
         :param savefile: Name of a file to save the plot to

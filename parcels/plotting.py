@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-                  land=None, vmin=None, vmax=None, savefile=None, animation=False):
+                  land=True, vmin=None, vmax=None, savefile=None, animation=False):
     """Function to plot a Parcels ParticleSet
 
     :param show_time: Time at which to show the ParticleSet
@@ -15,7 +15,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
     :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
     :param projection: type of cartopy projection to use (default PlateCarree)
-    :param land: Boolean whether to show land
+    :param land: Boolean whether to show land. This is ignored for flat meshes
     :param vmin: minimum colour scale (only in single-plot mode)
     :param vmax: maximum colour scale (only in single-plot mode)
     :param savefile: Name of a file to save the plot to
@@ -92,14 +92,14 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt.close()
 
 
-def plotfield(field, show_time=None, domain=None, projection=None, land=None,
+def plotfield(field, show_time=None, domain=None, projection=None, land=True,
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
     :param show_time: Time at which to show the Field
     :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
     :param projection: type of cartopy projection to use (default PlateCarree)
-    :param land: Boolean whether to show land
+    :param land: Boolean whether to show land. This is ignored for flat meshes
     :param vmin: minimum colour scale (only in single-plot mode)
     :param vmax: maximum colour scale (only in single-plot mode)
     :param savefile: Name of a file to save the plot to
@@ -202,7 +202,7 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=None,
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(spherical, land=None, projection=None, central_longitude=0):
+def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0):
     try:
         import matplotlib.pyplot as plt
     except:
@@ -229,14 +229,12 @@ def create_parcelsfig_axis(spherical, land=None, projection=None, central_longit
         except:
             pass
 
-        if land is not False:
+        if land:
             ax.coastlines()
     else:
         cartopy = None
         fig, ax = plt.subplots(1, 1)
         ax.grid()
-        if land is True:
-            logger.info('Land can only be shown for Fields with geographic coordinates')
     return plt, fig, ax, cartopy
 
 
