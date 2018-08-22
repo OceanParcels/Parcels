@@ -116,6 +116,13 @@ parcels.loggers module
     :members:
     :undoc-members:
 
+parcels.plotting module
+-----------------------
+
+.. automodule:: parcels.plotting
+    :members:
+    :undoc-members:
+
 scripts.plotParticles module
 ----------------------------
 
