@@ -123,10 +123,10 @@ parcels.plotting module
     :members:
     :undoc-members:
 
-scripts.plotParticles module
-----------------------------
+scripts.plottrajectoriesfile module
+-----------------------------------
 
-.. automodule:: scripts.plotParticles
+.. automodule:: scripts.plottrajectoriesfile
     :members:
     :undoc-members:
 
