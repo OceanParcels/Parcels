@@ -538,7 +538,10 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.left)
         self.visit(node.op)
         self.visit(node.right)
-        node.ccode = "(%s %s %s)" % (node.left.ccode, node.op.ccode, node.right.ccode)
+        if node.op.ccode == 'pow':  # catching '**' pow statements
+            node.ccode = "pow(%s, %s)" % (node.left.ccode, node.right.ccode)
+        else:
+            node.ccode = "(%s %s %s)" % (node.left.ccode, node.op.ccode, node.right.ccode)
         node.s_print = True
 
     def visit_Add(self, node):
@@ -561,6 +564,9 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Mod(self, node):
         node.ccode = "%"
+
+    def visit_Pow(self, node):
+        node.ccode = "pow"
 
     def visit_Num(self, node):
         node.ccode = str(node.n)
