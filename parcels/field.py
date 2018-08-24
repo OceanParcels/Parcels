@@ -32,7 +32,7 @@ class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling"""
 
     def __init__(self, time, field=None):
-        if field is not None and field.grid.time_origin:
+        if field is not None and field.grid.time_origin and time is not None:
             time = field.grid.time_origin + np.timedelta64(int(time), 's')
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
