@@ -33,7 +33,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     if isinstance(show_time, delta):
         show_time = show_time.total_seconds()
     if np.isnan(show_time):
-        show_time, _ = particles.fieldset.gridset.dimrange('time')
+        show_time, _ = particles.fieldset.gridset.dimrange('time_full')
 
     if field is None:
         spherical = True if particles.fieldset.U.grid.mesh == 'spherical' else False

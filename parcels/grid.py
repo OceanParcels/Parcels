@@ -28,6 +28,7 @@ class Grid(object):
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        self.time_full = self.time  # needed for deferred_loaded Fields
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
             self.lon = self.lon.astype(np.float32)

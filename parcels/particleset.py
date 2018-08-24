@@ -297,7 +297,7 @@ class ParticleSet(object):
         # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
         for p in self:
             if np.isnan(p.time):
-                mintime, maxtime = self.fieldset.gridset.dimrange('time')
+                mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
                 p.time = mintime if dt >= 0 else maxtime
 
         # Derive _starttime and endtime from arguments or fieldset defaults
@@ -309,7 +309,7 @@ class ParticleSet(object):
         if runtime is not None:
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
-            mintime, maxtime = self.fieldset.gridset.dimrange('time')
+            mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
