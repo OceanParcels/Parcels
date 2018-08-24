@@ -53,6 +53,7 @@ def test_expression_int(fieldset, mode, name, expr, result, npart=10):
     ('Sub', '6. - 2.', 4),
     ('Mul', '3. * 5.', 15),
     ('Div', '24. / 4.', 6),
+    ('Pow', '2 ** 3', 8),
 ])
 def test_expression_float(fieldset, mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """
