@@ -309,7 +309,7 @@ class ParticleSet(object):
         if runtime is not None:
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
-            mintime, maxtime = self.fieldset.gridset.dimrange('time')
+            mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
