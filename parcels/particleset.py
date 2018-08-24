@@ -297,7 +297,7 @@ class ParticleSet(object):
         # Set particle.time defaults based on sign of dt, if not set at ParticleSet construction
         for p in self:
             if np.isnan(p.time):
-                mintime, maxtime = self.fieldset.gridset.dimrange('time')
+                mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
                 p.time = mintime if dt >= 0 else maxtime
 
         # Derive _starttime and endtime from arguments or fieldset defaults
