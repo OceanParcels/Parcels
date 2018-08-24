@@ -51,6 +51,7 @@ class Kernel(object):
                  funccode=None, py_ast=None, funcvars=None, c_include=""):
         self.fieldset = fieldset
         self.ptype = ptype
+        self._lib = None
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
@@ -117,7 +118,6 @@ class Kernel(object):
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
-        self._lib = None
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
