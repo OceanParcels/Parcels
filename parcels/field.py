@@ -349,7 +349,6 @@ class Field(object):
                 ti += len(tslice)
         else:
             grid.defer_load = True
-            grid.time_full = grid.time
             grid.ti = -1
             data = None
 
