@@ -6,6 +6,7 @@ from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 from math import cos, pi
 import datetime
+import cftime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
@@ -305,6 +306,9 @@ class Field(object):
             if isinstance(time[0], np.datetime64):
                 time_origin = time[0]
                 time = (time - time_origin) / np.timedelta64(1, 's')
+            elif isinstance(time[0], cftime._cftime.DatetimeNoLeap):
+                time_origin = time[0]
+                time = np.array([(t - time_origin).total_seconds() for t in time])
             else:
                 time_origin = None
             assert(np.all((time[1:]-time[:-1]) > 0))

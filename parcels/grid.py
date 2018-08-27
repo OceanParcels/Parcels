@@ -3,6 +3,7 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 import datetime
+import cftime
 
 __all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
 
@@ -41,7 +42,7 @@ class Grid(object):
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
         if self.time_origin:
-            if isinstance(self.time_origin, datetime.datetime):
+            if isinstance(self.time_origin, (datetime.datetime, cftime._cftime.DatetimeNoLeap)):
                 self.time_origin = np.datetime64(self.time_origin)
             assert isinstance(self.time_origin, np.datetime64), 'If defined, time_origin must be a datetime.datetime or a np.datetime64'
         self.mesh = mesh
