@@ -4,6 +4,7 @@ from parcels.loggers import logger
 import numpy as np
 from datetime import timedelta as delta
 from datetime import datetime
+import cftime
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
@@ -252,7 +253,10 @@ def parsetimestr(time_origin, show_time):
     if not time_origin:
         return ' after ' + str(delta(seconds=show_time)) + ' hours'
     else:
-        date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
+        if isinstance(time_origin, np.datetime64):
+            date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
+        elif isinstance(time_origin, cftime._cftime.DatetimeNoLeap):
+            date_str = str(time_origin + delta(seconds=show_time))
         return ' on ' + date_str[:10] + ' ' + date_str[11:19]
 
 

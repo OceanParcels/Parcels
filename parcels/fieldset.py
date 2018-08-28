@@ -3,6 +3,7 @@ from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.loggers import logger
 import numpy as np
+import cftime
 from os import path
 from glob import glob
 from copy import deepcopy
@@ -121,9 +122,15 @@ class FieldSet(object):
                 continue
             assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
             if g.time_origin:
-                g.time = g.time + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                if isinstance(self.time_origin, np.datetime64):
+                    g.time = g.time + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                elif isinstance(self.time_origin, cftime._cftime.DatetimeNoLeap):
+                    g.time = g.time + (g.time_origin - self.time_origin).total_seconds()
                 if g.defer_load:
-                    g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                    if isinstance(self.time_origin, np.datetime64):
+                        g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
+                    elif isinstance(self.time_origin, cftime._cftime.DatetimeNoLeap):
+                        g.time_full = g.time_full + (g.time_origin - self.time_origin).total_seconds()
                 g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
             if isinstance(self.U, FieldList):

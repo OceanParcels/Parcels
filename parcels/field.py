@@ -962,6 +962,8 @@ class Field(object):
             if isinstance(time_data[0], np.datetime64):
                 assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
                 time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
+            elif isinstance(time_data[0], cftime._cftime.DatetimeNoLeap):
+                time_data = np.array([(t - g.time_origin).total_seconds() for t in time_data])
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                 data[tindex, 0, :, :] = filebuffer.data[:, :]

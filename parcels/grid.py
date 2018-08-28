@@ -42,9 +42,9 @@ class Grid(object):
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin
         if self.time_origin:
-            if isinstance(self.time_origin, (datetime.datetime, cftime._cftime.DatetimeNoLeap)):
+            if isinstance(self.time_origin, datetime.datetime):
                 self.time_origin = np.datetime64(self.time_origin)
-            assert isinstance(self.time_origin, np.datetime64), 'If defined, time_origin must be a datetime.datetime or a np.datetime64'
+            assert isinstance(self.time_origin, (np.datetime64, cftime._cftime.DatetimeNoLeap)), 'If defined, time_origin must be a datetime.datetime or a np.datetime64'
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes = {}
