@@ -165,8 +165,9 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-        assert pset.fieldset.gridset.size == len(pset.particles[0].xi), \
-            'FieldSet has different amount of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
+        if len(pset.particles) > 0:
+            assert pset.fieldset.gridset.size == len(pset.particles[0].xi), \
+                'FieldSet has different amount of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
         for g in pset.fieldset.gridset.grids:
             g.cstruct = None  # This force to point newly the grids from Python to C
         # Make a copy of the transposed array to enforce
