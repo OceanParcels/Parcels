@@ -120,6 +120,7 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, in
     }
 
     float xvalsi = xvals[*xi];
+    // this will fail if longitude is e.g. only [-180, 180] (so length 2). Can't we make these hardcoded values more dynamic?
     if (xvalsi < x - 225) xvalsi += 360;
     if (xvalsi > x + 225) xvalsi -= 360;
     float xvalsi1 = xvals[*xi+1];
