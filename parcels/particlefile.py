@@ -2,6 +2,7 @@
 import numpy as np
 import netCDF4
 from datetime import timedelta as delta
+import cftime
 from parcels.loggers import logger
 from os import path
 
@@ -65,7 +66,10 @@ class ParticleFile(object):
         self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        if self.particleset.time_origin == 0:
+        if isinstance(self.particleset.time_origin, cftime._cftime.DatetimeNoLeap):
+            self.time.units = "seconds since " + str(self.particleset.time_origin)
+            self.time.calendar = "NOLEAP"
+        elif self.particleset.time_origin == 0:
             self.time.units = "seconds"
         else:
             self.time.units = "seconds since " + str(self.particleset.time_origin)
