@@ -253,7 +253,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, in
     reconnect_bnd_indices(xi, yi, xdim, ydim, 0, sphere_mesh);
     it++;
     if ( it > maxIterSearch){
-      printf("Correct cell not found after %d iterations\n", maxIterSearch);
+      printf("Correct cell not found for (%f, %f) after %d iterations\n", x, y, maxIterSearch);
       return ERROR_OUT_OF_BOUNDS;
     }
   }
