@@ -1180,6 +1180,9 @@ class NetcdfFileBuffer(object):
             for nm in name:
                 if hasattr(self.dataset, nm):
                     name = nm
+                    break
+        if isinstance(name, list):
+            raise IOError('None of variables in list found in file')
         return name
 
     @property
