@@ -316,8 +316,7 @@ static inline ErrorCode temporal_interpolation_UV_c_grid(float x, float y, float
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid->xdim, grid->ydim, grid->zdim, grid->lon, grid->lat, grid->depth, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, grid->sphere_mesh, grid->zonal_periodic, gcode, grid->z4d, ti[igrid], grid->tdim, t0, t0, t0+1); CHECKERROR(err);
     if (grid->zdim==1){
-    // Why u, v here but &u, &v in the call below?
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), &u, &v);
     }
     else{
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), &u, &v);
