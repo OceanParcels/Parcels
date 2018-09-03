@@ -165,18 +165,23 @@ class ParticleSet(object):
             xsi = np.random.uniform(size=len(inds))
             eta = np.random.uniform(size=len(inds))
             j, i = np.unravel_index(inds, p_interior.shape)
-            if start_field.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
-                lon = start_field.grid.lon[i] + xsi * (start_field.grid.lon[i + 1] - start_field.grid.lon[i])
-                lat = start_field.grid.lat[j] + eta * (start_field.grid.lat[j + 1] - start_field.grid.lat[j])
+            grid = start_field.grid
+            if grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+                lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
+                lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
             else:
-                lon = (1-xsi)*(1-eta) * start_field.grid.lon[j, i] +\
-                    xsi*(1-eta) * start_field.grid.lon[j, i+1] +\
-                    xsi*eta * start_field.grid.lon[j+1, i+1] +\
-                    (1-xsi)*eta * start_field.grid.lon[j+1, i]
-                lat = (1-xsi)*(1-eta) * start_field.grid.lat[j, i] +\
-                    xsi*(1-eta) * start_field.grid.lat[j, i+1] +\
-                    xsi*eta * start_field.grid.lat[j+1, i+1] +\
-                    (1-xsi)*eta * start_field.grid.lat[j+1, i]
+                lons = np.array([grid.lon[j, i], grid.lon[j, i+1], grid.lon[j+1, i+1], grid.lon[j+1, i]])
+                if grid.mesh == 'spherical':
+                    lons[1:] = np.where(lons[1:] - lons[0] > 180, lons[1:]-360, lons[1:])
+                    lons[1:] = np.where(-lons[1:] + lons[0] > 180, lons[1:]+360, lons[1:])
+                lon = (1-xsi)*(1-eta) * lons[0] +\
+                    xsi*(1-eta) * lons[1] +\
+                    xsi*eta * lons[2] +\
+                    (1-xsi)*eta * lons[3]
+                lat = (1-xsi)*(1-eta) * grid.lat[j, i] +\
+                    xsi*(1-eta) * grid.lat[j, i+1] +\
+                    xsi*eta * grid.lat[j+1, i+1] +\
+                    (1-xsi)*eta * grid.lat[j+1, i]
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
