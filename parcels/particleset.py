@@ -4,6 +4,7 @@ from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.loggers import logger
+from parcels.grid import GridCode
 import numpy as np
 import progressbar
 import time as time_module
@@ -164,7 +165,7 @@ class ParticleSet(object):
             xsi = np.random.uniform(size=len(inds))
             eta = np.random.uniform(size=len(inds))
             j, i = np.unravel_index(inds, p_interior.shape)
-            if start_field.grid.lat.ndim == 1:
+            if start_field.grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
                 lon = start_field.grid.lon[i] + xsi * (start_field.grid.lon[i + 1] - start_field.grid.lon[i])
                 lat = start_field.grid.lat[j] + eta * (start_field.grid.lat[j + 1] - start_field.grid.lat[j])
             else:
