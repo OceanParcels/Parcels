@@ -335,7 +335,7 @@ class Field(object):
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = dimensions['data'] if 'data' in dimensions else variable
+                    filebuffer.name = filebuffer.parse_name(dimensions, variable)
 
                     if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
@@ -953,7 +953,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
-            filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
+            filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
                 assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
@@ -1173,6 +1173,14 @@ class NetcdfFileBuffer(object):
 
     def __exit__(self, type, value, traceback):
         self.dataset.close()
+
+    def parse_name(self, dimensions, variable):
+        name = dimensions['data'] if 'data' in dimensions else variable
+        if isinstance(name, list):
+            for nm in name:
+                if hasattr(self.dataset, nm):
+                    name = nm
+        return name
 
     @property
     def read_lonlat(self):
