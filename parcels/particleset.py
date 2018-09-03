@@ -168,9 +168,14 @@ class ParticleSet(object):
                 lon = start_field.grid.lon[i] + xsi * (start_field.grid.lon[i + 1] - start_field.grid.lon[i])
                 lat = start_field.grid.lat[j] + eta * (start_field.grid.lat[j + 1] - start_field.grid.lat[j])
             else:
-                lon = start_field.grid.lon[j, i] + xsi * (start_field.grid.lon[j, i + 1] - start_field.grid.lon[j, i])
-                lat = start_field.grid.lat[j, i] + eta * (start_field.grid.lat[j + 1, i] - start_field.grid.lat[j, i])
-                raise NotImplementedError('ParticelSet.from_field not correctly implemented')
+                lon = (1-xsi)*(1-eta) * start_field.grid.lon[j, i] +\
+                    xsi*(1-eta) * start_field.grid.lon[j, i+1] +\
+                    xsi*eta * start_field.grid.lon[j+1, i+1] +\
+                    (1-xsi)*eta * start_field.grid.lon[j+1, i]
+                lat = (1-xsi)*(1-eta) * start_field.grid.lat[j, i] +\
+                    xsi*(1-eta) * start_field.grid.lat[j, i+1] +\
+                    xsi*eta * start_field.grid.lat[j+1, i+1] +\
+                    (1-xsi)*eta * start_field.grid.lat[j+1, i]
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
