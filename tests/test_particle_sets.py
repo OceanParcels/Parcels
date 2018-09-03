@@ -2,6 +2,7 @@ from parcels import (FieldSet, ParticleSet, Field, ScipyParticle, JITParticle,
                      Variable, ErrorCode)
 import numpy as np
 import pytest
+import os
 from netCDF4 import Dataset
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -35,6 +36,21 @@ def test_pset_create_line(fieldset, mode, npart=100):
     pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode])
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
+
+    class MyParticle(ptype[mode]):
+        v = Variable('v')
+
+    v_vals = np.arange(npart)
+    pset = ParticleSet.from_list(fieldset, lon=lon, lat=lat, v=v_vals, pclass=MyParticle)
+    assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
+    assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+    assert np.allclose([p.v for p in pset], v_vals, rtol=1e-12)
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
@@ -78,18 +94,22 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
+@pytest.mark.parametrize('type', ['releasedt', 'timearr'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
 @pytest.mark.parametrize('maxvar', [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
     fieldset.maxvar = maxvar
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
-    pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
-    outfilepath = tmpdir.join("pfile_repeatdt")
-    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
+    if type == 'releasedt':
+        pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
+    elif type == 'timearr':
+        pset = ParticleSet(fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
+    outfilepath = tmpdir.join("pfile_repeated_release")
+    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunksizes=[len(pset), 1])
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
@@ -97,15 +117,19 @@ def test_pset_repeated_release_delayed_adding_deleting(fieldset, mode, repeatdt,
             particle.delete()
     for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
-    assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
-    assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
-    if repeatdt == 0:
-        # test whether samplevar[i, i+k] = k for k=range(maxvar)
-        for k in range(maxvar):
-            for i in range(runtime-k):
-                assert(samplevar[i, i+k] == k)
+    ncfile.close()
+    if type == 'releasedt':
+        assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
+        assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
+    elif type == 'timearr':
+        assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
+    # test whether samplevar[:, k] = k
+    for k in range(samplevar.shape[1]):
+        assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
+    filesize = os.path.getsize(str(outfilepath+".nc"))
+    assert filesize < 1024 * 60  # test that chunking leads to filesize less than 60KB
 
 
 def test_pset_repeatdt_check_dt(fieldset):

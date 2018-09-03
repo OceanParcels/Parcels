@@ -185,8 +185,11 @@ class ScipyParticle(_Particle):
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
-                                                             self.depth, time_string)
+        str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
+        for var in vars(type(self)):
+            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
+                str += "%s=%f, " % (var, getattr(self, var))
+        return str + "time=%s)" % time_string
 
     def delete(self):
         self.state = ErrorCode.Delete
@@ -228,8 +231,3 @@ class JITParticle(ScipyParticle):
                 setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
             setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
             setattr(self, 'c'+index, getattr(self, index+'p').value)
-
-    def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
-                                                             self.depth, time_string)

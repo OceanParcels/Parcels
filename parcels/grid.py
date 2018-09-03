@@ -28,6 +28,7 @@ class Grid(object):
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
+        self.time_full = self.time  # needed for deferred_loaded Fields
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
             self.lon = self.lon.astype(np.float32)
@@ -35,6 +36,7 @@ class Grid(object):
             logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.time.dtype == np.float64:
+            assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         self.time_origin = time_origin

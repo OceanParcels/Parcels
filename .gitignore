@@ -17,4 +17,9 @@ Profile.prof
 */.ipynb_checkpoints/*
 parcels/examples/.ipynb_checkpoints/*
 .cache/*
+.pytest_cache/*
+.eggs/*
+parcels.egg-info/*
+dist/parcels*.egg
 parcels/examples/particle*.png
+parcels/_version.py

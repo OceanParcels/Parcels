@@ -13,10 +13,9 @@ def set_globcurrent_fieldset(filename=None, indices=None, full_load=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
-    filenames = {'U': filename, 'V': filename}
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
-    return FieldSet.from_netcdf(filenames, variables, dimensions, indices, full_load=full_load)
+    return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load)
 
 
 def test_globcurrent_fieldset():
@@ -75,7 +74,23 @@ def test_globcurrent_particles(mode):
     assert(abs(pset[0].lat - -35.3) < 1)
 
 
-@pytest.mark.xfail(reason="Time extrapolation error expected to be thrown")
+def test__particles_init_time():
+    fieldset = set_globcurrent_fieldset()
+
+    lonstart = [25]
+    latstart = [-35]
+
+    # tests the different ways of initialising the time of a particle
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.datetime64('2002-01-15'))
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=14*86400)
+    pset3 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.array([np.datetime64('2002-01-15')]))
+    pset4 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[np.datetime64('2002-01-15')])
+    assert pset[0].time - pset2[0].time == 0
+    assert pset[0].time - pset3[0].time == 0
+    assert pset[0].time - pset4[0].time == 0
+
+
+@pytest.mark.xfail(reason="Time extrapolation error expected to be thrown", strict=True)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_globcurrent_time_extrapolation_error(mode):
     fieldset = set_globcurrent_fieldset()
