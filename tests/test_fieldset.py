@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
 from datetime import timedelta as delta
 import datetime
@@ -317,3 +317,27 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                  time=[datetime.datetime(2018, 4, 20, 1)])
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
+
+
+def test_fieldset_defer_loading_function(tmpdir, filename='test_parcels_defer_loading'):
+    filepath = tmpdir.join(filename)
+    data0, dims0 = generate_fieldset(3, 3, 1, 10)
+    dims0['time'] = np.arange(0, 10, 1) * 3600
+    fieldset_out = FieldSet.from_data(data0, dims0)
+    fieldset_out.write(filepath)
+    fieldset = FieldSet.from_parcels(filepath)
+
+    def compute(data):
+        return data + 1
+
+    fieldset.U.compute_on_defer = compute
+    fieldset.computeTimeChunk(1, 1)
+    assert np.allclose(fieldset.U.data, 2)
+
+    pset = ParticleSet(fieldset, JITParticle, 0, 0)
+
+    def DoNothing(particle, fieldset, time, dt):
+        return ErrorCode.Success
+
+    pset.execute(DoNothing, dt=3600)
+    assert np.allclose(fieldset.U.data, 2)
