@@ -408,25 +408,25 @@ class FieldSet(object):
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                f._tindex = range(3)
-                for tind in f._tindex:
+                f.loaded_time_indices = range(3)
+                for tind in f.loaded_time_indices:
                     data = f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
-                    f._tindex = [2]
+                    f.loaded_time_indices = [2]
                 else:
                     f.data[1:, :] = f.data[:2, :]
-                    f._tindex = [0]
-                data = f.computeTimeChunk(data, f._tindex[0])
-                f.data[f._tindex[0], :] = f.reshape(data)[f._tindex[0], :]
+                    f.loaded_time_indices = [0]
+                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
             else:
-                f._tindex = []
+                f.loaded_time_indices = []
 
             # do built-in computations on data
-            for tind in f._tindex:
+            for tind in f.loaded_time_indices:
                 if f._scaling_factor:
                     f.data[tind, :] *= f._scaling_factor
                 f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
