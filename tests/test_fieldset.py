@@ -320,26 +320,33 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
 
 
 @pytest.mark.parametrize('zdim', [2, 8])
-def test_fieldset_defer_loading_function(zdim, tmpdir, filename='test_parcels_defer_loading'):
+@pytest.mark.parametrize('scale_fac', [0.2, 4, 1])
+def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(3, 3, zdim, 10)
-    data0['U'][:, 0, :, :] = 0  # setting first layer to zero (and all other layers to 1)
+    data0['U'][:, 0, :, :] = np.nan  # setting first layer to nan, which will be changed to zero (and all other layers to 1)
     dims0['time'] = np.arange(0, 10, 1) * 3600
     dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath)
+    fieldset.U.set_scaling_factor(scale_fac)
+
+    dFdx, dFdy = fieldset.V.gradient()
 
     dz = np.gradient(fieldset.U.depth)
     DZ = np.moveaxis(np.tile(dz, (fieldset.U.grid.ydim, fieldset.U.grid.xdim, 1)), [0, 1, 2], [1, 2, 0])
 
-    def compute(data):
-        weighted_vel = np.sum(data * DZ, axis=0) / sum(dz)
-        return weighted_vel
+    def compute(fieldset):
+        # Calculating vertical weighted average
+        for f in [fieldset.U, fieldset.V]:
+            for tind in f._tindex:
+                f.data[tind, :] = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
 
-    fieldset.U.compute_on_defer = compute
+    fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
-    assert np.allclose(fieldset.U.data, (zdim-1.)/zdim)
+    assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
+    assert np.allclose(dFdx.data, 0)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
@@ -347,4 +354,5 @@ def test_fieldset_defer_loading_function(zdim, tmpdir, filename='test_parcels_de
         return ErrorCode.Success
 
     pset.execute(DoNothing, dt=3600)
-    assert np.allclose(fieldset.U.data, (zdim-1.)/zdim)
+    assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
+    assert np.allclose(dFdx.data, 0)
