@@ -71,6 +71,7 @@ def test_pset_create_field_curvi(npart=100):
     r_v = np.linspace(.25, 2, 20)
     theta_v = np.linspace(0, np.pi/2, 200)
     dtheta = theta_v[1]-theta_v[0]
+    dr = r_v[1]-r_v[0]
     (r, theta) = np.meshgrid(r_v, theta_v)
 
     x = -1 + r * np.cos(theta)
@@ -85,11 +86,16 @@ def test_pset_create_field_curvi(npart=100):
     fieldset = FieldSet(ufield, vfield)
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype['scipy'], start_field=fieldset.V)
 
-    lons = [p.lon+1 for p in pset]
-    lats = [p.lat+1 for p in pset]
+    lons = np.array([p.lon+1 for p in pset])
+    lats = np.array([p.lat+1 for p in pset])
     thetas = np.arctan2(lats, lons)
-    assert np.all(np.pi/4-dtheta < thetas)
-    assert np.all(thetas < np.pi/3+dtheta)
+    rs = np.sqrt(lons*lons + lats*lats)
+
+    test = np.pi/4-dtheta < thetas
+    test *= thetas < np.pi/3+dtheta
+    test *= rs > .25-dr
+    test *= rs < 2+dr
+    assert np.all(test)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
