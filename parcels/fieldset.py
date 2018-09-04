@@ -407,8 +407,8 @@ class FieldSet(object):
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 for tindex in range(3):
                     data = f.computeTimeChunk(data, tindex)
-                if f.compute_on_defer:
-                    data = f.compute_on_defer(data)
+                    if f.compute_on_defer:
+                        data[tindex, :] = f.compute_on_defer(data[tindex, :])
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 f.data = f.reshape(data)

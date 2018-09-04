@@ -319,20 +319,27 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
 
 
-def test_fieldset_defer_loading_function(tmpdir, filename='test_parcels_defer_loading'):
+@pytest.mark.parametrize('zdim', [2, 8])
+def test_fieldset_defer_loading_function(zdim, tmpdir, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
-    data0, dims0 = generate_fieldset(3, 3, 1, 10)
+    data0, dims0 = generate_fieldset(3, 3, zdim, 10)
+    data0['U'][:, 0, :, :] = 0  # setting first layer to zero (and all other layers to 1)
     dims0['time'] = np.arange(0, 10, 1) * 3600
+    dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath)
 
+    dz = np.gradient(fieldset.U.depth)
+    DZ = np.moveaxis(np.tile(dz, (fieldset.U.grid.ydim, fieldset.U.grid.xdim, 1)), [0, 1, 2], [1, 2, 0])
+
     def compute(data):
-        return data + 1
+        weighted_vel = np.sum(data * DZ, axis=0) / sum(dz)
+        return weighted_vel
 
     fieldset.U.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
-    assert np.allclose(fieldset.U.data, 2)
+    assert np.allclose(fieldset.U.data, (zdim-1.)/zdim)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
@@ -340,4 +347,4 @@ def test_fieldset_defer_loading_function(tmpdir, filename='test_parcels_defer_lo
         return ErrorCode.Success
 
     pset.execute(DoNothing, dt=3600)
-    assert np.allclose(fieldset.U.data, 2)
+    assert np.allclose(fieldset.U.data, (zdim-1.)/zdim)
