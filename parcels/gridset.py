@@ -42,8 +42,11 @@ class GridSet(object):
 
         maxleft, minright = (0, np.infty)
         for g in self.grids:
-            maxleft = max(maxleft, getattr(g, dim)[0])
-            minright = min(minright, getattr(g, dim)[-1])
+            if dim == 'time_full' and len(getattr(g, dim)) == 1:
+                continue  # not including grids where only one time_full entry, as with allow_time_extrapolation=True
+            else:
+                maxleft = max(maxleft, getattr(g, dim)[0])
+                minright = min(minright, getattr(g, dim)[-1])
         return maxleft, minright
 
     @property
