@@ -4,6 +4,7 @@ from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.loggers import logger
+from parcels.grid import GridCode
 import numpy as np
 import progressbar
 import time as time_module
@@ -156,24 +157,31 @@ class ParticleSet(object):
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
-        lonwidth = (start_field.grid.lon[1] - start_field.grid.lon[0]) / 2
-        latwidth = (start_field.grid.lat[1] - start_field.grid.lat[0]) / 2
-
-        def add_jitter(pos, width, min, max):
-            value = pos + np.random.uniform(-width, width)
-            while not (min <= value <= max):
-                value = pos + np.random.uniform(-width, width)
-            return value
 
         if mode == 'monte_carlo':
-            p = np.reshape(start_field.data, (1, start_field.data.size))
-            inds = np.random.choice(start_field.data.size, size, replace=True, p=p[0] / np.sum(p))
-            lat, lon = np.unravel_index(inds, start_field.data[0, :, :].shape)
-            lon = start_field.grid.lon[lon]
-            lat = start_field.grid.lat[lat]
-            for i in range(lon.size):
-                lon[i] = add_jitter(lon[i], lonwidth, start_field.grid.lon[0], start_field.grid.lon[-1])
-                lat[i] = add_jitter(lat[i], latwidth, start_field.grid.lat[0], start_field.grid.lat[-1])
+            p_interior = np.squeeze(start_field.data[:, :-1, :-1])
+            p = np.reshape(p_interior, (1, p_interior.size))
+            inds = np.random.choice(p_interior.size, size, replace=True, p=p[0] / np.sum(p))
+            xsi = np.random.uniform(size=len(inds))
+            eta = np.random.uniform(size=len(inds))
+            j, i = np.unravel_index(inds, p_interior.shape)
+            grid = start_field.grid
+            if grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+                lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
+                lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
+            else:
+                lons = np.array([grid.lon[j, i], grid.lon[j, i+1], grid.lon[j+1, i+1], grid.lon[j+1, i]])
+                if grid.mesh == 'spherical':
+                    lons[1:] = np.where(lons[1:] - lons[0] > 180, lons[1:]-360, lons[1:])
+                    lons[1:] = np.where(-lons[1:] + lons[0] > 180, lons[1:]+360, lons[1:])
+                lon = (1-xsi)*(1-eta) * lons[0] +\
+                    xsi*(1-eta) * lons[1] +\
+                    xsi*eta * lons[2] +\
+                    (1-xsi)*eta * lons[3]
+                lat = (1-xsi)*(1-eta) * grid.lat[j, i] +\
+                    xsi*(1-eta) * grid.lat[j, i+1] +\
+                    xsi*eta * grid.lat[j+1, i+1] +\
+                    (1-xsi)*eta * grid.lat[j+1, i]
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
