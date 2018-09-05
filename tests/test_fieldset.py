@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
 from datetime import timedelta as delta
 import datetime
@@ -317,3 +317,42 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                  time=[datetime.datetime(2018, 4, 20, 1)])
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
+
+
+@pytest.mark.parametrize('zdim', [2, 8])
+@pytest.mark.parametrize('scale_fac', [0.2, 4, 1])
+def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test_parcels_defer_loading'):
+    filepath = tmpdir.join(filename)
+    data0, dims0 = generate_fieldset(3, 3, zdim, 10)
+    data0['U'][:, 0, :, :] = np.nan  # setting first layer to nan, which will be changed to zero (and all other layers to 1)
+    dims0['time'] = np.arange(0, 10, 1) * 3600
+    dims0['depth'] = np.arange(0, zdim, 1)
+    fieldset_out = FieldSet.from_data(data0, dims0)
+    fieldset_out.write(filepath)
+    fieldset = FieldSet.from_parcels(filepath)
+    fieldset.U.set_scaling_factor(scale_fac)
+
+    dFdx, dFdy = fieldset.V.gradient()
+
+    dz = np.gradient(fieldset.U.depth)
+    DZ = np.moveaxis(np.tile(dz, (fieldset.U.grid.ydim, fieldset.U.grid.xdim, 1)), [0, 1, 2], [1, 2, 0])
+
+    def compute(fieldset):
+        # Calculating vertical weighted average
+        for f in [fieldset.U, fieldset.V]:
+            for tind in f.loaded_time_indices:
+                f.data[tind, :] = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+
+    fieldset.compute_on_defer = compute
+    fieldset.computeTimeChunk(1, 1)
+    assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
+    assert np.allclose(dFdx.data, 0)
+
+    pset = ParticleSet(fieldset, JITParticle, 0, 0)
+
+    def DoNothing(particle, fieldset, time, dt):
+        return ErrorCode.Success
+
+    pset.execute(DoNothing, dt=3600)
+    assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
+    assert np.allclose(dFdx.data, 0)

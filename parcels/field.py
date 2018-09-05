@@ -243,6 +243,7 @@ class Field(object):
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
+        self.loaded_time_indices = []
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -432,22 +433,26 @@ class Field(object):
             self.calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
 
-    def gradient(self, update=False):
+    def gradient(self, update=False, tindex=None):
         """Method to calculate horizontal gradients of Field.
                 Returns two Fields: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method
                 Names of these grids are dNAME_dx and dNAME_dy, where NAME is the name
                 of the original Field"""
+        tindex = range(self.grid.tdim) if tindex is None else tindex
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
         if self.grid.defer_load and self.data is None:
             (dFdx, dFdy) = (None, None)
         else:
-            dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
-            dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
+            dFdy = np.gradient(self.data[tindex, :], axis=-2) / self.grid.cell_edge_sizes['y']
+            dFdx = np.gradient(self.data[tindex, :], axis=-1) / self.grid.cell_edge_sizes['x']
         if update:
-            self.gradientx.data = dFdx
-            self.gradienty.data = dFdy
+            if self.gradientx.data is None:
+                self.gradientx.data = np.zeros_like(self.data)
+                self.gradienty.data = np.zeros_like(self.data)
+            self.gradientx.data[tindex, :] = dFdx
+            self.gradienty.data[tindex, :] = dFdy
         else:
             dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
             dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
@@ -968,11 +973,6 @@ class Field(object):
                     data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
             else:
                 data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
-        data[np.isnan(data)] = 0.
-        if self.vmin is not None:
-            data[data < self.vmin] = 0.
-        if self.vmax is not None:
-            data[data > self.vmax] = 0.
 
         return data
 

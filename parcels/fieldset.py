@@ -31,6 +31,8 @@ class FieldSet(object):
             for name, field in fields.items():
                 self.add_field(field, name)
 
+        self.compute_on_defer = None
+
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
@@ -399,31 +401,45 @@ class FieldSet(object):
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
+        # load in new data
         for f in self.fields:
             if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                for tindex in range(3):
-                    data = f.computeTimeChunk(data, tindex)
-                if f._scaling_factor:
-                    data *= f._scaling_factor
+                f.loaded_time_indices = range(3)
+                for tind in f.loaded_time_indices:
+                    data = f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
-                    tindex = 2
+                    f.loaded_time_indices = [2]
                 else:
                     f.data[1:, :] = f.data[:2, :]
-                    tindex = 0
-                data = f.computeTimeChunk(data, tindex)
+                    f.loaded_time_indices = [0]
+                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
+            else:
+                f.loaded_time_indices = []
+
+            # do built-in computations on data
+            for tind in f.loaded_time_indices:
                 if f._scaling_factor:
-                    data *= f._scaling_factor
-                f.data[tindex, :] = f.reshape(data)[tindex, :]
-            if f.gradientx is not None and g.update_status in ['first_updated', 'updated']:
-                f.gradient(update=True)
+                    f.data[tind, :] *= f._scaling_factor
+                f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
+                if f.vmin is not None:
+                    f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
+                if f.vmax is not None:
+                    f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
+                if f.gradientx is not None:
+                    f.gradient(update=True, tindex=tind)
+
+        # do user-defined computations on fieldset data
+        if self.compute_on_defer:
+            self.compute_on_defer(self)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
