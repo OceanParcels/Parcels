@@ -40,14 +40,15 @@ class GridSet(object):
            in a gridset. Useful for finding e.g. longitude range that
            overlaps on all grids in a gridset"""
 
-        maxleft, minright = (0, np.inf)
+        maxleft, minright = (-np.inf, np.inf)
         for g in self.grids:
-            if dim == 'time_full' and len(getattr(g, dim)) == 1:
-                continue  # not including grids where only one time_full entry, as with allow_time_extrapolation=True
+            if len(getattr(g, dim)) == 1:
+                continue  # not including grids where only one entry
             else:
                 maxleft = max(maxleft, getattr(g, dim)[0])
                 minright = min(minright, getattr(g, dim)[-1])
-        minright = 0 if minright == np.inf else minright  # if all len(time_full) == 1
+        maxleft = 0 if maxleft == -np.inf else maxleft  # if all len(dim) == 1
+        minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
         return maxleft, minright
 
     @property
