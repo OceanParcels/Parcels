@@ -244,7 +244,7 @@ class FieldSet(object):
 
         """
 
-        dimension_filename = filenames.pop('mesh_mask')
+        dimension_filename = filenames.pop('mesh_mask') if type(filenames) is dict else filenames
 
         interp_method = {}
         for v in variables:
