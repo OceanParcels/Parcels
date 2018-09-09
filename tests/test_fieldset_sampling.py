@@ -409,7 +409,7 @@ def test_sampling_multiple_grid_sizes(mode):
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('with_W', [True, False])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_list_of_fields(mode, with_W, k_sample_p, mesh):
+def test_summedfields(mode, with_W, k_sample_p, mesh):
     xdim = 10
     ydim = 20
     zdim = 4

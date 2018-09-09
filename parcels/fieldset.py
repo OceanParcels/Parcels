@@ -97,6 +97,8 @@ class FieldSet(object):
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
+        elif isinstance(field, list):
+            raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
