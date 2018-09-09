@@ -11,7 +11,8 @@ from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['Field', 'VectorField', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
+__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField',
+           'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
 
 
 class FieldSamplingError(RuntimeError):
@@ -164,7 +165,7 @@ class Field(object):
            2. flat: No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
-    :param fieldtype: Type of Field to be used for UnitConverter when using FieldLists
+    :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
            (either 'U', 'V', 'Kh_zonal', 'Kh_Meridional' or None)
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
@@ -976,6 +977,23 @@ class Field(object):
 
         return data
 
+    def __add__(self, field):
+        return SummedField([self, field])
+
+
+class SummedField(list):
+    def eval(self, time, x, y, z, applyConversion=True):
+        tmp = 0
+        for fld in self:
+            tmp += fld.eval(time, x, y, z, applyConversion)
+        return tmp
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
+
 
 class VectorField(object):
     """Class VectorField stores 2 or 3 fields which defines together a vector field.
@@ -1148,6 +1166,49 @@ class VectorField(object):
                    % (x, y, z, t, U.name, V.name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
+
+
+class SummedVectorField(list):
+    """Class SummedVectorField stores 2 or 3 SummedFields which defines together a vector field.
+    This enables to interpolate them as one single vector SummedField in the kernels.
+
+    :param name: Name of the vector field
+    :param U: SummedField defining the zonal component
+    :param V: SummedField defining the meridional component
+    :param W: SummedField defining the vertical component (default: None)
+    """
+
+    def __init__(self, name, U, V, W=None):
+        self.name = name
+        self.U = U
+        self.V = V
+        self.W = W
+
+    def eval(self, time, x, y, z):
+        zonal = meridional = vertical = 0
+        if self.W is not None:
+            for (U, V, W) in zip(self.U, self.V, self.W):
+                vfld = VectorField(self.name, U, V, W)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+                vertical += tmp3
+            return (zonal, meridional, vertical)
+        else:
+            for (U, V) in zip(self.U, self.V):
+                vfld = VectorField(self.name, U, V)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+            return (zonal, meridional)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
 
 
 class NetcdfFileBuffer(object):
