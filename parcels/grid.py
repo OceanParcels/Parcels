@@ -1,4 +1,4 @@
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum

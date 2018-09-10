@@ -2,7 +2,7 @@
 import numpy as np
 import netCDF4
 from datetime import timedelta as delta
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 from os import path
 
 

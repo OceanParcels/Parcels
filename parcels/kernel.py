@@ -1,8 +1,8 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
-from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
+from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldSamplingError
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
 import numpy as np

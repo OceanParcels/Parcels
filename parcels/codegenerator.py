@@ -1,6 +1,6 @@
 from parcels.field import Field, VectorField
 from parcels.fieldset import FieldList, VectorFieldList
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 import ast
 import cgen as c
 from collections import OrderedDict

@@ -1,4 +1,4 @@
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_dict, UnitConverter, Geographic, GeographicPolar
 from collections import Iterable
 from py import path
