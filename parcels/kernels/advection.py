@@ -1,5 +1,5 @@
 """Collection of pre-built advection kernels"""
-from parcels.kernels.error import ErrorCode
+from parcels.tools.error import ErrorCode
 import math
 
 
