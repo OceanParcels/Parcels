@@ -126,6 +126,15 @@ class ParticleFile(object):
         """Write all buffered data to disk"""
         self.dataset.sync()
 
+    def add_metadata(self, name, message):
+        """Add metadata to :class:`parcels.particleset.ParticleSet`
+        :param name: Name of the metadata variabale
+        :param message: message to be written
+        """
+        if self.dataset is None:
+            self.open_dataset()
+        setattr(self.dataset, name, message)
+
     def write(self, pset, time, sync=True, deleted_only=False):
         """Write :class:`parcels.particleset.ParticleSet` data to file
 
