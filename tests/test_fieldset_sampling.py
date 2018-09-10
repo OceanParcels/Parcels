@@ -434,8 +434,10 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
 
     P1 = Field('P1', 30*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
     P2 = Field('P2', 20*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
-    fieldset.add_field(P1+P2, name='P')
-    assert np.allclose(fieldset.P[0, 0, 0, 0], 50)
+    P3 = Field('P3', 10*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
+    P4 = Field('P4', 0*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
+    fieldset.add_field((P1+P4)+(P2+P3), name='P')
+    assert np.allclose(fieldset.P[0, 0, 0, 0], 60)
 
     if with_W:
         W1 = Field('W1', 2*np.ones((zdim * gf, ydim * gf, xdim * gf), dtype=np.float32), grid=U1.grid)
@@ -447,6 +449,6 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
     else:
         pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[0.9])
         pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
-    assert np.isclose(pset[0].p, 50)
+    assert np.isclose(pset[0].p, 60)
     assert np.isclose(pset[0].lon*conv, 0.6, atol=1e-3)
     assert np.isclose(pset[0].lat, 0.9)

@@ -978,7 +978,10 @@ class Field(object):
         return data
 
     def __add__(self, field):
-        return SummedField([self, field])
+        if isinstance(self, Field) and isinstance(field, Field):
+            return SummedField([self, field])
+        elif isinstance(field, SummedField):
+            return field.__add__(self)
 
 
 class SummedField(list):
@@ -993,6 +996,14 @@ class SummedField(list):
             return list.__getitem__(self, key)
         else:
             return self.eval(*key)
+
+    def __add__(self, field):
+        if isinstance(field, Field):
+            self.append(field)
+        elif isinstance(field, SummedField):
+            for fld in field:
+                self.append(fld)
+        return self
 
 
 class VectorField(object):
