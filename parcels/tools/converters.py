@@ -1,7 +1,7 @@
 from math import cos, pi
 
-__all__ = ['unitconverters_dict', 'UnitConverter', 'Geographic',
-           'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
+__all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
+           'GeographicPolarSquare', 'unitconverters_map']
 
 
 class UnitConverter(object):
@@ -100,6 +100,6 @@ class GeographicPolarSquare(UnitConverter):
         return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
 
 
-unitconverters_dict = {'U': GeographicPolar(), 'V': Geographic(),
+unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
                        'Kh_zonal': GeographicPolarSquare(),
                        'Kh_meridional': GeographicSquare()}

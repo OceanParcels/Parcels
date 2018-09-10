@@ -1,5 +1,5 @@
 from parcels.tools.loggers import logger
-from parcels.tools.converters import unitconverters_dict, UnitConverter, Geographic, GeographicPolar
+from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 from collections import Iterable
 from py import path
@@ -70,10 +70,10 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_dict.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = unitconverters_dict[fieldtype]
+            self.units = unitconverters_map[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:
