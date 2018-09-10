@@ -279,6 +279,8 @@ class Field(object):
         dimension_filename = dimension_filename if dimension_filename else filenames[0]
         if indices is None:
             indices = {}
+        else:
+            indices = indices.copy()
         with NetcdfFileBuffer(dimension_filename, dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
