@@ -981,10 +981,18 @@ class Field(object):
         if isinstance(self, Field) and isinstance(field, Field):
             return SummedField([self, field])
         elif isinstance(field, SummedField):
-            return field.__add__(self)
+            field.insert(0, self)
+            return field
 
 
 class SummedField(list):
+    """Class SummedField is a list of Fields over which Field interpolation
+    is summed. This can e.g. be used when combining multiple flow fields,
+    where the total flow is the sum of all the individual flows.
+    Note that the individual Fields can be on different Grids.
+    Also note that, since SummedFields are lists, the individual Fields can
+    still be queried through their list index (e.g. SummedField[1]).
+    """
     def eval(self, time, x, y, z, applyConversion=True):
         tmp = 0
         for fld in self:

@@ -437,6 +437,7 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
     P3 = Field('P3', 10*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
     P4 = Field('P4', 0*np.ones((zdim, ydim, xdim), dtype=np.float32), grid=U2.grid)
     fieldset.add_field((P1+P4)+(P2+P3), name='P')
+    assert fieldset.P[0].name == 'P1'
     assert np.allclose(fieldset.P[0, 0, 0, 0], 60)
 
     if with_W:
