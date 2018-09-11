@@ -67,13 +67,6 @@ parcels.kernels.diffusion module
     :members:
     :show-inheritance:
 
-parcels.kernels.error module
-----------------------------
-
-.. automodule:: parcels.kernels.error
-    :members:
-    :show-inheritance:
-
 parcels.codegenerator module
 ----------------------------
 
@@ -109,10 +102,24 @@ parcels.rng module
     :members:
     :undoc-members:
 
-parcels.loggers module
-----------------------
+parcels.tools.error module
+--------------------------
 
-.. automodule:: parcels.loggers
+.. automodule:: parcels.tools.error
+    :members:
+    :show-inheritance:
+
+parcels.tools.converters module
+-------------------------------
+
+.. automodule:: parcels.tools.converters
+    :members:
+    :show-inheritance:
+
+parcels.tools.loggers module
+----------------------------
+
+.. automodule:: parcels.tools.loggers
     :members:
     :undoc-members:
 
