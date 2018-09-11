@@ -3,8 +3,12 @@ import numpy as np
 import netCDF4
 from datetime import timedelta as delta
 import cftime
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 from os import path
+try:
+    from parcels._version import version as parcels_version
+except:
+    raise EnvironmentError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
 
 
 __all__ = ['ParticleFile']
@@ -55,6 +59,7 @@ class ParticleFile(object):
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
+        self.dataset.parcels_version = parcels_version
         self.dataset.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
 
         # Create ID variable according to CF conventions
@@ -124,6 +129,15 @@ class ParticleFile(object):
     def sync(self):
         """Write all buffered data to disk"""
         self.dataset.sync()
+
+    def add_metadata(self, name, message):
+        """Add metadata to :class:`parcels.particleset.ParticleSet`
+        :param name: Name of the metadata variabale
+        :param message: message to be written
+        """
+        if self.dataset is None:
+            self.open_dataset()
+        setattr(self.dataset, name, message)
 
     def write(self, pset, time, sync=True, deleted_only=False):
         """Write :class:`parcels.particleset.ParticleSet` data to file

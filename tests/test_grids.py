@@ -343,6 +343,9 @@ def test_nemo_grid(mode):
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
 
+    # test ParticleSet.from_field on curvilinear grids
+    ParticleSet.from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
+
     def sampleVel(particle, fieldset, time, dt):
         (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
 

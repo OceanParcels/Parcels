@@ -1,7 +1,7 @@
-from parcels.field import Field, VectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 import numpy as np
 import cftime
 from os import path
@@ -9,7 +9,7 @@ from glob import glob
 from copy import deepcopy
 
 
-__all__ = ['FieldSet', 'FieldList']
+__all__ = ['FieldSet']
 
 
 class FieldSet(object):
@@ -31,6 +31,8 @@ class FieldSet(object):
         if fields:
             for name, field in fields.items():
                 self.add_field(field, name)
+
+        self.compute_on_defer = None
 
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
@@ -91,11 +93,13 @@ class FieldSet(object):
         :param name: Name of the :class:`parcels.field.Field` object to be added
         """
         name = field.name if name is None else name
-        if isinstance(field, list):
-            setattr(self, name, FieldList(field))
+        if isinstance(field, SummedField):
+            setattr(self, name, field)
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
+        elif isinstance(field, list):
+            raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
@@ -133,13 +137,13 @@ class FieldSet(object):
                         g.time_full = g.time_full + (g.time_origin - self.time_origin).total_seconds()
                 g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
-            if isinstance(self.U, FieldList):
-                self.add_vector_field(VectorFieldList('UV', self.U, self.V))
+            if isinstance(self.U, SummedField):
+                self.add_vector_field(SummedVectorField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            if isinstance(self.U, FieldList):
-                self.add_vector_field(VectorFieldList('UVW', self.U, self.V, self.W))
+            if isinstance(self.U, SummedField):
+                self.add_vector_field(SummedVectorField('UVW', self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
@@ -185,7 +189,7 @@ class FieldSet(object):
             if not isinstance(paths, list):
                 paths = sorted(glob(str(paths)))
             if len(paths) == 0:
-                raise IOError("FieldSet files not found: %s" % str(filenames[var]))
+                raise IOError("FieldSet files not found: %s" % str(paths))
             for fp in paths:
                 if not path.exists(fp):
                     raise IOError("FieldSet file not found: %s" % str(fp))
@@ -249,7 +253,7 @@ class FieldSet(object):
 
         """
 
-        dimension_filename = filenames.pop('mesh_mask')
+        dimension_filename = filenames.pop('mesh_mask') if type(filenames) is dict else filenames
 
         interp_method = {}
         for v in variables:
@@ -308,7 +312,7 @@ class FieldSet(object):
         for v in self.__dict__.values():
             if isinstance(v, Field):
                 fields.append(v)
-            elif isinstance(v, FieldList):
+            elif isinstance(v, SummedField):
                 for v2 in v:
                     if v2 not in fields:
                         fields.append(v2)
@@ -406,31 +410,45 @@ class FieldSet(object):
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
+        # load in new data
         for f in self.fields:
             if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                for tindex in range(3):
-                    data = f.computeTimeChunk(data, tindex)
-                if f._scaling_factor:
-                    data *= f._scaling_factor
+                f.loaded_time_indices = range(3)
+                for tind in f.loaded_time_indices:
+                    data = f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
-                    tindex = 2
+                    f.loaded_time_indices = [2]
                 else:
                     f.data[1:, :] = f.data[:2, :]
-                    tindex = 0
-                data = f.computeTimeChunk(data, tindex)
+                    f.loaded_time_indices = [0]
+                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
+            else:
+                f.loaded_time_indices = []
+
+            # do built-in computations on data
+            for tind in f.loaded_time_indices:
                 if f._scaling_factor:
-                    data *= f._scaling_factor
-                f.data[tindex, :] = f.reshape(data)[tindex, :]
-            if f.gradientx is not None and g.update_status in ['first_updated', 'updated']:
-                f.gradient(update=True)
+                    f.data[tind, :] *= f._scaling_factor
+                f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
+                if f.vmin is not None:
+                    f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
+                if f.vmax is not None:
+                    f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
+                if f.gradientx is not None:
+                    f.gradient(update=True, tindex=tind)
+
+        # do user-defined computations on fieldset data
+        if self.compute_on_defer:
+            self.compute_on_defer(self)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
@@ -440,60 +458,3 @@ class FieldSet(object):
                 return nextTime
             else:
                 return time + nSteps * dt
-
-
-class FieldList(list):
-    def eval(self, time, x, y, z, applyConversion=True):
-        tmp = 0
-        for fld in self:
-            tmp += fld.eval(time, x, y, z, applyConversion)
-        return tmp
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            return self.eval(*key)
-
-
-class VectorFieldList(list):
-    """Class VectorFieldList stores 2 or 3 FieldLists which defines together a vector field.
-    This enables to interpolate them as one single vector FieldList in the kernels.
-
-    :param name: Name of the vector field
-    :param U: FieldList defining the zonal component
-    :param V: FieldList defining the meridional component
-    :param W: FieldList defining the vertical component (default: None)
-    """
-
-    def __init__(self, name, U, V, W=None):
-        self.name = name
-        self.U = U
-        self.V = V
-        self.W = W
-
-    def eval(self, time, x, y, z):
-        zonal = meridional = vertical = 0
-        if self.W is not None:
-            for (U, V, W) in zip(self.U, self.V, self.W):
-                vfld = VectorField(self.name, U, V, W)
-                vfld.fieldset = self.fieldset
-                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
-                zonal += tmp1
-                meridional += tmp2
-                vertical += tmp3
-            return (zonal, meridional, vertical)
-        else:
-            for (U, V) in zip(self.U, self.V):
-                vfld = VectorField(self.name, U, V)
-                vfld.fieldset = self.fieldset
-                (tmp1, tmp2) = vfld.eval(time, x, y, z)
-                zonal += tmp1
-                meridional += tmp2
-            return (zonal, meridional)
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            return self.eval(*key)

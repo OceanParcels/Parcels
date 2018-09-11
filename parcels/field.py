@@ -1,10 +1,12 @@
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
+from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
+from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 from collections import Iterable
 from py import path
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
-from math import cos, pi
+from math import cos
 import datetime
 import cftime
 import math
@@ -12,134 +14,7 @@ from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['Field', 'VectorField', 'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
-
-
-class FieldSamplingError(RuntimeError):
-    """Utility error class to propagate erroneous field sampling"""
-
-    def __init__(self, x, y, z, field=None):
-        self.field = field
-        self.x = x
-        self.y = y
-        self.z = z
-        message = "%s sampled at (%f, %f, %f)" % (
-            field.name if field else "Field", self.x, self.y, self.z
-        )
-        super(FieldSamplingError, self).__init__(message)
-
-
-class TimeExtrapolationError(RuntimeError):
-    """Utility error class to propagate erroneous time extrapolation sampling"""
-
-    def __init__(self, time, field=None):
-        if field is not None and field.grid.time_origin and time is not None:
-            time = field.grid.time_origin + np.timedelta64(int(time), 's')
-        message = "%s sampled outside time domain at time %s." % (
-            field.name if field else "Field", time)
-        message += " Try setting allow_time_extrapolation to True"
-        super(TimeExtrapolationError, self).__init__(message)
-
-
-class UnitConverter(object):
-    """ Interface class for spatial unit conversion during field sampling
-        that performs no conversion.
-    """
-    source_unit = None
-    target_unit = None
-
-    def to_target(self, value, x, y, z):
-        return value
-
-    def ccode_to_target(self, x, y, z):
-        return "1.0"
-
-    def to_source(self, value, x, y, z):
-        return value
-
-    def ccode_to_source(self, x, y, z):
-        return "1.0"
-
-
-class Geographic(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree) """
-    source_unit = 'm'
-    target_unit = 'degree'
-
-    def to_target(self, value, x, y, z):
-        return value / 1000. / 1.852 / 60.
-
-    def to_source(self, value, x, y, z):
-        return value * 1000. * 1.852 * 60.
-
-    def ccode_to_target(self, x, y, z):
-        return "(1.0 / (1000.0 * 1.852 * 60.0))"
-
-    def ccode_to_source(self, x, y, z):
-        return "(1000.0 * 1.852 * 60.0)"
-
-
-class GeographicPolar(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree)
-        with a correction to account for narrower grid cells closer to the poles.
-    """
-    source_unit = 'm'
-    target_unit = 'degree'
-
-    def to_target(self, value, x, y, z):
-        return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
-
-    def to_source(self, value, x, y, z):
-        return value * 1000. * 1.852 * 60. * cos(y * pi / 180)
-
-    def ccode_to_target(self, x, y, z):
-        return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
-
-    def ccode_to_source(self, x, y, z):
-        return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
-
-
-class GeographicSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
-    source_unit = 'm2'
-    target_unit = 'degree2'
-
-    def to_target(self, value, x, y, z):
-        return value / pow(1000. * 1.852 * 60., 2)
-
-    def to_source(self, value, x, y, z):
-        return value * pow(1000. * 1.852 * 60., 2)
-
-    def ccode_to_target(self, x, y, z):
-        return "pow(1.0 / (1000.0 * 1.852 * 60.0), 2)"
-
-    def ccode_to_source(self, x, y, z):
-        return "pow((1000.0 * 1.852 * 60.0), 2)"
-
-
-class GeographicPolarSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
-        with a correction to account for narrower grid cells closer to the poles.
-    """
-    source_unit = 'm2'
-    target_unit = 'degree2'
-
-    def to_target(self, value, x, y, z):
-        return value / pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
-
-    def to_source(self, value, x, y, z):
-        return value * pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
-
-    def ccode_to_target(self, x, y, z):
-        return "pow(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
-
-    def ccode_to_source(self, x, y, z):
-        return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
-
-
-unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
-                  'Kh_zonal': GeographicPolarSquare(),
-                  'Kh_meridional': GeographicSquare()}
+__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField']
 
 
 class Field(object):
@@ -165,7 +40,7 @@ class Field(object):
            2. flat: No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
-    :param fieldtype: Type of Field to be used for UnitConverter when using FieldLists
+    :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
            (either 'U', 'V', 'Kh_zonal', 'Kh_Meridional' or None)
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
@@ -196,10 +71,10 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = unitconverters[fieldtype]
+            self.units = unitconverters_map[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:
@@ -244,6 +119,7 @@ class Field(object):
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
+        self.loaded_time_indices = []
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -277,8 +153,7 @@ class Field(object):
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
         dimension_filename = dimension_filename if dimension_filename else filenames[0]
-        if indices is None:
-            indices = {}
+        indices = {} if indices is None else indices.copy()
         with NetcdfFileBuffer(dimension_filename, dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
@@ -339,7 +214,7 @@ class Field(object):
                 with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = dimensions['data'] if 'data' in dimensions else variable
+                    filebuffer.name = filebuffer.parse_name(dimensions, variable)
 
                     if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
@@ -436,22 +311,26 @@ class Field(object):
             self.calc_cell_edge_sizes()
         return self.grid.cell_edge_sizes['x'] * self.grid.cell_edge_sizes['y']
 
-    def gradient(self, update=False):
+    def gradient(self, update=False, tindex=None):
         """Method to calculate horizontal gradients of Field.
                 Returns two Fields: the zonal and meridional gradients,
                 on the same Grid as the original Field, using numpy.gradient() method
                 Names of these grids are dNAME_dx and dNAME_dy, where NAME is the name
                 of the original Field"""
+        tindex = range(self.grid.tdim) if tindex is None else tindex
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
         if self.grid.defer_load and self.data is None:
             (dFdx, dFdy) = (None, None)
         else:
-            dFdy = np.gradient(self.data, axis=-2) / self.grid.cell_edge_sizes['y']
-            dFdx = np.gradient(self.data, axis=-1) / self.grid.cell_edge_sizes['x']
+            dFdy = np.gradient(self.data[tindex, :], axis=-2) / self.grid.cell_edge_sizes['y']
+            dFdx = np.gradient(self.data[tindex, :], axis=-1) / self.grid.cell_edge_sizes['x']
         if update:
-            self.gradientx.data = dFdx
-            self.gradienty.data = dFdy
+            if self.gradientx.data is None:
+                self.gradientx.data = np.zeros_like(self.data)
+                self.gradienty.data = np.zeros_like(self.data)
+            self.gradientx.data[tindex, :] = dFdx
+            self.gradienty.data[tindex, :] = dFdy
         else:
             dFdx_fld = Field('d%s_dx' % self.name, dFdx, grid=self.grid)
             dFdy_fld = Field('d%s_dy' % self.name, dFdy, grid=self.grid)
@@ -957,7 +836,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
-            filebuffer.name = self.dimensions['data'] if 'data' in self.dimensions else self.name
+            filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
                 assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
@@ -974,13 +853,44 @@ class Field(object):
                     data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
             else:
                 data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
-        data[np.isnan(data)] = 0.
-        if self.vmin is not None:
-            data[data < self.vmin] = 0.
-        if self.vmax is not None:
-            data[data > self.vmax] = 0.
 
         return data
+
+    def __add__(self, field):
+        if isinstance(self, Field) and isinstance(field, Field):
+            return SummedField([self, field])
+        elif isinstance(field, SummedField):
+            field.insert(0, self)
+            return field
+
+
+class SummedField(list):
+    """Class SummedField is a list of Fields over which Field interpolation
+    is summed. This can e.g. be used when combining multiple flow fields,
+    where the total flow is the sum of all the individual flows.
+    Note that the individual Fields can be on different Grids.
+    Also note that, since SummedFields are lists, the individual Fields can
+    still be queried through their list index (e.g. SummedField[1]).
+    """
+    def eval(self, time, x, y, z, applyConversion=True):
+        tmp = 0
+        for fld in self:
+            tmp += fld.eval(time, x, y, z, applyConversion)
+        return tmp
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
+
+    def __add__(self, field):
+        if isinstance(field, Field):
+            self.append(field)
+        elif isinstance(field, SummedField):
+            for fld in field:
+                self.append(fld)
+        return self
 
 
 class VectorField(object):
@@ -1156,6 +1066,49 @@ class VectorField(object):
                    % (varU, varV, U.interp_method.upper())
 
 
+class SummedVectorField(list):
+    """Class SummedVectorField stores 2 or 3 SummedFields which defines together a vector field.
+    This enables to interpolate them as one single vector SummedField in the kernels.
+
+    :param name: Name of the vector field
+    :param U: SummedField defining the zonal component
+    :param V: SummedField defining the meridional component
+    :param W: SummedField defining the vertical component (default: None)
+    """
+
+    def __init__(self, name, U, V, W=None):
+        self.name = name
+        self.U = U
+        self.V = V
+        self.W = W
+
+    def eval(self, time, x, y, z):
+        zonal = meridional = vertical = 0
+        if self.W is not None:
+            for (U, V, W) in zip(self.U, self.V, self.W):
+                vfld = VectorField(self.name, U, V, W)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+                vertical += tmp3
+            return (zonal, meridional, vertical)
+        else:
+            for (U, V) in zip(self.U, self.V):
+                vfld = VectorField(self.name, U, V)
+                vfld.fieldset = self.fieldset
+                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                zonal += tmp1
+                meridional += tmp2
+            return (zonal, meridional)
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            return self.eval(*key)
+
+
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
@@ -1179,6 +1132,17 @@ class NetcdfFileBuffer(object):
 
     def __exit__(self, type, value, traceback):
         self.dataset.close()
+
+    def parse_name(self, dimensions, variable):
+        name = dimensions['data'] if 'data' in dimensions else variable
+        if isinstance(name, list):
+            for nm in name:
+                if hasattr(self.dataset, nm):
+                    name = nm
+                    break
+        if isinstance(name, list):
+            raise IOError('None of variables in list found in file')
+        return name
 
     @property
     def read_lonlat(self):

@@ -1,6 +1,5 @@
-from parcels.field import Field, VectorField
-from parcels.fieldset import FieldList, VectorFieldList
-from parcels.loggers import logger
+from parcels.field import Field, VectorField, SummedField, SummedVectorField
+from parcels.tools.loggers import logger
 import ast
 import cgen as c
 from collections import OrderedDict
@@ -20,12 +19,12 @@ class FieldSetNode(IntrinsicNode):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
                              ccode="%s->%s" % (self.ccode, attr))
-        elif isinstance(getattr(self.obj, attr), VectorFieldList):
-            return VectorFieldListNode(getattr(self.obj, attr),
-                                       ccode="%s->%s" % (self.ccode, attr))
-        elif isinstance(getattr(self.obj, attr), FieldList) or isinstance(getattr(self.obj, attr), list):
-            return FieldListNode(getattr(self.obj, attr),
-                                 ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), SummedVectorField):
+            return SummedVectorFieldNode(getattr(self.obj, attr),
+                                         ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), SummedField) or isinstance(getattr(self.obj, attr), list):
+            return SummedFieldNode(getattr(self.obj, attr),
+                                   ccode="%s->%s" % (self.ccode, attr))
         elif isinstance(getattr(self.obj, attr), VectorField):
             return VectorFieldNode(getattr(self.obj, attr),
                                    ccode="%s->%s" % (self.ccode, attr))
@@ -60,24 +59,24 @@ class VectorFieldEvalNode(IntrinsicNode):
         self.var3 = var3  # third variable for UVW interpolation
 
 
-class FieldListNode(IntrinsicNode):
+class SummedFieldNode(IntrinsicNode):
     def __getitem__(self, attr):
-        return FieldListEvalNode(self.obj, attr)
+        return SummedFieldEvalNode(self.obj, attr)
 
 
-class FieldListEvalNode(IntrinsicNode):
+class SummedFieldEvalNode(IntrinsicNode):
     def __init__(self, fields, args, var):
         self.fields = fields
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
 
 
-class VectorFieldListNode(IntrinsicNode):
+class SummedVectorFieldNode(IntrinsicNode):
     def __getitem__(self, attr):
-        return VectorFieldListEvalNode(self.obj, attr)
+        return SummedVectorFieldEvalNode(self.obj, attr)
 
 
-class VectorFieldListEvalNode(IntrinsicNode):
+class SummedVectorFieldEvalNode(IntrinsicNode):
     def __init__(self, field, args, var, var2, var3):
         self.field = field
         self.args = args
@@ -210,18 +209,18 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
         # If we encounter field evaluation we replace it with a
         # temporary variable and put the evaluation call on the stack.
-        if isinstance(node.value, FieldListNode):
+        if isinstance(node.value, SummedFieldNode):
             tmp = [self.get_tmp() for _ in node.value.obj]
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [FieldListEvalNode(node.value, node.slice, tmp)]
+            self.stmt_stack += [SummedFieldEvalNode(node.value, node.slice, tmp)]
             # .. and return the name of the temporary that will be populated
             return ast.Name(id='+'.join(tmp))
-        elif isinstance(node.value, VectorFieldListNode):
+        elif isinstance(node.value, SummedVectorFieldNode):
             tmp = [self.get_tmp() for _ in node.value.obj.U]
             tmp2 = [self.get_tmp() for _ in node.value.obj.U]
             tmp3 = [self.get_tmp() if node.value.obj.W else None for _ in node.value.obj.U]
             # Insert placeholder node for field eval ...
-            self.stmt_stack += [VectorFieldListEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
+            self.stmt_stack += [SummedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
             # .. and return the name of the temporary that will be populated
             if all(tmp3):
                 return ast.Tuple([ast.Name(id='+'.join(tmp)), ast.Name(id='+'.join(tmp2)), ast.Name(id='+'.join(tmp3))], ast.Load())
@@ -621,7 +620,7 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.name] = node.obj
 
-    def visit_FieldListNode(self, node):
+    def visit_SummedFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
             self.field_args[fld.name] = fld
@@ -630,7 +629,7 @@ class KernelGenerator(ast.NodeVisitor):
         """Record intrinsic fields used in kernel"""
         self.vector_field_args[node.obj.name] = node.obj
 
-    def visit_VectorFieldListNode(self, node):
+    def visit_SummedVectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj.U:
             self.field_args[fld.name] = fld
@@ -672,7 +671,7 @@ class KernelGenerator(ast.NodeVisitor):
         node.ccode = c.Block([c.Assign("err", ccode_eval),
                               conv_stat, c.Statement("CHECKERROR(err)")])
 
-    def visit_FieldListEvalNode(self, node):
+    def visit_SummedFieldEvalNode(self, node):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
@@ -683,7 +682,7 @@ class KernelGenerator(ast.NodeVisitor):
             cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKERROR(err)")]
         node.ccode = c.Block(cstat)
 
-    def visit_VectorFieldListEvalNode(self, node):
+    def visit_SummedVectorFieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
         cstat = []

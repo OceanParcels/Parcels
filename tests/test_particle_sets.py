@@ -1,5 +1,5 @@
 from parcels import (FieldSet, ParticleSet, Field, ScipyParticle, JITParticle,
-                     Variable, ErrorCode)
+                     Variable, ErrorCode, CurvilinearZGrid)
 import numpy as np
 import pytest
 import os
@@ -64,6 +64,38 @@ def test_pset_create_field(fieldset, mode, npart=100):
     assert (np.array([p.lon for p in pset]) >= K.lon[0]).all()
     assert (np.array([p.lat for p in pset]) <= K.lat[-1]).all()
     assert (np.array([p.lat for p in pset]) >= K.lat[0]).all()
+
+
+def test_pset_create_field_curvi(npart=100):
+    np.random.seed(123456)
+    r_v = np.linspace(.25, 2, 20)
+    theta_v = np.linspace(0, np.pi/2, 200)
+    dtheta = theta_v[1]-theta_v[0]
+    dr = r_v[1]-r_v[0]
+    (r, theta) = np.meshgrid(r_v, theta_v)
+
+    x = -1 + r * np.cos(theta)
+    y = -1 + r * np.sin(theta)
+    grid = CurvilinearZGrid(x, y)
+
+    u = np.ones(x.shape)
+    v = np.where(np.logical_and(theta > np.pi/4, theta < np.pi/3), 1, 0)
+
+    ufield = Field('U', u, grid=grid)
+    vfield = Field('V', v, grid=grid)
+    fieldset = FieldSet(ufield, vfield)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype['scipy'], start_field=fieldset.V)
+
+    lons = np.array([p.lon+1 for p in pset])
+    lats = np.array([p.lat+1 for p in pset])
+    thetas = np.arctan2(lats, lons)
+    rs = np.sqrt(lons*lons + lats*lats)
+
+    test = np.pi/4-dtheta < thetas
+    test *= thetas < np.pi/3+dtheta
+    test *= rs > .25-dr
+    test *= rs < 2+dr
+    assert np.all(test)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -392,6 +424,7 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
     outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
+    outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')

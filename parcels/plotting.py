@@ -1,6 +1,6 @@
 from parcels.field import Field, VectorField
-from parcels.grid import CurvilinearGrid
-from parcels.loggers import logger
+from parcels.grid import CurvilinearGrid, GridCode
+from parcels.tools.loggers import logger
 import numpy as np
 from datetime import timedelta as delta
 from datetime import datetime
@@ -244,9 +244,12 @@ def parsedomain(domain, field):
     if domain is not None:
         _, _, _, lonW, latS, _ = field.search_indices(domain[3], domain[1], 0, 0, 0, search2D=True)
         _, _, _, lonE, latN, _ = field.search_indices(domain[2], domain[0], 0, 0, 0, search2D=True)
-        return latN, latS, lonE, lonW
+        return latN+1, latS, lonE+1, lonW
     else:
-        return -1, 0, -1, 0
+        if field.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
+            return field.grid.lon.shape[0], 0, field.grid.lon.shape[1], 0
+        else:
+            return len(field.grid.lat), 0, len(field.grid.lon), 0
 
 
 def parsetimestr(time_origin, show_time):
