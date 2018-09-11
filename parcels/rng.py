@@ -1,5 +1,5 @@
 from parcels.compiler import get_cache_dir, GNUCompiler
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float

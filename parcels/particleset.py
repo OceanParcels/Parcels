@@ -3,7 +3,7 @@ from parcels.particle import JITParticle
 from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 from parcels.grid import GridCode
 import numpy as np
 import progressbar
@@ -257,7 +257,7 @@ class ParticleSet(object):
                          It is either a timedelta object or a positive double.
                          None value means no animation.
         :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
-        :param recovery: Dictionary with additional `:mod:parcels.kernels.error`
+        :param recovery: Dictionary with additional `:mod:parcels.tools.error`
                          recovery kernels to allow custom recovery behaviour in case of
                          kernel errors.
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
