@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.loggers import logger
@@ -8,7 +8,7 @@ from glob import glob
 from copy import deepcopy
 
 
-__all__ = ['FieldSet', 'FieldList']
+__all__ = ['FieldSet']
 
 
 class FieldSet(object):
@@ -92,11 +92,13 @@ class FieldSet(object):
         :param name: Name of the :class:`parcels.field.Field` object to be added
         """
         name = field.name if name is None else name
-        if isinstance(field, list):
-            setattr(self, name, FieldList(field))
+        if isinstance(field, SummedField):
+            setattr(self, name, field)
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
+        elif isinstance(field, list):
+            raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
             self.gridset.add_grid(field)
@@ -128,13 +130,13 @@ class FieldSet(object):
                     g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
                 g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
-            if isinstance(self.U, FieldList):
-                self.add_vector_field(VectorFieldList('UV', self.U, self.V))
+            if isinstance(self.U, SummedField):
+                self.add_vector_field(SummedVectorField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
-            if isinstance(self.U, FieldList):
-                self.add_vector_field(VectorFieldList('UVW', self.U, self.V, self.W))
+            if isinstance(self.U, SummedField):
+                self.add_vector_field(SummedVectorField('UVW', self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
@@ -303,7 +305,7 @@ class FieldSet(object):
         for v in self.__dict__.values():
             if isinstance(v, Field):
                 fields.append(v)
-            elif isinstance(v, FieldList):
+            elif isinstance(v, SummedField):
                 for v2 in v:
                     if v2 not in fields:
                         fields.append(v2)
@@ -449,60 +451,3 @@ class FieldSet(object):
                 return nextTime
             else:
                 return time + nSteps * dt
-
-
-class FieldList(list):
-    def eval(self, time, x, y, z, applyConversion=True):
-        tmp = 0
-        for fld in self:
-            tmp += fld.eval(time, x, y, z, applyConversion)
-        return tmp
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            return self.eval(*key)
-
-
-class VectorFieldList(list):
-    """Class VectorFieldList stores 2 or 3 FieldLists which defines together a vector field.
-    This enables to interpolate them as one single vector FieldList in the kernels.
-
-    :param name: Name of the vector field
-    :param U: FieldList defining the zonal component
-    :param V: FieldList defining the meridional component
-    :param W: FieldList defining the vertical component (default: None)
-    """
-
-    def __init__(self, name, U, V, W=None):
-        self.name = name
-        self.U = U
-        self.V = V
-        self.W = W
-
-    def eval(self, time, x, y, z):
-        zonal = meridional = vertical = 0
-        if self.W is not None:
-            for (U, V, W) in zip(self.U, self.V, self.W):
-                vfld = VectorField(self.name, U, V, W)
-                vfld.fieldset = self.fieldset
-                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
-                zonal += tmp1
-                meridional += tmp2
-                vertical += tmp3
-            return (zonal, meridional, vertical)
-        else:
-            for (U, V) in zip(self.U, self.V):
-                vfld = VectorField(self.name, U, V)
-                vfld.fieldset = self.fieldset
-                (tmp1, tmp2) = vfld.eval(time, x, y, z)
-                zonal += tmp1
-                meridional += tmp2
-            return (zonal, meridional)
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            return self.eval(*key)
