@@ -403,9 +403,13 @@ class Field(object):
         grid = self.grid
         xi = yi = -1
 
-        if grid.mesh is not 'spherical':
-            if x < grid.lon[0] or x > grid.lon[-1]:
+        if not grid.zonal_periodic:
+            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 raise FieldSamplingError(x, y, z, field=self)
+        if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
+            raise FieldSamplingError(x, y, z, field=self)
+
+        if grid.mesh is not 'spherical':
             lon_index = grid.lon < x
             if lon_index.all():
                 xi = len(grid.lon) - 2
@@ -425,11 +429,6 @@ class Field(object):
                 lon_fixed[indices.argmin():] += 360
             if x < lon_fixed[0]:
                 lon_fixed -= 360
-            if not grid.zonal_periodic:
-                if (grid.lon[0] < grid.lon[-1]) and (x < grid.lon[0] or x > grid.lon[-1]):
-                    raise FieldSamplingError(x, y, z, field=self)
-                elif (grid.lon[0] >= grid.lon[-1]) and (x < grid.lon[0] and x > grid.lon[-1]):
-                    raise FieldSamplingError(x, y, z, field=self)
 
             lon_index = lon_fixed < x
             if lon_index.all():
@@ -444,8 +443,6 @@ class Field(object):
                 xi += 1
                 xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
 
-        if y < grid.lat[0] or y > grid.lat[-1]:
-            raise FieldSamplingError(x, y, z, field=self)
         lat_index = grid.lat < y
         if lat_index.all():
             yi = len(grid.lat) - 2
@@ -485,12 +482,13 @@ class Field(object):
                          [1, -1, 1, -1]])
         maxIterSearch = 1e6
         it = 0
-        if (not grid.zonal_periodic) or grid.mesh == 'flat':
-            if (grid.lon[0, 0] < grid.lon[0, -1]) and (x < grid.lon[0, 0] or x > grid.lon[0, -1]):
-                raise FieldSamplingError(x, y, z, field=self)
-            elif (grid.lon[0, 0] >= grid.lon[0, -1]) and (x < grid.lon[0, 0] and x > grid.lon[0, -1]):
-                raise FieldSamplingError(x, y, z, field=self)
-        if y < np.min(grid.lat) or y > np.max(grid.lat):
+        if not grid.zonal_periodic:
+            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
+                if grid.lon[0, 0] < grid.lon[0, -1]:
+                    raise FieldSamplingError(x, y, z, field=self)
+                elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
+                    raise FieldSamplingError(x, y, z, field=self)
+        if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
             raise FieldSamplingError(x, y, z, field=self)
 
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:

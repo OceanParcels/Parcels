@@ -327,7 +327,7 @@ def test_curvilinear_grids(mode):
     class MyParticle(ptype[mode]):
         speed = Variable('speed', dtype=np.float32, initial=0.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[400], lat=[600])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
     assert(np.allclose(pset[0].speed, 1000))
 
