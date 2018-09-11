@@ -1,7 +1,7 @@
 from parcels.field import Field, VectorField, SummedField, SummedVectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 import numpy as np
 from os import path
 from glob import glob

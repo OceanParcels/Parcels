@@ -1,145 +1,19 @@
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
+from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
+from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 from collections import Iterable
 from py import path
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
-from math import cos, pi
+from math import cos
 import datetime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField',
-           'Geographic', 'GeographicPolar', 'GeographicSquare', 'GeographicPolarSquare']
-
-
-class FieldSamplingError(RuntimeError):
-    """Utility error class to propagate erroneous field sampling"""
-
-    def __init__(self, x, y, z, field=None):
-        self.field = field
-        self.x = x
-        self.y = y
-        self.z = z
-        message = "%s sampled at (%f, %f, %f)" % (
-            field.name if field else "Field", self.x, self.y, self.z
-        )
-        super(FieldSamplingError, self).__init__(message)
-
-
-class TimeExtrapolationError(RuntimeError):
-    """Utility error class to propagate erroneous time extrapolation sampling"""
-
-    def __init__(self, time, field=None):
-        if field is not None and field.grid.time_origin and time is not None:
-            time = field.grid.time_origin + np.timedelta64(int(time), 's')
-        message = "%s sampled outside time domain at time %s." % (
-            field.name if field else "Field", time)
-        message += " Try setting allow_time_extrapolation to True"
-        super(TimeExtrapolationError, self).__init__(message)
-
-
-class UnitConverter(object):
-    """ Interface class for spatial unit conversion during field sampling
-        that performs no conversion.
-    """
-    source_unit = None
-    target_unit = None
-
-    def to_target(self, value, x, y, z):
-        return value
-
-    def ccode_to_target(self, x, y, z):
-        return "1.0"
-
-    def to_source(self, value, x, y, z):
-        return value
-
-    def ccode_to_source(self, x, y, z):
-        return "1.0"
-
-
-class Geographic(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree) """
-    source_unit = 'm'
-    target_unit = 'degree'
-
-    def to_target(self, value, x, y, z):
-        return value / 1000. / 1.852 / 60.
-
-    def to_source(self, value, x, y, z):
-        return value * 1000. * 1.852 * 60.
-
-    def ccode_to_target(self, x, y, z):
-        return "(1.0 / (1000.0 * 1.852 * 60.0))"
-
-    def ccode_to_source(self, x, y, z):
-        return "(1000.0 * 1.852 * 60.0)"
-
-
-class GeographicPolar(UnitConverter):
-    """ Unit converter from geometric to geographic coordinates (m to degree)
-        with a correction to account for narrower grid cells closer to the poles.
-    """
-    source_unit = 'm'
-    target_unit = 'degree'
-
-    def to_target(self, value, x, y, z):
-        return value / 1000. / 1.852 / 60. / cos(y * pi / 180)
-
-    def to_source(self, value, x, y, z):
-        return value * 1000. * 1.852 * 60. * cos(y * pi / 180)
-
-    def ccode_to_target(self, x, y, z):
-        return "(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)))" % y
-
-    def ccode_to_source(self, x, y, z):
-        return "(1000. * 1.852 * 60. * cos(%s * M_PI / 180))" % y
-
-
-class GeographicSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2) """
-    source_unit = 'm2'
-    target_unit = 'degree2'
-
-    def to_target(self, value, x, y, z):
-        return value / pow(1000. * 1.852 * 60., 2)
-
-    def to_source(self, value, x, y, z):
-        return value * pow(1000. * 1.852 * 60., 2)
-
-    def ccode_to_target(self, x, y, z):
-        return "pow(1.0 / (1000.0 * 1.852 * 60.0), 2)"
-
-    def ccode_to_source(self, x, y, z):
-        return "pow((1000.0 * 1.852 * 60.0), 2)"
-
-
-class GeographicPolarSquare(UnitConverter):
-    """ Square distance converter from geometric to geographic coordinates (m2 to degree2)
-        with a correction to account for narrower grid cells closer to the poles.
-    """
-    source_unit = 'm2'
-    target_unit = 'degree2'
-
-    def to_target(self, value, x, y, z):
-        return value / pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
-
-    def to_source(self, value, x, y, z):
-        return value * pow(1000. * 1.852 * 60. * cos(y * pi / 180), 2)
-
-    def ccode_to_target(self, x, y, z):
-        return "pow(1.0 / (1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
-
-    def ccode_to_source(self, x, y, z):
-        return "pow((1000. * 1.852 * 60. * cos(%s * M_PI / 180)), 2)" % y
-
-
-unitconverters = {'U': GeographicPolar(), 'V': Geographic(),
-                  'Kh_zonal': GeographicPolarSquare(),
-                  'Kh_meridional': GeographicSquare()}
+__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField']
 
 
 class Field(object):
@@ -196,10 +70,10 @@ class Field(object):
         self.depth = self.grid.depth
         self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters.keys()):
+        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = unitconverters[fieldtype]
+            self.units = unitconverters_map[fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:

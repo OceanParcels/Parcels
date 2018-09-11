@@ -1,6 +1,6 @@
 from parcels.field import Field, VectorField
 from parcels.grid import CurvilinearGrid, GridCode
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 import numpy as np
 from datetime import timedelta as delta
 from datetime import datetime

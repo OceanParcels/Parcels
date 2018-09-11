@@ -3,7 +3,8 @@ from enum import IntEnum
 import numpy as np
 
 
-__all__ = ['ErrorCode', 'KernelError', 'OutOfBoundsError', 'recovery_map']
+__all__ = ['ErrorCode', 'FieldSamplingError', 'TimeExtrapolationError',
+           'KernelError', 'OutOfBoundsError', 'recovery_map']
 
 
 class ErrorCode(IntEnum):
@@ -13,6 +14,32 @@ class ErrorCode(IntEnum):
     Error = 3
     ErrorOutOfBounds = 4
     ErrorTimeExtrapolation = 5
+
+
+class FieldSamplingError(RuntimeError):
+    """Utility error class to propagate erroneous field sampling in Scipy mode"""
+
+    def __init__(self, x, y, z, field=None):
+        self.field = field
+        self.x = x
+        self.y = y
+        self.z = z
+        message = "%s sampled at (%f, %f, %f)" % (
+            field.name if field else "Field", self.x, self.y, self.z
+        )
+        super(FieldSamplingError, self).__init__(message)
+
+
+class TimeExtrapolationError(RuntimeError):
+    """Utility error class to propagate erroneous time extrapolation sampling in Scipy mode"""
+
+    def __init__(self, time, field=None):
+        if field is not None and field.grid.time_origin and time is not None:
+            time = field.grid.time_origin + np.timedelta64(int(time), 's')
+        message = "%s sampled outside time domain at time %s." % (
+            field.name if field else "Field", time)
+        message += " Try setting allow_time_extrapolation to True"
+        super(TimeExtrapolationError, self).__init__(message)
 
 
 class KernelError(RuntimeError):

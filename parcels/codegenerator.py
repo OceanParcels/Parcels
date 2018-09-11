@@ -1,5 +1,5 @@
 from parcels.field import Field, VectorField, SummedField, SummedVectorField
-from parcels.loggers import logger
+from parcels.tools.loggers import logger
 import ast
 import cgen as c
 from collections import OrderedDict
