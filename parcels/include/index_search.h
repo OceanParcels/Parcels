@@ -129,21 +129,24 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, CS
   float *xvals = grid->lon;
   float *yvals = grid->lat;
   float *zvals = grid->depth;
+  float *xy_minmax = grid->lonlat_minmax;
   int sphere_mesh = grid->sphere_mesh;
   int zonal_periodic = grid->zonal_periodic;
   int z4d = grid->z4d;
 
+  if (zonal_periodic == 0){
+    if ((x < xy_minmax[0]) || (x > xy_minmax[1]))
+      return ERROR_OUT_OF_BOUNDS;
+  }
+  if ((y < xy_minmax[2]) || (y > xy_minmax[3]))
+    return ERROR_OUT_OF_BOUNDS;
+
   if (sphere_mesh == 0){
-    if (x < xvals[0] || x > xvals[xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
     while (*xi < xdim-1 && x > xvals[*xi+1]) ++(*xi);
     while (*xi > 0 && x < xvals[*xi]) --(*xi);
     *xsi = (x - xvals[*xi]) / (xvals[*xi+1] - xvals[*xi]);
   }
   else{
-    if (zonal_periodic == 0){
-      if ((xvals[0] < xvals[xdim-1]) && (x < xvals[0] || x > xvals[xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
-      else if ((xvals[0] >= xvals[xdim-1]) && (x < xvals[0] && x > xvals[xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
-    }
 
     float xvalsi = xvals[*xi];
     // TODO: this will fail if longitude is e.g. only [-180, 180] (so length 2)
@@ -176,7 +179,6 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, CS
     *xsi = (x - xvalsi) / (xvalsi1 - xvalsi);
   }
 
-  if (y < yvals[0] || y > yvals[ydim-1]) {return ERROR_OUT_OF_BOUNDS;}
   while (*yi < ydim-1 && y > yvals[*yi+1]) ++(*yi);
   while (*yi > 0 && y < yvals[*yi]) --(*yi);
 
@@ -220,6 +222,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
   float *xvals = grid->lon;
   float *yvals = grid->lat;
   float *zvals = grid->depth;
+  float *xy_minmax = grid->lonlat_minmax;
   int sphere_mesh = grid->sphere_mesh;
   int zonal_periodic = grid->zonal_periodic;
   int z4d = grid->z4d;
@@ -228,10 +231,14 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
   float (* xgrid)[xdim] = (float (*)[xdim]) xvals;
   float (* ygrid)[xdim] = (float (*)[xdim]) yvals;
 
-  if (zonal_periodic == 0 || sphere_mesh == 0) {
-    if ((xgrid[0][0] < xgrid[0][xdim-1]) && (x < xgrid[0][0] || x > xgrid[0][xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
-    else if ((xgrid[0][0] >= xgrid[0][xdim-1]) && (x < xgrid[0][0] && x > xgrid[0][xdim-1])) {return ERROR_OUT_OF_BOUNDS;}
+  if (zonal_periodic == 0){
+    if ((x < xy_minmax[0]) || (x > xy_minmax[1])){
+      if (xgrid[0][0] < xgrid[0][xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+      else if (x < xgrid[0][0] && x > xgrid[0][xdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    }
   }
+  if ((y < xy_minmax[2]) || (y > xy_minmax[3]))
+    return ERROR_OUT_OF_BOUNDS;
 
   double a[4], b[4];
 
