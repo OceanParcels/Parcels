@@ -424,6 +424,7 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
 
     outfile = pset.ParticleFile(name=filepath, write_ondelete=True)
+    outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
