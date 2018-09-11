@@ -52,7 +52,7 @@ class Grid(object):
         self.meridional_halo = 0
         self.lat_flipped = False
         self.defer_load = False
-        self.lonlat_minmax = np.array([np.min(lon), np.max(lon), np.min(lat), np.max(lat)], dtype=np.float32)
+        self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
 
     @property
     def ctypes_struct(self):
@@ -203,7 +203,7 @@ class RectilinearGrid(Grid):
                                       self.lat, self.lat[0:halosize] + latshift))
             self.ydim = self.lat.size
             self.meridional_halo = halosize
-        self.lonlat_minmax = np.array([np.min(self.lon), np.max(self.lon), np.min(self.lat), np.max(self.lat)], dtype=np.float32)
+        self.lonlat_minmax = np.array([np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32)
 
 
 class RectilinearZGrid(RectilinearGrid):
