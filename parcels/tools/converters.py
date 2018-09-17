@@ -14,29 +14,33 @@ class TimeConverter(object):
     def __init__(self, time_origin=0):
         self.time_origin = time_origin
         if isinstance(time_origin, np.datetime64):
-            self.type = 'datetime64'
+            self.calendar = "standard"
         elif isinstance(time_origin, cftime._cftime.DatetimeNoLeap):
-            self.type = 'cftime'
+            self.calendar = "NOLEAP"
         else:
-            self.type = None
+            self.calendar = None
 
     def reltime(self, time):
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.type == 'datetime64':
+        if self.calendar == 'standard':
             return (time - self.time_origin) / np.timedelta64(1, 's')
-        elif self.type == 'cftime':
+        elif self.calendar == 'NOLEAP':
             return np.array([(t - self.time_origin).total_seconds() for t in time])
-        else:
+        elif self.calendar is None:
             return time - self.time_origin
+        else:
+            raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
 
     def fulltime(self, time):
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.type == 'datetime64':
+        if self.calendar == 'standard':
             return self.time_origin + np.timedelta64(int(time), 's')
-        # elif self.type == 'cftime':
+        # elif self.type == 'NOLEAP':
 
-        else:
+        elif self.calendar is None:
             return time + self.time_origin
+        else:
+            raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
 
     def __repr__(self):
         return "%s" % self.time_origin

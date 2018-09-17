@@ -4,7 +4,6 @@ from parcels.tools.loggers import logger
 import numpy as np
 from datetime import timedelta as delta
 from datetime import datetime
-import cftime
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
@@ -253,7 +252,7 @@ def parsedomain(domain, field):
 
 
 def parsetimestr(time_origin, show_time):
-    if time_origin.type is None:
+    if time_origin.calendar is None:
         return ' after ' + str(delta(seconds=show_time)) + ' hours'
     else:
         date_str = str(time_origin.fulltime(show_time))

@@ -806,7 +806,7 @@ class Field(object):
         else:
             raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
 
-        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin.type else {}
+        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin.calendar else {}
         time_counter = xr.DataArray(self.grid.time,
                                     dims=['time_counter'],
                                     attrs=attrs)
