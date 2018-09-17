@@ -1,6 +1,8 @@
 from math import cos, pi
 import numpy as np
 import cftime
+import netcdftime
+from datetime import timedelta as delta
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
            'GeographicPolarSquare', 'unitconverters_map',
@@ -15,7 +17,8 @@ class TimeConverter(object):
         self.time_origin = time_origin
         if isinstance(time_origin, np.datetime64):
             self.calendar = "standard"
-        elif isinstance(time_origin, cftime._cftime.DatetimeNoLeap):
+        elif isinstance(time_origin, (cftime._cftime.DatetimeNoLeap,
+                                      netcdftime._netcdftime.DatetimeNoLeap)):
             self.calendar = "NOLEAP"
         else:
             self.calendar = None
@@ -25,7 +28,10 @@ class TimeConverter(object):
         if self.calendar == 'standard':
             return (time - self.time_origin) / np.timedelta64(1, 's')
         elif self.calendar == 'NOLEAP':
-            return np.array([(t - self.time_origin).total_seconds() for t in time])
+            if isinstance(time, (list, np.ndarray)):
+                return np.array([(t - self.time_origin).total_seconds() for t in time])
+            else:
+                return (time - self.time_origin).total_seconds()
         elif self.calendar is None:
             return time - self.time_origin
         else:
@@ -35,10 +41,10 @@ class TimeConverter(object):
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar == 'standard':
             return self.time_origin + np.timedelta64(int(time), 's')
-        # elif self.type == 'NOLEAP':
-
+        elif self.calendar == 'NOLEAP':
+            return self.time_origin + delta(seconds=time)
         elif self.calendar is None:
-            return time + self.time_origin
+            return self.time_origin + time
         else:
             raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
 
