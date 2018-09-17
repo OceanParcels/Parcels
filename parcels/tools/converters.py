@@ -45,9 +45,29 @@ class TimeConverter(object):
     def __repr__(self):
         return "%s" % self.time_origin
 
-    def __cmp__(self, other):
+    def __eq__(self, other):
         other = other.time_origin if isinstance(other, TimeConverter) else other
-        return cmp(self.time_origin, other)
+        return self.time_origin == other
+
+    def __ne__(self, other):
+        other = other.time_origin if isinstance(other, TimeConverter) else other
+        return self.time_origin != other
+
+    def __gt__(self, other):
+        other = other.time_origin if isinstance(other, TimeConverter) else other
+        return self.time_origin > other
+
+    def __lt__(self, other):
+        other = other.time_origin if isinstance(other, TimeConverter) else other
+        return self.time_origin < other
+
+    def __ge__(self, other):
+        other = other.time_origin if isinstance(other, TimeConverter) else other
+        return self.time_origin >= other
+
+    def __le__(self, other):
+        other = other.time_origin if isinstance(other, TimeConverter) else other
+        return self.time_origin <= other
 
 
 class UnitConverter(object):
