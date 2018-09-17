@@ -1,7 +1,49 @@
 from math import cos, pi
+import numpy as np
+import cftime
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
-           'GeographicPolarSquare', 'unitconverters_map']
+           'GeographicPolarSquare', 'unitconverters_map',
+           'TimeConverter']
+
+
+class TimeConverter(object):
+    """ Intrerface class for converting of TimeOrigins that performs no conversion
+    """
+
+    def __init__(self, time_origin=0):
+        self.time_origin = time_origin
+        if isinstance(time_origin, np.datetime64):
+            self.type = 'datetime64'
+        elif isinstance(time_origin, cftime._cftime.DatetimeNoLeap):
+            self.type = 'cftime'
+        else:
+            self.type = None
+
+    def reltime(self, time):
+        time = time.time_origin if isinstance(time, TimeConverter) else time
+        if self.type == 'datetime64':
+            return (time - self.time_origin) / np.timedelta64(1, 's')
+        elif self.type == 'cftime':
+            return np.array([(t - self.time_origin).total_seconds() for t in time])
+        else:
+            return time - self.time_origin
+
+    def fulltime(self, time):
+        time = time.time_origin if isinstance(time, TimeConverter) else time
+        if self.type == 'datetime64':
+            return self.time_origin + np.timedelta64(int(time), 's')
+        # elif self.type == 'cftime':
+
+        else:
+            return time + self.time_origin
+
+    def __repr__(self):
+        return "%s" % self.time_origin
+
+    def __cmp__(self, other):
+        other = other.time_origin if isinstance(other, TimeConverter) else other
+        return cmp(self.time_origin, other)
 
 
 class UnitConverter(object):
@@ -101,5 +143,5 @@ class GeographicPolarSquare(UnitConverter):
 
 
 unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
-                       'Kh_zonal': GeographicPolarSquare(),
-                       'Kh_meridional': GeographicSquare()}
+                      'Kh_zonal': GeographicPolarSquare(),
+                      'Kh_meridional': GeographicSquare()}

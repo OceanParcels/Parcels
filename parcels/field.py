@@ -1,5 +1,6 @@
 from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
+from parcels.tools.converters import TimeConverter
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 from collections import Iterable
 from py import path
@@ -8,7 +9,6 @@ from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 from math import cos
 import datetime
-import cftime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
@@ -58,6 +58,7 @@ class Field(object):
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         self.data = data
+        time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
             self.grid = grid
         else:
@@ -178,18 +179,12 @@ class Field(object):
             timeslices = np.array(timeslices)
             time = np.concatenate(timeslices)
             dataFiles = np.concatenate(np.array(dataFiles))
-            if isinstance(time[0], np.datetime64):
-                time_origin = time[0]
-                time = (time - time_origin) / np.timedelta64(1, 's')
-            elif isinstance(time[0], cftime._cftime.DatetimeNoLeap):
-                time_origin = time[0]
-                time = np.array([(t - time_origin).total_seconds() for t in time])
-            else:
-                time_origin = None
-            assert(np.all((time[1:]-time[:-1]) > 0))
-
             if time.size == 1 and time[0] is None:
                 time[0] = 0
+            time_origin = TimeConverter(time[0])
+            time = time_origin.reltime(time)
+            assert(np.all((time[1:]-time[:-1]) > 0))
+
             if len(lon.shape) == 1:
                 if len(depth.shape) == 1:
                     grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
@@ -811,7 +806,7 @@ class Field(object):
         else:
             raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
 
-        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
+        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin.type else {}
         time_counter = xr.DataArray(self.grid.time,
                                     dims=['time_counter'],
                                     attrs=attrs)
@@ -838,11 +833,7 @@ class Field(object):
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
             filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             time_data = filebuffer.time
-            if isinstance(time_data[0], np.datetime64):
-                assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
-                time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
-            elif isinstance(time_data[0], cftime._cftime.DatetimeNoLeap):
-                time_data = np.array([(t - g.time_origin).total_seconds() for t in time_data])
+            time_data = g.time_origin.reltime(time_data)
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                 data[tindex, 0, :, :] = filebuffer.data[:, :]

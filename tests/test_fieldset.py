@@ -1,5 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
+from parcels.tools.converters import TimeConverter
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -301,24 +302,25 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     data0, dims0 = generate_fieldset(10, 10, 1, 10)
     dims0['time'] = np.arange(0, 10, 1) * 3600
     fieldset_out = FieldSet.from_data(data0, dims0)
-    fieldset_out.U.grid.time_origin = np.datetime64('2018-04-20')
+    fieldset_out.U.grid.time_origin = TimeConverter(np.datetime64('2018-04-20'))
+    fieldset_out.V.grid.time_origin = TimeConverter(np.datetime64('2018-04-20'))
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
     if fail:
         dims1['time'] = np.arange(0, 10, 1) * 3600
     else:
         dims1['time'] = np.arange(0, 10, 1) * 1800 + (24+25)*3600
-    gridW = RectilinearZGrid(dims1['lon'], dims1['lat'], dims1['depth'], dims1['time'])
-    fieldW = Field('W', np.zeros(data1['U'].shape), grid=gridW)
     if fail:
-        fieldW.grid.time_origin = np.datetime64('2018-04-22')
+        Wtime_origin = TimeConverter(np.datetime64('2018-04-22'))
     else:
-        fieldW.grid.time_origin = np.datetime64('2018-04-18')
+        Wtime_origin = TimeConverter(np.datetime64('2018-04-18'))
+    gridW = RectilinearZGrid(dims1['lon'], dims1['lat'], dims1['depth'], dims1['time'], time_origin=Wtime_origin)
+    fieldW = Field('W', np.zeros(data1['U'].shape), grid=gridW)
     fieldset_out.add_field(fieldW)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
-                                 time=[datetime.datetime(2018, 4, 20, 1)])
-    pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
+                                 time=[datetime.datetime(2018, 4, 20, 0)])
+    pset.execute(AdvectionRK4_3D, runtime=delta(hours=3), dt=delta(hours=1))
 
 
 @pytest.mark.parametrize('zdim', [2, 8])

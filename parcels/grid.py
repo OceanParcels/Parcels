@@ -1,9 +1,8 @@
 from parcels.tools.loggers import logger
+from parcels.tools.converters import TimeConverter
 import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
-import datetime
-import cftime
 
 __all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
 
@@ -40,11 +39,8 @@ class Grid(object):
             assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
-        self.time_origin = time_origin
-        if self.time_origin:
-            if isinstance(self.time_origin, datetime.datetime):
-                self.time_origin = np.datetime64(self.time_origin)
-            assert isinstance(self.time_origin, (np.datetime64, cftime._cftime.DatetimeNoLeap)), 'If defined, time_origin must be a datetime.datetime or a np.datetime64'
+        self.time_origin = TimeConverter() if time_origin is None else time_origin
+        assert isinstance(self.time_origin, TimeConverter), 'time_origin needs to be a TimeConverter object'
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes = {}
