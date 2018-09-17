@@ -334,6 +334,11 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath)
+
+    # testing for combination of deferred-loaded and numpy Fields
+    fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
+
+    # testing for scaling factors
     fieldset.U.set_scaling_factor(scale_fac)
 
     dFdx, dFdy = fieldset.V.gradient()

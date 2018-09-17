@@ -1,6 +1,7 @@
 from parcels.field import Field, VectorField
 from parcels.grid import CurvilinearGrid, GridCode
 from parcels.tools.loggers import logger
+from parcels.tools.error import TimeExtrapolationError
 import numpy as np
 from datetime import timedelta as delta
 from datetime import datetime
@@ -130,6 +131,8 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=True,
             fld.fieldset.computeTimeChunk(show_time, 1)
         (idx, periods) = fld.time_index(show_time)
         show_time -= periods * (fld.grid.time[-1] - fld.grid.time[0])
+        if show_time > fld.grid.time[-1] or show_time < fld.grid.time[0]:
+            raise TimeExtrapolationError(show_time, field=fld, msg='show_time')
 
         latN, latS, lonE, lonW = parsedomain(domain, fld)
         if isinstance(fld.grid, CurvilinearGrid):

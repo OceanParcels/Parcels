@@ -352,7 +352,10 @@ class ParticleSet(object):
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
-            pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
+            try:
+                pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
+            except:  # for old versions of progressbar
+                pbar = progressbar.ProgressBar(maxvalue=abs(endtime - _starttime)).start()
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds

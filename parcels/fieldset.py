@@ -405,7 +405,7 @@ class FieldSet(object):
 
         # load in new data
         for f in self.fields:
-            if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient:
+            if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
