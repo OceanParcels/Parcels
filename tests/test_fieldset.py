@@ -319,8 +319,8 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
-                                 time=[datetime.datetime(2018, 4, 20, 0)])
-    pset.execute(AdvectionRK4_3D, runtime=delta(hours=3), dt=delta(hours=1))
+                                 time=[datetime.datetime(2018, 4, 20, 1)])
+    pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
 
 
 @pytest.mark.parametrize('zdim', [2, 8])

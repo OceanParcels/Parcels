@@ -40,7 +40,10 @@ class TimeConverter(object):
     def fulltime(self, time):
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar == 'standard':
-            return self.time_origin + np.timedelta64(int(time), 's')
+            if isinstance(time, (list, np.ndarray)):
+                return [self.time_origin + np.timedelta64(int(t), 's') for t in time]
+            else:
+                return self.time_origin + np.timedelta64(int(time), 's')
         elif self.calendar == 'NOLEAP':
             return self.time_origin + delta(seconds=time)
         elif self.calendar is None:

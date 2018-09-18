@@ -70,7 +70,6 @@ class Field(object):
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
-        self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
         if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
