@@ -10,11 +10,14 @@ __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
 
 
 class TimeConverter(object):
-    """ Intrerface class for converting of TimeOrigins that performs no conversion
+    """ Converter class for dates with different calendars in FieldSets
+
+    :param: time_origin: time origin of the class. Currently supported formats are
+            float, integer, numpy.datetime64, and netcdftime.DatetimeNoLeap
     """
 
     def __init__(self, time_origin=0):
-        self.time_origin = time_origin
+        self.time_origin = 0 if time_origin is None else time_origin
         if isinstance(time_origin, np.datetime64):
             self.calendar = "standard"
         elif isinstance(time_origin, (cftime._cftime.DatetimeNoLeap,
@@ -24,6 +27,12 @@ class TimeConverter(object):
             self.calendar = None
 
     def reltime(self, time):
+        """Method to compute the difference, in seconds, between a time and the time_origin
+        of the TimeConverter
+
+        :param: time: input time
+        :return: time - self.time_origin
+        """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar == 'standard':
             return (time - self.time_origin) / np.timedelta64(1, 's')
@@ -38,6 +47,11 @@ class TimeConverter(object):
             raise RuntimeError('Calendar %s not implemented in TimeConverter' % (self.calendar))
 
     def fulltime(self, time):
+        """Method to convert a time difference in seconds to a date, based on the time_origin
+
+        :param: time: input time
+        :return: self.time_origin + time
+        """
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar == 'standard':
             if isinstance(time, (list, np.ndarray)):

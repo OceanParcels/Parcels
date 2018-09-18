@@ -45,7 +45,7 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis (only if grid is None)
+    :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)

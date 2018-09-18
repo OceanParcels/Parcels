@@ -211,7 +211,7 @@ class RectilinearZGrid(RectilinearGrid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
            The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -248,7 +248,7 @@ class RectilinearSGrid(RectilinearGrid):
            the number of the layer and the time is depth is a 4D array.
            depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -340,7 +340,7 @@ class CurvilinearZGrid(CurvilinearGrid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
            The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -376,7 +376,7 @@ class CurvilinearSGrid(CurvilinearGrid):
            the number of the layer and the time is depth is a 4D array.
            depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
