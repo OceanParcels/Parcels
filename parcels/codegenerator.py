@@ -201,7 +201,12 @@ class IntrinsicTransformer(ast.NodeTransformer):
         if isinstance(node.value, IntrinsicNode):
             return getattr(node.value, node.attr)
         else:
-            raise NotImplementedError("Cannot propagate attribute access to C-code")
+            if node.value.id in ['np', 'numpy']:
+                raise NotImplementedError("Cannot convert numpy functions in kernels to C-code.\n"
+                                          "Either use functions from the math library or run Parcels in Scipy mode.\n"
+                                          "For more information, see http://oceanparcels.org/faq.html#kernelwriting")
+            else:
+                raise NotImplementedError("Cannot convert '%s' used in kernel to C-code" % node.value.id)
 
     def visit_Subscript(self, node):
         node.value = self.visit(node.value)
@@ -537,7 +542,9 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.left)
         self.visit(node.op)
         self.visit(node.right)
-        if node.op.ccode == 'pow':  # catching '**' pow statements
+        if isinstance(node.op, ast.BitXor):
+            raise RuntimeError('JIT kernels do not support ^ operator. Please use ** for power operator')
+        elif node.op.ccode == 'pow':  # catching '**' pow statements
             node.ccode = "pow(%s, %s)" % (node.left.ccode, node.right.ccode)
         else:
             node.ccode = "(%s %s %s)" % (node.left.ccode, node.op.ccode, node.right.ccode)
