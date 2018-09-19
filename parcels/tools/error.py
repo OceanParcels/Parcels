@@ -33,12 +33,15 @@ class FieldSamplingError(RuntimeError):
 class TimeExtrapolationError(RuntimeError):
     """Utility error class to propagate erroneous time extrapolation sampling in Scipy mode"""
 
-    def __init__(self, time, field=None):
+    def __init__(self, time, field=None, msg='allow_time_extrapoltion'):
         if field is not None and field.grid.time_origin and time is not None:
             time = field.grid.time_origin + np.timedelta64(int(time), 's')
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
-        message += " Try setting allow_time_extrapolation to True"
+        if msg == 'allow_time_extrapoltion':
+            message += " Try setting allow_time_extrapolation to True"
+        elif msg == 'show_time':
+            message += " Try explicitly providing a 'show_time'"
         super(TimeExtrapolationError, self).__init__(message)
 
 

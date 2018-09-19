@@ -610,10 +610,15 @@ class Field(object):
 
         :rtype: Linearly interpolated field"""
         t0 = self.grid.time[ti]
-        t1 = self.grid.time[ti+1]
-        f0 = self.data[ti, :]
-        f1 = self.data[ti+1, :]
-        return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+        if time == t0:
+            return self.data[ti, :]
+        elif ti+1 >= len(self.grid.time):
+            raise TimeExtrapolationError(time, field=self, msg='show_time')
+        else:
+            t1 = self.grid.time[ti+1]
+            f0 = self.data[ti, :]
+            f1 = self.data[ti+1, :]
+            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, ti, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
@@ -1203,13 +1208,14 @@ class NetcdfFileBuffer(object):
         try:
             time_da = getattr(self.dataset, self.dimensions['time'])
             if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
-                time = np.array(time_da)
+                time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
             else:
                 if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
                     time_da.attrs['units'] = time_da.attrs['Unit']
                 ds = xr.Dataset({self.dimensions['time']: time_da})
                 ds = xr.decode_cf(ds)
-                time = np.array(getattr(ds, self.dimensions['time']))
+                da = getattr(ds, self.dimensions['time'])
+                time = np.array([da]) if len(da.shape) == 0 else np.array(da)
             if isinstance(time[0], datetime.datetime):
                 raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
             return time
