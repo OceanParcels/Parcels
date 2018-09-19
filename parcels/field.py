@@ -610,10 +610,15 @@ class Field(object):
 
         :rtype: Linearly interpolated field"""
         t0 = self.grid.time[ti]
-        t1 = self.grid.time[ti+1]
-        f0 = self.data[ti, :]
-        f1 = self.data[ti+1, :]
-        return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
+        if time == t0:
+            return self.data[ti, :]
+        elif ti+1 >= len(self.grid.time):
+            raise TimeExtrapolationError(time, field=self, msg='show_time')
+        else:
+            t1 = self.grid.time[ti+1]
+            f0 = self.data[ti, :]
+            f1 = self.data[ti+1, :]
+            return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
     def spatial_interpolation(self, ti, z, y, x, time):
         """Interpolate horizontal field values using a SciPy interpolator"""
