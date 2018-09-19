@@ -543,7 +543,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.op)
         self.visit(node.right)
         if isinstance(node.op, ast.BitXor):
-            raise RuntimeError('JIT kernels do not support ^ operator. Please use ** for power operator')
+            raise RuntimeError("JIT kernels do not support the '^' operator.\n"
+                               "Did you intend to use the exponential/power operator? In that case, please use '**'")
         elif node.op.ccode == 'pow':  # catching '**' pow statements
             node.ccode = "pow(%s, %s)" % (node.left.ccode, node.right.ccode)
         else:
