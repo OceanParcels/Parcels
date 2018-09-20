@@ -155,11 +155,14 @@ class Field(object):
         indices = {} if indices is None else indices.copy()
         with NetcdfFileBuffer(dimension_filename, dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
-            depth = filebuffer.read_depth
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
             if 'parcels_mesh' in filebuffer.dataset.attrs:
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
+
+        dimension_filename = filenames[0]
+        with NetcdfFileBuffer(dimension_filename, dimensions, indices) as filebuffer:
+            depth = filebuffer.read_depth
 
         if len(filenames) > 1 and 'time' not in dimensions:
             raise RuntimeError('Multiple files given but no time dimension specified')
