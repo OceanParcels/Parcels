@@ -1117,12 +1117,12 @@ class NetcdfFileBuffer(object):
 
     def __enter__(self):
         try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True)
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine='scipy')
             self.dataset['decoded'] = True
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False)
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine='scipy')
             self.dataset['decoded'] = False
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
@@ -1208,7 +1208,7 @@ class NetcdfFileBuffer(object):
     @property
     def time(self):
         try:
-            time_da = getattr(self.dataset, self.dimensions['time'])
+            time_da =self.dataset[self.dimensions['time']]
             if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
                 time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
             else:
