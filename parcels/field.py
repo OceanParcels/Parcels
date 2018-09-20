@@ -1120,6 +1120,8 @@ class NetcdfFileBuffer(object):
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True)
             self.dataset['decoded'] = True
         except:
+            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
+                                % (self.filename, xr.__version__))
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=False)
             self.dataset['decoded'] = False
         for inds in self.indices.values():
