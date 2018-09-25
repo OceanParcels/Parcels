@@ -50,6 +50,8 @@ class Field(object):
            (i.e. beyond the last available time snapshot)
     :param time_periodic: boolean whether to loop periodically over the time component of the Field
            This flag overrides the allow_time_interpolation and sets it to False
+    :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
+           but in cases where this doesn't work, setting netcdf_engine='scipy' could help
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
@@ -118,6 +120,7 @@ class Field(object):
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
+        self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
 
     @classmethod
@@ -153,7 +156,8 @@ class Field(object):
             filenames = [filenames]
         dimension_filename = dimension_filename if dimension_filename else filenames[0]
         indices = {} if indices is None else indices.copy()
-        with NetcdfFileBuffer(dimension_filename, dimensions, indices) as filebuffer:
+        netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        with NetcdfFileBuffer(dimension_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             depth = filebuffer.read_depth
             indices = filebuffer.indices
@@ -170,7 +174,7 @@ class Field(object):
             timeslices = []
             dataFiles = []
             for fname in filenames:
-                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
                     dataFiles.append([fname] * len(ftime))
@@ -198,6 +202,7 @@ class Field(object):
                     grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
+            kwargs['netcdf_engine'] = netcdf_engine
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
@@ -207,7 +212,7 @@ class Field(object):
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, filenames):
-                with NetcdfFileBuffer(fname, dimensions, indices) as filebuffer:
+                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(dimensions, variable)
@@ -834,7 +839,7 @@ class Field(object):
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine) as filebuffer:
             filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             time_data = filebuffer.time
             if isinstance(time_data[0], np.datetime64):
@@ -1109,20 +1114,21 @@ class SummedVectorField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
-    def __init__(self, filename, dimensions, indices):
+    def __init__(self, filename, dimensions, indices, netcdf_engine):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keyes for file data
         self.indices = indices
         self.dataset = None
+        self.netcdf_engine = netcdf_engine
 
     def __enter__(self):
         try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine='scipy')
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine='scipy')
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
             self.dataset['decoded'] = False
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
@@ -1208,7 +1214,7 @@ class NetcdfFileBuffer(object):
     @property
     def time(self):
         try:
-            time_da =self.dataset[self.dimensions['time']]
+            time_da = self.dataset[self.dimensions['time']]
             if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
                 time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
             else:
