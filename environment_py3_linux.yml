@@ -23,6 +23,7 @@ dependencies:
   - six >=1.10.0
   - xarray>=0.5.1
   - netcdftime
+  - cftime
   - pip:
       - pytest>=2.7.0
       - nbval
