@@ -62,7 +62,7 @@ class ParticleSet(object):
         self.time_origin = fieldset.time_origin
         if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        time = [((t - self.time_origin) / np.timedelta64(1, 's')) if isinstance(t, np.datetime64) else t for t in time]
+        time = [self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time]
 
         assert len(lon) == len(time)
 
@@ -285,9 +285,9 @@ class ParticleSet(object):
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
         if isinstance(endtime, np.datetime64):
-            if not self.time_origin:
+            if self.time_origin.calender is None:
                 raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
-            endtime = (endtime - self.time_origin) / np.timedelta64(1, 's')
+            endtime = self.time_origin.reltime(endtime)
         if isinstance(runtime, delta):
             runtime = runtime.total_seconds()
         if isinstance(dt, delta):

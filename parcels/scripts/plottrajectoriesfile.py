@@ -90,7 +90,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         plottimes = np.unique(time)
         if not movie_forward:
             plottimes = np.flip(plottimes, 0)
-        if isinstance(plottimes[0], np.datetime64):
+        if isinstance(plottimes[0], (np.datetime64, np.timedelta64)):
             plottimes = plottimes[~np.isnat(plottimes)]
         else:
             plottimes = plottimes[~np.isnan(plottimes)]
