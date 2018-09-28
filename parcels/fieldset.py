@@ -182,7 +182,8 @@ class FieldSet(object):
             if not isinstance(paths, list):
                 paths = sorted(glob(str(paths)))
             if len(paths) == 0:
-                raise IOError("FieldSet files not found: %s" % str(paths))
+                notfound_paths = filenames[var] if type(filenames) is dict else filenames
+                raise IOError("FieldSet files not found: %s" % str(notfound_paths))
             for fp in paths:
                 if not path.exists(fp):
                     raise IOError("FieldSet file not found: %s" % str(fp))
