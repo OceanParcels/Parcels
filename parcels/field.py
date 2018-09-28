@@ -1,5 +1,6 @@
 from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
+from parcels.tools.converters import TimeConverter
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 from collections import Iterable
 from py import path
@@ -44,7 +45,7 @@ class Field(object):
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis (only if grid is None)
+    :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
@@ -57,6 +58,7 @@ class Field(object):
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
         self.data = data
+        time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
             self.grid = grid
         else:
@@ -68,7 +70,6 @@ class Field(object):
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
-        self.time = self.grid.time
         fieldtype = self.name if fieldtype is None else fieldtype
         if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
@@ -181,15 +182,12 @@ class Field(object):
             timeslices = np.array(timeslices)
             time = np.concatenate(timeslices)
             dataFiles = np.concatenate(np.array(dataFiles))
-            if isinstance(time[0], np.datetime64):
-                time_origin = time[0]
-                time = (time - time_origin) / np.timedelta64(1, 's')
-            else:
-                time_origin = None
-            assert(np.all((time[1:]-time[:-1]) > 0))
-
             if time.size == 1 and time[0] is None:
                 time[0] = 0
+            time_origin = TimeConverter(time[0])
+            time = time_origin.reltime(time)
+            assert(np.all((time[1:]-time[:-1]) > 0))
+
             if len(lon.shape) == 1:
                 if len(depth.shape) == 1:
                     grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
@@ -815,7 +813,7 @@ class Field(object):
         else:
             raise NotImplementedError('Field.write only implemented for RectilinearZGrid and CurvilinearZGrid')
 
-        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin else {}
+        attrs = {'units': 'seconds since ' + str(self.grid.time_origin)} if self.grid.time_origin.calendar else {}
         time_counter = xr.DataArray(self.grid.time,
                                     dims=['time_counter'],
                                     attrs=attrs)
@@ -842,9 +840,7 @@ class Field(object):
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine) as filebuffer:
             filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             time_data = filebuffer.time
-            if isinstance(time_data[0], np.datetime64):
-                assert isinstance(time_data[0], type(g.time_origin)), ('Field %s stores times as dates, but time_origin is not defined ' % self.name)
-                time_data = (time_data - g.time_origin) / np.timedelta64(1, 's')
+            time_data = g.time_origin.reltime(time_data)
             ti = (time_data <= g.time[tindex]).argmin() - 1
             if len(filebuffer.dataset[filebuffer.name].shape) == 2:
                 data[tindex, 0, :, :] = filebuffer.data[:, :]

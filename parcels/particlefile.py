@@ -70,11 +70,11 @@ class ParticleFile(object):
         self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        if self.particleset.time_origin == 0:
+        if self.particleset.time_origin.calendar is None:
             self.time.units = "seconds"
         else:
             self.time.units = "seconds since " + str(self.particleset.time_origin)
-            self.time.calendar = "standard"
+            self.time.calendar = self.particleset.time_origin.calendar
         self.time.axis = "T"
 
         self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)

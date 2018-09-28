@@ -30,7 +30,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         if not particles.time_origin:
             raise NotImplementedError(
                 'If fieldset.time_origin is not a date, showtime cannot be a date in particleset.show()')
-        show_time = (show_time - particles.time_origin) / np.timedelta64(1, 's')
+        show_time = particles.time_origin.reltime(show_time)
     if isinstance(show_time, delta):
         show_time = show_time.total_seconds()
     if np.isnan(show_time):
@@ -255,10 +255,10 @@ def parsedomain(domain, field):
 
 
 def parsetimestr(time_origin, show_time):
-    if not time_origin:
+    if time_origin.calendar is None:
         return ' after ' + str(delta(seconds=show_time)) + ' hours'
     else:
-        date_str = str(time_origin + np.timedelta64(int(show_time), 's'))
+        date_str = str(time_origin.fulltime(show_time))
         return ' on ' + date_str[:10] + ' ' + date_str[11:19]
 
 

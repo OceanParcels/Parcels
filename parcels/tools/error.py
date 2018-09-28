@@ -1,6 +1,5 @@
 """Collection of pre-built recovery kernels"""
 from enum import IntEnum
-import numpy as np
 
 
 __all__ = ['ErrorCode', 'FieldSamplingError', 'TimeExtrapolationError',
@@ -35,7 +34,7 @@ class TimeExtrapolationError(RuntimeError):
 
     def __init__(self, time, field=None, msg='allow_time_extrapoltion'):
         if field is not None and field.grid.time_origin and time is not None:
-            time = field.grid.time_origin + np.timedelta64(int(time), 's')
+            time = field.grid.time_origin.fulltime(time)
         message = "%s sampled outside time domain at time %s." % (
             field.name if field else "Field", time)
         if msg == 'allow_time_extrapoltion':
@@ -60,7 +59,7 @@ class KernelError(RuntimeError):
 
 def parse_particletime(time, fieldset):
     if fieldset is not None and fieldset.time_origin:
-        time = fieldset.time_origin + np.timedelta64(int(time), 's')
+        time = fieldset.time_origin.fulltime(time)
     return time
 
 
