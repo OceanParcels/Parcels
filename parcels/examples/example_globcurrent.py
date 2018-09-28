@@ -49,8 +49,8 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
     fieldsetall = set_globcurrent_fieldset(files[0:10], full_load=True)
     psetall = ParticleSet.from_list(fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
     if dt < 0:
-        psetsub[0].time = fieldsetsub.U.time[-1]
-        psetall[0].time = fieldsetall.U.time[-1]
+        psetsub[0].time = fieldsetsub.U.grid.time[-1]
+        psetall[0].time = fieldsetall.U.grid.time[-1]
 
     for i in irange:
         psetsub.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
@@ -108,7 +108,7 @@ def test_globcurrent_variable_fromfield(mode, dt):
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=fieldset.U)
-    time = fieldset.U.time[0] if dt > 0 else fieldset.U.time[-1]
+    time = fieldset.U.grid.time[0] if dt > 0 else fieldset.U.grid.time[-1]
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
