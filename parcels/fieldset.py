@@ -173,6 +173,8 @@ class FieldSet(object):
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
+        :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
+               but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
 
         fields = {}

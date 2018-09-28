@@ -50,8 +50,6 @@ class Field(object):
            (i.e. beyond the last available time snapshot)
     :param time_periodic: boolean whether to loop periodically over the time component of the Field
            This flag overrides the allow_time_interpolation and sets it to False
-    :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
-           but in cases where this doesn't work, setting netcdf_engine='scipy' could help
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
@@ -150,6 +148,8 @@ class Field(object):
                It is advised not to fully load the data, since in that case Parcels deals with
                a better memory management during particle set execution.
                full_load is however sometimes necessary for plotting the fields.
+        :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
+               but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
@@ -202,7 +202,6 @@ class Field(object):
                     grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
-            kwargs['netcdf_engine'] = netcdf_engine
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
@@ -238,6 +237,7 @@ class Field(object):
         kwargs['dimensions'] = dimensions.copy()
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
+        kwargs['netcdf_engine'] = netcdf_engine
 
         return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
@@ -1151,8 +1151,8 @@ class NetcdfFileBuffer(object):
 
     @property
     def read_lonlat(self):
-        lon = getattr(self.dataset, self.dimensions['lon'])
-        lat = getattr(self.dataset, self.dimensions['lat'])
+        lon = self.dataset[self.dimensions['lon']]
+        lat = self.dataset[self.dimensions['lat']]
         xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
         ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
         self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
@@ -1180,7 +1180,7 @@ class NetcdfFileBuffer(object):
     @property
     def read_depth(self):
         if 'depth' in self.dimensions:
-            depth = getattr(self.dataset, self.dimensions['depth'])
+            depth = self.dataset[self.dimensions['depth']]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
             if len(depth.shape) == 1:
@@ -1196,7 +1196,7 @@ class NetcdfFileBuffer(object):
 
     @property
     def data(self):
-        data = getattr(self.dataset, self.name)
+        data = self.dataset[self.name]
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
@@ -1222,7 +1222,7 @@ class NetcdfFileBuffer(object):
                     time_da.attrs['units'] = time_da.attrs['Unit']
                 ds = xr.Dataset({self.dimensions['time']: time_da})
                 ds = xr.decode_cf(ds)
-                da = getattr(ds, self.dimensions['time'])
+                da = ds[self.dimensions['time']]
                 time = np.array([da]) if len(da.shape) == 0 else np.array(da)
             if isinstance(time[0], datetime.datetime):
                 raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
