@@ -267,7 +267,7 @@ class FieldSet(object):
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise StandardError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
+            raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
 
         interp_method = {}
         for v in variables:
