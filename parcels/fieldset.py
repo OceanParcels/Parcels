@@ -178,15 +178,26 @@ class FieldSet(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            paths = filenames[var] if type(filenames) is dict else filenames
-            if not isinstance(paths, list):
-                paths = sorted(glob(str(paths)))
-            if len(paths) == 0:
-                notfound_paths = filenames[var] if type(filenames) is dict else filenames
-                raise IOError("FieldSet files not found: %s" % str(notfound_paths))
-            for fp in paths:
-                if not path.exists(fp):
-                    raise IOError("FieldSet file not found: %s" % str(fp))
+            paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            if type(paths) is not dict:
+                if not isinstance(paths, list):
+                    paths = sorted(glob(str(paths)))
+                if len(paths) == 0:
+                    notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+                    raise IOError("FieldSet files not found: %s" % str(notfound_paths))
+                for fp in paths:
+                    if not path.exists(fp):
+                        raise IOError("FieldSet file not found: %s" % str(fp))
+            else:
+                for dim, p in paths.items():
+                    if not isinstance(p, list):
+                        paths[dim] = sorted(glob(str(p)))
+                    if len(paths[dim]) == 0:
+                        notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+                        raise IOError("FieldSet files not found: %s" % str(notfound_paths))
+                    for fp in paths[dim]:
+                        if not path.exists(fp):
+                            raise IOError("FieldSet file not found: %s" % str(fp))
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
@@ -198,11 +209,18 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                if (type(filenames) is not dict or filenames[procvar] == filenames[var]) \
-                        and procdims == dims and procinds == inds:
-                    grid = fields[procvar].grid
-                    kwargs['dataFiles'] = fields[procvar].dataFiles
-                    break
+                if procdims == dims and procinds == inds:
+                    if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
+                        sameGrid = True
+                    else:
+                        sameGrid = True
+                        for dim in ['lon', 'lat', 'depth']:
+                            if dim in dimensions:
+                                sameGrid *= filenames[procvar][dim] == filenames[var][dim]
+                    if sameGrid:
+                        grid = fields[procvar].grid
+                        kwargs['dataFiles'] = fields[procvar].dataFiles
+                        break
             fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
@@ -247,7 +265,8 @@ class FieldSet(object):
 
         """
 
-        dimension_filename = filenames.pop('mesh_mask') if type(filenames) is dict else filenames
+        if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
+            raise StandardError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
 
         interp_method = {}
         for v in variables:
@@ -257,8 +276,7 @@ class FieldSet(object):
                 interp_method[v] = tracer_interp_method
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               dimension_filename=dimension_filename, **kwargs)
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
