@@ -210,9 +210,10 @@ class FieldSet(object):
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
                 if procdims == dims and procinds == inds:
+                    sameGrid = False
                     if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
                         sameGrid = True
-                    else:
+                    elif type(filenames[procvar]) == dict:
                         sameGrid = True
                         for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
