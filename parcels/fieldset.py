@@ -2,6 +2,7 @@ from parcels.field import Field, VectorField, SummedField, SummedVectorField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.tools.loggers import logger
+from parcels.tools.converters import TimeConverter
 import numpy as np
 from os import path
 from glob import glob
@@ -77,7 +78,7 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = RectilinearZGrid(lon, lat, depth, time, mesh=mesh)
+            grid = RectilinearZGrid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
 
             fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
@@ -124,11 +125,10 @@ class FieldSet(object):
             if len(g.time) == 1:
                 continue
             assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
-            if g.time_origin:
-                g.time = g.time + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
-                if g.defer_load:
-                    g.time_full = g.time_full + (g.time_origin - self.time_origin) / np.timedelta64(1, 's')
-                g.time_origin = self.time_origin
+            g.time = g.time + self.time_origin.reltime(g.time_origin)
+            if g.defer_load:
+                g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
+            g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UV', self.U, self.V))
@@ -182,7 +182,8 @@ class FieldSet(object):
             if not isinstance(paths, list):
                 paths = sorted(glob(str(paths)))
             if len(paths) == 0:
-                raise IOError("FieldSet files not found: %s" % str(paths))
+                notfound_paths = filenames[var] if type(filenames) is dict else filenames
+                raise IOError("FieldSet files not found: %s" % str(notfound_paths))
             for fp in paths:
                 if not path.exists(fp):
                     raise IOError("FieldSet file not found: %s" % str(fp))
