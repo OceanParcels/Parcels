@@ -141,6 +141,18 @@ class FieldSet(object):
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
+    def parse_wildcards(cls, paths, filenames, var):
+        if not isinstance(paths, list):
+            paths = sorted(glob(str(paths)))
+        if len(paths) == 0:
+            notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            raise IOError("FieldSet files not found: %s" % str(notfound_paths))
+        for fp in paths:
+            if not path.exists(fp):
+                raise IOError("FieldSet file not found: %s" % str(fp))
+        return paths
+
+    @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
@@ -148,6 +160,10 @@ class FieldSet(object):
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
                or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}.
+               time values are in filenames[data]
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
@@ -178,15 +194,12 @@ class FieldSet(object):
         fields = {}
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
-            paths = filenames[var] if type(filenames) is dict else filenames
-            if not isinstance(paths, list):
-                paths = sorted(glob(str(paths)))
-            if len(paths) == 0:
-                notfound_paths = filenames[var] if type(filenames) is dict else filenames
-                raise IOError("FieldSet files not found: %s" % str(notfound_paths))
-            for fp in paths:
-                if not path.exists(fp):
-                    raise IOError("FieldSet file not found: %s" % str(fp))
+            paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            if type(paths) is not dict:
+                paths = cls.parse_wildcards(paths, filenames, var)
+            else:
+                for dim, p in paths.items():
+                    paths[dim] = cls.parse_wildcards(p, filenames, var)
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
@@ -198,11 +211,19 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                if (type(filenames) is not dict or filenames[procvar] == filenames[var]) \
-                        and procdims == dims and procinds == inds:
-                    grid = fields[procvar].grid
-                    kwargs['dataFiles'] = fields[procvar].dataFiles
-                    break
+                if procdims == dims and procinds == inds:
+                    sameGrid = False
+                    if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
+                        sameGrid = True
+                    elif type(filenames[procvar]) == dict:
+                        sameGrid = True
+                        for dim in ['lon', 'lat', 'depth']:
+                            if dim in dimensions:
+                                sameGrid *= filenames[procvar][dim] == filenames[var][dim]
+                    if sameGrid:
+                        grid = fields[procvar].grid
+                        kwargs['dataFiles'] = fields[procvar].dataFiles
+                        break
             fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
@@ -215,19 +236,29 @@ class FieldSet(object):
                   allow_time_extrapolation=None, time_periodic=False,
                   tracer_interp_method='linear', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-        Note that this assumes there is a variable mesh_mask that is used for the dimensions
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
-               or be a list of file. At least a 'mesh_mask' needs to be present
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}
+               time values are in filenames[data]
         :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s). Must include a variable 'mesh_mask' that
-               holds the dimensions
+               names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable
-               (e.g. dimensions['U'], dimensions['V'], etc).
+               dimension names are different for each variable.
+               Watch out: NEMO is discretised on a C-grid:
+               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+                __V1__
+               |      |
+               U0     U1
+               |__V0__|
+               To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
+               which are located on the corners of the cells.
+               (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -247,7 +278,8 @@ class FieldSet(object):
 
         """
 
-        dimension_filename = filenames.pop('mesh_mask') if type(filenames) is dict else filenames
+        if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
+            raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
 
         interp_method = {}
         for v in variables:
@@ -257,8 +289,7 @@ class FieldSet(object):
                 interp_method[v] = tracer_interp_method
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               dimension_filename=dimension_filename, **kwargs)
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
