@@ -150,6 +150,9 @@ class Field(object):
                full_load is however sometimes necessary for plotting the fields.
         """
 
+        if not isinstance(filenames, Iterable) or isinstance(filenames, str):
+            filenames = [filenames]
+
         data_filenames = filenames['data'] if type(filenames) is dict else filenames
         if type(filenames) == dict:
             assert len(filenames['lon']) == 1
@@ -163,8 +166,6 @@ class Field(object):
             lonlat_filename = filenames[0]
             depth_filename = filenames[0]
 
-        if not isinstance(data_filenames, Iterable) or isinstance(data_filenames, str):
-            data_filenames = [data_filenames]
         indices = {} if indices is None else indices.copy()
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices) as filebuffer:
             lon, lat = filebuffer.read_lonlat
