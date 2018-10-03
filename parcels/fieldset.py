@@ -162,7 +162,7 @@ class FieldSet(object):
                or be a list of file.
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth not stored in same files as data),
-               a dictionary of dictionaries {var:{dim:[files]}}
+               or a dictionary of dictionaries {var:{dim:[files]}}
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
@@ -241,21 +241,22 @@ class FieldSet(object):
                or be a list of file.
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth not stored in same files as data),
-               a dictionary of dictionaries {var:{dim:[files]}}
+               or a dictionary of dictionaries {var:{dim:[files]}}
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
-               Watch out: NEMO is discretised on a C-grid: U and V are not located
-               U and V velocities are not located on the same grid (see https://www.nemo-ocean.eu/doc/node19.html).
+               Watch out: NEMO is discretised on a C-grid:
+               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
                 __V1__
                |      |
                U0     U1
                |__V0__|
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
+               (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
