@@ -160,6 +160,9 @@ class FieldSet(object):
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
                or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth not stored in same files as data),
+               a dictionary of dictionaries {var:{dim:[files]}}
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
@@ -232,19 +235,27 @@ class FieldSet(object):
                   allow_time_extrapolation=None, time_periodic=False,
                   tracer_interp_method='linear', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-        Note that this assumes there is a variable mesh_mask that is used for the dimensions
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
-               or be a list of file. At least a 'mesh_mask' needs to be present
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth not stored in same files as data),
+               a dictionary of dictionaries {var:{dim:[files]}}
         :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s). Must include a variable 'mesh_mask' that
-               holds the dimensions
+               names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
-               dimension names are different for each variable
-               (e.g. dimensions['U'], dimensions['V'], etc).
+               dimension names are different for each variable.
+               Watch out: NEMO is discretised on a C-grid: U and V are not located
+               U and V velocities are not located on the same grid (see https://www.nemo-ocean.eu/doc/node19.html).
+                __V1__
+               |      |
+               U0     U1
+               |__V0__|
+               To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
+               which are located on the corners of the cells.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
