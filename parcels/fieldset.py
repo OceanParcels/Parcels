@@ -141,6 +141,18 @@ class FieldSet(object):
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
     @classmethod
+    def parse_wildcards(cls, paths, filenames, var):
+        if not isinstance(paths, list):
+            paths = sorted(glob(str(paths)))
+        if len(paths) == 0:
+            notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            raise IOError("FieldSet files not found: %s" % str(notfound_paths))
+        for fp in paths:
+            if not path.exists(fp):
+                raise IOError("FieldSet file not found: %s" % str(fp))
+        return paths
+
+    @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
@@ -180,24 +192,10 @@ class FieldSet(object):
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
             if type(paths) is not dict:
-                if not isinstance(paths, list):
-                    paths = sorted(glob(str(paths)))
-                if len(paths) == 0:
-                    notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
-                    raise IOError("FieldSet files not found: %s" % str(notfound_paths))
-                for fp in paths:
-                    if not path.exists(fp):
-                        raise IOError("FieldSet file not found: %s" % str(fp))
+                paths = cls.parse_wildcards(paths, filenames, var)
             else:
                 for dim, p in paths.items():
-                    if not isinstance(p, list):
-                        paths[dim] = sorted(glob(str(p)))
-                    if len(paths[dim]) == 0:
-                        notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
-                        raise IOError("FieldSet files not found: %s" % str(notfound_paths))
-                    for fp in paths[dim]:
-                        if not path.exists(fp):
-                            raise IOError("FieldSet file not found: %s" % str(fp))
+                    paths[dim] = cls.parse_wildcards(p, filenames, var)
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
