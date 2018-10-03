@@ -100,7 +100,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         else:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k')
         ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
-        frames = np.arange(1, len(plottimes))
+        frames = np.arange(0, len(plottimes))
 
         def animate(t):
             b = time == plottimes[t]
