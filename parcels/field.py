@@ -156,7 +156,8 @@ class Field(object):
         data_filenames = filenames['data'] if type(filenames) is dict else filenames
         if type(filenames) == dict:
             assert len(filenames['lon']) == 1
-            assert filenames['lon'] == filenames['lat']
+            if filenames['lon'] != filenames['lat']:
+                raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
             lonlat_filename = filenames['lon'][0]
             if 'depth' in dimensions:
                 depth_filename = filenames['depth'][0]
