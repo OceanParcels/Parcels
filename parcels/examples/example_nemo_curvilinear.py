@@ -12,9 +12,12 @@ def run_nemo_curvilinear(mode, outfile):
     """Function that shows how to read in curvilinear grids, in this case from NEMO"""
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
-    filenames = {'U': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4',
-                 'V': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4',
-                 'mesh_mask': data_path + 'mesh_mask.nc4'}
+    filenames = {'U': {'lon': data_path + 'mesh_mask.nc4',
+                       'lat': data_path + 'mesh_mask.nc4',
+                       'data': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4'},
+                 'V': {'lon': data_path + 'mesh_mask.nc4',
+                       'lat': data_path + 'mesh_mask.nc4',
+                       'data': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)

@@ -125,11 +125,14 @@ class Field(object):
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', allow_time_extrapolation=None, time_periodic=False,
-                    full_load=False, dimension_filename=None, **kwargs):
+                    full_load=False, **kwargs):
         """Create field from netCDF file
 
         :param filenames: list of filenames to read for the field.
                Note that wildcards ('*') are also allowed
+               filenames can be a list [files]
+               or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
+               time values are in filenames[data]
         :param variable: Name of the field to create. Note that this has to be a string
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
@@ -155,18 +158,41 @@ class Field(object):
 
         if not isinstance(filenames, Iterable) or isinstance(filenames, str):
             filenames = [filenames]
-        dimension_filename = dimension_filename if dimension_filename else filenames[0]
+
+        data_filenames = filenames['data'] if type(filenames) is dict else filenames
+        if type(filenames) == dict:
+            for k in filenames.keys():
+                assert k in ['lon', 'lat', 'depth', 'data'], \
+                    'filename dimension keys must be lon, lat, depth or data'
+            assert len(filenames['lon']) == 1
+            if filenames['lon'] != filenames['lat']:
+                raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
+            lonlat_filename = filenames['lon'][0]
+            if 'depth' in dimensions:
+                depth_filename = filenames['depth'][0]
+                if len(depth_filename) != 1:
+                    raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+        else:
+            lonlat_filename = filenames[0]
+            depth_filename = filenames[0]
+
         indices = {} if indices is None else indices.copy()
         netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
-        with NetcdfFileBuffer(dimension_filename, dimensions, indices, netcdf_engine) as filebuffer:
+        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
-            depth = filebuffer.read_depth
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
             if 'parcels_mesh' in filebuffer.dataset.attrs:
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
-        if len(filenames) > 1 and 'time' not in dimensions:
+        if 'depth' in dimensions:
+            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine) as filebuffer:
+                depth = filebuffer.read_depth
+        else:
+            indices['depth'] = [0]
+            depth = np.zeros(1)
+
+        if len(data_filenames) > 1 and 'time' not in dimensions:
             raise RuntimeError('Multiple files given but no time dimension specified')
 
         if grid is None:
@@ -174,7 +200,7 @@ class Field(object):
             # across multiple files
             timeslices = []
             dataFiles = []
-            for fname in filenames:
+            for fname in data_filenames:
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     ftime = filebuffer.time
                     timeslices.append(ftime)
@@ -208,7 +234,7 @@ class Field(object):
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
-            for tslice, fname in zip(grid.timeslices, filenames):
+            for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
@@ -910,7 +936,6 @@ class VectorField(object):
             assert self.U.grid is self.V.grid
             if W:
                 assert self.W.interp_method == 'cgrid_linear'
-                assert self.U.grid is self.W.grid
 
     def dist(self, lon1, lon2, lat1, lat2, mesh):
         if mesh == 'spherical':
