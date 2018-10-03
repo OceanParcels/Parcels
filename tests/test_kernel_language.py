@@ -146,12 +146,11 @@ def test_if_withfield(fieldset, mode):
 @pytest.mark.parametrize(
     'mode',
     ['scipy',
-     pytest.mark.xfail(
-         (sys.version_info >= (3, 0)) or (sys.platform == 'win32'),
-         reason="py.test FD capturing does not work for jit on python3 or Win"
-     )(
-         'jit'
-     )])
+     pytest.param('jit',
+                  marks=pytest.mark.xfail(
+                      (sys.version_info >= (3, 0)) or (sys.platform == 'win32'),
+                      reason="py.test FD capturing does not work for jit on python3 or Win"))
+     ])
 def test_print(fieldset, mode, capfd):
     """Test print statements"""
     class TestParticle(ptype[mode]):

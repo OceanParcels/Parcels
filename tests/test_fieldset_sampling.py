@@ -118,7 +118,7 @@ def test_variable_init_from_field(mode, npart=9):
             'P': np.zeros(dims, dtype=np.float32)}
     data['P'][0, 0] = 1.
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
-    xv, yv = np.meshgrid(np.linspace(0, 1, np.sqrt(npart)), np.linspace(0, 1, np.sqrt(npart)))
+    xv, yv = np.meshgrid(np.linspace(0, 1, int(np.sqrt(npart))), np.linspace(0, 1, int(np.sqrt(npart))))
 
     class VarParticle(pclass(mode)):
         a = Variable('a', dtype=np.float32, initial=fieldset.P)
@@ -161,7 +161,7 @@ def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
     data['P'][0, 1] = 1.
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
     fieldset.P.interp_method = 'nearest'
-    xv, yv = np.meshgrid(np.linspace(0., 1.0, np.sqrt(npart)), np.linspace(0., 1.0, np.sqrt(npart)))
+    xv, yv = np.meshgrid(np.linspace(0., 1.0, int(np.sqrt(npart))), np.linspace(0., 1.0, int(np.sqrt(npart))))
     pset = ParticleSet(fieldset, pclass=pclass(mode),
                        lon=xv.flatten(), lat=yv.flatten())
     pset.execute(k_sample_p, endtime=1, dt=1)
@@ -181,7 +181,7 @@ def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
     data['P'][0, 1, 1] = 1.
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
     fieldset.P.interp_method = 'nearest'
-    xv, yv = np.meshgrid(np.linspace(0, 1.0, np.sqrt(npart)), np.linspace(0, 1.0, np.sqrt(npart)))
+    xv, yv = np.meshgrid(np.linspace(0, 1.0, int(np.sqrt(npart))), np.linspace(0, 1.0, int(np.sqrt(npart))))
     # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.zeros(npart))
     pset2 = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.ones(npart))

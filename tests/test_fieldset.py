@@ -296,7 +296,7 @@ def test_periodic(mode, time_periodic, dt_sign):
     assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)
 
 
-@pytest.mark.parametrize('fail', [False, pytest.mark.xfail(strict=True)(True)])
+@pytest.mark.parametrize('fail', [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])
 def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(10, 10, 1, 10)

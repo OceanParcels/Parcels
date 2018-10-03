@@ -336,9 +336,12 @@ def test_curvilinear_grids(mode):
 def test_nemo_grid(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
-    filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
-                 'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
-                 'mesh_mask': data_path + 'mask_nemo_cross_180lon.nc'}
+    filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
@@ -367,9 +370,12 @@ def test_nemo_grid(mode):
 def test_advect_nemo(mode):
     data_path = path.join(path.dirname(__file__), 'test_data/')
 
-    filenames = {'U': data_path + 'Uu_eastward_nemo_cross_180lon.nc',
-                 'V': data_path + 'Vv_eastward_nemo_cross_180lon.nc',
-                 'mesh_mask': data_path + 'mask_nemo_cross_180lon.nc'}
+    filenames = {'U': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'V': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                       'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                       'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     field_set = FieldSet.from_nemo(filenames, variables, dimensions)
