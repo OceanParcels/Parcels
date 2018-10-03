@@ -130,7 +130,8 @@ class Field(object):
         :param filenames: list of filenames to read for the field.
                Note that wildcards ('*') are also allowed
                filenames can be a list [files]
-               or a dictionary {dim:[files]} (if lon, lat, depth not stored in same files as data),
+               or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
+               time values in filenames[data]
         :param variable: Name of the field to create. Note that this has to be a string
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
@@ -157,6 +158,9 @@ class Field(object):
 
         data_filenames = filenames['data'] if type(filenames) is dict else filenames
         if type(filenames) == dict:
+            for k in filenames.keys():
+                assert k in ['lon', 'lat', 'depth', 'data'], \
+                    'filename dimension keys must be lon, lat, depth or data'
             assert len(filenames['lon']) == 1
             if filenames['lon'] != filenames['lat']:
                 raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
