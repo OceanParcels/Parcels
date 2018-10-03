@@ -163,7 +163,7 @@ class FieldSet(object):
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
                or a dictionary of dictionaries {var:{dim:[files]}}.
-               time values in filenames[data]
+               time values are in filenames[data]
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,
@@ -243,7 +243,7 @@ class FieldSet(object):
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
                or a dictionary of dictionaries {var:{dim:[files]}}
-               time values in filenames[data]
+               time values are in filenames[data]
         :param variables: Dictionary mapping variables to variable
                names in the netCDF file(s).
         :param dimensions: Dictionary mapping data dimensions (lon,

@@ -131,7 +131,7 @@ class Field(object):
                Note that wildcards ('*') are also allowed
                filenames can be a list [files]
                or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
-               time values in filenames[data]
+               time values are in filenames[data]
         :param variable: Name of the field to create. Note that this has to be a string
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
