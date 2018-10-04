@@ -3,7 +3,7 @@ import numpy as np
 import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
-from os import path
+from os import path,mkdir
 try:
     from parcels._version import version as parcels_version
 except:
@@ -135,7 +135,7 @@ class ParticleFile(object):
             self.open_dataset()
         setattr(self.dataset, name, message)
 
-    def write(self, pset, time, sync=True, deleted_only=False):
+    def write(self, pset, time, sync=True, deleted_only=False,pickle=True):
         """Write :class:`parcels.particleset.ParticleSet` data to file
 
         :param pset: ParticleSet object to write
@@ -157,15 +157,26 @@ class ParticleFile(object):
                     self.lasttraj += 1
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
-
+                
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
-                        i = p.fileid
-                        self.id[i, self.idx[i]] = p.id
-                        self.time[i, self.idx[i]] = time
-                        self.lat[i, self.idx[i]] = p.lat
-                        self.lon[i, self.idx[i]] = p.lon
-                        self.z[i, self.idx[i]] = p.depth
+                        
+                        # write to pickle routine
+                        if pickle:
+                            pickle_file_path = "out/"+str(p.id)+"/"
+                            
+                            if not path.exists(pickle_file_path):
+                                mkdir(pickle_file_path)
+                            
+                            np.save("out/"+str(p.id)+"/"+str(time),[p.id,time,p.lat,p.lon,p.depth])
+                        
+                        else:
+                            i = p.fileid
+                            self.id[i, self.idx[i]] = p.id
+                            self.time[i, self.idx[i]] = time
+                            self.lat[i, self.idx[i]] = p.lat
+                            self.lon[i, self.idx[i]] = p.lon
+                            self.z[i, self.idx[i]] = p.depth
                         for var in self.user_vars:
                             getattr(self, var)[i, self.idx[i]] = getattr(p, var)
                 for p in first_write:
