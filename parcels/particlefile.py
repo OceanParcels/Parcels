@@ -183,8 +183,9 @@ class ParticleFile(object):
             self.sync()
             
             
-    def write_1pickle(self, pset, time, sync=True, deleted_only=False):
-        """Write :class:`parcels.particleset.ParticleSet` data to file pickle
+    def write_pickle_per_id_tstep(self, pset, time, sync=True, deleted_only=False):
+        """Write :class:`parcels.particleset.ParticleSet` data to file pickles. 
+         Each pickle contains output for one particle/id.
 
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
@@ -228,9 +229,10 @@ class ParticleFile(object):
         if sync:
             self.sync()
             
-            
-    def write_pickle(self, pset, time, sync=True, deleted_only=False):
-        """Write :class:`parcels.particleset.ParticleSet` data to file pickle
+    def write_pickle_per_tstep(self, pset, time, sync=True, deleted_only=False):
+        """Write :class:`parcels.particleset.ParticleSet` data to file pickle. 
+        All data is saved to one pickle. Hence, each time step has a new pickle 
+        file.
 
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
