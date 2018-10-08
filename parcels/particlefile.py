@@ -135,7 +135,7 @@ class ParticleFile(object):
             self.open_dataset()
         setattr(self.dataset, name, message)
 
-    def write(self, pset, time, sync=True, deleted_only=False,pickle=True):
+    def write(self, pset, time, sync=True, deleted_only=False):
         """Write :class:`parcels.particleset.ParticleSet` data to file
 
         :param pset: ParticleSet object to write
@@ -160,25 +160,15 @@ class ParticleFile(object):
                 
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
-                        
-                        # write to pickle routine
-                        if pickle:
-                            pickle_file_path = "out/"+str(p.id)+"/"
-                            
-                            if not path.exists(pickle_file_path):
-                                mkdir(pickle_file_path)
-                            
-                            np.save("out/"+str(p.id)+"/"+str(time),[p.id,time,p.lat,p.lon,p.depth])
-                        
-                        else:
-                            i = p.fileid
-                            self.id[i, self.idx[i]] = p.id
-                            self.time[i, self.idx[i]] = time
-                            self.lat[i, self.idx[i]] = p.lat
-                            self.lon[i, self.idx[i]] = p.lon
-                            self.z[i, self.idx[i]] = p.depth
+                        i = p.fileid
+                        self.id[i, self.idx[i]] = p.id
+                        self.time[i, self.idx[i]] = time
+                        self.lat[i, self.idx[i]] = p.lat
+                        self.lon[i, self.idx[i]] = p.lon
+                        self.z[i, self.idx[i]] = p.depth
                         for var in self.user_vars:
                             getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
@@ -191,3 +181,120 @@ class ParticleFile(object):
 
         if sync:
             self.sync()
+            
+            
+    def write_1pickle(self, pset, time, sync=True, deleted_only=False):
+        """Write :class:`parcels.particleset.ParticleSet` data to file pickle
+
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param sync: Optional argument whether to write data to disk immediately. Default is True
+
+        """
+        if self.dataset is None:
+            self.open_dataset()
+        if isinstance(time, delta):
+            time = time.total_seconds()
+        if self.lasttime_written != time and \
+           (self.write_ondelete is False or deleted_only is True):
+            if pset.size > 0:
+
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and p.dt*p.time <= p.dt*time]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                for p in first_write:
+                    p.fileid = self.lasttraj
+                    self.lasttraj += 1
+
+                self.idx = np.append(self.idx, np.zeros(len(first_write)))
+# =============================================================================
+#               BEGIN EDITING  
+# =============================================================================
+                for p in pset:
+                    if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
+                        
+                        # write to pickle routine
+                        pickle_file_path = "out/"+str(p.id)+"/"
+                        if not path.exists(pickle_file_path):
+                            mkdir(pickle_file_path)
+                        np.save("out/"+str(p.id)+"/"+str(time),[p.id,time,p.lat,p.lon,p.depth])
+# =============================================================================
+#               END EDITING     
+# =============================================================================
+                
+                for p in first_write:
+                    for var in self.user_vars_once:
+                        getattr(self, var)[p.fileid] = getattr(p, var)
+            else:
+                logger.warning("ParticleSet is empty on writing as array")
+
+            if not deleted_only:
+                self.idx += 1
+                self.lasttime_written = time
+
+        if sync:
+            self.sync()
+            
+            
+    def write_pickle(self, pset, time, sync=True, deleted_only=False):
+        """Write :class:`parcels.particleset.ParticleSet` data to file pickle
+
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param sync: Optional argument whether to write data to disk immediately. Default is True
+
+        """
+        if self.dataset is None:
+            self.open_dataset()
+        if isinstance(time, delta):
+            time = time.total_seconds()
+        if self.lasttime_written != time and \
+           (self.write_ondelete is False or deleted_only is True):
+            if pset.size > 0:
+
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and p.dt*p.time <= p.dt*time]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                for p in first_write:
+                    p.fileid = self.lasttraj
+                    self.lasttraj += 1
+
+                self.idx = np.append(self.idx, np.zeros(len(first_write)))
+# =============================================================================
+#                 BEGIN EDITING
+# =============================================================================
+                # write to pickle routine
+                size = len(pset)
+                
+                # temporary arrays
+                ids_tmp, time_tmp, lat_tmp, lon_tmp, z_tmp = map(lambda x: np.zeros(x), [size,size,size,size,size])
+                
+                i = 0
+                for p in pset:
+                    if p.dt*p.time <= p.dt*time: 
+                        ids_tmp[i] = p.id
+                        time_tmp[i] = time
+                        lat_tmp[i] = p.lat
+                        lon_tmp[i] = p.lon
+                        z_tmp[i]   = p.depth
+                        i +=1
+                
+                pickle_file_path = "out/"
+                
+                if not path.exists(pickle_file_path):
+                    mkdir(pickle_file_path)
+                
+                np.save("out/"+str(time),[ids_tmp,time_tmp,lat_tmp,lon_tmp,z_tmp])
+                
+# =============================================================================
+#                 END EDITING
+# =============================================================================
+                for p in first_write:
+                    for var in self.user_vars_once:
+                        getattr(self, var)[p.fileid] = getattr(p, var)
+            else:
+                logger.warning("ParticleSet is empty on writing as array")
+
+            if not deleted_only:
+                self.idx += 1
+                self.lasttime_written = time
+
+        if sync:
+            self.sync()
+
