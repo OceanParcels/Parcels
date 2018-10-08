@@ -205,9 +205,7 @@ class ParticleFile(object):
                     self.lasttraj += 1
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
-# =============================================================================
-#               BEGIN EDITING  
-# =============================================================================
+
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
                         
@@ -216,9 +214,6 @@ class ParticleFile(object):
                         if not path.exists(pickle_file_path):
                             mkdir(pickle_file_path)
                         np.save("out/"+str(p.id)+"/"+str(time),[p.id,time,p.lat,p.lon,p.depth])
-# =============================================================================
-#               END EDITING     
-# =============================================================================
                 
                 for p in first_write:
                     for var in self.user_vars_once:
@@ -256,9 +251,7 @@ class ParticleFile(object):
                     self.lasttraj += 1
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
-# =============================================================================
-#                 BEGIN EDITING
-# =============================================================================
+
                 # write to pickle routine
                 size = len(pset)
                 
@@ -282,9 +275,6 @@ class ParticleFile(object):
                 
                 np.save("out/"+str(time),[ids_tmp,time_tmp,lat_tmp,lon_tmp,z_tmp])
                 
-# =============================================================================
-#                 END EDITING
-# =============================================================================
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
