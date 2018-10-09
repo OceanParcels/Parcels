@@ -21,15 +21,8 @@ def stommel_fieldset(xdim=200, ydim=200):
     Ph.D. dissertation, University of Bologna
     http://amsdottorato.unibo.it/1733/1/Fabbroni_Nicoletta_Tesi.pdf
     """
-    # Set NEMO fieldset variables
-    depth = np.zeros(1, dtype=np.float32)
-    time = np.linspace(0., 100000. * 86400., 2, dtype=np.float64)
-
-    # Some constants
-    A = 100
-    eps = 0.05
-    a = 10000
-    b = 10000
+    a = 10000 * 1e3
+    b = 10000 * 1e3
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(0, a, xdim, dtype=np.float32)
@@ -37,30 +30,24 @@ def stommel_fieldset(xdim=200, ydim=200):
 
     # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
     # surface height) all on A-grid
-    U = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
-    P = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
+    U = np.zeros((lon.size, lat.size), dtype=np.float32)
+    V = np.zeros((lon.size, lat.size), dtype=np.float32)
+    P = np.zeros((lon.size, lat.size), dtype=np.float32)
 
-    [x, y] = np.mgrid[:lon.size, :lat.size]
-    l1 = (-1 + math.sqrt(1 + 4 * math.pi**2 * eps**2)) / (2 * eps)
-    l2 = (-1 - math.sqrt(1 + 4 * math.pi**2 * eps**2)) / (2 * eps)
-    c1 = (1 - math.exp(l2)) / (math.exp(l2) - math.exp(l1))
-    c2 = -(1 + c1)
-    for t in range(time.size):
-        for i in range(lon.size):
-            for j in range(lat.size):
-                xi = lon[i] / a
-                yi = lat[j] / b
-                P[i, j, t] = A * (c1*math.exp(l1*xi) + c2*math.exp(l2*xi) + 1) * math.sin(math.pi * yi)
-        for i in range(lon.size-2):
-            for j in range(lat.size):
-                V[i+1, j, t] = (P[i+2, j, t] - P[i, j, t]) / (2 * a / (xdim-1))
-        for i in range(lon.size):
-            for j in range(lat.size-2):
-                U[i, j+1, t] = -(P[i, j+2, t] - P[i, j, t]) / (2 * b / (ydim-1))
+    beta = 2e-11
+    r = 1/(11.6*86400)
+    es = r/(beta*a)
+
+    for i in range(lon.size):
+        for j in range(lat.size):
+            xi = lon[i] / a
+            yi = lat[j] / b
+            P[i, j] = (1 - math.exp(-xi/es) - xi) * math.pi * np.sin(math.pi*yi)
+            U[i, j] = -(1 - math.exp(-xi/es) - xi) * math.pi**2 * np.cos(math.pi*yi)
+            V[i, j] = (math.exp(-xi/es)/es - 1) * math.pi * np.sin(math.pi*yi)
 
     data = {'U': U, 'V': V, 'P': P}
-    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
+    dimensions = {'lon': lon, 'lat': lat}
     return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
