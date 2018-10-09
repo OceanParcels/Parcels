@@ -215,6 +215,8 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                                    int ti, double time, double t0, double t1)
 {
+  int xi_old = *xi;
+  int yi_old = *yi;
   int xdim = grid->xdim;
   int ydim = grid->ydim;
   int zdim = grid->zdim;
@@ -298,6 +300,10 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
     it++;
     if ( it > maxIterSearch){
       printf("Correct cell not found for (%f, %f) after %d iterations\n", x, y, maxIterSearch);
+      printf("Debug info: old particle indices: (yi, xi) %d %d\n", yi_old, xi_old);
+      printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
+      printf("            Mesh size:  %d %d\n", ydim, xdim);
+      printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
       return ERROR_OUT_OF_BOUNDS;
     }
   }
