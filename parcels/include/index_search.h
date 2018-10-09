@@ -244,7 +244,8 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
 
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
-  while ( (*xsi < 0) || (*xsi > 1) || (*eta < 0) || (*eta > 1) ){
+  double tol = 0;//1e-12;
+  while ( (*xsi < -tol) || (*xsi > 1+tol) || (*eta < -tol) || (*eta > 1+tol) ){
     double xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
     if (sphere_mesh){ //we are on the sphere
       int i4;
@@ -285,13 +286,13 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
       return ERROR_OUT_OF_BOUNDS;
     if ( (*xsi > 1) && (*eta > 1) && (*xi == xdim-1) && (*yi == ydim-1) )
       return ERROR_OUT_OF_BOUNDS;
-    if (*xsi < 0) 
+    if (*xsi < -tol)
       (*xi)--;
-    if (*xsi > 1)
+    if (*xsi > 1+tol)
       (*xi)++;
-    if (*eta < 0)
+    if (*eta < -tol)
       (*yi)--;
-    if (*eta > 1)
+    if (*eta > 1+tol)
       (*yi)++;
     reconnect_bnd_indices(xi, yi, xdim, ydim, 0, sphere_mesh);
     it++;
@@ -304,6 +305,10 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
       printf("xsi and or eta are nan values\n");
       return ERROR_OUT_OF_BOUNDS;
   }
+  if (*xsi < 0) *xsi = 0;
+  if (*xsi > 1) *xsi = 1;
+  if (*eta < 0) *eta = 0;
+  if (*eta > 1) *eta = 1;
 
   ErrorCode err;
 
