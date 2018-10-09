@@ -302,13 +302,17 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
       printf("Correct cell not found for (%f, %f) after %d iterations\n", x, y, maxIterSearch);
       printf("Debug info: old particle indices: (yi, xi) %d %d\n", yi_old, xi_old);
       printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
-      printf("            Mesh size:  %d %d\n", ydim, xdim);
+      printf("            Mesh 2d shape:  %d %d\n", ydim, xdim);
       printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
       return ERROR_OUT_OF_BOUNDS;
     }
   }
   if ( (*xsi != *xsi) || (*eta != *eta) ){  // check if nan
-      printf("xsi and or eta are nan values\n");
+      printf("Correct cell not found for (%f, %f))\n", x, y);
+      printf("Debug info: old particle indices: (yi, xi) %d %d\n", yi_old, xi_old);
+      printf("            new particle indices: (yi, xi) %d %d\n", *yi, *xi);
+      printf("            Mesh 2d shape:  %d %d\n", ydim, xdim);
+      printf("            Relative particle position:  (xsi, eta) %1.16e %1.16e\n", *xsi, *eta);
       return ERROR_OUT_OF_BOUNDS;
   }
   if (*xsi < 0) *xsi = 0;
