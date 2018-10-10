@@ -4,6 +4,7 @@ from parcels.tools.converters import TimeConverter
 from datetime import timedelta as delta
 import datetime
 import numpy as np
+import xarray as xr
 import math
 import pytest
 from os import path
@@ -365,3 +366,28 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
     assert np.allclose(dFdx.data, 0)
+
+
+def test_fieldset_from_xarray():
+    def generate_dataset(xdim, ydim, zdim=1, tdim=1):
+        lon = np.linspace(0., 10., xdim, dtype=np.float32)
+        lat = np.linspace(0., 10., ydim, dtype=np.float32)
+        depth = np.linspace(0., 20., zdim, dtype=np.float32)
+        time = np.linspace(0., 86400, tdim, dtype=np.float64)
+        U = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+        V = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+        coords = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+        dims = ('time', 'depth', 'lat', 'lon')
+        return xr.Dataset({'U': xr.DataArray(U, coords=coords, dims=dims),
+                           'V': xr.DataArray(V, coords=coords, dims=dims)})
+
+    ds = generate_dataset(3, 3, 2, 10)
+    dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
+    fieldset = FieldSet.from_ds(ds, dimensions)
+
+    pset = ParticleSet(fieldset, JITParticle, 0, 0)
+
+    def DoNothing(particle, fieldset, time, dt):
+        return ErrorCode.Success
+
+    pset.execute(DoNothing, dt=3600)

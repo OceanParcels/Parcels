@@ -155,29 +155,36 @@ class Field(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
-
-        if not isinstance(filenames, Iterable) or isinstance(filenames, str):
-            filenames = [filenames]
-
-        data_filenames = filenames['data'] if type(filenames) is dict else filenames
-        if type(filenames) == dict:
-            for k in filenames.keys():
-                assert k in ['lon', 'lat', 'depth', 'data'], \
-                    'filename dimension keys must be lon, lat, depth or data'
-            assert len(filenames['lon']) == 1
-            if filenames['lon'] != filenames['lat']:
-                raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
-            lonlat_filename = filenames['lon'][0]
-            if 'depth' in dimensions:
-                depth_filename = filenames['depth'][0]
-                if len(depth_filename) != 1:
-                    raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+        if isinstance(variable, xr.core.dataarray.DataArray):
+            lonlat_filename = variable
+            depth_filename = variable
+            data_filenames = variable
+            netcdf_engine = 'xarray'
         else:
-            lonlat_filename = filenames[0]
-            depth_filename = filenames[0]
+            if not isinstance(filenames, Iterable) or isinstance(filenames, str):
+                filenames = [filenames]
 
+            data_filenames = filenames['data'] if type(filenames) is dict else filenames
+            if type(filenames) == dict:
+                for k in filenames.keys():
+                    assert k in ['lon', 'lat', 'depth', 'data'], \
+                        'filename dimension keys must be lon, lat, depth or data'
+                assert len(filenames['lon']) == 1
+                if filenames['lon'] != filenames['lat']:
+                    raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
+                lonlat_filename = filenames['lon'][0]
+                if 'depth' in dimensions:
+                    depth_filename = filenames['depth'][0]
+                    if len(depth_filename) != 1:
+                        raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+            else:
+                lonlat_filename = filenames[0]
+                depth_filename = filenames[0]
+
+            indices = {} if indices is None else indices.copy()
+            netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         indices = {} if indices is None else indices.copy()
-        netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             indices = filebuffer.indices
@@ -198,16 +205,22 @@ class Field(object):
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            timeslices = []
-            dataFiles = []
-            for fname in data_filenames:
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
-                    ftime = filebuffer.time
-                    timeslices.append(ftime)
-                    dataFiles.append([fname] * len(ftime))
-            timeslices = np.array(timeslices)
-            time = np.concatenate(timeslices)
-            dataFiles = np.concatenate(np.array(dataFiles))
+            if netcdf_engine == 'xarray':
+                with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
+                    time = filebuffer.time
+                    timeslices = time
+                    dataFiles = [data_filenames] * len(time)
+            else:
+                timeslices = []
+                dataFiles = []
+                for fname in data_filenames:
+                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
+                        ftime = filebuffer.time
+                        timeslices.append(ftime)
+                        dataFiles.append([fname] * len(ftime))
+                timeslices = np.array(timeslices)
+                time = np.concatenate(timeslices)
+                dataFiles = np.concatenate(np.array(dataFiles))
             if time.size == 1 and time[0] is None:
                 time[0] = 0
             time_origin = TimeConverter(time[0])
@@ -263,7 +276,11 @@ class Field(object):
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
 
-        return cls(variable, data, grid=grid,
+        if netcdf_engine == 'xarray':
+            name = variable.name
+        else:
+            name = variable
+        return cls(name, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def reshape(self, data, transpose=False):
@@ -864,19 +881,34 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine) as filebuffer:
-            filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
-            time_data = filebuffer.time
-            time_data = g.time_origin.reltime(time_data)
-            ti = (time_data <= g.time[tindex]).argmin() - 1
-            if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                data[tindex, 0, :, :] = filebuffer.data[:, :]
-            elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                if g.zdim > 1:
-                    data[tindex, :, :, :] = filebuffer.data[:, :, :]
+            if self.netcdf_engine == 'xarray':
+                time_data = filebuffer.time
+                time_data = g.time_origin.reltime(time_data)
+                ti = (time_data <= g.time[tindex]).argmin() - 1
+                dataset = np.array(filebuffer.dataset)
+                if len(dataset.shape) == 2:
+                    data[tindex, 0, :, :] = dataset[:, :]
+                elif len(dataset.shape) == 3:
+                    if g.zdim > 1:
+                        data[tindex, :, :, :] = dataset[:, :, :]
+                    else:
+                        data[tindex, 0, :, :] = dataset[ti, :, :]
                 else:
-                    data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
+                    data[tindex, :, :, :] = dataset[ti, :, :, :]
             else:
-                data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
+                filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
+                time_data = filebuffer.time
+                time_data = g.time_origin.reltime(time_data)
+                ti = (time_data <= g.time[tindex]).argmin() - 1
+                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                    data[tindex, 0, :, :] = filebuffer.data[:, :]
+                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                    if g.zdim > 1:
+                        data[tindex, :, :, :] = filebuffer.data[:, :, :]
+                    else:
+                        data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
+                else:
+                    data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
 
         return data
 
@@ -1137,12 +1169,15 @@ class NetcdfFileBuffer(object):
 
     def __init__(self, filename, dimensions, indices, netcdf_engine):
         self.filename = filename
-        self.dimensions = dimensions  # Dict with dimension keyes for file data
+        self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
         self.netcdf_engine = netcdf_engine
 
     def __enter__(self):
+        if self.netcdf_engine == 'xarray':
+            self.dataset = self.filename
+            return self
         try:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
@@ -1157,7 +1192,10 @@ class NetcdfFileBuffer(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.dataset.close()
+        if self.netcdf_engine == 'xarray':
+            pass
+        else:
+            self.dataset.close()
 
     def parse_name(self, dimensions, variable):
         name = dimensions['data'] if 'data' in dimensions else variable
@@ -1234,19 +1272,22 @@ class NetcdfFileBuffer(object):
 
     @property
     def time(self):
-        try:
-            time_da = self.dataset[self.dimensions['time']]
-            if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
-                time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
-            else:
-                if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
-                    time_da.attrs['units'] = time_da.attrs['Unit']
-                ds = xr.Dataset({self.dimensions['time']: time_da})
-                ds = xr.decode_cf(ds)
-                da = ds[self.dimensions['time']]
-                time = np.array([da]) if len(da.shape) == 0 else np.array(da)
-            if isinstance(time[0], datetime.datetime):
-                raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
-            return time
-        except:
-            return np.array([None])
+        if self.netcdf_engine == 'xarray':
+            return np.array(self.dataset[self.dimensions['time']])
+        else:
+            try:
+                time_da = self.dataset[self.dimensions['time']]
+                if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
+                    time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
+                else:
+                    if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
+                        time_da.attrs['units'] = time_da.attrs['Unit']
+                    ds = xr.Dataset({self.dimensions['time']: time_da})
+                    ds = xr.decode_cf(ds)
+                    da = ds[self.dimensions['time']]
+                    time = np.array([da]) if len(da.shape) == 0 else np.array(da)
+                if isinstance(time[0], datetime.datetime):
+                    raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
+                return time
+            except:
+                return np.array([None])

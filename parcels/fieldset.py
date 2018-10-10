@@ -331,6 +331,41 @@ class FieldSet(object):
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                time_periodic=time_periodic, full_load=full_load, **kwargs)
 
+    @classmethod
+    def from_ds(cls, ds, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
+                time_periodic=False, full_load=False, **kwargs):
+        """Initialises FieldSet data from xarray DataSets.
+
+        :param ds: xarray dataset
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the xarray DataSet.
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+        :param extra_fields: Extra fields to read beyond U and V
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however sometimes necessary for plotting the fields.
+        """
+
+        fields = {}
+        for name in ds.data_vars:
+            fields[name] = Field.from_netcdf(None, ds[name], dimensions=dimensions, indices=indices, grid=None, mesh=mesh,
+                                             allow_time_extrapolation=allow_time_extrapolation,
+                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
+        return cls(u, v, fields=fields)
+
     @property
     def fields(self):
         """Returns a list of all the :class:`parcels.field.Field` objects
