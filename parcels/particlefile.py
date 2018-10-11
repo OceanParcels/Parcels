@@ -174,7 +174,7 @@ class ParticleFile(object):
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
             else:
-                logger.warning("ParticleSet is empty on writing as array at tiem %g" % time)
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
 
             if not deleted_only:
                 self.idx += 1
