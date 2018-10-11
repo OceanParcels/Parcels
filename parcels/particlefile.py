@@ -158,6 +158,8 @@ class ParticleFile(object):
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
+                if np.isnan(pset[0].dt):
+                    logger.warning("particle dt not defined yet at particle file writing. Writing at time %g will be ignored." % time)
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
                         i = p.fileid
@@ -172,7 +174,7 @@ class ParticleFile(object):
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
             else:
-                logger.warning("ParticleSet is empty on writing as array")
+                logger.warning("ParticleSet is empty on writing as array at tiem %g" % time)
 
             if not deleted_only:
                 self.idx += 1
