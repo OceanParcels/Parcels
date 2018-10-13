@@ -26,3 +26,4 @@ dependencies:
   - pip:
       - pytest>=2.7.0,<3.8.2
       - nbval
+      - jupyter_console<=5.2
