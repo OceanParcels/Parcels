@@ -219,7 +219,7 @@ class FieldSet(object):
                         sameGrid = True
                     elif type(filenames[procvar]) == dict:
                         sameGrid = True
-                        for dim in ['lon', 'lat', 'depth']:
+                        for dim in ['lon', 'lat', 'depth', 'data']:
                             if dim in dimensions:
                                 sameGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if sameGrid:
