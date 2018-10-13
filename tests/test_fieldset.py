@@ -382,8 +382,9 @@ def test_fieldset_from_xarray():
                            'V': xr.DataArray(V, coords=coords, dims=dims)})
 
     ds = generate_dataset(3, 3, 2, 10)
+    variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
-    fieldset = FieldSet.from_ds(ds, dimensions)
+    fieldset = FieldSet.from_ds(ds, variables, dimensions)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 

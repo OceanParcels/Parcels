@@ -332,13 +332,13 @@ class FieldSet(object):
                                time_periodic=time_periodic, full_load=full_load, **kwargs)
 
     @classmethod
-    def from_ds(cls, ds, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
+    def from_ds(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
                 time_periodic=False, full_load=False, **kwargs):
-        """Initialises FieldSet data from xarray DataSets.
+        """Initialises FieldSet data from xarray Datasets.
 
-        :param ds: xarray dataset
+        :param ds: xarray Dataset
         :param dimensions: Dictionary mapping data dimensions (lon,
-               lat, depth, time, data) to dimensions in the xarray DataSet.
+               lat, depth, time, data) to dimensions in the xarray Dataset.
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable
                (e.g. dimensions['U'], dimensions['V'], etc).
@@ -358,7 +358,7 @@ class FieldSet(object):
         """
 
         fields = {}
-        for name in ds.data_vars:
+        for name in variables:
             fields[name] = Field.from_netcdf(None, ds[name], dimensions=dimensions, indices=indices, grid=None, mesh=mesh,
                                              allow_time_extrapolation=allow_time_extrapolation,
                                              time_periodic=time_periodic, full_load=full_load, **kwargs)
