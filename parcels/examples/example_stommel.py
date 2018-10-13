@@ -23,6 +23,7 @@ def stommel_fieldset(xdim=200, ydim=200):
     """
     a = 10000 * 1e3
     b = 10000 * 1e3
+    scalefac = 0.05  # to scale for physically meaningful velocities
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(0, a, xdim, dtype=np.float32)
@@ -42,9 +43,9 @@ def stommel_fieldset(xdim=200, ydim=200):
         for j in range(lat.size):
             xi = lon[i] / a
             yi = lat[j] / b
-            P[i, j] = (1 - math.exp(-xi/es) - xi) * math.pi * np.sin(math.pi*yi)
-            U[i, j] = -(1 - math.exp(-xi/es) - xi) * math.pi**2 * np.cos(math.pi*yi)
-            V[i, j] = (math.exp(-xi/es)/es - 1) * math.pi * np.sin(math.pi*yi)
+            P[i, j] = (1 - math.exp(-xi/es) - xi) * math.pi * np.sin(math.pi*yi)*scalefac
+            U[i, j] = -(1 - math.exp(-xi/es) - xi) * math.pi**2 * np.cos(math.pi*yi)*scalefac
+            V[i, j] = (math.exp(-xi/es)/es - 1) * math.pi * np.sin(math.pi*yi)*scalefac
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
@@ -72,15 +73,15 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
 
     pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
-                                 start=(100, 5000), finish=(200, 5000), time=0)
+                                 start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
         print("Initial particle positions:\n%s" % pset)
 
     # Execute for 30 days, with 1hour timesteps and 12-hourly output
-    runtime = delta(days=30)
+    runtime = delta(days=600)
     dt = delta(hours=1)
-    outputdt = delta(hours=12)
+    outputdt = delta(days=5)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
