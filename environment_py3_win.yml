@@ -23,8 +23,8 @@ dependencies:
   - xarray>=0.5.1
   - netcdftime
   - cftime
+  - ipykernel<5.0
   - pip:
       - pytest>=2.7.0,<3.8.2
       - nbval
       - jupyter_console<=5.2
-      - ipykernel<5.0
