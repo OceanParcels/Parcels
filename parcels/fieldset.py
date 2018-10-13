@@ -358,10 +358,16 @@ class FieldSet(object):
         """
 
         fields = {}
-        for name in variables:
-            fields[name] = Field.from_netcdf(None, ds[name], dimensions=dimensions, indices=indices, grid=None, mesh=mesh,
-                                             allow_time_extrapolation=allow_time_extrapolation,
-                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
+        for var, name in variables.items():
+
+            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
+            dims = dimensions[var] if var in dimensions else dimensions
+            dims['data'] = name
+            inds = indices[var] if (indices and var in indices) else indices
+
+            fields[var] = Field.from_netcdf(None, ds[name], dimensions=dimensions, indices=inds, grid=None, mesh=mesh,
+                                            allow_time_extrapolation=allow_time_extrapolation,
+                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
