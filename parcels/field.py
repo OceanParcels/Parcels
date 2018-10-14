@@ -207,8 +207,8 @@ class Field(object):
             if netcdf_engine == 'xarray':
                 with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
                     time = filebuffer.time
-                    timeslices = [time]
-                    dataFiles = [data_filenames] * len(time)
+                    timeslices = time if isinstance(time, (list, np.ndarray)) else [time]
+                    dataFiles = data_filenames if isinstance(data_filenames, (list, np.ndarray)) else [data_filenames] * len(time)
             else:
                 timeslices = []
                 dataFiles = []
@@ -247,21 +247,24 @@ class Field(object):
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
+                tslice = [tslice]
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine != 'xarray':
                         filebuffer.name = filebuffer.parse_name(dimensions, variable)
+                    else:
+                        filebuffer.ti = range(ti, ti+len(tslice))
 
                     if len(filebuffer.data.shape) == 2:
-                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
+                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     elif len(filebuffer.data.shape) == 3:
                         if len(filebuffer.indices['depth']) > 1:
-                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
+                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                         else:
-                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     else:
-                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
+                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                 ti += len(tslice)
         else:
             grid.defer_load = True
@@ -884,14 +887,14 @@ class Field(object):
             if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             if len(filebuffer.data.shape) == 2:
-                data[tindex, 0, :, :] = filebuffer.data[:, :]
+                data[tindex, 0, :, :] = filebuffer.data
             elif len(filebuffer.data.shape) == 3:
                 if g.zdim > 1:
-                    data[tindex, :, :, :] = filebuffer.data[:, :, :]
+                    data[tindex, :, :, :] = filebuffer.data
                 else:
-                    data[tindex, 0, :, :] = filebuffer.data[:, :]
+                    data[tindex, 0, :, :] = filebuffer.data
             else:
-                data[tindex, :, :, :] = filebuffer.data[:, :, :]
+                data[tindex, :, :, :] = filebuffer.data
 
         return data
 
