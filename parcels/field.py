@@ -277,7 +277,7 @@ class Field(object):
         kwargs['netcdf_engine'] = netcdf_engine
 
         if netcdf_engine == 'xarray':
-            name = variable.name
+            name = kwargs['var_name']
         else:
             name = variable
         return cls(name, data, grid=grid,

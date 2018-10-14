@@ -375,17 +375,17 @@ def test_fieldset_from_xarray(maxlatind):
         lat = np.linspace(0., 12, ydim, dtype=np.float32)
         depth = np.linspace(0., 20., zdim, dtype=np.float32)
         time = np.linspace(0., 10, tdim, dtype=np.float64)
-        U = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-        V = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
-        for t in range(U.shape[0]):
-            U[t, :, :, :] = t/10.
+        Uxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+        Vxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+        for t in range(Uxr.shape[0]):
+            Uxr[t, :, :, :] = t/10.
         coords = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
         dims = ('time', 'depth', 'lat', 'lon')
-        return xr.Dataset({'U': xr.DataArray(U, coords=coords, dims=dims),
-                           'V': xr.DataArray(V, coords=coords, dims=dims)})
+        return xr.Dataset({'Uxr': xr.DataArray(Uxr, coords=coords, dims=dims),
+                           'Vxr': xr.DataArray(Vxr, coords=coords, dims=dims)})
 
     ds = generate_dataset(3, 3, 2, 10)
-    variables = {'U': 'U', 'V': 'V'}
+    variables = {'U': 'Uxr', 'V': 'Vxr'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
     indices = {'lat': range(0, maxlatind)}
     fieldset = FieldSet.from_ds(ds, variables, dimensions, indices, mesh='flat')

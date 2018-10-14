@@ -366,7 +366,7 @@ class FieldSet(object):
             inds = indices[var] if (indices and var in indices) else indices
 
             fields[var] = Field.from_netcdf(None, ds[name], dimensions=dimensions, indices=inds, grid=None, mesh=mesh,
-                                            allow_time_extrapolation=allow_time_extrapolation,
+                                            allow_time_extrapolation=allow_time_extrapolation, var_name=var,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
