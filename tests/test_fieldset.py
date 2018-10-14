@@ -368,7 +368,8 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     assert np.allclose(dFdx.data, 0)
 
 
-def test_fieldset_from_xarray():
+@pytest.mark.parametrize('maxlatind', [3, pytest.param(2, marks=pytest.mark.xfail(strict=True))])
+def test_fieldset_from_xarray(maxlatind):
     def generate_dataset(xdim, ydim, zdim=1, tdim=1):
         lon = np.linspace(0., 12, xdim, dtype=np.float32)
         lat = np.linspace(0., 12, ydim, dtype=np.float32)
@@ -386,7 +387,8 @@ def test_fieldset_from_xarray():
     ds = generate_dataset(3, 3, 2, 10)
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
-    fieldset = FieldSet.from_ds(ds, variables, dimensions, mesh='flat')
+    indices = {'lat': range(0, maxlatind)}
+    fieldset = FieldSet.from_ds(ds, variables, dimensions, indices, mesh='flat')
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 

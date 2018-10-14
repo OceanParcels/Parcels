@@ -881,34 +881,21 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine) as filebuffer:
-            if self.netcdf_engine == 'xarray':
-                time_data = filebuffer.time
-                time_data = g.time_origin.reltime(time_data)
-                ti = (time_data <= g.time[tindex]).argmin() - 1
-                dataset = np.array(filebuffer.dataset)
-                if len(dataset.shape) == 2:
-                    data[tindex, 0, :, :] = dataset[:, :]
-                elif len(dataset.shape) == 3:
-                    if g.zdim > 1:
-                        data[tindex, :, :, :] = dataset[:, :, :]
-                    else:
-                        data[tindex, 0, :, :] = dataset[ti, :, :]
-                else:
-                    data[tindex, :, :, :] = dataset[ti, :, :, :]
-            else:
+            time_data = filebuffer.time
+            time_data = g.time_origin.reltime(time_data)
+            filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
+            if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
-                time_data = filebuffer.time
-                time_data = g.time_origin.reltime(time_data)
-                ti = (time_data <= g.time[tindex]).argmin() - 1
-                if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                    data[tindex, 0, :, :] = filebuffer.data[:, :]
-                elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                    if g.zdim > 1:
-                        data[tindex, :, :, :] = filebuffer.data[:, :, :]
-                    else:
-                        data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
+            dataset = filebuffer.data
+            if len(dataset.shape) == 2:
+                data[tindex, 0, :, :] = dataset[:, :]
+            elif len(dataset.shape) == 3:
+                if g.zdim > 1:
+                    data[tindex, :, :, :] = dataset[:, :, :]
                 else:
-                    data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
+                    data[tindex, 0, :, :] = dataset[:, :]
+            else:
+                data[tindex, :, :, :] = dataset[:, :, :]
 
         return data
 
@@ -1173,6 +1160,7 @@ class NetcdfFileBuffer(object):
         self.indices = indices
         self.dataset = None
         self.netcdf_engine = netcdf_engine
+        self.ti = None
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1255,16 +1243,20 @@ class NetcdfFileBuffer(object):
 
     @property
     def data(self):
-        data = self.dataset[self.name]
+        if self.netcdf_engine == 'xarray':
+            data = self.dataset
+        else:
+            data = self.dataset[self.name]
+        ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
             if len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
-                data = data[:, self.indices['lat'], self.indices['lon']]
+                data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
-            data = data[:, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+            data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
