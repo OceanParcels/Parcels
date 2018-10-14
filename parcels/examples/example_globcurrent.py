@@ -40,12 +40,9 @@ def test_globcurrent_fieldset(from_ds):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt, substart, subend, lonstart, latstart, irange', [
-    (3600., 0, 3, 25, -35, range(3, 9, 1)),
-    (-3600., 8, 10, 20, -39, range(7, 2, -1))
-])
+@pytest.mark.parametrize('dt, lonstart, latstart', [(3600., 25, -35), (-3600., 20, -39)])
 @pytest.mark.parametrize('from_ds', [True, False])
-def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, latstart, irange, from_ds):
+def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, from_ds):
     basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                          '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     files = sorted(glob(str(basepath)))
@@ -59,9 +56,8 @@ def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, 
         psetsub[0].time = fieldsetsub.U.grid.time[-1]
         psetall[0].time = fieldsetall.U.grid.time[-1]
 
-    for i in irange:
-        psetsub.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
-        psetall.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+    psetsub.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
+    psetall.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
 
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
 
