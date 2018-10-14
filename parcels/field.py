@@ -207,7 +207,7 @@ class Field(object):
             if netcdf_engine == 'xarray':
                 with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
                     time = filebuffer.time
-                    timeslices = time
+                    timeslices = [time]
                     dataFiles = [data_filenames] * len(time)
             else:
                 timeslices = []
@@ -250,11 +250,12 @@ class Field(object):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = filebuffer.parse_name(dimensions, variable)
+                    if netcdf_engine != 'xarray':
+                        filebuffer.name = filebuffer.parse_name(dimensions, variable)
 
-                    if len(filebuffer.dataset[filebuffer.name].shape) == 2:
+                    if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
-                    elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+                    elif len(filebuffer.data.shape) == 3:
                         if len(filebuffer.indices['depth']) > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
                         else:
