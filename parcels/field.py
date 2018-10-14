@@ -180,9 +180,8 @@ class Field(object):
             else:
                 lonlat_filename = filenames[0]
                 depth_filename = filenames[0]
-
-            indices = {} if indices is None else indices.copy()
             netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+
         indices = {} if indices is None else indices.copy()
 
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
@@ -276,11 +275,8 @@ class Field(object):
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
 
-        if netcdf_engine == 'xarray':
-            name = kwargs['var_name']
-        else:
-            name = variable
-        return cls(name, data, grid=grid,
+        variable = kwargs['var_name'] if netcdf_engine == 'xarray' else variable
+        return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def reshape(self, data, transpose=False):
@@ -886,16 +882,15 @@ class Field(object):
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
             if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
-            dataset = filebuffer.data
-            if len(dataset.shape) == 2:
-                data[tindex, 0, :, :] = dataset[:, :]
-            elif len(dataset.shape) == 3:
+            if len(filebuffer.data.shape) == 2:
+                data[tindex, 0, :, :] = filebuffer.data[:, :]
+            elif len(filebuffer.data.shape) == 3:
                 if g.zdim > 1:
-                    data[tindex, :, :, :] = dataset[:, :, :]
+                    data[tindex, :, :, :] = filebuffer.data[:, :, :]
                 else:
-                    data[tindex, 0, :, :] = dataset[:, :]
+                    data[tindex, 0, :, :] = filebuffer.data[:, :]
             else:
-                data[tindex, :, :, :] = dataset[:, :, :]
+                data[tindex, :, :, :] = filebuffer.data[:, :, :]
 
         return data
 
