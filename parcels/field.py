@@ -1193,7 +1193,7 @@ class NetcdfFileBuffer(object):
         if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
             xdim = lon_subset.shape[0]
             ydim = lat_subset.shape[1]
-            if np.allclose(lon_subset[0, :], lon_subset[int(xdim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(ydim/2)]):
+            if np.allclose(lon_subset[0, :], lon_subset[xdim-1, :]) and np.allclose(lat_subset[:, 0], lat_subset[:, ydim-1]):
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
