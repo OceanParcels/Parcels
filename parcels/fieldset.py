@@ -332,8 +332,8 @@ class FieldSet(object):
                                time_periodic=time_periodic, full_load=full_load, **kwargs)
 
     @classmethod
-    def from_ds(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
-                time_periodic=False, full_load=False, **kwargs):
+    def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
+                            time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
         :param ds: xarray Dataset
@@ -345,7 +345,12 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
-        :param extra_fields: Extra fields to read beyond U and V
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True

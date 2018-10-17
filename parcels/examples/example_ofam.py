@@ -8,30 +8,30 @@ from os import path
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_ofam_fieldset(full_load=False, from_ds=False):
+def set_ofam_fieldset(full_load=False, use_xarray=False):
     filenames = {'U': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_U.nc'),
                  'V': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_V.nc')}
     variables = {'U': 'u', 'V': 'v'}
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}
-    if from_ds:
+    if use_xarray:
         ds = xr.open_mfdataset([filenames['U'], filenames['V']])
-        return FieldSet.from_ds(ds, variables, dimensions, allow_time_extrapolation=True, full_load=full_load)
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, allow_time_extrapolation=True, full_load=full_load)
     else:
         return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, full_load=full_load)
 
 
-@pytest.mark.parametrize('from_ds', [True, False])
-def test_ofam_fieldset_fillvalues(from_ds):
-    fieldset = set_ofam_fieldset(full_load=True, from_ds=from_ds)
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_ofam_fieldset_fillvalues(use_xarray):
+    fieldset = set_ofam_fieldset(full_load=True, use_xarray=use_xarray)
     # V.data[0, 0, 150] is a landpoint, that makes NetCDF4 generate a masked array, instead of an ndarray
     assert(fieldset.V.data[0, 0, 150] == 0)
 
 
-@pytest.mark.parametrize('from_ds', [True, False])
+@pytest.mark.parametrize('use_xarray', [True, False])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_ofam_particles(mode, from_ds):
-    fieldset = set_ofam_fieldset(from_ds=from_ds)
+def test_ofam_particles(mode, use_xarray):
+    fieldset = set_ofam_fieldset(use_xarray=use_xarray)
 
     lonstart = [180]
     latstart = [10]

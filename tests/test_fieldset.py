@@ -388,7 +388,7 @@ def test_fieldset_from_xarray(maxlatind):
     variables = {'U': 'Uxr', 'V': 'Vxr'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
     indices = {'lat': range(0, maxlatind)}
-    fieldset = FieldSet.from_ds(ds, variables, dimensions, indices, mesh='flat')
+    fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, mesh='flat')
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
