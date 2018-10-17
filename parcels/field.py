@@ -247,14 +247,13 @@ class Field(object):
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                tslice = [tslice]
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    if netcdf_engine != 'xarray':
-                        filebuffer.name = filebuffer.parse_name(dimensions, variable)
+                    if netcdf_engine == 'xarray':
+                        tslice = [tslice]
                     else:
-                        filebuffer.ti = range(ti, ti+len(tslice))
+                        filebuffer.name = filebuffer.parse_name(dimensions, variable)
 
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
