@@ -60,12 +60,13 @@ class ParticleFile(object):
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
         self.dataset.parcels_version = parcels_version
         self.dataset.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
-
+        
+        
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i4", coords, chunksizes=self.chunksizes)
+        self.id = self.dataset.createVariable("trajectory", "i4", coords, fill_value=-2147483647, chunksizes=self.chunksizes)
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
-
+        
         # Create time, lat, lon and z variables according to CF conventions:
         self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=self.chunksizes)
         self.time.long_name = ""
