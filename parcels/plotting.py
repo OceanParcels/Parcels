@@ -93,12 +93,13 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         plt.close()
 
 
-def plotfield(field, show_time=None, domain=None, projection=None, land=True,
+def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None, land=True,
               vmin=None, vmax=None, savefile=None, **kwargs):
     """Function to plot a Parcels Field
 
     :param show_time: Time at which to show the Field
     :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
     :param vmin: minimum colour scale (only in single-plot mode)
@@ -144,9 +145,15 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=True,
         if i > 0 and not np.allclose(plotlon[i], plotlon[0]):
             raise RuntimeError('VectorField needs to be on an A-grid for plotting')
         if fld.grid.time.size > 1:
-            data[i] = np.squeeze(fld.temporal_interpolate_fullfield(idx, show_time))[latS:latN, lonW:lonE]
+            if fld.grid.zdim > 1:
+                data[i] = np.squeeze(fld.temporal_interpolate_fullfield(idx, show_time))[depth_level, latS:latN, lonW:lonE]
+            else:
+                data[i] = np.squeeze(fld.temporal_interpolate_fullfield(idx, show_time))[latS:latN, lonW:lonE]
         else:
-            data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
+            if fld.grid.zdim > 1:
+                data[i] = np.squeeze(fld.data)[depth_level, latS:latN, lonW:lonE]
+            else:
+                data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
 
     if plottype is 'vector':
         spd = data[0] ** 2 + data[1] ** 2
@@ -186,10 +193,14 @@ def plotfield(field, show_time=None, domain=None, projection=None, land=True,
 
     timestr = parsetimestr(field[0].grid.time_origin, show_time)
     titlestr = kwargs.pop('titlestr', '')
-    if plottype is 'vector':
-        ax.set_title(titlestr + 'Velocity field' + timestr)
+    if fld.grid.zdim > 1:
+        depthstr = ' at depth %f ' % fld.grid.depth[depth_level]
     else:
-        ax.set_title(titlestr + field[0].name + timestr)
+        depthstr = ''
+    if plottype is 'vector':
+        ax.set_title(titlestr + 'Velocity field' + depthstr + timestr)
+    else:
+        ax.set_title(titlestr + field[0].name + depthstr + timestr)
 
     if not spherical:
         ax.set_xlabel('Zonal distance [m]')
