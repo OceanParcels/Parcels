@@ -1198,7 +1198,7 @@ class NetcdfFileBuffer(object):
                     rectilinear = False
                     break
             if rectilinear:
-                for y in range(1, lat_subset.shape[1]):
+                for yi in range(1, lat_subset.shape[1]):
                     if not np.allclose(lat_subset[:, 0], lat_subset[:, y]):
                         rectilinear = False
                         break
