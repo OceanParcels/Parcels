@@ -895,8 +895,6 @@ class Field(object):
             else:
                 data[tindex, :, :, :] = filebuffer.data
 
-        return data
-
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
             return SummedField([self, field])

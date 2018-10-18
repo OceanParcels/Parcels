@@ -491,7 +491,7 @@ class FieldSet(object):
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    data = f.computeTimeChunk(data, tind)
+                    f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
@@ -501,7 +501,7 @@ class FieldSet(object):
                 else:
                     f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                f.computeTimeChunk(data, f.loaded_time_indices[0])
                 f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
             else:
                 f.loaded_time_indices = []
