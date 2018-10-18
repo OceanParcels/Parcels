@@ -78,16 +78,17 @@ def test_globcurrent_particles(mode, use_xarray):
     assert(abs(pset[0].lat - -35.3) < 1)
 
 
-def test_globcurrent_xarray_vs_netcdf():
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_xarray_vs_netcdf(dt):
     fieldsetNetcdf = set_globcurrent_fieldset(use_xarray=False)
     fieldsetxarray = set_globcurrent_fieldset(use_xarray=True)
     lonstart, latstart, runtime = (25, -35, delta(days=7))
 
     psetN = ParticleSet(fieldsetNetcdf, pclass=JITParticle, lon=lonstart, lat=latstart)
-    psetN.execute(AdvectionRK4, runtime=runtime, dt=delta(minutes=5))
+    psetN.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
     psetX = ParticleSet(fieldsetxarray, pclass=JITParticle, lon=lonstart, lat=latstart)
-    psetX.execute(AdvectionRK4, runtime=runtime, dt=delta(minutes=5))
+    psetX.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
     assert np.allclose(psetN[0].lon, psetX[0].lon)
     assert np.allclose(psetN[0].lat, psetX[0].lat)
