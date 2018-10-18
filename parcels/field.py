@@ -1193,7 +1193,7 @@ class NetcdfFileBuffer(object):
          if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
             rectilinear = True
             # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
-            for x in range(1, lon_subset.shape[0]):
+            for xi in range(1, lon_subset.shape[0]):
                 if not np.allclose(lon_subset[0, :], lon_subset[x, :]):
                     rectilinear = False
                     break
