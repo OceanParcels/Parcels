@@ -1191,9 +1191,18 @@ class NetcdfFileBuffer(object):
             lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
             lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
         if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
-            xdim = lon_subset.shape[0]
-            ydim = lat_subset.shape[1]
-            if np.allclose(lon_subset[0, :], lon_subset[xdim-1, :]) and np.allclose(lat_subset[:, 0], lat_subset[:, ydim-1]):
+            rectilinear = True
+            # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
+            for x in range(1, lon_subset.shape[0]):
+                if not np.allclose(lon_subset[0, :], lon_subset[x, :]):
+                    rectilinear = False
+                    break
+            if rectilinear:
+                for y in range(1, lat_subset.shape[1]):
+                    if not np.allclose(lat_subset[:, 0], lat_subset[:, y]):
+                        rectilinear = False
+                        break
+            if rectilinear:
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
