@@ -151,15 +151,13 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and p.dt*p.time <= p.dt*time]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
-                if np.isnan(pset[0].dt):
-                    logger.warning("particle dt not defined yet at particle file writing. Writing at time %g will be ignored." % time)
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
                         i = p.fileid
