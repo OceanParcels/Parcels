@@ -321,7 +321,6 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
   if (*eta > 1) *eta = 1;
 
   ErrorCode err;
-
   if (zdim > 1){
     switch(gcode){
       case CURVILINEAR_Z_GRID:
