@@ -1212,10 +1212,19 @@ class NetcdfFileBuffer(object):
         elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
             lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
             lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
-        if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
-            xdim = lon_subset.shape[0]
-            ydim = lat_subset.shape[1]
-            if np.allclose(lon_subset[0, :], lon_subset[int(xdim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(ydim/2)]):
+        if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
+            rectilinear = True
+            # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
+            for xi in range(1, lon_subset.shape[0]):
+                if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
+                    rectilinear = False
+                    break
+            if rectilinear:
+                for yi in range(1, lat_subset.shape[1]):
+                    if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
+                        rectilinear = False
+                        break
+            if rectilinear:
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
