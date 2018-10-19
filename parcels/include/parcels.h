@@ -145,15 +145,18 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
       interp_method = LINEAR;
     }
     if (interp_method == LINEAR){
-      if (grid->zdim==1)
+      if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
-      else
+      }
+      else{
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
                                              (float**)(data[ti[igrid]]), value); CHECKERROR(err);
+      }
     }
     else if (interp_method == NEAREST){
-      if (grid->zdim==1)
+      if (grid->zdim==1){
         err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
+      }
       else {
         err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
                                              (float**)(data[ti[igrid]]), value); CHECKERROR(err);
