@@ -94,7 +94,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic);
+  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic); CHECKERROR(err);
 
   /* Cast data array intp data[time][depth][lat][lon] as per NEMO convention */
   float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
@@ -113,22 +113,22 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     }
     if (interp_method == LINEAR){
       if (grid->zdim==1){
-        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
-        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1);
+        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
+        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
       } else {
-        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]]), &f0);
-        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]+1]), &f1);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
+        err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
       }
     }
     else if  (interp_method == NEAREST){
       if (grid->zdim==1){
-        err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
-        err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1);
+        err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
+        err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
       } else {
         err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
-                                              (float**)(data[ti[igrid]]), &f0);
+                                              (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
         err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
-                                              (float**)(data[ti[igrid]+1]), &f1);
+                                              (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
       }
     }
     else {
@@ -146,17 +146,17 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     }
     if (interp_method == LINEAR){
       if (grid->zdim==1)
-        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value);
+        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       else
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
-                                             (float**)(data[ti[igrid]]), value);
+                                             (float**)(data[ti[igrid]]), value); CHECKERROR(err);
     }
     else if (interp_method == NEAREST){
       if (grid->zdim==1)
-        err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value);
+        err = spatial_interpolation_nearest2D(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       else {
         err = spatial_interpolation_nearest3D(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
-                                             (float**)(data[ti[igrid]]), value);
+                                             (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       }
     }
     else {
@@ -275,7 +275,7 @@ static inline ErrorCode temporal_interpolation_UV_c_grid(float x, float y, float
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic);
+  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic); CHECKERROR(err);
 
   /* Cast data array intp data[time][depth][lat][lon] as per NEMO convention */
   float (*dataU)[U->zdim][U->ydim][U->xdim] = (float (*)[U->zdim][U->ydim][U->xdim]) U->data;
@@ -289,11 +289,11 @@ static inline ErrorCode temporal_interpolation_UV_c_grid(float x, float y, float
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1); CHECKERROR(err);
     if (grid->zdim==1){
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0);
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0); CHECKERROR(err);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1); CHECKERROR(err);
     } else {
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]),   &u0, &v0);
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1][zi[igrid]]), (float**)(dataV[ti[igrid]+1][zi[igrid]]), &u1, &v1);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]),   &u0, &v0); CHECKERROR(err);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1][zi[igrid]]), (float**)(dataV[ti[igrid]+1][zi[igrid]]), &u1, &v1); CHECKERROR(err);
     }
     *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
     *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
@@ -302,10 +302,10 @@ static inline ErrorCode temporal_interpolation_UV_c_grid(float x, float y, float
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
     if (grid->zdim==1){
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
     }
     else{
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), u, v);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), u, v); CHECKERROR(err);
     }
     return SUCCESS;
   }
