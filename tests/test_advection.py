@@ -274,12 +274,12 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, npart=1):
 
 
 def truth_decaying(x_0, y_0, t):
-    lat = y_0 - ((u_0 - u_g) * f / (f ** 2 + gamma ** 2) *
-                 (1 - np.exp(-gamma * t) * (np.cos(f * t) + gamma / f * np.sin(f * t))))
-    lon = x_0 + (u_g / gamma_g * (1 - np.exp(-gamma_g * t)) +
-                 (u_0 - u_g) * f / (f ** 2 + gamma ** 2) *
-                 (gamma / f + np.exp(-gamma * t) *
-                  (math.sin(f * t) - gamma / f * math.cos(f * t))))
+    lat = y_0 - ((u_0 - u_g) * f / (f ** 2 + gamma ** 2)
+                 * (1 - np.exp(-gamma * t) * (np.cos(f * t) + gamma / f * np.sin(f * t))))
+    lon = x_0 + (u_g / gamma_g * (1 - np.exp(-gamma_g * t))
+                 + (u_0 - u_g) * f / (f ** 2 + gamma ** 2)
+                 * (gamma / f + np.exp(-gamma * t)
+                    * (math.sin(f * t) - gamma / f * math.cos(f * t))))
     return lon, lat
 
 
