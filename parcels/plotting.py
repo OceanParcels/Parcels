@@ -194,8 +194,13 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     timestr = parsetimestr(field[0].grid.time_origin, show_time)
     titlestr = kwargs.pop('titlestr', '')
     if field[0].grid.zdim > 1:
-        gphrase = 'depth' if field[0].grid.gtype in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid] else 'level'
-        depthstr = ' at %s %f ' % (gphrase, field[0].grid.depth[depth_level])
+        if field[0].grid.gtype in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
+            gphrase = 'depth'
+            depth_or_level = field[0].grid.depth[depth_level]
+        else:
+            gphrase = 'level'
+            depth_or_level = depth_level
+        depthstr = ' at %s %g ' % (gphrase, depth_or_level)
     else:
         depthstr = ''
     if plottype is 'vector':
