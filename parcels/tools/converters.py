@@ -1,7 +1,6 @@
 from math import cos, pi
 import numpy as np
 import cftime
-import netcdftime
 from datetime import timedelta as delta
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
