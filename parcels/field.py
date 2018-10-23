@@ -136,7 +136,8 @@ class Field(object):
         :param variable: Name of the field to create. Note that this has to be a string
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
-               This can be used for reading in only a subregion of the NetCDF file
+               This can be used for reading in only a subregion of the NetCDF file.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -588,6 +589,7 @@ class Field(object):
         xi = 0
         yi = 0
         (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
+        return self.data[ti, yi+1, xi+1]
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1

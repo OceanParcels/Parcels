@@ -174,6 +174,7 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -264,6 +265,7 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -303,6 +305,7 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
