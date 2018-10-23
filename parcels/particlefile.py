@@ -258,36 +258,40 @@ class ParticleFile(object):
                 # write to pickle routine
                 size = len(pset)
                 
-                # temporary arrays
-                ids_tmp, time_tmp, lat_tmp, lon_tmp, z_tmp = map(lambda x: np.zeros(x), [size,size,size,size,size])
-                ids_tmp[ids_tmp==0] = np.nan
-                time_tmp[time_tmp==0] = np.nan
-                lon_tmp[lon_tmp==0] = np.nan
-                lat_tmp[lat_tmp==0] = np.nan
-                z_tmp[z_tmp==0] = np.nan
+                # dictionary for temporary hold data                
+                tmp = {}
+                tmp["ids"], tmp["time"], tmp["lat"], tmp["lon"], tmp["z"] =\
+                        map(lambda x: np.zeros(x), [size,size,size,size,size])
+                
+                for var in self.user_vars:
+                    tmp[var] = np.zeros(size)
+                
+                for key in tmp.keys():
+                    tmp[key][:] = np.nan 
                 
                 i = 0
                 for p in pset:
                     if p.dt*p.time <= p.dt*time: 
-                        ids_tmp[i] = p.id
-                        time_tmp[i] = time
-                        lat_tmp[i] = p.lat
-                        lon_tmp[i] = p.lon
-                        z_tmp[i]   = p.depth
+                        tmp["ids"][i] = p.id
+                        tmp["time"][i] = time
+                        tmp["lat"][i] = p.lat
+                        tmp["lon"][i] = p.lon
+                        tmp["z"][i]   = p.depth
+                        for var in self.user_vars:
+                            tmp[var][i] = getattr(p, var)
                         
-                        i +=1
+                        i += 1
                 
                 pickle_file_path = "out/"
                 
                 if not path.exists(pickle_file_path):
                     mkdir(pickle_file_path)
                 
-                save_ind = np.isfinite(ids_tmp)
-                np.save("out/"+str(time),[ids_tmp[save_ind],
-                                          time_tmp[save_ind],
-                                          lat_tmp[save_ind],
-                                          lon_tmp[save_ind],
-                                          z_tmp[save_ind]])
+                save_ind = np.isfinite(tmp["ids"])
+                for key in tmp.keys():
+                    tmp[key] = tmp[key][save_ind]
+
+                np.save("out/"+str(time),tmp)
                 
                 for p in first_write:
                     for var in self.user_vars_once:
