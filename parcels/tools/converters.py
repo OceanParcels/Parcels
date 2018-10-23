@@ -1,7 +1,6 @@
 from math import cos, pi
 import numpy as np
 import cftime
-import netcdftime
 from datetime import timedelta as delta
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
@@ -20,8 +19,7 @@ class TimeConverter(object):
         self.time_origin = 0 if time_origin is None else time_origin
         if isinstance(time_origin, np.datetime64):
             self.calendar = "standard"
-        elif isinstance(time_origin, (cftime._cftime.DatetimeNoLeap,
-                                      netcdftime._netcdftime.DatetimeNoLeap)):
+        elif isinstance(time_origin, cftime._cftime.DatetimeNoLeap):
             self.calendar = "NOLEAP"
         else:
             self.calendar = None
