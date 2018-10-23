@@ -1005,14 +1005,14 @@ class VectorField(object):
         meshJac = (deg2m * deg2m * cos(rad * y)) if grid.mesh == 'spherical' else 1
         jac = self.jacobian(xsi, eta, px, py) * meshJac
 
-        u = ((-(1-eta) * U - (1-xsi) * V) * px[0] +
-             ((1-eta) * U - xsi * V) * px[1] +
-             (eta * U + xsi * V) * px[2] +
-             (-eta * U + (1-xsi) * V) * px[3]) / jac
-        v = ((-(1-eta) * U - (1-xsi) * V) * py[0] +
-             ((1-eta) * U - xsi * V) * py[1] +
-             (eta * U + xsi * V) * py[2] +
-             (-eta * U + (1-xsi) * V) * py[3]) / jac
+        u = ((-(1-eta) * U - (1-xsi) * V) * px[0]
+             + ((1-eta) * U - xsi * V) * px[1]
+             + (eta * U + xsi * V) * px[2]
+             + (-eta * U + (1-xsi) * V) * px[3]) / jac
+        v = ((-(1-eta) * U - (1-xsi) * V) * py[0]
+             + ((1-eta) * U - xsi * V) * py[1]
+             + (eta * U + xsi * V) * py[2]
+             + (-eta * U + (1-xsi) * V) * py[3]) / jac
         return (u, v)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
