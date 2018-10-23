@@ -589,7 +589,6 @@ class Field(object):
         xi = 0
         yi = 0
         (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
-        return self.data[ti, yi+1, xi+1]
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
