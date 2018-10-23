@@ -756,13 +756,14 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, animation=False, show_time=None, domain=None, projection=None, land=True,
+    def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection=None, land=True,
              vmin=None, vmax=None, savefile=None, **kwargs):
         """Method to 'show' a Parcels Field
 
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param depth_level: depth level to be plotted (default 0)
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -770,8 +771,8 @@ class Field(object):
         :param savefile: Name of a file to save the plot to
         """
         from parcels.plotting import plotfield
-        plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, projection=projection,
-                                 land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
+        plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, depth_level=depth_level,
+                                 projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
         if plt:
             plt.show()
 
