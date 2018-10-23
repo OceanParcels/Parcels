@@ -260,6 +260,11 @@ class ParticleFile(object):
                 
                 # temporary arrays
                 ids_tmp, time_tmp, lat_tmp, lon_tmp, z_tmp = map(lambda x: np.zeros(x), [size,size,size,size,size])
+                ids_tmp[ids_tmp==0] = np.nan
+                time_tmp[time_tmp==0] = np.nan
+                lon_tmp[lon_tmp==0] = np.nan
+                lat_tmp[lat_tmp==0] = np.nan
+                z_tmp[z_tmp==0] = np.nan
                 
                 i = 0
                 for p in pset:
@@ -269,6 +274,7 @@ class ParticleFile(object):
                         lat_tmp[i] = p.lat
                         lon_tmp[i] = p.lon
                         z_tmp[i]   = p.depth
+                        
                         i +=1
                 
                 pickle_file_path = "out/"
@@ -276,7 +282,12 @@ class ParticleFile(object):
                 if not path.exists(pickle_file_path):
                     mkdir(pickle_file_path)
                 
-                np.save("out/"+str(time),[ids_tmp,time_tmp,lat_tmp,lon_tmp,z_tmp])
+                save_ind = np.isfinite(ids_tmp)
+                np.save("out/"+str(time),[ids_tmp[save_ind],
+                                          time_tmp[save_ind],
+                                          lat_tmp[save_ind],
+                                          lon_tmp[save_ind],
+                                          z_tmp[save_ind]])
                 
                 for p in first_write:
                     for var in self.user_vars_once:
