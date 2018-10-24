@@ -24,7 +24,6 @@ dependencies:
   - six>=1.10.0
   - xarray>=0.10.8
   - dask
-  - netcdftime
   - cftime
   - pip:
       - pytest>=2.7.0

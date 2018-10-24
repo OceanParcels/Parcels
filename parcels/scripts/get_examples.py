@@ -18,19 +18,19 @@ import sys
 
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [
-        "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]] +
-    ["OFAM_example_data/" + fn for fn in [
-        "OFAM_simple_U.nc", "OFAM_simple_V.nc"]] +
-    ["Peninsula_data/" + fn for fn in [
-        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]] +
-    ["GlobCurrent_example_data/" + fn for fn in [
+        "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]]
+    + ["OFAM_example_data/" + fn for fn in [
+        "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
+    + ["Peninsula_data/" + fn for fn in [
+        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]]
+    + ["GlobCurrent_example_data/" + fn for fn in [
         "%s000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc" % (
             date.strftime("%Y%m%d"))
         for date in [datetime(2002, 1, 1) + timedelta(days=x)
-                     for x in range(0, 365)]]] +
-    ["DecayingMovingEddy_data/" + fn for fn in [
-        "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]] +
-    ["NemoCurvilinear_data/" + fn for fn in [
+                     for x in range(0, 365)]]]
+    + ["DecayingMovingEddy_data/" + fn for fn in [
+        "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]]
+    + ["NemoCurvilinear_data/" + fn for fn in [
         "U_purely_zonal-ORCA025_grid_U.nc4", "V_purely_zonal-ORCA025_grid_V.nc4",
         "mesh_mask.nc4"]])
 
