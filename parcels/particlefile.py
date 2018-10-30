@@ -3,7 +3,7 @@ import numpy as np
 import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
-from os import path,mkdir
+import os 
 try:
     from parcels._version import version as parcels_version
 except:
@@ -47,9 +47,13 @@ class ParticleFile(object):
 
         self.dataset = None
         self.particleset = particleset
+        
+        if os.path.exists("out"):
+            os.system("rm -rf out")
+            print "Existing 'out' folder from previous runs (probably aborted) was deleted"
 
     def open_dataset(self):
-        extension = path.splitext(str(self.name))[1]
+        extension = os.path.splitext(str(self.name))[1]
         fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", None)
@@ -120,7 +124,9 @@ class ParticleFile(object):
         self.idx = np.empty(shape=0)
 
     def __del__(self):
+        
         if self.dataset:
+            #self.convert_npy()
             self.dataset.close()
 
     def sync(self):
@@ -211,10 +217,12 @@ class ParticleFile(object):
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
                         
-                        # write to pickle routine
+                        # write to npy file
+                        if not os.path.exists("out"):
+                            os.mkdir("out")
                         pickle_file_path = "out/"+str(p.id)+"/"
-                        if not path.exists(pickle_file_path):
-                            mkdir(pickle_file_path)
+                        if not os.path.exists(pickle_file_path):
+                            os.mkdir(pickle_file_path)
                         np.save("out/"+str(p.id)+"/"+str(time),[p.id,time,p.lat,p.lon,p.depth])
                 
                 for p in first_write:
@@ -230,10 +238,10 @@ class ParticleFile(object):
         if sync:
             self.sync()
             
-    def write_pickle_per_tstep(self, pset, time, sync=True, deleted_only=False):
-        """Write :class:`parcels.particleset.ParticleSet` data to file pickle. 
-        All data is saved to one pickle. Hence, each time step has a new pickle 
-        file.
+    def write_npy(self, pset, time, sync=True, deleted_only=False):
+        """Write :class:`parcels.particleset.ParticleSet` 
+        All data from one time step is saved to one NPY-file using a python 
+        dictionary. The data is saved in the folder 'out'.
 
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
@@ -255,7 +263,6 @@ class ParticleFile(object):
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
-                # write to pickle routine
                 size = len(pset)
                 
                 # dictionary for temporary hold data                
@@ -284,8 +291,8 @@ class ParticleFile(object):
                 
                 pickle_file_path = "out/"
                 
-                if not path.exists(pickle_file_path):
-                    mkdir(pickle_file_path)
+                if not os.path.exists(pickle_file_path):
+                    os.mkdir(pickle_file_path)
                 
                 save_ind = np.isfinite(tmp["ids"])
                 for key in tmp.keys():
@@ -305,4 +312,121 @@ class ParticleFile(object):
 
         if sync:
             self.sync()
+            
+    
+#    def convert_npy(self):
+#        """
+#        Writes outputs from NPY-files (all ids in one file per time step) 
+#        to ParticleFile instance
+#        
+#        Parameters:
+#        -----------
+#        pfile: ParticleFile instance
+#        
+#        multiProcess: boolean 
+#            Use multiprocessing for reading pickles. Currently, not possible.
+#        
+#        Returns
+#        -------
+#        conversion time : float
+#        """
+#        
+#        def sort_list(path):
+#            """
+#            method to sort a list of all pathes to output by their name that is the
+#            time stamp.
+#            """
+#            splitted = path.split("/")
+#            return float(splitted[1][:-4])    
+#        
+#        def read(file_list,id_fill_value):
+#            """
+#            read NPY-files using a loop over all files and return one array 
+#            for each variable. 
+#            
+#            Parameters
+#            -----------
+#            file_list : list of strings
+#                List that  ontains all file names in the output directory
+#            id_fill_value:
+#                FillValue for the IDs as used in the output netcdf
+#                
+#            Returns
+#            -------
+#            Python dictionary with the data read from the NPY-files
+#            
+#            """
+#            #generate sorted list
+#            file_list = [x[:-4] for x in file_list]
+#            file_list = map(float,file_list)
+#            file_list.sort()
+#            
+#            # infer array size of dimension id from the highest id in NPY file from 
+#            # last time step
+#            data_dict  = np.load("out/"+str(file_list[-1])+".npy").item()
+#            
+#            n_id = int(max(data_dict["ids"])+1)
+#            n_time = len(file_list)
+#            
+#            # dictionary for merging
+#            merge_dict = {}
+#            for var in data_dict.keys():
+#                merge_dict[var] = np.zeros((n_id,n_time))
+#                
+#                if var!="ids":
+#                    merge_dict[var][:] = np.nan
+#                else:
+#                    merge_dict[var][:] = id_fill_value
+#            
+#            # initiated indeces for time axis
+#            time_index = np.zeros(n_id,dtype=int)
+#            
+#            # loop over all files
+#            for i in range(n_time):
+#                data_dict = np.load("out/"+str(file_list[i])+".npy").item()
+#                
+#                # don't convert to netdcf if all values are nan for a time step
+#                if np.isnan(data_dict["ids"]).all():
+#                    for key in merge_dict.keys():
+#                        merge_dict[key] = merge_dict[key][:,:-1]
+#                    continue
+#                
+#                # get ids that going to be filled
+#                id_ind =  np.array(data_dict["ids"],dtype=int)
+#                
+#                # get the corresponding time indeces
+#                t_ind = time_index[id_ind]
+#                
+#                # write into merge array
+#                for key in merge_dict.keys():
+#                    merge_dict[key][id_ind,t_ind] = data_dict[key]
+#               
+#                # new time index for ids that where filled with values
+#                time_index[id_ind]  = time_index[id_ind]  + 1
+#            
+#            # remove rows that are completely filled with nan values
+#            out_dict = {}
+#            for var in merge_dict.keys():
+#                out_dict[var] = merge_dict[var][~np.isnan(merge_dict["lat"]).all(axis=1)]
+#            
+#            return out_dict
+#            
+#        
+#        # list of files
+#        time_list = os.listdir("out")
+#        
+#        
+#        data_dict = read(time_list,self.id._FillValue)
+#    
+#        for var in data_dict.keys():
+#            if var !="ids":
+#                getattr(self, var)[:,:] = data_dict[var]
+#            else:
+#                getattr(self, "id")[:,:] = data_dict[var]
+#        print data_dict["lon"].shape      
+#
+#        
+#        if os.path.exists("out"):
+#            print "Remove folder 'out' after conversion of NPY-files to NetCDF file '"+str(self.name)+"'." 
+#            os.system("rm -rf out")
 
