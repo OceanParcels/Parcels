@@ -4,6 +4,8 @@ import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
 import os 
+from tempfile import gettempdir
+
 try:
     from parcels._version import version as parcels_version
 except:
@@ -48,9 +50,10 @@ class ParticleFile(object):
         self.dataset = None
         self.particleset = particleset
         
-        if os.path.exists("out"):
-            os.system("rm -rf out")
-            print "Existing 'out' folder from previous runs (probably aborted) was deleted"
+        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out/")
+        if os.path.exists(self.npy_path):
+            os.system("rm -rf "+ self.npy_path)
+            print "Existing temporary output folder ('"+self.npy_path+"') from previous runs (probably aborted) was deleted"
 
     def open_dataset(self):
         extension = os.path.splitext(str(self.name))[1]
@@ -190,19 +193,16 @@ class ParticleFile(object):
                         tmp["z"][i]   = p.depth
                         for var in self.user_vars:
                             tmp[var][i] = getattr(p, var)
-                        
                         i += 1
                 
-                pickle_file_path = "out/"
-                
-                if not os.path.exists(pickle_file_path):
-                    os.mkdir(pickle_file_path)
+                if not os.path.exists(self.npy_path):
+                    os.mkdir(self.npy_path)
                 
                 save_ind = np.isfinite(tmp["ids"])
                 for key in tmp.keys():
                     tmp[key] = tmp[key][save_ind]
 
-                np.save("out/"+str(time),tmp)
+                np.save(os.path.join(self.npy_path,str(time)),tmp)
                 
                 for p in first_write:
                     for var in self.user_vars_once:
@@ -218,46 +218,34 @@ class ParticleFile(object):
             self.sync()
             
     def convert_npy(self):
-        """
-        Writes outputs from NPY-files (all ids in one file per time step) 
-        to ParticleFile instance
-        
-        Parameters:
-        -----------
-        pfile: ParticleFile instance
-        
-        multiProcess: boolean 
-            Use multiprocessing for reading pickles. Currently, not possible.
-        
-        Returns
-        -------
-        conversion time : float
+        """Writes outputs from NPY-files to ParticleFile instance
         """
         
-        def sort_list(path):
-            """
-            method to sort a list of all pathes to output by their name that is the
+        def sort_list(path_list):
+            """Method to sort a list of all NPY-files by their name that is the
             time stamp.
+            
+            :param path_list: List of all pathes to the NPY-files
+            
+            :return: sorted list
             """
-            splitted = path.split("/")
+            splitted = path_list.split("/")
             return float(splitted[1][:-4])    
         
         def read(file_list,id_fill_value):
-            """
-            read NPY-files using a loop over all files and return one array 
+            """Read NPY-files using a loop over all files and return one array 
             for each variable. 
             
-            Parameters
-            -----------
-            file_list : list of strings
-                List that  ontains all file names in the output directory
-            id_fill_value:
-                FillValue for the IDs as used in the output netcdf
-                
-            Returns
-            -------
-            Python dictionary with the data read from the NPY-files
+            :param file_list: List that  contains all file names in the output 
+            directory
+            :param id_fill_value: FillValue for the IDs as used in the output
+            netcdf
             
+            :type file_list: list
+            :type id_fill_value: int
+                
+            :return: Python dictionary with the data that was read from the 
+            NPY-files
             """
             #generate sorted list
             file_list = [x[:-4] for x in file_list]
@@ -266,7 +254,7 @@ class ParticleFile(object):
             
             # infer array size of dimension id from the highest id in NPY file from 
             # last time step
-            data_dict  = np.load("out/"+str(file_list[-1])+".npy").item()
+            data_dict  = np.load(self.npy_path+"/"+str(file_list[-1])+".npy").item()
             
             n_id = int(max(data_dict["ids"])+1)
             n_time = len(file_list)
@@ -286,7 +274,7 @@ class ParticleFile(object):
             
             # loop over all files
             for i in range(n_time):
-                data_dict = np.load("out/"+str(file_list[i])+".npy").item()
+                data_dict = np.load(self.npy_path+"/"+str(file_list[i])+".npy").item()
                 
                 # don't convert to netdcf if all values are nan for a time step
                 if np.isnan(data_dict["ids"]).all():
@@ -316,7 +304,7 @@ class ParticleFile(object):
             
         
         # list of files
-        time_list = os.listdir("out")
+        time_list = os.listdir(self.npy_path)
         
         
         data_dict = read(time_list,self.id._FillValue)
@@ -329,7 +317,7 @@ class ParticleFile(object):
         print data_dict["lon"].shape      
 
         
-        if os.path.exists("out"):
-            print "Remove folder 'out' after conversion of NPY-files to NetCDF file '"+str(self.name)+"'." 
-            os.system("rm -rf out")
+        if os.path.exists(self.npy_path):
+            print "Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '"+str(self.name)+"'." 
+            os.system("rm -rf "+self.npy_path)
 
