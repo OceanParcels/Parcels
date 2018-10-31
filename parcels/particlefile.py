@@ -3,6 +3,7 @@ import numpy as np
 import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
+from parcels.tools.error import ErrorCode
 from os import path
 try:
     from parcels._version import version as parcels_version
@@ -168,6 +169,9 @@ class ParticleFile(object):
                         self.z[i, self.idx[i]] = p.depth
                         for var in self.user_vars:
                             getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                        if p.state != ErrorCode.Delete:
+                            assert np.allclose(p.time, time), \
+                                ('time argument in pfile.write() is %g, but a particle has time %g' % (time, p.time))
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
