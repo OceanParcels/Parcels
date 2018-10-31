@@ -50,7 +50,7 @@ class ParticleFile(object):
         self.dataset = None
         self.particleset = particleset
         
-        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out/")
+        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out")
         if os.path.exists(self.npy_path):
             os.system("rm -rf "+ self.npy_path)
             print "Existing temporary output folder ('"+self.npy_path+"') from previous runs (probably aborted) was deleted"
@@ -253,7 +253,7 @@ class ParticleFile(object):
             
             # infer array size of dimension id from the highest id in NPY file from 
             # last time step
-            data_dict  = np.load(self.npy_path+"/"+str(file_list[-1])+".npy").item()
+            data_dict  = np.load(os.path.join(self.npy_path,str(file_list[-1])+".npy")).item()
             
             n_id = int(max(data_dict["ids"])+1)
             n_time = len(file_list)
@@ -273,7 +273,7 @@ class ParticleFile(object):
             
             # loop over all files
             for i in range(n_time):
-                data_dict = np.load(self.npy_path+"/"+str(file_list[i])+".npy").item()
+                data_dict = np.load(os.path.join(self.npy_path,str(file_list[i])+".npy")).item()
                 
                 # don't convert to netdcf if all values are nan for a time step
                 if np.isnan(data_dict["ids"]).all():
@@ -309,10 +309,8 @@ class ParticleFile(object):
             if var !="ids":
                 getattr(self, var)[:,:] = data_dict[var]
             else:
-                getattr(self, "id")[:,:] = data_dict[var]
-        print data_dict["lon"].shape      
+                getattr(self, "id")[:,:] = data_dict[var]      
         
         if os.path.exists(self.npy_path):
             print "Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '"+str(self.name)+"'." 
             os.system("rm -rf "+self.npy_path)
-
