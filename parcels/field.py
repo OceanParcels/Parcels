@@ -136,7 +136,8 @@ class Field(object):
         :param variable: Name of the field to create. Note that this has to be a string
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
-               This can be used for reading in only a subregion of the NetCDF file
+               This can be used for reading in only a subregion of the NetCDF file.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -183,6 +184,13 @@ class Field(object):
             netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
 
         indices = {} if indices is None else indices.copy()
+        for ind in indices.values():
+            assert np.min(ind) >= 0, \
+                ('Negative indices are currently not allowed in Parcels. ' +
+                 'This is related to the non-increasing dimension it could generate ' +
+                 'if the domain goes from lon[-4] to lon[6] for example. ' +
+                 'Please raise an issue on https://github.com/OceanParcels/parcels/issues ' +
+                 'if you would need such feature implemented.')
 
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
