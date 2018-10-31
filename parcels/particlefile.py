@@ -127,7 +127,6 @@ class ParticleFile(object):
         self.idx = np.empty(shape=0)
 
     def __del__(self):
-        
         if self.dataset:
             self.convert_npy()
             self.dataset.close()
@@ -302,11 +301,8 @@ class ParticleFile(object):
             
             return out_dict
             
-        
         # list of files
         time_list = os.listdir(self.npy_path)
-        
-        
         data_dict = read(time_list,self.id._FillValue)
     
         for var in data_dict.keys():
@@ -315,7 +311,6 @@ class ParticleFile(object):
             else:
                 getattr(self, "id")[:,:] = data_dict[var]
         print data_dict["lon"].shape      
-
         
         if os.path.exists(self.npy_path):
             print "Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '"+str(self.name)+"'." 
