@@ -331,6 +331,51 @@ class FieldSet(object):
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                time_periodic=time_periodic, full_load=full_load, **kwargs)
 
+    @classmethod
+    def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
+                            time_periodic=False, full_load=False, **kwargs):
+        """Initialises FieldSet data from xarray Datasets.
+
+        :param ds: xarray Dataset
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the xarray Dataset.
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however sometimes necessary for plotting the fields.
+        """
+
+        fields = {}
+        for var, name in variables.items():
+
+            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
+            dims = dimensions[var] if var in dimensions else dimensions
+            inds = indices[var] if (indices and var in indices) else indices
+
+            fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
+                                            allow_time_extrapolation=allow_time_extrapolation, var_name=var,
+                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
+        return cls(u, v, fields=fields)
+
     @property
     def fields(self):
         """Returns a list of all the :class:`parcels.field.Field` objects
@@ -446,7 +491,7 @@ class FieldSet(object):
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    data = f.computeTimeChunk(data, tind)
+                    f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
@@ -456,7 +501,7 @@ class FieldSet(object):
                 else:
                     f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                f.computeTimeChunk(data, f.loaded_time_indices[0])
                 f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
             else:
                 f.loaded_time_indices = []
