@@ -4,29 +4,35 @@ from os import path
 from glob import glob
 import numpy as np
 import pytest
+import xarray as xr
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices=None, full_load=False):
+def set_globcurrent_fieldset(filename=None, indices=None, full_load=False, use_xarray=False):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
-    return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load)
+    if use_xarray:
+        ds = xr.open_mfdataset(filename)
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, full_load=full_load)
+    else:
+        return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load)
 
 
-def test_globcurrent_fieldset():
-    fieldset = set_globcurrent_fieldset()
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_fieldset(use_xarray):
+    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
     assert(fieldset.U.lon.size == 81)
     assert(fieldset.U.lat.size == 41)
     assert(fieldset.V.lon.size == 81)
     assert(fieldset.V.lat.size == 41)
 
     indices = {'lon': [5], 'lat': range(20, 30)}
-    fieldsetsub = set_globcurrent_fieldset(indices=indices)
+    fieldsetsub = set_globcurrent_fieldset(indices=indices, use_xarray=use_xarray)
     assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
     assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices['lon']])
@@ -34,34 +40,32 @@ def test_globcurrent_fieldset():
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt, substart, subend, lonstart, latstart, irange', [
-    (3600., 0, 3, 25, -35, range(3, 9, 1)),
-    (-3600., 8, 10, 20, -39, range(7, 2, -1))
-])
-def test_globcurrent_fieldset_advancetime(mode, dt, substart, subend, lonstart, latstart, irange):
+@pytest.mark.parametrize('dt, lonstart, latstart', [(3600., 25, -35), (-3600., 20, -39)])
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarray):
     basepath = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                          '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     files = sorted(glob(str(basepath)))
 
-    fieldsetsub = set_globcurrent_fieldset(files[0:10])
+    fieldsetsub = set_globcurrent_fieldset(files[0:10], use_xarray=use_xarray)
     psetsub = ParticleSet.from_list(fieldset=fieldsetsub, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
 
-    fieldsetall = set_globcurrent_fieldset(files[0:10], full_load=True)
+    fieldsetall = set_globcurrent_fieldset(files[0:10], full_load=True, use_xarray=use_xarray)
     psetall = ParticleSet.from_list(fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
     if dt < 0:
         psetsub[0].time = fieldsetsub.U.grid.time[-1]
         psetall[0].time = fieldsetall.U.grid.time[-1]
 
-    for i in irange:
-        psetsub.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
-        psetall.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+    psetsub.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
+    psetall.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
 
     assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_globcurrent_particles(mode):
-    fieldset = set_globcurrent_fieldset()
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_particles(mode, use_xarray):
+    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
 
     lonstart = [25]
     latstart = [-35]
@@ -72,6 +76,22 @@ def test_globcurrent_particles(mode):
 
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
+
+
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_xarray_vs_netcdf(dt):
+    fieldsetNetcdf = set_globcurrent_fieldset(use_xarray=False)
+    fieldsetxarray = set_globcurrent_fieldset(use_xarray=True)
+    lonstart, latstart, runtime = (25, -35, delta(days=7))
+
+    psetN = ParticleSet(fieldsetNetcdf, pclass=JITParticle, lon=lonstart, lat=latstart)
+    psetN.execute(AdvectionRK4, runtime=runtime, dt=dt)
+
+    psetX = ParticleSet(fieldsetxarray, pclass=JITParticle, lon=lonstart, lat=latstart)
+    psetX.execute(AdvectionRK4, runtime=runtime, dt=dt)
+
+    assert np.allclose(psetN[0].lon, psetX[0].lon)
+    assert np.allclose(psetN[0].lat, psetX[0].lat)
 
 
 def test__particles_init_time():
@@ -92,8 +112,9 @@ def test__particles_init_time():
 
 @pytest.mark.xfail(reason="Time extrapolation error expected to be thrown", strict=True)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_globcurrent_time_extrapolation_error(mode):
-    fieldset = set_globcurrent_fieldset()
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_time_extrapolation_error(mode, use_xarray):
+    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35],
                        time=fieldset.U.time[0]-delta(days=1).total_seconds())
@@ -103,8 +124,9 @@ def test_globcurrent_time_extrapolation_error(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt', [-300, 300])
-def test_globcurrent_variable_fromfield(mode, dt):
-    fieldset = set_globcurrent_fieldset()
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
+    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=fieldset.U)
@@ -115,8 +137,9 @@ def test_globcurrent_variable_fromfield(mode, dt):
 
 
 @pytest.mark.parametrize('full_load', [True, False])
-def test_globcurrent_deferred_fieldset_gradient(full_load):
-    fieldset = set_globcurrent_fieldset(full_load=full_load)
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_deferred_fieldset_gradient(full_load, use_xarray):
+    fieldset = set_globcurrent_fieldset(full_load=full_load, use_xarray=use_xarray)
     (dU_dx, dU_dy) = fieldset.U.gradient()
     fieldset.add_field(dU_dy)
 
