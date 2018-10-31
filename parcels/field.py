@@ -178,6 +178,13 @@ class Field(object):
             depth_filename = filenames[0]
 
         indices = {} if indices is None else indices.copy()
+        for ind in indices.values():
+            assert np.min(ind) >= 0, \
+                ('Negative indices are currently not allowed in Parcels. ' +
+                 'This is related to the non-increasing dimension it could generate ' +
+                 'if the domain goes from lon[-4] to lon[6] for example. ' +
+                 'Please raise an issue on https://github.com/OceanParcels/parcels/issues ' +
+                 'if you would need such feature implemented.')
         netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
