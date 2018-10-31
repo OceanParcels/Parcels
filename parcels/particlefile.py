@@ -162,7 +162,7 @@ class ParticleFile(object):
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
                         i = p.fileid
                         self.id[i, self.idx[i]] = p.id
-                        self.time[i, self.idx[i]] = time
+                        self.time[i, self.idx[i]] = p.time
                         self.lat[i, self.idx[i]] = p.lat
                         self.lon[i, self.idx[i]] = p.lon
                         self.z[i, self.idx[i]] = p.depth
