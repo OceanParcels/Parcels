@@ -169,7 +169,7 @@ class ParticleFile(object):
                         self.z[i, self.idx[i]] = p.depth
                         for var in self.user_vars:
                             getattr(self, var)[i, self.idx[i]] = getattr(p, var)
-                        if p.state != ErrorCode.Delete and if not np.allclose(p.time, time):
+                        if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
                             logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
 
                 for p in first_write:
