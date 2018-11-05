@@ -97,7 +97,7 @@ def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardti
     da = xr.DataArray(np.random.rand(12, xdim, ydim),
                       coords=[dates, range(xdim), range(ydim)],
                       dims=['time', 'lon', 'lat'], name='U')
-    da.to_netcdf(filepath)
+    da.to_netcdf(str(filepath))
 
     dims = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
     field = Field.from_netcdf(filepath, 'U', dims)
