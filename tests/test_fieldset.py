@@ -85,6 +85,25 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
+@pytest.mark.parametrize('calendar', ['noleap', '360day'])
+def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
+    from cftime import DatetimeNoLeap, Datetime360Day
+    filepath = tmpdir.join(filename)
+
+    if calendar == 'noleap':
+        dates = [DatetimeNoLeap(0, m, 1) for m in range(1, 13)]
+    else:
+        dates = [Datetime360Day(0, m, 1) for m in range(1, 13)]
+    da = xr.DataArray(np.random.rand(12, xdim, ydim),
+                      coords=[dates, range(xdim), range(ydim)],
+                      dims=['time', 'lon', 'lat'], name='U')
+    da.to_netcdf(filepath)
+
+    dims = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
+    field = Field.from_netcdf(filepath, 'U', dims)
+    assert field.grid.time_origin.calendar == 'cftime'
+
+
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
 @pytest.mark.parametrize('indslat', [range(30, 60), [22]])
 def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_subsets'):
