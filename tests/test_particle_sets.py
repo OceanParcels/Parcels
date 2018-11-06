@@ -161,7 +161,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
     filesize = os.path.getsize(str(outfilepath+".nc"))
-    assert filesize < 1024 * 60  # test that chunking leads to filesize less than 60KB
+    assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
 
 
 def test_pset_repeatdt_check_dt(fieldset):
