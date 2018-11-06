@@ -224,7 +224,7 @@ class ParticleFile(object):
         
         :param batch_processing: If True batch processing is applied. Batches 
         of files are loaded and then written to the output netcdf-file. This
-        option is stioll work in progress. Default:True
+        option is still work in progress. Default:True
         
         :param batch_size: size of one batch in bytes. Default: 2**30 (1 Gbyte).
         
