@@ -3,6 +3,7 @@ import numpy as np
 import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
+from parcels.tools.error import ErrorCode
 from os import path
 try:
     from parcels._version import version as parcels_version
@@ -151,7 +152,7 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and p.dt*p.time <= p.dt*time]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
@@ -162,17 +163,20 @@ class ParticleFile(object):
                     if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
                         i = p.fileid
                         self.id[i, self.idx[i]] = p.id
-                        self.time[i, self.idx[i]] = time
+                        self.time[i, self.idx[i]] = p.time
                         self.lat[i, self.idx[i]] = p.lat
                         self.lon[i, self.idx[i]] = p.lon
                         self.z[i, self.idx[i]] = p.depth
                         for var in self.user_vars:
                             getattr(self, var)[i, self.idx[i]] = getattr(p, var)
+                        if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
+                            logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
+
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
             else:
-                logger.warning("ParticleSet is empty on writing as array")
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
 
             if not deleted_only:
                 self.idx += 1
