@@ -217,7 +217,7 @@ class ParticleFile(object):
         if sync:
             self.sync()
             
-    def convert_npy(self,delete_tmp = True, batch_processing=True, batch_size = 2**30):
+    def convert_npy(self,delete_tmp = True, batch_processing=False, batch_size = 2**30):
         """Writes outputs from NPY-files to ParticleFile instance
         
         :param delete_tmp: If True the tmp output folder for the NPY-files is deleted. Default: True
@@ -260,11 +260,11 @@ class ParticleFile(object):
                     merge_dict[var][:] = self.id._FillValue
             return merge_dict
         
-        def get_free_memory():
-            """return free memory in bytes"""
+        def get_available_memory():
+            """return available memory in bytes"""
             memory_info = psutil.virtual_memory()
-            free_memory = memory_info.free
-            return free_memory
+            available_memory = memory_info.available
+            return available_memory
         
         def read(file_list,time_steps):
             """Read NPY-files using a loop over all files and return one array 
@@ -328,8 +328,8 @@ class ParticleFile(object):
         if batch_processing:
             print "=============convert NPY-files to NetCDF-file==============="
         
-            free_memory = get_free_memory()
-            print "Free memory: '" + str(free_memory/float(2**20)) + "' Mbytes"
+            available_memory = get_available_memory()
+            print "Available memory: '" + str(available_memory/float(2**20)) + "' Mbytes"
             self.batch_size = batch_size
             
             # estimate the total size in bytes for merging array
@@ -338,13 +338,13 @@ class ParticleFile(object):
             print "Estimated memory needed: '" +str(float(self.memory_estimate_total)/2**20)+"' Mbytes" 
             print "Estimated memory per file needed: '" +str(float(self.memory_per_file)/2**20)+"' Mbytes" 
             
-            if self.memory_per_file>free_memory*0.9:
-                raise MemoryError("Too little free memory is available to load even one tempory output file. With 10% safety margin.")
+            if self.memory_per_file>available_memory*0.9:
+                raise MemoryError("Too little available memory is available to load even one tempory output file. With 10% safety margin.")
             
-            if 0.7*free_memory<self.batch_size:
-                self.batch_size = 0.7 * free_memory 
-                print "Too little free memory available in ParticleFile.conversion_npy() for batch_size:"+ str(batch_size/2**20) +" Mbytes."
-                print "Setting batch_size to 70% of free memory:"+str(float(self.batch_size)/2**20) + " Mbytes."                             
+            if 0.7*available_memory<self.batch_size:
+                self.batch_size = 0.7 * available_memory 
+                print "Too little available  memory available in ParticleFile.conversion_npy() for batch_size:"+ str(batch_size/2**20) +" Mbytes."
+                print "Setting batch_size to 70% of available  memory:"+str(float(self.batch_size)/2**20) + " Mbytes."                             
                         
             if batch_size<self.memory_per_file:
                 self.batch_size = self.memory_per_file
