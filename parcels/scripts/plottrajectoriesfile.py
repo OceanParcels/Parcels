@@ -93,14 +93,17 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         if isinstance(plottimes[0], (np.datetime64, np.timedelta64)):
             plottimes = plottimes[~np.isnat(plottimes)]
         else:
-            plottimes = plottimes[~np.isnan(plottimes)]
+            try:
+                plottimes = plottimes[~np.isnan(plottimes)]
+            except:
+                pass
         b = time == plottimes[0]
         if cartopy:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
         else:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k')
         ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
-        frames = np.arange(1, len(plottimes))
+        frames = np.arange(0, len(plottimes))
 
         def animate(t):
             b = time == plottimes[t]

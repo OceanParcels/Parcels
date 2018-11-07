@@ -11,7 +11,7 @@ dependencies:
   - git
   - jupyter
   - m2w64-toolchain
-  - matplotlib 2.0.2
+  - matplotlib>=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
   - progressbar2
@@ -21,8 +21,8 @@ dependencies:
   - scipy>=0.16.0
   - six>=1.10.0
   - xarray>=0.5.1
-  - netcdftime
   - cftime
+  - ipykernel<5.0
   - pip:
       - pytest>=2.7.0
       - nbval

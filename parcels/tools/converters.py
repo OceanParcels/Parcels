@@ -1,7 +1,7 @@
 from math import cos, pi
 import numpy as np
-import cftime
-import netcdftime
+import cftime._cftime as cftime_mods
+import inspect
 from datetime import timedelta as delta
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
@@ -18,11 +18,11 @@ class TimeConverter(object):
 
     def __init__(self, time_origin=0):
         self.time_origin = 0 if time_origin is None else time_origin
+        cftime_calendars = tuple(x[1].__name__ for x in inspect.getmembers(cftime_mods, inspect.isclass))
         if isinstance(time_origin, np.datetime64):
-            self.calendar = "standard"
-        elif isinstance(time_origin, (cftime._cftime.DatetimeNoLeap,
-                                      netcdftime._netcdftime.DatetimeNoLeap)):
-            self.calendar = "NOLEAP"
+            self.calendar = "np_datetime64"
+        elif type(time_origin).__name__ in cftime_calendars:
+            self.calendar = "cftime"
         else:
             self.calendar = None
 
@@ -34,9 +34,9 @@ class TimeConverter(object):
         :return: time - self.time_origin
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar == 'standard':
+        if self.calendar == 'np_datetime64':
             return (time - self.time_origin) / np.timedelta64(1, 's')
-        elif self.calendar == 'NOLEAP':
+        elif self.calendar == 'cftime':
             if isinstance(time, (list, np.ndarray)):
                 return np.array([(t - self.time_origin).total_seconds() for t in time])
             else:
@@ -53,12 +53,12 @@ class TimeConverter(object):
         :return: self.time_origin + time
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar == 'standard':
+        if self.calendar == 'np_datetime64':
             if isinstance(time, (list, np.ndarray)):
                 return [self.time_origin + np.timedelta64(int(t), 's') for t in time]
             else:
                 return self.time_origin + np.timedelta64(int(time), 's')
-        elif self.calendar == 'NOLEAP':
+        elif self.calendar == 'cftime':
             return self.time_origin + delta(seconds=time)
         elif self.calendar is None:
             return self.time_origin + time

@@ -1,7 +1,11 @@
 import subprocess
-from os import path, getenv, makedirs
+from os import path, getenv
 from tempfile import gettempdir
 from struct import calcsize
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path  # python 2 backport
 try:
     from os import getuid
 except:
@@ -16,8 +20,7 @@ def get_package_dir():
 
 def get_cache_dir():
     directory = path.join(gettempdir(), "parcels-%s" % getuid())
-    if not path.exists(directory):
-        makedirs(directory)
+    Path(directory).mkdir(exist_ok=True)
     return directory
 
 

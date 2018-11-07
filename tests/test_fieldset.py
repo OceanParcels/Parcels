@@ -4,6 +4,7 @@ from parcels.tools.converters import TimeConverter
 from datetime import timedelta as delta
 import datetime
 import numpy as np
+import xarray as xr
 import math
 import pytest
 from os import path
@@ -82,6 +83,25 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     assert len(fieldset.V.data.shape) == 3
     assert np.allclose(fieldset.U.data[0, :], data['U'], rtol=1e-12)
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
+
+
+@pytest.mark.parametrize('calendar', ['noleap', '360day'])
+def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
+    from cftime import DatetimeNoLeap, Datetime360Day
+    filepath = tmpdir.join(filename)
+
+    if calendar == 'noleap':
+        dates = [DatetimeNoLeap(0, m, 1) for m in range(1, 13)]
+    else:
+        dates = [Datetime360Day(0, m, 1) for m in range(1, 13)]
+    da = xr.DataArray(np.random.rand(12, xdim, ydim),
+                      coords=[dates, range(xdim), range(ydim)],
+                      dims=['time', 'lon', 'lat'], name='U')
+    da.to_netcdf(str(filepath))
+
+    dims = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
+    field = Field.from_netcdf(filepath, 'U', dims)
+    assert field.grid.time_origin.calendar == 'cftime'
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
@@ -296,7 +316,7 @@ def test_periodic(mode, time_periodic, dt_sign):
     assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)
 
 
-@pytest.mark.parametrize('fail', [False, pytest.mark.xfail(strict=True)(True)])
+@pytest.mark.parametrize('fail', [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])
 def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(10, 10, 1, 10)
@@ -365,3 +385,31 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
     assert np.allclose(dFdx.data, 0)
+
+
+@pytest.mark.parametrize('maxlatind', [3, pytest.param(2, marks=pytest.mark.xfail(strict=True))])
+def test_fieldset_from_xarray(maxlatind):
+    def generate_dataset(xdim, ydim, zdim=1, tdim=1):
+        lon = np.linspace(0., 12, xdim, dtype=np.float32)
+        lat = np.linspace(0., 12, ydim, dtype=np.float32)
+        depth = np.linspace(0., 20., zdim, dtype=np.float32)
+        time = np.linspace(0., 10, tdim, dtype=np.float64)
+        Uxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+        Vxr = np.ones((tdim, zdim, ydim, xdim), dtype=np.float32)
+        for t in range(Uxr.shape[0]):
+            Uxr[t, :, :, :] = t/10.
+        coords = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+        dims = ('time', 'depth', 'lat', 'lon')
+        return xr.Dataset({'Uxr': xr.DataArray(Uxr, coords=coords, dims=dims),
+                           'Vxr': xr.DataArray(Vxr, coords=coords, dims=dims)})
+
+    ds = generate_dataset(3, 3, 2, 10)
+    variables = {'U': 'Uxr', 'V': 'Vxr'}
+    dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
+    indices = {'lat': range(0, maxlatind)}
+    fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, mesh='flat')
+
+    pset = ParticleSet(fieldset, JITParticle, 0, 0)
+
+    pset.execute(AdvectionRK4, dt=1)
+    assert pset[0].lon == 4.5 and pset[0].lat == 10
