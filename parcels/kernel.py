@@ -208,8 +208,11 @@ class Kernel(object):
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
+                    print 'bou'
                     res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
+                    print 'not bou'
                 except FieldSamplingError as fse:
+                    print 'test'
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
                 except Exception as e:

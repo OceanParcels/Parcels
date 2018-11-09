@@ -1,4 +1,4 @@
-from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Geographic,
+from parcels import (FieldSet, Field, NestedField, ParticleSet, ScipyParticle, JITParticle, Geographic,
                      AdvectionRK4, AdvectionRK4_3D, Variable)
 import numpy as np
 import pytest
@@ -453,3 +453,25 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
     assert np.isclose(pset[0].p, 60)
     assert np.isclose(pset[0].lon*conv, 0.6, atol=1e-3)
     assert np.isclose(pset[0].lat, 0.9)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_nestedfields(mode, fieldset, k_sample_p):
+    xdim = 10
+    ydim = 20
+    gf = 10  # factor by which the resolution of grid1 is higher than of grid2
+    P1 = Field('P1', 0.1*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
+    P2 = Field('P2', 0.2*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
+    P = NestedField('P', [P1, P2])
+    fieldset.add_field(P)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.9])
+    pset.execute(pset.Kernel(k_sample_p), runtime=0, dt=0)
+    print pset[0].p
+
+
+test_nestedfields('scipy', fieldset(), k_sample_p())

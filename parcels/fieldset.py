@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, SummedField, SummedVectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.tools.loggers import logger
@@ -96,6 +96,11 @@ class FieldSet(object):
         if isinstance(field, SummedField):
             setattr(self, name, field)
             for fld in field:
+                self.gridset.add_grid(fld)
+                fld.fieldset = self
+        elif isinstance(field, NestedField):
+            setattr(self, name, field)
+            for fld in field.fields:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
         elif isinstance(field, list):
