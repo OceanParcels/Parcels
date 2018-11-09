@@ -14,7 +14,7 @@ from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField']
+__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField', 'NestedVectorField']
 
 
 class Field(object):
@@ -1158,16 +1158,31 @@ class SummedVectorField(list):
 
 class NestedField(list):
     def __getitem__(self, key):
-        for iField in range(len(self)):
-            try:
-                val = list.__getitem__(self, iField).eval(*key)
-                break
-            except FieldSamplingError:
-                if iField == len(self)-1:
-                    raise
-                else:
-                    pass
-        return val
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            for iField in range(len(self)):
+                try:
+                    val = list.__getitem__(self, iField).eval(*key)
+                    break
+                except FieldSamplingError:
+                    if iField == len(self)-1:
+                        raise
+                    else:
+                        pass
+            print val
+            return val
+
+
+class NestedVectorField(NestedField):
+    def __init__(self, name, U, V):
+        i = 0
+        uv = []
+        for (U, V) in zip(U, V):
+            uv.append(VectorField(name+'_%d' % i, U, V))
+            self.append(VectorField(name+'_%d' % i, U, V))
+            i = i+1
+        self.name = name
 
 
 class NetcdfFileBuffer(object):
