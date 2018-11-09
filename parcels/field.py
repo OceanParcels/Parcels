@@ -1158,8 +1158,7 @@ class SummedVectorField(list):
 
 class NestedField(list):
     def __getitem__(self, key):
-        iField = 0
-        while iField < len(self):
+        for iField in range(len(self)):
             try:
                 val = list.__getitem__(self, iField).eval(*key)
                 break
@@ -1168,7 +1167,6 @@ class NestedField(list):
                     raise
                 else:
                     pass
-                iField = iField+1
         return val
 
 
