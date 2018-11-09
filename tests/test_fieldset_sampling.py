@@ -460,14 +460,15 @@ def test_nestedfields(mode, fieldset, k_sample_p):
     xdim = 10
     ydim = 20
     gf = 10  # factor by which the resolution of grid1 is higher than of grid2
+
     P1 = Field('P1', 0.1*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
                lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
                lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
     P2 = Field('P2', 0.2*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
-    P = NestedField('P', [P1, P2])
-    fieldset.add_field(P)
+               lon=np.linspace(0., 2., xdim*gf, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim*gf, dtype=np.float32))
+    P = NestedField([P1, P2])
+    fieldset.add_field(P, 'P')
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.9])
     pset.execute(pset.Kernel(k_sample_p), runtime=0, dt=0)

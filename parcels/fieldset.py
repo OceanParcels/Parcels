@@ -100,7 +100,7 @@ class FieldSet(object):
                 fld.fieldset = self
         elif isinstance(field, NestedField):
             setattr(self, name, field)
-            for fld in field.fields:
+            for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
         elif isinstance(field, list):

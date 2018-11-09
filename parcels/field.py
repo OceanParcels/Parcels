@@ -1156,20 +1156,15 @@ class SummedVectorField(list):
             return self.eval(*key)
 
 
-class NestedField(object):
-    def __init__(self, name, f):
-        self.name = name
-        self.fields = f
-        self.nfields = len(f)
-
+class NestedField(list):
     def __getitem__(self, key):
         iField = 0
-        while iField < self.nfields:
+        while iField < len(self):
             try:
-                val = self.fields[iField].eval(*key)
+                val = list.__getitem__(self, iField).eval(*key)
                 break
             except FieldSamplingError:
-                if iField == self.nfields-1:
+                if iField == len(self)-1:
                     raise
                 else:
                     pass
