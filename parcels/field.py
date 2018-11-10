@@ -1175,13 +1175,13 @@ class NestedField(list):
 
 
 class NestedVectorField(NestedField):
-    def __init__(self, name, U, V):
-        i = 0
-        uv = []
-        for (U, V) in zip(U, V):
-            uv.append(VectorField(name+'_%d' % i, U, V))
-            self.append(VectorField(name+'_%d' % i, U, V))
-            i = i+1
+    def __init__(self, name, U, V, W=None):
+        if W is not None:
+            for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
+                self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
+        else:
+            for (i, Ui, Vi) in zip(range(len(U)), U, V):
+                self.append(VectorField(name+'_%d' % i, Ui, Vi))
         self.name = name
 
 
