@@ -473,8 +473,8 @@ def test_nestedfields(mode, fieldset, k_sample_p):
     V2 = Field('V2', 0.4*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
                lon=np.linspace(0., 2., xdim*gf, dtype=np.float32),
                lat=np.linspace(0., 2., ydim*gf, dtype=np.float32))
-    U = NestedField([U1, U2])
-    V = NestedField([V1, V2])
+    U = NestedField('U', [U1, U2])
+    V = NestedField('V', [V1, V2])
     fieldset = FieldSet(U, V)
 
     P1 = Field('P1', 0.1*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
@@ -483,8 +483,8 @@ def test_nestedfields(mode, fieldset, k_sample_p):
     P2 = Field('P2', 0.2*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
                lon=np.linspace(0., 2., xdim*gf, dtype=np.float32),
                lat=np.linspace(0., 2., ydim*gf, dtype=np.float32))
-    P = NestedField([P1, P2])
-    fieldset.add_field(P, 'P')
+    P = NestedField('P', [P1, P2])
+    fieldset.add_field(P)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)

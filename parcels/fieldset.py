@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField, NestedVectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.tools.loggers import logger
@@ -138,12 +138,14 @@ class FieldSet(object):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UV', self.U, self.V))
             elif isinstance(self.U, NestedField):
-                self.add_vector_field(NestedVectorField('UV', self.U, self.V))
+                self.add_vector_field(NestedField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UVW', self.U, self.V, self.W))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
