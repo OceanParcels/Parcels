@@ -1182,7 +1182,6 @@ class NestedField(list):
                         raise
                     else:
                         pass
-            print val
             return val
 
 
