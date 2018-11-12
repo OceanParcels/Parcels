@@ -101,6 +101,7 @@ class FieldSet(object):
         elif isinstance(field, NestedField):
             setattr(self, name, field)
             for fld in field:
+                setattr(self, fld.name, fld)
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
         elif isinstance(field, list):
@@ -117,6 +118,10 @@ class FieldSet(object):
         """
         setattr(self, vfield.name, vfield)
         vfield.fieldset = self
+        if isinstance(vfield, NestedField):
+            for f in vfield:
+                setattr(self, f.name, f)
+                f.fieldset = self
 
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'

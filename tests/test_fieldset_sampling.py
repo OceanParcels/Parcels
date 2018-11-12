@@ -488,7 +488,11 @@ def test_nestedfields(mode, fieldset, k_sample_p):
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
+    #pset.execute(pset.Kernel(k_sample_p), runtime=1, dt=1)
     print pset[0].lon, pset[0].lat, pset[0].p
+    #print fieldset.U.name
+    #print fieldset.U1.name
+    #print fieldset.UV_1.name
 
 
-test_nestedfields('scipy', fieldset(), k_sample_p())
+test_nestedfields('jit', fieldset(), k_sample_p())
