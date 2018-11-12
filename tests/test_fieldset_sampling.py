@@ -456,33 +456,32 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_nestedfields(mode, fieldset, k_sample_p):
+def test_nestedfields(mode, k_sample_p):
     xdim = 10
     ydim = 20
-    gf = 10  # factor by which the resolution of grid1 is higher than of grid2
 
-    U1 = Field('U1', 0.1*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
-    V1 = Field('V1', 0.2*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
-    U2 = Field('U2', 0.3*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 2., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 2., ydim*gf, dtype=np.float32))
-    V2 = Field('V2', 0.4*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 2., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 2., ydim*gf, dtype=np.float32))
+    U1 = Field('U1', 0.1*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V1 = Field('V1', 0.2*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    U2 = Field('U2', 0.3*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 2., xdim, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim, dtype=np.float32))
+    V2 = Field('V2', 0.4*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 2., xdim, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim, dtype=np.float32))
     U = NestedField('U', [U1, U2])
     V = NestedField('V', [V1, V2])
     fieldset = FieldSet(U, V)
 
-    P1 = Field('P1', 0.1*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
-    P2 = Field('P2', 0.2*np.ones((ydim*gf, xdim*gf), dtype=np.float32),
-               lon=np.linspace(0., 2., xdim*gf, dtype=np.float32),
-               lat=np.linspace(0., 2., ydim*gf, dtype=np.float32))
+    P1 = Field('P1', 0.1*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    P2 = Field('P2', 0.2*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 2., xdim, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim, dtype=np.float32))
     P = NestedField('P', [P1, P2])
     fieldset.add_field(P)
 
