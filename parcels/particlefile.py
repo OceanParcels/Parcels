@@ -54,6 +54,8 @@ class ParticleFile(object):
         self.particleset = particleset
         
         self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out")
+        self. file_list = []
+        self.dataset_closed = False
         if os.path.exists(self.npy_path):
             os.system("rm -rf "+ self.npy_path)
             print "Existing temporary output folder ('"+self.npy_path+"') from previous runs (probably aborted) was deleted"
@@ -130,9 +132,14 @@ class ParticleFile(object):
         self.idx = np.empty(shape=0)
 
     def __del__(self):
+        if not self.dataset_closed:
+            self.close()
+
+    def close(self):
         if self.dataset:
             self.convert_npy()
             self.dataset.close()
+            self.dataset_closed = True
 
     def sync(self):
         """Write all buffered data to disk"""
@@ -207,7 +214,9 @@ class ParticleFile(object):
                 for key in tmp.keys():
                     tmp[key] = tmp[key][save_ind]
 
-                np.save(os.path.join(self.npy_path,str(time)),tmp)
+                tmpfilename = os.path.join(self.npy_path,str(time))
+                np.save(tmpfilename,tmp)
+                self.file_list.append(tmpfilename+".npy")
                 
                 for p in first_write:
                     for var in self.user_vars_once:
@@ -238,15 +247,15 @@ class ParticleFile(object):
         :type batch_size: int
         """
         
-        def get_info(file_list):
+        def get_info():
             """get shape and variable names of the temporary output files
             """
             
             # infer array size id from the highest id in NPY file from last time step
-            data_dict  = np.load(os.path.join(self.npy_path,str(file_list[-1])+".npy")).item()
+            data_dict  = np.load(self.file_list[-1]).item()
 
             n_id = int(max(data_dict["ids"])+1)
-            n_time = len(file_list)
+            n_time = len(self.file_list)
             var_names = data_dict.keys()
             
             return n_id,n_time,var_names
@@ -294,7 +303,7 @@ class ParticleFile(object):
             # loop over all files
             for i in range(time_steps):
                 
-                data_dict = np.load(os.path.join(self.npy_path,str(file_list[i])+".npy")).item()
+                data_dict = np.load(self.file_list[i]).item()
                 
                 # don't convert to netdcf if all values are nan for a time step
                 if np.isnan(data_dict["ids"]).all():
@@ -322,13 +331,7 @@ class ParticleFile(object):
             
             return out_dict
 
-        # sort list of NPY-files
-        time_list = os.listdir(self.npy_path)
-        time_list = [x[:-4] for x in time_list]
-        time_list = map(float,time_list)
-        time_list.sort()
-        
-        self.n_id,self.n_time,self.var_names = get_info(time_list)
+        self.n_id,self.n_time,self.var_names = get_info()
         
         if batch_processing:
             print "=============convert NPY-files to NetCDF-file==============="
@@ -389,7 +392,7 @@ class ParticleFile(object):
                 last_filled += n_time_step
         
         else:
-            data_dict = read(time_list,len(time_list))
+            data_dict = read(self.file_list,len(self.file_list))
             for var in self.var_names:
                 if var !="ids":
                     getattr(self, var)[:,:] = data_dict[var]

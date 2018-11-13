@@ -149,6 +149,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
             particle.delete()
     for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
+    pfile.close()
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
     ncfile.close()
@@ -394,9 +395,11 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, repeatdt=0.1)
+    outfile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
-                 output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
+                 output_file=outfile)
     assert np.allclose([p.v_once - p.age * 10 for p in pset], 0, atol=1e-5)
+    outfile.close()
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     vfile = ncfile.variables['v_once'][:]
     assert (vfile.shape == (npart*11, ))
@@ -427,6 +430,7 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
+    outfile.close()
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     lon = ncfile.variables['lon'][:]
     assert (lon.size == noutside)
