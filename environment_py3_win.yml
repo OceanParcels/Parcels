@@ -21,6 +21,7 @@ dependencies:
   - scipy>=0.16.0
   - six>=1.10.0
   - xarray>=0.5.1
+  - dask
   - cftime
   - ipykernel<5.0
   - pip:
