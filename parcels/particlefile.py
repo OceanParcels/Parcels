@@ -108,7 +108,7 @@ class ParticleFile(object):
         self.z.units = "m"
         self.z.positive = "down"
 
-        self.user_vars = []
+        self.var_names = []
         self.user_vars_once = []
         """
         :user_vars: list of additional user defined particle variables to write for all particles and all times
@@ -116,12 +116,13 @@ class ParticleFile(object):
         """
 
         for v in self.particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
+            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
+                self.var_names += [v.name]
                 continue
             if v.to_write:
                 if v.to_write is True:
                     setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes))
-                    self.user_vars += [v.name]
+                    self.var_names += [v.name]
                 elif v.to_write == 'once':
                     setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[self.chunksizes[0]]))
                     self.user_vars_once += [v.name]
@@ -141,10 +142,6 @@ class ParticleFile(object):
             self.dataset.close()
             self.dataset_closed = True
 
-    def sync(self):
-        """Write all buffered data to disk"""
-        self.dataset.sync()
-
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`
         :param name: Name of the metadata variabale
@@ -154,14 +151,13 @@ class ParticleFile(object):
             self.open_dataset()
         setattr(self.dataset, name, message)
 
-    def write(self, pset, time, sync=True, deleted_only=False):
+    def write(self, pset, time, deleted_only=False):
         """Write :class:`parcels.particleset.ParticleSet`
         All data from one time step is saved to one NPY-file using a python
         dictionary. The data is saved in the folder 'out'.
 
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
-        :param sync: Optional argument whether to write data to disk immediately. Default is True
 
         """
         if self.dataset is None:
@@ -171,56 +167,42 @@ class ParticleFile(object):
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
-
-                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
-                for p in first_write:
-                    p.fileid = self.lasttraj
-                    self.lasttraj += 1
-
-                self.idx = np.append(self.idx, np.zeros(len(first_write)))
-
-                size = len(pset)
-
                 # dictionary for temporary hold data
                 tmp = {}
-                tmp["ids"], tmp["time"], tmp["lat"], tmp["lon"], tmp["z"] =\
-                    map(lambda x: np.zeros(x), [size, size, size, size, size])
-
-                for var in self.user_vars:
-                    tmp[var] = np.zeros(size)
-
-                for key in tmp.keys():
-                    tmp[key][:] = np.nan
+                for var in self.var_names:
+                    tmp[var] = np.nan * np.zeros(len(pset))
 
                 i = 0
                 for p in pset:
-
                     if p.dt*p.time <= p.dt*time:
-                        tmp["ids"][i] = p.id
-                        self.maxid_written = np.max([self.maxid_written, p.id])
-                        tmp["time"][i] = time
-                        tmp["lat"][i] = p.lat
-                        tmp["lon"][i] = p.lon
-                        tmp["z"][i] = p.depth
-                        for var in self.user_vars:
-                            tmp[var][i] = getattr(p, var)
+                        for var in self.var_names:
+                            if var == "z":
+                                tmp["z"][i] = p.depth
+                            else:
+                                tmp[var][i] = getattr(p, var)
                         if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
                             logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
+                        self.maxid_written = np.max([self.maxid_written, p.id])
                         i += 1
 
                 if not os.path.exists(self.npy_path):
                     os.mkdir(self.npy_path)
 
-                save_ind = np.isfinite(tmp["ids"])
-                for key in tmp.keys():
+                save_ind = np.isfinite(tmp["id"])
+                for key in self.var_names:
                     tmp[key] = tmp[key][save_ind]
 
                 tmpfilename = os.path.join(self.npy_path, str(len(self.file_list)+1))
                 np.save(tmpfilename, tmp)
                 self.file_list.append(tmpfilename+".npy")
-                self.time_written.append(time)
+                if time not in self.time_written:
+                    self.time_written.append(time)
 
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                self.idx = np.append(self.idx, np.zeros(len(first_write)))
                 for p in first_write:
+                    p.fileid = self.lasttraj
+                    self.lasttraj += 1
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
             else:
@@ -229,9 +211,6 @@ class ParticleFile(object):
             if not deleted_only:
                 self.idx += 1
                 self.lasttime_written = time
-
-        if sync:
-            self.sync()
 
     def convert_npy(self, delete_tmp=True, batch_processing=False, batch_size=2**30):
         """Writes outputs from NPY-files to ParticleFile instance
@@ -248,33 +227,6 @@ class ParticleFile(object):
         :type batch_processing: boolean
         :type batch_size: int
         """
-
-        def get_info():
-            """get shape and variable names of the temporary output files
-            """
-
-            # infer array size id from the highest id in NPY file from last time step
-            data_dict = np.load(self.file_list[-1]).item()
-
-            n_id = int(self.maxid_written+1)
-            n_time = len(self.time_written)
-            var_names = data_dict.keys()
-
-            return n_id, n_time, var_names
-
-        def init_merge_dict(time_steps):
-            """initalize a merging directory"""
-
-            # dictionary for merging
-            merge_dict = {}
-            for var in self.var_names:
-                merge_dict[var] = np.zeros((self.n_id, time_steps))
-
-                if var != "ids":
-                    merge_dict[var][:] = np.nan
-                else:
-                    merge_dict[var][:] = np.nan
-            return merge_dict
 
         def get_available_memory():
             """return available memory in bytes"""
@@ -298,44 +250,29 @@ class ParticleFile(object):
             NPY-files
             """
 
-            merge_dict = init_merge_dict(time_steps)
-            # initiated indeces for time axis
-            time_index = np.zeros(self.n_id, dtype=int)
+            merge_dict = {}
+            for var in self.var_names:
+                merge_dict[var] = np.nan * np.zeros((self.maxid_written+1, time_steps))
+            time_index = np.zeros(self.maxid_written+1, dtype=int)
 
             # loop over all files
-            for i in range(len(self.file_list)):
+            for npyfile in self.file_list:
+                data_dict = np.load(npyfile).item()
 
-                data_dict = np.load(self.file_list[i]).item()
-                # print self.file_list[i], data_dict['time']
-                # don't convert to netdcf if all values are nan for a time step
-                if np.isnan(data_dict["ids"]).all():
-                    for key in merge_dict.keys():
-                        merge_dict[key] = merge_dict[key][:, :-1]
-                    continue
-
-                # get ids that going to be filled
-                id_ind = np.array(data_dict["ids"], dtype=int)
-
-                # get the corresponding time indeces
+                id_ind = np.array(data_dict["id"], dtype=int)
                 t_ind = time_index[id_ind]
-
-                # write into merge array
                 for key in self.var_names:
                     merge_dict[key][id_ind, t_ind] = data_dict[key]
 
-                # new time index for ids that where filled with values
                 time_index[id_ind] = time_index[id_ind] + 1
 
-            # remove rows that are completely filled with nan values
+            # remove rows and columns that are completely filled with nan values
             out_dict = {}
             for var in self.var_names:
                 tmp = merge_dict[var][~np.isnan(merge_dict["lat"]).all(axis=1)]
                 out_dict[var] = tmp[:, ~np.isnan(merge_dict["lat"]).all(axis=0)]
 
             return out_dict
-
-        self.time_written = np.unique(self.time_written)
-        self.n_id, self.n_time, self.var_names = get_info()
 
         if batch_processing:
             print("=============convert NPY-files to NetCDF-file===============")
@@ -345,7 +282,7 @@ class ParticleFile(object):
             self.batch_size = batch_size
 
             # estimate the total size in bytes for merging array
-            self.memory_estimate_total = self.n_id * self.n_time * len(self.var_names) * 8
+            self.memory_estimate_total = (self.maxid_written+1) * len(self.time_written) * len(self.var_names) * 8
             self.memory_per_file = self.memory_estimate_total/len(self.file_list)
             print("Estimated memory needed: '" + str(float(self.memory_estimate_total)/2**20) + "' Mbytes")
             print("Estimated memory per file needed: '" + str(float(self.memory_per_file)/2**20) + "' Mbytes")
@@ -388,21 +325,14 @@ class ParticleFile(object):
                 data_dict = read(time_list_loop, n_time_step)
 
                 for var in self.var_names:
-                    if var != "ids":
-                        getattr(self, var)[:, last_filled:last_filled+n_time_step] = data_dict[var]
-                    else:
-                        getattr(self, "id")[:, last_filled:last_filled+n_time_step] = data_dict[var]
+                    getattr(self, var)[:, last_filled:last_filled+n_time_step] = data_dict[var]
 
                 last_filled += n_time_step
 
         else:
-            data_dict = read(self.file_list, self.n_time)
-
+            data_dict = read(self.file_list, len(self.time_written))
             for var in self.var_names:
-                if var != "ids":
-                    getattr(self, var)[:, :] = data_dict[var]
-                else:
-                    getattr(self, "id")[:, :] = data_dict[var]
+                getattr(self, var)[:, :] = data_dict[var]
 
         if os.path.exists(self.npy_path) and delete_tmp:
             print("Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '" + str(self.name) + "'.")
