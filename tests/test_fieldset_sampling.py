@@ -1,5 +1,5 @@
-from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Geographic,
-                     AdvectionRK4, AdvectionRK4_3D, Variable)
+from parcels import (FieldSet, Field, NestedField, ParticleSet, ScipyParticle, JITParticle, Geographic,
+                     AdvectionRK4, AdvectionRK4_3D, Variable, ErrorCode)
 import numpy as np
 import pytest
 from math import cos, pi
@@ -453,3 +453,53 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
     assert np.isclose(pset[0].p, 60)
     assert np.isclose(pset[0].lon*conv, 0.6, atol=1e-3)
     assert np.isclose(pset[0].lat, 0.9)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_nestedfields(mode, k_sample_p):
+    xdim = 10
+    ydim = 20
+
+    U1 = Field('U1', 0.1*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V1 = Field('V1', 0.2*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    U2 = Field('U2', 0.3*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 2., xdim, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim, dtype=np.float32))
+    V2 = Field('V2', 0.4*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 2., xdim, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim, dtype=np.float32))
+    U = NestedField('U', [U1, U2])
+    V = NestedField('V', [V1, V2])
+    fieldset = FieldSet(U, V)
+
+    P1 = Field('P1', 0.1*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 1., xdim, dtype=np.float32),
+               lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    P2 = Field('P2', 0.2*np.ones((ydim, xdim), dtype=np.float32),
+               lon=np.linspace(0., 2., xdim, dtype=np.float32),
+               lat=np.linspace(0., 2., ydim, dtype=np.float32))
+    P = NestedField('P', [P1, P2])
+    fieldset.add_field(P)
+
+    def Recover(particle, fieldset, time, dt):
+        particle.lon = -1
+        particle.lat = -1
+        particle.p = 999
+        particle.time = particle.time + dt
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
+    assert np.isclose(pset[0].lat, .5)
+    assert np.isclose(pset[0].p, .1)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.3])
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
+    assert np.isclose(pset[0].lat, 1.7)
+    assert np.isclose(pset[0].p, .2)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[2.3])
+    pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1, recovery={ErrorCode.ErrorOutOfBounds: Recover})
+    assert np.isclose(pset[0].lat, -1)
+    assert np.isclose(pset[0].p, 999)

@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, SummedField, SummedVectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.tools.loggers import logger
@@ -98,6 +98,12 @@ class FieldSet(object):
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
+        elif isinstance(field, NestedField):
+            setattr(self, name, field)
+            for fld in field:
+                setattr(self, fld.name, fld)
+                self.gridset.add_grid(fld)
+                fld.fieldset = self
         elif isinstance(field, list):
             raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
@@ -112,6 +118,10 @@ class FieldSet(object):
         """
         setattr(self, vfield.name, vfield)
         vfield.fieldset = self
+        if isinstance(vfield, NestedField):
+            for f in vfield:
+                setattr(self, f.name, f)
+                f.fieldset = self
 
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
@@ -132,11 +142,15 @@ class FieldSet(object):
         if not hasattr(self, 'UV'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UV', self.U, self.V))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UVW', self.U, self.V, self.W))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 

@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, SummedField, SummedVectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField
 from parcels.tools.loggers import logger
 import ast
 import cgen as c
@@ -19,6 +19,13 @@ class FieldSetNode(IntrinsicNode):
         if isinstance(getattr(self.obj, attr), Field):
             return FieldNode(getattr(self.obj, attr),
                              ccode="%s->%s" % (self.ccode, attr))
+        elif isinstance(getattr(self.obj, attr), NestedField):
+            if isinstance(getattr(self.obj, attr)[0], VectorField):
+                return NestedVectorFieldNode(getattr(self.obj, attr),
+                                             ccode="%s->%s" % (self.ccode, attr))
+            else:
+                return NestedFieldNode(getattr(self.obj, attr),
+                                       ccode="%s->%s" % (self.ccode, attr))
         elif isinstance(getattr(self.obj, attr), SummedVectorField):
             return SummedVectorFieldNode(getattr(self.obj, attr),
                                          ccode="%s->%s" % (self.ccode, attr))
@@ -79,6 +86,32 @@ class SummedVectorFieldNode(IntrinsicNode):
 class SummedVectorFieldEvalNode(IntrinsicNode):
     def __init__(self, field, args, var, var2, var3):
         self.field = field
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
+        self.var2 = var2  # second variable for UV interpolation
+        self.var3 = var3  # third variable for UVW interpolation
+
+
+class NestedFieldNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return NestedFieldEvalNode(self.obj, attr)
+
+
+class NestedFieldEvalNode(IntrinsicNode):
+    def __init__(self, fields, args, var):
+        self.fields = fields
+        self.args = args
+        self.var = var  # the variable in which the interpolated field is written
+
+
+class NestedVectorFieldNode(IntrinsicNode):
+    def __getitem__(self, attr):
+        return NestedVectorFieldEvalNode(self.obj, attr)
+
+
+class NestedVectorFieldEvalNode(IntrinsicNode):
+    def __init__(self, fields, args, var, var2, var3):
+        self.fields = fields
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
@@ -244,6 +277,19 @@ class IntrinsicTransformer(ast.NodeTransformer):
             # Insert placeholder node for field eval ...
             self.stmt_stack += [VectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
             # .. and return the name of the temporary that will be populated
+            if tmp3:
+                return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
+            else:
+                return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2)], ast.Load())
+        elif isinstance(node.value, NestedFieldNode):
+            tmp = self.get_tmp()
+            self.stmt_stack += [NestedFieldEvalNode(node.value, node.slice, tmp)]
+            return ast.Name(id=tmp)
+        elif isinstance(node.value, NestedVectorFieldNode):
+            tmp = self.get_tmp()
+            tmp2 = self.get_tmp()
+            tmp3 = self.get_tmp() if list.__getitem__(node.value.obj, 0).W else None
+            self.stmt_stack += [NestedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
             if tmp3:
                 return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
             else:
@@ -633,6 +679,11 @@ class KernelGenerator(ast.NodeVisitor):
         for fld in node.obj:
             self.field_args[fld.name] = fld
 
+    def visit_NestedFieldNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        for fld in node.obj:
+            self.field_args[fld.name] = fld
+
     def visit_VectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         self.vector_field_args[node.obj.name] = node.obj
@@ -646,6 +697,11 @@ class KernelGenerator(ast.NodeVisitor):
         if hasattr(node.obj, 'W') and node.obj.W:
             for fld in node.obj.W:
                 self.field_args[fld.name] = fld
+
+    def visit_NestedVectorFieldNode(self, node):
+        """Record intrinsic fields used in kernel"""
+        for fld in node.obj:
+            self.vector_field_args[fld.name] = fld
 
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
@@ -711,6 +767,44 @@ class KernelGenerator(ast.NodeVisitor):
             conv_stat = c.Block(statements)
             cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKERROR(err)")]
         node.ccode = c.Block(cstat)
+
+    def visit_NestedFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        for fld in node.fields.obj:
+            ccode_eval = fld.ccode_eval(node.var, *node.args.ccode)
+            ccode_conv = fld.ccode_convert(*node.args.ccode)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval),
+                      conv_stat,
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKERROR(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKERROR(err)"), c.Statement("break")]
+        node.ccode = c.While("1==1", c.Block(cstat))
+
+    def visit_NestedVectorFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        for fld in node.fields.obj:
+            ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
+                                        fld.U, fld.V, fld.W,
+                                        *node.args.ccode)
+            if fld.U.interp_method != 'cgrid_linear':
+                ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
+                ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                              c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+            else:
+                statements = []
+            if node.var3:
+                ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
+            cstat += [c.Assign("err", ccode_eval),
+                      c.Block(statements),
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKERROR(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKERROR(err)"), c.Statement("break")]
+        node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_Return(self, node):
         self.visit(node.value)
