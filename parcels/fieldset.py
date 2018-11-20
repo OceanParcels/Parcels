@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, SummedField, SummedVectorField
+from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField
 from parcels.gridset import GridSet
 from parcels.grid import RectilinearZGrid
 from parcels.tools.loggers import logger
@@ -98,6 +98,12 @@ class FieldSet(object):
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
+        elif isinstance(field, NestedField):
+            setattr(self, name, field)
+            for fld in field:
+                setattr(self, fld.name, fld)
+                self.gridset.add_grid(fld)
+                fld.fieldset = self
         elif isinstance(field, list):
             raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
@@ -112,6 +118,10 @@ class FieldSet(object):
         """
         setattr(self, vfield.name, vfield)
         vfield.fieldset = self
+        if isinstance(vfield, NestedField):
+            for f in vfield:
+                setattr(self, f.name, f)
+                f.fieldset = self
 
     def check_complete(self):
         assert self.U, 'FieldSet does not have a Field named "U"'
@@ -132,11 +142,15 @@ class FieldSet(object):
         if not hasattr(self, 'UV'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UV', self.U, self.V))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
             if isinstance(self.U, SummedField):
                 self.add_vector_field(SummedVectorField('UVW', self.U, self.V, self.W))
+            elif isinstance(self.U, NestedField):
+                self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
@@ -174,6 +188,7 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -236,7 +251,7 @@ class FieldSet(object):
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='linear', **kwargs):
+                  tracer_interp_method='uniform_value', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -264,6 +279,7 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -303,6 +319,7 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
@@ -330,6 +347,51 @@ class FieldSet(object):
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
                                time_periodic=time_periodic, full_load=full_load, **kwargs)
+
+    @classmethod
+    def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
+                            time_periodic=False, full_load=False, **kwargs):
+        """Initialises FieldSet data from xarray Datasets.
+
+        :param ds: xarray Dataset
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the xarray Dataset.
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable
+               (e.g. dimensions['U'], dimensions['V'], etc).
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
+               It is advised not to fully load the data, since in that case Parcels deals with
+               a better memory management during particle set execution.
+               full_load is however sometimes necessary for plotting the fields.
+        """
+
+        fields = {}
+        for var, name in variables.items():
+
+            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
+            dims = dimensions[var] if var in dimensions else dimensions
+            inds = indices[var] if (indices and var in indices) else indices
+
+            fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
+                                            allow_time_extrapolation=allow_time_extrapolation, var_name=var,
+                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+        u = fields.pop('U', None)
+        v = fields.pop('V', None)
+        return cls(u, v, fields=fields)
 
     @property
     def fields(self):
@@ -446,7 +508,7 @@ class FieldSet(object):
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    data = f.computeTimeChunk(data, tind)
+                    f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
@@ -456,7 +518,7 @@ class FieldSet(object):
                 else:
                     f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                f.computeTimeChunk(data, f.loaded_time_indices[0])
                 f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
             else:
                 f.loaded_time_indices = []

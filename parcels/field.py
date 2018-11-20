@@ -14,7 +14,7 @@ from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
                    CurvilinearSGrid, CGrid, GridCode)
 
 
-__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField']
+__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField']
 
 
 class Field(object):
@@ -136,7 +136,8 @@ class Field(object):
         :param variable: Name of the field to create. Note that this has to be a string
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
-               This can be used for reading in only a subregion of the NetCDF file
+               This can be used for reading in only a subregion of the NetCDF file.
+               Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -155,29 +156,42 @@ class Field(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
-
-        if not isinstance(filenames, Iterable) or isinstance(filenames, str):
-            filenames = [filenames]
-
-        data_filenames = filenames['data'] if type(filenames) is dict else filenames
-        if type(filenames) == dict:
-            for k in filenames.keys():
-                assert k in ['lon', 'lat', 'depth', 'data'], \
-                    'filename dimension keys must be lon, lat, depth or data'
-            assert len(filenames['lon']) == 1
-            if filenames['lon'] != filenames['lat']:
-                raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
-            lonlat_filename = filenames['lon'][0]
-            if 'depth' in dimensions:
-                depth_filename = filenames['depth'][0]
-                if len(depth_filename) != 1:
-                    raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+        if isinstance(variable, xr.core.dataarray.DataArray):
+            lonlat_filename = variable
+            depth_filename = variable
+            data_filenames = variable
+            netcdf_engine = 'xarray'
         else:
-            lonlat_filename = filenames[0]
-            depth_filename = filenames[0]
+            if not isinstance(filenames, Iterable) or isinstance(filenames, str):
+                filenames = [filenames]
+
+            data_filenames = filenames['data'] if type(filenames) is dict else filenames
+            if type(filenames) == dict:
+                for k in filenames.keys():
+                    assert k in ['lon', 'lat', 'depth', 'data'], \
+                        'filename dimension keys must be lon, lat, depth or data'
+                assert len(filenames['lon']) == 1
+                if filenames['lon'] != filenames['lat']:
+                    raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
+                lonlat_filename = filenames['lon'][0]
+                if 'depth' in dimensions:
+                    if len(filenames['depth']) != 1:
+                        raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+                    depth_filename = filenames['depth'][0]
+            else:
+                lonlat_filename = filenames[0]
+                depth_filename = filenames[0]
+            netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
 
         indices = {} if indices is None else indices.copy()
-        netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        for ind in indices.values():
+            assert np.min(ind) >= 0, \
+                ('Negative indices are currently not allowed in Parcels. ' +
+                 'This is related to the non-increasing dimension it could generate ' +
+                 'if the domain goes from lon[-4] to lon[6] for example. ' +
+                 'Please raise an issue on https://github.com/OceanParcels/parcels/issues ' +
+                 'if you would need such feature implemented.')
+
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             indices = filebuffer.indices
@@ -198,16 +212,22 @@ class Field(object):
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            timeslices = []
-            dataFiles = []
-            for fname in data_filenames:
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
-                    ftime = filebuffer.time
-                    timeslices.append(ftime)
-                    dataFiles.append([fname] * len(ftime))
-            timeslices = np.array(timeslices)
-            time = np.concatenate(timeslices)
-            dataFiles = np.concatenate(np.array(dataFiles))
+            if netcdf_engine == 'xarray':
+                with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
+                    time = filebuffer.time
+                    timeslices = time if isinstance(time, (list, np.ndarray)) else [time]
+                    dataFiles = data_filenames if isinstance(data_filenames, (list, np.ndarray)) else [data_filenames] * len(time)
+            else:
+                timeslices = []
+                dataFiles = []
+                for fname in data_filenames:
+                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
+                        ftime = filebuffer.time
+                        timeslices.append(ftime)
+                        dataFiles.append([fname] * len(ftime))
+                timeslices = np.array(timeslices)
+                time = np.concatenate(timeslices)
+                dataFiles = np.concatenate(np.array(dataFiles))
             if time.size == 1 and time[0] is None:
                 time[0] = 0
             time_origin = TimeConverter(time[0])
@@ -238,17 +258,20 @@ class Field(object):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    filebuffer.name = filebuffer.parse_name(dimensions, variable)
-
-                    if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :]
-                    elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
-                        if len(filebuffer.indices['depth']) > 1:
-                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :]
-                        else:
-                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data[:, :, :]
+                    if netcdf_engine == 'xarray':
+                        tslice = [tslice]
                     else:
-                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data[:, :, :, :]
+                        filebuffer.name = filebuffer.parse_name(dimensions, variable)
+
+                    if len(filebuffer.data.shape) == 2:
+                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
+                    elif len(filebuffer.data.shape) == 3:
+                        if len(filebuffer.indices['depth']) > 1:
+                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data
+                        else:
+                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
+                    else:
+                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                 ti += len(tslice)
         else:
             grid.defer_load = True
@@ -263,6 +286,7 @@ class Field(object):
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
 
+        variable = kwargs['var_name'] if netcdf_engine == 'xarray' else variable
         return cls(variable, data, grid=grid,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
@@ -598,6 +622,10 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
+        elif self.interp_method is  'uniform_value':
+			xii = xi+1
+			yii = yi+1
+			return self.data[ti, yii, xii]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
@@ -627,6 +655,11 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
+        elif self.interp_method is 'uniform_value':
+			xii = xi+1
+			yii = yi+1
+			zii = zi+1
+			return self.data[ti, zii, yii, xii]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
@@ -755,13 +788,14 @@ class Field(object):
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
-    def show(self, animation=False, show_time=None, domain=None, projection=None, land=True,
+    def show(self, animation=False, show_time=None, domain=None, depth_level=0, projection=None, land=True,
              vmin=None, vmax=None, savefile=None, **kwargs):
         """Method to 'show' a Parcels Field
 
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
         :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param depth_level: depth level to be plotted (default 0)
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -769,8 +803,8 @@ class Field(object):
         :param savefile: Name of a file to save the plot to
         """
         from parcels.plotting import plotfield
-        plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, projection=projection,
-                                 land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
+        plt, _, _, _ = plotfield(self, animation=animation, show_time=show_time, domain=domain, depth_level=depth_level,
+                                 projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, **kwargs)
         if plt:
             plt.show()
 
@@ -864,21 +898,20 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine) as filebuffer:
-            filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
-            ti = (time_data <= g.time[tindex]).argmin() - 1
-            if len(filebuffer.dataset[filebuffer.name].shape) == 2:
-                data[tindex, 0, :, :] = filebuffer.data[:, :]
-            elif len(filebuffer.dataset[filebuffer.name].shape) == 3:
+            filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
+            if self.netcdf_engine != 'xarray':
+                filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
+            if len(filebuffer.data.shape) == 2:
+                data[tindex, 0, :, :] = filebuffer.data
+            elif len(filebuffer.data.shape) == 3:
                 if g.zdim > 1:
-                    data[tindex, :, :, :] = filebuffer.data[:, :, :]
+                    data[tindex, :, :, :] = filebuffer.data
                 else:
-                    data[tindex, 0, :, :] = filebuffer.data[ti, :, :]
+                    data[tindex, 0, :, :] = filebuffer.data
             else:
-                data[tindex, :, :, :] = filebuffer.data[ti, :, :, :]
-
-        return data
+                data[tindex, :, :, :] = filebuffer.data
 
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
@@ -1003,14 +1036,14 @@ class VectorField(object):
         meshJac = (deg2m * deg2m * cos(rad * y)) if grid.mesh == 'spherical' else 1
         jac = self.jacobian(xsi, eta, px, py) * meshJac
 
-        u = ((-(1-eta) * U - (1-xsi) * V) * px[0] +
-             ((1-eta) * U - xsi * V) * px[1] +
-             (eta * U + xsi * V) * px[2] +
-             (-eta * U + (1-xsi) * V) * px[3]) / jac
-        v = ((-(1-eta) * U - (1-xsi) * V) * py[0] +
-             ((1-eta) * U - xsi * V) * py[1] +
-             (eta * U + xsi * V) * py[2] +
-             (-eta * U + (1-xsi) * V) * py[3]) / jac
+        u = ((-(1-eta) * U - (1-xsi) * V) * px[0]
+             + ((1-eta) * U - xsi * V) * px[1]
+             + (eta * U + xsi * V) * px[2]
+             + (-eta * U + (1-xsi) * V) * px[3]) / jac
+        v = ((-(1-eta) * U - (1-xsi) * V) * py[0]
+             + ((1-eta) * U - xsi * V) * py[1]
+             + (eta * U + xsi * V) * py[2]
+             + (-eta * U + (1-xsi) * V) * py[3]) / jac
         return (u, v)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
@@ -1132,17 +1165,63 @@ class SummedVectorField(list):
             return self.eval(*key)
 
 
+class NestedField(list):
+    """Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
+    at particle position is interpolated. This induces that the order of the fields in the list matters.
+    Each one it its turn, a field is interpolated: if the interpolation succeeds or if an error other
+    than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.
+    NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
+    NestedField is composed of either Fields or VectorFields.
+
+    :param name: Name of the Nested field
+    :param U: List of fields (order matters). U can be a scalar Field, a VectorField, or the zonal component of the VectorField
+    :param V: List of fields defining the meridional component (default: None)
+    :param W: List of fields defining the vertical component (default: None)
+    """
+
+    def __init__(self, name, U, V=None, W=None):
+        if V is None:
+            for Ui in U:
+                self.append(Ui)
+        elif W is None:
+            for (i, Ui, Vi) in zip(range(len(U)), U, V):
+                self.append(VectorField(name+'_%d' % i, Ui, Vi))
+        else:
+            for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
+                self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
+        self.name = name
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return list.__getitem__(self, key)
+        else:
+            for iField in range(len(self)):
+                try:
+                    val = list.__getitem__(self, iField).eval(*key)
+                    break
+                except FieldSamplingError:
+                    if iField == len(self)-1:
+                        raise
+                    else:
+                        pass
+            return val
+
+
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
     def __init__(self, filename, dimensions, indices, netcdf_engine):
         self.filename = filename
-        self.dimensions = dimensions  # Dict with dimension keyes for file data
+        self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
         self.netcdf_engine = netcdf_engine
+        self.ti = None
 
     def __enter__(self):
+        if self.netcdf_engine == 'xarray':
+            self.dataset = self.filename
+            return self
         try:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
@@ -1157,7 +1236,10 @@ class NetcdfFileBuffer(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        self.dataset.close()
+        if self.netcdf_engine == 'xarray':
+            pass
+        else:
+            self.dataset.close()
 
     def parse_name(self, dimensions, variable):
         name = dimensions['data'] if 'data' in dimensions else variable
@@ -1190,10 +1272,19 @@ class NetcdfFileBuffer(object):
         elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
             lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
             lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
-        if len(lon.shape) > 1:  # if lon, lat are rectilinear but were stored in arrays
-            xdim = lon_subset.shape[0]
-            ydim = lat_subset.shape[1]
-            if np.allclose(lon_subset[0, :], lon_subset[int(xdim/2), :]) and np.allclose(lat_subset[:, 0], lat_subset[:, int(ydim/2)]):
+        if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
+            rectilinear = True
+            # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
+            for xi in range(1, lon_subset.shape[0]):
+                if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
+                    rectilinear = False
+                    break
+            if rectilinear:
+                for yi in range(1, lat_subset.shape[1]):
+                    if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
+                        rectilinear = False
+                        break
+            if rectilinear:
                 lon_subset = lon_subset[0, :]
                 lat_subset = lat_subset[:, 0]
         return lon_subset, lat_subset
@@ -1217,16 +1308,20 @@ class NetcdfFileBuffer(object):
 
     @property
     def data(self):
-        data = self.dataset[self.name]
+        if self.netcdf_engine == 'xarray':
+            data = self.dataset
+        else:
+            data = self.dataset[self.name]
+        ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
             if len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
-                data = data[:, self.indices['lat'], self.indices['lon']]
+                data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
-            data = data[:, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+            data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
@@ -1236,7 +1331,7 @@ class NetcdfFileBuffer(object):
     def time(self):
         try:
             time_da = self.dataset[self.dimensions['time']]
-            if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
+            if self.netcdf_engine != 'xarray' and (self.dataset['decoded'] and 'Unit' not in time_da.attrs):
                 time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
             else:
                 if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
