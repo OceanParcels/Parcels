@@ -54,7 +54,9 @@ class ParticleFile(object):
         self.particleset = particleset
         
         self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out")
-        self. file_list = []
+        self.file_list = []
+        self.time_written = []
+        self.maxid_written = None
         self.dataset_closed = False
         if os.path.exists(self.npy_path):
             os.system("rm -rf "+ self.npy_path)
@@ -197,6 +199,7 @@ class ParticleFile(object):
 
                     if p.dt*p.time <= p.dt*time: 
                         tmp["ids"][i] = p.id
+                        self.maxid_written=np.max([self.maxid_written, p.id])
                         tmp["time"][i] = time
                         tmp["lat"][i] = p.lat
                         tmp["lon"][i] = p.lon
@@ -206,7 +209,7 @@ class ParticleFile(object):
                         if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
                             logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
                         i += 1
-                
+
                 if not os.path.exists(self.npy_path):
                     os.mkdir(self.npy_path)
                 
@@ -214,10 +217,11 @@ class ParticleFile(object):
                 for key in tmp.keys():
                     tmp[key] = tmp[key][save_ind]
 
-                tmpfilename = os.path.join(self.npy_path,str(time))
+                tmpfilename = os.path.join(self.npy_path,str(len(self.file_list)+1))
                 np.save(tmpfilename,tmp)
                 self.file_list.append(tmpfilename+".npy")
-                
+                self.time_written.append(time)
+
                 for p in first_write:
                     for var in self.user_vars_once:
                         getattr(self, var)[p.fileid] = getattr(p, var)
@@ -246,7 +250,7 @@ class ParticleFile(object):
         :type batch_processing: boolean
         :type batch_size: int
         """
-        
+
         def get_info():
             """get shape and variable names of the temporary output files
             """
@@ -254,8 +258,8 @@ class ParticleFile(object):
             # infer array size id from the highest id in NPY file from last time step
             data_dict  = np.load(self.file_list[-1]).item()
 
-            n_id = int(max(data_dict["ids"])+1)
-            n_time = len(self.file_list)
+            n_id = int(self.maxid_written+1)
+            n_time = len(self.time_written)
             var_names = data_dict.keys()
             
             return n_id,n_time,var_names
@@ -271,7 +275,7 @@ class ParticleFile(object):
                 if var!="ids":
                     merge_dict[var][:] = np.nan
                 else:
-                    merge_dict[var][:] = self.id._FillValue
+                    merge_dict[var][:] = np.nan
             return merge_dict
         
         def get_available_memory():
@@ -295,44 +299,46 @@ class ParticleFile(object):
             :return: Python dictionary with the data that was read from the 
             NPY-files
             """
-            
-            merge_dict = init_merge_dict(time_steps)
+
+            merge_dict = init_merge_dict(time_steps) #HACK!
             # initiated indeces for time axis
             time_index = np.zeros(self.n_id,dtype=int)
             
             # loop over all files
-            for i in range(time_steps):
+            for i in range(len(self.file_list)):
                 
                 data_dict = np.load(self.file_list[i]).item()
-                
+                # print self.file_list[i], data_dict['time']
                 # don't convert to netdcf if all values are nan for a time step
-                if np.isnan(data_dict["ids"]).all():
-                    for key in merge_dict.keys():
-                        merge_dict[key] = merge_dict[key][:,:-1]
-                    continue
+                # if np.isnan(data_dict["ids"]).all():
+                # for key in merge_dict.keys():
+                #     merge_dict[key] = merge_dict[key][:,:-1]
+                # continue
                 
                 # get ids that going to be filled
                 id_ind =  np.array(data_dict["ids"],dtype=int)
-                
+
                 # get the corresponding time indeces
                 t_ind = time_index[id_ind]
-                
+
                 # write into merge array
                 for key in self.var_names:
                     merge_dict[key][id_ind,t_ind] = data_dict[key]
                
                 # new time index for ids that where filled with values
                 time_index[id_ind]  = time_index[id_ind]  + 1
-            
+
             # remove rows that are completely filled with nan values
             out_dict = {}
             for var in self.var_names:
-                out_dict[var] = merge_dict[var][~np.isnan(merge_dict["lat"]).all(axis=1)]
-            
+                tmp = merge_dict[var][~np.isnan(merge_dict["lat"]).all(axis=1)]
+                out_dict[var] = tmp[:, ~np.isnan(merge_dict["lat"]).all(axis=0)]
+
             return out_dict
 
+        self.time_written = np.unique(self.time_written)
         self.n_id,self.n_time,self.var_names = get_info()
-        
+
         if batch_processing:
             print "=============convert NPY-files to NetCDF-file==============="
         
@@ -392,13 +398,14 @@ class ParticleFile(object):
                 last_filled += n_time_step
         
         else:
-            data_dict = read(self.file_list,len(self.file_list))
+            data_dict = read(self.file_list,self.n_time)
+
             for var in self.var_names:
                 if var !="ids":
-                    getattr(self, var)[:,:] = data_dict[var]
+                    getattr(self, var)[:, :] = data_dict[var]
                 else:
-                    getattr(self, "id")[:,:] = data_dict[var]  
-        
+                    getattr(self, "id")[:,:] = data_dict[var]
+
         if os.path.exists(self.npy_path) and delete_tmp:
             print "Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '"+str(self.name)+"'." 
             os.system("rm -rf "+self.npy_path)
