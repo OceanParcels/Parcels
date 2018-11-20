@@ -55,7 +55,7 @@ class ParticleFile(object):
         self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out")
         self.file_list = []
         self.time_written = []
-        self.maxid_written = None
+        self.maxid_written = -1
         self.dataset_closed = False
         if os.path.exists(self.npy_path):
             os.system("rm -rf " + self.npy_path)
