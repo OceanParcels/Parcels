@@ -21,9 +21,9 @@ dependencies:
   - scipy>=0.16.0
   - six>=1.10.0
   - xarray>=0.5.1
-  - netcdftime
+  - dask
   - cftime
   - ipykernel<5.0
   - pip:
-      - pytest>=2.7.0
+      - pytest<4.0
       - nbval
