@@ -51,6 +51,16 @@ class ParticleFile(object):
 
         self.dataset = None
         self.particleset = particleset
+        self.var_names = []
+        self.user_vars_once = []
+        for v in self.particleset.ptype.variables:
+            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
+                self.var_names += [v.name]
+            elif v.to_write:
+                if v.to_write is True:
+                    self.var_names += [v.name]
+                elif v.to_write == 'once':
+                    self.user_vars_once += [v.name]
 
         self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out")
         self.file_list = []
@@ -108,47 +118,31 @@ class ParticleFile(object):
         self.z.units = "m"
         self.z.positive = "down"
 
-        self.var_names = []
-        self.user_vars_once = []
-        """
-        :user_vars: list of additional user defined particle variables to write for all particles and all times
-        :user_vars_once: list of additional user defined particle variables to write for all particles only once at initial time.
-        """
-
         for v in self.particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
-                self.var_names += [v.name]
-                continue
-            if v.to_write:
+            if v.to_write and v.name not in ['time', 'lat', 'lon', 'z', 'id']:
                 if v.to_write is True:
                     setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes))
-                    self.var_names += [v.name]
                 elif v.to_write == 'once':
                     setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[self.chunksizes[0]]))
-                    self.user_vars_once += [v.name]
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
-
-        self.idx = np.empty(shape=0)
 
     def __del__(self):
         if not self.dataset_closed:
             self.close()
 
     def close(self):
-        if self.dataset:
-            self.convert_npy()
-            self.dataset.close()
-            self.dataset_closed = True
+        self.export()
+        self.delete_npyfiles()
+        self.dataset.close()
+        self.dataset_closed = True
 
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`
         :param name: Name of the metadata variabale
         :param message: message to be written
         """
-        if self.dataset is None:
-            self.open_dataset()
         setattr(self.dataset, name, message)
 
     def write(self, pset, time, deleted_only=False):
@@ -160,26 +154,23 @@ class ParticleFile(object):
         :param time: Time at which to write ParticleSet
 
         """
-        if self.dataset is None:
-            self.open_dataset()
         if isinstance(time, delta):
             time = time.total_seconds()
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
-                # dictionary for temporary hold data
-                tmp = {}
+                data = {}
                 for var in self.var_names:
-                    tmp[var] = np.nan * np.zeros(len(pset))
+                    data[var] = np.nan * np.zeros(len(pset))
 
                 i = 0
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:
                         for var in self.var_names:
                             if var == "z":
-                                tmp["z"][i] = p.depth
+                                data["z"][i] = p.depth
                             else:
-                                tmp[var][i] = getattr(p, var)
+                                data[var][i] = getattr(p, var)
                         if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
                             logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
                         self.maxid_written = np.max([self.maxid_written, p.id])
@@ -188,34 +179,24 @@ class ParticleFile(object):
                 if not os.path.exists(self.npy_path):
                     os.mkdir(self.npy_path)
 
-                save_ind = np.isfinite(tmp["id"])
+                save_ind = np.isfinite(data["id"])
                 for key in self.var_names:
-                    tmp[key] = tmp[key][save_ind]
+                    data[key] = data[key][save_ind]
 
                 tmpfilename = os.path.join(self.npy_path, str(len(self.file_list)+1))
-                np.save(tmpfilename, tmp)
+                np.save(tmpfilename, data)
                 self.file_list.append(tmpfilename+".npy")
                 if time not in self.time_written:
                     self.time_written.append(time)
 
-                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
-                self.idx = np.append(self.idx, np.zeros(len(first_write)))
-                for p in first_write:
-                    p.fileid = self.lasttraj
-                    self.lasttraj += 1
-                    for var in self.user_vars_once:
-                        getattr(self, var)[p.fileid] = getattr(p, var)
             else:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
 
             if not deleted_only:
-                self.idx += 1
                 self.lasttime_written = time
 
-    def convert_npy(self, delete_tmp=True, batch_processing=False, batch_size=2**30):
-        """Writes outputs from NPY-files to ParticleFile instance
-
-        :param delete_tmp: If True the tmp output folder for the NPY-files is deleted. Default: True
+    def export(self, batch_processing=False, batch_size=2**30):
+        """Exports outputs in temporary NPY-files to NetCDF file
 
         :param batch_processing: If True batch processing is applied. Batches
         of files are loaded and then written to the output netcdf-file. This
@@ -223,7 +204,6 @@ class ParticleFile(object):
 
         :param batch_size: size of one batch in bytes. Default: 2**30 (1 Gbyte).
 
-        :type delete_tmp: boolean
         :type batch_processing: boolean
         :type batch_size: int
         """
@@ -274,6 +254,7 @@ class ParticleFile(object):
 
             return out_dict
 
+        self.open_dataset()
         if batch_processing:
             print("=============convert NPY-files to NetCDF-file===============")
 
@@ -310,7 +291,7 @@ class ParticleFile(object):
             files_per_loop = len(self.file_list)//n_reading_loops
 
             if files_per_loop == 0:
-                raise ValueError("'files_per_loop' can not be equal to 0. Some bug might exist in ParticleFile.convert_npy().")
+                raise ValueError("'files_per_loop' can not be equal to 0. Some bug might exist in ParticleFile.export().")
 
             time_list_splitted = [self.file_list[i:i + files_per_loop] for i in range(0, len(self.file_list), files_per_loop)]
 
@@ -334,6 +315,7 @@ class ParticleFile(object):
             for var in self.var_names:
                 getattr(self, var)[:, :] = data_dict[var]
 
-        if os.path.exists(self.npy_path) and delete_tmp:
+    def delete_npyfiles(self):
+        if os.path.exists(self.npy_path):
             print("Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '" + str(self.name) + "'.")
             os.system("rm -rf "+self.npy_path)
