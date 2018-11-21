@@ -25,5 +25,5 @@ dependencies:
   - cftime
   - ipykernel<5.0
   - pip:
-      - pytest>=2.7.0
+      - pytest<4.0
       - nbval
