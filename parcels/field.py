@@ -623,9 +623,9 @@ class Field(object):
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
         elif self.interp_method is  'uniform_value':
-			xii = xi+1
-			yii = yi+1
-			return self.data[ti, yii, xii]
+            xii = xi+1
+            yii = yi+1
+            return self.data[ti, yii, xii]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
@@ -656,10 +656,10 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'uniform_value':
-			xii = xi+1
-			yii = yi+1
-			zii = zi+1
-			return self.data[ti, zii, yii, xii]
+            xii = xi+1
+            yii = yi+1
+            zii = zi+1
+            return self.data[ti, zii, yii, xii]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 

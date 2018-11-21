@@ -162,9 +162,6 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
         err = spatial_interpolation_uniformvalue2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
         err = spatial_interpolation_uniformvalue2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1);
       } else {
-		    int main() {
-				return 0;
-			}
         err = spatial_interpolation_uniformvalue3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
                                               (float**)(data[ti[igrid]]), &f0);
         err = spatial_interpolation_uniformvalue3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
