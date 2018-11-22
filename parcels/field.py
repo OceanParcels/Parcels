@@ -622,7 +622,7 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
-        elif self.interp_method is 'cgrid_velocity':
+        elif self.interp_method is 'cgrid_tracer':
             return self.data[ti, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
