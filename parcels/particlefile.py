@@ -36,14 +36,11 @@ class ParticleFile(object):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
-    :param chunksizes: 2d vector of sizes for NetCDF chunking. Lower values means smaller files, but also slower IO.
-                       See e.g. https://www.unidata.ucar.edu/blogs/developer/entry/chunking_data_choosing_shapes
     """
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=None):
 
         self.name = name
-        self.chunksizes = [max([len(particleset), 1]), 1] if chunksizes is None else chunksizes
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttraj = 0  # id of last particle written
@@ -71,12 +68,12 @@ class ParticleFile(object):
             os.system("rm -rf " + self.npy_path)
             print("Existing temporary output folder " + self.npy_path + " from previous runs (probably aborted) was deleted")
 
-    def open_dataset(self):
+    def open_dataset(self, data_shape):
         extension = os.path.splitext(str(self.name))[1]
         fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
-        self.dataset.createDimension("obs", None)
-        self.dataset.createDimension("traj", None)
+        self.dataset.createDimension("obs", data_shape[1])
+        self.dataset.createDimension("traj", data_shape[0])
         coords = ("traj", "obs")
         self.dataset.feature_type = "trajectory"
         self.dataset.Conventions = "CF-1.6/CF-1.7"
@@ -85,12 +82,12 @@ class ParticleFile(object):
         self.dataset.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
 
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i4", coords, fill_value=-2147483647, chunksizes=self.chunksizes)
+        self.id = self.dataset.createVariable("trajectory", "i4", coords, fill_value=-2147483647, chunksizes=data_shape)
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=self.chunksizes)
+        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=data_shape)
         self.time.long_name = ""
         self.time.standard_name = "time"
         if self.particleset.time_origin.calendar is None:
@@ -100,19 +97,19 @@ class ParticleFile(object):
             self.time.calendar = self.particleset.time_origin.calendar
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
+        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=data_shape)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
+        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan, chunksizes=data_shape)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
+        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan, chunksizes=data_shape)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"
@@ -121,9 +118,9 @@ class ParticleFile(object):
         for v in self.particleset.ptype.variables:
             if v.to_write and v.name not in ['time', 'lat', 'lon', 'z', 'id']:
                 if v.to_write is True:
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=data_shape))
                 elif v.to_write == 'once':
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[self.chunksizes[0]]))
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[data_shape[0]]))
                 getattr(self, v.name).long_name = ""
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
@@ -254,7 +251,6 @@ class ParticleFile(object):
 
             return out_dict
 
-        self.open_dataset()
         if batch_processing:
             print("=============convert NPY-files to NetCDF-file===============")
 
@@ -312,6 +308,7 @@ class ParticleFile(object):
 
         else:
             data_dict = read(self.file_list, len(self.time_written))
+            self.open_dataset(data_dict["id"].shape)
             for var in self.var_names:
                 getattr(self, var)[:, :] = data_dict[var]
 
