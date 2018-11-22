@@ -251,7 +251,7 @@ class FieldSet(object):
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='uniform_value', **kwargs):
+                  tracer_interp_method='cgrid_tracer', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         :param filenames: Dictionary mapping variables to file(s). The

@@ -15,7 +15,7 @@ extern "C" {
 
 typedef enum
   {
-    LINEAR=0, NEAREST=1, CGRID_LINEAR=2, UNIFORM_VALUE=3,
+    LINEAR=0, NEAREST=1, CGRID_LINEAR=2, CGRID_TRACER=3,
   } InterpCode;
 
 typedef struct
@@ -55,19 +55,6 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
   return SUCCESS;
 }
 
-/* uniform_value interpolation routine for 2D grid */
-static inline ErrorCode spatial_interpolation_uniformvalue2D(int xi, int yi, int xdim, 
-                                                        float **f_data, float *value)
-{
-  /* Cast data array into data[lat][lon] as per NEMO convention */
-  float (*data)[xdim] = (float (*)[xdim]) f_data;
-  int ii, jj;
-  ii = xi+1; 
-  jj = yi+1;
-  *value = data[jj][ii];
-  return SUCCESS;
-}
-
 /* Nearest neighbour interpolation routine for 2D grid */
 static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta, int xi, int yi, int xdim,
                                                         float **f_data, float *value)
@@ -78,6 +65,15 @@ static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta, 
   if (xsi < .5) {ii = xi;} else {ii = xi + 1;}
   if (eta < .5) {jj = yi;} else {jj = yi + 1;}
   *value = data[jj][ii];
+  return SUCCESS;
+}
+
+/* C grid interpolation routine for tracers on 2D grid */
+static inline ErrorCode spatial_interpolation_tracer_c_grid_2D(int xi, int yi, int xdim,
+                                                        float **f_data, float *value)
+{
+  float (*data)[xdim] = (float (*)[xdim]) f_data;
+  *value = data[yi+1][xi+1];
   return SUCCESS;
 }
 
@@ -94,16 +90,12 @@ static inline ErrorCode spatial_interpolation_nearest3D(double xsi, double eta, 
   return SUCCESS;
 }
 
-/* uniform_value interpolation routine for 3D grid */
-static inline ErrorCode spatial_interpolation_uniformvalue3D(int xi, int yi, int zi,
+/* C grid interpolation routine for tracers on 3D grid */
+static inline ErrorCode spatial_interpolation_tracer_c_grid_3D(int xi, int yi, int zi,
                                                         int xdim, int ydim, float **f_data, float *value)
 {
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
-  int ii, jj, kk;
-  ii = xi+1;
-  jj = yi+1;
-  kk = zi+1;
-  *value = data[kk][jj][ii];
+  *value = data[zi+1][yi+1][xi+1];
   return SUCCESS;
 }
 
@@ -132,11 +124,6 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1); CHECKERROR(err);
-    if (interp_method == CGRID_LINEAR){
-      xsi = 0.;
-      eta = 0.;
-      interp_method = LINEAR;
-    }
     if (interp_method == LINEAR){
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
@@ -157,14 +144,14 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
                                               (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
       }
     }
-	else if  (interp_method == UNIFORM_VALUE){
+	else if  (interp_method == CGRID_TRACER){
       if (grid->zdim==1){
-        err = spatial_interpolation_uniformvalue2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
-        err = spatial_interpolation_uniformvalue2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1);
+        err = spatial_interpolation_tracer_c_grid_2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
+        err = spatial_interpolation_tracer_c_grid_2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1);
       } else {
-        err = spatial_interpolation_uniformvalue3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
+        err = spatial_interpolation_tracer_c_grid_3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
                                               (float**)(data[ti[igrid]]), &f0);
-        err = spatial_interpolation_uniformvalue3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
+        err = spatial_interpolation_tracer_c_grid_3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
                                               (float**)(data[ti[igrid]+1]), &f1);
       }
     }
@@ -176,11 +163,6 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   } else {
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
-    if (interp_method == CGRID_LINEAR){
-      xsi = 0.;
-      eta = 0.;
-      interp_method = LINEAR;
-    }
     if (interp_method == LINEAR){
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
@@ -199,13 +181,13 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
                                              (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       }
     }
-	else if (interp_method == UNIFORM_VALUE){
+	else if (interp_method == CGRID_TRACER){
 		
       if (grid->zdim==1){
-        err = spatial_interpolation_uniformvalue2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value);
+        err = spatial_interpolation_tracer_c_grid_2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value);
 	  }
 	  else {
-        err = spatial_interpolation_uniformvalue3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
+        err = spatial_interpolation_tracer_c_grid_3D(xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,
                                              (float**)(data[ti[igrid]]), value);
       }
     }

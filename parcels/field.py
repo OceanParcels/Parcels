@@ -622,7 +622,7 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
-        elif self.interp_method is  'uniform_value':
+        elif self.interp_method is 'cgrid_tracer':
             xii = xi+1
             yii = yi+1
             return self.data[ti, yii, xii]
@@ -655,7 +655,7 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method is 'uniform_value':
+        elif self.interp_method is 'cgrid_tracer':
             xii = xi+1
             yii = yi+1
             zii = zi+1
