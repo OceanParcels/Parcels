@@ -15,7 +15,7 @@ extern "C" {
 
 typedef enum
   {
-    LINEAR=0, NEAREST=1, CGRID_LINEAR=2, CGRID_TRACER=3,
+    LINEAR=0, NEAREST=1, CGRID_VELOCITY=2, CGRID_TRACER=3,
   } InterpCode;
 
 typedef struct
@@ -369,7 +369,7 @@ static inline ErrorCode temporal_interpolationUV(float x, float y, float z, doub
                                                  float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
-  if (interp_method == CGRID_LINEAR){
+  if (interp_method == CGRID_VELOCITY){
     CGrid *_grid = U->grid;
     GridCode gcode = _grid->gtype;
     int *xi = (int *) vxi;
@@ -392,7 +392,7 @@ static inline ErrorCode temporal_interpolationUVW(float x, float y, float z, dou
                                                   float *valueU, float *valueV, float *valueW, int interp_method)
 {
   ErrorCode err;
-  if (interp_method == CGRID_LINEAR){
+  if (interp_method == CGRID_VELOCITY){
     CGrid *_grid = U->grid;
     GridCode gcode = _grid->gtype;
     if (gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_S_GRID){

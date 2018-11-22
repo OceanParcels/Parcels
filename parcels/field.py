@@ -622,10 +622,8 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
-        elif self.interp_method is 'cgrid_tracer':
-            xii = xi+1
-            yii = yi+1
-            return self.data[ti, yii, xii]
+        elif self.interp_method is 'cgrid_velocity':
+            return self.data[ti, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
@@ -638,7 +636,7 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'cgrid_linear':
+        elif self.interp_method is 'cgrid_velocity':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
@@ -656,10 +654,7 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'cgrid_tracer':
-            xii = xi+1
-            yii = yi+1
-            zii = zi+1
-            return self.data[ti, zii, yii, xii]
+            return self.data[ti, zi+1, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
@@ -964,11 +959,11 @@ class VectorField(object):
         self.U = U
         self.V = V
         self.W = W
-        if self.U.interp_method == 'cgrid_linear':
-            assert self.V.interp_method == 'cgrid_linear'
+        if self.U.interp_method == 'cgrid_velocity':
+            assert self.V.interp_method == 'cgrid_velocity'
             assert self.U.grid is self.V.grid
             if W:
-                assert self.W.interp_method == 'cgrid_linear'
+                assert self.W.interp_method == 'cgrid_velocity'
 
     def dist(self, lon1, lon2, lat1, lat2, mesh):
         if mesh == 'spherical':
@@ -1065,7 +1060,7 @@ class VectorField(object):
         return (u, v, w)
 
     def eval(self, time, x, y, z):
-        if self.U.interp_method != 'cgrid_linear':
+        if self.U.interp_method != 'cgrid_velocity':
             u = self.U.eval(time, x, y, z, False)
             v = self.V.eval(time, x, y, z, False)
             u = self.U.units.to_target(u, x, y, z)

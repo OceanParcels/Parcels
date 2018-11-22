@@ -291,8 +291,8 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. Either 'linear' or 'nearest'
-               Note that in the case of from_nemo(), the velocity fields are default to 'cgrid_linear'
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
+               Note that in the case of from_nemo(), the velocity fields are default to 'cgrid_velocity'
 
         """
 
@@ -302,7 +302,7 @@ class FieldSet(object):
         interp_method = {}
         for v in variables:
             if v in ['U', 'V', 'W']:
-                interp_method[v] = 'cgrid_linear'
+                interp_method[v] = 'cgrid_velocity'
             else:
                 interp_method[v] = tracer_interp_method
 
