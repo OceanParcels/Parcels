@@ -177,9 +177,9 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
-        assert len(data.shape) == 3
-        if field.interp_method == 'cgrid_tracer':
-            d = data[0,1:,1:]
+        assert len(data[0].shape) == 2
+        if field[0].interp_method == 'cgrid_tracer':
+            d = data[0][1:,1:]
         else:  # if A-grid
             d = (data[0, :-1, :-1] + data[0, 1:, :-1] + data[0, :-1, 1:] + data[0, 1:, 1:])/4.
             d = np.where(data[0, :-1, :-1] == 0, 0, d)
