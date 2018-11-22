@@ -47,6 +47,7 @@ class ParticleFile(object):
         self.lasttime_written = None  # variable to check if time has been written already
 
         self.dataset = None
+        self.metadata = {}
         self.particleset = particleset
         self.var_names = []
         self.user_vars_once = []
@@ -125,6 +126,9 @@ class ParticleFile(object):
                 getattr(self, v.name).standard_name = v.name
                 getattr(self, v.name).units = "unknown"
 
+        for name, message in self.metadata.items():
+            setattr(self.dataset, name, message)
+
     def __del__(self):
         if not self.dataset_closed:
             self.close()
@@ -140,7 +144,10 @@ class ParticleFile(object):
         :param name: Name of the metadata variabale
         :param message: message to be written
         """
-        setattr(self.dataset, name, message)
+        if self.dataset is None:
+            self.metadata[name] = message
+        else:
+            setattr(self.dataset, name, message)
 
     def write(self, pset, time, deleted_only=False):
         """Write :class:`parcels.particleset.ParticleSet`

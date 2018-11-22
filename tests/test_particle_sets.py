@@ -432,5 +432,6 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
     outfile.close()
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    assert ncfile.runtime == runtime
     lon = ncfile.variables['lon'][:]
     assert (lon.size == noutside)
