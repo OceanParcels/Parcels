@@ -52,7 +52,7 @@ class ParticleFile(object):
         self.var_names = []
         self.user_vars_once = []
         for v in self.particleset.ptype.variables:
-            if v.name in ['time', 'lat', 'lon', 'z', 'id']:
+            if v.name in ['time', 'lat', 'lon', 'depth', 'id']:
                 self.var_names += [v.name]
             elif v.to_write:
                 if v.to_write is True:
@@ -171,10 +171,7 @@ class ParticleFile(object):
                 for p in pset:
                     if p.dt*p.time <= p.dt*time:
                         for var in self.var_names:
-                            if var == "z":
-                                data["z"][i] = p.depth
-                            else:
-                                data[var][i] = getattr(p, var)
+                            data[var][i] = getattr(p, var)
                         if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
                             logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
                         self.maxid_written = np.max([self.maxid_written, p.id])
@@ -240,7 +237,7 @@ class ParticleFile(object):
             time_index = np.zeros(self.maxid_written+1, dtype=int)
 
             # loop over all files
-            for npyfile in self.file_list:
+            for npyfile in file_list:
                 data_dict = np.load(npyfile).item()
 
                 id_ind = np.array(data_dict["id"], dtype=int)
@@ -317,7 +314,10 @@ class ParticleFile(object):
             data_dict = read(self.file_list, len(self.time_written))
             self.open_dataset(data_dict["id"].shape)
             for var in self.var_names:
-                getattr(self, var)[:, :] = data_dict[var]
+                if var == "depth":
+                    self.z[:, :] = data_dict["depth"]
+                else:
+                    getattr(self, var)[:, :] = data_dict[var]
 
     def delete_npyfiles(self):
         if os.path.exists(self.npy_path):
