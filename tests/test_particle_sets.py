@@ -437,7 +437,7 @@ def test_from_field_exact_val(staggered_grid):
     xdim = 4
     ydim = 3
 
-    lon = np.linspace(-1, 3, xdim, dtype=np.float32)
+    lon = np.linspace(-1, 2, xdim, dtype=np.float32)
     lat = np.linspace(50, 52, ydim, dtype=np.float32)
 
     dimensions = {'lat': lat, 'lon': lon}
@@ -474,8 +474,8 @@ def test_from_field_exact_val(staggered_grid):
         mask = Variable('mask', initial=fieldset.mask)
 
     pset = ParticleSet.from_field(fieldset, size=400, pclass=SampleParticle, start_field=FMask, time=0)
-    pset.show(field=FMask)
+    # pset.show(field=FMask)
     assert np.allclose([p.mask for p in pset], 1)
-
-
-test_from_field_exact_val('Cgrid')
+    assert (np.array([p.lon for p in pset]) <= 1).all()
+    test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)
+    assert test.all()
