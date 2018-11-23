@@ -157,7 +157,15 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
 
     if plottype is 'vector':
         if field.interp_method == 'cgrid_velocity':
-            print 'do something here'
+            logger.warning_once('Plotting a C-grid velocity field is achieved via an A-grid projection, reducing the plot accuracy')
+            d = np.empty_like(data[0])
+            d[:-1, :] = (data[:-1, :] + data[1:, :]) / 2.
+            d[-1, :] = data[-1, :]
+            data[0] = d
+            d = np.empty_like(data[0])
+            d[:, :-1] = (data[:, :-1] + data[:, 1:]) / 2.
+            d[:, -1] = data[:, -1]
+            data[1] = d
         spd = data[0] ** 2 + data[1] ** 2
         speed = np.sqrt(spd, where=spd > 0)
         vmin = speed.min() if vmin is None else vmin
@@ -179,13 +187,13 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         vmax = data[0].max() if vmax is None else vmax
         assert len(data[0].shape) == 2
         if field[0].interp_method == 'cgrid_tracer':
-            d = data[0][1:,1:]
+            d = data[0][1:, 1:]
         else:  # if A-grid
-            d = (data[0, :-1, :-1] + data[0, 1:, :-1] + data[0, :-1, 1:] + data[0, 1:, 1:])/4.
-            d = np.where(data[0, :-1, :-1] == 0, 0, d)
-            d = np.where(data[0, 1:, :-1] == 0, 0, d)
-            d = np.where(data[0, 1:, 1:] == 0, 0, d)
-            d = np.where(data[0, :-1, 1:] == 0, 0, d)
+            d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
+            d = np.where(data[0][:-1, :-1] == 0, 0, d)
+            d = np.where(data[0][1:, :-1] == 0, 0, d)
+            d = np.where(data[0][1:, 1:] == 0, 0, d)
+            d = np.where(data[0][:-1, 1:] == 0, 0, d)
         if cartopy:
             cs = ax.pcolormesh(plotlon[0], plotlat[0], d, transform=cartopy.crs.PlateCarree())
         else:
