@@ -189,11 +189,11 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         if field[0].interp_method == 'cgrid_tracer':
             d = data[0][1:, 1:]
         else:  # if A-grid
-            d = (data[0, :-1, :-1] + data[0, 1:, :-1] + data[0, :-1, 1:] + data[0, 1:, 1:])/4.
-            d = np.where(data[0, :-1, :-1] == 0, 0, d)
-            d = np.where(data[0, 1:, :-1] == 0, 0, d)
-            d = np.where(data[0, 1:, 1:] == 0, 0, d)
-            d = np.where(data[0, :-1, 1:] == 0, 0, d)
+            d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
+            d = np.where(data[0][:-1, :-1] == 0, 0, d)
+            d = np.where(data[0][1:, :-1] == 0, 0, d)
+            d = np.where(data[0][1:, 1:] == 0, 0, d)
+            d = np.where(data[0][:-1, 1:] == 0, 0, d)
         if cartopy:
             cs = ax.pcolormesh(plotlon[0], plotlat[0], d, transform=cartopy.crs.PlateCarree())
         else:
