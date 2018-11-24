@@ -72,14 +72,15 @@ class ParticleFile(object):
         self.file_list = []
         self.time_written = []
         self.maxid_written = -1
-        self.dataset_closed = False
+        self.dataset_open = True
         if os.path.exists(self.npy_path):
             os.system("rm -rf " + self.npy_path)
-            print("Existing temporary output folder " + self.npy_path + " from previous runs (probably aborted) was deleted")
 
     def open_dataset(self, data_shape):
         extension = os.path.splitext(str(self.name))[1]
         fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
+        if os.path.exists(fname):
+            os.system("rm -rf " + fname)
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", data_shape[1])
         self.dataset.createDimension("traj", data_shape[0])
@@ -138,14 +139,14 @@ class ParticleFile(object):
             setattr(self.dataset, name, message)
 
     def __del__(self):
-        if not self.dataset_closed:
+        if self.dataset_open:
             self.close()
 
     def close(self):
         self.export()
         self.delete_npyfiles()
         self.dataset.close()
-        self.dataset_closed = True
+        self.dataset_open = False
 
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`
@@ -352,5 +353,4 @@ class ParticleFile(object):
 
     def delete_npyfiles(self):
         if os.path.exists(self.npy_path):
-            print("Remove folder '"+self.npy_path+"' after conversion of NPY-files to NetCDF file '" + str(self.name) + "'.")
             os.system("rm -rf "+self.npy_path)
