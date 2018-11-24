@@ -7,11 +7,16 @@ import os
 from tempfile import gettempdir
 import psutil
 from parcels.tools.error import ErrorCode
-
 try:
     from parcels._version import version as parcels_version
 except:
     raise EnvironmentError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
+try:
+    from os import getuid
+except:
+    # Windows does not have getuid(), so define to simply return 'tmp'
+    def getuid():
+        return 'tmp'
 
 
 __all__ = ['ParticleFile']
@@ -60,7 +65,7 @@ class ParticleFile(object):
                 elif v.to_write == 'once':
                     self.user_vars_once += [v.name]
 
-        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % os.getuid(), "out")
+        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % getuid(), "out")
         self.file_list = []
         self.time_written = []
         self.maxid_written = -1
