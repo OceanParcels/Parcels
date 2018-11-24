@@ -401,9 +401,9 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     assert np.allclose([p.v_once - p.age * 10 for p in pset], 0, atol=1e-5)
     outfile.close()
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
-    vfile = ncfile.variables['v_once'][:]
+    vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
     assert (vfile.shape == (npart*11, ))
-    assert [v == 0 for v in vfile]
+    assert np.all([v == 0 for v in vfile])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

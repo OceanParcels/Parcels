@@ -55,7 +55,7 @@ class ParticleFile(object):
         self.metadata = {}
         self.particleset = particleset
         self.var_names = []
-        self.user_vars_once = []
+        self.var_names_once = []
         for v in self.particleset.ptype.variables:
             if v.name in ['time', 'lat', 'lon', 'depth', 'id']:
                 self.var_names += [v.name]
@@ -63,7 +63,10 @@ class ParticleFile(object):
                 if v.to_write is True:
                     self.var_names += [v.name]
                 elif v.to_write == 'once':
-                    self.user_vars_once += [v.name]
+                    self.var_names_once += [v.name]
+        if len(self.var_names_once) > 0:
+            self.written_once = []
+            self.file_list_once = []
 
         self.npy_path = os.path.join(gettempdir(), "parcels-%s" % getuid(), "out")
         self.file_list = []
@@ -195,6 +198,25 @@ class ParticleFile(object):
                 if time not in self.time_written:
                     self.time_written.append(time)
 
+                if len(self.var_names_once) > 0:
+                    first_write = [p for p in pset if (p.id not in self.written_once) and (p.dt * p.time <= p.dt * time or np.isnan(p.dt))]
+                    data_once = {}
+                    data_once['id'] = np.nan * np.zeros(len(first_write))
+                    for var in self.var_names_once:
+                        data_once[var] = np.nan * np.zeros(len(first_write))
+
+                    i = 0
+                    for p in first_write:
+                        self.written_once.append(p.id)
+                        data_once['id'][i] = p.id
+                        for var in self.var_names_once:
+                            data_once[var][i] = getattr(p, var)
+                        i += 1
+
+                    tmpfilename = os.path.join(self.npy_path, str(len(self.file_list)+1)+'_once')
+                    np.save(tmpfilename, data_once)
+                    self.file_list_once.append(tmpfilename+".npy")
+
             else:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
 
@@ -220,7 +242,7 @@ class ParticleFile(object):
             available_memory = memory_info.available
             return available_memory
 
-        def read(file_list, time_steps):
+        def read(file_list, time_steps, var_names):
             """Read NPY-files using a loop over all files and return one array
             for each variable.
 
@@ -237,7 +259,7 @@ class ParticleFile(object):
             """
 
             merge_dict = {}
-            for var in self.var_names:
+            for var in var_names:
                 merge_dict[var] = np.nan * np.zeros((self.maxid_written+1, time_steps))
             time_index = np.zeros(self.maxid_written+1, dtype=int)
 
@@ -246,18 +268,17 @@ class ParticleFile(object):
                 data_dict = np.load(npyfile).item()
 
                 id_ind = np.array(data_dict["id"], dtype=int)
-                t_ind = time_index[id_ind]
-                for key in self.var_names:
+                t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
+                for key in var_names:
                     merge_dict[key][id_ind, t_ind] = data_dict[key]
 
                 time_index[id_ind] = time_index[id_ind] + 1
 
             # remove rows and columns that are completely filled with nan values
             out_dict = {}
-            for var in self.var_names:
-                tmp = merge_dict[var][~np.isnan(merge_dict["lat"]).all(axis=1)]
-                out_dict[var] = tmp[:, ~np.isnan(merge_dict["lat"]).all(axis=0)]
-
+            for var in var_names:
+                tmp = merge_dict[var][~np.isnan(merge_dict[var]).all(axis=1)]
+                out_dict[var] = tmp[:, ~np.isnan(merge_dict[var]).all(axis=0)]
             return out_dict
 
         if batch_processing:
@@ -308,7 +329,7 @@ class ParticleFile(object):
             # reading loop
             for time_list_loop in time_list_splitted:
                 n_time_step = len(time_list_loop)
-                data_dict = read(time_list_loop, n_time_step)
+                data_dict = read(time_list_loop, n_time_step, self.var_names)
 
                 for var in self.var_names:
                     getattr(self, var)[:, last_filled:last_filled+n_time_step] = data_dict[var]
@@ -316,13 +337,18 @@ class ParticleFile(object):
                 last_filled += n_time_step
 
         else:
-            data_dict = read(self.file_list, len(self.time_written))
+            data_dict = read(self.file_list, len(self.time_written), self.var_names)
             self.open_dataset(data_dict["id"].shape)
             for var in self.var_names:
                 if var == "depth":
                     self.z[:, :] = data_dict["depth"]
                 else:
                     getattr(self, var)[:, :] = data_dict[var]
+
+        if len(self.var_names_once) > 0:
+            data_dict = read(self.file_list_once, 1, self.var_names_once)
+            for var in self.var_names_once:
+                getattr(self, var)[:] = data_dict[var]
 
     def delete_npyfiles(self):
         if os.path.exists(self.npy_path):
