@@ -156,7 +156,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
                 data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
 
     if plottype is 'vector':
-        if field.interp_method == 'cgrid_velocity':
+        if field[0].interp_method == 'cgrid_velocity':
             logger.warning_once('Plotting a C-grid velocity field is achieved via an A-grid projection, reducing the plot accuracy')
             d = np.empty_like(data[0])
             d[:-1, :] = (data[:-1, :] + data[1:, :]) / 2.
