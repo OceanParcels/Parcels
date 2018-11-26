@@ -71,7 +71,7 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
+        if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
             self.units = unitconverters_map[self.fieldtype]
