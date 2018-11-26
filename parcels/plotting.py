@@ -189,6 +189,13 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         assert len(data[0].shape) == 2
         if field[0].interp_method == 'cgrid_tracer':
             d = data[0][1:, 1:]
+        elif field[0].interp_method == 'cgrid_velocity':
+            if field[0].fieldtype == 'U':
+                d = np.empty_like(data[0])
+                d[:-1, :-1] = (data[0][1:, :-1] + data[0][1:, 1:]) / 2.
+            elif field[0].fieldtype == 'V':
+                d = np.empty_like(data[0])
+                d[:-1, :-1] = (data[0][:-1, 1:] + data[0][1:, 1:]) / 2.
         else:  # if A-grid
             d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
             d = np.where(data[0][:-1, :-1] == 0, 0, d)

@@ -70,11 +70,11 @@ class Field(object):
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
-        fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
+        self.fieldtype = self.name if fieldtype is None else fieldtype
+        if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = unitconverters_map[fieldtype]
+            self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:
@@ -276,7 +276,7 @@ class Field(object):
         else:
             grid.defer_load = True
             grid.ti = -1
-            data = None
+            data = DeferredArray()
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if 'time' in dimensions else True
@@ -369,7 +369,7 @@ class Field(object):
         tindex = range(self.grid.tdim) if tindex is None else tindex
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
-        if self.grid.defer_load and self.data is None:
+        if self.grid.defer_load and isinstance(self.data, DeferredArray):
             (dFdx, dFdy) = (None, None)
         else:
             dFdy = np.gradient(self.data[tindex, :], axis=-2) / self.grid.cell_edge_sizes['y']
@@ -1115,6 +1115,12 @@ class VectorField(object):
                    % (x, y, z, t, U.name, V.name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
+
+
+class DeferredArray():
+    """Class used for throwing error when Field.data is not read in deferred loading mode"""
+    def __getitem__(self, key):
+        raise RuntimeError('Field is in deferred_load mode, so can''t be accessed. Use .computeTimeChunk() method to force loading of  data')
 
 
 class SummedVectorField(list):
