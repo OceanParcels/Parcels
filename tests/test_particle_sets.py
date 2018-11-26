@@ -430,3 +430,52 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     lon = ncfile.variables['lon'][:]
     assert (lon.size == noutside)
+
+
+@pytest.mark.parametrize('staggered_grid', ['Agrid', 'Cgrid'])
+def test_from_field_exact_val(staggered_grid):
+    xdim = 4
+    ydim = 3
+
+    lon = np.linspace(-1, 2, xdim, dtype=np.float32)
+    lat = np.linspace(50, 52, ydim, dtype=np.float32)
+
+    dimensions = {'lat': lat, 'lon': lon}
+    if staggered_grid == 'Agrid':
+        U = np.zeros((ydim, xdim), dtype=np.float32)
+        V = np.zeros((ydim, xdim), dtype=np.float32)
+        data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+        mask = np.array([[1, 1, 0, 0],
+                         [1, 1, 1, 0],
+                         [1, 1, 1, 1]])
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+        FMask = Field('mask', mask, lon, lat)
+        fieldset.add_field(FMask)
+    elif staggered_grid == 'Cgrid':
+        U = np.array([[0, 0, 0, 0],
+                      [1, 0, 0, 0],
+                      [1, 1, 0, 0]])
+        V = np.array([[0, 1, 0, 0],
+                      [0, 1, 0, 0],
+                      [0, 1, 1, 0]])
+        data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+        mask = np.array([[-1, -1, -1, -1],
+                         [-1, 1, 0, 0],
+                         [-1, 1, 1, 0]])
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
+
+        FMask = Field('mask', mask, lon, lat, interp_method='cgrid_tracer')
+        fieldset.add_field(FMask)
+
+    class SampleParticle(ptype['scipy']):
+        mask = Variable('mask', initial=fieldset.mask)
+
+    pset = ParticleSet.from_field(fieldset, size=400, pclass=SampleParticle, start_field=FMask, time=0)
+    # pset.show(field=FMask)
+    assert np.allclose([p.mask for p in pset], 1)
+    assert (np.array([p.lon for p in pset]) <= 1).all()
+    test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)
+    assert test.all()

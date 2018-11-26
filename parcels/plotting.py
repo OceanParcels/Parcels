@@ -159,13 +159,14 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         if field[0].interp_method == 'cgrid_velocity':
             logger.warning_once('Plotting a C-grid velocity field is achieved via an A-grid projection, reducing the plot accuracy')
             d = np.empty_like(data[0])
-            d[:-1, :] = (data[:-1, :] + data[1:, :]) / 2.
-            d[-1, :] = data[-1, :]
+            d[:-1, :] = (data[0][:-1, :] + data[0][1:, :]) / 2.
+            d[-1, :] = data[0][-1, :]
             data[0] = d
             d = np.empty_like(data[0])
-            d[:, :-1] = (data[:, :-1] + data[:, 1:]) / 2.
-            d[:, -1] = data[:, -1]
+            d[:, :-1] = (data[0][:, :-1] + data[0][:, 1:]) / 2.
+            d[:, -1] = data[0][:, -1]
             data[1] = d
+
         spd = data[0] ** 2 + data[1] ** 2
         speed = np.sqrt(spd, where=spd > 0)
         vmin = speed.min() if vmin is None else vmin

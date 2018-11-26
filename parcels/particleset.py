@@ -150,7 +150,7 @@ class ParticleSet(object):
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
                  object that defines custom particle
-        :param start_field: Field for initialising particles stochastically according to the presented density field.
+        :param start_field: Field for initialising particles stochastically (horizontally)  according to the presented density field.
         :param size: Initial size of particle set
         :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
         :param depth: Optional list of initial depth values for particles. Default is 0m
@@ -159,7 +159,15 @@ class ParticleSet(object):
         """
 
         if mode == 'monte_carlo':
-            p_interior = np.squeeze(start_field.data[:, :-1, :-1])
+            if start_field.interp_method == 'cgrid_tracer':
+                p_interior = np.squeeze(start_field.data[0, 1:, 1:])
+            else:  # if A-grid
+                d = start_field.data
+                p_interior = (d[0, :-1, :-1] + d[0, 1:, :-1] + d[0, :-1, 1:] + d[0, 1:, 1:])/4.
+                p_interior = np.where(d[0, :-1, :-1] == 0, 0, p_interior)
+                p_interior = np.where(d[0, 1:, :-1] == 0, 0, p_interior)
+                p_interior = np.where(d[0, 1:, 1:] == 0, 0, p_interior)
+                p_interior = np.where(d[0, :-1, 1:] == 0, 0, p_interior)
             p = np.reshape(p_interior, (1, p_interior.size))
             inds = np.random.choice(p_interior.size, size, replace=True, p=p[0] / np.sum(p))
             xsi = np.random.uniform(size=len(inds))
