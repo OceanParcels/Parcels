@@ -70,11 +70,11 @@ class Field(object):
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
-        fieldtype = self.name if fieldtype is None else fieldtype
+        self.fieldtype = self.name if fieldtype is None else fieldtype
         if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = unitconverters_map[fieldtype]
+            self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:
