@@ -156,6 +156,17 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
                 data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
 
     if plottype is 'vector':
+        if field[0].interp_method == 'cgrid_velocity':
+            logger.warning_once('Plotting a C-grid velocity field is achieved via an A-grid projection, reducing the plot accuracy')
+            d = np.empty_like(data[0])
+            d[:-1, :] = (data[0][:-1, :] + data[0][1:, :]) / 2.
+            d[-1, :] = data[0][-1, :]
+            data[0] = d
+            d = np.empty_like(data[0])
+            d[:, :-1] = (data[0][:, :-1] + data[0][:, 1:]) / 2.
+            d[:, -1] = data[0][:, -1]
+            data[1] = d
+
         spd = data[0] ** 2 + data[1] ** 2
         speed = np.sqrt(spd, where=spd > 0)
         vmin = speed.min() if vmin is None else vmin
@@ -175,10 +186,26 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
+        assert len(data[0].shape) == 2
+        if field[0].interp_method == 'cgrid_tracer':
+            d = data[0][1:, 1:]
+        elif field[0].interp_method == 'cgrid_velocity':
+            if field[0].fieldtype == 'U':
+                d = np.empty_like(data[0])
+                d[:-1, :-1] = (data[0][1:, :-1] + data[0][1:, 1:]) / 2.
+            elif field[0].fieldtype == 'V':
+                d = np.empty_like(data[0])
+                d[:-1, :-1] = (data[0][:-1, 1:] + data[0][1:, 1:]) / 2.
+        else:  # if A-grid
+            d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
+            d = np.where(data[0][:-1, :-1] == 0, 0, d)
+            d = np.where(data[0][1:, :-1] == 0, 0, d)
+            d = np.where(data[0][1:, 1:] == 0, 0, d)
+            d = np.where(data[0][:-1, 1:] == 0, 0, d)
         if cartopy:
-            cs = ax.pcolormesh(plotlon[0], plotlat[0], data[0], transform=cartopy.crs.PlateCarree())
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, transform=cartopy.crs.PlateCarree())
         else:
-            cs = ax.pcolormesh(plotlon[0], plotlat[0], data[0])
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], d)
 
     if cartopy is None or projection is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))

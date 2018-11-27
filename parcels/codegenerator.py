@@ -721,7 +721,7 @@ class KernelGenerator(ast.NodeVisitor):
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
                                                node.field.obj.U, node.field.obj.V, node.field.obj.W,
                                                *node.args.ccode)
-        if node.field.obj.U.interp_method != 'cgrid_linear':
+        if node.field.obj.U.interp_method != 'cgrid_velocity':
             ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
             ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
             statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
@@ -790,7 +790,7 @@ class KernelGenerator(ast.NodeVisitor):
             ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
                                         fld.U, fld.V, fld.W,
                                         *node.args.ccode)
-            if fld.U.interp_method != 'cgrid_linear':
+            if fld.U.interp_method != 'cgrid_velocity':
                 ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
                 ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
                 statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),

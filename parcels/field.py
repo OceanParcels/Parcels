@@ -70,11 +70,11 @@ class Field(object):
         self.lon = self.grid.lon
         self.lat = self.grid.lat
         self.depth = self.grid.depth
-        fieldtype = self.name if fieldtype is None else fieldtype
-        if self.grid.mesh == 'flat' or (fieldtype not in unitconverters_map.keys()):
+        self.fieldtype = self.name if fieldtype is None else fieldtype
+        if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
-            self.units = unitconverters_map[fieldtype]
+            self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if type(interp_method) is dict:
@@ -276,7 +276,7 @@ class Field(object):
         else:
             grid.defer_load = True
             grid.ti = -1
-            data = None
+            data = DeferredArray()
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if 'time' in dimensions else True
@@ -369,7 +369,7 @@ class Field(object):
         tindex = range(self.grid.tdim) if tindex is None else tindex
         if not self.grid.cell_edge_sizes:
             self.calc_cell_edge_sizes()
-        if self.grid.defer_load and self.data is None:
+        if self.grid.defer_load and isinstance(self.data, DeferredArray):
             (dFdx, dFdy) = (None, None)
         else:
             dFdy = np.gradient(self.data[tindex, :], axis=-2) / self.grid.cell_edge_sizes['y']
@@ -622,6 +622,8 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
+        elif self.interp_method is 'cgrid_tracer':
+            return self.data[ti, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
@@ -634,7 +636,7 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'cgrid_linear':
+        elif self.interp_method is 'cgrid_velocity':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi, xi]
             f1 = self.data[ti, zi+1, yi, xi]
@@ -651,6 +653,8 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
+        elif self.interp_method is 'cgrid_tracer':
+            return self.data[ti, zi+1, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
@@ -955,11 +959,11 @@ class VectorField(object):
         self.U = U
         self.V = V
         self.W = W
-        if self.U.interp_method == 'cgrid_linear':
-            assert self.V.interp_method == 'cgrid_linear'
+        if self.U.interp_method == 'cgrid_velocity':
+            assert self.V.interp_method == 'cgrid_velocity'
             assert self.U.grid is self.V.grid
             if W:
-                assert self.W.interp_method == 'cgrid_linear'
+                assert self.W.interp_method == 'cgrid_velocity'
 
     def dist(self, lon1, lon2, lat1, lat2, mesh):
         if mesh == 'spherical':
@@ -1056,7 +1060,7 @@ class VectorField(object):
         return (u, v, w)
 
     def eval(self, time, x, y, z):
-        if self.U.interp_method != 'cgrid_linear':
+        if self.U.interp_method != 'cgrid_velocity':
             u = self.U.eval(time, x, y, z, False)
             v = self.V.eval(time, x, y, z, False)
             u = self.U.units.to_target(u, x, y, z)
@@ -1111,6 +1115,12 @@ class VectorField(object):
                    % (x, y, z, t, U.name, V.name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
+
+
+class DeferredArray():
+    """Class used for throwing error when Field.data is not read in deferred loading mode"""
+    def __getitem__(self, key):
+        raise RuntimeError('Field is in deferred_load mode, so can''t be accessed. Use .computeTimeChunk() method to force loading of  data')
 
 
 class SummedVectorField(list):
