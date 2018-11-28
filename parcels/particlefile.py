@@ -23,18 +23,7 @@ __all__ = ['ParticleFile']
 
 
 class ParticleFile(object):
-    """Initialise netCDF4.Dataset for trajectory output.
-
-    The output follows the format outlined in the Discrete Sampling Geometries
-    section of the CF-conventions:
-    http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#discrete-sampling-geometries
-
-    The current implementation is based on the NCEI template:
-    http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
-
-    Developer note: We cannot use xray.Dataset here, since it does not yet allow
-    incremental writes to disk: https://github.com/pydata/xarray/issues/199
-
+    """Initialise trajectory output.
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
     :param outputdt: Interval which dictates the update frequency of file output
@@ -43,7 +32,7 @@ class ParticleFile(object):
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, chunksizes=None):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
 
         self.name = name
         self.write_ondelete = write_ondelete
@@ -73,6 +62,14 @@ class ParticleFile(object):
         self.delete_npyfiles()
 
     def open_dataset(self, data_shape):
+        """Initialise NetCDF4.Dataset for trajectory output.
+        The output follows the format outlined in the Discrete Sampling Geometries
+        section of the CF-conventions:
+        http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#discrete-sampling-geometries
+        The current implementation is based on the NCEI template:
+        http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
+        :param data_shape: shape of the variables in the NetCDF4 file
+        """
         extension = os.path.splitext(str(self.name))[1]
         fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         if os.path.exists(str(fname)):
@@ -139,6 +136,8 @@ class ParticleFile(object):
             self.close()
 
     def close(self):
+        """Close the ParticleFile object by exporting and then deleting
+        the temporary npy files"""
         self.export()
         self.delete_npyfiles()
         self.dataset.close()
@@ -155,13 +154,11 @@ class ParticleFile(object):
             setattr(self.dataset, name, message)
 
     def write(self, pset, time, deleted_only=False):
-        """Write :class:`parcels.particleset.ParticleSet`
-        All data from one time step is saved to one NPY-file using a python
-        dictionary. The data is saved in the folder 'out'.
-
+        """Write all data from one time step to a temporary npy-file
+        using a python dictionary. The data is saved in the folder 'out'.
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
-
+        :param deleted_only: Flag to write only the deleted Particles
         """
         if isinstance(time, delta):
             time = time.total_seconds()
@@ -221,13 +218,10 @@ class ParticleFile(object):
                 self.lasttime_written = time
 
     def read_npy(self, file_list, time_steps, var):
-        """Read NPY-files using a loop over all files and return one array
-        for each variable.
-
-        :param file_list: List that  contains all file names in the output
-        directory
-        :param id_fill_value: FillValue for the IDs as used in the output
-        netcdf
+        """Read NPY-files for one variable using a loop over all files.
+        :param file_list: List that  contains all file names in the output directory
+        :param time_steps: Number of time steps that were written in out directory
+        :param var: name of the variable to read
         """
 
         data = np.nan * np.zeros((self.maxid_written+1, time_steps))
@@ -246,9 +240,7 @@ class ParticleFile(object):
         return tmp[:, ~np.isnan(data).all(axis=0)]
 
     def export(self):
-        """Exports outputs in temporary NPY-files to NetCDF file
-        """
-
+        """Exports outputs in temporary NPY-files to NetCDF file"""
         memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8
         if memory_estimate_total > 0.9*psutil.virtual_memory().available:
             raise MemoryError("Not enough memory available for export. npy files are stored at %s", self.npy_path)
@@ -265,5 +257,6 @@ class ParticleFile(object):
                 getattr(self, var)[:] = self.read_npy(self.file_list_once, 1, var)
 
     def delete_npyfiles(self):
+        """Deleted all temporary npy files"""
         if os.path.exists(self.npy_path):
             os.system("rm -rf "+self.npy_path)
