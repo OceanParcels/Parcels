@@ -432,31 +432,36 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
 
     # Rectilinear Z grid
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = ParticleSet(fieldset, ScipyParticle, 0, 0)
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    plon = pset[0].lon
-    plat = pset[0].lat
+    plon = [p.lon for p in pset]
+    plat = [p.lat for p in pset]
+    # sol of  dx/dt = (init_depth+1)*x+0.1; x(0)=0
+    assert np.allclose(plon, [0.17173462592827032, 0.2177736932123214])
+    assert np.allclose(plat, [1, 1])
 
     # Rectilinear S grid
     dimensions['depth'] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = ParticleSet(fieldset, ScipyParticle, 0, 0)
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    plon = pset[0].lon
-    plat = pset[0].lat
+    assert np.allclose(plon, [p.lon for p in pset])
+    assert np.allclose(plat, [p.lat for p in pset])
 
     # Curvilinear Z grid
     dimensions['lon'] = lonm
     dimensions['lat'] = latm
     dimensions['depth'] = depth
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = ParticleSet(fieldset, ScipyParticle, 0, 0)
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    assert np.allclose([plon, plat], [pset[0].lon, pset[0].lat])
+    assert np.allclose(plon, [p.lon for p in pset])
+    assert np.allclose(plat, [p.lat for p in pset])
 
     # Curvilinear S grid
     dimensions['depth'] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
-    pset = ParticleSet(fieldset, ScipyParticle, 0, 0)
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    assert np.allclose([plon, plat], [pset[0].lon, pset[0].lat])
+    assert np.allclose(plon, [p.lon for p in pset])
+    assert np.allclose(plat, [p.lat for p in pset])
