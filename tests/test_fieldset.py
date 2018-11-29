@@ -460,6 +460,3 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     pset = ParticleSet(fieldset, ScipyParticle, 0, 0)
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
     assert np.allclose([plon, plat], [pset[0].lon, pset[0].lat])
-
-
-test_fieldset_from_data_gridtypes()
