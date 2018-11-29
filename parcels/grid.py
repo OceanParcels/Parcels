@@ -24,7 +24,7 @@ class Grid(object):
 
     """
 
-    def init(self, lon, lat, time, time_origin, mesh):
+    def __init__(self, lon, lat, time, time_origin, mesh):
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -50,6 +50,19 @@ class Grid(object):
         self.lat_flipped = False
         self.defer_load = False
         self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
+
+    @classmethod
+    def grid(self, lon, lat, depth, time, time_origin, mesh, **kwargs):
+        if len(lon.shape) == 1:
+            if len(depth.shape) == 1:
+                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+            else:
+                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+        else:
+            if len(depth.shape) == 1:
+                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+            else:
+                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
 
     @property
     def ctypes_struct(self):
@@ -166,7 +179,7 @@ class RectilinearGrid(Grid):
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        Grid.init(self, lon, lat, time, time_origin, mesh)
+        Grid.__init__(self, lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
@@ -290,7 +303,7 @@ class CurvilinearGrid(Grid):
 
         lon = lon.squeeze()
         lat = lat.squeeze()
-        Grid.init(self, lon, lat, time, time_origin, mesh)
+        Grid.__init__(self, lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
