@@ -45,8 +45,12 @@ class GridSet(object):
             if len(getattr(g, dim)) == 1:
                 continue  # not including grids where only one entry
             else:
-                maxleft = max(maxleft, getattr(g, dim)[0])
-                minright = min(minright, getattr(g, dim)[-1])
+                if dim == 'depth':
+                    maxleft = max(maxleft, np.min(getattr(g, dim)))
+                    minright = min(minright, np.max(getattr(g, dim)))
+                else:
+                    maxleft = max(maxleft, getattr(g, dim)[0])
+                    minright = min(minright, getattr(g, dim)[-1])
         maxleft = 0 if maxleft == -np.inf else maxleft  # if all len(dim) == 1
         minright = 0 if minright == np.inf else minright  # if all len(dim) == 1
         return maxleft, minright
