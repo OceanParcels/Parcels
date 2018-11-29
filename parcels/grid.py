@@ -24,7 +24,7 @@ class Grid(object):
 
     """
 
-    def __init__(self, lon, lat, time, time_origin, mesh):
+    def init(self, lon, lat, time, time_origin, mesh):
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
@@ -166,7 +166,7 @@ class RectilinearGrid(Grid):
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        Grid.__init__(self, lon, lat, time, time_origin, mesh)
+        Grid.init(self, lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
@@ -290,7 +290,7 @@ class CurvilinearGrid(Grid):
 
         lon = lon.squeeze()
         lat = lat.squeeze()
-        Grid.__init__(self, lon, lat, time, time_origin, mesh)
+        Grid.init(self, lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
