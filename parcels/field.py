@@ -2,6 +2,7 @@ from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
+import parcels.tools.interpolation_utils as i_u
 from collections import Iterable
 from py import path
 import numpy as np
@@ -1020,7 +1021,7 @@ class VectorField(object):
             V0 = self.V.data[ti, yi, xi+1] * c1
             V1 = self.V.data[ti, yi+1, xi+1] * c3
         else:
-            U0 = self.U.data[ti, zi, yi+1, xi] * c4  # zi here??
+            U0 = self.U.data[ti, zi, yi+1, xi] * c4
             U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
             V0 = self.V.data[ti, zi, yi, xi+1] * c1
             V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
@@ -1041,6 +1042,107 @@ class VectorField(object):
              + (-eta * U + (1-xsi) * V) * py[3]) / jac
         return (u, v)
 
+    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time):
+        grid = self.U.grid
+        xi = int(grid.xdim / 2) - 1
+        yi = int(grid.ydim / 2) - 1
+        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+
+        if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+            px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
+            py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
+        else:
+            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
+
+        if grid.mesh == 'spherical':
+            px[0] = px[0]+360 if px[0] < x-225 else px[0]
+            px[0] = px[0]-360 if px[0] > x+225 else px[0]
+            px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+            px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
+        xx = (1-xsi)*(1-eta) * px[0] + xsi*(1-eta) * px[1] + xsi*eta * px[2] + (1-xsi)*eta * px[3]
+        assert abs(xx-x) < 1e-4
+
+        px = np.concatenate((px, px))
+        py = np.concatenate((py, py))
+        if grid.z4d == True:
+            pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1], grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
+                           grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1], grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
+        else:
+            pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
+                           grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])
+
+        u0 = self.U.data[ti, zi, yi+1, xi]
+        u1 = self.U.data[ti, zi, yi+1, xi+1]
+        v0 = self.V.data[ti, zi, yi, xi+1]
+        v1 = self.V.data[ti, zi, yi+1, xi+1]
+        w0 = self.W.data[ti, zi, yi+1, xi+1]
+        w1 = self.W.data[ti, zi+1, yi+1, xi+1]
+
+        U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zet, 'zonal')
+        U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zet, 'zonal')
+        V0 = v0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 0, zet, 'meridional')
+        V1 = v1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 1, zet, 'meridional')
+        W0 = w0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 0, 'vertical')
+        W1 = w1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 1, 'vertical')
+
+        # Computing fluxes in half left hexahedron -> flux_u05
+        xx = [px[0], (px[0]+px[1])/2, (px[2]+px[3])/2, px[3], px[4], (px[4]+px[5])/2, (px[6]+px[7])/2, px[7]]
+        yy = [py[0], (py[0]+py[1])/2, (py[2]+py[3])/2, py[3], py[4], (py[4]+py[5])/2, (py[6]+py[7])/2, py[7]]
+        zz = [pz[0], (pz[0]+pz[1])/2, (pz[2]+pz[3])/2, pz[3], pz[4], (pz[4]+pz[5])/2, (pz[6]+pz[7])/2, pz[7]]
+        flux_u0 = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal')
+        flux_v0_halfx = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional')
+        flux_v1_halfx = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional')
+        flux_w0_halfx = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical')
+        flux_w1_halfx = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 1, 'vertical')
+        flux_u05 = flux_u0 + flux_v0_halfx - flux_v1_halfx + flux_w0_halfx - flux_w1_halfx
+
+        # Computing fluxes in half front hexahedron -> flux_v05
+        xx = [px[0], px[1], (px[1]+px[2])/2, (px[0]+px[3])/2, px[4], px[5], (px[5]+px[6])/2, (px[4]+px[7])/2]
+        yy = [py[0], py[1], (py[1]+py[2])/2, (py[0]+py[3])/2, py[4], py[5], (py[5]+py[6])/2, (py[4]+py[7])/2]
+        zz = [pz[0], pz[1], (pz[1]+pz[2])/2, (pz[0]+pz[3])/2, pz[4], pz[5], (pz[5]+pz[6])/2, (pz[4]+pz[7])/2]
+        flux_u0_halfy = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal')
+        flux_u1_halfy = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal')
+        flux_v0 = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional')
+        flux_w0_halfy = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical')
+        flux_w1_halfy = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 1, 'vertical')
+        flux_v05 = flux_u0_halfy - flux_u1_halfy + flux_v0 + flux_w0_halfy - flux_w1_halfy
+
+        # Computing fluxes in half lower hexahedron -> flux_w05
+        xx = [px[0], px[1], px[2], px[3], (px[0]+px[4])/2, (px[1]+px[5])/2, (px[2]+px[6])/2, (px[3]+px[7])/2]
+        yy = [py[0], py[1], py[2], py[3], (py[0]+py[4])/2, (py[1]+py[5])/2, (py[2]+py[6])/2, (py[3]+py[7])/2]
+        zz = [pz[0], pz[1], pz[2], pz[3], (pz[0]+pz[4])/2, (pz[1]+pz[5])/2, (pz[2]+pz[6])/2, (pz[3]+pz[7])/2]
+        flux_u0_halfz = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal')
+        flux_u1_halfz = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal')
+        flux_v0_halfz = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional')
+        flux_v1_halfz = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional')
+        flux_w0 = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical')
+        flux_w05 = flux_u0_halfz - flux_u1_halfz + flux_v0_halfz - flux_v1_halfz + flux_w0
+
+        surf_u05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'zonal')
+        jac_u05 = i_u.jacobian3D_lin_face(px, py, pz, .5, eta, zet, 'zonal')
+        U05 = flux_u05 / surf_u05 * jac_u05
+
+        surf_v05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'meridional')
+        jac_v05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, .5, zet, 'meridional')
+        V05 = flux_v05 / surf_v05 * jac_v05
+
+        surf_w05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'vertical')
+        jac_w05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, .5, 'vertical')
+        W05 = flux_w05 / surf_w05 * jac_w05
+
+        jac = i_u.jacobian3D_lin(px, py, pz, xsi, eta, zet)
+        dxsidt = i_u.interpolate(i_u.phi1D_quad, [U0, U05, U1], xsi) / jac
+        detadt = i_u.interpolate(i_u.phi1D_quad, [V0, V05, V1], eta) / jac
+        dzetdt = i_u.interpolate(i_u.phi1D_quad, [W0, W05, W1], zet) / jac
+
+        dphidxsi, dphideta, dphidzet = i_u.dphidxsi3D_lin(xsi, eta, zet)
+
+        u = np.dot(dphidxsi, px) * dxsidt + np.dot(dphideta, px) * detadt + np.dot(dphidzet, px) * dzetdt
+        v = np.dot(dphidxsi, py) * dxsidt + np.dot(dphideta, py) * detadt + np.dot(dphidzet, py) * dzetdt
+        w = np.dot(dphidxsi, pz) * dxsidt + np.dot(dphideta, pz) * detadt + np.dot(dphidzet, pz) * dzetdt
+        return (u, v, w)
+
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
         """
           __ V1 __
@@ -1053,10 +1155,11 @@ class VectorField(object):
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
-            raise NotImplementedError('C staggered grid with a s vertical discretisation are not available')
-        (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-        w = self.W.eval(time, x, y, z, False)
-        w = self.W.units.to_target(w, x, y, z)
+            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time)
+        else:
+            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
+            w = self.W.eval(time, x, y, z, False)
+            w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
     def eval(self, time, x, y, z):

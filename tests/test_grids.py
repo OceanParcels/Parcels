@@ -415,22 +415,35 @@ def test_cgrid_uniform_2dvel(mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_cgrid_uniform_3dvel(mode):
+@pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
+def test_cgrid_uniform_3dvel(mode, vert_mode):
 
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
 
-    depth = np.array([0, 1])
-    # depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
-    U = np.array([[[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]],
-                  [[-99, -99], [-99, -99]]])
-    V = np.array([[[-99, 1.2126781251816650e+00], [-99, 1.2278812270298409e+00]],
-                  [[-99, -99], [-99, -99]]])
-    W = np.array([[[-99, -99], [-99, 2]],
-                  [[-99, -99], [-99, 2]]])
+    u0 = 4.4721359549995793e-01
+    u1 = 1.3416407864998738e+00
+    v0 = 1.2126781251816650e+00
+    v1 = 1.2278812270298409e+00
+    w0 = 1
+    w1 = 1
 
-    # depth = np.array([[[-1, -.6], [-1.1257142857142859, -.9]],
-    #                   [[1, 1.5], [0.50857142857142845, .8]]])
+    if vert_mode == 'zlev':
+        depth = np.array([0, 1])
+    elif vert_mode == 'slev1':
+        depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
+    elif vert_mode == 'slev2':
+        depth = np.array([[[-1, -.6], [-1.1257142857142859, -.9]],
+                          [[1, 1.5], [0.50857142857142845, .8]]])
+        w0 = 1.0483007922296661e+00
+        w1 = 1.3098951476312375e+00
+
+    U = np.array([[[-99, -99], [u0, u1]],
+                  [[-99, -99], [-99, -99]]])
+    V = np.array([[[-99, v0], [-99, v1]],
+                  [[-99, -99], [-99, -99]]])
+    W = np.array([[[-99, -99], [-99, w0]],
+                  [[-99, -99], [-99, w1]]])
 
     dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
     data = {'U': np.array(U, dtype=np.float32),
@@ -451,6 +464,8 @@ def test_cgrid_uniform_3dvel(mode):
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    print pset[0].zonal, pset[0].meridional
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
-    assert abs(pset[0].vertical - 2) < 1e-6
+    assert abs(pset[0].vertical - 1) < 1e-6
+test_cgrid_uniform_3dvel('scipy', 'zlev')
