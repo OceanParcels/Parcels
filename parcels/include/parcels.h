@@ -95,7 +95,7 @@ static inline ErrorCode spatial_interpolation_tracer_c_grid_3D(int xi, int yi, i
                                                         int xdim, int ydim, float **f_data, float *value)
 {
   float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) f_data;
-  *value = data[zi+1][yi+1][xi+1];
+  *value = data[zi][yi+1][xi+1];
   return SUCCESS;
 }
 
@@ -124,7 +124,11 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1); CHECKERROR(err);
-    if (interp_method == LINEAR){
+    if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY)){
+      if (interp_method == CGRID_VELOCITY){ // interpolate w
+        xsi = 1;
+        eta = 1;
+      }
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
@@ -156,6 +160,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
       }
     }
     else {
+        printf("trying to interpolate w\n");
         return ERROR;
     }
     *value = f0 + (f1 - f0) * (float)((time - t0) / (t1 - t0));
@@ -163,7 +168,13 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   } else {
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
-    if (interp_method == LINEAR){
+    if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY)){
+      if (interp_method == CGRID_VELOCITY){ // interpolate w
+        xsi = 1;
+        eta = 1;
+        if (grid->zdim==1)
+          return ERROR;
+      }
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       }
@@ -192,6 +203,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
       }
     }
     else {
+        printf("trying to interpolate w\n");
         return ERROR;    
     }
     return SUCCESS;

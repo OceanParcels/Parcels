@@ -628,8 +628,8 @@ class Field(object):
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
     def interpolator3D(self, ti, z, y, x, time):
-        xi = int(self.grid.xdim / 2)
-        yi = int(self.grid.ydim / 2)
+        xi = int(self.grid.xdim / 2) - 1
+        yi = int(self.grid.ydim / 2) - 1
         (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
@@ -638,8 +638,8 @@ class Field(object):
             return self.data[ti, zii, yii, xii]
         elif self.interp_method is 'cgrid_velocity':
             # evaluating W velocity in c_grid
-            f0 = self.data[ti, zi, yi, xi]
-            f1 = self.data[ti, zi+1, yi, xi]
+            f0 = self.data[ti, zi, yi+1, xi+1]
+            f1 = self.data[ti, zi+1, yi+1, xi+1]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'linear':
             data = self.data[ti, zi, :, :]
@@ -654,7 +654,7 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'cgrid_tracer':
-            return self.data[ti, zi+1, yi+1, xi+1]
+            return self.data[ti, zi, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
