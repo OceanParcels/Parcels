@@ -385,3 +385,31 @@ def test_advect_nemo(mode):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
     assert abs(pset[0].lat - latp) < 1e-3
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_cgrid_uniform_vel(mode):
+    lon = np.array([[0, 2], [.4, 1.5]])
+    lat = np.array([[0, -.5], [.8, .5]])
+    U = np.array([[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]])
+    V = np.array([[-99, 1.2126781251816650e+00], [-99, 1.2278812270298409e+00]])
+
+    dimensions = {'lat': lat, 'lon': lon}
+    data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+
+    def sampleVel(particle, fieldset, time, dt):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+
+    class MyParticle(ptype[mode]):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3)
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    print pset[0].zonal, pset[0].meridional
+    assert abs(pset[0].zonal - 1) < 1e-6
+    assert abs(pset[0].meridional - 1) < 1e-6
+
+test_cgrid_uniform_vel('jit')

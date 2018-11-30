@@ -992,8 +992,8 @@ class VectorField(object):
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time):
         grid = self.U.grid
-        xi = int(grid.xdim / 2)
-        yi = int(grid.ydim / 2)
+        xi = int(grid.xdim / 2) - 1
+        yi = int(grid.ydim / 2) - 1
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
