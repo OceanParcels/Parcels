@@ -141,7 +141,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     elif type == 'timearr':
         pset = ParticleSet(fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
     outfilepath = tmpdir.join("pfile_repeated_release")
-    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunksizes=[len(pset), 1])
+    pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
 
     def IncrLon(particle, fieldset, time, dt):
         particle.sample_var += 1.
