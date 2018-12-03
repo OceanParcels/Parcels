@@ -971,7 +971,7 @@ class VectorField(object):
             rad = np.pi/180.
             deg2m = 1852 * 60.
             lat = (lat1+lat2)/2.
-            return np.sqrt(((lon2-lon1)*deg2m*cos(rad * lat))**2 + ((lat2-lat1)*deg2m)**2 );
+            return np.sqrt(((lon2-lon1)*deg2m*cos(rad * lat))**2 + ((lat2-lat1)*deg2m)**2)
         else:
             return np.sqrt((lon2-lon1)**2 + (lat2-lat1)**2)
 
@@ -1060,7 +1060,7 @@ class VectorField(object):
 
         px = np.concatenate((px, px))
         py = np.concatenate((py, py))
-        if grid.z4d == True:
+        if grid.z4d:
             pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1], grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
                            grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1], grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
         else:
