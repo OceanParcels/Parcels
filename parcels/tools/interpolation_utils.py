@@ -64,9 +64,9 @@ def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     if mesh is 'spherical':
         deg2m = 1852 * 60.
         rad = np.pi / 180.
-        lat = (1-xsi) * (1-eta) * hexa_y[0]+
-                 xsi  * (1-eta) * hexa_y[1]+
-                 xsi  *    eta  * hexa_y[2]+
+        lat = (1-xsi) * (1-eta) * hexa_y[0]+\
+                 xsi  * (1-eta) * hexa_y[1]+\
+                 xsi  *    eta  * hexa_y[2]+\
               (1-xsi) *    eta  * hexa_y[3]
         jac_lon = deg2m * cos(rad * lat)
         jac_lat = deg2m
