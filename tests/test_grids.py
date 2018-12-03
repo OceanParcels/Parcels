@@ -464,8 +464,7 @@ def test_cgrid_uniform_3dvel(mode, vert_mode):
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    print pset[0].zonal, pset[0].meridional
+    print pset[0].zonal, pset[0].meridional, pset[0].vertical
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
     assert abs(pset[0].vertical - 1) < 1e-6
-test_cgrid_uniform_3dvel('scipy', 'zlev')
