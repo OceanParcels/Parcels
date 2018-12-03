@@ -46,7 +46,7 @@ static inline void dphidxsi3D_lin(double xsi, double eta, double zet, double *dp
   dphidzet[7] =   (1-xsi) * (  eta);
 }
 
-static inline void dxdxsi3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zet, double *jacM)
+static inline void dxdxsi3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zet, double *jacM, int sphere_mesh)
 {
   double dphidxsi[8], dphideta[8], dphidzet[8];
   dphidxsi3D_lin(xsi, eta, zet, dphidxsi, dphideta, dphidzet);
@@ -55,24 +55,32 @@ static inline void dxdxsi3D_lin(double *px, double *py, double *pz, double xsi, 
   for(i=0; i<9; ++i)
       jacM[i] = 0;
 
+  double deg2m = 1852 * 60.;
+  double rad = M_PI / 180.;
+  double lat = (1-xsi) * (1-eta) * py[0]+
+                  xsi  * (1-eta) * py[1]+
+                  xsi  *    eta  * py[2]+
+               (1-xsi) *    eta  * py[3];
+  double jac_lon = (sphere_mesh == 1) ? (deg2m * cos(rad * lat) ) : 1;
+  double jac_lat = (sphere_mesh == 1) ? deg2m : 1;
 
   for(i=0; i<8; ++i){
-    jacM[3*0+0] += px[i] * dphidxsi[i]; // dxdxsi
-    jacM[3*0+1] += px[i] * dphideta[i]; // dxdeta
-    jacM[3*0+2] += px[i] * dphidzet[i]; // dxdzet
-    jacM[3*1+0] += py[i] * dphidxsi[i]; // dydxsi
-    jacM[3*1+1] += py[i] * dphideta[i]; // dydeta
-    jacM[3*1+2] += py[i] * dphidzet[i]; // dydzet
-    jacM[3*2+0] += pz[i] * dphidxsi[i]; // dzdxsi
-    jacM[3*2+1] += pz[i] * dphideta[i]; // dzdeta
-    jacM[3*2+2] += pz[i] * dphidzet[i]; // dzdzet
+    jacM[3*0+0] += px[i] * dphidxsi[i] * jac_lon; // dxdxsi
+    jacM[3*0+1] += px[i] * dphideta[i] * jac_lon; // dxdeta
+    jacM[3*0+2] += px[i] * dphidzet[i] * jac_lon; // dxdzet
+    jacM[3*1+0] += py[i] * dphidxsi[i] * jac_lat; // dydxsi
+    jacM[3*1+1] += py[i] * dphideta[i] * jac_lat; // dydeta
+    jacM[3*1+2] += py[i] * dphidzet[i] * jac_lat; // dydzet
+    jacM[3*2+0] += pz[i] * dphidxsi[i];           // dzdxsi
+    jacM[3*2+1] += pz[i] * dphideta[i];           // dzdeta
+    jacM[3*2+2] += pz[i] * dphidzet[i];           // dzdzet
   }
 }
 
-static inline double jacobian3D_lin_face(double *px, double *py, double *pz, double xsi, double eta, double zet, Orientation orientation)
+static inline double jacobian3D_lin_face(double *px, double *py, double *pz, double xsi, double eta, double zet, Orientation orientation, int sphere_mesh)
 {
   double jacM[9];
-  dxdxsi3D_lin(px, py, pz, xsi, eta, zet, jacM);
+  dxdxsi3D_lin(px, py, pz, xsi, eta, zet, jacM, sphere_mesh);
 
   double j[3];
 
@@ -95,10 +103,10 @@ static inline double jacobian3D_lin_face(double *px, double *py, double *pz, dou
   return sqrt(j[0]*j[0]+j[1]*j[1]+j[2]*j[2]);
 }
 
-static inline double jacobian3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zet)
+static inline double jacobian3D_lin(double *px, double *py, double *pz, double xsi, double eta, double zet, int sphere_mesh)
 {
   double jacM[9];
-  dxdxsi3D_lin(px, py, pz, xsi, eta, zet, jacM);
+  dxdxsi3D_lin(px, py, pz, xsi, eta, zet, jacM, sphere_mesh);
 
   double jac = jacM[3*0+0] * (jacM[3*1+1]*jacM[3*2+2] - jacM[3*2+1]*jacM[3*1+2])
              - jacM[3*0+1] * (jacM[3*1+0]*jacM[3*2+2] - jacM[3*2+0]*jacM[3*1+2])

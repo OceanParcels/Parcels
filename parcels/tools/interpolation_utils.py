@@ -57,15 +57,29 @@ def dphidxsi3D_lin(xsi, eta, zet):
     return dphidxsi, dphideta, dphidzet
 
 
-def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet):
+def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     dphidxsi, dphideta, dphidzet = dphidxsi3D_lin(xsi, eta, zet)
 
-    dxdxsi = np.dot(hexa_x, dphidxsi)
-    dxdeta = np.dot(hexa_x, dphideta)
-    dxdzet = np.dot(hexa_x, dphidzet)
-    dydxsi = np.dot(hexa_y, dphidxsi)
-    dydeta = np.dot(hexa_y, dphideta)
-    dydzet = np.dot(hexa_y, dphidzet)
+
+    if mesh is 'spherical':
+        deg2m = 1852 * 60.
+        rad = np.pi / 180.
+        lat = (1-xsi) * (1-eta) * hexa_y[0]+
+                 xsi  * (1-eta) * hexa_y[1]+
+                 xsi  *    eta  * hexa_y[2]+
+              (1-xsi) *    eta  * hexa_y[3]
+        jac_lon = deg2m * cos(rad * lat)
+        jac_lat = deg2m
+    else:
+        jac_lon = 1
+        jac_lat = 1
+
+    dxdxsi = np.dot(hexa_x, dphidxsi) * jac_lon
+    dxdeta = np.dot(hexa_x, dphideta) * jac_lon
+    dxdzet = np.dot(hexa_x, dphidzet) * jac_lon
+    dydxsi = np.dot(hexa_y, dphidxsi) * jac_lat
+    dydeta = np.dot(hexa_y, dphideta) * jac_lat
+    dydzet = np.dot(hexa_y, dphidzet) * jac_lat
     dzdxsi = np.dot(hexa_z, dphidxsi)
     dzdeta = np.dot(hexa_z, dphideta)
     dzdzet = np.dot(hexa_z, dphidzet)
@@ -73,8 +87,8 @@ def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet):
     return dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet
 
 
-def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet):
-    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet)
+def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
+    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
     jac = dxdxsi * (dydeta*dzdzet - dzdeta*dydzet)\
         - dxdeta * (dydxsi*dzdzet - dzdxsi*dydzet)\
@@ -82,8 +96,8 @@ def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet):
     return jac
 
 
-def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation):
-    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet)
+def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh):
+    dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
     if orientation is 'zonal':
         j = [dydeta*dzdzet-dydzet*dzdeta,
