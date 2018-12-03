@@ -413,3 +413,55 @@ def test_fieldset_from_xarray(maxlatind):
 
     pset.execute(AdvectionRK4, dt=1)
     assert pset[0].lon == 4.5 and pset[0].lat == 10
+
+
+def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
+    """ Simple test for fieldset initialisation from data. """
+    lon = np.linspace(0., 10., xdim, dtype=np.float32)
+    lat = np.linspace(0., 10., ydim, dtype=np.float32)
+    depth = np.linspace(0., 1., zdim, dtype=np.float32)
+    depth_s = np.ones((zdim, ydim, xdim))
+    U = np.ones((zdim, ydim, xdim))
+    V = np.ones((zdim, ydim, xdim))
+    dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
+    data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
+    lonm, latm = np.meshgrid(lon, lat)
+    for k in range(zdim):
+        data['U'][k, :, :] = lonm * (depth[k]+1) + .1
+        depth_s[k, :, :] = depth[k]
+
+    # Rectilinear Z grid
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset.execute(AdvectionRK4, runtime=1, dt=.5)
+    plon = [p.lon for p in pset]
+    plat = [p.lat for p in pset]
+    # sol of  dx/dt = (init_depth+1)*x+0.1; x(0)=0
+    assert np.allclose(plon, [0.17173462592827032, 0.2177736932123214])
+    assert np.allclose(plat, [1, 1])
+
+    # Rectilinear S grid
+    dimensions['depth'] = depth_s
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset.execute(AdvectionRK4, runtime=1, dt=.5)
+    assert np.allclose(plon, [p.lon for p in pset])
+    assert np.allclose(plat, [p.lat for p in pset])
+
+    # Curvilinear Z grid
+    dimensions['lon'] = lonm
+    dimensions['lat'] = latm
+    dimensions['depth'] = depth
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset.execute(AdvectionRK4, runtime=1, dt=.5)
+    assert np.allclose(plon, [p.lon for p in pset])
+    assert np.allclose(plat, [p.lat for p in pset])
+
+    # Curvilinear S grid
+    dimensions['depth'] = depth_s
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
+    pset.execute(AdvectionRK4, runtime=1, dt=.5)
+    assert np.allclose(plon, [p.lon for p in pset])
+    assert np.allclose(plat, [p.lat for p in pset])
