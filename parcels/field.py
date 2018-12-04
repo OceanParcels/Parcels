@@ -8,7 +8,6 @@ from py import path
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
-from math import cos
 import datetime
 import math
 from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
@@ -970,7 +969,7 @@ class VectorField(object):
         if mesh == 'spherical':
             rad = np.pi/180.
             deg2m = 1852 * 60.
-            return np.sqrt(((lon2-lon1)*deg2m*cos(rad * lat))**2 + ((lat2-lat1)*deg2m)**2)
+            return np.sqrt(((lon2-lon1)*deg2m*math.cos(rad * lat))**2 + ((lat2-lat1)*deg2m)**2)
         else:
             return np.sqrt((lon2-lon1)**2 + (lat2-lat1)**2)
 
@@ -1023,7 +1022,7 @@ class VectorField(object):
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
         deg2m = 1852 * 60.
-        meshJac = (deg2m * deg2m * cos(rad * y)) if grid.mesh == 'spherical' else 1
+        meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == 'spherical' else 1
         jac = self.jacobian(xsi, eta, px, py) * meshJac
 
         u = ((-(1-eta) * U - (1-xsi) * V) * px[0]
