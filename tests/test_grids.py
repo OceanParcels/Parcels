@@ -409,7 +409,6 @@ def test_cgrid_uniform_2dvel(mode):
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    print pset[0].zonal, pset[0].meridional
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
 
