@@ -966,11 +966,10 @@ class VectorField(object):
             if W:
                 assert self.W.interp_method == 'cgrid_velocity'
 
-    def dist(self, lon1, lon2, lat1, lat2, mesh):
+    def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
             rad = np.pi/180.
             deg2m = 1852 * 60.
-            lat = (lat1+lat2)/2.
             return np.sqrt(((lon2-lon1)*deg2m*cos(rad * lat))**2 + ((lat2-lat1)*deg2m)**2)
         else:
             return np.sqrt((lon2-lon1)**2 + (lat2-lat1)**2)
@@ -1006,10 +1005,10 @@ class VectorField(object):
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
         xx = (1-xsi)*(1-eta) * px[0] + xsi*(1-eta) * px[1] + xsi*eta * px[2] + (1-xsi)*eta * px[3]
         assert abs(xx-x) < 1e-4
-        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh)
-        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh)
-        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh)
-        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh)
+        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 0.), py))
+        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
+        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
+        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
         if grid.zdim == 1:
             U0 = self.U.data[ti, yi+1, xi] * c4
             U1 = self.U.data[ti, yi+1, xi+1] * c2

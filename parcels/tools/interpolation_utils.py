@@ -17,6 +17,15 @@ def phi1D_quad(xsi):
     return phi
 
 
+def phi2D_lin(xsi, eta):
+    phi = [(1-xsi) * (1-eta),
+              xsi  * (1-eta),
+              xsi  *    eta ,
+           (1-xsi) *    eta ]
+
+    return phi
+
+
 def phi3D_lin(xsi, eta, zet):
     phi = [(1-xsi) * (1-eta) * (1-zet),
               xsi  * (1-eta) * (1-zet),

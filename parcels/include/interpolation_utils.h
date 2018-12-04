@@ -8,6 +8,15 @@ typedef enum
   } Orientation;
 
 
+static inline void phi2D_lin(double xsi, double eta, double *phi)
+{
+    phi[0] = (1-xsi) * (1-eta);
+    phi[1] =    xsi  * (1-eta);
+    phi[2] =    xsi  *    eta ;
+    phi[3] = (1-xsi) *    eta ;
+}
+
+
 static inline void phi1D_quad(double xsi, double *phi)
 {
     phi[0] = 2*xsi*xsi-3*xsi+1;
