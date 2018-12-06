@@ -226,18 +226,20 @@ class ParticleFile(object):
 
         data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(self.maxid_written+1, dtype=int)
+        t_ind_used = np.zeros(time_steps, dtype=int)
 
         # loop over all files
         for npyfile in file_list:
             data_dict = np.load(npyfile).item()
             id_ind = np.array(data_dict["id"], dtype=int)
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
+            t_ind_used[t_ind] = 1
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
 
         # remove rows and columns that are completely filled with nan values
-        tmp = data[~np.isnan(data).all(axis=1)]
-        return tmp[:, ~np.isnan(data).all(axis=0)]
+        tmp = data[time_index > 0, :]
+        return tmp[:, t_ind_used == 1]
 
     def export(self):
         """Exports outputs in temporary NPY-files to NetCDF file"""
