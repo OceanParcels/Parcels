@@ -152,7 +152,7 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isclose(p.time, time))]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
                     p.fileid = self.lasttraj
                     self.lasttraj += 1
@@ -160,7 +160,7 @@ class ParticleFile(object):
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
                 for p in pset:
-                    if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
+                    if p.dt*p.time <= p.dt*time or np.isclose(p.time, time):  # don't write particles if they haven't started yet
                         i = p.fileid
                         self.id[i, self.idx[i]] = p.id
                         self.time[i, self.idx[i]] = p.time
