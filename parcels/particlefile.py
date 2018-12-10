@@ -14,6 +14,15 @@ except:
 __all__ = ['ParticleFile']
 
 
+def _is_particle_started_yet(particle, time):
+    """We don't want to write a particle that is not started yet.
+    Particle will be written if:
+      * particle.time is equal to time argument of pfile.write()
+      * particle.time is before time (in case particle was deleted between previous export and current one)
+    """
+    return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
+
+
 class ParticleFile(object):
     """Initialise netCDF4.Dataset for trajectory output.
 
@@ -152,15 +161,15 @@ class ParticleFile(object):
            (self.write_ondelete is False or deleted_only is True):
             if pset.size > 0:
 
-                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and (p.dt*p.time <= p.dt*time or np.isnan(p.dt))]  # len(self.idx)==0 in case pset is written to new ParticleFile
+                first_write = [p for p in pset if (p.fileid < 0 or len(self.idx) == 0) and _is_particle_started_yet(p, time)]  # len(self.idx)==0 in case pset is written to new ParticleFile
                 for p in first_write:
-                    p.fileid = self.lasttraj
+                    p.fileid = self.lasttraj  # particle id in current file
                     self.lasttraj += 1
 
                 self.idx = np.append(self.idx, np.zeros(len(first_write)))
 
                 for p in pset:
-                    if p.dt*p.time <= p.dt*time:  # don't write particles if they haven't started yet
+                    if _is_particle_started_yet(p, time):
                         i = p.fileid
                         self.id[i, self.idx[i]] = p.id
                         self.time[i, self.idx[i]] = p.time
