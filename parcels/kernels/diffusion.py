@@ -12,9 +12,9 @@ def BrownianMotion2D(particle, fieldset, time, dt):
 
     r = 1/3.
     kh_meridional = fieldset.Kh_meridional[time, particle.lon, particle.lat, particle.depth]
-    particle.lat += random.uniform(-1., 1.) * math.sqrt(2*math.fabs(dt)*kh_meridional/r)
+    particle.lat += random.uniform(-1., 1.) * math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
     kh_zonal = fieldset.Kh_zonal[time, particle.lon, particle.lat, particle.depth]
-    particle.lon += random.uniform(-1., 1.) * math.sqrt(2*math.fabs(dt)*kh_zonal/r)
+    particle.lon += random.uniform(-1., 1.) * math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
 
 
 def SpatiallyVaryingBrownianMotion2D(particle, fieldset, time, dt):
@@ -25,15 +25,15 @@ def SpatiallyVaryingBrownianMotion2D(particle, fieldset, time, dt):
     # regular Brownian motion step
     r = 1/3.
     kh_meridional = fieldset.Kh_meridional[time, particle.lon, particle.lat, particle.depth]
-    Ry = random.uniform(-1., 1.) * math.sqrt(2*math.fabs(dt)*kh_meridional/r)
+    Ry = random.uniform(-1., 1.) * math.sqrt(2*math.fabs(particle.dt)*kh_meridional/r)
     kh_zonal = fieldset.Kh_zonal[time, particle.lon, particle.lat, particle.depth]
-    Rx = random.uniform(-1., 1.) * math.sqrt(2*math.fabs(dt)*kh_zonal/r)
+    Rx = random.uniform(-1., 1.) * math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
 
     # Deterministic 'boost' out of areas of low diffusivity
     dKdx = fieldset.dKh_zonal_dx[time, particle.lon, particle.lat, particle.depth]
     dKdy = fieldset.dKh_meridional_dy[time, particle.lon, particle.lat, particle.depth]
-    CorrectionX = dKdx * math.fabs(dt)
-    CorrectionY = dKdy * math.fabs(dt)
+    CorrectionX = dKdx * math.fabs(particle.dt)
+    CorrectionY = dKdy * math.fabs(particle.dt)
 
     # diffuse particle as sum of Brownian motion and deterministic 'boost'
     particle.lon += Rx + CorrectionX

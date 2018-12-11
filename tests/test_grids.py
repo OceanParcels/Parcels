@@ -65,8 +65,8 @@ def test_multi_structured_grids(mode):
         # Note that fieldset.temp is interpolated at time=time+dt.
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
-        particle.temp0 = fieldset.temp0[time+dt, particle.lon, particle.lat, particle.depth]
-        particle.temp1 = fieldset.temp1[time+dt, particle.lon, particle.lat, particle.depth]
+        particle.temp0 = fieldset.temp0[time+particle.dt, particle.lon, particle.lat, particle.depth]
+        particle.temp1 = fieldset.temp1[time+particle.dt, particle.lon, particle.lat, particle.depth]
 
     class MyParticle(ptype[mode]):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
@@ -284,7 +284,7 @@ def test_rectilinear_s_grids_advect2(mode):
         relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
 
     def moveEast(particle, fieldset, time, dt):
-        particle.lon += 5 * dt
+        particle.lon += 5 * particle.dt
         particle.relDepth = fieldset.relDepth[time, particle.lon, particle.lat, particle.depth]
 
     depth = .9

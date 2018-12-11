@@ -489,7 +489,7 @@ def test_nestedfields(mode, k_sample_p):
         particle.lon = -1
         particle.lat = -1
         particle.p = 999
-        particle.time = particle.time + dt
+        particle.time = particle.time + particle.dt
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)

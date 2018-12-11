@@ -386,7 +386,7 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 
     def Update_v(particle, fieldset, time, dt):
         particle.v_once += 1.
-        particle.age += dt
+        particle.age += particle.dt
 
     class MyParticle(ptype[mode]):
         v_once = Variable('v_once', dtype=np.float32, initial=0., to_write='once')

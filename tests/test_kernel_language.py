@@ -219,10 +219,10 @@ def test_c_kernel(fieldset, mode, c_inc):
         c_include = path.join(path.dirname(__file__), 'customed_header.h')
 
     def ckernel(particle, fieldset, time, dt):
-        func('pointer_args', fieldset.U, particle.lon, dt)
+        func('pointer_args', fieldset.U, particle.lon, particle.dt)
 
     def pykernel(particle, fieldset, time, dt):
-        particle.lon = func(fieldset.U, particle.lon, dt)
+        particle.lon = func(fieldset.U, particle.lon, particle.dt)
 
     if mode == 'scipy':
         kernel = pset.Kernel(pykernel)

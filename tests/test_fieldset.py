@@ -295,7 +295,7 @@ def test_periodic(mode, time_periodic, dt_sign):
         # Note that fieldset.temp is interpolated at time=time+dt.
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
-        particle.temp = fieldset.temp[time+dt, particle.lon, particle.lat, particle.depth]
+        particle.temp = fieldset.temp[time+particle.dt, particle.lon, particle.lat, particle.depth]
 
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)

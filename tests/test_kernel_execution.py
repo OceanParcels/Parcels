@@ -254,7 +254,7 @@ def test_errorcode_repeat(fieldset, mode):
             # if particle.lon is not re-setted before kernel repetition, it will break here
             return ErrorCode.Error
         particle.lon += 0.1
-        if dt > 1.49:
+        if particle.dt > 1.49:
             # dt is used to leave the repetition loop (dt is the only variable not re-setted)
             return ErrorCode.Success
         particle.dt += .1
