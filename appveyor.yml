@@ -7,11 +7,14 @@ environment:
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py2_win.yml"
 
-    allow_failures:
     - PYTHON: "C:\\Python36-miniconda"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py3_win.yml"
+
+matrix:
+  allow_failures:
+    - PYTHON_VERSION: "3.6.x"
 
 install:
   - "powershell ./appveyor/install_miniconda.ps1"
