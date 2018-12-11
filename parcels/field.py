@@ -726,7 +726,7 @@ class Field(object):
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
-    def eval(self, time, x, y, z, applyConversion=True):
+    def eval(self, time, z, y, x, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -752,7 +752,7 @@ class Field(object):
         else:
             return value
 
-    def ccode_eval(self, var, t, x, y, z):
+    def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
             % (x, y, z, t, self.name, var, self.interp_method.upper())
@@ -924,10 +924,10 @@ class SummedField(list):
     Also note that, since SummedFields are lists, the individual Fields can
     still be queried through their list index (e.g. SummedField[1]).
     """
-    def eval(self, time, x, y, z, applyConversion=True):
+    def eval(self, time, z, y, x, applyConversion=True):
         tmp = 0
         for fld in self:
-            tmp += fld.eval(time, x, y, z, applyConversion)
+            tmp += fld.eval(time, z, y, x, applyConversion)
         return tmp
 
     def __getitem__(self, key):
@@ -1055,18 +1055,18 @@ class VectorField(object):
         if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
             raise NotImplementedError('C staggered grid with a s vertical discretisation are not available')
         (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-        w = self.W.eval(time, x, y, z, False)
+        w = self.W.eval(time, z, y, x, False)
         w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
-    def eval(self, time, x, y, z):
+    def eval(self, time, z, y, x):
         if self.U.interp_method != 'cgrid_velocity':
-            u = self.U.eval(time, x, y, z, False)
-            v = self.V.eval(time, x, y, z, False)
+            u = self.U.eval(time, z, y, x, False)
+            v = self.V.eval(time, z, y, x, False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
             if self.W is not None:
-                w = self.W.eval(time, x, y, z, False)
+                w = self.W.eval(time, z, y, x, False)
                 w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
             else:
@@ -1103,7 +1103,7 @@ class VectorField(object):
     def __getitem__(self, key):
         return self.eval(*key)
 
-    def ccode_eval(self, varU, varV, varW, U, V, W, t, x, y, z):
+    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         if varW:
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
@@ -1139,13 +1139,13 @@ class SummedVectorField(list):
         self.V = V
         self.W = W
 
-    def eval(self, time, x, y, z):
+    def eval(self, time, z, y, x):
         zonal = meridional = vertical = 0
         if self.W is not None:
             for (U, V, W) in zip(self.U, self.V, self.W):
                 vfld = VectorField(self.name, U, V, W)
                 vfld.fieldset = self.fieldset
-                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                (tmp1, tmp2, tmp3) = vfld.eval(time, z, y, x)
                 zonal += tmp1
                 meridional += tmp2
                 vertical += tmp3
@@ -1154,7 +1154,7 @@ class SummedVectorField(list):
             for (U, V) in zip(self.U, self.V):
                 vfld = VectorField(self.name, U, V)
                 vfld.fieldset = self.fieldset
-                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                (tmp1, tmp2) = vfld.eval(time, z, y, x)
                 zonal += tmp1
                 meridional += tmp2
             return (zonal, meridional)

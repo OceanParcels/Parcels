@@ -212,7 +212,7 @@ class Kernel(object):
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
                     p.dt = sign_dt * dt_pos
-                    res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
+                    res = self.pyfunc(p, pset.fieldset, p.time)
                 except FieldSamplingError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
@@ -278,7 +278,7 @@ class Kernel(object):
                 else:
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
-                    recovery_kernel(p, self.fieldset, p.time, dt)
+                    recovery_kernel(p, self.fieldset, p.time)
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
