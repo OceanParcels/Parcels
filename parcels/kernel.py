@@ -204,11 +204,11 @@ class Kernel(object):
 
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
-            p.dt = sign_dt * dt_pos
             while dt_pos > 1e-6 or dt == 0:
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
+                    p.dt = sign_dt * dt_pos
                     res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
                 except FieldSamplingError as fse:
                     res = ErrorCode.ErrorOutOfBounds
@@ -226,7 +226,6 @@ class Kernel(object):
                     # Update time and repeat
                     p.time += sign_dt * dt_pos
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    p.dt = sign_dt * dt_pos
                     if dt == 0:
                         break
                     continue
@@ -236,7 +235,6 @@ class Kernel(object):
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    p.dt = sign_dt * dt_pos
                     break
                 else:
                     break  # Failure - stop time loop
