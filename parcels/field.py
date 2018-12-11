@@ -757,7 +757,7 @@ class Field(object):
         return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
             % (x, y, z, t, self.name, var, self.interp_method.upper())
 
-    def ccode_convert(self, _, x, y, z):
+    def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
     @property
