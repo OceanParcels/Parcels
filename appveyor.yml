@@ -12,6 +12,10 @@ environment:
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py3_win.yml"
 
+matrix:
+  allow_failures:
+    - PYTHON_VERSION: "3.6.x"
+
 install:
   - "powershell ./appveyor/install_miniconda.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
