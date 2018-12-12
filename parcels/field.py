@@ -1171,7 +1171,7 @@ class VectorField(object):
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
             time -= periods*(grid.time[-1]-grid.time[0])
-            if ti < grid.tdim-1 and time > self.grid.time[ti]:
+            if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
                 if self.W:
