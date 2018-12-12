@@ -388,13 +388,19 @@ def test_advect_nemo(mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_cgrid_uniform_2dvel(mode):
+@pytest.mark.parametrize('time', [True, False])
+def test_cgrid_uniform_2dvel(mode, time):
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
     U = np.array([[-99, -99], [4.4721359549995793e-01, 1.3416407864998738e+00]])
     V = np.array([[-99, 1.2126781251816650e+00], [-99, 1.2278812270298409e+00]])
 
-    dimensions = {'lat': lat, 'lon': lon}
+    if time:
+        U = np.stack((U, U))
+        V = np.stack((V, V))
+        dimensions = {'lat': lat, 'lon': lon, 'time': np.array([0, 10])}
+    else:
+        dimensions = {'lat': lat, 'lon': lon}
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     fieldset.U.interp_method = 'cgrid_velocity'
@@ -415,7 +421,8 @@ def test_cgrid_uniform_2dvel(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_mode', ['zlev', 'slev1', 'slev2'])
-def test_cgrid_uniform_3dvel(mode, vert_mode):
+@pytest.mark.parametrize('time', [True, False])
+def test_cgrid_uniform_3dvel(mode, vert_mode, time):
 
     lon = np.array([[0, 2], [.4, 1.5]])
     lat = np.array([[0, -.5], [.8, .5]])
@@ -444,7 +451,13 @@ def test_cgrid_uniform_3dvel(mode, vert_mode):
     W = np.array([[[-99, -99], [-99, w0]],
                   [[-99, -99], [-99, w1]]])
 
-    dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
+    if time:
+        U = np.stack((U, U))
+        V = np.stack((V, V))
+        W = np.stack((W, W))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': np.array([0, 10])}
+    else:
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
     data = {'U': np.array(U, dtype=np.float32),
             'V': np.array(V, dtype=np.float32),
             'W': np.array(W, dtype=np.float32)}
