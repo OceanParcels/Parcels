@@ -22,6 +22,15 @@ except:
 __all__ = ['ParticleFile']
 
 
+def _is_particle_started_yet(particle, time):
+    """We don't want to write a particle that is not started yet.
+    Particle will be written if:
+      * particle.time is equal to time argument of pfile.write()
+      * particle.time is before time (in case particle was deleted between previous export and current one)
+    """
+    return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
+
+
 class ParticleFile(object):
     """Initialise trajectory output.
     :param name: Basename of the output file
@@ -193,7 +202,7 @@ class ParticleFile(object):
                     self.time_written.append(time)
 
                 if len(self.var_names_once) > 0:
-                    first_write = [p for p in pset if (p.id not in self.written_once) and (p.dt * p.time <= p.dt * time or np.isnan(p.dt))]
+                    first_write = [p for p in pset if (p.id not in self.written_once) and _is_particle_started_yet(p, time)]
                     data_once = {}
                     data_once['id'] = np.nan * np.zeros(len(first_write))
                     for var in self.var_names_once:
