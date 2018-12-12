@@ -175,6 +175,8 @@ class Field(object):
                     raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
                 lonlat_filename = filenames['lon'][0]
                 if 'depth' in dimensions:
+                    if not isinstance(filenames['depth'], Iterable) or isinstance(filenames['depth'], str):
+                        filenames['depth'] = [filenames['depth']]
                     if len(filenames['depth']) != 1:
                         raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
                     depth_filename = filenames['depth'][0]
