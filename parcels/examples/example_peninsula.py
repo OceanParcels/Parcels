@@ -67,8 +67,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
-def UpdateP(particle, fieldset, time, dt):
-    particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
+def UpdateP(particle, fieldset, time):
+    particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
 def pensinsula_example(fieldset, npart, mode='jit', degree=1,
