@@ -19,16 +19,16 @@ def pclass(mode):
 
 @pytest.fixture
 def k_sample_uv():
-    def SampleUV(particle, fieldset, time, dt):
-        particle.u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-        particle.v = fieldset.V[time, particle.lon, particle.lat, particle.depth]
+    def SampleUV(particle, fieldset, time):
+        particle.u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        particle.v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
     return SampleUV
 
 
 @pytest.fixture
 def k_sample_p():
-    def SampleP(particle, fieldset, time, dt):
-        particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
+    def SampleP(particle, fieldset, time):
+        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
     return SampleP
 
 
@@ -84,8 +84,8 @@ def test_fieldset_sample(fieldset, xdim=120, ydim=80):
     """ Sample the fieldset using indexing notation. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([fieldset.V[0, x, 70., 0.] for x in lon])
-    u_s = np.array([fieldset.U[0, -45., y, 0.] for y in lat])
+    v_s = np.array([fieldset.V[0, 0., 70., x] for x in lon])
+    u_s = np.array([fieldset.U[0, 0., y, -45.] for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
@@ -94,8 +94,8 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
     """ Sample the fieldset using the explicit eval function. """
     lon = np.linspace(-170, 170, xdim, dtype=np.float32)
     lat = np.linspace(-80, 80, ydim, dtype=np.float32)
-    v_s = np.array([fieldset.V.eval(0, x, 70., 0.) for x in lon])
-    u_s = np.array([fieldset.U.eval(0, -45., y, 0.) for y in lat])
+    v_s = np.array([fieldset.V.eval(0, 0., 70., x) for x in lon])
+    u_s = np.array([fieldset.U.eval(0, 0., y, 0.) for y in lat])
     assert np.allclose(v_s, lon, rtol=1e-7)
     assert np.allclose(u_s, lat, rtol=1e-7)
 
@@ -125,7 +125,7 @@ def test_variable_init_from_field(mode, npart=9):
 
     pset = ParticleSet(fieldset, pclass=VarParticle,
                        lon=xv.flatten(), lat=yv.flatten(), time=0)
-    assert np.all([abs(p.a - fieldset.P[p.time, p.lat, p.lon, p.depth]) < 1e-6 for p in pset])
+    assert np.all([abs(p.a - fieldset.P[p.time, p.depth, p.lat, p.lon]) < 1e-6 for p in pset])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -485,7 +485,7 @@ def test_nestedfields(mode, k_sample_p):
     P = NestedField('P', [P1, P2])
     fieldset.add_field(P)
 
-    def Recover(particle, fieldset, time, dt):
+    def Recover(particle, fieldset, time):
         particle.lon = -1
         particle.lat = -1
         particle.p = 999

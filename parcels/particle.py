@@ -128,7 +128,7 @@ class _Particle(object):
                     logger.error('Cannot initialise a Variable with a Field if no time provided. '
                                  'Add a "time=" to ParticleSet construction')
                     exit(-1)
-                initial = v.initial[time, lon, lat, depth]
+                initial = v.initial[time, depth, lat, lon]
             else:
                 initial = v.initial
             # Enforce type of initial value

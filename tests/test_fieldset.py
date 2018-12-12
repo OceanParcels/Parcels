@@ -220,7 +220,7 @@ def test_fieldset_gradient(mesh):
     assert np.allclose(dFdy.data, np_dFdy, rtol=5e-2)  # Field gradient dy.
 
 
-def addConst(particle, fieldset, time, dt):
+def addConst(particle, fieldset, time):
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 
 
@@ -291,11 +291,11 @@ def test_periodic(mode, time_periodic, dt_sign):
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', time_periodic=time_periodic, transpose=True, allow_time_extrapolation=True)
 
-    def sampleTemp(particle, fieldset, time, dt):
+    def sampleTemp(particle, fieldset, time):
         # Note that fieldset.temp is interpolated at time=time+dt.
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
-        particle.temp = fieldset.temp[time+particle.dt, particle.lon, particle.lat, particle.depth]
+        particle.temp = fieldset.temp[time+particle.dt, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)
@@ -379,7 +379,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
-    def DoNothing(particle, fieldset, time, dt):
+    def DoNothing(particle, fieldset, time):
         return ErrorCode.Success
 
     pset.execute(DoNothing, dt=3600)

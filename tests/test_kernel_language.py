@@ -11,7 +11,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def expr_kernel(name, pset, expr):
-    pycode = """def %s(particle, fieldset, time, dt):
+    pycode = """def %s(particle, fieldset, time):
     particle.p = %s""" % (name, expr)
     return Kernel(pset.fieldset, pset.ptype, pyfunc=None,
                   funccode=pycode, funcname=name,
@@ -99,7 +99,7 @@ def test_while_if_break(fieldset, mode):
         p = Variable('p', dtype=np.float32, initial=0.)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
-    def kernel(particle, fieldset, time, dt):
+    def kernel(particle, fieldset, time):
         while particle.p < 30:
             if particle.p > 9:
                 break
@@ -117,24 +117,24 @@ def test_if_withfield(fieldset, mode):
         p = Variable('p', dtype=np.float32, initial=0.)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
 
-    def kernel(particle, fieldset, time, dt):
-        u = fieldset.U[time, 1., 0, 0]
+    def kernel(particle, fieldset, time):
+        u = fieldset.U[time, 0, 0, 1.]
         particle.p = 0
-        if fieldset.U[time, 1., 0, 0] == u:
+        if fieldset.U[time, 0, 0, 1.] == u:
             particle.p += 1
-        if fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0]:
+        if fieldset.U[time, 0, 0, 1.] == fieldset.U[time, 0, 0, 1.]:
             particle.p += 1
         if True:
             particle.p += 1
-        if fieldset.U[time, 1., 0, 0] == u and 1 == 1:
+        if fieldset.U[time, 0, 0, 1.] == u and 1 == 1:
             particle.p += 1
-        if fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0] and fieldset.U[time, 1., 0, 0] == fieldset.U[time, 1., 0, 0]:
+        if fieldset.U[time, 0, 0, 1.] == fieldset.U[time, 0, 0, 1.] and fieldset.U[time, 0, 0, 1.] == fieldset.U[time, 0, 0, 1.]:
             particle.p += 1
-        if fieldset.U[time, 1., 0, 0] == u:
+        if fieldset.U[time, 0, 0, 1.] == u:
             particle.p += 1
         else:
             particle.p += 1000
-        if fieldset.U[time, 1., 0, 0] == 3:
+        if fieldset.U[time, 0, 0, 1.] == 3:
             particle.p += 1000
         else:
             particle.p += 1
@@ -157,8 +157,8 @@ def test_print(fieldset, mode, capfd):
         p = Variable('p', dtype=np.float32, initial=0.)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0.5])
 
-    def kernel(particle, fieldset, time, dt):
-        particle.p = fieldset.U[time, particle.lon, particle.lat, particle.depth]
+    def kernel(particle, fieldset, time):
+        particle.p = fieldset.U[time, particle.depth, particle.lat, particle.lon]
         tmp = 5
         print("%d %f %f" % (particle.id, particle.p, tmp))
     pset.execute(kernel, endtime=1., dt=1.)
@@ -218,10 +218,10 @@ def test_c_kernel(fieldset, mode, c_inc):
     else:
         c_include = path.join(path.dirname(__file__), 'customed_header.h')
 
-    def ckernel(particle, fieldset, time, dt):
+    def ckernel(particle, fieldset, time):
         func('pointer_args', fieldset.U, particle.lon, particle.dt)
 
-    def pykernel(particle, fieldset, time, dt):
+    def pykernel(particle, fieldset, time):
         particle.lon = func(fieldset.U, particle.lon, particle.dt)
 
     if mode == 'scipy':

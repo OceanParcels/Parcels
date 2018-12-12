@@ -9,7 +9,7 @@ import pytest
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def DoNothing(particle, fieldset, time, dt):
+def DoNothing(particle, fieldset, time):
     return ErrorCode.Success
 
 
@@ -64,7 +64,7 @@ def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
 @pytest.mark.parametrize('time', [0., 1])
 @pytest.mark.parametrize('dt', [0., 1])
 def test_pset_execute_dt_0(fieldset, mode, time, dt, npart=2):
-    def SetLat(particle, fieldset, time, dt):
+    def SetLat(particle, fieldset, time):
         particle.lat = .6
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
@@ -84,7 +84,7 @@ def test_pset_execute_dt_0(fieldset, mode, time, dt, npart=2):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_timed(fieldset, mode, npart=10):
-    def TimedFail(particle, fieldset, time, dt):
+    def TimedFail(particle, fieldset, time):
         if particle.time >= 10.:
             return ErrorCode.Error
         else:
@@ -105,7 +105,7 @@ def test_execution_fail_timed(fieldset, mode, npart=10):
 
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_execution_fail_python_exception(fieldset, mode, npart=10):
-    def PythonFail(particle, fieldset, time, dt):
+    def PythonFail(particle, fieldset, time):
         if particle.time >= 10.:
             raise RuntimeError("Enough is enough!")
         else:
@@ -126,8 +126,8 @@ def test_execution_fail_python_exception(fieldset, mode, npart=10):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
-    def MoveRight(particle, fieldset, time, dt):
-        fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
+    def MoveRight(particle, fieldset, time):
+        fieldset.U[time, particle.depth, particle.lat, particle.lon + 0.1]
         particle.lon += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
@@ -145,11 +145,11 @@ def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
-    def MoveRight(particle, fieldset, time, dt):
-        fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
+    def MoveRight(particle, fieldset, time):
+        fieldset.U[time, particle.depth, particle.lat, particle.lon + 0.1]
         particle.lon += 0.1
 
-    def MoveLeft(particle, fieldset, time, dt):
+    def MoveLeft(particle, fieldset, time):
         particle.lon -= 1.
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
@@ -164,11 +164,11 @@ def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
-    def MoveRight(particle, fieldset, time, dt):
-        fieldset.U[time, particle.lon + 0.1, particle.lat, particle.depth]
+    def MoveRight(particle, fieldset, time):
+        fieldset.U[time, particle.depth, particle.lat, particle.lon + 0.1]
         particle.lon += 0.1
 
-    def DeleteMe(particle, fieldset, time, dt):
+    def DeleteMe(particle, fieldset, time):
         particle.delete()
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
@@ -181,10 +181,10 @@ def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_kernel_add_no_new_variables(fieldset, mode):
-    def MoveEast(particle, fieldset, time, dt):
+    def MoveEast(particle, fieldset, time):
         particle.lon += 0.1
 
-    def MoveNorth(particle, fieldset, time, dt):
+    def MoveNorth(particle, fieldset, time):
         particle.lat += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
@@ -198,11 +198,11 @@ def test_kernel_add_no_new_variables(fieldset, mode):
 def test_multi_kernel_duplicate_varnames(fieldset, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
-    def MoveEast(particle, fieldset, time, dt):
+    def MoveEast(particle, fieldset, time):
         add_lon = 0.1
         particle.lon += add_lon
 
-    def MoveWest(particle, fieldset, time, dt):
+    def MoveWest(particle, fieldset, time):
         add_lon = -0.3
         particle.lon += add_lon
 
@@ -216,11 +216,11 @@ def test_multi_kernel_duplicate_varnames(fieldset, mode):
 def test_multi_kernel_reuse_varnames(fieldset, mode):
     # Testing for merging of two Kernels with the same variable declared
     # Should throw a warning, but go ahead regardless
-    def MoveEast1(particle, fieldset, time, dt):
+    def MoveEast1(particle, fieldset, time):
         add_lon = 0.2
         particle.lon += add_lon
 
-    def MoveEast2(particle, fieldset, time, dt):
+    def MoveEast2(particle, fieldset, time):
         particle.lon += add_lon  # NOQA - no flake8 testing of this line
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
@@ -233,11 +233,11 @@ def test_multi_kernel_reuse_varnames(fieldset, mode):
 def test_update_kernel_in_script(fieldset, mode):
     # Testing what happens when kernels are updated during runtime of a script
     # Should throw a warning, but go ahead regardless
-    def MoveEast(particle, fieldset, time, dt):
+    def MoveEast(particle, fieldset, time):
         add_lon = 0.1
         particle.lon += add_lon
 
-    def MoveWest(particle, fieldset, time, dt):
+    def MoveWest(particle, fieldset, time):
         add_lon = -0.3
         particle.lon += add_lon
 
@@ -249,7 +249,7 @@ def test_update_kernel_in_script(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_errorcode_repeat(fieldset, mode):
-    def simpleKernel(particle, fieldset, time, dt):
+    def simpleKernel(particle, fieldset, time):
         if particle.lon > .1 and time < 1.:
             # if particle.lon is not re-setted before kernel repetition, it will break here
             return ErrorCode.Error
