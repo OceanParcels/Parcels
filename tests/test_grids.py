@@ -1,6 +1,7 @@
 from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
 import numpy as np
+import xarray as xr
 import math
 import pytest
 from os import path
@@ -479,3 +480,64 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
     assert abs(pset[0].zonal - 1) < 1e-6
     assert abs(pset[0].meridional - 1) < 1e-6
     assert abs(pset[0].vertical - 1) < 1e-6
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('vert_mode', ['zlev', 'slev1'])
+@pytest.mark.parametrize('time', [True, False])
+def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+    dim_file = xr.open_dataset(data_path + 'mask_nemo_cross_180lon.nc')
+    u_file = xr.open_dataset(data_path + 'Uu_eastward_nemo_cross_180lon.nc')
+    v_file = xr.open_dataset(data_path + 'Vv_eastward_nemo_cross_180lon.nc')
+    j = 4
+    i = 11
+    lon = np.array(dim_file.glamf[0, j:j+2, i:i+2])
+    lat = np.array(dim_file.gphif[0, j:j+2, i:i+2])
+    U = np.array(u_file.U[0, j:j+2, i:i+2])
+    V = np.array(v_file.V[0, j:j+2, i:i+2])
+    trash = np.zeros((2, 2))
+    U = np.stack((U, trash))
+    V = np.stack((V, trash))
+    w0 = 1
+    w1 = 1
+    W = np.array([[[-99, -99], [-99, w0]],
+                  [[-99, -99], [-99, w1]]])
+
+    if vert_mode == 'zlev':
+        depth = np.array([0, 1])
+    elif vert_mode == 'slev1':
+        depth = np.array([[[0, 0], [0, 0]], [[1, 1], [1, 1]]])
+
+    if time:
+        U = np.stack((U, U))
+        V = np.stack((V, V))
+        W = np.stack((W, W))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': np.array([0, 10])}
+    else:
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
+    data = {'U': np.array(U, dtype=np.float32),
+            'V': np.array(V, dtype=np.float32),
+            'W': np.array(W, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical')
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+    fieldset.W.interp_method = 'cgrid_velocity'
+
+    def sampleVel(particle, fieldset, time, dt):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.lon, particle.lat, particle.depth]
+
+    class MyParticle(ptype[mode]):
+        zonal = Variable('zonal', dtype=np.float32, initial=0.)
+        meridional = Variable('meridional', dtype=np.float32, initial=0.)
+        vertical = Variable('vertical', dtype=np.float32, initial=0.)
+
+    lonp = 179.8
+    latp = 81.35
+    pset = ParticleSet.from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
+    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
+    pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
+    pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
+    assert abs(pset[0].zonal - 1) < 1e-3
+    assert abs(pset[0].meridional) < 1e-3
+    assert abs(pset[0].vertical - 1) < 1e-3
