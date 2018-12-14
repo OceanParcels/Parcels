@@ -5,7 +5,11 @@ from argparse import ArgumentParser
 from parcels import Field
 from os import environ
 from parcels.plotting import create_parcelsfig_axis, plotfield, cartopy_colorbar
+import sys
 try:
+    if sys.platform == 'darwin' and sys.version_info[0] == 3:
+        import matplotlib
+        matplotlib.use("TkAgg")
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
