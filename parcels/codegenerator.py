@@ -6,6 +6,7 @@ from collections import OrderedDict
 import math
 import numpy as np
 import random
+from copy import copy
 
 
 class IntrinsicNode(ast.AST):
@@ -379,12 +380,14 @@ class KernelGenerator(ast.NodeVisitor):
         # Make sure that repeated variables are not declared more than
         # once. If variables occur in multiple Kernels, give a warning
         used_vars = []
+        funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
         for kvar in funcvars:
             if kvar in used_vars:
                 logger.warning(kvar+" declared in multiple Kernels")
-                funcvars.remove(kvar)
+                funcvars_copy.remove(kvar)
             else:
                 used_vars.append(kvar)
+        funcvars = funcvars_copy
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
