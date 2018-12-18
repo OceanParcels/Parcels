@@ -407,8 +407,8 @@ def test_cgrid_uniform_2dvel(mode, time):
     fieldset.U.interp_method = 'cgrid_velocity'
     fieldset.V.interp_method = 'cgrid_velocity'
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -467,8 +467,8 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
     fieldset.V.interp_method = 'cgrid_velocity'
     fieldset.W.interp_method = 'cgrid_velocity'
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -524,8 +524,8 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
     fieldset.V.interp_method = 'cgrid_velocity'
     fieldset.W.interp_method = 'cgrid_velocity'
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
