@@ -85,6 +85,9 @@ class Kernel(object):
             self.pyfunc = user_ctx[self.funcname]
         else:
             self.pyfunc = pyfunc
+        assert len(inspect.getargspec(self.pyfunc).args) == 3, \
+            'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
+
         self.name = "%s%s" % (ptype.name, self.funcname)
 
         # Generate the kernel function and add the outer loop
@@ -208,7 +211,8 @@ class Kernel(object):
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
-                    res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
+                    p.dt = sign_dt * dt_pos
+                    res = self.pyfunc(p, pset.fieldset, p.time)
                 except FieldSamplingError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
@@ -274,7 +278,7 @@ class Kernel(object):
                 else:
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
-                    recovery_kernel(p, self.fieldset, p.time, dt)
+                    recovery_kernel(p, self.fieldset, p.time)
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)

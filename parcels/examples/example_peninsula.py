@@ -67,8 +67,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
-def UpdateP(particle, fieldset, time, dt):
-    particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
+def UpdateP(particle, fieldset, time):
+    particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
 def pensinsula_example(fieldset, npart, mode='jit', degree=1,
@@ -124,7 +124,7 @@ def test_peninsula_fieldset(mode, mesh):
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
-    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
+    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.depth, p.lat, p.lon]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
 
 
@@ -147,7 +147,7 @@ def test_peninsula_file(mode, mesh):
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
-    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
+    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.depth, p.lat, p.lon]) for p in pset])
     assert(err_smpl <= 1.e-3).all()
 
 

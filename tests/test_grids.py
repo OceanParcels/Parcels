@@ -62,12 +62,12 @@ def test_multi_structured_grids(mode):
 
     field_set = FieldSet(u_field, v_field, fields=other_fields)
 
-    def sampleTemp(particle, fieldset, time, dt):
+    def sampleTemp(particle, fieldset, time):
         # Note that fieldset.temp is interpolated at time=time+dt.
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
-        particle.temp0 = fieldset.temp0[time+dt, particle.lon, particle.lat, particle.depth]
-        particle.temp1 = fieldset.temp1[time+dt, particle.lon, particle.lat, particle.depth]
+        particle.temp0 = fieldset.temp0[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        particle.temp1 = fieldset.temp1[time+particle.dt, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
@@ -194,8 +194,8 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
     other_fields['temp'] = temp_field
     field_set = FieldSet(u_field, v_field, fields=other_fields)
 
-    def sampleTemp(particle, fieldset, time, dt):
-        particle.temp = fieldset.temp[time, particle.lon, particle.lat, particle.depth]
+    def sampleTemp(particle, fieldset, time):
+        particle.temp = fieldset.temp[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)
@@ -284,9 +284,9 @@ def test_rectilinear_s_grids_advect2(mode):
     class MyParticle(ptype[mode]):
         relDepth = Variable('relDepth', dtype=np.float32, initial=20.)
 
-    def moveEast(particle, fieldset, time, dt):
-        particle.lon += 5 * dt
-        particle.relDepth = fieldset.relDepth[time, particle.lon, particle.lat, particle.depth]
+    def moveEast(particle, fieldset, time):
+        particle.lon += 5 * particle.dt
+        particle.relDepth = fieldset.relDepth[time, particle.depth, particle.lat, particle.lon]
 
     depth = .9
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[0], lat=[0], depth=[depth])
@@ -320,9 +320,9 @@ def test_curvilinear_grids(mode):
     v_field = Field('V', v_data, grid=grid, transpose=False)
     field_set = FieldSet(u_field, v_field)
 
-    def sampleSpeed(particle, fieldset, time, dt):
-        u = fieldset.U[time, particle.lon, particle.lat, particle.depth]
-        v = fieldset.V[time, particle.lon, particle.lat, particle.depth]
+    def sampleSpeed(particle, fieldset, time):
+        u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
         particle.speed = math.sqrt(u*u+v*v)
 
     class MyParticle(ptype[mode]):
@@ -350,8 +350,8 @@ def test_nemo_grid(mode):
     # test ParticleSet.from_field on curvilinear grids
     ParticleSet.from_field(field_set, ptype[mode], start_field=field_set.U, size=5)
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -407,8 +407,8 @@ def test_cgrid_uniform_2dvel(mode, time):
     fieldset.U.interp_method = 'cgrid_velocity'
     fieldset.V.interp_method = 'cgrid_velocity'
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -467,8 +467,8 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
     fieldset.V.interp_method = 'cgrid_velocity'
     fieldset.W.interp_method = 'cgrid_velocity'
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
@@ -524,8 +524,8 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
     fieldset.V.interp_method = 'cgrid_velocity'
     fieldset.W.interp_method = 'cgrid_velocity'
 
-    def sampleVel(particle, fieldset, time, dt):
-        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.lon, particle.lat, particle.depth]
+    def sampleVel(particle, fieldset, time):
+        (particle.zonal, particle.meridional, particle.vertical) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)

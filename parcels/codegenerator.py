@@ -909,10 +909,12 @@ class LoopGenerator(object):
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
+        pdt_eq_dt_pos = c.Assign("particles[p].dt", "__dt * sign_dt")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
         body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
+        body += [pdt_eq_dt_pos]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),

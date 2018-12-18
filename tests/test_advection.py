@@ -110,7 +110,7 @@ def periodicfields(xdim, ydim, uvel, vvel):
     return FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
 
-def periodicBC(particle, fieldset, time, dt):
+def periodicBC(particle, fieldset, time):
     particle.lon = math.fmod(particle.lon, 1)
     particle.lat = math.fmod(particle.lat, 1)
 

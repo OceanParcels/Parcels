@@ -434,18 +434,6 @@ class FieldSet(object):
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
 
-    def eval(self, x, y):
-        """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
-
-        :param x: zonal point to evaluate
-        :param y: meridional point to evaluate
-
-        :return u, v: zonal and meridional velocities at point"""
-
-        u = self.U.eval(x, y)
-        v = self.V.eval(x, y)
-        return u, v
-
     def write(self, filename):
         """Write FieldSet to NetCDF file using NEMO convention
 

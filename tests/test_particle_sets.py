@@ -120,7 +120,7 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
                        pclass=ptype[mode], time=time)
     assert np.allclose([p.time for p in pset], time)
 
-    def IncrLon(particle, fieldset, time, dt):
+    def IncrLon(particle, fieldset, time):
         particle.lon += 1.
     pset.execute(IncrLon, dt=1., runtime=npart)
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
@@ -143,7 +143,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     outfilepath = tmpdir.join("pfile_repeated_release")
     pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt), chunksizes=[len(pset), 1])
 
-    def IncrLon(particle, fieldset, time, dt):
+    def IncrLon(particle, fieldset, time):
         particle.sample_var += 1.
         if particle.sample_var > fieldset.maxvar:
             particle.delete()
@@ -167,7 +167,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
 def test_pset_repeatdt_check_dt(fieldset):
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
 
-    def IncrLon(particle, fieldset, time, dt):
+    def IncrLon(particle, fieldset, time):
         particle.lon = 1.
     pset.execute(IncrLon, dt=2, runtime=21)
     assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
@@ -229,7 +229,7 @@ def test_pset_add_shorthand(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_execute(fieldset, mode, npart=10):
-    def AddLat(particle, fieldset, time, dt):
+    def AddLat(particle, fieldset, time):
         particle.lat += 0.1
 
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode])
@@ -296,7 +296,7 @@ def test_pset_remove_particle(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_remove_kernel(fieldset, mode, npart=100):
-    def DeleteKernel(particle, fieldset, time, dt):
+    def DeleteKernel(particle, fieldset, time):
         if particle.lon >= .4:
             particle.delete()
 
@@ -309,7 +309,7 @@ def test_pset_remove_kernel(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute(fieldset, mode, npart=10, n=5):
-    def AddLat(particle, fieldset, time, dt):
+    def AddLat(particle, fieldset, time):
         particle.lat += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
@@ -323,7 +323,7 @@ def test_pset_multi_execute(fieldset, mode, npart=10, n=5):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
-    def AddLat(particle, fieldset, time, dt):
+    def AddLat(particle, fieldset, time):
         particle.lat += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
@@ -384,9 +384,9 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
 def test_variable_written_once(fieldset, mode, tmpdir, npart):
     filepath = tmpdir.join("pfile_once_written_variables")
 
-    def Update_v(particle, fieldset, time, dt):
+    def Update_v(particle, fieldset, time):
         particle.v_once += 1.
-        particle.age += dt
+        particle.age += particle.dt
 
     class MyParticle(ptype[mode]):
         v_once = Variable('v_once', dtype=np.float32, initial=0., to_write='once')
@@ -407,11 +407,11 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     filepath = tmpdir.join("pfile_on_delete_written_variables")
 
-    def move_west(particle, fieldset, time, dt):
-        tmp = fieldset.U[time, particle.lon, particle.lat, particle.depth]  # to trigger out-of-bounds error
+    def move_west(particle, fieldset, time):
+        tmp = fieldset.U[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
         particle.lon -= 0.1 + tmp
 
-    def DeleteP(particle, fieldset, time, dt):
+    def DeleteP(particle, fieldset, time):
         particle.delete()
 
     lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)

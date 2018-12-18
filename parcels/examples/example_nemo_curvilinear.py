@@ -27,7 +27,7 @@ def run_nemo_curvilinear(mode, outfile):
     lonp = 30 * np.ones(npart)
     latp = [i for i in np.linspace(-70, 88, npart)]
 
-    def periodicBC(particle, pieldSet, time, dt):
+    def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
             particle.lon -= 360
 
