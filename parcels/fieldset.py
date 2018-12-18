@@ -276,6 +276,7 @@ class FieldSet(object):
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
+               In 3D, the depth is the one corresponding to W nodes
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
