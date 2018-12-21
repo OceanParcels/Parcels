@@ -27,6 +27,6 @@ install:
 build: false
 
 test_script:
-  - "py.test -v -s tests/"
+  - "py.test -v -s --durations=0 tests/"
   - "parcels_get_examples examples/"
-  - "py.test -v -s --nbval-lax examples/"
+  - "py.test -v -s --nbval-lax --durations=0 examples/"
