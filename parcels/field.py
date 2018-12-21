@@ -1334,10 +1334,10 @@ class NetcdfFileBuffer(object):
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
-        try:
-            self.dataset.set_auto_mask(False)
-        except:
-            pass
+        # try:
+        #     self.dataset.set_auto_mask(False)
+        # except:
+        #     pass
         return self
 
     def __exit__(self, type, value, traceback):
