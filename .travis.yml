@@ -36,7 +36,7 @@ script:
         sh -e /etc/init.d/xvfb start;
         sleep 3;
       fi
-    - py.test -v -s tests/
+    - py.test -v -s --durations=0 tests/
     - |
       # only get examples on linux
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
@@ -51,5 +51,5 @@ script:
     - |
       # evaluate example scripts and notebooks on linux only
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        py.test -v -s --nbval-lax examples/;
+        py.test -v -s --nbval-lax --durations=0 examples/;
       fi
