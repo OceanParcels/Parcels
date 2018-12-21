@@ -626,6 +626,8 @@ class Field(object):
             return val
         elif self.interp_method is 'cgrid_tracer':
             return self.data[ti, yi+1, xi+1]
+        elif self.interp_method is 'cgrid_velocity':
+            raise RuntimeError(self.interp_method+" must be interpolated as VectorField")
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
