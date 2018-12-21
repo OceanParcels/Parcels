@@ -627,7 +627,7 @@ class Field(object):
         elif self.interp_method is 'cgrid_tracer':
             return self.data[ti, yi+1, xi+1]
         elif self.interp_method is 'cgrid_velocity':
-            raise RuntimeError(self.interp_method+" must be interpolated as VectorField")
+            raise RuntimeError("%s is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)" % self.name)
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
