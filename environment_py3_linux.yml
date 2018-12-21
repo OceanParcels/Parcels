@@ -13,7 +13,7 @@ dependencies:
   - git
   - jupyter
   - matplotlib>=2.0.2
-  - netcdf4>=1.1.9,<=1.4.1
+  - netcdf4>=1.1.9
   - numpy>=1.9.1
   - progressbar2
   - py>=1.4.27
