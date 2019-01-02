@@ -29,8 +29,8 @@ def test_brownian_example(mode, mesh, npart=3000):
     fieldset = zeros_fieldset(mesh=mesh)
 
     # Set diffusion constants.
-    kh_zonal = 100
-    kh_meridional = 100
+    kh_zonal = 100  # in m^2/s
+    kh_meridional = 100  # in m^2/s
 
     # Create field of Kh_zonal and Kh_meridional, using same grid as U
     grid = fieldset.U.grid
