@@ -383,7 +383,8 @@ class KernelGenerator(ast.NodeVisitor):
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
         for kvar in funcvars:
             if kvar in used_vars:
-                logger.warning(kvar+" declared in multiple Kernels")
+                if kvar not in ['particle', 'fieldset', 'time']:
+                    logger.warning(kvar+" declared in multiple Kernels")
                 funcvars_copy.remove(kvar)
             else:
                 used_vars.append(kvar)
