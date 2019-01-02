@@ -1,6 +1,5 @@
 from parcels.tools.error import ErrorCode
 from parcels.field import Field
-from parcels.tools.loggers import logger
 from operator import attrgetter
 import numpy as np
 from ctypes import c_void_p
