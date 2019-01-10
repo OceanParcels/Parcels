@@ -84,7 +84,7 @@ class ParticleFile(object):
             self.time.units = "seconds"
         else:
             self.time.units = "seconds since " + str(self.particleset.time_origin)
-            self.time.calendar = self.particleset.time_origin.calendar
+            self.time.calendar = 'standard' if self.particleset.time_origin.calendar == 'np_datetime64' else self.particleset.time_origin.calendar
         self.time.axis = "T"
 
         self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes)
