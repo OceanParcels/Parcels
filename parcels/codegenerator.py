@@ -766,6 +766,8 @@ class KernelGenerator(ast.NodeVisitor):
                 ccode_conv2 = V.ccode_convert(*node.args.ccode)
                 statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
                               c.Statement("%s *= %s" % (var2, ccode_conv2))]
+            else:
+                statements = []
             if var3:
                 ccode_conv3 = W.ccode_convert(*node.args.ccode)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
