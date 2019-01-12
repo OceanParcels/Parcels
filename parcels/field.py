@@ -10,7 +10,7 @@ from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 import datetime
 import math
-from .grid import (Grid, CGrid, GridCode)
+from .grid import Grid, CGrid, GridCode
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField']
