@@ -1,6 +1,5 @@
 from parcels.tools.error import ErrorCode
 from parcels.field import Field
-from parcels.tools.loggers import logger
 from operator import attrgetter
 import numpy as np
 from ctypes import c_void_p
@@ -123,11 +122,10 @@ class _Particle(object):
                 lat = self.getInitialValue(ptype, name='lat')
                 depth = self.getInitialValue(ptype, name='depth')
                 time = self.getInitialValue(ptype, name='time')
-                v.initial.fieldset.computeTimeChunk(time, 1)
                 if time is None:
-                    logger.error('Cannot initialise a Variable with a Field if no time provided. '
-                                 'Add a "time=" to ParticleSet construction')
-                    exit(-1)
+                    raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
+                                       'Add a "time=" to ParticleSet construction')
+                v.initial.fieldset.computeTimeChunk(time, 1)
                 initial = v.initial[time, depth, lat, lon]
             else:
                 initial = v.initial
