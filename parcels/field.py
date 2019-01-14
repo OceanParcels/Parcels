@@ -10,8 +10,7 @@ from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 import datetime
 import math
-from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
-                   CurvilinearSGrid, CGrid, GridCode)
+from .grid import Grid, CGrid, GridCode
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField']
@@ -62,7 +61,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
@@ -236,16 +235,7 @@ class Field(object):
             time = time_origin.reltime(time)
             assert(np.all((time[1:]-time[:-1]) > 0))
 
-            if len(lon.shape) == 1:
-                if len(depth.shape) == 1:
-                    grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                else:
-                    grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-            else:
-                if len(depth.shape) == 1:
-                    grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                else:
-                    grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
 
@@ -859,12 +849,12 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        if type(self.grid) is RectilinearZGrid:
+        if self.grid.gtype == GridCode.RectilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
                                    coords=[('y', self.grid.lat), ('x', self.grid.lon)])
             nav_lat = xr.DataArray(self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
                                    coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        elif type(self.grid) is CurvilinearZGrid:
+        elif self.grid.gtype == GridCode.CurvilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon, coords=[('y', range(self.grid.ydim)),
                                                           ('x', range(self.grid.xdim))])
             nav_lat = xr.DataArray(self.grid.lat, coords=[('y', range(self.grid.ydim)),
