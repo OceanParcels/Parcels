@@ -383,7 +383,8 @@ class KernelGenerator(ast.NodeVisitor):
         funcvars_copy = copy(funcvars)  # editing a list while looping over it is dangerous
         for kvar in funcvars:
             if kvar in used_vars:
-                logger.warning(kvar+" declared in multiple Kernels")
+                if kvar not in ['particle', 'fieldset', 'time']:
+                    logger.warning(kvar+" declared in multiple Kernels")
                 funcvars_copy.remove(kvar)
             else:
                 used_vars.append(kvar)
@@ -760,10 +761,13 @@ class KernelGenerator(ast.NodeVisitor):
         for U, V, W, var, var2, var3 in zip(node.field.obj.U, node.field.obj.V, Wlist, node.var, node.var2, node.var3):
             vfld = VectorField(node.field.obj.name, U, V, W)
             ccode_eval = vfld.ccode_eval(var, var2, var3, U, V, W, *node.args.ccode)
-            ccode_conv1 = U.ccode_convert(*node.args.ccode)
-            ccode_conv2 = V.ccode_convert(*node.args.ccode)
-            statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
-                          c.Statement("%s *= %s" % (var2, ccode_conv2))]
+            if U.interp_method != 'cgrid_velocity':
+                ccode_conv1 = U.ccode_convert(*node.args.ccode)
+                ccode_conv2 = V.ccode_convert(*node.args.ccode)
+                statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
+                              c.Statement("%s *= %s" % (var2, ccode_conv2))]
+            else:
+                statements = []
             if var3:
                 ccode_conv3 = W.ccode_convert(*node.args.ccode)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
