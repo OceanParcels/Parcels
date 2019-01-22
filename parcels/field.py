@@ -958,6 +958,7 @@ class VectorField(object):
             assert self.U.grid is self.V.grid
             if W:
                 assert self.W.interp_method == 'cgrid_velocity'
+                assert self.W.grid is self.U.grid
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
