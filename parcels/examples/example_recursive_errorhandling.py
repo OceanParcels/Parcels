@@ -35,13 +35,13 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     pset = ParticleSet.from_line(fieldset=fieldset, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5), size=10)
 
-    def TestLon(particle, fieldset, time, dt):
+    def TestLon(particle, fieldset, time):
         """Kernel to check whether a longitude is larger than fieldset.minlon.
         If not, the Kernel throws an error"""
         if particle.lon <= fieldset.minlon:
             return ErrorCode.Error
 
-    def Error_RandomiseLon(particle, fieldset, time, dt):
+    def Error_RandomiseLon(particle, fieldset, time):
         """Error handling kernel that draws a new longitude.
         Note that this new longitude can be smaller than fieldset.minlon"""
         particle.lon = random.uniform(0., 1.)

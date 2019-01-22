@@ -52,8 +52,8 @@ def stommel_fieldset(xdim=200, ydim=200):
     return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
-def UpdateP(particle, fieldset, time, dt):
-    particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
+def UpdateP(particle, fieldset, time):
+    particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):

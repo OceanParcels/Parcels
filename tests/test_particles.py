@@ -27,7 +27,7 @@ def test_variable_init(fieldset, mode, npart=10):
                        lon=np.linspace(0, 1, npart, dtype=np.float32),
                        lat=np.linspace(1, 0, npart, dtype=np.float32))
 
-    def addOne(particle, fieldset, time, dt):
+    def addOne(particle, fieldset, time):
         particle.p_float += 1.
         particle.p_double += 1.
         particle.p_int += 1

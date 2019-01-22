@@ -2,16 +2,15 @@ from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
+import parcels.tools.interpolation_utils as i_u
 from collections import Iterable
 from py import path
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
-from math import cos
 import datetime
 import math
-from .grid import (RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid,
-                   CurvilinearSGrid, CGrid, GridCode)
+from .grid import Grid, CGrid, GridCode
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField']
@@ -62,7 +61,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
@@ -175,6 +174,8 @@ class Field(object):
                     raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
                 lonlat_filename = filenames['lon'][0]
                 if 'depth' in dimensions:
+                    if not isinstance(filenames['depth'], Iterable) or isinstance(filenames['depth'], str):
+                        filenames['depth'] = [filenames['depth']]
                     if len(filenames['depth']) != 1:
                         raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
                     depth_filename = filenames['depth'][0]
@@ -186,11 +187,11 @@ class Field(object):
         indices = {} if indices is None else indices.copy()
         for ind in indices.values():
             assert np.min(ind) >= 0, \
-                ('Negative indices are currently not allowed in Parcels. ' +
-                 'This is related to the non-increasing dimension it could generate ' +
-                 'if the domain goes from lon[-4] to lon[6] for example. ' +
-                 'Please raise an issue on https://github.com/OceanParcels/parcels/issues ' +
-                 'if you would need such feature implemented.')
+                ('Negative indices are currently not allowed in Parcels. '
+                 + 'This is related to the non-increasing dimension it could generate '
+                 + 'if the domain goes from lon[-4] to lon[6] for example. '
+                 + 'Please raise an issue on https://github.com/OceanParcels/parcels/issues '
+                 + 'if you would need such feature implemented.')
 
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
@@ -234,16 +235,7 @@ class Field(object):
             time = time_origin.reltime(time)
             assert(np.all((time[1:]-time[:-1]) > 0))
 
-            if len(lon.shape) == 1:
-                if len(depth.shape) == 1:
-                    grid = RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                else:
-                    grid = RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-            else:
-                if len(depth.shape) == 1:
-                    grid = CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
-                else:
-                    grid = CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
 
@@ -624,12 +616,14 @@ class Field(object):
             return val
         elif self.interp_method is 'cgrid_tracer':
             return self.data[ti, yi+1, xi+1]
+        elif self.interp_method is 'cgrid_velocity':
+            raise RuntimeError("%s is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)" % self.name)
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
     def interpolator3D(self, ti, z, y, x, time):
-        xi = int(self.grid.xdim / 2)
-        yi = int(self.grid.ydim / 2)
+        xi = int(self.grid.xdim / 2) - 1
+        yi = int(self.grid.ydim / 2) - 1
         (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)
         if self.interp_method is 'nearest':
             xii = xi if xsi <= .5 else xi+1
@@ -638,8 +632,8 @@ class Field(object):
             return self.data[ti, zii, yii, xii]
         elif self.interp_method is 'cgrid_velocity':
             # evaluating W velocity in c_grid
-            f0 = self.data[ti, zi, yi, xi]
-            f1 = self.data[ti, zi+1, yi, xi]
+            f0 = self.data[ti, zi, yi+1, xi+1]
+            f1 = self.data[ti, zi+1, yi+1, xi+1]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'linear':
             data = self.data[ti, zi, :, :]
@@ -654,7 +648,7 @@ class Field(object):
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method is 'cgrid_tracer':
-            return self.data[ti, zi+1, yi+1, xi+1]
+            return self.data[ti, zi, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
 
@@ -726,7 +720,7 @@ class Field(object):
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
 
-    def eval(self, time, x, y, z, applyConversion=True):
+    def eval(self, time, z, y, x, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -752,12 +746,12 @@ class Field(object):
         else:
             return value
 
-    def ccode_eval(self, var, t, x, y, z):
+    def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
             % (x, y, z, t, self.name, var, self.interp_method.upper())
 
-    def ccode_convert(self, _, x, y, z):
+    def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
     @property
@@ -855,12 +849,12 @@ class Field(object):
         vname_depth = 'depth%s' % self.name.lower()
 
         # Create DataArray objects for file I/O
-        if type(self.grid) is RectilinearZGrid:
+        if self.grid.gtype == GridCode.RectilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon + np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32),
                                    coords=[('y', self.grid.lat), ('x', self.grid.lon)])
             nav_lat = xr.DataArray(self.grid.lat.reshape(self.grid.ydim, 1) + np.zeros(self.grid.xdim, dtype=np.float32),
                                    coords=[('y', self.grid.lat), ('x', self.grid.lon)])
-        elif type(self.grid) is CurvilinearZGrid:
+        elif self.grid.gtype == GridCode.CurvilinearZGrid:
             nav_lon = xr.DataArray(self.grid.lon, coords=[('y', range(self.grid.ydim)),
                                                           ('x', range(self.grid.xdim))])
             nav_lat = xr.DataArray(self.grid.lat, coords=[('y', range(self.grid.ydim)),
@@ -924,10 +918,10 @@ class SummedField(list):
     Also note that, since SummedFields are lists, the individual Fields can
     still be queried through their list index (e.g. SummedField[1]).
     """
-    def eval(self, time, x, y, z, applyConversion=True):
+    def eval(self, time, z, y, x, applyConversion=True):
         tmp = 0
         for fld in self:
-            tmp += fld.eval(time, x, y, z, applyConversion)
+            tmp += fld.eval(time, z, y, x, applyConversion)
         return tmp
 
     def __getitem__(self, key):
@@ -965,17 +959,11 @@ class VectorField(object):
             if W:
                 assert self.W.interp_method == 'cgrid_velocity'
 
-    def dist(self, lon1, lon2, lat1, lat2, mesh):
+    def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
-            r = 360*60*1852/2/np.pi
             rad = np.pi/180.
-            x1 = r*np.cos(rad*lon1) * np.cos(rad*lat1)
-            y1 = r*np.sin(rad*lon1) * np.cos(rad*lat1)
-            z1 = r*np.sin(rad*lat1)
-            x2 = r*np.cos(rad*lon2) * np.cos(rad*lat2)
-            y2 = r*np.sin(rad*lon2) * np.cos(rad*lat2)
-            z2 = r*np.sin(rad*lat2)
-            return np.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)
+            deg2m = 1852 * 60.
+            return np.sqrt(((lon2-lon1)*deg2m*math.cos(rad * lat))**2 + ((lat2-lat1)*deg2m)**2)
         else:
             return np.sqrt((lon2-lon1)**2 + (lat2-lat1)**2)
 
@@ -992,8 +980,8 @@ class VectorField(object):
 
     def spatial_c_grid_interpolation2D(self, ti, z, y, x, time):
         grid = self.U.grid
-        xi = int(grid.xdim / 2)
-        yi = int(grid.ydim / 2)
+        xi = int(grid.xdim / 2) - 1
+        yi = int(grid.ydim / 2) - 1
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
@@ -1010,17 +998,17 @@ class VectorField(object):
             px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
         xx = (1-xsi)*(1-eta) * px[0] + xsi*(1-eta) * px[1] + xsi*eta * px[2] + (1-xsi)*eta * px[3]
         assert abs(xx-x) < 1e-4
-        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh)
-        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh)
-        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh)
-        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh)
+        c1 = self.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 0.), py))
+        c2 = self.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
+        c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
+        c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
         if grid.zdim == 1:
             U0 = self.U.data[ti, yi+1, xi] * c4
             U1 = self.U.data[ti, yi+1, xi+1] * c2
             V0 = self.V.data[ti, yi, xi+1] * c1
             V1 = self.V.data[ti, yi+1, xi+1] * c3
         else:
-            U0 = self.U.data[ti, zi, yi+1, xi] * c4  # zi here??
+            U0 = self.U.data[ti, zi, yi+1, xi] * c4
             U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
             V0 = self.V.data[ti, zi, yi, xi+1] * c1
             V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
@@ -1028,7 +1016,7 @@ class VectorField(object):
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
         deg2m = 1852 * 60.
-        meshJac = (deg2m * deg2m * cos(rad * y)) if grid.mesh == 'spherical' else 1
+        meshJac = (deg2m * deg2m * math.cos(rad * y)) if grid.mesh == 'spherical' else 1
         jac = self.jacobian(xsi, eta, px, py) * meshJac
 
         u = ((-(1-eta) * U - (1-xsi) * V) * px[0]
@@ -1040,6 +1028,107 @@ class VectorField(object):
              + (eta * U + xsi * V) * py[2]
              + (-eta * U + (1-xsi) * V) * py[3]) / jac
         return (u, v)
+
+    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time):
+        grid = self.U.grid
+        xi = int(grid.xdim / 2) - 1
+        yi = int(grid.ydim / 2) - 1
+        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+
+        if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+            px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
+            py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi+1], grid.lat[yi+1]])
+        else:
+            px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
+            py = np.array([grid.lat[yi, xi], grid.lat[yi, xi+1], grid.lat[yi+1, xi+1], grid.lat[yi+1, xi]])
+
+        if grid.mesh == 'spherical':
+            px[0] = px[0]+360 if px[0] < x-225 else px[0]
+            px[0] = px[0]-360 if px[0] > x+225 else px[0]
+            px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+            px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
+        xx = (1-xsi)*(1-eta) * px[0] + xsi*(1-eta) * px[1] + xsi*eta * px[2] + (1-xsi)*eta * px[3]
+        assert abs(xx-x) < 1e-4
+
+        px = np.concatenate((px, px))
+        py = np.concatenate((py, py))
+        if grid.z4d:
+            pz = np.array([grid.depth[0, zi, yi, xi], grid.depth[0, zi, yi, xi+1], grid.depth[0, zi, yi+1, xi+1], grid.depth[0, zi, yi+1, xi],
+                           grid.depth[0, zi+1, yi, xi], grid.depth[0, zi+1, yi, xi+1], grid.depth[0, zi+1, yi+1, xi+1], grid.depth[0, zi+1, yi+1, xi]])
+        else:
+            pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
+                           grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])
+
+        u0 = self.U.data[ti, zi, yi+1, xi]
+        u1 = self.U.data[ti, zi, yi+1, xi+1]
+        v0 = self.V.data[ti, zi, yi, xi+1]
+        v1 = self.V.data[ti, zi, yi+1, xi+1]
+        w0 = self.W.data[ti, zi, yi+1, xi+1]
+        w1 = self.W.data[ti, zi+1, yi+1, xi+1]
+
+        U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zet, 'zonal', grid.mesh)
+        U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zet, 'zonal', grid.mesh)
+        V0 = v0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 0, zet, 'meridional', grid.mesh)
+        V1 = v1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 1, zet, 'meridional', grid.mesh)
+        W0 = w0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 0, 'vertical', grid.mesh)
+        W1 = w1 * i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, 1, 'vertical', grid.mesh)
+
+        # Computing fluxes in half left hexahedron -> flux_u05
+        xx = [px[0], (px[0]+px[1])/2, (px[2]+px[3])/2, px[3], px[4], (px[4]+px[5])/2, (px[6]+px[7])/2, px[7]]
+        yy = [py[0], (py[0]+py[1])/2, (py[2]+py[3])/2, py[3], py[4], (py[4]+py[5])/2, (py[6]+py[7])/2, py[7]]
+        zz = [pz[0], (pz[0]+pz[1])/2, (pz[2]+pz[3])/2, pz[3], pz[4], (pz[4]+pz[5])/2, (pz[6]+pz[7])/2, pz[7]]
+        flux_u0 = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
+        flux_v0_halfx = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
+        flux_v1_halfx = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional', grid.mesh)
+        flux_w0_halfx = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical', grid.mesh)
+        flux_w1_halfx = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 1, 'vertical', grid.mesh)
+        flux_u05 = flux_u0 + flux_v0_halfx - flux_v1_halfx + flux_w0_halfx - flux_w1_halfx
+
+        # Computing fluxes in half front hexahedron -> flux_v05
+        xx = [px[0], px[1], (px[1]+px[2])/2, (px[0]+px[3])/2, px[4], px[5], (px[5]+px[6])/2, (px[4]+px[7])/2]
+        yy = [py[0], py[1], (py[1]+py[2])/2, (py[0]+py[3])/2, py[4], py[5], (py[5]+py[6])/2, (py[4]+py[7])/2]
+        zz = [pz[0], pz[1], (pz[1]+pz[2])/2, (pz[0]+pz[3])/2, pz[4], pz[5], (pz[5]+pz[6])/2, (pz[4]+pz[7])/2]
+        flux_u0_halfy = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
+        flux_u1_halfy = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal', grid.mesh)
+        flux_v0 = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
+        flux_w0_halfy = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical', grid.mesh)
+        flux_w1_halfy = w1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 1, 'vertical', grid.mesh)
+        flux_v05 = flux_u0_halfy - flux_u1_halfy + flux_v0 + flux_w0_halfy - flux_w1_halfy
+
+        # Computing fluxes in half lower hexahedron -> flux_w05
+        xx = [px[0], px[1], px[2], px[3], (px[0]+px[4])/2, (px[1]+px[5])/2, (px[2]+px[6])/2, (px[3]+px[7])/2]
+        yy = [py[0], py[1], py[2], py[3], (py[0]+py[4])/2, (py[1]+py[5])/2, (py[2]+py[6])/2, (py[3]+py[7])/2]
+        zz = [pz[0], pz[1], pz[2], pz[3], (pz[0]+pz[4])/2, (pz[1]+pz[5])/2, (pz[2]+pz[6])/2, (pz[3]+pz[7])/2]
+        flux_u0_halfz = u0 * i_u.jacobian3D_lin_face(xx, yy, zz, 0, .5, .5, 'zonal', grid.mesh)
+        flux_u1_halfz = u1 * i_u.jacobian3D_lin_face(xx, yy, zz, 1, .5, .5, 'zonal', grid.mesh)
+        flux_v0_halfz = v0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 0, .5, 'meridional', grid.mesh)
+        flux_v1_halfz = v1 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, 1, .5, 'meridional', grid.mesh)
+        flux_w0 = w0 * i_u.jacobian3D_lin_face(xx, yy, zz, .5, .5, 0, 'vertical', grid.mesh)
+        flux_w05 = flux_u0_halfz - flux_u1_halfz + flux_v0_halfz - flux_v1_halfz + flux_w0
+
+        surf_u05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'zonal', grid.mesh)
+        jac_u05 = i_u.jacobian3D_lin_face(px, py, pz, .5, eta, zet, 'zonal', grid.mesh)
+        U05 = flux_u05 / surf_u05 * jac_u05
+
+        surf_v05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'meridional', grid.mesh)
+        jac_v05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, .5, zet, 'meridional', grid.mesh)
+        V05 = flux_v05 / surf_v05 * jac_v05
+
+        surf_w05 = i_u.jacobian3D_lin_face(px, py, pz, .5, .5, .5, 'vertical', grid.mesh)
+        jac_w05 = i_u.jacobian3D_lin_face(px, py, pz, xsi, eta, .5, 'vertical', grid.mesh)
+        W05 = flux_w05 / surf_w05 * jac_w05
+
+        jac = i_u.jacobian3D_lin(px, py, pz, xsi, eta, zet, grid.mesh)
+        dxsidt = i_u.interpolate(i_u.phi1D_quad, [U0, U05, U1], xsi) / jac
+        detadt = i_u.interpolate(i_u.phi1D_quad, [V0, V05, V1], eta) / jac
+        dzetdt = i_u.interpolate(i_u.phi1D_quad, [W0, W05, W1], zet) / jac
+
+        dphidxsi, dphideta, dphidzet = i_u.dphidxsi3D_lin(xsi, eta, zet)
+
+        u = np.dot(dphidxsi, px) * dxsidt + np.dot(dphideta, px) * detadt + np.dot(dphidzet, px) * dzetdt
+        v = np.dot(dphidxsi, py) * dxsidt + np.dot(dphideta, py) * detadt + np.dot(dphidzet, py) * dzetdt
+        w = np.dot(dphidxsi, pz) * dxsidt + np.dot(dphideta, pz) * detadt + np.dot(dphidzet, pz) * dzetdt
+        return (u, v, w)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
         """
@@ -1053,20 +1142,21 @@ class VectorField(object):
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
-            raise NotImplementedError('C staggered grid with a s vertical discretisation are not available')
-        (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-        w = self.W.eval(time, x, y, z, False)
-        w = self.W.units.to_target(w, x, y, z)
+            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time)
+        else:
+            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
+            w = self.W.eval(time, z, y, x, False)
+            w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
-    def eval(self, time, x, y, z):
+    def eval(self, time, z, y, x):
         if self.U.interp_method != 'cgrid_velocity':
-            u = self.U.eval(time, x, y, z, False)
-            v = self.V.eval(time, x, y, z, False)
+            u = self.U.eval(time, z, y, x, False)
+            v = self.V.eval(time, z, y, x, False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
             if self.W is not None:
-                w = self.W.eval(time, x, y, z, False)
+                w = self.W.eval(time, z, y, x, False)
                 w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
             else:
@@ -1075,7 +1165,7 @@ class VectorField(object):
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
             time -= periods*(grid.time[-1]-grid.time[0])
-            if ti < grid.tdim-1 and time > self.grid.time[ti]:
+            if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
                 if self.W:
@@ -1103,7 +1193,7 @@ class VectorField(object):
     def __getitem__(self, key):
         return self.eval(*key)
 
-    def ccode_eval(self, varU, varV, varW, U, V, W, t, x, y, z):
+    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         if varW:
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
@@ -1139,13 +1229,13 @@ class SummedVectorField(list):
         self.V = V
         self.W = W
 
-    def eval(self, time, x, y, z):
+    def eval(self, time, z, y, x):
         zonal = meridional = vertical = 0
         if self.W is not None:
             for (U, V, W) in zip(self.U, self.V, self.W):
                 vfld = VectorField(self.name, U, V, W)
                 vfld.fieldset = self.fieldset
-                (tmp1, tmp2, tmp3) = vfld.eval(time, x, y, z)
+                (tmp1, tmp2, tmp3) = vfld.eval(time, z, y, x)
                 zonal += tmp1
                 meridional += tmp2
                 vertical += tmp3
@@ -1154,7 +1244,7 @@ class SummedVectorField(list):
             for (U, V) in zip(self.U, self.V):
                 vfld = VectorField(self.name, U, V)
                 vfld.fieldset = self.fieldset
-                (tmp1, tmp2) = vfld.eval(time, x, y, z)
+                (tmp1, tmp2) = vfld.eval(time, z, y, x)
                 zonal += tmp1
                 meridional += tmp2
             return (zonal, meridional)

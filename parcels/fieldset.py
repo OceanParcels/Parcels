@@ -276,6 +276,7 @@ class FieldSet(object):
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
+               In 3D, the depth is the one corresponding to W nodes
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -432,18 +433,6 @@ class FieldSet(object):
         for attr, value in iter(self.__dict__.items()):
             if isinstance(value, Field):
                 value.add_periodic_halo(zonal, meridional, halosize)
-
-    def eval(self, x, y):
-        """Evaluate the zonal and meridional velocities (u,v) at a point (x,y)
-
-        :param x: zonal point to evaluate
-        :param y: meridional point to evaluate
-
-        :return u, v: zonal and meridional velocities at point"""
-
-        u = self.U.eval(x, y)
-        v = self.V.eval(x, y)
-        return u, v
 
     def write(self, filename):
         """Write FieldSet to NetCDF file using NEMO convention

@@ -109,7 +109,7 @@ def test_randomexponential(mode, lambd, npart=1000):
 
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
-    def vertical_randomexponential(particle, fieldset, time, dt):
+    def vertical_randomexponential(particle, fieldset, time):
         # Kernel for random exponential variable in depth direction
         particle.depth = random.expovariate(fieldset.lambd)
 

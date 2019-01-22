@@ -4,7 +4,7 @@ import numpy as np
 from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
 from enum import IntEnum
 
-__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
+__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
 
 
 class GridCode(IntEnum):
@@ -54,12 +54,12 @@ class Grid(object):
     @classmethod
     def grid(self, lon, lat, depth, time, time_origin, mesh, **kwargs):
         if len(lon.shape) == 1:
-            if len(depth.shape) == 1:
+            if depth is None or len(depth.shape) == 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
         else:
-            if len(depth.shape) == 1:
+            if depth is None or len(depth.shape) == 1:
                 return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)

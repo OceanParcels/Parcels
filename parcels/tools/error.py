@@ -63,7 +63,7 @@ def parse_particletime(time, fieldset):
     return time
 
 
-def recovery_kernel_error(particle, fieldset, time, dt):
+def recovery_kernel_error(particle, fieldset, time):
     """Default error kernel that throws exception"""
     msg = "Error: %s" % particle.exception if particle.exception else None
     raise KernelError(particle, fieldset=fieldset, msg=msg)
@@ -95,7 +95,7 @@ class OutOfTimeError(KernelError):
         super(OutOfTimeError, self).__init__(particle, fieldset=fieldset, msg=message)
 
 
-def recovery_kernel_out_of_bounds(particle, fieldset, time, dt):
+def recovery_kernel_out_of_bounds(particle, fieldset, time):
     """Default sampling error kernel that throws OutOfBoundsError"""
     if particle.exception is None:
         # TODO: JIT does not yet provide the context that created
@@ -106,7 +106,7 @@ def recovery_kernel_out_of_bounds(particle, fieldset, time, dt):
         raise OutOfBoundsError(particle, fieldset, error.x, error.y, error.z)
 
 
-def recovery_kernel_time_extrapolation(particle, fieldset, time, dt):
+def recovery_kernel_time_extrapolation(particle, fieldset, time):
     """Default sampling error kernel that throws OutOfTimeError"""
     raise OutOfTimeError(particle, fieldset)
 
