@@ -6,6 +6,7 @@ from parcels.tools.loggers import logger
 import os
 from tempfile import gettempdir
 import psutil
+import string
 from parcels.tools.error import ErrorCode
 try:
     from parcels._version import version as parcels_version
@@ -67,7 +68,8 @@ class ParticleFile(object):
         self.maxid_written = -1
         self.dataset_open = True
 
-        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % getuid(), "out")
+        self.npy_path = os.path.join(gettempdir(), "parcels-%s" % getuid(),
+                                     "out-%s" % ''.join(string.ascii_uppercase for _ in range(6)))
         self.delete_npyfiles()
 
     def open_dataset(self, data_shape):
