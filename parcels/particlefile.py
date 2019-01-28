@@ -7,6 +7,7 @@ import os
 from tempfile import gettempdir
 import psutil
 import string
+import random
 from parcels.tools.error import ErrorCode
 try:
     from parcels._version import version as parcels_version
@@ -69,7 +70,7 @@ class ParticleFile(object):
         self.dataset_open = True
 
         self.npy_path = os.path.join(gettempdir(), "parcels-%s" % getuid(),
-                                     "out-%s" % ''.join(string.ascii_uppercase for _ in range(6)))
+                                     "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
         self.delete_npyfiles()
 
     def open_dataset(self, data_shape):
