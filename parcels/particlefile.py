@@ -165,6 +165,78 @@ class ParticleFile(object):
         else:
             setattr(self.dataset, name, message)
 
+    def convert_pset_to_dict(self, pset, time, deleted_only=False):
+        """Convert all Particle data from one time step to a python dictionary.
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        returns two dictionaries: one for all variables to be written each outputdt,
+         and one for all variables to be written once
+        """
+        data_dict = {}
+        data_dict_once = {}
+
+        time = time.total_seconds() if isinstance(time, delta) else time
+
+        if self.lasttime_written != time and \
+           (self.write_ondelete is False or deleted_only is True):
+            if pset.size == 0:
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            else:
+                for var in self.var_names:
+                    data_dict[var] = np.nan * np.zeros(len(pset))
+
+                i = 0
+                for p in pset:
+                    if p.dt*p.time <= p.dt*time:
+                        for var in self.var_names:
+                            data_dict[var][i] = getattr(p, var)
+                        if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
+                            logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
+                        self.maxid_written = np.max([self.maxid_written, p.id])
+                        i += 1
+
+                save_ind = np.isfinite(data_dict["id"])
+                for key in self.var_names:
+                    data_dict[key] = data_dict[key][save_ind]
+
+                if time not in self.time_written:
+                    self.time_written.append(time)
+
+                if len(self.var_names_once) > 0:
+                    first_write = [p for p in pset if (p.id not in self.written_once) and _is_particle_started_yet(p, time)]
+                    data_dict_once['id'] = np.nan * np.zeros(len(first_write))
+                    for var in self.var_names_once:
+                        data_dict_once[var] = np.nan * np.zeros(len(first_write))
+
+                    i = 0
+                    for p in first_write:
+                        self.written_once.append(p.id)
+                        data_dict_once['id'][i] = p.id
+                        for var in self.var_names_once:
+                            data_dict_once[var][i] = getattr(p, var)
+                        i += 1
+
+            if not deleted_only:
+                self.lasttime_written = time
+
+        return data_dict, data_dict_once
+
+    def buffer_to_npy(self, data_dict, data_dict_once):
+        """Buffer daat to set of temporary numpy files, using np.save"""
+        if not os.path.exists(self.npy_path):
+            os.mkdir(self.npy_path)
+
+        if len(data_dict) > 0:
+            tmpfilename = os.path.join(self.npy_path, str(len(self.file_list) + 1))
+            np.save(tmpfilename, data_dict)
+            self.file_list.append(tmpfilename + ".npy")
+
+        if len(data_dict_once) > 0:
+            tmpfilename = os.path.join(self.npy_path, str(len(self.file_list) + 1) + '_once')
+            np.save(tmpfilename, data_dict_once)
+            self.file_list_once.append(tmpfilename + ".npy")
+
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to a temporary npy-file
         using a python dictionary. The data is saved in the folder 'out'.
@@ -172,64 +244,11 @@ class ParticleFile(object):
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
         """
-        if isinstance(time, delta):
-            time = time.total_seconds()
-        if self.lasttime_written != time and \
-           (self.write_ondelete is False or deleted_only is True):
-            if pset.size > 0:
-                data = {}
-                for var in self.var_names:
-                    data[var] = np.nan * np.zeros(len(pset))
 
-                i = 0
-                for p in pset:
-                    if p.dt*p.time <= p.dt*time:
-                        for var in self.var_names:
-                            data[var][i] = getattr(p, var)
-                        if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
-                            logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
-                        self.maxid_written = np.max([self.maxid_written, p.id])
-                        i += 1
+        data_dict, data_dict_once = self.convert_pset_to_dict(pset, time, deleted_only=deleted_only)
+        self.buffer_to_npy(data_dict, data_dict_once)
 
-                if not os.path.exists(self.npy_path):
-                    os.mkdir(self.npy_path)
-
-                save_ind = np.isfinite(data["id"])
-                for key in self.var_names:
-                    data[key] = data[key][save_ind]
-
-                tmpfilename = os.path.join(self.npy_path, str(len(self.file_list)+1))
-                np.save(tmpfilename, data)
-                self.file_list.append(tmpfilename+".npy")
-                if time not in self.time_written:
-                    self.time_written.append(time)
-
-                if len(self.var_names_once) > 0:
-                    first_write = [p for p in pset if (p.id not in self.written_once) and _is_particle_started_yet(p, time)]
-                    data_once = {}
-                    data_once['id'] = np.nan * np.zeros(len(first_write))
-                    for var in self.var_names_once:
-                        data_once[var] = np.nan * np.zeros(len(first_write))
-
-                    i = 0
-                    for p in first_write:
-                        self.written_once.append(p.id)
-                        data_once['id'][i] = p.id
-                        for var in self.var_names_once:
-                            data_once[var][i] = getattr(p, var)
-                        i += 1
-
-                    tmpfilename = os.path.join(self.npy_path, str(len(self.file_list)+1)+'_once')
-                    np.save(tmpfilename, data_once)
-                    self.file_list_once.append(tmpfilename+".npy")
-
-            else:
-                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
-
-            if not deleted_only:
-                self.lasttime_written = time
-
-    def read_npy(self, file_list, time_steps, var):
+    def read_from_npy(self, file_list, time_steps, var):
         """Read NPY-files for one variable using a loop over all files.
         :param file_list: List that  contains all file names in the output directory
         :param time_steps: Number of time steps that were written in out directory
@@ -260,7 +279,7 @@ class ParticleFile(object):
             raise MemoryError("Not enough memory available for export. npy files are stored at %s", self.npy_path)
 
         for var in self.var_names:
-            data = self.read_npy(self.file_list, len(self.time_written), var)
+            data = self.read_from_npy(self.file_list, len(self.time_written), var)
             if var == self.var_names[0]:
                 self.open_dataset(data.shape)
             varout = 'z' if var == 'depth' else var
@@ -268,7 +287,7 @@ class ParticleFile(object):
 
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_npy(self.file_list_once, 1, var)
+                getattr(self, var)[:] = self.read_from_npy(self.file_list_once, 1, var)
 
     def delete_npyfiles(self):
         """Deleted all temporary npy files"""
