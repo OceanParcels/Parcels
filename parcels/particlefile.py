@@ -69,7 +69,7 @@ class ParticleFile(object):
         self.maxid_written = -1
         self.dataset_open = True
 
-        self.npy_path = os.path.join(os.path.dirname(self.name), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+        self.npy_path = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
         self.delete_npyfiles()
 
     def open_dataset(self, data_shape):
