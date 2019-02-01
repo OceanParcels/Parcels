@@ -19,7 +19,7 @@ matrix:
 install:
   - "powershell ./appveyor/install_miniconda.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "conda install --yes conda=4.4"
+  - "conda install --yes conda<4.6"
   - "conda env create -f %ENV_NAME% -n parcels"
   - "activate parcels"
   - "python setup.py install"
