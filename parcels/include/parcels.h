@@ -342,7 +342,7 @@ static inline ErrorCode temporal_interpolationUV_c_grid(float x, float y, float 
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
     if (grid->zdim==1){
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
     }
     else{
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), u, v); CHECKERROR(err);
