@@ -50,6 +50,7 @@ class Grid(object):
         self.lat_flipped = False
         self.defer_load = False
         self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
+        self.periods = 0
 
     @classmethod
     def grid(self, lon, lat, depth, time, time_origin, mesh, **kwargs):
@@ -138,14 +139,15 @@ class Grid(object):
         nextTime_loc = np.infty * signdt
         if self.update_status == 'not_updated':
             if self.ti >= 0:
-                if signdt >= 0 and ((time < self.time[0] and self.ti > 0)
-                   or (time > self.time[2] and self.ti < len(self.time_full)-3)):
+                if (time - self.periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - self.periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
                     self.ti = -1  # reset
-                elif signdt >= 0 and time >= self.time[1] and self.ti < len(self.time_full)-3:
+                elif (time - self.periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - self.periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                    self.ti = -1  # reset
+                elif signdt >= 0 and time - self.periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
-                elif signdt == -1 and time <= self.time[1] and self.ti > 0:
+                elif signdt == -1 and time - self.periods*(self.time_full[-1]-self.time_full[0]) <= self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
@@ -159,10 +161,10 @@ class Grid(object):
                 self.time = self.time_full[self.ti:self.ti+3]
                 self.tdim = 3
                 self.update_status = 'first_updated'
-            if signdt >= 0 and self.ti < len(self.time_full)-3:
-                nextTime_loc = self.time[2]
-            elif signdt == -1 and self.ti > 0:
-                nextTime_loc = self.time[0]
+            if signdt >= 0 and (self.ti < len(self.time_full)-3 or not f.allow_time_extrapolation):
+                nextTime_loc = self.time[2] + self.periods*(self.time_full[-1]-self.time_full[0])
+            elif signdt == -1 and (self.ti > 0 or not f.allow_time_extrapolation):
+                nextTime_loc = self.time[0] + self.periods*(self.time_full[-1]-self.time_full[0])
         return nextTime_loc
 
 

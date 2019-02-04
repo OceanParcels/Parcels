@@ -695,8 +695,9 @@ class Field(object):
         time_index = self.grid.time <= time
         if self.time_periodic:
             if time_index.all() or np.logical_not(time_index).all():
-                periods = math.floor((time-self.grid.time[0])/(self.grid.time[-1]-self.grid.time[0]))
-                time -= periods*(self.grid.time[-1]-self.grid.time[0])
+                periods = math.floor((time-self.grid.time_full[0])/(self.grid.time_full[-1]-self.grid.time_full[0]))
+                self.grid.periods = periods
+                time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
                 time_index = self.grid.time <= time
                 ti = time_index.argmin() - 1 if time_index.any() else 0
                 return (ti, periods)
@@ -728,7 +729,7 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         (ti, periods) = self.time_index(time)
-        time -= periods*(self.grid.time[-1]-self.grid.time[0])
+        time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
             f0 = self.spatial_interpolation(ti, z, y, x, time)
             f1 = self.spatial_interpolation(ti + 1, z, y, x, time)
@@ -1165,7 +1166,7 @@ class VectorField(object):
         else:
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
-            time -= periods*(grid.time[-1]-grid.time[0])
+            time -= periods*(grid.time_full[-1]-grid.time_full[0])
             if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
