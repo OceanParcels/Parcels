@@ -82,6 +82,7 @@ class Grid(object):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('z4d', c_int),
                         ('mesh_spherical', c_int), ('zonal_periodic', c_int),
+                        ('tfull_min', c_double), ('tfull_max', c_double), ('periods', POINTER(c_int)),
                         ('lonlat_minmax', POINTER(c_float)),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
@@ -89,9 +90,13 @@ class Grid(object):
 
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+            if not isinstance(self.periods, c_int):
+                self.periods = c_int()
+                self.periods.value = 0
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
                                            self.mesh == 'spherical', self.zonal_periodic,
+                                           self.time_full[0], self.time_full[-1], pointer(self.periods),
                                            self.lonlat_minmax.ctypes.data_as(POINTER(c_float)),
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
@@ -137,23 +142,25 @@ class Grid(object):
 
     def computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.infty * signdt
+        periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         if self.update_status == 'not_updated':
             if self.ti >= 0:
-                if (time - self.periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - self.periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
+                if (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
                     self.ti = -1  # reset
-                elif (time - self.periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - self.periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                elif (time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
                     self.ti = -1  # reset
-                elif signdt >= 0 and time - self.periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
+                elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
-                elif signdt == -1 and time - self.periods*(self.time_full[-1]-self.time_full[0]) <= self.time[1] and self.ti > 0:
+                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
             if self.ti == -1:
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)
+                periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
                 if self.ti > 0 and signdt == -1:
                     self.ti -= 1
                 if self.ti >= len(self.time_full) - 2:
@@ -162,9 +169,9 @@ class Grid(object):
                 self.tdim = 3
                 self.update_status = 'first_updated'
             if signdt >= 0 and (self.ti < len(self.time_full)-3 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[2] + self.periods*(self.time_full[-1]-self.time_full[0])
+                nextTime_loc = self.time[2] + periods*(self.time_full[-1]-self.time_full[0])
             elif signdt == -1 and (self.ti > 0 or not f.allow_time_extrapolation):
-                nextTime_loc = self.time[0] + self.periods*(self.time_full[-1]-self.time_full[0])
+                nextTime_loc = self.time[0] + periods*(self.time_full[-1]-self.time_full[0])
         return nextTime_loc
 
 

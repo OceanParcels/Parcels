@@ -79,7 +79,7 @@ def test_globcurrent_particles(mode, use_xarray):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('rundays', [300, 3000])
+@pytest.mark.parametrize('rundays', [300, 900])
 def test_globcurrent_time_periodic(mode, rundays):
     sample_var = []
     for full_load in [True, False]:
