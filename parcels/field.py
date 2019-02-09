@@ -52,7 +52,7 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
+    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='spherical',
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
