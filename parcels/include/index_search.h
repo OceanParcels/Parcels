@@ -20,6 +20,8 @@ typedef struct
 {
   int xdim, ydim, zdim, tdim, z4d;
   int sphere_mesh, zonal_periodic;
+  double tfull_min, tfull_max;
+  int* periods;
   float *lonlat_minmax;
   float *lon, *lat, *depth;
   double *time;
@@ -371,22 +373,22 @@ static inline ErrorCode search_indices(float x, float y, float z, CStructuredGri
 }
 
 /* Local linear search to update time index */
-static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *ti, int time_periodic)
+static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *ti, int time_periodic, double tfull_min, double tfull_max, int *periods)
 {
   if (*ti < 0)
     *ti = 0;
   if (time_periodic == 1){
     if (*t < tvals[0]){
       *ti = size-1;
-      int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
-      *t -= periods * (tvals[size-1]-tvals[0]);
-      search_time_index(t, size, tvals, ti, time_periodic);
+      *periods = (int) floor( (*t-tfull_min)/(tfull_max-tfull_min));
+      *t -= *periods * (tfull_max-tfull_min);
+      search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
     }  
-    else if (*t > tvals[size-1]){
+    else if (*t >= tvals[size-1]){
       *ti = 0;
-      int periods = floor( (*t-tvals[0])/(tvals[size-1]-tvals[0]));
-      *t -= periods * (tvals[size-1]-tvals[0]);
-      search_time_index(t, size, tvals, ti, time_periodic);
+      *periods = (int) floor( (*t-tfull_min)/(tfull_max-tfull_min));
+      *t -= *periods * (tfull_max-tfull_min);
+      search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
     }  
   }          
   while (*ti < size-1 && *t >= tvals[*ti+1]) ++(*ti);
