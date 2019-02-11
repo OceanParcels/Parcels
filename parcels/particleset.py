@@ -293,7 +293,7 @@ class ParticleSet(object):
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
         if isinstance(endtime, np.datetime64):
-            if self.time_origin.calender is None:
+            if self.time_origin.calendar is None:
                 raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
             endtime = self.time_origin.reltime(endtime)
         if isinstance(runtime, delta):
