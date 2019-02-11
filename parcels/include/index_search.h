@@ -384,7 +384,7 @@ static inline ErrorCode search_time_index(double *t, int size, double *tvals, in
       *t -= *periods * (tfull_max-tfull_min);
       search_time_index(t, size, tvals, ti, time_periodic, tfull_min, tfull_max, periods);
     }  
-    else if (*t > tvals[size-1]){
+    else if (*t >= tvals[size-1]){
       *ti = 0;
       *periods = (int) floor( (*t-tfull_min)/(tfull_max-tfull_min));
       *t -= *periods * (tfull_max-tfull_min);
