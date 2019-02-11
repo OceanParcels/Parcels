@@ -34,9 +34,9 @@ class Field(object):
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation: (only if grid is None)
 
-           1. spherical (default): Lat and lon in degree, with a
+           1. spherical: Lat and lon in degree, with a
               correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+           2. flat (default): No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
     :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
@@ -52,7 +52,7 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='spherical',
+    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = name
