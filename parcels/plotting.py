@@ -131,7 +131,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         if fld.grid.defer_load:
             fld.fieldset.computeTimeChunk(show_time, 1)
         (idx, periods) = fld.time_index(show_time)
-        show_time -= periods * (fld.grid.time[-1] - fld.grid.time[0])
+        show_time -= periods * (fld.grid.time_full[-1] - fld.grid.time_full[0])
         if show_time > fld.grid.time[-1] or show_time < fld.grid.time[0]:
             raise TimeExtrapolationError(show_time, field=fld, msg='show_time')
 
