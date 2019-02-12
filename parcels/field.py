@@ -34,9 +34,9 @@ class Field(object):
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation: (only if grid is None)
 
-           1. spherical (default): Lat and lon in degree, with a
+           1. spherical: Lat and lon in degree, with a
               correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+           2. flat (default): No conversion, lat/lon are assumed to be in m.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
     :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
@@ -695,8 +695,12 @@ class Field(object):
         time_index = self.grid.time <= time
         if self.time_periodic:
             if time_index.all() or np.logical_not(time_index).all():
-                periods = math.floor((time-self.grid.time[0])/(self.grid.time[-1]-self.grid.time[0]))
-                time -= periods*(self.grid.time[-1]-self.grid.time[0])
+                periods = int(math.floor((time-self.grid.time_full[0])/(self.grid.time_full[-1]-self.grid.time_full[0])))
+                if isinstance(self.grid.periods, c_int):
+                    self.grid.periods.value = periods
+                else:
+                    self.grid.periods = periods
+                time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
                 time_index = self.grid.time <= time
                 ti = time_index.argmin() - 1 if time_index.any() else 0
                 return (ti, periods)
@@ -728,7 +732,7 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         (ti, periods) = self.time_index(time)
-        time -= periods*(self.grid.time[-1]-self.grid.time[0])
+        time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
             f0 = self.spatial_interpolation(ti, z, y, x, time)
             f1 = self.spatial_interpolation(ti + 1, z, y, x, time)
@@ -1165,7 +1169,7 @@ class VectorField(object):
         else:
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
-            time -= periods*(grid.time[-1]-grid.time[0])
+            time -= periods*(grid.time_full[-1]-grid.time_full[0])
             if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
