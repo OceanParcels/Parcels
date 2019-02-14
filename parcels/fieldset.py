@@ -293,12 +293,69 @@ class FieldSet(object):
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-               Note that in the case of from_nemo(), the velocity fields are default to 'cgrid_velocity'
+               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+
+        """
+
+        fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                                  allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, **kwargs)
+        if hasattr(fieldset, 'W'):
+            fieldset.W.set_scaling_factor(-1.)
+        return fieldset
+
+    @classmethod
+    def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                  allow_time_extrapolation=None, time_periodic=False,
+                  tracer_interp_method='cgrid_tracer', **kwargs):
+        """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
+
+        :param filenames: Dictionary mapping variables to file(s). The
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}
+               time values are in filenames[data]
+        :param variables: Dictionary mapping variables to variable
+               names in the netCDF file(s).
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable.
+               Watch out: NEMO is discretised on a C-grid:
+               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+                __V1__
+               |      |
+               U0     U1
+               |__V0__|
+               To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
+               which are located on the corners of the cells.
+               (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
+               In 3D, the depth is the one corresponding to W nodes
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
+               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
 
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
+        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
+            raise RuntimeError("On a c-grid discretisation like NEMO, U, V and W should have the same dimensions")
 
         interp_method = {}
         for v in variables:
