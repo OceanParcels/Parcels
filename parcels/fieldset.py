@@ -79,6 +79,8 @@ class FieldSet(object):
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
             grid = Grid.grid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
+            if 'creation_log' not in kwargs.keys():
+                kwargs['creation_log'] = 'from_data'
 
             fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
@@ -209,6 +211,8 @@ class FieldSet(object):
         """
 
         fields = {}
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_netcdf'
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
@@ -297,6 +301,8 @@ class FieldSet(object):
 
         """
 
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_nemo'
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, **kwargs)
         if hasattr(fieldset, 'W'):
@@ -363,6 +369,8 @@ class FieldSet(object):
                 interp_method[v] = 'cgrid_velocity'
             else:
                 interp_method[v] = tracer_interp_method
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_c_grid_dataset'
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
@@ -392,6 +400,8 @@ class FieldSet(object):
 
         if extra_fields is None:
             extra_fields = {}
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_parcels'
 
         dimensions = {}
         default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
@@ -438,6 +448,8 @@ class FieldSet(object):
         """
 
         fields = {}
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_xarray_dataset'
         for var, name in variables.items():
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts

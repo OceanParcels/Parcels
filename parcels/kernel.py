@@ -55,8 +55,9 @@ class Kernel(object):
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
-        if pyfunc is AdvectionRK4_3D:
-            logger.warning_once('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
+        if pyfunc is AdvectionRK4_3D and fieldset.W.creation_log != 'from_nemo' and fieldset.W._scaling_factor > 0:
+            logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
+                                '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
