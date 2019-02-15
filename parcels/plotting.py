@@ -197,7 +197,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             elif field[0].fieldtype == 'V':
                 d = np.empty_like(data[0])
                 d[:-1, :-1] = (data[0][:-1, 1:] + data[0][1:, 1:]) / 2.
-            else: # W
+            else:  # W
                 d = data[0][1:, 1:]
         else:  # if A-grid
             d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
