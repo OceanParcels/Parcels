@@ -64,6 +64,9 @@ class ParticleSet(object):
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = [self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time]
 
+        for kwvar in kwargs:
+            kwargs[kwvar] = convert_to_list(kwargs[kwvar])
+
         assert len(lon) == len(time)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
@@ -77,6 +80,7 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
+            self.repeatkwargs = kwargs
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -379,7 +383,7 @@ class ParticleSet(object):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass)
+                                       pclass=self.repeatpclass, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

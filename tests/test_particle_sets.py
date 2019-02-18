@@ -174,6 +174,20 @@ def test_pset_repeatdt_check_dt(fieldset):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_repeatdt_custominit(fieldset, mode):
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var')
+
+    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
+
+    def DoNothing(particle, fieldset, time):
+        return ErrorCode.Success
+
+    pset.execute(DoNothing, dt=1, runtime=21)
+    assert np.allclose([p.sample_var for p in pset], 5.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
