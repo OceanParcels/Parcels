@@ -57,11 +57,12 @@ class Kernel(object):
         self.funcname = funcname or pyfunc.__name__
         if pyfunc is AdvectionRK4_3D:
             warning = False
-            if isinstance(fieldset.W, Field) and fieldset.W.creation_log != 'from_nemo' and fieldset.W._scaling_factor > 0:
+            if isinstance(fieldset.W, Field) and fieldset.W.creation_log != 'from_nemo' and \
+               fieldset.W._scaling_factor is not None and fieldset.W._scaling_factor > 0:
                 warning = True
             if type(fieldset.W) in [SummedField, NestedField]:
                 for f in fieldset.W:
-                    if f.creation_log != 'from_nemo' and f._scaling_factor > 0:
+                    if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
                         warning = True
             if warning:
                 logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
