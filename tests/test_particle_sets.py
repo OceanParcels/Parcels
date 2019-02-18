@@ -394,16 +394,17 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
         age = Variable('age', dtype=np.float32, initial=0.)
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, repeatdt=0.1)
+    time = np.arange(0, npart/10, 0.1, dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
     outfile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
                  output_file=outfile)
-    assert np.allclose([p.v_once - p.age * 10 for p in pset], 0, atol=1e-5)
+    assert np.allclose([p.v_once - vo - p.age*10 for p, vo in zip(pset, time)], 0, atol=1e-5)
     outfile.close()
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
-    assert (vfile.shape == (npart*11, ))
-    assert np.all([v == 0 for v in vfile])
+    assert (vfile.shape == (npart, ))
+    assert np.all([v == vo for v, vo in zip(vfile, time)])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
