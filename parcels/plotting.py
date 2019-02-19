@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-                  land=True, vmin=None, vmax=None, savefile=None, animation=False):
+                  land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
     """Function to plot a Parcels ParticleSet
 
     :param show_time: Time at which to show the ParticleSet
@@ -68,9 +68,10 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         elif not isinstance(field, Field):
             field = getattr(particles.fieldset, field)
 
+        depth_level = kwargs.pop('depth_level', 0)
         plt, fig, ax, cartopy = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
                                           projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=None,
-                                          titlestr='Particles and ')
+                                          titlestr='Particles and ', depth_level=depth_level)
         if plt is None:
             return  # creating axes was not possible
 
@@ -196,6 +197,8 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             elif field[0].fieldtype == 'V':
                 d = np.empty_like(data[0])
                 d[:-1, :-1] = (data[0][:-1, 1:] + data[0][1:, 1:]) / 2.
+            else:  # W
+                d = data[0][1:, 1:]
         else:  # if A-grid
             d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
             d = np.where(data[0][:-1, :-1] == 0, 0, d)

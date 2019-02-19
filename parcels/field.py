@@ -120,6 +120,7 @@ class Field(object):
         self.dataFiles = kwargs.pop('dataFiles', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
+        self.creation_log = kwargs.pop('creation_log', '')
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,

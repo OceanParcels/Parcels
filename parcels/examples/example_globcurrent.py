@@ -167,7 +167,7 @@ def test_globcurrent_deferred_fieldset_gradient(full_load, use_xarray):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=25, lat=-35)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(days=1))
 
-    tdim = 365 if full_load else 3
+    tdim = 366 if full_load else 3
     assert(dU_dx.data.shape == (tdim, 41, 81))
     assert(fieldset.dU_dy.data.shape == (tdim, 41, 81))
     assert(dU_dx is fieldset.U.gradientx)

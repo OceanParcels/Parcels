@@ -44,6 +44,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
               'V': np.zeros((lon.size, lat.size, depth.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
+    assert fieldset2D.U.creation_log == 'from_data'
 
     pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart, dtype=np.float32) + 20.,
