@@ -407,7 +407,7 @@ class ParticleSet(object):
             pbar.finish()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=True, vmin=None, vmax=None, savefile=None, animation=False):
+             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet
 
         :param with_particles: Boolean whether to show particles
@@ -423,7 +423,7 @@ class ParticleSet(object):
         """
         from parcels.plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
