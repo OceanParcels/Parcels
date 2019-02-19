@@ -40,7 +40,8 @@ class FieldSet(object):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
-               Note that at least a 'U' and 'V' numpy array need to be given
+               Note that at least a 'U' and 'V' numpy array need to be given, and that
+               the built-in Advection kernels assume that U and V are in m/s
 
                1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
                   whichever is relevant for the dataset, use the flag transpose=True
@@ -54,7 +55,7 @@ class FieldSet(object):
                (e.g. dimensions['U'], dimensions['V'], etc).
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -180,8 +181,8 @@ class FieldSet(object):
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
                or a dictionary of dictionaries {var:{dim:[files]}}.
                time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
+        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
+               Note that the built-in Advection kernels assume that U and V are in m/s
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
@@ -192,7 +193,7 @@ class FieldSet(object):
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -265,8 +266,8 @@ class FieldSet(object):
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
                or a dictionary of dictionaries {var:{dim:[files]}}
                time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
+        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
+               Note that the built-in Advection kernels assume that U and V are in m/s
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
@@ -286,7 +287,7 @@ class FieldSet(object):
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -421,7 +422,8 @@ class FieldSet(object):
                             time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
-        :param ds: xarray Dataset
+        :param ds: xarray Dataset.
+               Note that the built-in Advection kernels assume that U and V are in m/s
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the xarray Dataset.
                Note that dimensions can also be a dictionary of dictionaries if
@@ -431,7 +433,7 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
