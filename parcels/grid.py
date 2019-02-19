@@ -53,7 +53,7 @@ class Grid(object):
         self.periods = 0
 
     @staticmethod
-    def grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
+    def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
         if len(lon.shape) == 1:
             if depth is None or len(depth.shape) == 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
