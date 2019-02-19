@@ -52,8 +52,8 @@ class Grid(object):
         self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
         self.periods = 0
 
-    @classmethod
-    def grid(self, lon, lat, depth, time, time_origin, mesh, **kwargs):
+    @staticmethod
+    def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
         if len(lon.shape) == 1:
             if depth is None or len(depth.shape) == 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)

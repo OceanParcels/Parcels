@@ -61,7 +61,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
@@ -236,7 +236,7 @@ class Field(object):
             time = time_origin.reltime(time)
             assert(np.all((time[1:]-time[:-1]) > 0))
 
-            grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
 
