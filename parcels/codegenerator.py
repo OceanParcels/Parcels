@@ -228,6 +228,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = RandomNode(math, ccode='')
         elif node.id == 'print':
             node = PrintNode()
+        elif 'tmp' in node.id:
+            raise NotImplementedError("Custom Kernels cannot contain string 'tmp'; please change your kernel")
         return node
 
     def visit_Attribute(self, node):
