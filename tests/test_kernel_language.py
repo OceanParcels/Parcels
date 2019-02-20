@@ -111,6 +111,24 @@ def test_while_if_break(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nested_if(fieldset, mode):
+    """Test nested if commands"""
+    class TestParticle(ptype[mode]):
+        p1 = Variable('p1', dtype=np.int32, initial=1)
+        p2 = Variable('p2', dtype=np.int32, initial=0)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        if particle.p1 >= particle.p2:
+            particle.p2 = 1
+            if particle.p2 == particle.p1:
+                particle.p1 = 5
+
+    pset.execute(kernel, endtime=10, dt=1.)
+    assert np.allclose([pset[0].p1, pset[0].p2], [5, 1])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_if_withfield(fieldset, mode):
     """Test combination of if and Field sampling commands"""
     class TestParticle(ptype[mode]):
