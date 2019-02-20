@@ -291,7 +291,7 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
 def parsedomain(domain, field):
     field.grid.check_zonal_periodic()
     if domain is not None:
-        if not isinstance(domain, dict) and len(domain)  == 4:
+        if not isinstance(domain, dict) and len(domain) == 4:  # for backward compatibility with <v2.0.0
             domain = {'N': domain[0], 'S': domain[1], 'E': domain[2],'W': domain[3]}
         _, _, _, lonW, latS, _ = field.search_indices(domain['W'], domain['S'], 0, 0, 0, search2D=True)
         _, _, _, lonE, latN, _ = field.search_indices(domain['E'], domain['N'], 0, 0, 0, search2D=True)
