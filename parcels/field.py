@@ -788,7 +788,7 @@ class Field(object):
 
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
-        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
         :param depth_level: depth level to be plotted (default 0)
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
