@@ -128,13 +128,13 @@ def test_nested_if(fieldset, mode):
     assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
 
 
-def test_tmp_in_kernel(fieldset):
+def test_parcels_tmpvar_in_kernel(fieldset):
     """Tests for error thrown if vartiable with 'tmp' defined in custom kernel"""
     error_thrown = False
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=0, lat=0)
 
     def kernel_tmpvar(particle, fieldset, time):
-        tmpvar = 0  # noqa
+        parcels_tmpvar0 = 0  # noqa
 
     try:
         pset.execute(kernel_tmpvar, endtime=1, dt=1.)

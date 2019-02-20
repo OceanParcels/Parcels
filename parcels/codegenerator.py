@@ -209,7 +209,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def get_tmp(self):
         """Create a new temporary veriable name"""
-        tmp = "tmp%d" % self._tmp_counter
+        tmp = "parcels_tmpvar%d" % self._tmp_counter
         self._tmp_counter += 1
         self.tmp_vars += [tmp]
         return tmp
@@ -228,8 +228,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = RandomNode(math, ccode='')
         elif node.id == 'print':
             node = PrintNode()
-        elif 'tmp' in node.id:
-            raise NotImplementedError("Custom Kernels cannot contain string 'tmp'; please change your kernel")
+        elif 'parcels_tmpvar' in node.id:
+            raise NotImplementedError("Custom Kernels cannot contain string 'parcels_tmpvar'; please change your kernel")
         return node
 
     def visit_Attribute(self, node):
@@ -544,7 +544,7 @@ class KernelGenerator(ast.NodeVisitor):
             self.visit(b)
         # field evals are replaced by a tmp variable is added to the stack.
         # Here it means field evals passes from node.test to node.body. We take it out manually
-        fieldInTestCount = node.test.ccode.count('tmp')
+        fieldInTestCount = node.test.ccode.count('parcels_tmpvar')
         body0 = c.Block([b.ccode for b in node.body[:fieldInTestCount]])
         body = c.Block([b.ccode for b in node.body[fieldInTestCount:]])
         orelse = c.Block([b.ccode for b in node.orelse]) if len(node.orelse) > 0 else None
