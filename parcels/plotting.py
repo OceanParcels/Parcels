@@ -210,11 +210,11 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         else:
             cs = ax.pcolormesh(plotlon[0], plotlat[0], d)
 
-    if cartopy is None or projection is None:
+    if cartopy is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
         ax.set_ylim(np.nanmin(plotlat[0]), np.nanmax(plotlat[0]))
     elif domain is not None:
-        ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])])
+        ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])], crs=cartopy.crs.PlateCarree())
     cs.cmap.set_over('k')
     cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
