@@ -126,7 +126,7 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
-                    mesh='spherical', timestamps=None , allow_time_extrapolation=None, time_periodic=False,
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     full_load=False, **kwargs):
         """Create field from netCDF file
 
@@ -160,6 +160,7 @@ class Field(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
+        # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
                 assert len(filenames) == len(timestamps), 'Number of files and number of timestamps must be equal.'
@@ -241,7 +242,7 @@ class Field(object):
                 dataFiles = []
                 for fname in data_filenames:
                     with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
-                        ftime =  filebuffer.time
+                        ftime = filebuffer.time
                         timeslices.append(ftime)
                         dataFiles.append([fname] * len(ftime))
                 timeslices = np.array(timeslices)

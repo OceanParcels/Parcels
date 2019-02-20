@@ -172,7 +172,7 @@ class FieldSet(object):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
+               filepath may contain wildcards to indicate multiple files
                or be a list of file.
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
@@ -217,7 +217,6 @@ class FieldSet(object):
         # Typecast timestamps to numpy array
         if isinstance(timestamps, list):
             timestamps = np.array(timestamps)
-
 
         fields = {}
         for var, name in variables.items():
