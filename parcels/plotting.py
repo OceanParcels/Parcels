@@ -14,7 +14,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     :param show_time: Time at which to show the ParticleSet
     :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
-    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
     :param vmin: minimum colour scale (only in single-plot mode)
@@ -99,7 +99,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     """Function to plot a Parcels Field
 
     :param show_time: Time at which to show the Field
-    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
@@ -291,8 +291,10 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
 def parsedomain(domain, field):
     field.grid.check_zonal_periodic()
     if domain is not None:
-        _, _, _, lonW, latS, _ = field.search_indices(domain[3], domain[1], 0, 0, 0, search2D=True)
-        _, _, _, lonE, latN, _ = field.search_indices(domain[2], domain[0], 0, 0, 0, search2D=True)
+        if not isinstance(domain, dict) and len(domain)  == 4:
+            domain = {'N': domain[0], 'S': domain[1], 'E': domain[2],'W': domain[3]}
+        _, _, _, lonW, latS, _ = field.search_indices(domain['W'], domain['S'], 0, 0, 0, search2D=True)
+        _, _, _, lonE, latN, _ = field.search_indices(domain['E'], domain['N'], 0, 0, 0, search2D=True)
         return latN+1, latS, lonE+1, lonW
     else:
         if field.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:

@@ -413,7 +413,7 @@ class ParticleSet(object):
         :param with_particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
