@@ -113,7 +113,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(float x, float y,
   if (f->time_periodic == 0 && f->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic); CHECKERROR(err);
+  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], f->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKERROR(err);
 
   /* Cast data array intp data[time][depth][lat][lon] as per NEMO convention */
   float (*data)[f->zdim][f->ydim][f->xdim] = (float (*)[f->zdim][f->ydim][f->xdim]) f->data;
@@ -315,7 +315,7 @@ static inline ErrorCode temporal_interpolationUV_c_grid(float x, float y, float 
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic); CHECKERROR(err);
+  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKERROR(err);
 
   /* Cast data array intp data[time][depth][lat][lon] as per NEMO convention */
   float (*dataU)[U->zdim][U->ydim][U->xdim] = (float (*)[U->zdim][U->ydim][U->xdim]) U->data;
@@ -342,7 +342,7 @@ static inline ErrorCode temporal_interpolationUV_c_grid(float x, float y, float 
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
     if (grid->zdim==1){
-      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
+      err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
     }
     else{
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), u, v); CHECKERROR(err);
@@ -502,7 +502,7 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(float x, float y, float
   if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
     return ERROR_TIME_EXTRAPOLATION;
   }
-  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic); CHECKERROR(err);
+  err = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKERROR(err);
 
   /* Cast data array intp data[time][depth][lat][lon] as per NEMO convention */
   float (*dataU)[U->zdim][U->ydim][U->xdim] = (float (*)[U->zdim][U->ydim][U->xdim]) U->data;

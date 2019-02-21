@@ -34,9 +34,9 @@ class Field(object):
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation: (only if grid is None)
 
-           1. spherical (default): Lat and lon in degree, with a
+           1. spherical: Lat and lon in degree, with a
               correction for zonal velocity U near the poles.
-           2. flat: No conversion, lat/lon are assumed to be in m.
+           2. flat (default): No conversion, lat/lon are assumed to be in m.
     :param timestamps: A numpy array containing the timestamps for each of the files in filenames, for loading
            from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
@@ -63,7 +63,7 @@ class Field(object):
         if grid:
             self.grid = grid
         else:
-            self.grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
@@ -123,6 +123,7 @@ class Field(object):
         self.dataFiles = kwargs.pop('dataFiles', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
+        self.creation_log = kwargs.pop('creation_log', '')
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -254,7 +255,7 @@ class Field(object):
             time = time_origin.reltime(time)
             assert(np.all((time[1:]-time[:-1]) > 0))
 
-            grid = Grid.grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
 
@@ -714,8 +715,12 @@ class Field(object):
         time_index = self.grid.time <= time
         if self.time_periodic:
             if time_index.all() or np.logical_not(time_index).all():
-                periods = math.floor((time-self.grid.time[0])/(self.grid.time[-1]-self.grid.time[0]))
-                time -= periods*(self.grid.time[-1]-self.grid.time[0])
+                periods = int(math.floor((time-self.grid.time_full[0])/(self.grid.time_full[-1]-self.grid.time_full[0])))
+                if isinstance(self.grid.periods, c_int):
+                    self.grid.periods.value = periods
+                else:
+                    self.grid.periods = periods
+                time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
                 time_index = self.grid.time <= time
                 ti = time_index.argmin() - 1 if time_index.any() else 0
                 return (ti, periods)
@@ -747,7 +752,7 @@ class Field(object):
         scipy.interpolate to perform spatial interpolation.
         """
         (ti, periods) = self.time_index(time)
-        time -= periods*(self.grid.time[-1]-self.grid.time[0])
+        time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
             f0 = self.spatial_interpolation(ti, z, y, x, time)
             f1 = self.spatial_interpolation(ti + 1, z, y, x, time)
@@ -802,7 +807,7 @@ class Field(object):
 
         :param animation: Boolean whether result is a single plot, or an animation
         :param show_time: Time at which to show the Field (only in single-plot mode)
-        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
         :param depth_level: depth level to be plotted (default 0)
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
@@ -977,6 +982,7 @@ class VectorField(object):
             assert self.U.grid is self.V.grid
             if W:
                 assert self.W.interp_method == 'cgrid_velocity'
+                assert self.W.grid is self.U.grid
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
@@ -1183,7 +1189,7 @@ class VectorField(object):
         else:
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
-            time -= periods*(grid.time[-1]-grid.time[0])
+            time -= periods*(grid.time_full[-1]-grid.time_full[0])
             if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]

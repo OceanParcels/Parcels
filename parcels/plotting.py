@@ -8,13 +8,13 @@ from datetime import datetime
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-                  land=True, vmin=None, vmax=None, savefile=None, animation=False):
+                  land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
     """Function to plot a Parcels ParticleSet
 
     :param show_time: Time at which to show the ParticleSet
     :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
-    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
     :param vmin: minimum colour scale (only in single-plot mode)
@@ -68,9 +68,10 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         elif not isinstance(field, Field):
             field = getattr(particles.fieldset, field)
 
+        depth_level = kwargs.pop('depth_level', 0)
         plt, fig, ax, cartopy = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
                                           projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=None,
-                                          titlestr='Particles and ')
+                                          titlestr='Particles and ', depth_level=depth_level)
         if plt is None:
             return  # creating axes was not possible
 
@@ -98,7 +99,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     """Function to plot a Parcels Field
 
     :param show_time: Time at which to show the Field
-    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
@@ -131,7 +132,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         if fld.grid.defer_load:
             fld.fieldset.computeTimeChunk(show_time, 1)
         (idx, periods) = fld.time_index(show_time)
-        show_time -= periods * (fld.grid.time[-1] - fld.grid.time[0])
+        show_time -= periods * (fld.grid.time_full[-1] - fld.grid.time_full[0])
         if show_time > fld.grid.time[-1] or show_time < fld.grid.time[0]:
             raise TimeExtrapolationError(show_time, field=fld, msg='show_time')
 
@@ -196,6 +197,8 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             elif field[0].fieldtype == 'V':
                 d = np.empty_like(data[0])
                 d[:-1, :-1] = (data[0][:-1, 1:] + data[0][1:, 1:]) / 2.
+            else:  # W
+                d = data[0][1:, 1:]
         else:  # if A-grid
             d = (data[0][:-1, :-1] + data[0][1:, :-1] + data[0][:-1, 1:] + data[0][1:, 1:])/4.
             d = np.where(data[0][:-1, :-1] == 0, 0, d)
@@ -207,11 +210,11 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         else:
             cs = ax.pcolormesh(plotlon[0], plotlat[0], d)
 
-    if cartopy is None or projection is None:
+    if cartopy is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
         ax.set_ylim(np.nanmin(plotlat[0]), np.nanmax(plotlat[0]))
     elif domain is not None:
-        ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])])
+        ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])], crs=cartopy.crs.PlateCarree())
     cs.cmap.set_over('k')
     cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
@@ -288,8 +291,10 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
 def parsedomain(domain, field):
     field.grid.check_zonal_periodic()
     if domain is not None:
-        _, _, _, lonW, latS, _ = field.search_indices(domain[3], domain[1], 0, 0, 0, search2D=True)
-        _, _, _, lonE, latN, _ = field.search_indices(domain[2], domain[0], 0, 0, 0, search2D=True)
+        if not isinstance(domain, dict) and len(domain) == 4:  # for backward compatibility with <v2.0.0
+            domain = {'N': domain[0], 'S': domain[1], 'E': domain[2],'W': domain[3]}
+        _, _, _, lonW, latS, _ = field.search_indices(domain['W'], domain['S'], 0, 0, 0, search2D=True)
+        _, _, _, lonE, latN, _ = field.search_indices(domain['E'], domain['N'], 0, 0, 0, search2D=True)
         return latN+1, latS, lonE+1, lonW
     else:
         if field.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
