@@ -333,8 +333,8 @@ class Field(object):
                 self.grid.cell_edge_sizes['x'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
                 self.grid.cell_edge_sizes['y'] = np.zeros((self.grid.ydim, self.grid.xdim), dtype=np.float32)
 
-                x_conv = GeographicPolar() if self.grid.mesh is 'spherical' else UnitConverter()
-                y_conv = Geographic() if self.grid.mesh is 'spherical' else UnitConverter()
+                x_conv = GeographicPolar() if self.grid.mesh == 'spherical' else UnitConverter()
+                y_conv = Geographic() if self.grid.mesh == 'spherical' else UnitConverter()
                 for y, (lat, dy) in enumerate(zip(self.grid.lat, np.gradient(self.grid.lat))):
                     for x, (lon, dx) in enumerate(zip(self.grid.lon, np.gradient(self.grid.lon))):
                         self.grid.cell_edge_sizes['x'][y, x] = x_conv.to_source(dx, lon, lat, self.grid.depth[0])
@@ -605,19 +605,19 @@ class Field(object):
         xi = 0
         yi = 0
         (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
-        if self.interp_method is 'nearest':
+        if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
             return self.data[ti, yii, xii]
-        elif self.interp_method is 'linear':
+        elif self.interp_method == 'linear':
             val = (1-xsi)*(1-eta) * self.data[ti, yi, xi] + \
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
-        elif self.interp_method is 'cgrid_tracer':
+        elif self.interp_method == 'cgrid_tracer':
             return self.data[ti, yi+1, xi+1]
-        elif self.interp_method is 'cgrid_velocity':
+        elif self.interp_method == 'cgrid_velocity':
             raise RuntimeError("%s is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)" % self.name)
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
@@ -626,17 +626,17 @@ class Field(object):
         xi = int(self.grid.xdim / 2) - 1
         yi = int(self.grid.ydim / 2) - 1
         (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)
-        if self.interp_method is 'nearest':
+        if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
             zii = zi if zeta <= .5 else zi+1
             return self.data[ti, zii, yii, xii]
-        elif self.interp_method is 'cgrid_velocity':
+        elif self.interp_method == 'cgrid_velocity':
             # evaluating W velocity in c_grid
             f0 = self.data[ti, zi, yi+1, xi+1]
             f1 = self.data[ti, zi+1, yi+1, xi+1]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method is 'linear':
+        elif self.interp_method == 'linear':
             data = self.data[ti, zi, :, :]
             f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
@@ -648,7 +648,7 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method is 'cgrid_tracer':
+        elif self.interp_method == 'cgrid_tracer':
             return self.data[ti, zi, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
