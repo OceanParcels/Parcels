@@ -32,7 +32,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
     time = np.arange(0., 8. * 86400., 86400., dtype=np.float64)
 
     # Coordinates of the test fieldset (on A-grid in m)
-    if mesh is 'spherical':
+    if mesh == 'spherical':
         lon = np.linspace(0, 4, xdim, dtype=np.float32)
         lat = np.linspace(45, 52, ydim, dtype=np.float32)
     else:
@@ -42,8 +42,8 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
     # Grid spacing in m
     def cosd(x):
         return math.cos(math.radians(float(x)))
-    dx = (lon[1] - lon[0]) * 1852 * 60 * cosd(lat.mean()) if mesh is 'spherical' else lon[1] - lon[0]
-    dy = (lat[1] - lat[0]) * 1852 * 60 if mesh is 'spherical' else lat[1] - lat[0]
+    dx = (lon[1] - lon[0]) * 1852 * 60 * cosd(lat.mean()) if mesh == 'spherical' else lon[1] - lon[0]
+    dy = (lat[1] - lat[0]) * 1852 * 60 if mesh == 'spherical' else lat[1] - lat[0]
 
     # Define arrays U (zonal), V (meridional), and P (sea surface height) on A-grid
     U = np.zeros((lon.size, lat.size, time.size), dtype=np.float32)
@@ -142,7 +142,7 @@ def test_moving_eddies_fwdbwd(mode, mesh, npart=2):
 def test_moving_eddies_fieldset(mode, mesh):
     fieldset = moving_eddies_fieldset(mesh=mesh)
     pset = moving_eddies_example(fieldset, 2, mode=mode)
-    if mesh is 'flat':
+    if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
     else:
@@ -164,7 +164,7 @@ def fieldsetfile(mesh):
 def test_moving_eddies_file(mode, mesh):
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
-    if mesh is 'flat':
+    if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
     else:
