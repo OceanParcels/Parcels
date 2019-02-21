@@ -394,7 +394,7 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
         age = Variable('age', dtype=np.float32, initial=0.)
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
-    time = np.arange(0, npart/10, 0.1, dtype=np.float32)
+    time = np.arange(0, npart/10., 0.1, dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
     outfile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
