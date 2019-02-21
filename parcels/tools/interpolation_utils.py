@@ -71,7 +71,7 @@ def dphidxsi3D_lin(xsi, eta, zet):
 def dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
     dphidxsi, dphideta, dphidzet = dphidxsi3D_lin(xsi, eta, zet)
 
-    if mesh is 'spherical':
+    if mesh == 'spherical':
         deg2m = 1852 * 60.
         rad = np.pi / 180.
         lat = (1-xsi) * (1-eta) * hexa_y[0] + \
@@ -109,15 +109,15 @@ def jacobian3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh):
 def jacobian3D_lin_face(hexa_x, hexa_y, hexa_z, xsi, eta, zet, orientation, mesh):
     dxdxsi, dxdeta, dxdzet, dydxsi, dydeta, dydzet, dzdxsi, dzdeta, dzdzet = dxdxsi3D_lin(hexa_x, hexa_y, hexa_z, xsi, eta, zet, mesh)
 
-    if orientation is 'zonal':
+    if orientation == 'zonal':
         j = [dydeta*dzdzet-dydzet*dzdeta,
             -dxdeta*dzdzet+dxdzet*dzdeta,
              dxdeta*dydzet-dxdzet*dydeta]
-    elif orientation is 'meridional':
+    elif orientation == 'meridional':
         j = [dydxsi*dzdzet-dydzet*dzdxsi,
             -dxdxsi*dzdzet+dxdzet*dzdxsi,
              dxdxsi*dydzet-dxdzet*dydxsi]
-    elif orientation is 'vertical':
+    elif orientation == 'vertical':
         j = [dydxsi*dzdeta-dydeta*dzdxsi,
             -dxdxsi*dzdeta+dxdeta*dzdxsi,
              dxdxsi*dydeta-dxdeta*dydxsi]

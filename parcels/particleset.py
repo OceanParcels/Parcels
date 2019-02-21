@@ -64,6 +64,9 @@ class ParticleSet(object):
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = [self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time]
 
+        for kwvar in kwargs:
+            kwargs[kwvar] = convert_to_list(kwargs[kwvar])
+
         assert len(lon) == len(time)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
@@ -77,6 +80,7 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
+            self.repeatkwargs = kwargs
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -379,7 +383,7 @@ class ParticleSet(object):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass)
+                                       pclass=self.repeatpclass, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
@@ -403,13 +407,13 @@ class ParticleSet(object):
             pbar.finish()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=True, vmin=None, vmax=None, savefile=None, animation=False):
+             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet
 
         :param with_particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -419,7 +423,7 @@ class ParticleSet(object):
         """
         from parcels.plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,

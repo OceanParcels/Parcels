@@ -126,7 +126,7 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
-@pytest.mark.parametrize('type', ['releasedt', 'timearr'])
+@pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
@@ -136,7 +136,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
-    if type == 'releasedt':
+    if type == 'repeatdt':
         pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     elif type == 'timearr':
         pset = ParticleSet(fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
@@ -153,7 +153,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
     ncfile.close()
-    if type == 'releasedt':
+    if type == 'repeatdt':
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
         assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
     elif type == 'timearr':
@@ -172,6 +172,20 @@ def test_pset_repeatdt_check_dt(fieldset):
         particle.lon = 1.
     pset.execute(IncrLon, dt=2, runtime=21)
     assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_repeatdt_custominit(fieldset, mode):
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var')
+
+    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
+
+    def DoNothing(particle, fieldset, time):
+        return ErrorCode.Success
+
+    pset.execute(DoNothing, dt=1, runtime=21)
+    assert np.allclose([p.sample_var for p in pset], 5.)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

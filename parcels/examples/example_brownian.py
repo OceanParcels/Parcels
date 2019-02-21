@@ -8,7 +8,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def mesh_conversion(mesh):
-    return (1852. * 60) if mesh is 'spherical' else 1.
+    return (1852. * 60) if mesh == 'spherical' else 1.
 
 
 def zeros_fieldset(xdim=2, ydim=2, mesh='flat'):
