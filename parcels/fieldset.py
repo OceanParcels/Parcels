@@ -35,6 +35,12 @@ class FieldSet(object):
         self.compute_on_defer = None
 
     @classmethod
+    def checkvaliddimensionsdict(cls, dims):
+        for d in dims:
+            if d not in ['lon', 'lat', 'depth', 'time']:
+                raise NameError('%s is not a valid key in the dimensions dictionary' % d)
+
+    @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialise FieldSet object from raw data
@@ -71,6 +77,7 @@ class FieldSet(object):
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
 
             if allow_time_extrapolation is None:
                 allow_time_extrapolation = False if 'time' in dims else True
@@ -225,6 +232,7 @@ class FieldSet(object):
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
             dims['data'] = name
             inds = indices[var] if (indices and var in indices) else indices
 
