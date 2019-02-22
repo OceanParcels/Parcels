@@ -910,7 +910,6 @@ class Field(object):
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
-            print(filebuffer.ti)
             if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             if len(filebuffer.data.shape) == 2:
