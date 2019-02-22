@@ -233,7 +233,6 @@ class FieldSet(object):
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
-            dims['data'] = name
             inds = indices[var] if (indices and var in indices) else indices
 
             grid = None
@@ -247,14 +246,14 @@ class FieldSet(object):
                         sameGrid = True
                     elif type(filenames[procvar]) == dict:
                         sameGrid = True
-                        for dim in ['lon', 'lat', 'depth', 'data']:
+                        for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
                                 sameGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if sameGrid:
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
+            fields[var] = Field.from_netcdf(paths, {var: name}, dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
