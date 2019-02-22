@@ -195,7 +195,7 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+        :param timestamps: A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
                Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
@@ -214,9 +214,13 @@ class FieldSet(object):
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
 
-        # Typecast timestamps to numpy array
-        if isinstance(timestamps, list):
-            timestamps = np.array(timestamps)
+        # Typecast timestamps to numpy array & correct shape.
+        if timestamps is not None:
+            if isinstance(timestamps, list):
+                timestamps = np.array(timestamps)
+            timestamps = np.reshape(timestamps, [timestamps.size, 1])
+
+        #assert(all(isinstance(timestamp, np.datetime64) for timestamp in timestamps))
 
         fields = {}
         for var, name in variables.items():

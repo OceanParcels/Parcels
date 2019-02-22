@@ -10,17 +10,20 @@ import xarray as xr
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices=None, full_load=False, use_xarray=False):
+def set_globcurrent_fieldset(filename=None, indices=None, full_load=False, use_xarray=False, time_periodic=False, timestamps=None):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
-    dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
+    if timestamps is None:
+        dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
+    else:
+        dimensions = {'lat': 'lat', 'lon': 'lon'}
     if use_xarray:
         ds = xr.open_mfdataset(filename)
-        return FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, full_load=full_load)
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, full_load=full_load, time_periodic=time_periodic)
     else:
-        return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load)
+        return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load, time_periodic=time_periodic, timestamps=timestamps)
 
 
 @pytest.mark.parametrize('use_xarray', [True, False])
@@ -78,6 +81,27 @@ def test_globcurrent_particles(mode, use_xarray):
     assert(abs(pset[0].lat - -35.3) < 1)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('rundays', [300, 900])
+def test_globcurrent_time_periodic(mode, rundays):
+    sample_var = []
+    for full_load in [True, False]:
+        fieldset = set_globcurrent_fieldset(time_periodic=True, full_load=full_load)
+
+        class MyParticle(ptype[mode]):
+            sample_var = Variable('sample_var', initial=fieldset.U)
+
+        pset = ParticleSet(fieldset, pclass=MyParticle, lon=25, lat=-35, time=fieldset.U.grid.time[0])
+
+        def SampleU(particle, fieldset, time):
+            particle.sample_var += fieldset.U[time, particle.depth, particle.lat, particle.lon]
+
+        pset.execute(SampleU, runtime=delta(days=rundays), dt=delta(days=1))
+        sample_var.append(pset[0].sample_var)
+
+    assert np.allclose(sample_var[0], sample_var[1])
+
+
 @pytest.mark.parametrize('dt', [-300, 300])
 def test_globcurrent_xarray_vs_netcdf(dt):
     fieldsetNetcdf = set_globcurrent_fieldset(use_xarray=False)
@@ -92,6 +116,23 @@ def test_globcurrent_xarray_vs_netcdf(dt):
 
     assert np.allclose(psetN[0].lon, psetX[0].lon)
     assert np.allclose(psetN[0].lat, psetX[0].lat)
+
+
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_netcdf_timestamps(dt):
+    fieldsetNetcdf = set_globcurrent_fieldset()
+    timestamps = fieldsetNetcdf.U.grid.timeslices
+    fieldsetTimestamps = set_globcurrent_fieldset(timestamps=timestamps)
+    lonstart, latstart, runtime = (25, -35, delta(days=7))
+
+    psetN = ParticleSet(fieldsetNetcdf, pclass=JITParticle, lon=lonstart, lat=latstart)
+    psetN.execute(AdvectionRK4, runtime=runtime, dt=dt)
+
+    psetT = ParticleSet(fieldsetTimestamps, pclass=JITParticle, lon=lonstart, lat=latstart)
+    psetT.execute(AdvectionRK4, runtime=runtime, dt=dt)
+
+    assert np.allclose(psetN[0].lon, psetT[0].lon)
+    assert np.allclose(psetN[0].lat, psetT[0].lat)
 
 
 def test__particles_init_time():
@@ -146,7 +187,7 @@ def test_globcurrent_deferred_fieldset_gradient(full_load, use_xarray):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=25, lat=-35)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(days=1))
 
-    tdim = 365 if full_load else 3
+    tdim = 366 if full_load else 3
     assert(dU_dx.data.shape == (tdim, 41, 81))
     assert(fieldset.dU_dy.data.shape == (tdim, 41, 81))
     assert(dU_dx is fieldset.U.gradientx)

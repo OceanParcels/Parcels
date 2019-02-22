@@ -146,7 +146,7 @@ class Field(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+        :param timestamps: A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
                Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
                (i.e. beyond the last available time snapshot)
@@ -229,8 +229,8 @@ class Field(object):
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if timestamps is not None:
-                time = timestamps
-                timeslices = np.reshape(time, [time.size, 1])
+                timeslices = timestamps
+                time = np.concatenate(timeslices)
                 dataFiles = np.array(data_filenames)
             elif netcdf_engine == 'xarray':
                 with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
@@ -905,10 +905,12 @@ class Field(object):
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamps=self.timestamps) as filebuffer:
+        timestamp = None if self.timestamps is None else self.timestamps[tindex]
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp) as filebuffer:
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
+            print(filebuffer.ti)
             if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
             if len(filebuffer.data.shape) == 2:
@@ -1320,13 +1322,13 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
-    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamps=None):
+    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
         self.netcdf_engine = netcdf_engine
-        self.timestamps = timestamps
+        self.timestamp = timestamp
         self.ti = None
 
     def __enter__(self):
@@ -1440,6 +1442,9 @@ class NetcdfFileBuffer(object):
 
     @property
     def time(self):
+        if self.timestamp is not None:
+            return self.timestamp
+
         try:
             time_da = self.dataset[self.dimensions['time']]
             if self.netcdf_engine != 'xarray' and (self.dataset['decoded'] and 'Unit' not in time_da.attrs):
@@ -1455,6 +1460,4 @@ class NetcdfFileBuffer(object):
                 raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
             return time
         except:
-            if self.timestamps is not None:
-                return self.timestamps
             return np.array([None])
