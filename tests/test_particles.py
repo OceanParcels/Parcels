@@ -52,6 +52,19 @@ def test_variable_unsupported_dtypes(fieldset, mode, type):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_variable_special_names(fieldset, mode):
+    """Test that checks errors thrown for special names"""
+    class TestParticle(ptype[mode]):
+        error_thrown = False
+        try:
+            z = Variable('z', dtype=np.float32, initial=10.)
+        except RuntimeError:
+            error_thrown = True
+        assert error_thrown
+    ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_relative(fieldset, mode, npart=10):
     """Test that checks relative initialisation of custom variables"""
     class TestParticle(ptype[mode]):
