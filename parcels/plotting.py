@@ -63,7 +63,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
                                particles.fieldset.U.grid.lat[latS], particles.fieldset.U.grid.lat[latN]])
 
     else:
-        if field is 'vector':
+        if field == 'vector':
             field = particles.fieldset.UV
         elif not isinstance(field, Field):
             field = getattr(particles.fieldset, field)
@@ -156,7 +156,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             else:
                 data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
 
-    if plottype is 'vector':
+    if plottype == 'vector':
         if field[0].interp_method == 'cgrid_velocity':
             logger.warning_once('Plotting a C-grid velocity field is achieved via an A-grid projection, reducing the plot accuracy')
             d = np.empty_like(data[0])
@@ -233,7 +233,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         depthstr = ' at %s %g ' % (gphrase, depth_or_level)
     else:
         depthstr = ''
-    if plottype is 'vector':
+    if plottype == 'vector':
         ax.set_title(titlestr + 'Velocity field' + depthstr + timestr)
     else:
         ax.set_title(titlestr + field[0].name + depthstr + timestr)
