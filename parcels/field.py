@@ -56,7 +56,7 @@ class Field(object):
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
         self.name = list(name)[0] if isinstance(name, dict) else name
-        self.filebuffername = name[list(name)[0]] if isinstance(name, dict) else None
+        self.filebuffername = name[list(name)[0]] if isinstance(name, dict) else name
         self.data = data
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
@@ -163,6 +163,8 @@ class Field(object):
             data_filenames = variable
             netcdf_engine = 'xarray'
         else:
+            if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
+                variable = {variable: variable}
             assert len(variable) == 1, 'There can only be one key in variable dictionary. Use FieldSet.from_netcdf() for multiple variables'
             if not isinstance(filenames, Iterable) or isinstance(filenames, str):
                 filenames = [filenames]
