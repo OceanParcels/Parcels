@@ -126,6 +126,26 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
+@pytest.mark.parametrize('calltype', ['from_data', 'from_nemo'])
+def test_illegal_dimensionsdict(calltype):
+    error_thrown = False
+    try:
+        if calltype == 'from_data':
+            data, dimensions = generate_fieldset(10, 10)
+            dimensions['test'] = None
+            FieldSet.from_data(data, dimensions)
+        elif calltype == 'from_nemo':
+            fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+            filenames = {'dx': fname, 'mesh_mask': fname}
+            variables = {'dx': 'e1u'}
+            dimensions = {'lon': 'glamu', 'lat': 'gphiu', 'test': 'test'}
+            error_thrown = False
+            FieldSet.from_nemo(filenames, variables, dimensions)
+    except NameError:
+        error_thrown = True
+    assert error_thrown
+
+
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
