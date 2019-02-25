@@ -57,7 +57,11 @@ class Field(object):
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
-        self.name = name
+        if not isinstance(name, tuple):
+            self.name = name
+            self.filebuffername = name
+        else:
+            self.name, self.filebuffername = name
         self.data = data
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
@@ -80,8 +84,8 @@ class Field(object):
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.timestamps = timestamps
         if type(interp_method) is dict:
-            if name in interp_method:
-                self.interp_method = interp_method[name]
+            if self.name in interp_method:
+                self.interp_method = interp_method[self.name]
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
         else:
@@ -136,7 +140,7 @@ class Field(object):
                filenames can be a list [files]
                or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
                time values are in filenames[data]
-        :param variable: Name of the field to create. Note that this has to be a string
+        :param variable: Tuple mapping field name to variable name in the NetCDF file.
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
                This can be used for reading in only a subregion of the NetCDF file.
@@ -177,6 +181,9 @@ class Field(object):
             data_filenames = variable
             netcdf_engine = 'xarray'
         else:
+            if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
+                variable = (variable, variable)
+            assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
             if not isinstance(filenames, Iterable) or isinstance(filenames, str):
                 filenames = [filenames]
 
@@ -273,7 +280,7 @@ class Field(object):
                     if netcdf_engine == 'xarray':
                         tslice = [tslice]
                     else:
-                        filebuffer.name = filebuffer.parse_name(dimensions, variable)
+                        filebuffer.name = filebuffer.parse_name(variable[1])
 
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
@@ -916,7 +923,7 @@ class Field(object):
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
             if self.netcdf_engine != 'xarray':
-                filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
+                filebuffer.name = filebuffer.parse_name(self.filebuffername)
             if len(filebuffer.data.shape) == 2:
                 data[tindex, 0, :, :] = filebuffer.data
             elif len(filebuffer.data.shape) == 3:
@@ -1359,8 +1366,7 @@ class NetcdfFileBuffer(object):
         else:
             self.dataset.close()
 
-    def parse_name(self, dimensions, variable):
-        name = dimensions['data'] if 'data' in dimensions else variable
+    def parse_name(self, name):
         if isinstance(name, list):
             for nm in name:
                 if hasattr(self.dataset, nm):

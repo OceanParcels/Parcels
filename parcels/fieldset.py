@@ -34,6 +34,12 @@ class FieldSet(object):
 
         self.compute_on_defer = None
 
+    @staticmethod
+    def checkvaliddimensionsdict(dims):
+        for d in dims:
+            if d not in ['lon', 'lat', 'depth', 'time']:
+                raise NameError('%s is not a valid key in the dimensions dictionary' % d)
+
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
@@ -71,6 +77,7 @@ class FieldSet(object):
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
 
             if allow_time_extrapolation is None:
                 allow_time_extrapolation = False if 'time' in dims else True
@@ -238,7 +245,7 @@ class FieldSet(object):
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
-            dims['data'] = name
+            cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
 
             grid = None
@@ -252,14 +259,14 @@ class FieldSet(object):
                         sameGrid = True
                     elif type(filenames[procvar]) == dict:
                         sameGrid = True
-                        for dim in ['lon', 'lat', 'depth', 'data']:
+                        for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
                                 sameGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if sameGrid:
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
+            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
