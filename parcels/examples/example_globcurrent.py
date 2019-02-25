@@ -10,17 +10,20 @@ import xarray as xr
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-def set_globcurrent_fieldset(filename=None, indices=None, full_load=False, use_xarray=False, time_periodic=False):
+def set_globcurrent_fieldset(filename=None, indices=None, full_load=False, use_xarray=False, time_periodic=False, timestamps=None):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
-    dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
+    if timestamps is None:
+        dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
+    else:
+        dimensions = {'lat': 'lat', 'lon': 'lon'}
     if use_xarray:
         ds = xr.open_mfdataset(filename)
         return FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, full_load=full_load, time_periodic=time_periodic)
     else:
-        return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load, time_periodic=time_periodic)
+        return FieldSet.from_netcdf(filename, variables, dimensions, indices, full_load=full_load, time_periodic=time_periodic, timestamps=timestamps)
 
 
 @pytest.mark.parametrize('use_xarray', [True, False])
@@ -113,6 +116,23 @@ def test_globcurrent_xarray_vs_netcdf(dt):
 
     assert np.allclose(psetN[0].lon, psetX[0].lon)
     assert np.allclose(psetN[0].lat, psetX[0].lat)
+
+
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_netcdf_timestamps(dt):
+    fieldsetNetcdf = set_globcurrent_fieldset()
+    timestamps = fieldsetNetcdf.U.grid.timeslices
+    fieldsetTimestamps = set_globcurrent_fieldset(timestamps=timestamps)
+    lonstart, latstart, runtime = (25, -35, delta(days=7))
+
+    psetN = ParticleSet(fieldsetNetcdf, pclass=JITParticle, lon=lonstart, lat=latstart)
+    psetN.execute(AdvectionRK4, runtime=runtime, dt=dt)
+
+    psetT = ParticleSet(fieldsetTimestamps, pclass=JITParticle, lon=lonstart, lat=latstart)
+    psetT.execute(AdvectionRK4, runtime=runtime, dt=dt)
+
+    assert np.allclose(psetN[0].lon, psetT[0].lon)
+    assert np.allclose(psetN[0].lat, psetT[0].lat)
 
 
 def test__particles_init_time():

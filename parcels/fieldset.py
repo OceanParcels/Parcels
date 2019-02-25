@@ -178,11 +178,11 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
-                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
+               filepath may contain wildcards to indicate multiple files
                or be a list of file.
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
@@ -205,6 +205,8 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+               Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
@@ -217,6 +219,17 @@ class FieldSet(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
+        # Ensure that times are not provided both in netcdf file and in 'timestamps'.
+        if timestamps is not None and 'time' in dimensions:
+            logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
+            timestamps = None
+
+        # Typecast timestamps to numpy array & correct shape.
+        if timestamps is not None:
+            if isinstance(timestamps, list):
+                timestamps = np.array(timestamps)
+            timestamps = np.reshape(timestamps, [timestamps.size, 1])
+
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
@@ -253,7 +266,7 @@ class FieldSet(object):
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh,
+            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
