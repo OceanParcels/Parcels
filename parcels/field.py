@@ -55,8 +55,11 @@ class Field(object):
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
-        self.name = list(name)[0] if isinstance(name, dict) else name
-        self.filebuffername = name[list(name)[0]] if isinstance(name, dict) else name
+        if not isinstance(name, tuple):
+            self.name = name
+            self.filebuffername = name
+        else:
+            self.name, self.filebuffername = name
         self.data = data
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
@@ -134,7 +137,7 @@ class Field(object):
                filenames can be a list [files]
                or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
                time values are in filenames[data]
-        :param variable: Dictionary mapping name of the field to create to variable in file.
+        :param variable: Tuple mapping field name to variable name in the NetCDF file.
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
                This can be used for reading in only a subregion of the NetCDF file.
@@ -164,8 +167,8 @@ class Field(object):
             netcdf_engine = 'xarray'
         else:
             if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
-                variable = {variable: variable}
-            assert len(variable) == 1, 'There can only be one key in variable dictionary. Use FieldSet.from_netcdf() for multiple variables'
+                variable = (variable, variable)
+            assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
             if not isinstance(filenames, Iterable) or isinstance(filenames, str):
                 filenames = [filenames]
 
@@ -258,7 +261,7 @@ class Field(object):
                     if netcdf_engine == 'xarray':
                         tslice = [tslice]
                     else:
-                        filebuffer.name = filebuffer.parse_name(variable[list(variable)[0]])
+                        filebuffer.name = filebuffer.parse_name(variable[1])
 
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data

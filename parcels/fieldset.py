@@ -34,8 +34,8 @@ class FieldSet(object):
 
         self.compute_on_defer = None
 
-    @classmethod
-    def checkvaliddimensionsdict(cls, dims):
+    @staticmethod
+    def checkvaliddimensionsdict(dims):
         for d in dims:
             if d not in ['lon', 'lat', 'depth', 'time']:
                 raise NameError('%s is not a valid key in the dimensions dictionary' % d)
@@ -253,7 +253,7 @@ class FieldSet(object):
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, {var: name}, dims, inds, grid=grid, mesh=mesh,
+            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)
