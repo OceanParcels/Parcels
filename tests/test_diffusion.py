@@ -24,7 +24,7 @@ def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
-    mesh_conversion = 1/1852./60 if mesh is 'spherical' else 1
+    mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     vec = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, 2)
@@ -60,7 +60,7 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
     """Test SpatiallyVaryingDiffusion on a non-uniform diffusivity field
     with a linear gradient in one direction"""
-    mesh_conversion = 1/1852./60 if mesh is 'spherical' else 1
+    mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
     Kh = np.zeros((ydim, xdim), dtype=np.float32)
@@ -75,7 +75,7 @@ def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
     _, dKh_meridional_dy = fieldset.Kh_meridional.gradient()
     fieldset.add_field(dKh_zonal_dx)
     fieldset.add_field(dKh_meridional_dy)
-    if mesh is 'spherical':
+    if mesh == 'spherical':
         fieldset.dKh_zonal_dx.units = GeographicPolar()
         fieldset.dKh_meridional_dy.units = Geographic()
 

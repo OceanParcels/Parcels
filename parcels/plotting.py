@@ -14,7 +14,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
     :param show_time: Time at which to show the ParticleSet
     :param with_particles: Boolean whether particles are also plotted on Field
     :param field: Field to plot under particles (either None, a Field object, or 'vector')
-    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
     :param vmin: minimum colour scale (only in single-plot mode)
@@ -63,7 +63,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
                                particles.fieldset.U.grid.lat[latS], particles.fieldset.U.grid.lat[latN]])
 
     else:
-        if field is 'vector':
+        if field == 'vector':
             field = particles.fieldset.UV
         elif not isinstance(field, Field):
             field = getattr(particles.fieldset, field)
@@ -99,7 +99,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     """Function to plot a Parcels Field
 
     :param show_time: Time at which to show the Field
-    :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+    :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
     :param depth_level: depth level to be plotted (default 0)
     :param projection: type of cartopy projection to use (default PlateCarree)
     :param land: Boolean whether to show land. This is ignored for flat meshes
@@ -156,7 +156,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             else:
                 data[i] = np.squeeze(fld.data)[latS:latN, lonW:lonE]
 
-    if plottype is 'vector':
+    if plottype == 'vector':
         if field[0].interp_method == 'cgrid_velocity':
             logger.warning_once('Plotting a C-grid velocity field is achieved via an A-grid projection, reducing the plot accuracy')
             d = np.empty_like(data[0])
@@ -210,11 +210,11 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         else:
             cs = ax.pcolormesh(plotlon[0], plotlat[0], d)
 
-    if cartopy is None or projection is None:
+    if cartopy is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
         ax.set_ylim(np.nanmin(plotlat[0]), np.nanmax(plotlat[0]))
     elif domain is not None:
-        ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])])
+        ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])], crs=cartopy.crs.PlateCarree())
     cs.cmap.set_over('k')
     cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
@@ -233,7 +233,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         depthstr = ' at %s %g ' % (gphrase, depth_or_level)
     else:
         depthstr = ''
-    if plottype is 'vector':
+    if plottype == 'vector':
         ax.set_title(titlestr + 'Velocity field' + depthstr + timestr)
     else:
         ax.set_title(titlestr + field[0].name + depthstr + timestr)
@@ -291,8 +291,10 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
 def parsedomain(domain, field):
     field.grid.check_zonal_periodic()
     if domain is not None:
-        _, _, _, lonW, latS, _ = field.search_indices(domain[3], domain[1], 0, 0, 0, search2D=True)
-        _, _, _, lonE, latN, _ = field.search_indices(domain[2], domain[0], 0, 0, 0, search2D=True)
+        if not isinstance(domain, dict) and len(domain) == 4:  # for backward compatibility with <v2.0.0
+            domain = {'N': domain[0], 'S': domain[1], 'E': domain[2],'W': domain[3]}
+        _, _, _, lonW, latS, _ = field.search_indices(domain['W'], domain['S'], 0, 0, 0, search2D=True)
+        _, _, _, lonE, latN, _ = field.search_indices(domain['E'], domain['N'], 0, 0, 0, search2D=True)
         return latN+1, latS, lonE+1, lonW
     else:
         if field.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
