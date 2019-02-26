@@ -101,7 +101,7 @@ static inline ErrorCode spatial_interpolation_tracer_c_grid_3D(int xi, int yi, i
 }
 
 /* Linear interpolation along the time axis */
-static inline ErrorCode temporal_interpolation_structured_grid(float x, float y, float z, double time, CField *f, 
+static inline ErrorCode temporal_interpolation_structured_grid(double x, double y, double z, double time, CField *f,
                                                                GridCode gcode, int *xi, int *yi, int *zi, int *ti,
                                                                float *value, int interp_method)
 {
@@ -303,7 +303,7 @@ static inline ErrorCode spatial_interpolation_UV_c_grid(double xsi, double eta, 
 
 
 
-static inline ErrorCode temporal_interpolationUV_c_grid(float x, float y, float z, double time, CField *U, CField *V,
+static inline ErrorCode temporal_interpolationUV_c_grid(double x, double y, double z, double time, CField *U, CField *V,
                                                          GridCode gcode, int *xi, int *yi, int *zi, int *ti,
                                                          float *u, float *v)
 {
@@ -490,7 +490,7 @@ static inline ErrorCode spatial_interpolation_UVW_c_grid(double xsi, double eta,
   return SUCCESS;
 }
 
-static inline ErrorCode temporal_interpolationUVW_c_grid(float x, float y, float z, double time, CField *U, CField *V, CField *W,
+static inline ErrorCode temporal_interpolationUVW_c_grid(double x, double y, double z, double time, CField *U, CField *V, CField *W,
                                                          GridCode gcode, int *xi, int *yi, int *zi, int *ti,
                                                          float *u, float *v, float *w)
 {
@@ -540,7 +540,7 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(float x, float y, float
 }
 
 
-static inline ErrorCode temporal_interpolation(float x, float y, float z, double time, CField *f, 
+static inline ErrorCode temporal_interpolation(double x, double y, double z, double time, CField *f,
                                                void *vxi, void *vyi, void *vzi, void *vti,
                                                float *value, int interp_method)
 {
@@ -559,7 +559,7 @@ static inline ErrorCode temporal_interpolation(float x, float y, float z, double
   }
 }
 
-static inline ErrorCode temporal_interpolationUV(float x, float y, float z, double time,
+static inline ErrorCode temporal_interpolationUV(double x, double y, double z, double time,
                                                  CField *U, CField *V,
                                                  void *vxi, void *vyi, void *vzi, void *vti,
                                                  float *valueU, float *valueV, int interp_method)
@@ -582,7 +582,7 @@ static inline ErrorCode temporal_interpolationUV(float x, float y, float z, doub
   }
 }
 
-static inline ErrorCode temporal_interpolationUVW(float x, float y, float z, double time,
+static inline ErrorCode temporal_interpolationUVW(double x, double y, double z, double time,
                                                   CField *U, CField *V, CField *W,
                                                   void *vxi, void *vyi, void *vzi, void *vti,
                                                   float *valueU, float *valueV, float *valueW, int interp_method)

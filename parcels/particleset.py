@@ -143,8 +143,8 @@ class ParticleSet(object):
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
-        lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
-        lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+        lon = np.linspace(start[0], finish[0], size, dtype=np.float64)
+        lat = np.linspace(start[1], finish[1], size, dtype=np.float64)
         if type(depth) in [int, float]:
             depth = [depth] * size
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
