@@ -416,7 +416,7 @@ def test_fieldset_from_xarray(maxlatind):
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
     pset.execute(AdvectionRK4, dt=1)
-    assert pset[0].lon == 4.5 and pset[0].lat == 10
+    assert np.allclose(pset[0].lon, 4.5) and np.allclose(pset[0].lat, 10)
 
 
 def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):

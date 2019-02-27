@@ -31,8 +31,8 @@ def test_pset_create_lon_lat(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_line(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
     pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode])
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)

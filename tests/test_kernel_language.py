@@ -208,7 +208,7 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline void func(CField *f, float *lon, float *dt)
+                 static inline void func(CField *f, double *lon, double *dt)
                  {
                    float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
                    float u = data[2][1];
