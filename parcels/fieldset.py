@@ -34,6 +34,12 @@ class FieldSet(object):
 
         self.compute_on_defer = None
 
+    @staticmethod
+    def checkvaliddimensionsdict(dims):
+        for d in dims:
+            if d not in ['lon', 'lat', 'depth', 'time']:
+                raise NameError('%s is not a valid key in the dimensions dictionary' % d)
+
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
@@ -71,6 +77,7 @@ class FieldSet(object):
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
 
             if allow_time_extrapolation is None:
                 allow_time_extrapolation = False if 'time' in dims else True
@@ -171,11 +178,11 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
-                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
+               filepath may contain wildcards to indicate multiple files
                or be a list of file.
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
@@ -198,6 +205,8 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+               Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
@@ -210,6 +219,17 @@ class FieldSet(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
+        # Ensure that times are not provided both in netcdf file and in 'timestamps'.
+        if timestamps is not None and 'time' in dimensions:
+            logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
+            timestamps = None
+
+        # Typecast timestamps to numpy array & correct shape.
+        if timestamps is not None:
+            if isinstance(timestamps, list):
+                timestamps = np.array(timestamps)
+            timestamps = np.reshape(timestamps, [timestamps.size, 1])
+
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
@@ -225,7 +245,7 @@ class FieldSet(object):
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
-            dims['data'] = name
+            cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
 
             grid = None
@@ -239,14 +259,14 @@ class FieldSet(object):
                         sameGrid = True
                     elif type(filenames[procvar]) == dict:
                         sameGrid = True
-                        for dim in ['lon', 'lat', 'depth', 'data']:
+                        for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
                                 sameGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if sameGrid:
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
+            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, full_load=full_load, **kwargs)
         u = fields.pop('U', None)

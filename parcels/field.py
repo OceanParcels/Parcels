@@ -37,6 +37,8 @@ class Field(object):
            1. spherical: Lat and lon in degree, with a
               correction for zonal velocity U near the poles.
            2. flat (default): No conversion, lat/lon are assumed to be in m.
+    :param timestamps: A numpy array containing the timestamps for each of the files in filenames, for loading
+           from netCDF files only. Default is None if the netCDF dimensions dictionary includes time.
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
     :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
@@ -52,10 +54,14 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
-    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat',
+    def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
-        self.name = name
+        if not isinstance(name, tuple):
+            self.name = name
+            self.filebuffername = name
+        else:
+            self.name, self.filebuffername = name
         self.data = data
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
@@ -76,9 +82,10 @@ class Field(object):
             self.units = unitconverters_map[self.fieldtype]
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
+        self.timestamps = timestamps
         if type(interp_method) is dict:
-            if name in interp_method:
-                self.interp_method = interp_method[name]
+            if self.name in interp_method:
+                self.interp_method = interp_method[self.name]
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
         else:
@@ -124,7 +131,7 @@ class Field(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
-                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False,
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     full_load=False, **kwargs):
         """Create field from netCDF file
 
@@ -133,7 +140,7 @@ class Field(object):
                filenames can be a list [files]
                or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
                time values are in filenames[data]
-        :param variable: Name of the field to create. Note that this has to be a string
+        :param variable: Tuple mapping field name to variable name in the NetCDF file.
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
                This can be used for reading in only a subregion of the NetCDF file.
@@ -144,6 +151,8 @@ class Field(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param timestamps: A numpy array of datetime64 objects containing the timestamps for each of the files in filenames.
+               Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
@@ -156,12 +165,25 @@ class Field(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
+        # Ensure the timestamps array is compatible with the user-provided datafiles.
+        if timestamps is not None:
+            if isinstance(filenames, list):
+                assert len(filenames) == len(timestamps), 'Number of files and number of timestamps must be equal.'
+            elif isinstance(filenames, dict):
+                for k in filenames.keys():
+                    assert(len(filenames[k]) == len(timestamps)), 'Number of files and number of timestamps must be equal.'
+            else:
+                raise TypeError("filenames type is inconsistent with manual timestamp provision.")
+
         if isinstance(variable, xr.core.dataarray.DataArray):
             lonlat_filename = variable
             depth_filename = variable
             data_filenames = variable
             netcdf_engine = 'xarray'
         else:
+            if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
+                variable = (variable, variable)
+            assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
             if not isinstance(filenames, Iterable) or isinstance(filenames, str):
                 filenames = [filenames]
 
@@ -208,13 +230,17 @@ class Field(object):
             indices['depth'] = [0]
             depth = np.zeros(1)
 
-        if len(data_filenames) > 1 and 'time' not in dimensions:
+        if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
 
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            if netcdf_engine == 'xarray':
+            if timestamps is not None:
+                timeslices = timestamps
+                time = np.concatenate(timeslices)
+                dataFiles = np.array(data_filenames)
+            elif netcdf_engine == 'xarray':
                 with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
                     time = filebuffer.time
                     timeslices = time if isinstance(time, (list, np.ndarray)) else [time]
@@ -254,7 +280,7 @@ class Field(object):
                     if netcdf_engine == 'xarray':
                         tslice = [tslice]
                     else:
-                        filebuffer.name = filebuffer.parse_name(dimensions, variable)
+                        filebuffer.name = filebuffer.parse_name(variable[1])
 
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
@@ -280,7 +306,7 @@ class Field(object):
         kwargs['netcdf_engine'] = netcdf_engine
 
         variable = kwargs['var_name'] if netcdf_engine == 'xarray' else variable
-        return cls(variable, data, grid=grid,
+        return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, **kwargs)
 
     def reshape(self, data, transpose=False):
@@ -891,12 +917,13 @@ class Field(object):
 
     def computeTimeChunk(self, data, tindex):
         g = self.grid
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine) as filebuffer:
+        timestamp = None if self.timestamps is None else self.timestamps[tindex]
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp) as filebuffer:
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
             if self.netcdf_engine != 'xarray':
-                filebuffer.name = filebuffer.parse_name(self.dimensions, self.name)
+                filebuffer.name = filebuffer.parse_name(self.filebuffername)
             if len(filebuffer.data.shape) == 2:
                 data[tindex, 0, :, :] = filebuffer.data
             elif len(filebuffer.data.shape) == 3:
@@ -1307,12 +1334,13 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
-    def __init__(self, filename, dimensions, indices, netcdf_engine):
+    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
         self.dataset = None
         self.netcdf_engine = netcdf_engine
+        self.timestamp = timestamp
         self.ti = None
 
     def __enter__(self):
@@ -1338,8 +1366,7 @@ class NetcdfFileBuffer(object):
         else:
             self.dataset.close()
 
-    def parse_name(self, dimensions, variable):
-        name = dimensions['data'] if 'data' in dimensions else variable
+    def parse_name(self, name):
         if isinstance(name, list):
             for nm in name:
                 if hasattr(self.dataset, nm):
@@ -1426,6 +1453,9 @@ class NetcdfFileBuffer(object):
 
     @property
     def time(self):
+        if self.timestamp is not None:
+            return self.timestamp
+
         try:
             time_da = self.dataset[self.dimensions['time']]
             if self.netcdf_engine != 'xarray' and (self.dataset['decoded'] and 'Unit' not in time_da.attrs):
