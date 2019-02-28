@@ -230,7 +230,6 @@ class FieldSet(object):
                 timestamps = np.array(timestamps)
             timestamps = np.reshape(timestamps, [timestamps.size, 1])
 
-
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
@@ -253,7 +252,9 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                if procdims == dims and procinds == inds:
+                procpaths = filenames[procvar] if type(filenames) is dict and procvar in filenames else filenames
+                nowpaths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+                if procdims == dims and procinds == inds and procpaths == nowpaths:
                     sameGrid = False
                     if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
                         sameGrid = True
