@@ -169,7 +169,7 @@ class FieldSet(object):
         if not isinstance(paths, list):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
-            notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
             raise IOError("FieldSet files not found: %s" % str(notfound_paths))
         for fp in paths:
             if not path.exists(fp):
@@ -252,13 +252,13 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                procpaths = filenames[procvar] if type(filenames) is dict and procvar in filenames else filenames
-                nowpaths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+                procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
+                nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
                 if procdims == dims and procinds == inds and procpaths == nowpaths:
                     sameGrid = False
-                    if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
+                    if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         sameGrid = True
-                    elif type(filenames[procvar]) == dict:
+                    elif isinstance(filenames[procvar], dict):
                         sameGrid = True
                         for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
