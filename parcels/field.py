@@ -132,7 +132,7 @@ class Field(object):
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
-                    full_load=False, **kwargs):
+                    deferred_load=True, **kwargs):
         """Create field from netCDF file
 
         :param filenames: list of filenames to read for the field.
@@ -158,10 +158,10 @@ class Field(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -269,7 +269,10 @@ class Field(object):
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
 
-        if grid.time.size <= 3 or full_load:
+        if 'full_load' in kwargs:  # for backward compatibility with Parcels < v2.0.0
+            deferred_load = not kwargs['full_load']
+
+        if grid.time.size <= 3 or deferred_load is False:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
