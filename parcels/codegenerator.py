@@ -394,7 +394,7 @@ class KernelGenerator(ast.NodeVisitor):
                 funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value('ErrorCode', 'err'))
         if len(funcvars) > 0:
-            self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
+            self.ccode.body.insert(0, c.Value("double", ", ".join(funcvars)))
         if len(transformer.tmp_vars) > 0:
             self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
 
