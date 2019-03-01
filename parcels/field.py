@@ -3,7 +3,7 @@ from parcels.tools.converters import unitconverters_map, UnitConverter, Geograph
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 import parcels.tools.interpolation_utils as i_u
-from collections import Iterable
+import collections
 from py import path
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
@@ -184,7 +184,7 @@ class Field(object):
             if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
                 variable = (variable, variable)
             assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
-            if not isinstance(filenames, Iterable) or isinstance(filenames, str):
+            if not isinstance(filenames, collections.Iterable) or isinstance(filenames, str):
                 filenames = [filenames]
 
             data_filenames = filenames['data'] if type(filenames) is dict else filenames
@@ -197,7 +197,7 @@ class Field(object):
                     raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
                 lonlat_filename = filenames['lon'][0]
                 if 'depth' in dimensions:
-                    if not isinstance(filenames['depth'], Iterable) or isinstance(filenames['depth'], str):
+                    if not isinstance(filenames['depth'], collections.Iterable) or isinstance(filenames['depth'], str):
                         filenames['depth'] = [filenames['depth']]
                     if len(filenames['depth']) != 1:
                         raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
