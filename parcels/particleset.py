@@ -29,6 +29,9 @@ class ParticleSet(object):
     :param depth: Optional list of initial depth values for particles. Default is 0m
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    :param coordinates_var_precision: Floating precision for lon, lat, depth particle coordinates.
+           It is either 'single' or 'double'. Default is 'single' if fieldset.U.interp_method is 'linear'
+           and 'double' if the interpolation method is 'cgrid_velocity'
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
