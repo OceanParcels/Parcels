@@ -150,7 +150,6 @@ def test_moving_eddies_fieldset(mode, mesh):
         assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
-@pytest.fixture(scope='module')
 def fieldsetfile(mesh):
     """Generate fieldset files for moving_eddies test"""
     filename = 'moving_eddies'
