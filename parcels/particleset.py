@@ -8,7 +8,7 @@ from parcels.grid import GridCode
 import numpy as np
 import progressbar
 import time as time_module
-from collections import Iterable
+import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
 
@@ -225,7 +225,7 @@ class ParticleSet(object):
         """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
-        if not isinstance(particles, Iterable):
+        if not isinstance(particles, collections.Iterable):
             particles = [particles]
         self.particles = np.append(self.particles, particles)
         if self.ptype.uses_jit:
@@ -237,7 +237,7 @@ class ParticleSet(object):
 
     def remove(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
-        if isinstance(indices, Iterable):
+        if isinstance(indices, collections.Iterable):
             particles = [self.particles[i] for i in indices]
         else:
             particles = self.particles[indices]

@@ -2,7 +2,7 @@ from parcels.field import Field, VectorField, SummedField, SummedVectorField, Ne
 from parcels.tools.loggers import logger
 import ast
 import cgen as c
-from collections import OrderedDict
+import collections
 import math
 import numpy as np
 import random
@@ -362,9 +362,9 @@ class KernelGenerator(ast.NodeVisitor):
     def __init__(self, fieldset, ptype):
         self.fieldset = fieldset
         self.ptype = ptype
-        self.field_args = OrderedDict()
-        self.vector_field_args = OrderedDict()
-        self.const_args = OrderedDict()
+        self.field_args = collections.OrderedDict()
+        self.vector_field_args = collections.OrderedDict()
+        self.const_args = collections.OrderedDict()
 
     def generate(self, py_ast, funcvars):
         # Replace occurences of intrinsic objects in Python AST
