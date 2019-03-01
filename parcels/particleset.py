@@ -5,6 +5,7 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.tools.loggers import logger
 from parcels.grid import GridCode
+from parcels.field import NestedField, SummedField
 import numpy as np
 import progressbar
 import time as time_module
@@ -31,7 +32,7 @@ class ParticleSet(object):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, **kwargs):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, coordinates_var_precision=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -81,6 +82,21 @@ class ParticleSet(object):
             self.repeatdepth = depth
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
+
+        if coordinates_var_precision is None:
+            if type(fieldset.U) in [SummedField, NestedField]:
+                self.coordinates_var_precision = 'single'
+                for f in fieldset.U:
+                    if f.interp_method == 'cgrid_velocity':
+                        self.coordinates_var_precision = 'double'
+                        break
+            else:
+                self.coordinates_var_precision = 'double' if fieldset.U.interp_method == 'cgrid_velocity' else 'single'
+        else:
+            self.coordinates_var_precision = coordinates_var_precision
+        assert self.coordinates_var_precision in ['single', 'double'], \
+            'particle coordinate variable precision is either set at single or double'
+        JITParticle.set_coordinate_precision(self.coordinates_var_precision)
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -143,8 +159,10 @@ class ParticleSet(object):
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
-        lon = np.linspace(start[0], finish[0], size, dtype=np.float64)
-        lat = np.linspace(start[1], finish[1], size, dtype=np.float64)
+
+        lonlat_type = np.float64 if fieldset.U.interp_method == 'cgrid_velocity' else np.float32
+        lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
+        lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
         if type(depth) in [int, float]:
             depth = [depth] * size
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
@@ -290,7 +308,8 @@ class ParticleSet(object):
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
-                self.kernel.compile(compiler=GNUCompiler())
+                cppargs = ['-DFLOAT_COORD_VARIABLES'] if self.coordinates_var_precision == 'double' else None
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds

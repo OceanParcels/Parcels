@@ -200,7 +200,9 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('c_inc', ['str', 'file'])
 def test_c_kernel(fieldset, mode, c_inc):
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
+    coord_type = 'single' if c_inc == 'str' else 'double'
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0],
+                       coordinates_var_precision=coord_type)
 
     def func(U, lon, dt):
         u = U.data[0, 2, 1]
@@ -208,7 +210,7 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline void func(CField *f, double *lon, double *dt)
+                 static inline void func(CField *f, float *lon, float *dt)
                  {
                    float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
                    float u = data[2][1];

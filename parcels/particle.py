@@ -160,13 +160,13 @@ class ScipyParticle(_Particle):
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable('lon', dtype=np.float64)
-    lat = Variable('lat', dtype=np.float64)
-    depth = Variable('depth', dtype=np.float64)
+    lon = Variable('lon', dtype=np.float32)
+    lat = Variable('lat', dtype=np.float32)
+    depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
     fileid = Variable('fileid', dtype=np.int32, to_write=False)
-    dt = Variable('dt', dtype=np.float64, to_write=False)
+    dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
     def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
@@ -193,6 +193,17 @@ class ScipyParticle(_Particle):
 
     def delete(self):
         self.state = ErrorCode.Delete
+
+    @classmethod
+    def set_coordinate_precision(cls, precision):
+        if precision == 'double':
+            cls.lon.dtype = np.float64
+            cls.lat.dtype = np.float64
+            cls.depth.dtype = np.float64
+        else:
+            cls.lon.dtype = np.float32
+            cls.lat.dtype = np.float32
+            cls.depth.dtype = np.float32
 
 
 class JITParticle(ScipyParticle):

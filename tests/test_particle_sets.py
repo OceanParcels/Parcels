@@ -22,8 +22,8 @@ def fieldset(xdim=40, ydim=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_lon_lat(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
@@ -31,8 +31,8 @@ def test_pset_create_lon_lat(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_line(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode])
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
@@ -40,8 +40,8 @@ def test_pset_create_line(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
 
     class MyParticle(ptype[mode]):
         v = Variable('v')
@@ -189,8 +189,8 @@ def test_pset_repeatdt_custominit(fieldset, mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
     assert(pset.size == 100)
     assert np.allclose([pset[i].lon for i in range(pset.size)], lon, rtol=1e-12)
@@ -220,7 +220,7 @@ def test_pset_custom_ptype(fieldset, mode, npart=100):
 def test_pset_add_explicit(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode])
+    pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode], coordinates_var_precision='double')
     for i in range(npart):
         particle = ptype[mode](lon=lon[i], lat=lat[i], fieldset=fieldset)
         pset.add(particle)
@@ -231,8 +231,8 @@ def test_pset_add_explicit(fieldset, mode, npart=100):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_shorthand(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float32)
+    lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode])
     for i in range(npart):
         pset += ptype[mode](lon=lon[i], lat=lat[i], fieldset=fieldset)
@@ -287,7 +287,7 @@ def test_pset_merge_duplicate(fieldset, mode, npart=100):
 def test_pset_remove_index(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode], coordinates_var_precision='double')
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
         p = pset.remove(-1)
         assert(p.lon == ilon)
