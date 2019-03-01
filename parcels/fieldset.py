@@ -178,7 +178,7 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
-                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -212,10 +212,10 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -269,7 +269,7 @@ class FieldSet(object):
                         break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -399,7 +399,7 @@ class FieldSet(object):
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
-                     allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                     allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -414,10 +414,10 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         if extra_fields is None:
@@ -436,11 +436,11 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, full_load=full_load, **kwargs)
+                               time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
 
     @classmethod
     def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
-                            time_periodic=False, full_load=False, **kwargs):
+                            time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
         :param ds: xarray Dataset.
@@ -464,10 +464,10 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
@@ -481,7 +481,7 @@ class FieldSet(object):
 
             fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation, var_name=var,
-                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
