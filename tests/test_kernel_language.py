@@ -111,6 +111,39 @@ def test_while_if_break(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nested_if(fieldset, mode):
+    """Test nested if commands"""
+    class TestParticle(ptype[mode]):
+        p0 = Variable('p0', dtype=np.int32, initial=0)
+        p1 = Variable('p1', dtype=np.int32, initial=1)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        if particle.p1 >= particle.p0:
+            var = particle.p0
+            if var + 1 < particle.p1:
+                particle.p1 = -1
+
+    pset.execute(kernel, endtime=10, dt=1.)
+    assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
+
+
+def test_parcels_tmpvar_in_kernel(fieldset):
+    """Tests for error thrown if vartiable with 'tmp' defined in custom kernel"""
+    error_thrown = False
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=0, lat=0)
+
+    def kernel_tmpvar(particle, fieldset, time):
+        parcels_tmpvar0 = 0  # noqa
+
+    try:
+        pset.execute(kernel_tmpvar, endtime=1, dt=1.)
+    except NotImplementedError:
+        error_thrown = True
+    assert error_thrown
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_if_withfield(fieldset, mode):
     """Test combination of if and Field sampling commands"""
     class TestParticle(ptype[mode]):

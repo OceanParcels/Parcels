@@ -9,7 +9,7 @@ from parcels.field import NestedField, SummedField
 import numpy as np
 import progressbar
 import time as time_module
-from collections import Iterable
+import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
 
@@ -246,7 +246,7 @@ class ParticleSet(object):
         """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
-        if not isinstance(particles, Iterable):
+        if not isinstance(particles, collections.Iterable):
             particles = [particles]
         self.particles = np.append(self.particles, particles)
         if self.ptype.uses_jit:
@@ -258,7 +258,7 @@ class ParticleSet(object):
 
     def remove(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
-        if isinstance(indices, Iterable):
+        if isinstance(indices, collections.Iterable):
             particles = [self.particles[i] for i in indices]
         else:
             particles = self.particles[indices]
@@ -435,7 +435,7 @@ class ParticleSet(object):
         :param with_particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)

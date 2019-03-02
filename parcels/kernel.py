@@ -10,7 +10,7 @@ import numpy.ctypeslib as npct
 import time
 from ctypes import c_int, c_float, c_double, c_void_p, byref
 import _ctypes
-from sys import platform
+from sys import platform, version_info
 from ast import parse, FunctionDef, Module
 import inspect
 from copy import deepcopy
@@ -95,7 +95,13 @@ class Kernel(object):
             self.pyfunc = user_ctx[self.funcname]
         else:
             self.pyfunc = pyfunc
-        assert len(inspect.getargspec(self.pyfunc).args) == 3, \
+
+        if version_info[0] < 3:
+            numkernelargs = len(inspect.getargspec(self.pyfunc).args)
+        else:
+            numkernelargs = len(inspect.getfullargspec(self.pyfunc).args)
+
+        assert numkernelargs == 3, \
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
         self.name = "%s%s" % (ptype.name, self.funcname)

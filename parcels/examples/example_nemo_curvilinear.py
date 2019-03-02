@@ -2,6 +2,7 @@ from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Advection
 from argparse import ArgumentParser
 import numpy as np
 import pytest
+from glob import glob
 from datetime import timedelta as delta
 from os import path
 
@@ -66,6 +67,29 @@ def make_plot(trajfile):
 def test_nemo_curvilinear(mode):
     outfile = 'nemo_particles'
     run_nemo_curvilinear(mode, outfile)
+
+
+def test_nemo_3D_samegrid():
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
+                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+
+    variables = {'U': 'uo',
+                 'V': 'vo',
+                 'W': 'wo'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    assert fieldset.U.dataFiles is not fieldset.W.dataFiles
 
 
 if __name__ == "__main__":
