@@ -416,8 +416,8 @@ class KernelGenerator(ast.NodeVisitor):
             args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.vector_field_args.items():
             fieldset = field.fieldset
-            Wname = field.W.name if field.W else 'not_defined'
-            for f in [field.U.name, field.V.name, Wname]:
+            Wname = field.W.ccode_name if field.W else 'not_defined'
+            for f in [field.U.ccode_name, field.V.ccode_name, Wname]:
                 try:
                     # Next line will break for example if field.U was created but not added to the fieldset
                     getattr(fieldset, f)
@@ -678,36 +678,36 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
-        self.field_args[node.obj.name] = node.obj
+        self.field_args[node.obj.ccode_name] = node.obj
 
     def visit_SummedFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
 
     def visit_NestedFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
 
     def visit_VectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
-        self.vector_field_args[node.obj.name] = node.obj
+        self.vector_field_args[node.obj.ccode_name] = node.obj
 
     def visit_SummedVectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj.U:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
         for fld in node.obj.V:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
         if hasattr(node.obj, 'W') and node.obj.W:
             for fld in node.obj.W:
-                self.field_args[fld.name] = fld
+                self.field_args[fld.ccode_name] = fld
 
     def visit_NestedVectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
-            self.vector_field_args[fld.name] = fld
+            self.vector_field_args[fld.ccode_name] = fld
 
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
