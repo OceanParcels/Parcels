@@ -411,7 +411,7 @@ class KernelGenerator(ast.NodeVisitor):
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
-                c.Value("double", "time"), c.Value("float", "dt")]
+                c.Value("double", "time")]
         for field_name, field in self.field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.vector_field_args.items():
@@ -908,7 +908,7 @@ class LoopGenerator(object):
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
-        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys())
+        fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys())
                               + list(const_args.keys()))
         # Inner loop nest for forward runs
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
