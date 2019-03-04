@@ -35,8 +35,8 @@ def fieldset(xdim=20, ydim=20):
 ])
 def test_execution_endtime(fieldset, mode, start, end, substeps, dt, npart=10):
     pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     pset.execute(DoNothing, endtime=end, dt=dt)
     assert np.allclose(np.array([p.time for p in pset]), end)
 
@@ -52,8 +52,8 @@ def test_execution_endtime(fieldset, mode, start, end, substeps, dt, npart=10):
 ])
 def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
     pset = ParticleSet(fieldset, pclass=ptype[mode], time=start,
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     t_step = abs(end - start) / substeps
     for _ in range(substeps):
         pset.execute(DoNothing, runtime=t_step, dt=dt)
@@ -66,8 +66,8 @@ def test_execution_runtime(fieldset, mode, start, end, substeps, dt, npart=10):
 def test_pset_execute_dt_0(fieldset, mode, time, dt, npart=2):
     def SetLat(particle, fieldset, time):
         particle.lat = .6
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    lon = np.linspace(0, 1, npart)
+    lat = np.linspace(1, 0, npart)
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(SetLat, endtime=time, dt=dt)
@@ -91,8 +91,8 @@ def test_execution_fail_timed(fieldset, mode, npart=10):
             return ErrorCode.Success
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     error_thrown = False
     try:
         pset.execute(TimedFail, endtime=20., dt=2.)
@@ -112,8 +112,8 @@ def test_execution_fail_python_exception(fieldset, mode, npart=10):
             return ErrorCode.Success
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     error_thrown = False
     try:
         pset.execute(PythonFail, endtime=20., dt=2.)
@@ -131,8 +131,8 @@ def test_execution_fail_out_of_bounds(fieldset, mode, npart=10):
         particle.lon += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
     error_thrown = False
     try:
         pset.execute(MoveRight, endtime=10., dt=1.)
@@ -152,8 +152,8 @@ def test_execution_recover_out_of_bounds(fieldset, mode, npart=2):
     def MoveLeft(particle, fieldset, time):
         particle.lon -= 1.
 
-    lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    lon = np.linspace(0.05, 0.95, npart)
+    lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: MoveLeft})
@@ -171,8 +171,8 @@ def test_execution_delete_out_of_bounds(fieldset, mode, npart=10):
     def DeleteMe(particle, fieldset, time):
         particle.delete()
 
-    lon = np.linspace(0.05, 0.95, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
+    lon = np.linspace(0.05, 0.95, npart)
+    lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
     pset.execute(MoveRight, endtime=10., dt=1.,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteMe})

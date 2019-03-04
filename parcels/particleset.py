@@ -5,6 +5,7 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.tools.loggers import logger
 from parcels.grid import GridCode
+from parcels.field import NestedField, SummedField
 import numpy as np
 import progressbar
 import time as time_module
@@ -28,10 +29,13 @@ class ParticleSet(object):
     :param depth: Optional list of initial depth values for particles. Default is 0m
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+           It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+           and np.float64 if the interpolation method is 'cgrid_velocity'
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, **kwargs):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -81,6 +85,14 @@ class ParticleSet(object):
             self.repeatdepth = depth
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
+
+        if lonlatdepth_dtype is None:
+            self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+        else:
+            self.lonlatdepth_dtype = lonlatdepth_dtype
+        assert self.lonlatdepth_dtype in [np.float32, np.float64], \
+            'lon lat depth precision should be set to either np.float32 or np.float64'
+        JITParticle.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -143,8 +155,10 @@ class ParticleSet(object):
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
-        lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
-        lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+
+        lonlat_type = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+        lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
+        lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
         if type(depth) in [int, float]:
             depth = [depth] * size
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
@@ -200,6 +214,17 @@ class ParticleSet(object):
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
+
+    @staticmethod
+    def lonlatdepth_dtype_from_field_interp_method(field):
+        if type(field) in [SummedField, NestedField]:
+            for f in field:
+                if f.interp_method == 'cgrid_velocity':
+                    return np.float64
+        else:
+            if field.interp_method == 'cgrid_velocity':
+                return np.float64
+        return np.float32
 
     @property
     def size(self):
@@ -290,7 +315,8 @@ class ParticleSet(object):
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
-                self.kernel.compile(compiler=GNUCompiler())
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
