@@ -195,15 +195,10 @@ class ScipyParticle(_Particle):
         self.state = ErrorCode.Delete
 
     @classmethod
-    def set_coordinate_precision(cls, precision):
-        if precision == 'double':
-            cls.lon.dtype = np.float64
-            cls.lat.dtype = np.float64
-            cls.depth.dtype = np.float64
-        else:
-            cls.lon.dtype = np.float32
-            cls.lat.dtype = np.float32
-            cls.depth.dtype = np.float32
+    def set_lonlatdepth_dtype(cls, dtype):
+        cls.lon.dtype = dtype
+        cls.lat.dtype = dtype
+        cls.depth.dtype = dtype
 
 
 class JITParticle(ScipyParticle):

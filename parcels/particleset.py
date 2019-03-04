@@ -30,8 +30,8 @@ class ParticleSet(object):
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
     :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-           It is either 'single' or 'double'. Default is 'single' if fieldset.U.interp_method is 'linear'
-           and 'double' if the interpolation method is 'cgrid_velocity'
+           It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+           and np.float64 if the interpolation method is 'cgrid_velocity'
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
@@ -90,9 +90,9 @@ class ParticleSet(object):
             self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
         else:
             self.lonlatdepth_dtype = lonlatdepth_dtype
-        assert self.lonlatdepth_dtype in ['single', 'double'], \
-            'lon lat depth precision should be set to either single or double'
-        JITParticle.set_coordinate_precision(self.lonlatdepth_dtype)
+        assert self.lonlatdepth_dtype in [np.float32, np.float64], \
+            'lon lat depth precision should be set to either np.float32 or np.float64'
+        JITParticle.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -156,8 +156,7 @@ class ParticleSet(object):
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
 
-        lonlatdepth_dtype = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-        lonlat_type = np.float64 if lonlatdepth_dtype == 'double' else np.float32
+        lonlat_type = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
         lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
         lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
         if type(depth) in [int, float]:
@@ -221,11 +220,11 @@ class ParticleSet(object):
         if type(field) in [SummedField, NestedField]:
             for f in field:
                 if f.interp_method == 'cgrid_velocity':
-                    return 'double'
+                    return np.float64
         else:
             if field.interp_method == 'cgrid_velocity':
-                return 'double'
-        return 'single'
+                return np.float64
+        return np.float32
 
     @property
     def size(self):
@@ -316,7 +315,7 @@ class ParticleSet(object):
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
-                cppargs = ['-DFLOAT_COORD_VARIABLES'] if self.lonlatdepth_dtype == 'double' else None
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 

@@ -65,7 +65,7 @@ def test_variable_special_names(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('coord_type', ['single', 'double'])
+@pytest.mark.parametrize('coord_type', [np.float32, np.float64])
 def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
     """Test that checks relative initialisation of custom variables"""
     lonlat_type = np.float64 if coord_type == 'double' else np.float32

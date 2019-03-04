@@ -233,7 +233,7 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('c_inc', ['str', 'file'])
 def test_c_kernel(fieldset, mode, c_inc):
-    coord_type = 'single' if c_inc == 'str' else 'double'
+    coord_type = np.float32 if c_inc == 'str' else np.float64
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0],
                        lonlatdepth_dtype=coord_type)
 

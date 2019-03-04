@@ -220,7 +220,7 @@ def test_pset_custom_ptype(fieldset, mode, npart=100):
 def test_pset_add_explicit(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype='double')
+    pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for i in range(npart):
         particle = ptype[mode](lon=lon[i], lat=lat[i], fieldset=fieldset)
         pset.add(particle)
@@ -287,7 +287,7 @@ def test_pset_merge_duplicate(fieldset, mode, npart=100):
 def test_pset_remove_index(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart)
     lat = np.linspace(1, 0, npart)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype='double')
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
         p = pset.remove(-1)
         assert(p.lon == ilon)
