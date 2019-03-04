@@ -10,6 +10,12 @@ extern "C" {
 
 #define CHECKERROR(res) do {if (res != SUCCESS) return res;} while (0)
 
+#ifdef DOUBLE_COORD_VARIABLES
+typedef double type_coord;
+#else
+typedef float type_coord;
+#endif
+
 typedef struct
 {
   int gtype;
@@ -38,7 +44,7 @@ typedef enum
     RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_Z_GRID=2, CURVILINEAR_S_GRID=3
   } GridCode;
 
-static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zvals, int *zi, double *zeta)
+static inline ErrorCode search_indices_vertical_z(type_coord z, int zdim, float *zvals, int *zi, double *zeta)
 {
   if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
   while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
@@ -49,7 +55,7 @@ static inline ErrorCode search_indices_vertical_z(float z, int zdim, float *zval
   return SUCCESS;
 }
 
-static inline ErrorCode search_indices_vertical_s(float z, int xdim, int ydim, int zdim, float *zvals,
+static inline ErrorCode search_indices_vertical_s(type_coord z, int xdim, int ydim, int zdim, float *zvals,
                                     int xi, int yi, int *zi, double xsi, double eta, double *zeta,
                                     int z4d, int ti, int tdim, double time, double t0, double t1)
 {
@@ -120,7 +126,7 @@ static inline void reconnect_bnd_indices(int *xi, int *yi, int xdim, int ydim, i
 }
 
 
-static inline ErrorCode search_indices_rectilinear(float x, float y, float z, CStructuredGrid *grid, GridCode gcode,
+static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                                    int ti, double time, double t0, double t1)
 {
@@ -213,7 +219,7 @@ static inline ErrorCode search_indices_rectilinear(float x, float y, float z, CS
 }
 
 
-static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CStructuredGrid *grid, GridCode gcode,
+static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                                    int ti, double time, double t0, double t1)
 {
@@ -351,7 +357,7 @@ static inline ErrorCode search_indices_curvilinear(float x, float y, float z, CS
 /* Local linear search to update grid index
  * params ti, sizeT, time. t0, t1 are only used for 4D S grids
  * */
-static inline ErrorCode search_indices(float x, float y, float z, CStructuredGrid *grid,
+static inline ErrorCode search_indices(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid,
                                        int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
                                        GridCode gcode, int ti, double time, double t0, double t1)
 {

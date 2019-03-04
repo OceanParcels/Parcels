@@ -213,13 +213,13 @@ def test_fieldset_sample_particle(mode, k_sample_uv, lat_flip, npart=120):
 
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    lon = np.linspace(-170, 170, npart, dtype=np.float32)
-    lat = np.linspace(-80, 80, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart, dtype=np.float32) + 70.)
+    lon = np.linspace(-170, 170, npart)
+    lat = np.linspace(-80, 80, npart)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart, dtype=np.float32) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
 
@@ -228,14 +228,14 @@ def test_fieldset_sample_particle(mode, k_sample_uv, lat_flip, npart=120):
 def test_fieldset_sample_geographic(fieldset_geometric, mode, k_sample_uv, npart=120):
     """ Sample a fieldset with conversion to geographic units (degrees). """
     fieldset = fieldset_geometric
-    lon = np.linspace(-170, 170, npart, dtype=np.float32)
-    lat = np.linspace(-80, 80, npart, dtype=np.float32)
+    lon = np.linspace(-170, 170, npart)
+    lat = np.linspace(-80, 80, npart)
 
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart, dtype=np.float32) + 70.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart, dtype=np.float32) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
 
@@ -244,14 +244,14 @@ def test_fieldset_sample_geographic(fieldset_geometric, mode, k_sample_uv, npart
 def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode, k_sample_uv, npart=120):
     """ Sample a fieldset with conversion to geographic units and a pole correction. """
     fieldset = fieldset_geometric_polar
-    lon = np.linspace(-170, 170, npart, dtype=np.float32)
-    lat = np.linspace(-80, 80, npart, dtype=np.float32)
+    lon = np.linspace(-170, 170, npart)
+    lat = np.linspace(-80, 80, npart)
 
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart, dtype=np.float32) + 70.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
 
-    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart, dtype=np.float32) - 45.)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
     # large sampling error for the JIT correction.
