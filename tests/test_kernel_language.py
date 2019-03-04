@@ -235,7 +235,7 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
 def test_c_kernel(fieldset, mode, c_inc):
     coord_type = 'single' if c_inc == 'str' else 'double'
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0],
-                       coordinates_var_precision=coord_type)
+                       lonlatdepth_dtype=coord_type)
 
     def func(U, lon, dt):
         u = U.data[0, 2, 1]

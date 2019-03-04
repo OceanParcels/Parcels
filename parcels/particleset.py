@@ -29,13 +29,13 @@ class ParticleSet(object):
     :param depth: Optional list of initial depth values for particles. Default is 0m
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-    :param coordinates_var_precision: Floating precision for lon, lat, depth particle coordinates.
+    :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
            It is either 'single' or 'double'. Default is 'single' if fieldset.U.interp_method is 'linear'
            and 'double' if the interpolation method is 'cgrid_velocity'
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, coordinates_var_precision=None, **kwargs):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -86,20 +86,13 @@ class ParticleSet(object):
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
-        if coordinates_var_precision is None:
-            if type(fieldset.U) in [SummedField, NestedField]:
-                self.coordinates_var_precision = 'single'
-                for f in fieldset.U:
-                    if f.interp_method == 'cgrid_velocity':
-                        self.coordinates_var_precision = 'double'
-                        break
-            else:
-                self.coordinates_var_precision = 'double' if fieldset.U.interp_method == 'cgrid_velocity' else 'single'
+        if lonlatdepth_dtype is None:
+            self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
         else:
-            self.coordinates_var_precision = coordinates_var_precision
-        assert self.coordinates_var_precision in ['single', 'double'], \
-            'particle coordinate variable precision is either set at single or double'
-        JITParticle.set_coordinate_precision(self.coordinates_var_precision)
+            self.lonlatdepth_dtype = lonlatdepth_dtype
+        assert self.lonlatdepth_dtype in ['single', 'double'], \
+            'lon lat depth precision should be set to either single or double'
+        JITParticle.set_coordinate_precision(self.lonlatdepth_dtype)
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -163,7 +156,8 @@ class ParticleSet(object):
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
 
-        lonlat_type = np.float64 if fieldset.U.interp_method == 'cgrid_velocity' else np.float32
+        lonlatdepth_dtype = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+        lonlat_type = np.float64 if lonlatdepth_dtype == 'double' else np.float32
         lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
         lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
         if type(depth) in [int, float]:
@@ -221,6 +215,17 @@ class ParticleSet(object):
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
+
+    @staticmethod
+    def lonlatdepth_dtype_from_field_interp_method(field):
+        if type(field) in [SummedField, NestedField]:
+            for f in field:
+                if f.interp_method == 'cgrid_velocity':
+                    return 'double'
+        else:
+            if field.interp_method == 'cgrid_velocity':
+                return 'double'
+        return 'single'
 
     @property
     def size(self):
@@ -311,7 +316,7 @@ class ParticleSet(object):
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
-                cppargs = ['-DFLOAT_COORD_VARIABLES'] if self.coordinates_var_precision == 'double' else None
+                cppargs = ['-DFLOAT_COORD_VARIABLES'] if self.lonlatdepth_dtype == 'double' else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 
