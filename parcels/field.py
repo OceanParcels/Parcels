@@ -121,7 +121,6 @@ class Field(object):
         self.is_gradient = False
 
         # Variable names in JIT code
-        self.ccode_data = self.name
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
@@ -783,7 +782,7 @@ class Field(object):
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
-            % (x, y, z, t, self.name, var, self.interp_method.upper())
+            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
 
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
@@ -1233,12 +1232,12 @@ class VectorField(object):
         # Casting interp_methd to int as easier to pass on in C-code
         if varW:
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.name, V.name, W.name) + \
+                   % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
                    % (varU, varV, varW, U.interp_method.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.name, V.name) + \
+                   % (x, y, z, t, U.ccode_name, V.ccode_name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
 
