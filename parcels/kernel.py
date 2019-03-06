@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldSamplingError
+from parcels.field import FieldSamplingError, Field, SummedField, NestedField
 from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -10,7 +10,7 @@ import numpy.ctypeslib as npct
 import time
 from ctypes import c_int, c_float, c_double, c_void_p, byref
 import _ctypes
-from sys import platform
+from sys import platform, version_info
 from ast import parse, FunctionDef, Module
 import inspect
 from copy import deepcopy
@@ -56,7 +56,17 @@ class Kernel(object):
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
         if pyfunc is AdvectionRK4_3D:
-            logger.warning_once('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
+            warning = False
+            if isinstance(fieldset.W, Field) and fieldset.W.creation_log != 'from_nemo' and \
+               fieldset.W._scaling_factor is not None and fieldset.W._scaling_factor > 0:
+                warning = True
+            if type(fieldset.W) in [SummedField, NestedField]:
+                for f in fieldset.W:
+                    if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
+                        warning = True
+            if warning:
+                logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
+                                    '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -85,7 +95,13 @@ class Kernel(object):
             self.pyfunc = user_ctx[self.funcname]
         else:
             self.pyfunc = pyfunc
-        assert len(inspect.getargspec(self.pyfunc).args) == 3, \
+
+        if version_info[0] < 3:
+            numkernelargs = len(inspect.getargspec(self.pyfunc).args)
+        else:
+            numkernelargs = len(inspect.getfullargspec(self.pyfunc).args)
+
+        assert numkernelargs == 3, \
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
         self.name = "%s%s" % (ptype.name, self.funcname)

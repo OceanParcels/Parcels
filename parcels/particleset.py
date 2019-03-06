@@ -5,10 +5,11 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particlefile import ParticleFile
 from parcels.tools.loggers import logger
 from parcels.grid import GridCode
+from parcels.field import NestedField, SummedField
 import numpy as np
 import progressbar
 import time as time_module
-from collections import Iterable
+import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
 
@@ -28,10 +29,13 @@ class ParticleSet(object):
     :param depth: Optional list of initial depth values for particles. Default is 0m
     :param time: Optional list of initial time values for particles. Default is fieldset.U.grid.time[0]
     :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+    :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+           It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+           and np.float64 if the interpolation method is 'cgrid_velocity'
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, **kwargs):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
 
@@ -64,6 +68,9 @@ class ParticleSet(object):
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = [self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time]
 
+        for kwvar in kwargs:
+            kwargs[kwvar] = convert_to_list(kwargs[kwvar])
+
         assert len(lon) == len(time)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
@@ -77,6 +84,15 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
+            self.repeatkwargs = kwargs
+
+        if lonlatdepth_dtype is None:
+            self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+        else:
+            self.lonlatdepth_dtype = lonlatdepth_dtype
+        assert self.lonlatdepth_dtype in [np.float32, np.float64], \
+            'lon lat depth precision should be set to either np.float32 or np.float64'
+        JITParticle.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
@@ -139,8 +155,12 @@ class ParticleSet(object):
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         """
-        lon = np.linspace(start[0], finish[0], size, dtype=np.float32)
-        lat = np.linspace(start[1], finish[1], size, dtype=np.float32)
+
+        lonlat_type = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+        lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
+        lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
+        if type(depth) in [int, float]:
+            depth = [depth] * size
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
 
     @classmethod
@@ -195,6 +215,17 @@ class ParticleSet(object):
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
 
+    @staticmethod
+    def lonlatdepth_dtype_from_field_interp_method(field):
+        if type(field) in [SummedField, NestedField]:
+            for f in field:
+                if f.interp_method == 'cgrid_velocity':
+                    return np.float64
+        else:
+            if field.interp_method == 'cgrid_velocity':
+                return np.float64
+        return np.float32
+
     @property
     def size(self):
         return self.particles.size
@@ -219,7 +250,7 @@ class ParticleSet(object):
         """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
-        if not isinstance(particles, Iterable):
+        if not isinstance(particles, collections.Iterable):
             particles = [particles]
         self.particles = np.append(self.particles, particles)
         if self.ptype.uses_jit:
@@ -231,7 +262,7 @@ class ParticleSet(object):
 
     def remove(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
-        if isinstance(indices, Iterable):
+        if isinstance(indices, collections.Iterable):
             particles = [self.particles[i] for i in indices]
         else:
             particles = self.particles[indices]
@@ -284,7 +315,8 @@ class ParticleSet(object):
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
-                self.kernel.compile(compiler=GNUCompiler())
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
@@ -377,7 +409,7 @@ class ParticleSet(object):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass)
+                                       pclass=self.repeatpclass, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
@@ -401,13 +433,13 @@ class ParticleSet(object):
             pbar.finish()
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=True, vmin=None, vmax=None, savefile=None, animation=False):
+             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet
 
         :param with_particles: Boolean whether to show particles
         :param show_time: Time at which to show the ParticleSet
         :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: Four-vector (latN, latS, lonE, lonW) defining domain to show
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
         :param projection: type of cartopy projection to use (default PlateCarree)
         :param land: Boolean whether to show land. This is ignored for flat meshes
         :param vmin: minimum colour scale (only in single-plot mode)
@@ -417,7 +449,7 @@ class ParticleSet(object):
         """
         from parcels.plotting import plotparticles
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation)
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
     def density(self, field=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,

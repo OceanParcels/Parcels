@@ -57,8 +57,8 @@ def AdvectionRK45(particle, fieldset, time):
 
     Times-step dt is halved if error is larger than tolerance, and doubled
     if error is smaller than 1/10th of tolerance, with tolerance set to
-    1e-9 * dt by default."""
-    tol = [1e-9]
+    1e-5 * dt by default."""
+    tol = [1e-5]
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
          [3./32., 9./32., 0., 0., 0.],

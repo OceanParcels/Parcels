@@ -34,13 +34,20 @@ class FieldSet(object):
 
         self.compute_on_defer = None
 
+    @staticmethod
+    def checkvaliddimensionsdict(dims):
+        for d in dims:
+            if d not in ['lon', 'lat', 'depth', 'time']:
+                raise NameError('%s is not a valid key in the dimensions dictionary' % d)
+
     @classmethod
     def from_data(cls, data, dimensions, transpose=False, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False, **kwargs):
         """Initialise FieldSet object from raw data
 
         :param data: Dictionary mapping field names to numpy arrays.
-               Note that at least a 'U' and 'V' numpy array need to be given
+               Note that at least a 'U' and 'V' numpy array need to be given, and that
+               the built-in Advection kernels assume that U and V are in m/s
 
                1. If data shape is [xdim, ydim], [xdim, ydim, zdim], [xdim, ydim, tdim] or [xdim, ydim, zdim, tdim],
                   whichever is relevant for the dataset, use the flag transpose=True
@@ -54,7 +61,7 @@ class FieldSet(object):
                (e.g. dimensions['U'], dimensions['V'], etc).
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -70,6 +77,7 @@ class FieldSet(object):
         for name, datafld in data.items():
             # Use dimensions[name] if dimensions is a dict of dicts
             dims = dimensions[name] if name in dimensions else dimensions
+            cls.checkvaliddimensionsdict(dims)
 
             if allow_time_extrapolation is None:
                 allow_time_extrapolation = False if 'time' in dims else True
@@ -78,7 +86,9 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = Grid.grid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
+            if 'creation_log' not in kwargs.keys():
+                kwargs['creation_log'] = 'from_data'
 
             fields[name] = Field(name, datafld, grid=grid, transpose=transpose,
                                  allow_time_extrapolation=allow_time_extrapolation, time_periodic=time_periodic, **kwargs)
@@ -154,12 +164,22 @@ class FieldSet(object):
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
+        ccode_fieldnames = []
+        counter = 1
+        for fld in self.fields:
+                if fld.name not in ccode_fieldnames:
+                    fld.ccode_name = fld.name
+                else:
+                    fld.ccode_name = fld.name + str(counter)
+                    counter += 1
+                ccode_fieldnames.append(fld.ccode_name)
+
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
         if not isinstance(paths, list):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
-            notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
             raise IOError("FieldSet files not found: %s" % str(notfound_paths))
         for fp in paths:
             if not path.exists(fp):
@@ -168,18 +188,18 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
-                    mesh='spherical', allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
-               filepath may contain wildcards to indicate multiple files,
+               filepath may contain wildcards to indicate multiple files
                or be a list of file.
                filenames can be a list [files], a dictionary {var:[files]},
                a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
                or a dictionary of dictionaries {var:{dim:[files]}}.
                time values are in filenames[data]
-        :param variables: Dictionary mapping variables to variable
-               names in the netCDF file(s).
+        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
+               Note that the built-in Advection kernels assume that U and V are in m/s
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
@@ -190,25 +210,39 @@ class FieldSet(object):
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
+        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+               Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
+        # Ensure that times are not provided both in netcdf file and in 'timestamps'.
+        if timestamps is not None and 'time' in dimensions:
+            logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
+            timestamps = None
+
+        # Typecast timestamps to numpy array & correct shape.
+        if timestamps is not None:
+            if isinstance(timestamps, list):
+                timestamps = np.array(timestamps)
+            timestamps = np.reshape(timestamps, [timestamps.size, 1])
 
         fields = {}
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_netcdf'
         for var, name in variables.items():
             # Resolve all matching paths for the current variable
             paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
@@ -220,7 +254,7 @@ class FieldSet(object):
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
-            dims['data'] = name
+            cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
 
             grid = None
@@ -228,22 +262,24 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                if procdims == dims and procinds == inds:
+                procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
+                nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
+                if procdims == dims and procinds == inds and procpaths == nowpaths:
                     sameGrid = False
-                    if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
+                    if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         sameGrid = True
-                    elif type(filenames[procvar]) == dict:
+                    elif isinstance(filenames[procvar], dict):
                         sameGrid = True
-                        for dim in ['lon', 'lat', 'depth', 'data']:
+                        for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
                                 sameGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if sameGrid:
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, var, dims, inds, grid=grid, mesh=mesh,
+            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -252,6 +288,63 @@ class FieldSet(object):
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
                   tracer_interp_method='cgrid_tracer', **kwargs):
+        """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
+
+        :param filenames: Dictionary mapping variables to file(s). The
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}
+               time values are in filenames[data]
+        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
+               Note that the built-in Advection kernels assume that U and V are in m/s
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable.
+               Watch out: NEMO is discretised on a C-grid:
+               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+                __V1__
+               |      |
+               U0     U1
+               |__V0__|
+               To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
+               which are located on the corners of the cells.
+               (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
+               In 3D, the depth is the one corresponding to W nodes
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
+               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+
+        """
+
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_nemo'
+        fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, **kwargs)
+        if hasattr(fieldset, 'W'):
+            fieldset.W.set_scaling_factor(-1.)
+        return fieldset
+
+    @classmethod
+    def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                            allow_time_extrapolation=None, time_periodic=False,
+                            tracer_interp_method='cgrid_tracer', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -293,12 +386,14 @@ class FieldSet(object):
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-               Note that in the case of from_nemo(), the velocity fields are default to 'cgrid_velocity'
+               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
 
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
+        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
+            raise RuntimeError("On a c-grid discretisation like NEMO, U, V and W should have the same dimensions")
 
         interp_method = {}
         for v in variables:
@@ -306,13 +401,15 @@ class FieldSet(object):
                 interp_method[v] = 'cgrid_velocity'
             else:
                 interp_method[v] = tracer_interp_method
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_c_grid_dataset'
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
-                     allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                     allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -327,14 +424,16 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         if extra_fields is None:
             extra_fields = {}
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_parcels'
 
         dimensions = {}
         default_dims = {'lon': 'nav_lon', 'lat': 'nav_lat',
@@ -347,14 +446,15 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, full_load=full_load, **kwargs)
+                               time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
 
     @classmethod
     def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
-                            time_periodic=False, full_load=False, **kwargs):
+                            time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
-        :param ds: xarray Dataset
+        :param ds: xarray Dataset.
+               Note that the built-in Advection kernels assume that U and V are in m/s
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the xarray Dataset.
                Note that dimensions can also be a dictionary of dictionaries if
@@ -364,7 +464,7 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation:
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -374,13 +474,15 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_xarray_dataset'
         for var, name in variables.items():
 
             # Use dimensions[var] and indices[var] if either of them is a dict of dicts
@@ -389,23 +491,22 @@ class FieldSet(object):
 
             fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation, var_name=var,
-                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
     @property
     def fields(self):
-        """Returns a list of all the :class:`parcels.field.Field` objects
-        associated with this FieldSet"""
+        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
+        objects associated with this FieldSet"""
         fields = []
         for v in self.__dict__.values():
-            if isinstance(v, Field):
+            if type(v) in [Field, VectorField]:
                 fields.append(v)
             elif isinstance(v, SummedField):
                 for v2 in v:
-                    if v2 not in fields:
-                        fields.append(v2)
+                    fields.append(v2)
         return fields
 
     def add_constant(self, name, value):

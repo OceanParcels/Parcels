@@ -59,8 +59,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
     V[landpoints] = np.nan
 
     # Convert from m to lat/lon for spherical meshes
-    lon = La / 1852. / 60. if mesh is 'spherical' else La
-    lat = Wa / 1852. / 60. if mesh is 'spherical' else Wa
+    lon = La / 1852. / 60. if mesh == 'spherical' else La
+    lat = Wa / 1852. / 60. if mesh == 'spherical' else Wa
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
@@ -128,7 +128,6 @@ def test_peninsula_fieldset(mode, mesh):
     assert(err_smpl <= 1.e-3).all()
 
 
-@pytest.fixture(scope='module')
 def fieldsetfile(mesh):
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'

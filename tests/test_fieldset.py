@@ -126,6 +126,26 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
+@pytest.mark.parametrize('calltype', ['from_data', 'from_nemo'])
+def test_illegal_dimensionsdict(calltype):
+    error_thrown = False
+    try:
+        if calltype == 'from_data':
+            data, dimensions = generate_fieldset(10, 10)
+            dimensions['test'] = None
+            FieldSet.from_data(data, dimensions)
+        elif calltype == 'from_nemo':
+            fname = path.join(path.dirname(__file__), 'test_data', 'mask_nemo_cross_180lon.nc')
+            filenames = {'dx': fname, 'mesh_mask': fname}
+            variables = {'dx': 'e1u'}
+            dimensions = {'lon': 'glamu', 'lat': 'gphiu', 'test': 'test'}
+            error_thrown = False
+            FieldSet.from_nemo(filenames, variables, dimensions)
+    except NameError:
+        error_thrown = True
+    assert error_thrown
+
+
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 200])
 def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
@@ -177,11 +197,13 @@ def test_fieldset_write_curvilinear(tmpdir):
     variables = {'dx': 'e1u'}
     dimensions = {'lon': 'glamu', 'lat': 'gphiu'}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+    assert fieldset.dx.creation_log == 'from_nemo'
 
     newfile = tmpdir.join('curv_field')
     fieldset.write(newfile)
 
     fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+    assert fieldset2.dx.creation_log == 'from_netcdf'
 
     for var in ['lon', 'lat', 'data']:
         assert np.allclose(getattr(fieldset2.dx, var), getattr(fieldset.dx, var))
@@ -338,6 +360,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(tmpdir, fail, filename='te
     fieldset_out.add_field(fieldW)
     fieldset_out.write(filepath)
     fieldset = FieldSet.from_parcels(filepath, extra_fields={'W': 'W'})
+    assert fieldset.U.creation_log == 'from_parcels'
     pset = ParticleSet.from_list(fieldset, pclass=JITParticle, lon=[0.5], lat=[0.5], depth=[0.5],
                                  time=[datetime.datetime(2018, 4, 20, 1)])
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
@@ -408,11 +431,12 @@ def test_fieldset_from_xarray(maxlatind):
     dimensions = {'lat': 'lat', 'lon': 'lon', 'depth': 'depth', 'time': 'time'}
     indices = {'lat': range(0, maxlatind)}
     fieldset = FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, mesh='flat')
+    assert fieldset.U.creation_log == 'from_xarray_dataset'
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
     pset.execute(AdvectionRK4, dt=1)
-    assert pset[0].lon == 4.5 and pset[0].lat == 10
+    assert np.allclose(pset[0].lon, 4.5) and np.allclose(pset[0].lat, 10)
 
 
 def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):

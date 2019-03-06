@@ -41,8 +41,8 @@ def test_expression_int(fieldset, mode, name, expr, result, npart=10):
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=TestParticle,
-                       lon=np.linspace(0., 1., npart, dtype=np.float32),
-                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
+                       lon=np.linspace(0., 1., npart),
+                       lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     assert(np.array([result == particle.p for particle in pset]).all())
 
@@ -60,8 +60,8 @@ def test_expression_float(fieldset, mode, name, expr, result, npart=10):
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=TestParticle,
-                       lon=np.linspace(0., 1., npart, dtype=np.float32),
-                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
+                       lon=np.linspace(0., 1., npart),
+                       lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     assert(np.array([result == particle.p for particle in pset]).all())
 
@@ -83,8 +83,8 @@ def test_expression_bool(fieldset, mode, name, expr, result, npart=10):
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=TestParticle,
-                       lon=np.linspace(0., 1., npart, dtype=np.float32),
-                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
+                       lon=np.linspace(0., 1., npart),
+                       lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     if mode == 'jit':
         assert(np.array([result == (particle.p == 1) for particle in pset]).all())
@@ -108,6 +108,39 @@ def test_while_if_break(fieldset, mode):
             particle.p *= 2.
     pset.execute(kernel, endtime=1., dt=1.)
     assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_nested_if(fieldset, mode):
+    """Test nested if commands"""
+    class TestParticle(ptype[mode]):
+        p0 = Variable('p0', dtype=np.int32, initial=0)
+        p1 = Variable('p1', dtype=np.int32, initial=1)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        if particle.p1 >= particle.p0:
+            var = particle.p0
+            if var + 1 < particle.p1:
+                particle.p1 = -1
+
+    pset.execute(kernel, endtime=10, dt=1.)
+    assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
+
+
+def test_parcels_tmpvar_in_kernel(fieldset):
+    """Tests for error thrown if vartiable with 'tmp' defined in custom kernel"""
+    error_thrown = False
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=0, lat=0)
+
+    def kernel_tmpvar(particle, fieldset, time):
+        parcels_tmpvar0 = 0  # noqa
+
+    try:
+        pset.execute(kernel_tmpvar, endtime=1, dt=1.)
+    except NotImplementedError:
+        error_thrown = True
+    assert error_thrown
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -188,8 +221,8 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     class TestParticle(ptype[mode]):
         p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
     pset = ParticleSet(fieldset, pclass=TestParticle,
-                       lon=np.linspace(0., 1., npart, dtype=np.float32),
-                       lat=np.zeros(npart, dtype=np.float32) + 0.5)
+                       lon=np.linspace(0., 1., npart),
+                       lat=np.zeros(npart) + 0.5)
     series = random_series(npart, rngfunc, rngargs, mode)
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
@@ -200,7 +233,9 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('c_inc', ['str', 'file'])
 def test_c_kernel(fieldset, mode, c_inc):
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
+    coord_type = np.float32 if c_inc == 'str' else np.float64
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0],
+                       lonlatdepth_dtype=coord_type)
 
     def func(U, lon, dt):
         u = U.data[0, 2, 1]
