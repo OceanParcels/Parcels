@@ -24,8 +24,8 @@ def test_variable_init(fieldset, mode, npart=10):
         p_double = Variable('p_double', dtype=np.float64, initial=11.)
         p_int = Variable('p_int', dtype=np.int32, initial=12.)
     pset = ParticleSet(fieldset, pclass=TestParticle,
-                       lon=np.linspace(0, 1, npart, dtype=np.float32),
-                       lat=np.linspace(1, 0, npart, dtype=np.float32))
+                       lon=np.linspace(0, 1, npart),
+                       lat=np.linspace(1, 0, npart))
 
     def addOne(particle, fieldset, time):
         particle.p_float += 1.
@@ -65,25 +65,28 @@ def test_variable_special_names(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_variable_init_relative(fieldset, mode, npart=10):
+@pytest.mark.parametrize('coord_type', [np.float32, np.float64])
+def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
     """Test that checks relative initialisation of custom variables"""
+    lonlat_type = np.float64 if coord_type == 'double' else np.float32
+
     class TestParticle(ptype[mode]):
-        p_base = Variable('p_base', dtype=np.float32, initial=10.)
-        p_relative = Variable('p_relative', dtype=np.float32,
+        p_base = Variable('p_base', dtype=lonlat_type, initial=10.)
+        p_relative = Variable('p_relative', dtype=lonlat_type,
                               initial=attrgetter('p_base'))
-        p_offset = Variable('p_offset', dtype=np.float32,
+        p_offset = Variable('p_offset', dtype=lonlat_type,
                             initial=attrgetter('p_base'))
-        p_lon = Variable('p_lon', dtype=np.float32,
+        p_lon = Variable('p_lon', dtype=lonlat_type,
                          initial=attrgetter('lon'))
-        p_lat = Variable('p_lat', dtype=np.float32,
+        p_lat = Variable('p_lat', dtype=lonlat_type,
                          initial=attrgetter('lat'))
 
         def __init__(self, *args, **kwargs):
             super(TestParticle, self).__init__(*args, **kwargs)
             self.p_offset += 2.
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet(fieldset, pclass=TestParticle, lon=lon, lat=lat)
+    lon = np.linspace(0, 1, npart, dtype=lonlat_type)
+    lat = np.linspace(1, 0, npart, dtype=lonlat_type)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=lon, lat=lat, lonlatdepth_dtype=coord_type)
     # Adjust base variable to test for aliasing effects
     for p in pset:
         p.p_base += 3.

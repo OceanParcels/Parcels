@@ -194,6 +194,12 @@ class ScipyParticle(_Particle):
     def delete(self):
         self.state = ErrorCode.Delete
 
+    @classmethod
+    def set_lonlatdepth_dtype(cls, dtype):
+        cls.lon.dtype = dtype
+        cls.lat.dtype = dtype
+        cls.depth.dtype = dtype
+
 
 class JITParticle(ScipyParticle):
     """Particle class for JIT-based (Just-In-Time) Particle objects

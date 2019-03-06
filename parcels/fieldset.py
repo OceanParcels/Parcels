@@ -164,6 +164,16 @@ class FieldSet(object):
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
+        ccode_fieldnames = []
+        counter = 1
+        for fld in self.fields:
+                if fld.name not in ccode_fieldnames:
+                    fld.ccode_name = fld.name
+                else:
+                    fld.ccode_name = fld.name + str(counter)
+                    counter += 1
+                ccode_fieldnames.append(fld.ccode_name)
+
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
         if not isinstance(paths, list):
@@ -488,16 +498,15 @@ class FieldSet(object):
 
     @property
     def fields(self):
-        """Returns a list of all the :class:`parcels.field.Field` objects
-        associated with this FieldSet"""
+        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
+        objects associated with this FieldSet"""
         fields = []
         for v in self.__dict__.values():
-            if isinstance(v, Field):
+            if type(v) in [Field, VectorField]:
                 fields.append(v)
             elif isinstance(v, SummedField):
                 for v2 in v:
-                    if v2 not in fields:
-                        fields.append(v2)
+                    fields.append(v2)
         return fields
 
     def add_constant(self, name, value):
