@@ -2,7 +2,7 @@ from parcels.field import Field, VectorField, SummedField, SummedVectorField, Ne
 from parcels.tools.loggers import logger
 import ast
 import cgen as c
-from collections import OrderedDict
+import collections
 import math
 import numpy as np
 import random
@@ -362,9 +362,9 @@ class KernelGenerator(ast.NodeVisitor):
     def __init__(self, fieldset, ptype):
         self.fieldset = fieldset
         self.ptype = ptype
-        self.field_args = OrderedDict()
-        self.vector_field_args = OrderedDict()
-        self.const_args = OrderedDict()
+        self.field_args = collections.OrderedDict()
+        self.vector_field_args = collections.OrderedDict()
+        self.const_args = collections.OrderedDict()
 
     def generate(self, py_ast, funcvars):
         # Replace occurences of intrinsic objects in Python AST
@@ -396,7 +396,7 @@ class KernelGenerator(ast.NodeVisitor):
                 funcvars.remove(kvar)
         self.ccode.body.insert(0, c.Value('ErrorCode', 'err'))
         if len(funcvars) > 0:
-            self.ccode.body.insert(0, c.Value("float", ", ".join(funcvars)))
+            self.ccode.body.insert(0, c.Value("type_coord", ", ".join(funcvars)))
         if len(transformer.tmp_vars) > 0:
             self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
 
@@ -411,13 +411,13 @@ class KernelGenerator(ast.NodeVisitor):
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name, "particle")),
-                c.Value("double", "time"), c.Value("float", "dt")]
+                c.Value("double", "time")]
         for field_name, field in self.field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field_name))]
         for field_name, field in self.vector_field_args.items():
             fieldset = field.fieldset
-            Wname = field.W.name if field.W else 'not_defined'
-            for f in [field.U.name, field.V.name, Wname]:
+            Wname = field.W.ccode_name if field.W else 'not_defined'
+            for f in [field.U.ccode_name, field.V.ccode_name, Wname]:
                 try:
                     # Next line will break for example if field.U was created but not added to the fieldset
                     getattr(fieldset, f)
@@ -678,36 +678,36 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
-        self.field_args[node.obj.name] = node.obj
+        self.field_args[node.obj.ccode_name] = node.obj
 
     def visit_SummedFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
 
     def visit_NestedFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
 
     def visit_VectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
-        self.vector_field_args[node.obj.name] = node.obj
+        self.vector_field_args[node.obj.ccode_name] = node.obj
 
     def visit_SummedVectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj.U:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
         for fld in node.obj.V:
-            self.field_args[fld.name] = fld
+            self.field_args[fld.ccode_name] = fld
         if hasattr(node.obj, 'W') and node.obj.W:
             for fld in node.obj.W:
-                self.field_args[fld.name] = fld
+                self.field_args[fld.ccode_name] = fld
 
     def visit_NestedVectorFieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         for fld in node.obj:
-            self.vector_field_args[fld.name] = fld
+            self.vector_field_args[fld.ccode_name] = fld
 
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
@@ -908,7 +908,7 @@ class LoopGenerator(object):
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
             args += [c.Value("float", const)]
-        fargs_str = ", ".join(['particles[p].time', 'sign_dt * __dt'] + list(field_args.keys())
+        fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys())
                               + list(const_args.keys()))
         # Inner loop nest for forward runs
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")

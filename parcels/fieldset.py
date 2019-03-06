@@ -164,12 +164,22 @@ class FieldSet(object):
             else:
                 self.add_vector_field(VectorField('UVW', self.U, self.V, self.W))
 
+        ccode_fieldnames = []
+        counter = 1
+        for fld in self.fields:
+                if fld.name not in ccode_fieldnames:
+                    fld.ccode_name = fld.name
+                else:
+                    fld.ccode_name = fld.name + str(counter)
+                    counter += 1
+                ccode_fieldnames.append(fld.ccode_name)
+
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
         if not isinstance(paths, list):
             paths = sorted(glob(str(paths)))
         if len(paths) == 0:
-            notfound_paths = filenames[var] if type(filenames) is dict and var in filenames else filenames
+            notfound_paths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
             raise IOError("FieldSet files not found: %s" % str(notfound_paths))
         for fp in paths:
             if not path.exists(fp):
@@ -178,7 +188,7 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None,
-                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -212,10 +222,10 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -229,7 +239,6 @@ class FieldSet(object):
             if isinstance(timestamps, list):
                 timestamps = np.array(timestamps)
             timestamps = np.reshape(timestamps, [timestamps.size, 1])
-
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
@@ -253,11 +262,13 @@ class FieldSet(object):
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
-                if procdims == dims and procinds == inds:
+                procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
+                nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
+                if procdims == dims and procinds == inds and procpaths == nowpaths:
                     sameGrid = False
-                    if (type(filenames) is not dict or filenames[procvar] == filenames[var]):
+                    if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         sameGrid = True
-                    elif type(filenames[procvar]) == dict:
+                    elif isinstance(filenames[procvar], dict):
                         sameGrid = True
                         for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
@@ -268,7 +279,7 @@ class FieldSet(object):
                         break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -398,7 +409,7 @@ class FieldSet(object):
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
-                     allow_time_extrapolation=None, time_periodic=False, full_load=False, **kwargs):
+                     allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -413,10 +424,10 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         if extra_fields is None:
@@ -435,11 +446,11 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, full_load=full_load, **kwargs)
+                               time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
 
     @classmethod
     def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
-                            time_periodic=False, full_load=False, **kwargs):
+                            time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
         :param ds: xarray Dataset.
@@ -463,10 +474,10 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
@@ -480,23 +491,22 @@ class FieldSet(object):
 
             fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
                                             allow_time_extrapolation=allow_time_extrapolation, var_name=var,
-                                            time_periodic=time_periodic, full_load=full_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
     @property
     def fields(self):
-        """Returns a list of all the :class:`parcels.field.Field` objects
-        associated with this FieldSet"""
+        """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
+        objects associated with this FieldSet"""
         fields = []
         for v in self.__dict__.values():
-            if isinstance(v, Field):
+            if type(v) in [Field, VectorField]:
                 fields.append(v)
             elif isinstance(v, SummedField):
                 for v2 in v:
-                    if v2 not in fields:
-                        fields.append(v2)
+                    fields.append(v2)
         return fields
 
     def add_constant(self, name, value):

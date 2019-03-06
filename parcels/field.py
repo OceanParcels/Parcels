@@ -3,7 +3,7 @@ from parcels.tools.converters import unitconverters_map, UnitConverter, Geograph
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
 import parcels.tools.interpolation_utils as i_u
-from collections import Iterable
+import collections
 from py import path
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
@@ -121,7 +121,6 @@ class Field(object):
         self.is_gradient = False
 
         # Variable names in JIT code
-        self.ccode_data = self.name
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
@@ -132,7 +131,7 @@ class Field(object):
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
-                    full_load=False, **kwargs):
+                    deferred_load=True, **kwargs):
         """Create field from netCDF file
 
         :param filenames: list of filenames to read for the field.
@@ -158,10 +157,10 @@ class Field(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param full_load: boolean whether to fully load the data or only pre-load them. (default: False)
-               It is advised not to fully load the data, since in that case Parcels deals with
-               a better memory management during particle set execution.
-               full_load is however sometimes necessary for plotting the fields.
+        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
+               fully load them (default: True). It is advised to deferred load the data, since in
+               that case Parcels deals with a better memory management during particle set execution.
+               deferred_load=False is however sometimes necessary for plotting the fields.
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -184,7 +183,7 @@ class Field(object):
             if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
                 variable = (variable, variable)
             assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
-            if not isinstance(filenames, Iterable) or isinstance(filenames, str):
+            if not isinstance(filenames, collections.Iterable) or isinstance(filenames, str):
                 filenames = [filenames]
 
             data_filenames = filenames['data'] if type(filenames) is dict else filenames
@@ -197,7 +196,7 @@ class Field(object):
                     raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
                 lonlat_filename = filenames['lon'][0]
                 if 'depth' in dimensions:
-                    if not isinstance(filenames['depth'], Iterable) or isinstance(filenames['depth'], str):
+                    if not isinstance(filenames['depth'], collections.Iterable) or isinstance(filenames['depth'], str):
                         filenames['depth'] = [filenames['depth']]
                     if len(filenames['depth']) != 1:
                         raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
@@ -269,7 +268,10 @@ class Field(object):
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
 
-        if grid.time.size <= 3 or full_load:
+        if 'full_load' in kwargs:  # for backward compatibility with Parcels < v2.0.0
+            deferred_load = not kwargs['full_load']
+
+        if grid.time.size <= 3 or deferred_load is False:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
@@ -780,7 +782,7 @@ class Field(object):
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
         return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
-            % (x, y, z, t, self.name, var, self.interp_method.upper())
+            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
 
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
@@ -1230,12 +1232,12 @@ class VectorField(object):
         # Casting interp_methd to int as easier to pass on in C-code
         if varW:
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.name, V.name, W.name) + \
+                   % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
                    % (varU, varV, varW, U.interp_method.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.name, V.name) + \
+                   % (x, y, z, t, U.ccode_name, V.ccode_name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
 

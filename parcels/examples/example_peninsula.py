@@ -128,7 +128,6 @@ def test_peninsula_fieldset(mode, mesh):
     assert(err_smpl <= 1.e-3).all()
 
 
-@pytest.fixture(scope='module')
 def fieldsetfile(mesh):
     """Generate fieldset files for peninsula test"""
     filename = 'peninsula'
