@@ -42,7 +42,7 @@ class Field(object):
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
     :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
-           (either 'U', 'V', 'Kh_zonal', 'Kh_Meridional' or None)
+           (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
