@@ -158,6 +158,25 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     fieldset.write(filepath)
 
 
+@pytest.mark.parametrize('dupobject', ['same', 'new'])
+def test_add_duplicate_field(dupobject):
+    data, dimensions = generate_fieldset(100, 100)
+    fieldset = FieldSet.from_data(data, dimensions)
+    field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
+    fieldset.add_field(field)
+    error_thrown = False
+    try:
+        if dupobject == 'same':
+            fieldset.add_field(field)
+        elif dupobject == 'new':
+            field2 = Field('newfld', np.ones((2, 2)), lon=np.array([0, 1]), lat=np.array([0, 2]))
+            fieldset.add_field(field2)
+    except:
+        error_thrown = True
+
+    assert error_thrown
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)

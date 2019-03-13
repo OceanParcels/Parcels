@@ -103,6 +103,8 @@ class FieldSet(object):
         :param name: Name of the :class:`parcels.field.Field` object to be added
         """
         name = field.name if name is None else name
+        if name in [fld.name for fld in self.fields]:
+            raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
         if isinstance(field, SummedField):
             setattr(self, name, field)
             for fld in field:
