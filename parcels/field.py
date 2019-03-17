@@ -1463,19 +1463,19 @@ class NetcdfFileBuffer(object):
         if self.timestamp is not None:
             return self.timestamp
 
-        try:
-            time_da = self.dataset[self.dimensions['time']]
-            if self.netcdf_engine != 'xarray' and (self.dataset['decoded'] and 'Unit' not in time_da.attrs):
-                time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
-            else:
-                if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
-                    time_da.attrs['units'] = time_da.attrs['Unit']
-                ds = xr.Dataset({self.dimensions['time']: time_da})
-                ds = xr.decode_cf(ds)
-                da = ds[self.dimensions['time']]
-                time = np.array([da]) if len(da.shape) == 0 else np.array(da)
-            if isinstance(time[0], datetime.datetime):
-                raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
-            return time
-        except:
+        if 'time' not in self.dimensions:
             return np.array([None])
+
+        time_da = self.dataset[self.dimensions['time']]
+        if self.netcdf_engine != 'xarray' and (self.dataset['decoded'] and 'Unit' not in time_da.attrs):
+            time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
+        else:
+            if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
+                time_da.attrs['units'] = time_da.attrs['Unit']
+            ds = xr.Dataset({self.dimensions['time']: time_da})
+            ds = xr.decode_cf(ds)
+            da = ds[self.dimensions['time']]
+            time = np.array([da]) if len(da.shape) == 0 else np.array(da)
+        if isinstance(time[0], datetime.datetime):
+            raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
+        return time
