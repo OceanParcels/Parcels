@@ -28,7 +28,6 @@ class Grid(object):
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
-        self.time_full = self.time  # needed for deferred_loaded Fields
         if not self.lon.dtype == np.float32:
             logger.warning_once("Casting lon data to np.float32")
             self.lon = self.lon.astype(np.float32)
@@ -39,6 +38,7 @@ class Grid(object):
             assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
+        self.time_full = self.time  # needed for deferred_loaded Fields
         self.time_origin = TimeConverter() if time_origin is None else time_origin
         assert isinstance(self.time_origin, TimeConverter), 'time_origin needs to be a TimeConverter object'
         self.mesh = mesh

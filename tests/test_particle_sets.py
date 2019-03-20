@@ -429,7 +429,7 @@ def test_variable_write_double(fieldset, mode, tmpdir):
                  output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
     ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
     lons = ncfile.variables['lon'][:]
-    assert (isinstance(lons[0,0], np.float64))
+    assert (isinstance(lons[0, 0], np.float64))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

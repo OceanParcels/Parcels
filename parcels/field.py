@@ -42,7 +42,7 @@ class Field(object):
     :param grid: :class:`parcels.grid.Grid` object containing all the lon, lat depth, time
            mesh and time_origin information. Can be constructed from any of the Grid objects
     :param fieldtype: Type of Field to be used for UnitConverter when using SummedFields
-           (either 'U', 'V', 'Kh_zonal', 'Kh_Meridional' or None)
+           (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
     :param transpose: Transpose data to required (lon, lat) layout
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
@@ -259,7 +259,8 @@ class Field(object):
                 time[0] = 0
             time_origin = TimeConverter(time[0])
             time = time_origin.reltime(time)
-            assert(np.all((time[1:]-time[:-1]) > 0))
+            assert np.all((time[1:]-time[:-1]) > 0), ('time must me strictly '
+                                                      'monotonically rising')
 
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
@@ -848,22 +849,22 @@ class Field(object):
             if len(data.shape) is 3:
                 data = np.concatenate((data[:, :, -halosize:], data,
                                        data[:, :, 0:halosize]), axis=len(data.shape)-1)
-                assert data.shape[2] == self.grid.xdim
+                assert data.shape[2] == self.grid.xdim, "Third dim must be x."
             else:
                 data = np.concatenate((data[:, :, :, -halosize:], data,
                                        data[:, :, :, 0:halosize]), axis=len(data.shape) - 1)
-                assert data.shape[3] == self.grid.xdim
+                assert data.shape[3] == self.grid.xdim, "Fourth dim must be x."
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
             if len(data.shape) is 3:
                 data = np.concatenate((data[:, -halosize:, :], data,
                                        data[:, 0:halosize, :]), axis=len(data.shape)-2)
-                assert data.shape[1] == self.grid.ydim
+                assert data.shape[1] == self.grid.ydim, "Second dim must be y."
             else:
                 data = np.concatenate((data[:, :, -halosize:, :], data,
                                        data[:, :, 0:halosize, :]), axis=len(data.shape) - 2)
-                assert data.shape[2] == self.grid.ydim
+                assert data.shape[2] == self.grid.ydim, "Third dim must be y."
             self.lat = self.grid.lat
         if dataNone:
             self.data = data
@@ -988,11 +989,15 @@ class VectorField(object):
         self.V = V
         self.W = W
         if self.U.interp_method == 'cgrid_velocity':
-            assert self.V.interp_method == 'cgrid_velocity'
-            assert self.U.grid is self.V.grid
+            assert self.V.interp_method == 'cgrid_velocity', (
+                'Interpolation methods of U and V are not the same.')
+            assert self.U.grid is self.V.grid, (
+                'Grids of U and V are not the same.')
             if W:
-                assert self.W.interp_method == 'cgrid_velocity'
-                assert self.W.grid is self.U.grid
+                assert self.W.interp_method == 'cgrid_velocity', (
+                    'Interpolation methods of U and W are not the same.')
+                assert self.W.grid is self.U.grid, (
+                    'Grids of U and W are not the same.')
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
