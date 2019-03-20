@@ -413,7 +413,8 @@ class ParticleSet(object):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass, **self.repeatkwargs)
+                                       pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
+                                       **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
