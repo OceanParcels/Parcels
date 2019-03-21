@@ -111,19 +111,24 @@ class ParticleFile(object):
             self.time.calendar = 'standard' if self.particleset.time_origin.calendar == 'np_datetime64' else self.particleset.time_origin.calendar
         self.time.axis = "T"
 
-        self.lat = self.dataset.createVariable("lat", "f4", coords, fill_value=np.nan, chunksizes=data_shape)
+        if self.particleset.lonlatdepth_dtype is np.float64:
+            lonlatdepth_precision = "f8"
+        else:
+            lonlatdepth_precision = "f4"
+
+        self.lat = self.dataset.createVariable("lat", lonlatdepth_precision, coords, fill_value=np.nan, chunksizes=data_shape)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", "f4", coords, fill_value=np.nan, chunksizes=data_shape)
+        self.lon = self.dataset.createVariable("lon", lonlatdepth_precision, coords, fill_value=np.nan, chunksizes=data_shape)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", "f4", coords, fill_value=np.nan, chunksizes=data_shape)
+        self.z = self.dataset.createVariable("z", lonlatdepth_precision, coords, fill_value=np.nan, chunksizes=data_shape)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"

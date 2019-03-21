@@ -57,7 +57,8 @@ class ParticleSet(object):
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
             depth = np.ones(len(lon)) * mindepth
         depth = convert_to_list(depth)
-        assert len(lon) == len(lat) and len(lon) == len(depth)
+        assert len(lon) == len(lat) and len(lon) == len(depth), (
+            'lon, lat, depth don''t all have the same lenghts')
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
@@ -71,7 +72,9 @@ class ParticleSet(object):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_list(kwargs[kwvar])
 
-        assert len(lon) == len(time)
+        assert len(lon) == len(time), (
+            'time and positions (lon, lat, depth) don''t have the same '
+            'lengths.')
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -111,7 +114,8 @@ class ParticleSet(object):
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
-            assert(size == len(lon) and size == len(lat))
+            assert size == len(lon) and size == len(lat), (
+                'Size of ParticleSet does not match lenght of lon and lat.')
 
             for i in range(size):
                 self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
@@ -409,7 +413,8 @@ class ParticleSet(object):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass, **self.repeatkwargs)
+                                       pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
+                                       **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
