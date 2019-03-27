@@ -114,14 +114,7 @@ class Kernel(object):
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
-            for fname in self.vector_field_args:
-                fields = fieldset.fields_TMP
-                found = False
-                for f in fields:
-                    if f.name == fname:
-                        found = True
-                        break
-                assert found == True
+            for f in self.vector_field_args.values():
                 Wname = f.W.name if f.W else 'not_defined'
                 for sF_name, sF_component in zip([f.U.name, f.V.name, Wname], ['U', 'V', 'W']):
                     if sF_name not in self.field_args:
