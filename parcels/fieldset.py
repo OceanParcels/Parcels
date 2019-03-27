@@ -107,6 +107,7 @@ class FieldSet(object):
             raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
         if isinstance(field, SummedField):
             setattr(self, name, field)
+            field.name = name
             for fld in field:
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
