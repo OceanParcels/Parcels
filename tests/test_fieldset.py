@@ -171,7 +171,7 @@ def test_add_duplicate_field(dupobject):
         elif dupobject == 'new':
             field2 = Field('newfld', np.ones((2, 2)), lon=np.array([0, 1]), lat=np.array([0, 2]))
             fieldset.add_field(field2)
-    except:
+    except RuntimeError:
         error_thrown = True
 
     assert error_thrown

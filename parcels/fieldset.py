@@ -103,7 +103,7 @@ class FieldSet(object):
         :param name: Name of the :class:`parcels.field.Field` object to be added
         """
         name = field.name if name is None else name
-        if name in [fld.name for fld in self.fields]:
+        if name in [fld.name for fld in self.fields]:  # check if Field with same name already exists when adding new Field
             raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
         if isinstance(field, SummedField):
             setattr(self, name, field)
@@ -506,7 +506,7 @@ class FieldSet(object):
         for v in self.__dict__.values():
             if type(v) in [Field, VectorField]:
                 fields.append(v)
-            elif isinstance(v, SummedField):
+            elif type(v) in [NestedField, SummedField]:
                 for v2 in v:
                     fields.append(v2)
         return fields
