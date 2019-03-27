@@ -103,7 +103,7 @@ class FieldSet(object):
         :param name: Name of the :class:`parcels.field.Field` object to be added
         """
         name = field.name if name is None else name
-        if name in [fld.name for fld in self.fields]:  # check if Field with same name already exists when adding new Field
+        if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
         if isinstance(field, SummedField):
             setattr(self, name, field)
@@ -113,7 +113,6 @@ class FieldSet(object):
         elif isinstance(field, NestedField):
             setattr(self, name, field)
             for fld in field:
-                setattr(self, fld.name, fld)
                 self.gridset.add_grid(fld)
                 fld.fieldset = self
         elif isinstance(field, list):
@@ -132,7 +131,6 @@ class FieldSet(object):
         vfield.fieldset = self
         if isinstance(vfield, NestedField):
             for f in vfield:
-                setattr(self, f.name, f)
                 f.fieldset = self
 
     def check_complete(self):
@@ -168,7 +166,7 @@ class FieldSet(object):
 
         ccode_fieldnames = []
         counter = 1
-        for fld in self.fields:
+        for fld in self.fields_TMP:
                 if fld.name not in ccode_fieldnames:
                     fld.ccode_name = fld.name
                 else:
@@ -499,7 +497,7 @@ class FieldSet(object):
         return cls(u, v, fields=fields)
 
     @property
-    def fields(self):
+    def fields_TMP(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet"""
         fields = []
@@ -507,6 +505,7 @@ class FieldSet(object):
             if type(v) in [Field, VectorField]:
                 fields.append(v)
             elif type(v) in [NestedField, SummedField]:
+                fields.append(v)
                 for v2 in v:
                     fields.append(v2)
         return fields
@@ -548,7 +547,7 @@ class FieldSet(object):
         if hasattr(self, 'V'):
             self.V.write(filename, varname='vomecrty')
 
-        for v in self.fields:
+        for v in self.fields_TMP:
             if (v.name is not 'U') and (v.name is not 'V'):
                 v.write(filename)
 
@@ -564,7 +563,7 @@ class FieldSet(object):
         for gnew in fieldset_new.gridset.grids:
             gnew.advanced = False
 
-        for fnew in fieldset_new.fields:
+        for fnew in fieldset_new.fields_TMP:
             if isinstance(fnew, VectorField):
                 continue
             f = getattr(self, fnew.name)
@@ -584,16 +583,16 @@ class FieldSet(object):
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
-        for f in self.fields:
-            if isinstance(f, VectorField) or not f.grid.defer_load:
+        for f in self.fields_TMP:
+            if type(f) in  [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         # load in new data
-        for f in self.fields:
-            if isinstance(f, VectorField) or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+        for f in self.fields_TMP:
+            if type(f) in  [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data

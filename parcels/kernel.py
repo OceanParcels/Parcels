@@ -115,14 +115,18 @@ class Kernel(object):
             self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
             for fname in self.vector_field_args:
-                f = getattr(fieldset, fname)
+                fields = fieldset.fields_TMP
+                found = False
+                for f in fields:
+                    if f.name == fname:
+                        found = True
+                        break
+                assert found == True
                 Wname = f.W.name if f.W else 'not_defined'
-                for sF in [f.U.name, f.V.name, Wname]:
-                    if sF not in self.field_args:
-                        try:
-                            self.field_args[sF] = getattr(fieldset, sF)
-                        except:
-                            continue
+                for sF_name, sF_component in zip([f.U.name, f.V.name, Wname], ['U', 'V', 'W']):
+                    if sF_name not in self.field_args:
+                        if sF_name != 'not_defined':
+                            self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
