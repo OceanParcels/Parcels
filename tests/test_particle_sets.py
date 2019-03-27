@@ -418,6 +418,21 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_variable_write_double(fieldset, mode, tmpdir):
+    filepath = tmpdir.join("pfile_variable_write_double")
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    pset.execute(pset.Kernel(Update_lon), endtime=1, dt=0.1,
+                 output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
+    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    lons = ncfile.variables['lon'][:]
+    assert (isinstance(lons[0, 0], np.float64))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     filepath = tmpdir.join("pfile_on_delete_written_variables")
 
