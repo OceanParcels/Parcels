@@ -585,7 +585,7 @@ class FieldSet(object):
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
         for f in self.fields_TMP:
-            if type(f) in  [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load:
+            if type(f) in [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
@@ -593,7 +593,7 @@ class FieldSet(object):
 
         # load in new data
         for f in self.fields_TMP:
-            if type(f) in  [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
