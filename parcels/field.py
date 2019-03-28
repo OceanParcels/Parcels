@@ -1243,12 +1243,17 @@ class SummedField(list):
     def __init__(self, name, U, V=None, W=None):
         if V is None:
             for Ui in U:
+                assert type(Ui) in [Field, VectorField], 'Components of a SummedField must be Field or VectorField'
                 self.append(Ui)
         elif W is None:
             for (i, Ui, Vi) in zip(range(len(U)), U, V):
+                assert isinstance(Ui, Field) and isinstance(Vi, Field), \
+                    'U, and V components of a SummedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Ui, Vi))
         else:
             for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
+                assert isinstance(Ui, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
+                    'U, V and W components of a SummedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
         self.name = name
 
@@ -1294,12 +1299,17 @@ class NestedField(list):
     def __init__(self, name, U, V=None, W=None):
         if V is None:
             for Ui in U:
+                assert type(Ui) in [Field, VectorField], 'Components of a NestedField must be Field or VectorField'
                 self.append(Ui)
         elif W is None:
             for (i, Ui, Vi) in zip(range(len(U)), U, V):
+                assert isinstance(Ui, Field) and isinstance(Vi, Field), \
+                    'U, and V components of a NestedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Ui, Vi))
         else:
             for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
+                assert isinstance(Ui, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
+                    'U, V and W components of a NestedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
         self.name = name
 
