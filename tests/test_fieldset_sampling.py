@@ -429,7 +429,6 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
     fieldsetS = FieldSet(U1+U2, V1+V2)
 
     conv = 1852*60 if mesh == 'spherical' else 1.
-    assert np.allclose(fieldsetS.U.eval(0, 0, 0, 0)*conv, 0.3)
     assert np.allclose(fieldsetS.U[0, 0, 0, 0]*conv, 0.3)
 
     P1 = Field('P', 30*np.ones((zdim*gf, ydim*gf, xdim*gf), dtype=np.float32), grid=U1.grid)
