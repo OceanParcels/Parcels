@@ -451,6 +451,7 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
     assert np.isclose(pset[0].p, 60)
     assert np.isclose(pset[0].lon*conv, 0.6, atol=1e-3)
     assert np.isclose(pset[0].lat, 0.9)
+    assert np.allclose(fieldsetS.UV[0][0, 0, 0, 0], [.2/conv, 0])
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
@@ -501,3 +502,4 @@ def test_nestedfields(mode, k_sample_p):
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1, recovery={ErrorCode.ErrorOutOfBounds: Recover})
     assert np.isclose(pset[0].lat, -1)
     assert np.isclose(pset[0].p, 999)
+    assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [.1, .2])
