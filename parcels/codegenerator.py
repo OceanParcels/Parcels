@@ -467,7 +467,7 @@ class KernelGenerator(ast.NodeVisitor):
                     pointer_args = True
                     continue
                 if isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
-                    a.ccode = a.obj.name
+                    a.ccode = a.obj.ccode_name
                 elif isinstance(a, ParticleNode):
                     continue
                 elif pointer_args:
@@ -752,7 +752,7 @@ class KernelGenerator(ast.NodeVisitor):
         else:
             Wlist = [None] * len(node.field.obj.U)
         for U, V, W, var, var2, var3 in zip(node.field.obj.U, node.field.obj.V, Wlist, node.var, node.var2, node.var3):
-            vfld = VectorField(node.field.obj.name, U, V, W)
+            vfld = VectorField(node.field.obj.ccode_name, U, V, W)
             ccode_eval = vfld.ccode_eval(var, var2, var3, U, V, W, *node.args.ccode)
             if U.interp_method != 'cgrid_velocity':
                 ccode_conv1 = U.ccode_convert(*node.args.ccode)

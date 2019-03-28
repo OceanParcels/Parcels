@@ -505,7 +505,7 @@ class FieldSet(object):
         for v in self.__dict__.values():
             if type(v) in [Field, VectorField]:
                 fields.append(v)
-            elif type(v) in [NestedField, SummedField]:
+            elif type(v) in [NestedField, SummedField, SummedVectorField]:
                 fields.append(v)
                 for v2 in v:
                     fields.append(v2)
