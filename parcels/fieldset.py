@@ -1,4 +1,4 @@
-from parcels.field import Field, VectorField, SummedField, SummedVectorField, NestedField
+from parcels.field import Field, VectorField, SummedField, NestedField
 from parcels.gridset import GridSet
 from parcels.grid import Grid
 from parcels.tools.loggers import logger
@@ -152,14 +152,14 @@ class FieldSet(object):
             g.time_origin = self.time_origin
         if not hasattr(self, 'UV'):
             if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedVectorField('UV', self.U, self.V))
+                self.add_vector_field(SummedField('UV', self.U, self.V))
             elif isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField('UV', self.U, self.V))
             else:
                 self.add_vector_field(VectorField('UV', self.U, self.V))
         if not hasattr(self, 'UVW') and hasattr(self, 'W'):
             if isinstance(self.U, SummedField):
-                self.add_vector_field(SummedVectorField('UVW', self.U, self.V, self.W))
+                self.add_vector_field(SummedField('UVW', self.U, self.V, self.W))
             elif isinstance(self.U, NestedField):
                 self.add_vector_field(NestedField('UVW', self.U, self.V, self.W))
             else:
@@ -167,7 +167,7 @@ class FieldSet(object):
 
         ccode_fieldnames = []
         counter = 1
-        for fld in self.fields_TMP:
+        for fld in self.get_fields():
                 if fld.name not in ccode_fieldnames:
                     fld.ccode_name = fld.name
                 else:
@@ -497,18 +497,20 @@ class FieldSet(object):
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
 
-    @property
-    def fields_TMP(self):
+    def get_fields(self):
         """Returns a list of all the :class:`parcels.field.Field` and :class:`parcels.field.VectorField`
         objects associated with this FieldSet"""
         fields = []
         for v in self.__dict__.values():
             if type(v) in [Field, VectorField]:
-                fields.append(v)
-            elif type(v) in [NestedField, SummedField, SummedVectorField]:
-                fields.append(v)
+                if not v in fields:
+                    fields.append(v)
+            elif type(v) in [NestedField, SummedField]:
+                if not v in fields:
+                    fields.append(v)
                 for v2 in v:
-                    fields.append(v2)
+                    if not v2 in fields:
+                        fields.append(v2)
         return fields
 
     def add_constant(self, name, value):
@@ -548,7 +550,7 @@ class FieldSet(object):
         if hasattr(self, 'V'):
             self.V.write(filename, varname='vomecrty')
 
-        for v in self.fields_TMP:
+        for v in self.get_fields():
             if (v.name is not 'U') and (v.name is not 'V'):
                 v.write(filename)
 
@@ -564,7 +566,7 @@ class FieldSet(object):
         for gnew in fieldset_new.gridset.grids:
             gnew.advanced = False
 
-        for fnew in fieldset_new.fields_TMP:
+        for fnew in fieldset_new.get_fields():
             if isinstance(fnew, VectorField):
                 continue
             f = getattr(self, fnew.name)
@@ -584,16 +586,16 @@ class FieldSet(object):
 
         for g in self.gridset.grids:
             g.update_status = 'not_updated'
-        for f in self.fields_TMP:
-            if type(f) in [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load:
+        for f in self.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load:
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         # load in new data
-        for f in self.fields_TMP:
-            if type(f) in [VectorField, NestedField, SummedField, SummedVectorField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+        for f in self.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
