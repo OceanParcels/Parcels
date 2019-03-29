@@ -503,13 +503,13 @@ class FieldSet(object):
         fields = []
         for v in self.__dict__.values():
             if type(v) in [Field, VectorField]:
-                if not v in fields:
+                if v not in fields:
                     fields.append(v)
             elif type(v) in [NestedField, SummedField]:
-                if not v in fields:
+                if v not in fields:
                     fields.append(v)
                 for v2 in v:
-                    if not v2 in fields:
+                    if v2 not in fields:
                         fields.append(v2)
         return fields
 

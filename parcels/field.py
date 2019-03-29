@@ -970,6 +970,7 @@ class VectorField(object):
                     'Interpolation methods of U and W are not the same.')
                 assert self.W.grid is self.U.grid, (
                     'Grids of U and W are not the same.')
+        self.vector_type = '3D' if W else '2D'
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
@@ -1242,8 +1243,10 @@ class SummedField(list):
 
     def __init__(self, name, U, V=None, W=None):
         if V is None:
+            if isinstance(U[0], VectorField):
+                vector_type = U[0].vector_type
             for Ui in U:
-                assert type(Ui) in [Field, VectorField], 'Components of a SummedField must be Field or VectorField'
+                assert isinstance(Ui, Field) or (isinstance(Ui, VectorField) and Ui.vector_type == vector_type), 'Components of a SummedField must be Field or VectorField'
                 self.append(Ui)
         elif W is None:
             for (i, Ui, Vi) in zip(range(len(U)), U, V):
@@ -1295,8 +1298,10 @@ class NestedField(list):
 
     def __init__(self, name, U, V=None, W=None):
         if V is None:
+            if isinstance(U[0], VectorField):
+                vector_type = U[0].vector_type
             for Ui in U:
-                assert type(Ui) in [Field, VectorField], 'Components of a NestedField must be Field or VectorField'
+                assert isinstance(Ui, Field) or (isinstance(Ui, VectorField) and Ui.vector_type == vector_type), 'Components of a NestedField must be Field or VectorField'
                 self.append(Ui)
         elif W is None:
             for (i, Ui, Vi) in zip(range(len(U)), U, V):
