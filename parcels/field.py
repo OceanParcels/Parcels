@@ -13,7 +13,7 @@ import math
 from .grid import Grid, CGrid, GridCode
 
 
-__all__ = ['Field', 'VectorField', 'SummedField', 'SummedVectorField', 'NestedField']
+__all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 
 
 class Field(object):
@@ -939,39 +939,11 @@ class Field(object):
 
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
-            return SummedField([self, field])
+            return SummedField('_SummedField', [self, field])
         elif isinstance(field, SummedField):
+            assert isinstance(self, type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
             field.insert(0, self)
             return field
-
-
-class SummedField(list):
-    """Class SummedField is a list of Fields over which Field interpolation
-    is summed. This can e.g. be used when combining multiple flow fields,
-    where the total flow is the sum of all the individual flows.
-    Note that the individual Fields can be on different Grids.
-    Also note that, since SummedFields are lists, the individual Fields can
-    still be queried through their list index (e.g. SummedField[1]).
-    """
-    def eval(self, time, z, y, x, applyConversion=True):
-        tmp = 0
-        for fld in self:
-            tmp += fld.eval(time, z, y, x, applyConversion)
-        return tmp
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list.__getitem__(self, key)
-        else:
-            return self.eval(*key)
-
-    def __add__(self, field):
-        if isinstance(field, Field):
-            self.append(field)
-        elif isinstance(field, SummedField):
-            for fld in field:
-                self.append(fld)
-        return self
 
 
 class VectorField(object):
@@ -988,12 +960,13 @@ class VectorField(object):
         self.U = U
         self.V = V
         self.W = W
+        self.vector_type = '3D' if W else '2D'
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
             assert self.U.grid is self.V.grid, (
                 'Grids of U and V are not the same.')
-            if W:
+            if self.vector_type == '3D':
                 assert self.W.interp_method == 'cgrid_velocity', (
                     'Interpolation methods of U and W are not the same.')
                 assert self.W.grid is self.U.grid, (
@@ -1195,7 +1168,7 @@ class VectorField(object):
             v = self.V.eval(time, z, y, x, False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
-            if self.W is not None:
+            if self.vector_type == '3D':
                 w = self.W.eval(time, z, y, x, False)
                 w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
@@ -1208,7 +1181,7 @@ class VectorField(object):
             if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
-                if self.W:
+                if self.vector_type == '3D':
                     (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time)
                     (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
@@ -1217,7 +1190,7 @@ class VectorField(object):
                     (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
-                if self.W:
+                if self.vector_type == '3D':
                     return (u, v, w)
                 else:
                     return (u, v)
@@ -1225,7 +1198,7 @@ class VectorField(object):
                 # Skip temporal interpolation if time is outside
                 # of the defined time range or if we have hit an
                 # excat value in the time array.
-                if self.W:
+                if self.vector_type == '3D':
                     return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti])
                 else:
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti])
@@ -1235,7 +1208,7 @@ class VectorField(object):
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        if varW:
+        if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
@@ -1253,47 +1226,60 @@ class DeferredArray():
         raise RuntimeError('Field is in deferred_load mode, so can''t be accessed. Use .computeTimeChunk() method to force loading of  data')
 
 
-class SummedVectorField(list):
-    """Class SummedVectorField stores 2 or 3 SummedFields which defines together a vector field.
-    This enables to interpolate them as one single vector SummedField in the kernels.
+class SummedField(list):
+    """Class SummedField is a list of Fields over which Field interpolation
+    is summed. This can e.g. be used when combining multiple flow fields,
+    where the total flow is the sum of all the individual flows.
+    Note that the individual Fields can be on different Grids.
+    Also note that, since SummedFields are lists, the individual Fields can
+    still be queried through their list index (e.g. SummedField[1]).
+    SummedField is composed of either Fields or VectorFields.
 
-    :param name: Name of the vector field
-    :param U: SummedField defining the zonal component
-    :param V: SummedField defining the meridional component
-    :param W: SummedField defining the vertical component (default: None)
+    :param name: Name of the SummedField
+    :param F: List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
+    :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
+    :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
-    def __init__(self, name, U, V, W=None):
-        self.name = name
-        self.U = U
-        self.V = V
-        self.W = W
-
-    def eval(self, time, z, y, x):
-        zonal = meridional = vertical = 0
-        if self.W is not None:
-            for (U, V, W) in zip(self.U, self.V, self.W):
-                vfld = VectorField(self.name, U, V, W)
-                vfld.fieldset = self.fieldset
-                (tmp1, tmp2, tmp3) = vfld.eval(time, z, y, x)
-                zonal += tmp1
-                meridional += tmp2
-                vertical += tmp3
-            return (zonal, meridional, vertical)
+    def __init__(self, name, F, V=None, W=None):
+        if V is None:
+            if isinstance(F[0], VectorField):
+                vector_type = F[0].vector_type
+            for Fi in F:
+                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), 'Components of a SummedField must be Field or VectorField'
+                self.append(Fi)
+        elif W is None:
+            for (i, Fi, Vi) in zip(range(len(F)), F, V):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field), \
+                    'F, and V components of a SummedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi))
         else:
-            for (U, V) in zip(self.U, self.V):
-                vfld = VectorField(self.name, U, V)
-                vfld.fieldset = self.fieldset
-                (tmp1, tmp2) = vfld.eval(time, z, y, x)
-                zonal += tmp1
-                meridional += tmp2
-            return (zonal, meridional)
+            for (i, Fi, Vi, Wi) in zip(range(len(F)), F, V, W):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
+                    'F, V and W components of a SummedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
+        self.name = name
 
     def __getitem__(self, key):
         if isinstance(key, int):
             return list.__getitem__(self, key)
         else:
-            return self.eval(*key)
+            vals = []
+            val = None
+            for iField in range(len(self)):
+                    val = list.__getitem__(self, iField).eval(*key)
+                    vals.append(val)
+            return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
+
+    def __add__(self, field):
+        if isinstance(field, Field):
+            assert isinstance(self[0], type(field)), 'Fields in a SummedField should be either all scalars or all vectors'
+            self.append(field)
+        elif isinstance(field, SummedField):
+            assert isinstance(self[0], type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
+            for fld in field:
+                self.append(fld)
+        return self
 
 
 class NestedField(list):
@@ -1304,22 +1290,29 @@ class NestedField(list):
     NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
     NestedField is composed of either Fields or VectorFields.
 
-    :param name: Name of the Nested field
-    :param U: List of fields (order matters). U can be a scalar Field, a VectorField, or the zonal component of the VectorField
-    :param V: List of fields defining the meridional component (default: None)
-    :param W: List of fields defining the vertical component (default: None)
+    :param name: Name of the NestedField
+    :param F: List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
+    :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
+    :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
-    def __init__(self, name, U, V=None, W=None):
+    def __init__(self, name, F, V=None, W=None):
         if V is None:
-            for Ui in U:
-                self.append(Ui)
+            if isinstance(F[0], VectorField):
+                vector_type = F[0].vector_type
+            for Fi in F:
+                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), 'Components of a NestedField must be Field or VectorField'
+                self.append(Fi)
         elif W is None:
-            for (i, Ui, Vi) in zip(range(len(U)), U, V):
-                self.append(VectorField(name+'_%d' % i, Ui, Vi))
+            for (i, Fi, Vi) in zip(range(len(F)), F, V):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field), \
+                    'F, and V components of a NestedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi))
         else:
-            for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
-                self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
+            for (i, Fi, Vi, Wi) in zip(range(len(F)), F, V, W):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
+                    'F, V and W components of a NestedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
         self.name = name
 
     def __getitem__(self, key):
