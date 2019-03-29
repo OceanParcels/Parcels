@@ -1236,28 +1236,28 @@ class SummedField(list):
     SummedField is composed of either Fields or VectorFields.
 
     :param name: Name of the SummedField
-    :param U: List of fields. U can be a scalar Field, a VectorField, or the zonal component of the VectorField
-    :param V: List of fields defining the meridional component (default: None)
-    :param W: List of fields defining the vertical component (default: None)
+    :param F: List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
+    :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
+    :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
-    def __init__(self, name, U, V=None, W=None):
+    def __init__(self, name, F, V=None, W=None):
         if V is None:
-            if isinstance(U[0], VectorField):
-                vector_type = U[0].vector_type
-            for Ui in U:
-                assert isinstance(Ui, Field) or (isinstance(Ui, VectorField) and Ui.vector_type == vector_type), 'Components of a SummedField must be Field or VectorField'
-                self.append(Ui)
+            if isinstance(F[0], VectorField):
+                vector_type = F[0].vector_type
+            for Fi in F:
+                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), 'Components of a SummedField must be Field or VectorField'
+                self.append(Fi)
         elif W is None:
-            for (i, Ui, Vi) in zip(range(len(U)), U, V):
-                assert isinstance(Ui, Field) and isinstance(Vi, Field), \
-                    'U, and V components of a SummedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Ui, Vi))
+            for (i, Fi, Vi) in zip(range(len(F)), F, V):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field), \
+                    'F, and V components of a SummedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi))
         else:
-            for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
-                assert isinstance(Ui, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
-                    'U, V and W components of a SummedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
+            for (i, Fi, Vi, Wi) in zip(range(len(F)), F, V, W):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
+                    'F, V and W components of a SummedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
         self.name = name
 
     def __getitem__(self, key):
@@ -1290,29 +1290,29 @@ class NestedField(list):
     NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
     NestedField is composed of either Fields or VectorFields.
 
-    :param name: Name of the Nested field
+    :param name: Name of the NestedField
     :param F: List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
     :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
     :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
-    def __init__(self, name, U, V=None, W=None):
+    def __init__(self, name, F, V=None, W=None):
         if V is None:
-            if isinstance(U[0], VectorField):
-                vector_type = U[0].vector_type
-            for Ui in U:
-                assert isinstance(Ui, Field) or (isinstance(Ui, VectorField) and Ui.vector_type == vector_type), 'Components of a NestedField must be Field or VectorField'
-                self.append(Ui)
+            if isinstance(F[0], VectorField):
+                vector_type = F[0].vector_type
+            for Fi in F:
+                assert isinstance(Fi, Field) or (isinstance(Fi, VectorField) and Fi.vector_type == vector_type), 'Components of a NestedField must be Field or VectorField'
+                self.append(Fi)
         elif W is None:
-            for (i, Ui, Vi) in zip(range(len(U)), U, V):
-                assert isinstance(Ui, Field) and isinstance(Vi, Field), \
-                    'U, and V components of a NestedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Ui, Vi))
+            for (i, Fi, Vi) in zip(range(len(F)), F, V):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field), \
+                    'F, and V components of a NestedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi))
         else:
-            for (i, Ui, Vi, Wi) in zip(range(len(U)), U, V, W):
-                assert isinstance(Ui, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
-                    'U, V and W components of a NestedField must be Field'
-                self.append(VectorField(name+'_%d' % i, Ui, Vi, Wi))
+            for (i, Fi, Vi, Wi) in zip(range(len(F)), F, V, W):
+                assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
+                    'F, V and W components of a NestedField must be Field'
+                self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
         self.name = name
 
     def __getitem__(self, key):
