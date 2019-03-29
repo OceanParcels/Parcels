@@ -254,7 +254,7 @@ static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, t
 
   *xsi = *eta = -1;
   int maxIterSearch = 1e6, it = 0;
-  double tol = 1e-12;
+  double tol = 1e-10;
   while ( (*xsi < -tol) || (*xsi > 1+tol) || (*eta < -tol) || (*eta > 1+tol) ){
     double xgrid_loc[4] = {xgrid[*yi][*xi], xgrid[*yi][*xi+1], xgrid[*yi+1][*xi+1], xgrid[*yi+1][*xi]};
     if (sphere_mesh){ //we are on the sphere
