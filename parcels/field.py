@@ -941,7 +941,7 @@ class Field(object):
         if isinstance(self, Field) and isinstance(field, Field):
             return SummedField('_SummedField', [self, field])
         elif isinstance(field, SummedField):
-            assert isinstance(self, type(field[0])), 'All fields in a SummedField should either all scalars or  all vectors'
+            assert isinstance(self, type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
             field.insert(0, self)
             return field
 
@@ -1234,7 +1234,7 @@ class SummedField(list):
     still be queried through their list index (e.g. SummedField[1]).
     SummedField is composed of either Fields or VectorFields.
 
-    :param name: Name of the Summed field
+    :param name: Name of the SummedField
     :param U: List of fields. U can be a scalar Field, a VectorField, or the zonal component of the VectorField
     :param V: List of fields defining the meridional component (default: None)
     :param W: List of fields defining the vertical component (default: None)
@@ -1266,17 +1266,14 @@ class SummedField(list):
             for iField in range(len(self)):
                     val = list.__getitem__(self, iField).eval(*key)
                     vals.append(val)
-            if isinstance(val, tuple):
-                return tuple(np.sum(vals, 0))
-            else:
-                return np.sum(vals)
+            return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
 
     def __add__(self, field):
         if isinstance(field, Field):
-            assert isinstance(self[0], type(field)), 'All fields in a SummedField should either all scalars or all vectors'
+            assert isinstance(self[0], type(field)), 'Fields in a SummedField should be either all scalars or all vectors'
             self.append(field)
         elif isinstance(field, SummedField):
-            assert isinstance(self[0], type(field[0])), 'All fields in a SummedField should either all scalars or  all vectors'
+            assert isinstance(self[0], type(field[0])), 'Fields in a SummedField should be either all scalars or all vectors'
             for fld in field:
                 self.append(fld)
         return self
@@ -1291,9 +1288,9 @@ class NestedField(list):
     NestedField is composed of either Fields or VectorFields.
 
     :param name: Name of the Nested field
-    :param U: List of fields (order matters). U can be a scalar Field, a VectorField, or the zonal component of the VectorField
-    :param V: List of fields defining the meridional component (default: None)
-    :param W: List of fields defining the vertical component (default: None)
+    :param F: List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
+    :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
+    :param W: List of fields defining the vertical component of a VectorField, if F and V are the zonal and meridional components (default: None)
     """
 
     def __init__(self, name, U, V=None, W=None):
