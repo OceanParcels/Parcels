@@ -260,7 +260,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         elif isinstance(node.value, SummedVectorFieldNode):
             tmp = [self.get_tmp() for _ in range(len(node.value.obj))]
             tmp2 = [self.get_tmp() for _ in range(len(node.value.obj))]
-            tmp3 = [self.get_tmp() if list.__getitem__(node.value.obj, 0).W else None for _ in range(len(node.value.obj))]
+            tmp3 = [self.get_tmp() if list.__getitem__(node.value.obj, 0).vector_type == '3D' else None for _ in range(len(node.value.obj))]
             # Insert placeholder node for field eval ...
             self.stmt_stack += [SummedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
             # .. and return the name of the temporary that will be populated
@@ -277,7 +277,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         elif isinstance(node.value, VectorFieldNode):
             tmp = self.get_tmp()
             tmp2 = self.get_tmp()
-            tmp3 = self.get_tmp() if node.value.obj.W else None
+            tmp3 = self.get_tmp() if node.value.obj.vector_type == '3D' else None
             # Insert placeholder node for field eval ...
             self.stmt_stack += [VectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
             # .. and return the name of the temporary that will be populated
@@ -292,7 +292,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         elif isinstance(node.value, NestedVectorFieldNode):
             tmp = self.get_tmp()
             tmp2 = self.get_tmp()
-            tmp3 = self.get_tmp() if list.__getitem__(node.value.obj, 0).W else None
+            tmp3 = self.get_tmp() if list.__getitem__(node.value.obj, 0).vector_type == '3D' else None
             self.stmt_stack += [NestedVectorFieldEvalNode(node.value, node.slice, tmp, tmp2, tmp3)]
             if tmp3:
                 return ast.Tuple([ast.Name(id=tmp), ast.Name(id=tmp2), ast.Name(id=tmp3)], ast.Load())
@@ -721,7 +721,7 @@ class KernelGenerator(ast.NodeVisitor):
                           c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
         else:
             statements = []
-        if node.var3:
+        if node.field.obj.vector_type == '3D':
             ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
@@ -754,7 +754,7 @@ class KernelGenerator(ast.NodeVisitor):
                               c.Statement("%s *= %s" % (var2, ccode_conv2))]
             else:
                 statements = []
-            if var3:
+            if fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
@@ -790,7 +790,7 @@ class KernelGenerator(ast.NodeVisitor):
                               c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
             else:
                 statements = []
-            if node.var3:
+            if fld.vector_type == '3D':
                 ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
                 statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval),

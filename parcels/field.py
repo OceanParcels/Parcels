@@ -960,17 +960,17 @@ class VectorField(object):
         self.U = U
         self.V = V
         self.W = W
+        self.vector_type = '3D' if W else '2D'
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
             assert self.U.grid is self.V.grid, (
                 'Grids of U and V are not the same.')
-            if W:
+            if self.vector_type == '3D':
                 assert self.W.interp_method == 'cgrid_velocity', (
                     'Interpolation methods of U and W are not the same.')
                 assert self.W.grid is self.U.grid, (
                     'Grids of U and W are not the same.')
-        self.vector_type = '3D' if W else '2D'
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
@@ -1168,7 +1168,7 @@ class VectorField(object):
             v = self.V.eval(time, z, y, x, False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
-            if self.W is not None:
+            if self.vector_type == '3D':
                 w = self.W.eval(time, z, y, x, False)
                 w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
@@ -1181,7 +1181,7 @@ class VectorField(object):
             if ti < grid.tdim-1 and time > grid.time[ti]:
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
-                if self.W:
+                if self.vector_type == '3D':
                     (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time)
                     (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
@@ -1190,7 +1190,7 @@ class VectorField(object):
                     (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
-                if self.W:
+                if self.vector_type == '3D':
                     return (u, v, w)
                 else:
                     return (u, v)
@@ -1198,7 +1198,7 @@ class VectorField(object):
                 # Skip temporal interpolation if time is outside
                 # of the defined time range or if we have hit an
                 # excat value in the time array.
-                if self.W:
+                if self.vector_type == '3D':
                     return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti])
                 else:
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti])
@@ -1208,7 +1208,7 @@ class VectorField(object):
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        if varW:
+        if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
                    "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
