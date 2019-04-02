@@ -277,7 +277,7 @@ class Field(object):
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
+                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, interp_method=kwargs.get('interp_method')['U']) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine == 'xarray':
@@ -288,10 +288,13 @@ class Field(object):
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     elif len(filebuffer.data.shape) == 3:
-                        if len(filebuffer.indices['depth']) > 1:
+                        if ((len(filebuffer.indices['depth']) > 1) and (filebuffer.interp_method == 'bgrid_velocity')):
+                            data[ti:ti+len(tslice), :-1, :, :] = filebuffer.data
+                            data[ti:ti+len(tslice), -1, :, :] = np.zeros((data.shape[0],data.shape[2],data.shape[3]))                            
+                        elif len(filebuffer.indices['depth']) > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                         else:
-                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
+                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data                        
                     else:
                         data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                 ti += len(tslice)
@@ -677,7 +680,23 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method == 'cgrid_tracer':
+        elif self.interp_method in ('bgrid_velocity', 'bgrid_w_velocity'):
+            if(self.interp_method == 'bgrid_velocity'):
+                zeta = 0.;
+            else:
+                eta = 1.; xsi = 1.;
+            data = self.data[ti, zi, :, :]
+            f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
+                xsi*(1-eta) * data[yi, xi+1] + \
+                xsi*eta * data[yi+1, xi+1] + \
+                (1-xsi)*eta * data[yi+1, xi]
+            data = self.data[ti, zi+1, :, :]
+            f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
+                xsi*(1-eta) * data[yi, xi+1] + \
+                xsi*eta * data[yi+1, xi+1] + \
+                (1-xsi)*eta * data[yi+1, xi]
+            return (1-zeta) * f0 + zeta * f1
+        elif self.interp_method in ('cgrid_tracer','bgrid_tracer'):
             return self.data[ti, zi, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
@@ -931,11 +950,17 @@ class Field(object):
                 data[tindex, 0, :, :] = filebuffer.data
             elif len(filebuffer.data.shape) == 3:
                 if g.zdim > 1:
-                    data[tindex, :, :, :] = filebuffer.data
+                    if self.interp_method in ('bgrid_velocity', 'bgrid_w_velocity'):
+                        data[tindex, :-1, :, :] = filebuffer.data
+                    else:
+                        data[tindex, :, :, :] = filebuffer.data
                 else:
                     data[tindex, 0, :, :] = filebuffer.data
             else:
-                data[tindex, :, :, :] = filebuffer.data
+                if self.interp_method in ('bgrid_velocity', 'bgrid_w_velocity'):
+                    data[tindex, :-1, :, :] = filebuffer.data    
+                else:
+                    data[tindex, :, :, :] = filebuffer.data
 
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
@@ -1334,7 +1359,7 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
 
-    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None):
+    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None, interp_method = 'linear'):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1342,6 +1367,7 @@ class NetcdfFileBuffer(object):
         self.netcdf_engine = netcdf_engine
         self.timestamp = timestamp
         self.ti = None
+        self.interp_method = interp_method        
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1440,10 +1466,12 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if len(self.indices['depth']) > 1:
-                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
+            if ((len(self.indices['depth']) > 1) and self.interp_method=='bgrid_velocity'):
+                data = data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
+            elif(len(self.indices['depth']) > 1):
+                data = data[self.indices['depth'][:], self.indices['lat'], self.indices['lon']]                
             else:
-                data = data[ti, self.indices['lat'], self.indices['lon']]
+                data = data[ti, self.indices['lat'], self.indices['lon']]            
         else:
             data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
