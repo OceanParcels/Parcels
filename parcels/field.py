@@ -69,6 +69,8 @@ class Field(object):
         else:
             self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
         self.igrid = -1
+        if self.grid.gtype in (GridCode.CurvilinearSGrid, GridCode.RectilinearSGrid):
+            logger.warning_once('General s levels are not supported in B grid. Rectilinear and curvilinear s levels can still be used to deal with shaved cells, the levels being still horizontal.')
         # self.lon, self.lat, self.depth and self.time are not used anymore in parcels.
         # self.grid should be used instead.
         # Those variables are still defined for backwards compatibility with users codes.
