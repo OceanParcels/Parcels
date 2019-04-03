@@ -433,6 +433,9 @@ class Field(object):
 
     def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
+        if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+            xsi = 1
+            eta = 1
         if time < grid.time[ti]:
             ti -= 1
         if grid.z4d:
