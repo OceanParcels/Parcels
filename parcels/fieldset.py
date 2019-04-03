@@ -410,8 +410,8 @@ class FieldSet(object):
 
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                  allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='bgrid_tracer', **kwargs):
+                 allow_time_extrapolation=None, time_periodic=False,
+                 tracer_interp_method='bgrid_tracer', **kwargs):
         """Initialises FieldSet object from NetCDF files of POP fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -434,13 +434,13 @@ class FieldSet(object):
                |                |
                |                |
                U10,V10 _____U11,V11
-               To interpolate U, V velocities on the C-grid, Parcels bilinear 
+               To interpolate U, V velocities on the C-grid, Parcels bilinear
                interpolates the values on the corners.
                In 3D, the depth is the one corresponding to W nodes.
                W is interpolated linearly between the upper and lower W values of
                the grid cell.
                The interpolated value of the tracer is given by the tracer value of the grid cell,
-               similar to the cgrid.               
+               similar to the cgrid.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -472,7 +472,7 @@ class FieldSet(object):
         if hasattr(fieldset, 'W'):
             fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
         return fieldset
-        
+
     @classmethod
     def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
@@ -499,7 +499,7 @@ class FieldSet(object):
                |                |
                |                |
                U10,V10 _____U11,V11
-               To interpolate U, V velocities on the C-grid, Parcels bilinear 
+               To interpolate U, V velocities on the C-grid, Parcels bilinear
                interpolates the values on the corners.
                In 3D, the depth is the one corresponding to W nodes.
                W is interpolated linearly between the upper and lower W values of
@@ -525,8 +525,7 @@ class FieldSet(object):
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
 
         """
-        
-        
+
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise RuntimeError("On a bgrid discretisation like POP, U and V should have the same dimensions")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
@@ -544,7 +543,7 @@ class FieldSet(object):
             kwargs['creation_log'] = 'from_b_grid_dataset'
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)        
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
