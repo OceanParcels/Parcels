@@ -431,7 +431,7 @@ class FieldSet(object):
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
                U00,V00 _____U01,V01
                |                |
-               |                |
+               |     W00,T00    |
                |                |
                U10,V10 _____U11,V11
                To interpolate U, V velocities on the C-grid, Parcels bilinear
@@ -496,7 +496,7 @@ class FieldSet(object):
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
                U00,V00 _____U01,V01
                |                |
-               |                |
+               |     W00,T00    |
                |                |
                U10,V10 _____U11,V11
                To interpolate U, V velocities on the C-grid, Parcels bilinear
