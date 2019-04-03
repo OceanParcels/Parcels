@@ -74,12 +74,13 @@ def test_popgrid(mode, vert_mode, location):
     pset = ParticleSet.from_list(field_set, MyParticle, lon=location[2], lat=location[1], depth=location[0])
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
     
-#    print abs(pset[0].zonal - 0.015) 
-#    print abs(pset[0].meridional - 0.01)
-#    print abs(pset[0].vert)# + 0.01) 
-#    print abs(pset[0].tracer -1) 
+    #    print abs(pset[0].zonal - 0.015) 
+    #    print abs(pset[0].meridional - 0.01)
+    #    print abs(pset[0].vert)# + 0.01) 
+    #    print abs(pset[0].tracer -1) 
     
     assert abs(pset[0].zonal - 0.015) < 1e-6
     assert abs(pset[0].meridional - 0.01) < 1e-6
     assert abs(pset[0].vert + 0.01) < 1e-6
     assert abs(pset[0].tracer -1) < 1e-6
+    
