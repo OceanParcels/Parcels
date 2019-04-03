@@ -294,7 +294,7 @@ class Field(object):
                         elif len(filebuffer.indices['depth']) > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                         else:
-                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data                        
+                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     else:
                         data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                 ti += len(tslice)
@@ -680,7 +680,7 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method in ('bgrid_velocity', 'bgrid_w_velocity'):
+        elif self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity']:
             if(self.interp_method == 'bgrid_velocity'):
                 zeta = 0.;
             else:
@@ -696,7 +696,7 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method in ('cgrid_tracer','bgrid_tracer'):
+        elif self.interp_method in ['cgrid_tracer','bgrid_tracer']:
             return self.data[ti, zi, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
@@ -950,14 +950,14 @@ class Field(object):
                 data[tindex, 0, :, :] = filebuffer.data
             elif len(filebuffer.data.shape) == 3:
                 if g.zdim > 1:
-                    if self.interp_method in ('bgrid_velocity', 'bgrid_w_velocity'):
+                    if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity']:
                         data[tindex, :-1, :, :] = filebuffer.data
                     else:
                         data[tindex, :, :, :] = filebuffer.data
                 else:
                     data[tindex, 0, :, :] = filebuffer.data
             else:
-                if self.interp_method in ('bgrid_velocity', 'bgrid_w_velocity'):
+                if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity']:
                     data[tindex, :-1, :, :] = filebuffer.data    
                 else:
                     data[tindex, :, :, :] = filebuffer.data
@@ -1471,7 +1471,7 @@ class NetcdfFileBuffer(object):
             elif(len(self.indices['depth']) > 1):
                 data = data[self.indices['depth'][:], self.indices['lat'], self.indices['lon']]                
             else:
-                data = data[ti, self.indices['lat'], self.indices['lon']]            
+                data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
             data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
