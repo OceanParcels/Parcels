@@ -413,6 +413,7 @@ class FieldSet(object):
                  allow_time_extrapolation=None, time_periodic=False,
                  tracer_interp_method='bgrid_tracer', **kwargs):
         """Initialises FieldSet object from NetCDF files of POP fields.
+            It is assumed that the velocities in the POP fields is in cm/s.
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
@@ -428,19 +429,19 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
                Watch out: POP is discretised on a B-grid:
-               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+               U and V velocities are not located on the same nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
                U00,V00 _____U01,V01
                |                |
                |       W,T      |
                |                |
                U10,V10 _____U11,V11
-               To interpolate U, V velocities on the C-grid, Parcels bilinear
+               To interpolate U, V velocities on the B-grid, Parcels bilinear
                interpolates the values on the corners.
                In 3D, the depth is the one corresponding to W nodes.
                W is interpolated linearly between the upper and lower W values of
                the grid cell.
                The interpolated value of the tracer is given by the tracer value of the grid cell,
-               similar to the cgrid.
+               similar to the bgrid.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -456,8 +457,8 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+               Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
 
         """
 
@@ -493,19 +494,19 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
                Watch out: POP is discretised on a B-grid:
-               U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+               U and V velocities are not located on the same nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
                U00,V00 _____U01,V01
                |                |
                |       W,T      |
                |                |
                U10,V10 _____U11,V11
-               To interpolate U, V velocities on the C-grid, Parcels bilinear
+               To interpolate U, V velocities on the B-grid, Parcels bilinear
                interpolates the values on the corners.
                In 3D, the depth is the one corresponding to W nodes.
                W is interpolated linearly between the upper and lower W values of
                the grid cell.
                The interpolated value of the tracer is given by the tracer value of the grid cell,
-               similar to the cgrid.
+               similar to the bgrid.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -521,8 +522,8 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
                This flag overrides the allow_time_interpolation and sets it to False
-        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
-               Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+               Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
 
         """
 

@@ -1,4 +1,4 @@
-from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D
+from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, ErrorCode
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
 import numpy as np
 import xarray as xr
@@ -544,15 +544,15 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel'])
+@pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
 def test_popgrid(mode, vert_discretisation):
-    data_path = path.join(path.dirname(__file__), 'test_data/')
+    mesh = path.join(path.dirname(__file__), 'test_data/') + 'POPtestdata_.nc'
     if vert_discretisation == 'zlevel':
-        mesh = data_path + 'POPtestdata_zlevel.nc'
         w_dep = 'w_dep'
-    else:
-        mesh = data_path + 'POPtestdata_slevel.nc'
+    elif vert_discretisation == 'slevel':
         w_dep = 'w_deps'
+    elif vert_discretisation == 'slevel2':
+        w_dep = 'w_deps2'
 
     filenames = mesh
     variables = {'U': 'U',
@@ -567,16 +567,29 @@ def test_popgrid(mode, vert_discretisation):
         (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
         particle.tracer = fieldset.T[time, particle.depth, particle.lat, particle.lon]
 
+    def OutBoundsError(particle, fieldset, time):
+        particle.out_of_bounds = 1
+
     class MyParticle(ptype[mode]):
         zonal = Variable('zonal', dtype=np.float32, initial=0.)
         meridional = Variable('meridional', dtype=np.float32, initial=0.)
         vert = Variable('vert', dtype=np.float32, initial=0.)
         tracer = Variable('tracer', dtype=np.float32, initial=0.)
+        out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3, 1], lat=[3, 1], depth=[3, 11])
-    pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-
-    assert np.allclose([p.zonal for p in pset], 0.015)
-    assert np.allclose([p.meridional for p in pset], 0.01)
-    assert np.allclose([p.vert for p in pset], -0.01)
-    assert np.allclose([p.tracer for p in pset], 1)
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3,5], lat=[3,5], depth=[3,7])#3,5,1], lat=[3,5,1], depth=[3,7,11])#
+    pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1)#, 
+                # recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
+    if vert_discretisation == 'slevel2':
+        assert np.isclose(pset[0].vert, 0.)
+        assert np.isclose(pset[0].zonal, 0.)
+        assert np.isclose(pset[0].tracer, 99.)
+#        assert pset[2].out_of_bounds == 1
+        assert np.isclose(pset[1].vert, -0.0066666666)
+        assert np.isclose(pset[1].zonal, .015)
+        assert np.isclose(pset[1].tracer, 1.)       
+    else: 
+        assert np.allclose([p.zonal for p in pset], 0.015)
+        assert np.allclose([p.meridional for p in pset], 0.01)
+        assert np.allclose([p.vert for p in pset], -0.01)
+        assert np.allclose([p.tracer for p in pset], 1)

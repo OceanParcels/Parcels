@@ -293,14 +293,10 @@ class Field(object):
                         tslice = [tslice]
                     else:
                         filebuffer.name = filebuffer.parse_name(variable[1])
-
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     elif len(filebuffer.data.shape) == 3:
-                        if len(filebuffer.indices['depth']) > 1 and filebuffer.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                            data[ti:ti+len(tslice), :-1, :, :] = filebuffer.data
-                            data[ti:ti+len(tslice), -1, :, :] = np.zeros((data.shape[0], data.shape[2], data.shape[3]))
-                        elif len(filebuffer.indices['depth']) > 1:
+                        if len(filebuffer.indices['depth']) > 1:
                             data[ti:ti+len(tslice), :, :, :] = filebuffer.data
                         else:
                             data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
@@ -951,17 +947,11 @@ class Field(object):
                 data[tindex, 0, :, :] = filebuffer.data
             elif len(filebuffer.data.shape) == 3:
                 if g.zdim > 1:
-                    if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                        data[tindex, :-1, :, :] = filebuffer.data
-                    else:
-                        data[tindex, :, :, :] = filebuffer.data
+                    data[tindex, :, :, :] = filebuffer.data
                 else:
                     data[tindex, 0, :, :] = filebuffer.data
             else:
-                if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                    data[tindex, :-1, :, :] = filebuffer.data
-                else:
-                    data[tindex, :, :, :] = filebuffer.data
+                data[tindex, :, :, :] = filebuffer.data
 
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
@@ -1467,9 +1457,11 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if ((len(self.indices['depth']) > 1) and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']):
-                data = data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
-            elif(len(self.indices['depth']) > 1):
+            if len(self.indices['depth']) > 1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
+               len(self.indices['depth'][:]) == data.shape[0]+1:
+                data = np.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                       np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+            elif len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
