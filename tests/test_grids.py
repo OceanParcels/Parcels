@@ -578,20 +578,21 @@ def test_popgrid(mode, vert_discretisation):
         tracer = Variable('tracer', dtype=np.float32, initial=0.)
         out_of_bounds = Variable('out_of_bounds', dtype=np.float32, initial=0.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3,5,1], lat=[3,5,1], depth=[3,7,11])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3, 5, 1], lat=[3, 5, 1], depth=[3, 7, 11])
     pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
                  recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
     if vert_discretisation == 'slevel2':
         assert np.isclose(pset[0].vert, 0.)
         assert np.isclose(pset[0].zonal, 0.)
         assert np.isclose(pset[0].tracer, 99.)
-        assert pset[2].out_of_bounds == 1
         assert np.isclose(pset[1].vert, -0.0066666666)
         assert np.isclose(pset[1].zonal, .015)
-        assert np.isclose(pset[1].tracer, 1.)       
-    else: 
+        assert np.isclose(pset[1].tracer, 1.)
+        assert pset[0].out_of_bounds == 0
+        assert pset[1].out_of_bounds == 0
+        assert pset[2].out_of_bounds == 1        
+    else:
         assert np.allclose([p.zonal for p in pset], 0.015)
         assert np.allclose([p.meridional for p in pset], 0.01)
         assert np.allclose([p.vert for p in pset], -0.01)
         assert np.allclose([p.tracer for p in pset], 1)
-        
