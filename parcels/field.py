@@ -1457,6 +1457,7 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
+            #Add a vertical layer of zeros for bgrid if the depth length does not match the vertical data dimension.
             if len(self.indices['depth']) > 1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
                len(self.indices['depth'][:]) == data.shape[0]+1:
                 data = np.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
