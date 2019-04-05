@@ -550,9 +550,9 @@ def test_popgrid(mode, vert_discretisation):
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
     elif vert_discretisation == 'slevel':
-        w_dep = 'w_deps'
+        w_dep = 'w_deps'   # same as zlevel, but defined as slevel
     elif vert_discretisation == 'slevel2':
-        w_dep = 'w_deps2'
+        w_dep = 'w_deps2'  # contains shaved cells
 
     filenames = mesh
     variables = {'U': 'U',
@@ -590,7 +590,7 @@ def test_popgrid(mode, vert_discretisation):
         assert np.isclose(pset[1].tracer, 1.)
         assert pset[0].out_of_bounds == 0
         assert pset[1].out_of_bounds == 0
-        assert pset[2].out_of_bounds == 1        
+        assert pset[2].out_of_bounds == 1
     else:
         assert np.allclose([p.zonal for p in pset], 0.015)
         assert np.allclose([p.meridional for p in pset], 0.01)

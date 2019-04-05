@@ -306,10 +306,13 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
-                __V1__
-               |      |
-               U0     U1
-               |__V0__|
+                _________________V[k,j,i+1]__________________
+               |                                             |
+               |                                             |
+               U[k,j+1,i]   W[k:k+2,k+1,i+1], T[k,j+1,i+1]  U[k,j+1,i+1]
+               |                                             |
+               |                                             |
+               |_________________V[k,j+1,i+1]________________|
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -363,10 +366,13 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
-                __V1__
-               |      |
-               U0     U1
-               |__V0__|
+                _________________V[k,j,i+1]__________________
+               |                                             |
+               |                                             |
+               U[k,j+1,i]   W[k:k+2,k+1,i+1], T[k,j+1,i+1]  U[k,j+1,i+1]
+               |                                             |
+               |                                             |
+               |_________________V[k,j+1,i+1]________________|
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -429,19 +435,19 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
                Watch out: POP is discretised on a B-grid:
-               U and V velocities are not located on the same nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
-               U00,V00 _____U01,V01
-               |                |
-               |       W,T      |
-               |                |
-               U10,V10 _____U11,V11
-               To interpolate U, V velocities on the B-grid, Parcels bilinear
-               interpolates the values on the corners.
-               In 3D, the depth is the one corresponding to W nodes.
-               W is interpolated linearly between the upper and lower W values of
-               the grid cell.
-               The interpolated value of the tracer is given by the tracer value of the grid cell,
-               similar to the bgrid.
+               U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+               |                                         |
+               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
+               |                                         |
+               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
+               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+                      T node is at the cell centre and interpolated constant per cell as a C-grid.
+               In 3D: U and V nodes are at the midlle of the cell vertical edges,
+                      They are interpolated bilinearly (independently of z) in the cell.
+                      W nodes are at the centre of the horizontal interfaces.
+                      They are interpolated linearly (as a function of z) in the cell.
+                      T node is at the cell centre, and constant per cell.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -493,20 +499,19 @@ class FieldSet(object):
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
-               Watch out: POP is discretised on a B-grid:
-               U and V velocities are not located on the same nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
-               U00,V00 _____U01,V01
-               |                |
-               |       W,T      |
-               |                |
-               U10,V10 _____U11,V11
-               To interpolate U, V velocities on the B-grid, Parcels bilinear
-               interpolates the values on the corners.
-               In 3D, the depth is the one corresponding to W nodes.
-               W is interpolated linearly between the upper and lower W values of
-               the grid cell.
-               The interpolated value of the tracer is given by the tracer value of the grid cell,
-               similar to the bgrid.
+               U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+               |                                         |
+               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
+               |                                         |
+               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
+               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+                      T node is at the cell centre and interpolated constant per cell as a C-grid.
+               In 3D: U and V nodes are at the midlle of the cell vertical edges,
+                      They are interpolated bilinearly (independently of z) in the cell.
+                      W nodes are at the centre of the horizontal interfaces.
+                      They are interpolated linearly (as a function of z) in the cell.
+                      T node is at the cell centre, and constant per cell.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -528,9 +533,9 @@ class FieldSet(object):
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise RuntimeError("On a bgrid discretisation like POP, U and V should have the same dimensions")
+            raise RuntimeError("On a B-grid discretisation, U and V should have the same dimensions")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a bgrid discretisation in POP, U, V and W should have the same dimensions")
+            raise RuntimeError("On a B-grid discretisation, U, V and W should have the same dimensions")
 
         interp_method = {}
         for v in variables:
