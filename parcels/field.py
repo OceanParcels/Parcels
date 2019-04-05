@@ -502,7 +502,7 @@ class Field(object):
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
             raise FieldSamplingError(x, y, z, field=self)
 
-        if grid.mesh is not 'spherical':
+        if grid.mesh != 'spherical':
             lon_index = grid.lon < x
             if lon_index.all():
                 xi = len(grid.lon) - 2
@@ -869,7 +869,7 @@ class Field(object):
             return
         data = self.data if dataNone else data
         if zonal:
-            if len(data.shape) is 3:
+            if len(data.shape) == 3:
                 data = np.concatenate((data[:, :, -halosize:], data,
                                        data[:, :, 0:halosize]), axis=len(data.shape)-1)
                 assert data.shape[2] == self.grid.xdim, "Third dim must be x."
@@ -880,7 +880,7 @@ class Field(object):
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
-            if len(data.shape) is 3:
+            if len(data.shape) == 3:
                 data = np.concatenate((data[:, -halosize:, :], data,
                                        data[:, 0:halosize, :]), axis=len(data.shape)-2)
                 assert data.shape[1] == self.grid.ydim, "Second dim must be y."
@@ -1290,8 +1290,8 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                    val = list.__getitem__(self, iField).eval(*key)
-                    vals.append(val)
+                val = list.__getitem__(self, iField).eval(*key)
+                vals.append(val)
             return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
 
     def __add__(self, field):

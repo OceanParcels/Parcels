@@ -168,12 +168,12 @@ class FieldSet(object):
         ccode_fieldnames = []
         counter = 1
         for fld in self.get_fields():
-                if fld.name not in ccode_fieldnames:
-                    fld.ccode_name = fld.name
-                else:
-                    fld.ccode_name = fld.name + str(counter)
-                    counter += 1
-                ccode_fieldnames.append(fld.ccode_name)
+            if fld.name not in ccode_fieldnames:
+                fld.ccode_name = fld.name
+            else:
+                fld.ccode_name = fld.name + str(counter)
+                counter += 1
+            ccode_fieldnames.append(fld.ccode_name)
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
@@ -694,7 +694,7 @@ class FieldSet(object):
             self.V.write(filename, varname='vomecrty')
 
         for v in self.get_fields():
-            if (v.name is not 'U') and (v.name is not 'V'):
+            if (v.name != 'U') and (v.name != 'V'):
                 v.write(filename)
 
     def advancetime(self, fieldset_new):
