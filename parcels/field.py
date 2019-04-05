@@ -232,11 +232,14 @@ class Field(object):
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine) as filebuffer:
+            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
+                filebuffer.name = filebuffer.parse_name(variable[1])
                 depth = filebuffer.read_depth
+                z_zeros = filebuffer.add_vertical_zero_layer
         else:
             indices['depth'] = [0]
             depth = np.zeros(1)
+            z_zeros = False
 
         if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
@@ -286,7 +289,7 @@ class Field(object):
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
+                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, add_z_layer=z_zeros) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine == 'xarray':
@@ -1349,8 +1352,7 @@ class NestedField(list):
 
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
-
-    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None, interp_method='linear'):
+    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None, interp_method='linear', add_z_layer=False):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1359,6 +1361,7 @@ class NetcdfFileBuffer(object):
         self.timestamp = timestamp
         self.ti = None
         self.interp_method = interp_method
+        self.add_vertical_zero_layer = add_z_layer
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1436,6 +1439,13 @@ class NetcdfFileBuffer(object):
             depth = self.dataset[self.dimensions['depth']]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+                if self.netcdf_engine == 'xarray':
+                    data = self.dataset
+                else:
+                    data = self.dataset[self.name]
+                if self.indices['depth'][-1] == range(depthsize)[-1] and data.shape[0] == depthsize-1:
+                    self.add_vertical_zero_layer = True
             if len(depth.shape) == 1:
                 return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
@@ -1457,9 +1467,8 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            #Add a vertical layer of zeros for bgrid if the depth length does not match the vertical data dimension.
-            if len(self.indices['depth']) > 1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
-               len(self.indices['depth'][:]) == data.shape[0]+1:
+            # Add a vertical layer of zeros for bgrid if the depth length does not match the vertical data dimension.
+            if self.add_vertical_zero_layer:
                 data = np.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
                                        np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
             elif len(self.indices['depth']) > 1:
