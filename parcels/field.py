@@ -560,9 +560,8 @@ class Field(object):
             zi = -1
             zeta = 0
 
-        assert(xsi >= 0 and xsi <= 1)
-        assert(eta >= 0 and eta <= 1)
-        assert(zeta >= 0 and zeta <= 1)
+        if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
+            raise FieldSamplingError(x, y, z, field=self)
 
         return (xsi, eta, zeta, xi, yi, zi)
 
