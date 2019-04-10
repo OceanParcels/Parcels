@@ -102,22 +102,34 @@ def test_advection_3D(mode, npart=11):
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_advection_3D_outofbounds(mode):
+@pytest.mark.parametrize('direction', ['up', 'down'])
+def test_advection_3D_outofbounds(mode, direction):
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1, ydim, dtype=np.float32),
                   'depth': np.linspace(0., 1, zdim, dtype=np.float32)}
+    wfac = -1. if direction == 'up' else 1.
     data = {'U': np.zeros((xdim, ydim, zdim), dtype=np.float32),
             'V': np.zeros((xdim, ydim, zdim), dtype=np.float32),
-            'W': np.ones((xdim, ydim, zdim), dtype=np.float32)}
+            'W': wfac * np.ones((xdim, ydim, zdim), dtype=np.float32)}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     def DeleteParticle(particle, fieldset, time):
         particle.delete()
 
+    def SubmergeParticle(particle, fieldset, time):
+        particle.depth = 0
+        particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
+
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
-    pset.execute(AdvectionRK4_3D, runtime=1., dt=1,
-                 recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+    pset.execute(AdvectionRK4_3D, runtime=10., dt=1,
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle,
+                           ErrorCode.ErrorThroughSurface: SubmergeParticle})
+
+    if direction == 'up':
+        assert pset[0].depth == 0
+    else:
+        assert len(pset) == 0
 
 
 def periodicfields(xdim, ydim, uvel, vvel):

@@ -1,7 +1,7 @@
 from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.converters import TimeConverter
-from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
+from parcels.tools.error import FieldSamplingError, FieldSamplingError_Surface, TimeExtrapolationError
 import parcels.tools.interpolation_utils as i_u
 import collections
 from py import path
@@ -428,6 +428,9 @@ class Field(object):
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
+        if z < grid.depth[0]:
+            raise FieldSamplingError_Surface(z, field=self)
+
         depth_index = grid.depth <= z
         if z >= grid.depth[-1]:
             zi = len(grid.depth) - 2

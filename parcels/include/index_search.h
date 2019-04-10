@@ -42,7 +42,7 @@ typedef struct
 
 typedef enum
   {
-    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4, ERROR_TIME_EXTRAPOLATION =5
+    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4, ERROR_TIME_EXTRAPOLATION=5, ERROR_THROUGH_SURFACE=6
   } ErrorCode;
 
 typedef enum
@@ -52,7 +52,8 @@ typedef enum
 
 static inline ErrorCode search_indices_vertical_z(type_coord z, int zdim, float *zvals, int *zi, double *zeta)
 {
-  if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  if (z < zvals[0]) {return ERROR_THROUGH_SURFACE;}
+  if (z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
   while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
   while (*zi > 0 && z < zvals[*zi]) --(*zi);
   if (*zi == zdim-1) {--*zi;}
@@ -100,7 +101,8 @@ static inline ErrorCode search_indices_vertical_s(type_coord z, int xdim, int yd
     }
   }
 
-  if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+  if (z < zcol[0]) {return ERROR_THROUGH_SURFACE;}
+  if (z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
   while (*zi < zdim-1 && z > zcol[*zi+1]) ++(*zi);
   while (*zi > 0 && z < zcol[*zi]) --(*zi);
   if (*zi == zdim-1) {--*zi;}
