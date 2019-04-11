@@ -109,7 +109,7 @@ def test_advection_3D_outofbounds(mode, direction):
                   'lat': np.linspace(0., 1, ydim, dtype=np.float32),
                   'depth': np.linspace(0., 1, zdim, dtype=np.float32)}
     wfac = -1. if direction == 'up' else 1.
-    data = {'U': np.zeros((xdim, ydim, zdim), dtype=np.float32),
+    data = {'U': 0.01*np.ones((xdim, ydim, zdim), dtype=np.float32),
             'V': np.zeros((xdim, ydim, zdim), dtype=np.float32),
             'W': wfac * np.ones((xdim, ydim, zdim), dtype=np.float32)}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
@@ -119,6 +119,7 @@ def test_advection_3D_outofbounds(mode, direction):
 
     def SubmergeParticle(particle, fieldset, time):
         particle.depth = 0
+        AdvectionRK4(particle, fieldset, time)  # perform a 2D advection
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
 
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
@@ -127,7 +128,8 @@ def test_advection_3D_outofbounds(mode, direction):
                            ErrorCode.ErrorThroughSurface: SubmergeParticle})
 
     if direction == 'up':
-        assert pset[0].depth == 0
+        assert np.allclose(pset[0].lon, 0.6)
+        assert np.allclose(pset[0].depth, 0)
     else:
         assert len(pset) == 0
 
