@@ -68,7 +68,7 @@ class ParticleFile(object):
         self.file_list = []
         self.time_written = []
         self.maxid_written = -1
-        self.dataset_open = True
+        self.to_export = False
 
         if tempwritedir is None:
             self.tempwritedir = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
@@ -77,7 +77,7 @@ class ParticleFile(object):
 
         self.delete_tempwritedir()
 
-    def open_dataset(self, data_shape):
+    def open_netcdf_file(self, data_shape):
         """Initialise NetCDF4.Dataset for trajectory output.
         The output follows the format outlined in the Discrete Sampling Geometries
         section of the CF-conventions:
@@ -153,7 +153,7 @@ class ParticleFile(object):
             setattr(self.dataset, name, message)
 
     def __del__(self):
-        if self.dataset_open:
+        if self.to_export:
             self.close()
 
     def close(self):
@@ -162,7 +162,7 @@ class ParticleFile(object):
         self.export()
         self.delete_tempwritedir()
         self.dataset.close()
-        self.dataset_open = False
+        self.to_export = False
 
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`
@@ -231,8 +231,8 @@ class ParticleFile(object):
 
         return data_dict, data_dict_once
 
-    def buffer_to_npy(self, data_dict, data_dict_once):
-        """Buffer daat to set of temporary numpy files, using np.save"""
+    def dump_dict_to_npy(self, data_dict, data_dict_once):
+        """Buffer data to set of temporary numpy files, using np.save"""
         if not os.path.exists(self.tempwritedir):
             os.mkdir(self.tempwritedir)
 
@@ -246,6 +246,8 @@ class ParticleFile(object):
             np.save(tmpfilename, data_dict_once)
             self.file_list_once.append(tmpfilename + ".npy")
 
+        self.to_export = True
+
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to a temporary npy-file
         using a python dictionary. The data is saved in the folder 'out'.
@@ -255,7 +257,7 @@ class ParticleFile(object):
         """
 
         data_dict, data_dict_once = self.convert_pset_to_dict(pset, time, deleted_only=deleted_only)
-        self.buffer_to_npy(data_dict, data_dict_once)
+        self.dump_dict_to_npy(data_dict, data_dict_once)
 
     def read_from_npy(self, file_list, time_steps, var):
         """Read NPY-files for one variable using a loop over all files.
@@ -290,7 +292,7 @@ class ParticleFile(object):
         for var in self.var_names:
             data = self.read_from_npy(self.file_list, len(self.time_written), var)
             if var == self.var_names[0]:
-                self.open_dataset(data.shape)
+                self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
             getattr(self, varout)[:, :] = data
 
