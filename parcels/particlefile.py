@@ -4,7 +4,6 @@ import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
 import os
-from tempfile import gettempdir
 import psutil
 import string
 import random
@@ -41,9 +40,11 @@ class ParticleFile(object):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+    :param tempwritedir: directory to write temporary files to during executing.
+                        Default is out-XXXXXX where Xs are random capitals
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, tempwritedir=None):
 
         self.name = name
         self.write_ondelete = write_ondelete
@@ -69,8 +70,12 @@ class ParticleFile(object):
         self.maxid_written = -1
         self.dataset_open = True
 
-        self.npy_path = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
-        self.delete_npyfiles()
+        if tempwritedir is None:
+            self.tempwritedir = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+        else:
+            self.tempwritedir = tempwritedir
+
+        self.delete_tempwritedir()
 
     def open_dataset(self, data_shape):
         """Initialise NetCDF4.Dataset for trajectory output.
@@ -155,7 +160,7 @@ class ParticleFile(object):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""
         self.export()
-        self.delete_npyfiles()
+        self.delete_tempwritedir()
         self.dataset.close()
         self.dataset_open = False
 
@@ -228,16 +233,16 @@ class ParticleFile(object):
 
     def buffer_to_npy(self, data_dict, data_dict_once):
         """Buffer daat to set of temporary numpy files, using np.save"""
-        if not os.path.exists(self.npy_path):
-            os.mkdir(self.npy_path)
+        if not os.path.exists(self.tempwritedir):
+            os.mkdir(self.tempwritedir)
 
         if len(data_dict) > 0:
-            tmpfilename = os.path.join(self.npy_path, str(len(self.file_list) + 1))
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1))
             np.save(tmpfilename, data_dict)
             self.file_list.append(tmpfilename + ".npy")
 
         if len(data_dict_once) > 0:
-            tmpfilename = os.path.join(self.npy_path, str(len(self.file_list) + 1) + '_once')
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + '_once')
             np.save(tmpfilename, data_dict_once)
             self.file_list_once.append(tmpfilename + ".npy")
 
@@ -293,7 +298,7 @@ class ParticleFile(object):
             for var in self.var_names_once:
                 getattr(self, var)[:] = self.read_from_npy(self.file_list_once, 1, var)
 
-    def delete_npyfiles(self):
+    def delete_tempwritedir(self):
         """Deleted all temporary npy files"""
-        if os.path.exists(self.npy_path):
-            os.system("rm -rf "+self.npy_path)
+        if os.path.exists(self.tempwritedir):
+            os.system("rm -rf "+self.tempwritedir)
