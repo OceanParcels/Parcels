@@ -83,6 +83,7 @@ class Field(object):
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.timestamps = timestamps
+
         if type(interp_method) is dict:
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -90,6 +91,10 @@ class Field(object):
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
         else:
             self.interp_method = interp_method
+        if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
+           self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
+            logger.warning_once('General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.')
+
         self.fieldset = None
         if allow_time_extrapolation is None:
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
@@ -215,6 +220,13 @@ class Field(object):
                  + 'Please raise an issue on https://github.com/OceanParcels/parcels/issues '
                  + 'if you would need such feature implemented.')
 
+        interp_method = kwargs.pop('interp_method', 'linear')
+        if type(interp_method) is dict:
+            if variable[0] in interp_method:
+                interp_method = interp_method[variable[0]]
+            else:
+                raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
+
         with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             indices = filebuffer.indices
@@ -223,11 +235,14 @@ class Field(object):
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine) as filebuffer:
+            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
+                filebuffer.name = filebuffer.parse_name(variable[1])
                 depth = filebuffer.read_depth
+                add_bottom_level_0_data = filebuffer.add_bottom_level_0_data
         else:
             indices['depth'] = [0]
             depth = np.zeros(1)
+            add_bottom_level_0_data = False
 
         if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
@@ -277,14 +292,14 @@ class Field(object):
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine) as filebuffer:
+                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
+                                      add_bottom_level_0_data=add_bottom_level_0_data) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine == 'xarray':
                         tslice = [tslice]
                     else:
                         filebuffer.name = filebuffer.parse_name(variable[1])
-
                     if len(filebuffer.data.shape) == 2:
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     elif len(filebuffer.data.shape) == 3:
@@ -310,7 +325,7 @@ class Field(object):
 
         variable = kwargs['var_name'] if netcdf_engine == 'xarray' else variable
         return cls(variable, data, grid=grid, timestamps=timestamps,
-                   allow_time_extrapolation=allow_time_extrapolation, **kwargs)
+                   allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
     def reshape(self, data, transpose=False):
 
@@ -423,6 +438,9 @@ class Field(object):
 
     def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
+        if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+            xsi = 1
+            eta = 1
         if time < grid.time[ti]:
             ti -= 1
         if grid.z4d:
@@ -484,7 +502,7 @@ class Field(object):
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
             raise FieldSamplingError(x, y, z, field=self)
 
-        if grid.mesh is not 'spherical':
+        if grid.mesh != 'spherical':
             lon_index = grid.lon < x
             if lon_index.all():
                 xi = len(grid.lon) - 2
@@ -665,7 +683,12 @@ class Field(object):
             f0 = self.data[ti, zi, yi+1, xi+1]
             f1 = self.data[ti, zi+1, yi+1, xi+1]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method == 'linear':
+        elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
+            if self.interp_method == 'bgrid_velocity':
+                zeta = 0.
+            elif self.interp_method == 'bgrid_w_velocity':
+                eta = 1.
+                xsi = 1.
             data = self.data[ti, zi, :, :]
             f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
@@ -677,7 +700,7 @@ class Field(object):
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             return (1-zeta) * f0 + zeta * f1
-        elif self.interp_method == 'cgrid_tracer':
+        elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, zi, yi+1, xi+1]
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 3D grids")
@@ -846,7 +869,7 @@ class Field(object):
             return
         data = self.data if dataNone else data
         if zonal:
-            if len(data.shape) is 3:
+            if len(data.shape) == 3:
                 data = np.concatenate((data[:, :, -halosize:], data,
                                        data[:, :, 0:halosize]), axis=len(data.shape)-1)
                 assert data.shape[2] == self.grid.xdim, "Third dim must be x."
@@ -857,7 +880,7 @@ class Field(object):
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
-            if len(data.shape) is 3:
+            if len(data.shape) == 3:
                 data = np.concatenate((data[:, -halosize:, :], data,
                                        data[:, 0:halosize, :]), axis=len(data.shape)-2)
                 assert data.shape[1] == self.grid.ydim, "Second dim must be y."
@@ -1267,8 +1290,8 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                    val = list.__getitem__(self, iField).eval(*key)
-                    vals.append(val)
+                val = list.__getitem__(self, iField).eval(*key)
+                vals.append(val)
             return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
 
     def __add__(self, field):
@@ -1333,8 +1356,8 @@ class NestedField(list):
 
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
-
-    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None):
+    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
+                 interp_method='linear', add_bottom_level_0_data=False):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1342,6 +1365,8 @@ class NetcdfFileBuffer(object):
         self.netcdf_engine = netcdf_engine
         self.timestamp = timestamp
         self.ti = None
+        self.interp_method = interp_method
+        self.add_bottom_level_0_data = add_bottom_level_0_data
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1419,6 +1444,13 @@ class NetcdfFileBuffer(object):
             depth = self.dataset[self.dimensions['depth']]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+                if self.netcdf_engine == 'xarray':
+                    data = self.dataset
+                else:
+                    data = self.dataset[self.name]
+                if self.indices['depth'][-1] == depthsize-1 and data.shape[0] == depthsize-1:  # last level is missing
+                    self.add_bottom_level_0_data = True
             if len(depth.shape) == 1:
                 return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
@@ -1440,7 +1472,13 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if len(self.indices['depth']) > 1:
+            if self.add_bottom_level_0_data:
+                # Add a bottom level of zeros for B-grid if missing in the data.
+                # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
+                # to match Parcels data shape. for W, last level must be 0 for impermeability
+                data = np.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                       np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+            elif len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]

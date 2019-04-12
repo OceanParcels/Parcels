@@ -168,12 +168,12 @@ class FieldSet(object):
         ccode_fieldnames = []
         counter = 1
         for fld in self.get_fields():
-                if fld.name not in ccode_fieldnames:
-                    fld.ccode_name = fld.name
-                else:
-                    fld.ccode_name = fld.name + str(counter)
-                    counter += 1
-                ccode_fieldnames.append(fld.ccode_name)
+            if fld.name not in ccode_fieldnames:
+                fld.ccode_name = fld.name
+            else:
+                fld.ccode_name = fld.name + str(counter)
+                counter += 1
+            ccode_fieldnames.append(fld.ccode_name)
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
@@ -306,10 +306,13 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
-                __V1__
-               |      |
-               U0     U1
-               |__V0__|
+                _________________V[k,j+1,i+1]________________
+               |                                             |
+               |                                             |
+               U[k,j+1,i]   W[k:k+2,j+1,i+1], T[k,j+1,i+1]   U[k,j+1,i+1]
+               |                                             |
+               |                                             |
+               |_________________V[k,j,i+1]__________________|
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -363,10 +366,13 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
-                __V1__
-               |      |
-               U0     U1
-               |__V0__|
+                _________________V[k,j+1,i+1]________________
+               |                                             |
+               |                                             |
+               U[k,j+1,i]   W[k:k+2,j+1,i+1], T[k,j+1,i+1]   U[k,j+1,i+1]
+               |                                             |
+               |                                             |
+               |_________________V[k,j,i+1]__________________|
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -404,6 +410,143 @@ class FieldSet(object):
                 interp_method[v] = tracer_interp_method
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_c_grid_dataset'
+
+        return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
+
+    @classmethod
+    def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                 allow_time_extrapolation=None, time_periodic=False,
+                 tracer_interp_method='bgrid_tracer', **kwargs):
+        """Initialises FieldSet object from NetCDF files of POP fields.
+            It is assumed that the velocities in the POP fields is in cm/s.
+
+        :param filenames: Dictionary mapping variables to file(s). The
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}
+               time values are in filenames[data]
+        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
+               Note that the built-in Advection kernels assume that U and V are in m/s
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable.
+               Watch out: POP is discretised on a B-grid:
+               U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
+               |                                         |
+               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
+               |                                         |
+               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+                      T node is at the cell centre and interpolated constant per cell as a C-grid.
+               In 3D: U and V nodes are at the midlle of the cell vertical edges,
+                      They are interpolated bilinearly (independently of z) in the cell.
+                      W nodes are at the centre of the horizontal interfaces.
+                      They are interpolated linearly (as a function of z) in the cell.
+                      T node is at the cell centre, and constant per cell.
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+               Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+
+        """
+
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_pop'
+        fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, **kwargs)
+        if hasattr(fieldset, 'U'):
+            fieldset.U.set_scaling_factor(0.01)  # cm/s to m/s
+        if hasattr(fieldset, 'V'):
+            fieldset.V.set_scaling_factor(0.01)  # cm/s to m/s
+        if hasattr(fieldset, 'W'):
+            fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
+        return fieldset
+
+    @classmethod
+    def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                            allow_time_extrapolation=None, time_periodic=False,
+                            tracer_interp_method='bgrid_tracer', **kwargs):
+        """Initialises FieldSet object from NetCDF files of Bgrid fields.
+
+        :param filenames: Dictionary mapping variables to file(s). The
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}
+               time values are in filenames[data]
+        :param variables: Dictionary mapping variables to variable
+               names in the netCDF file(s).
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable.
+               U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
+               |                                         |
+               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
+               |                                         |
+               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+                      T node is at the cell centre and interpolated constant per cell as a C-grid.
+               In 3D: U and V nodes are at the midlle of the cell vertical edges,
+                      They are interpolated bilinearly (independently of z) in the cell.
+                      W nodes are at the centre of the horizontal interfaces.
+                      They are interpolated linearly (as a function of z) in the cell.
+                      T node is at the cell centre, and constant per cell.
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+               Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+
+        """
+
+        if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
+            raise RuntimeError("On a B-grid discretisation, U and V should have the same dimensions")
+        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
+            raise RuntimeError("On a B-grid discretisation, U, V and W should have the same dimensions")
+
+        interp_method = {}
+        for v in variables:
+            if v in ['U', 'V']:
+                interp_method[v] = 'bgrid_velocity'
+            elif v in ['W']:
+                interp_method[v] = 'bgrid_w_velocity'
+            else:
+                interp_method[v] = tracer_interp_method
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_b_grid_dataset'
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
@@ -551,7 +694,7 @@ class FieldSet(object):
             self.V.write(filename, varname='vomecrty')
 
         for v in self.get_fields():
-            if (v.name is not 'U') and (v.name is not 'V'):
+            if (v.name != 'U') and (v.name != 'V'):
                 v.write(filename)
 
     def advancetime(self, fieldset_new):
