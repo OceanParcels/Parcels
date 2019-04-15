@@ -429,7 +429,7 @@ class Field(object):
         grid = self.grid
         z = np.float32(z)
         if z < grid.depth[0] or z > grid.depth[-1]:
-            return (-999, 0)
+            raise FieldOutOfBoundError(0, 0, z, field=self)
         depth_index = grid.depth <= z
         if z >= grid.depth[-1]:
             zi = len(grid.depth) - 2
@@ -555,8 +555,9 @@ class Field(object):
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
-                (zi, zeta) = self.search_indices_vertical_z(z)
-                if zi == -999:
+                try:
+                    (zi, zeta) = self.search_indices_vertical_z(z)
+                except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
@@ -632,8 +633,9 @@ class Field(object):
 
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.CurvilinearZGrid:
-                (zi, zeta) = self.search_indices_vertical_z(z)
-                if zi == -999:
+                try:
+                    (zi, zeta) = self.search_indices_vertical_z(z)
+                except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid.gtype == GridCode.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)

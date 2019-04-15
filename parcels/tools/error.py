@@ -1,4 +1,4 @@
-"""Collection of pre-buil recovery kernels"""
+"""Collection of pre-built recovery kernels"""
 from enum import IntEnum
 
 
