@@ -133,7 +133,7 @@ class Field(object):
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
 
-        self.datadepthsize = kwargs['datadepthsize']
+        self.datadepthsize = kwargs.pop('datadepthsize', None)
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -1476,7 +1476,7 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if self.indices['depth'][-1] == self.datadepthsize-1 and data.shape[0] == self.datadepthsize-1:
+            if self.indices['depth'][-1] == self.datadepthsize-1 and data.shape[0] == self.datadepthsize-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
                 # Add a bottom level of zeros for B-grid if missing in the data.
                 # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
                 # to match Parcels data shape. for W, last level must be 0 for impermeability
