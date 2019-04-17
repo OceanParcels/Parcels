@@ -954,7 +954,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, datadepthsize = self.datadepthsize) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, datadepthsize=self.datadepthsize) as filebuffer:
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
@@ -1367,7 +1367,7 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
     def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', datadepthsize = None):
+                 interp_method='linear', datadepthsize=None):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1455,11 +1455,6 @@ class NetcdfFileBuffer(object):
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
             self.datadepthsize = depthsize
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                if self.netcdf_engine == 'xarray':
-                    data = self.dataset
-                else:
-                    data = self.dataset[self.name]
             if len(depth.shape) == 1:
                 return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
