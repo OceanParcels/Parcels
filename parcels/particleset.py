@@ -166,9 +166,8 @@ class ParticleSet(object):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
-        lonlat_type = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-        lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
-        lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
+        lon = np.linspace(start[0], finish[0], size)
+        lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
             depth = [depth] * size
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
