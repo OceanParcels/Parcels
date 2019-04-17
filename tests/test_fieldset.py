@@ -337,6 +337,8 @@ def test_periodic(mode, time_periodic, dt_sign):
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
         particle.temp = fieldset.temp[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        # test if we can interpolate UV and UVW together
+        (u_, v_) = fieldset.UV[time+particle.dt, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)
