@@ -416,10 +416,14 @@ class KernelGenerator(ast.NodeVisitor):
         for field in self.field_args.values():
             args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
         for field in self.vector_field_args.values():
-            Wname = field.W.ccode_name if field.W else 'not_defined'
-            for fname in [field.U.ccode_name, field.V.ccode_name, Wname]:
-                if fname not in self.field_args and fname != 'not_defined':
-                    args += [c.Pointer(c.Value("CField", "%s" % fname))]
+            for fcomponent in ['U', 'V', 'W']:
+                try:
+                    f = getattr(field, fcomponent)
+                    if f.ccode_name not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
+                        self.field_args[f.ccode_name] = f
+                except:
+                    pass  # field.W does not always exist
         for const, _ in self.const_args.items():
             args += [c.Value("float", const)]
 
