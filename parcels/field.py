@@ -53,11 +53,10 @@ class Field(object):
     :param time_periodic: boolean whether to loop periodically over the time component of the Field
            This flag overrides the allow_time_interpolation and sets it to False
     """
-
+    
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
-
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
