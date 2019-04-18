@@ -57,6 +57,7 @@ class Field(object):
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
+
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -297,7 +298,7 @@ class Field(object):
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                      datadepthsize=datadepthsize) as filebuffer:
+                                      interp_method=interp_method, datadepthsize=datadepthsize) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine == 'xarray':
@@ -954,7 +955,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, datadepthsize=self.datadepthsize) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, interp_method=self.interp_method, datadepthsize=self.datadepthsize) as filebuffer:
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
@@ -1487,7 +1488,11 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
-            data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+            if self.indices['depth'][-1] == self.datadepthsize-1 and data.shape[1] == self.datadepthsize-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+                data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                       np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+            else:
+                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)
