@@ -1,7 +1,7 @@
 from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.converters import TimeConverter
-from parcels.tools.error import FieldSamplingError, FieldSamplingError_Surface, TimeExtrapolationError
+from parcels.tools.error import FieldOutOfBoundError, FieldOutOfBoundError_Surface, FieldSamplingError, TimeExtrapolationError
 import parcels.tools.interpolation_utils as i_u
 import collections
 from py import path
@@ -429,8 +429,9 @@ class Field(object):
         grid = self.grid
         z = np.float32(z)
         if z < grid.depth[0]:
-            raise FieldSamplingError_Surface(z, field=self)
-
+            raise FieldOutOfBoundError_Surface(0, 0, z, field=self)
+        elif z > grid.depth[-1]:
+            raise FieldOutOfBoundError(0, 0, z, field=self)
         depth_index = grid.depth <= z
         if z >= grid.depth[-1]:
             zi = len(grid.depth) - 2
@@ -472,7 +473,7 @@ class Field(object):
         else:
             zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
         if z < depth_vector[zi] or z > depth_vector[zi+1]:
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
@@ -501,9 +502,9 @@ class Field(object):
 
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                raise FieldSamplingError(x, y, z, field=self)
+                raise FieldOutOfBoundError(x, y, z, field=self)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
 
         if grid.mesh != 'spherical':
             lon_index = grid.lon < x
@@ -556,7 +557,12 @@ class Field(object):
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
-                (zi, zeta) = self.search_indices_vertical_z(z)
+                try:
+                    (zi, zeta) = self.search_indices_vertical_z(z)
+                except FieldOutOfBoundError:
+                    raise FieldOutOfBoundError(x, y, z, field=self)
+                except FieldOutOfBoundError_Surface:
+                    raise FieldOutOfBoundError_Surface(x, y, z, field=self)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
@@ -580,11 +586,11 @@ class Field(object):
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 if grid.lon[0, 0] < grid.lon[0, -1]:
-                    raise FieldSamplingError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(x, y, z, field=self)
                 elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                    raise FieldSamplingError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(x, y, z, field=self)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
 
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
@@ -612,9 +618,9 @@ class Field(object):
             else:
                 xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
-                raise FieldSamplingError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
-                raise FieldSamplingError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(x, y, 0, field=self)
             if xsi < 0:
                 xi -= 1
             elif xsi > 1:
@@ -627,11 +633,14 @@ class Field(object):
             it += 1
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
-                raise FieldSamplingError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(x, y, 0, field=self)
 
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.CurvilinearZGrid:
-                (zi, zeta) = self.search_indices_vertical_z(z)
+                try:
+                    (zi, zeta) = self.search_indices_vertical_z(z)
+                except FieldOutOfBoundError:
+                    raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid.gtype == GridCode.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
@@ -734,7 +743,7 @@ class Field(object):
             val = self.interpolator3D(ti, z, y, x, time)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
         else:
             return val
 
@@ -769,7 +778,7 @@ class Field(object):
     def depth_index(self, depth, lat, lon):
         """Find the index in the depth array associated with a given depth"""
         if depth > self.grid.depth[-1]:
-            raise FieldSamplingError(lon, lat, depth, field=self)
+            raise FieldOutOfBoundError(lon, lat, depth, field=self)
         depth_index = self.grid.depth <= depth
         if depth_index.all():
             # If given depth == largest field depth, use the second-last
@@ -1347,7 +1356,7 @@ class NestedField(list):
                 try:
                     val = list.__getitem__(self, iField).eval(*key)
                     break
-                except FieldSamplingError:
+                except (FieldOutOfBoundError, FieldSamplingError):
                     if iField == len(self)-1:
                         raise
                     else:

@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldSamplingError, FieldSamplingError_Surface, Field, SummedField, NestedField
+from parcels.field import FieldOutOfBoundError, FieldOutOfBoundError_Surface, Field, SummedField, NestedField
 from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -226,10 +226,10 @@ class Kernel(object):
                 try:
                     p.dt = sign_dt * dt_pos
                     res = self.pyfunc(p, pset.fieldset, p.time)
-                except FieldSamplingError as fse:
+                except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
-                except FieldSamplingError_Surface as fse_z:
+                except FieldOutOfBoundError_Surface as fse_z:
                     res = ErrorCode.ErrorThroughSurface
                     p.exception = fse_z
                 except Exception as e:

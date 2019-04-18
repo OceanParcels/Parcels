@@ -2,7 +2,7 @@
 from enum import IntEnum
 
 
-__all__ = ['ErrorCode', 'FieldSamplingError', 'TimeExtrapolationError',
+__all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
            'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError',
            'recovery_map']
 
@@ -31,16 +31,32 @@ class FieldSamplingError(RuntimeError):
         super(FieldSamplingError, self).__init__(message)
 
 
-class FieldSamplingError_Surface(RuntimeError):
-    """Utility error class to propagate erroneous field sampling at the surface in Scipy mode"""
+class FieldOutOfBoundError(RuntimeError):
+    """Utility error class to propagate out-of-bound field sampling in Scipy mode"""
 
-    def __init__(self, z, field=None):
+    def __init__(self, x, y, z, field=None):
         self.field = field
+        self.x = x
+        self.y = y
         self.z = z
-        message = "%s goes through surface at depth %f" % (
-            field.name if field else "Field", self.z
+        message = "%s sampled out-of-bound, at (%f, %f, %f)" % (
+            field.name if field else "Field", self.x, self.y, self.z
         )
-        super(FieldSamplingError_Surface, self).__init__(message)
+        super(FieldOutOfBoundError, self).__init__(message)
+
+
+class FieldOutOfBoundError_Surface(RuntimeError):
+    """Utility error class to propagate out-of-bound field sampling at the surface in Scipy mode"""
+
+    def __init__(self, x, y, z, field=None):
+        self.field = field
+        self.x = x
+        self.y = y
+        self.z = z
+        message = "%s sampled out-of-bound, at (%f, %f, %f)" % (
+            field.name if field else "Field", self.x, self.y, self.z
+        )
+        super(FieldOutOfBoundError_Surface, self).__init__(message)
 
 
 class TimeExtrapolationError(RuntimeError):
