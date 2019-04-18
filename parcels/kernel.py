@@ -248,15 +248,13 @@ class Kernel(object):
                     if dt == 0:
                         break
                     continue
-                elif res == ErrorCode.Repeat:
+                else:
                     # Try again without time update
                     for var in ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     break
-                else:
-                    break  # Failure - stop time loop
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
