@@ -324,7 +324,7 @@ def test_periodic(mode, time_periodic, dt_sign):
 
     U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     V = np.zeros((2, 2, 2, tsize), dtype=np.float32)
-    V[0,0,0,:] = 1e-5
+    V[0, 0, 0, :] = 1e-5
     W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     temp = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     temp[:, :, :, :] = temp_vec
