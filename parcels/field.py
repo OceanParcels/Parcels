@@ -1,7 +1,7 @@
 from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.converters import TimeConverter
-from parcels.tools.error import FieldOutOfBoundError, FieldOutOfBoundError_Surface, FieldSamplingError, TimeExtrapolationError
+from parcels.tools.error import FieldOutOfBoundError, FieldOutOfBoundSurfaceError, FieldSamplingError, TimeExtrapolationError
 import parcels.tools.interpolation_utils as i_u
 import collections
 from py import path
@@ -429,7 +429,7 @@ class Field(object):
         grid = self.grid
         z = np.float32(z)
         if z < grid.depth[0]:
-            raise FieldOutOfBoundError_Surface(0, 0, z, field=self)
+            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
         elif z > grid.depth[-1]:
             raise FieldOutOfBoundError(0, 0, z, field=self)
         depth_index = grid.depth <= z
@@ -472,7 +472,9 @@ class Field(object):
             zi = len(depth_vector) - 2
         else:
             zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        if z < depth_vector[zi] or z > depth_vector[zi+1]:
+        if z < depth_vector[zi]:
+            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+        elif z > depth_vector[zi+1]:
             raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
@@ -561,8 +563,8 @@ class Field(object):
                     (zi, zeta) = self.search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
-                except FieldOutOfBoundError_Surface:
-                    raise FieldOutOfBoundError_Surface(x, y, z, field=self)
+                except FieldOutOfBoundSurfaceError:
+                    raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:

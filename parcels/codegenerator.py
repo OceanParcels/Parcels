@@ -911,8 +911,8 @@ class LoopGenerator(object):
         body += [pdt_eq_dt_pos]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
-        body += [c.If("res == SUCCESS | res == DELETE", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
-                                                                 dt_pos, dt_0_break, c.Statement("continue")]),
+        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
+                                                                  dt_pos, dt_0_break, c.Statement("continue")]),
                  c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
                           dt_pos, c.Statement("break")]))]
 

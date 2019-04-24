@@ -45,7 +45,7 @@ class FieldOutOfBoundError(RuntimeError):
         super(FieldOutOfBoundError, self).__init__(message)
 
 
-class FieldOutOfBoundError_Surface(RuntimeError):
+class FieldOutOfBoundSurfaceError(RuntimeError):
     """Utility error class to propagate out-of-bound field sampling at the surface in Scipy mode"""
 
     def __init__(self, x, y, z, field=None):
@@ -53,10 +53,10 @@ class FieldOutOfBoundError_Surface(RuntimeError):
         self.x = x
         self.y = y
         self.z = z
-        message = "%s sampled out-of-bound, at (%f, %f, %f)" % (
+        message = "%s sampled out-of-bound at the surface, at (%f, %f, %f)" % (
             field.name if field else "Field", self.x, self.y, self.z
         )
-        super(FieldOutOfBoundError_Surface, self).__init__(message)
+        super(FieldOutOfBoundSurfaceError, self).__init__(message)
 
 
 class TimeExtrapolationError(RuntimeError):
