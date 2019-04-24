@@ -53,7 +53,7 @@ class Field(object):
     :param time_periodic: boolean whether to loop periodically over the time component of the Field
            This flag overrides the allow_time_interpolation and sets it to False
     """
-    
+
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
@@ -133,7 +133,10 @@ class Field(object):
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
 
-        self.datadepthsize = kwargs.pop('datadepthsize', None)
+        # data_zdim is the vertical dimension of the complete field data, ignoring the indices.
+        # (data_zdim = grid.zdim if no indices are used, for A- , C-grids and for some B-grids). It is used for the B-grid,
+        # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
+        self.data_zdim = kwargs.pop('data_zdim', None)
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -240,13 +243,13 @@ class Field(object):
             with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 depth = filebuffer.read_depth
-                datadepthsize = filebuffer.datadepthsize
+                data_zdim = filebuffer.data_zdim
         else:
             indices['depth'] = [0]
             depth = np.zeros(1)
-            datadepthsize = 1
+            data_zdim = 1
 
-        kwargs['datadepthsize'] = datadepthsize
+        kwargs['data_zdim'] = data_zdim
 
         if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
@@ -297,7 +300,7 @@ class Field(object):
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                      interp_method=interp_method, datadepthsize=datadepthsize) as filebuffer:
+                                      interp_method=interp_method, data_zdim=data_zdim) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine == 'xarray':
@@ -954,7 +957,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, interp_method=self.interp_method, datadepthsize=self.datadepthsize) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, interp_method=self.interp_method, data_zdim=self.data_zdim) as filebuffer:
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
@@ -1367,7 +1370,7 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
     def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', datadepthsize=None):
+                 interp_method='linear', data_zdim=None):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1376,7 +1379,7 @@ class NetcdfFileBuffer(object):
         self.timestamp = timestamp
         self.ti = None
         self.interp_method = interp_method
-        self.datadepthsize = datadepthsize
+        self.data_zdim = data_zdim
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1453,7 +1456,7 @@ class NetcdfFileBuffer(object):
         if 'depth' in self.dimensions:
             depth = self.dataset[self.dimensions['depth']]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-            self.datadepthsize = depthsize
+            self.data_zdim = depthsize
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
             if len(depth.shape) == 1:
                 return np.array(depth[self.indices['depth']])
@@ -1476,7 +1479,7 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if self.indices['depth'][-1] == self.datadepthsize-1 and data.shape[0] == self.datadepthsize-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+            if self.indices['depth'][-1] == self.data_zdim-1 and data.shape[0] == self.data_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
                 # Add a bottom level of zeros for B-grid if missing in the data.
                 # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
                 # to match Parcels data shape. for W, last level must be 0 for impermeability
@@ -1487,9 +1490,13 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
-            if self.indices['depth'][-1] == self.datadepthsize-1 and data.shape[1] == self.datadepthsize-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
-                                       np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+            if self.indices['depth'][-1] == self.data_zdim-1 and data.shape[1] == self.data_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+                if(type(ti) == list):
+                    data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                           np.zeros((len(ti), 1, len(self.indices['lat']), len(self.indices['lon'])))), axis=1)
+                else:
+                    data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                           np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
