@@ -13,8 +13,8 @@ class ErrorCode(IntEnum):
     Delete = 2
     Error = 3
     ErrorOutOfBounds = 4
+    ErrorThroughSurface = 41
     ErrorTimeExtrapolation = 5
-    ErrorThroughSurface = 6
 
 
 class FieldSamplingError(RuntimeError):
