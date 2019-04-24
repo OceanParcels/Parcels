@@ -1491,7 +1491,7 @@ class NetcdfFileBuffer(object):
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
             if self.indices['depth'][-1] == self.data_zdim-1 and data.shape[1] == self.data_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                if(type(ti) == list):
+                if(type(ti) in [list, range]):
                     data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
                                            np.zeros((len(ti), 1, len(self.indices['lat']), len(self.indices['lon'])))), axis=1)
                 else:
