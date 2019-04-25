@@ -545,8 +545,9 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('vert_discretisation', ['zlevel', 'slevel', 'slevel2'])
-def test_popgrid(mode, vert_discretisation):
-    mesh = path.join(path.dirname(__file__), 'test_data/') + 'POPtestdata_.nc'
+@pytest.mark.parametrize('deferred_load', [True, False])
+def test_popgrid(mode, vert_discretisation, deferred_load):
+    mesh = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
     if vert_discretisation == 'zlevel':
         w_dep = 'w_dep'
     elif vert_discretisation == 'slevel':
@@ -559,9 +560,9 @@ def test_popgrid(mode, vert_discretisation):
                  'V': 'V',
                  'W': 'W',
                  'T': 'T'}
-    dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': w_dep}
+    dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': w_dep, 'time': 'time'}
 
-    field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat')
+    field_set = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat', deferred_load=deferred_load)
 
     def sampleVel(particle, fieldset, time):
         (particle.zonal, particle.meridional, particle.vert) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
