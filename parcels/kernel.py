@@ -269,6 +269,8 @@ class Kernel(object):
 
         if recovery is None:
             recovery = {}
+        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
+            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
 

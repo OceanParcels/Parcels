@@ -103,7 +103,8 @@ def test_advection_3D(mode, npart=11):
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('direction', ['up', 'down'])
-def test_advection_3D_outofbounds(mode, direction):
+@pytest.mark.parametrize('wErrorThroughSurface', [True, False])
+def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1, ydim, dtype=np.float32),
@@ -122,12 +123,14 @@ def test_advection_3D_outofbounds(mode, direction):
         AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
-    pset.execute(AdvectionRK4_3D, runtime=10., dt=1,
-                 recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle,
-                           ErrorCode.ErrorThroughSurface: SubmergeParticle})
+    recovery_dict = {ErrorCode.ErrorOutOfBounds: DeleteParticle}
+    if wErrorThroughSurface:
+        recovery_dict[ErrorCode.ErrorThroughSurface] = SubmergeParticle
 
-    if direction == 'up':
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
+    pset.execute(AdvectionRK4_3D, runtime=10., dt=1, recovery=recovery_dict)
+
+    if direction == 'up' and wErrorThroughSurface:
         assert np.allclose(pset[0].lon, 0.6)
         assert np.allclose(pset[0].depth, 0)
     else:

@@ -46,7 +46,8 @@ class FieldOutOfBoundError(RuntimeError):
 
 
 class FieldOutOfBoundSurfaceError(RuntimeError):
-    """Utility error class to propagate out-of-bound field sampling at the surface in Scipy mode"""
+    """Utility error class to propagate out-of-bound field sampling at the surface in Scipy mode.
+       Note that if ErrorThroughSurface is not part of the recovery kernel, Parcels will use ErrorOutOfBounds."""
 
     def __init__(self, x, y, z, field=None):
         self.field = field
