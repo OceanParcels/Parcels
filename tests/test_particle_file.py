@@ -49,7 +49,7 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
-    filepath = tmpdir.join("pfile_on_delete_written_variables")
+    filepath = tmpdir.join("pfile_on_delete_written_variables.nc")
 
     def move_west(particle, fieldset, time):
         tmp = fieldset.U[time, particle.depth, particle.lat, particle.lon]  # to trigger out-of-bounds error
@@ -72,7 +72,7 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
     outfile.close()
-    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    ncfile = Dataset(filepath, 'r', 'NETCDF4')
     assert ncfile.runtime == runtime
     lon = ncfile.variables['lon'][:]
     assert (lon.size == noutside)
@@ -80,15 +80,15 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_write_double(fieldset, mode, tmpdir):
-    filepath = tmpdir.join("pfile_variable_write_double")
+    filepath = tmpdir.join("pfile_variable_write_double.nc")
 
     def Update_lon(particle, fieldset, time):
         particle.lon += 0.1
 
-    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     pset.execute(pset.Kernel(Update_lon), endtime=1, dt=0.1,
                  output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
-    ncfile = Dataset(filepath + ".nc", 'r', 'NETCDF4')
+    ncfile = Dataset(filepath, 'r', 'NETCDF4')
     lons = ncfile.variables['lon'][:]
     assert (isinstance(lons[0, 0], np.float64))
 
@@ -96,7 +96,7 @@ def test_variable_write_double(fieldset, mode, tmpdir):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, mode, tmpdir, npart):
-    filepath = tmpdir.join("pfile_once_written_variables")
+    filepath = tmpdir.join("pfile_once_written_variables.nc")
 
     def Update_v(particle, fieldset, time):
         particle.v_once += 1.
@@ -114,7 +114,7 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
                  output_file=outfile)
     assert np.allclose([p.v_once - vo - p.age*10 for p, vo in zip(pset, time)], 0, atol=1e-5)
     outfile.close()
-    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    ncfile = Dataset(filepath, 'r', 'NETCDF4')
     vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
     assert (vfile.shape == (npart, ))
     assert np.allclose(vfile, time)
@@ -134,7 +134,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
         pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     elif type == 'timearr':
         pset = ParticleSet(fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
-    outfilepath = tmpdir.join("pfile_repeated_release")
+    outfilepath = tmpdir.join("pfile_repeated_release.nc")
     pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
 
     def IncrLon(particle, fieldset, time):
@@ -144,7 +144,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
     pfile.close()
-    ncfile = Dataset(outfilepath+".nc", 'r', 'NETCDF4')
+    ncfile = Dataset(outfilepath, 'r', 'NETCDF4')
     samplevar = ncfile.variables['sample_var'][:]
     ncfile.close()
     if type == 'repeatdt':
@@ -155,5 +155,5 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
-    filesize = os.path.getsize(str(outfilepath+".nc"))
+    filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
