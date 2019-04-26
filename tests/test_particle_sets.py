@@ -30,12 +30,15 @@ def test_pset_create_lon_lat(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_create_line(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode])
+@pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
+def test_pset_create_line(fieldset, mode, lonlatdepth_dtype, npart=100):
+    lon = np.linspace(0, 1, npart, dtype=lonlatdepth_dtype)
+    lat = np.linspace(1, 0, npart, dtype=lonlatdepth_dtype)
+    pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0),
+                                 pclass=ptype[mode], lonlatdepth_dtype=lonlatdepth_dtype)
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+    assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -54,16 +57,19 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
-def test_pset_create_field(fieldset, mode, npart=100):
+@pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
+def test_pset_create_field(fieldset, mode, lonlatdepth_dtype, npart=100):
     np.random.seed(123456)
     shape = (fieldset.U.lon.size, fieldset.U.lat.size)
     K = Field('K', lon=fieldset.U.lon, lat=fieldset.U.lat,
               data=np.ones(shape, dtype=np.float32), transpose=True)
-    pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode], start_field=K)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode],
+                                  start_field=K, lonlatdepth_dtype=lonlatdepth_dtype)
     assert (np.array([p.lon for p in pset]) <= K.lon[-1]).all()
     assert (np.array([p.lon for p in pset]) >= K.lon[0]).all()
     assert (np.array([p.lat for p in pset]) <= K.lat[-1]).all()
     assert (np.array([p.lat for p in pset]) >= K.lat[0]).all()
+    assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
 def test_pset_create_field_curvi(npart=100):

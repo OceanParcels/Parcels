@@ -1,7 +1,7 @@
 from parcels.tools.loggers import logger
 from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
 from parcels.tools.converters import TimeConverter
-from parcels.tools.error import FieldSamplingError, TimeExtrapolationError
+from parcels.tools.error import FieldSamplingError, FieldOutOfBoundError, TimeExtrapolationError
 import parcels.tools.interpolation_utils as i_u
 import collections
 from py import path
@@ -133,6 +133,11 @@ class Field(object):
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
 
+        # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
+        # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
+        # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
+        self.data_full_zdim = kwargs.pop('data_full_zdim', None)
+
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
@@ -238,11 +243,13 @@ class Field(object):
             with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 depth = filebuffer.read_depth
-                add_bottom_level_0_data = filebuffer.add_bottom_level_0_data
+                data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
             depth = np.zeros(1)
-            add_bottom_level_0_data = False
+            data_full_zdim = 1
+
+        kwargs['data_full_zdim'] = data_full_zdim
 
         if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
@@ -293,7 +300,7 @@ class Field(object):
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                      add_bottom_level_0_data=add_bottom_level_0_data) as filebuffer:
+                                      interp_method=interp_method, data_full_zdim=data_full_zdim) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     if netcdf_engine == 'xarray':
@@ -428,6 +435,8 @@ class Field(object):
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
+        if z < grid.depth[0] or z > grid.depth[-1]:
+            raise FieldOutOfBoundError(0, 0, z, field=self)
         depth_index = grid.depth <= z
         if z >= grid.depth[-1]:
             zi = len(grid.depth) - 2
@@ -469,7 +478,7 @@ class Field(object):
         else:
             zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
         if z < depth_vector[zi] or z > depth_vector[zi+1]:
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
@@ -498,9 +507,9 @@ class Field(object):
 
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                raise FieldSamplingError(x, y, z, field=self)
+                raise FieldOutOfBoundError(x, y, z, field=self)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
 
         if grid.mesh != 'spherical':
             lon_index = grid.lon < x
@@ -553,16 +562,18 @@ class Field(object):
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
                 # Never passes here, because in this case, we work with scipy
-                (zi, zeta) = self.search_indices_vertical_z(z)
+                try:
+                    (zi, zeta) = self.search_indices_vertical_z(z)
+                except FieldOutOfBoundError:
+                    raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
             zeta = 0
 
-        assert(xsi >= 0 and xsi <= 1)
-        assert(eta >= 0 and eta <= 1)
-        assert(zeta >= 0 and zeta <= 1)
+        if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
+            raise FieldSamplingError(x, y, z, field=self)
 
         return (xsi, eta, zeta, xi, yi, zi)
 
@@ -578,11 +589,11 @@ class Field(object):
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 if grid.lon[0, 0] < grid.lon[0, -1]:
-                    raise FieldSamplingError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(x, y, z, field=self)
                 elif x < grid.lon[0, 0] and x > grid.lon[0, -1]:  # This prevents from crashing in [160, -160]
-                    raise FieldSamplingError(x, y, z, field=self)
+                    raise FieldOutOfBoundError(x, y, z, field=self)
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
 
         while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
@@ -610,9 +621,9 @@ class Field(object):
             else:
                 xsi = (x-a[0]-a[2]*eta) / (a[1]+a[3]*eta)
             if xsi < 0 and eta < 0 and xi == 0 and yi == 0:
-                raise FieldSamplingError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
-                raise FieldSamplingError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(x, y, 0, field=self)
             if xsi < 0:
                 xi -= 1
             elif xsi > 1:
@@ -625,20 +636,22 @@ class Field(object):
             it += 1
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
-                raise FieldSamplingError(x, y, 0, field=self)
+                raise FieldOutOfBoundError(x, y, 0, field=self)
 
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.CurvilinearZGrid:
-                (zi, zeta) = self.search_indices_vertical_z(z)
+                try:
+                    (zi, zeta) = self.search_indices_vertical_z(z)
+                except FieldOutOfBoundError:
+                    raise FieldOutOfBoundError(x, y, z, field=self)
             elif grid.gtype == GridCode.CurvilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
             zi = -1
             zeta = 0
 
-        assert(xsi >= 0 and xsi <= 1)
-        assert(eta >= 0 and eta <= 1)
-        assert(zeta >= 0 and zeta <= 1)
+        if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
+            raise FieldSamplingError(x, y, z, field=self)
 
         return (xsi, eta, zeta, xi, yi, zi)
 
@@ -662,7 +675,7 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
-        elif self.interp_method == 'cgrid_tracer':
+        elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
         elif self.interp_method == 'cgrid_velocity':
             raise RuntimeError("%s is a scalar field. cgrid_velocity interpolation method should be used for vector fields (e.g. FieldSet.UV)" % self.name)
@@ -733,7 +746,7 @@ class Field(object):
             val = self.interpolator3D(ti, z, y, x, time)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
-            raise FieldSamplingError(x, y, z, field=self)
+            raise FieldOutOfBoundError(x, y, z, field=self)
         else:
             return val
 
@@ -768,7 +781,7 @@ class Field(object):
     def depth_index(self, depth, lat, lon):
         """Find the index in the depth array associated with a given depth"""
         if depth > self.grid.depth[-1]:
-            raise FieldSamplingError(lon, lat, depth, field=self)
+            raise FieldOutOfBoundError(lon, lat, depth, field=self)
         depth_index = self.grid.depth <= depth
         if depth_index.all():
             # If given depth == largest field depth, use the second-last
@@ -944,7 +957,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp) as filebuffer:
+        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, interp_method=self.interp_method, data_full_zdim=self.data_full_zdim) as filebuffer:
             time_data = filebuffer.time
             time_data = g.time_origin.reltime(time_data)
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
@@ -1346,7 +1359,7 @@ class NestedField(list):
                 try:
                     val = list.__getitem__(self, iField).eval(*key)
                     break
-                except FieldSamplingError:
+                except (FieldOutOfBoundError, FieldSamplingError):
                     if iField == len(self)-1:
                         raise
                     else:
@@ -1357,7 +1370,7 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
     def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', add_bottom_level_0_data=False):
+                 interp_method='linear', data_full_zdim=None):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1366,7 +1379,7 @@ class NetcdfFileBuffer(object):
         self.timestamp = timestamp
         self.ti = None
         self.interp_method = interp_method
-        self.add_bottom_level_0_data = add_bottom_level_0_data
+        self.data_full_zdim = data_full_zdim
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1443,14 +1456,8 @@ class NetcdfFileBuffer(object):
         if 'depth' in self.dimensions:
             depth = self.dataset[self.dimensions['depth']]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
+            self.data_full_zdim = depthsize
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                if self.netcdf_engine == 'xarray':
-                    data = self.dataset
-                else:
-                    data = self.dataset[self.name]
-                if self.indices['depth'][-1] == depthsize-1 and data.shape[0] == depthsize-1:  # last level is missing
-                    self.add_bottom_level_0_data = True
             if len(depth.shape) == 1:
                 return np.array(depth[self.indices['depth']])
             elif len(depth.shape) == 3:
@@ -1472,7 +1479,7 @@ class NetcdfFileBuffer(object):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
-            if self.add_bottom_level_0_data:
+            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[0] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
                 # Add a bottom level of zeros for B-grid if missing in the data.
                 # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
                 # to match Parcels data shape. for W, last level must be 0 for impermeability
@@ -1483,7 +1490,15 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
-            data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+                if(type(ti) in [list, range]):
+                    data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                           np.zeros((len(ti), 1, len(self.indices['lat']), len(self.indices['lon'])))), axis=1)
+                else:
+                    data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                                           np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+            else:
+                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
             data = np.ma.filled(data, np.nan)

@@ -221,9 +221,9 @@ static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, t
   else
     *zeta = 0;
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_OUT_OF_BOUNDS;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR_OUT_OF_BOUNDS;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_OUT_OF_BOUNDS;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR;
 
   return SUCCESS;
 }
@@ -357,9 +357,9 @@ static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, t
   else
     *zeta = 0;
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_OUT_OF_BOUNDS;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR_OUT_OF_BOUNDS;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_OUT_OF_BOUNDS;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR;
 
   return SUCCESS;
 }
