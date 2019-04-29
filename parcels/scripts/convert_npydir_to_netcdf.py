@@ -15,7 +15,7 @@ def convert_npydir_to_netcdf(tempwritedir):
     if not path.isfile(pyset_file):
         raise ValueError('Output directory "%s" does not contain a pset_info.npy file' % tempwritedir)
 
-    pset_info = np.load(pyset_file).item()
+    pset_info = np.load(pyset_file, allow_pickle=True).item()
     pfile = ParticleFile(None, None, pset_info=pset_info)
     pfile.export()
     pfile.dataset.close()

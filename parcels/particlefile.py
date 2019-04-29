@@ -296,7 +296,7 @@ class ParticleFile(object):
 
         # loop over all files
         for npyfile in file_list:
-            data_dict = np.load(npyfile).item()
+            data_dict = np.load(npyfile, allow_pickle=True).item()
             id_ind = np.array(data_dict["id"], dtype=int)
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
             t_ind_used[t_ind] = 1
