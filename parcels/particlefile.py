@@ -42,32 +42,41 @@ class ParticleFile(object):
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     :param tempwritedir: directory to write temporary files to during executing.
                         Default is out-XXXXXX where Xs are random capitals
+    :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/pset_info.npy,
+                      used to create NetCDF file from npy-files.
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, tempwritedir=None):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, tempwritedir=None, pset_info=None):
 
-        self.name = name
         self.write_ondelete = write_ondelete
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
 
         self.dataset = None
         self.metadata = {}
-        self.particleset = particleset
-        self.var_names = []
-        self.var_names_once = []
-        for v in self.particleset.ptype.variables:
-            if v.to_write == 'once':
-                self.var_names_once += [v.name]
-            elif v.to_write is True:
-                self.var_names += [v.name]
-        if len(self.var_names_once) > 0:
-            self.written_once = []
-            self.file_list_once = []
+        if pset_info is not None:
+            for v in pset_info.keys():
+                setattr(self, v, pset_info[v])
+        else:
+            self.name = name
+            self.particleset = particleset
+            self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
+            self.time_origin = self.particleset.time_origin
+            self.lonlatdepth_dtype = self.particleset.lonlatdepth_dtype
+            self.var_names = []
+            self.var_names_once = []
+            for v in self.particleset.ptype.variables:
+                if v.to_write == 'once':
+                    self.var_names_once += [v.name]
+                elif v.to_write is True:
+                    self.var_names += [v.name]
+            if len(self.var_names_once) > 0:
+                self.written_once = []
+                self.file_list_once = []
 
-        self.file_list = []
-        self.time_written = []
-        self.maxid_written = -1
+            self.file_list = []
+            self.time_written = []
+            self.maxid_written = -1
         self.to_export = False
 
         if tempwritedir is None:
@@ -98,7 +107,7 @@ class ParticleFile(object):
         self.dataset.Conventions = "CF-1.6/CF-1.7"
         self.dataset.ncei_template_version = "NCEI_NetCDF_Trajectory_Template_v2.0"
         self.dataset.parcels_version = parcels_version
-        self.dataset.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
+        self.dataset.parcels_mesh = self.parcels_mesh
 
         # Create ID variable according to CF conventions
         self.id = self.dataset.createVariable("trajectory", "i4", coords, fill_value=-2147483647, chunksizes=data_shape)
@@ -109,14 +118,14 @@ class ParticleFile(object):
         self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=data_shape)
         self.time.long_name = ""
         self.time.standard_name = "time"
-        if self.particleset.time_origin.calendar is None:
+        if self.time_origin.calendar is None:
             self.time.units = "seconds"
         else:
             self.time.units = "seconds since " + str(self.particleset.time_origin)
             self.time.calendar = 'standard' if self.particleset.time_origin.calendar == 'np_datetime64' else self.particleset.time_origin.calendar
         self.time.axis = "T"
 
-        if self.particleset.lonlatdepth_dtype is np.float64:
+        if self.lonlatdepth_dtype is np.float64:
             lonlatdepth_precision = "f8"
         else:
             lonlatdepth_precision = "f4"
@@ -139,15 +148,18 @@ class ParticleFile(object):
         self.z.units = "m"
         self.z.positive = "down"
 
-        for v in self.particleset.ptype.variables:
-            if v.to_write and v.name not in ['time', 'lat', 'lon', 'z', 'id']:
-                if v.to_write is True:
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=data_shape))
-                elif v.to_write == 'once':
-                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[data_shape[0]]))
-                getattr(self, v.name).long_name = ""
-                getattr(self, v.name).standard_name = v.name
-                getattr(self, v.name).units = "unknown"
+        for vname in self.var_names:
+            if vname not in ['time', 'lat', 'lon', 'depth', 'id']:
+                setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan, chunksizes=data_shape))
+                getattr(self, vname).long_name = ""
+                getattr(self, vname).standard_name = vname
+                getattr(self, vname).units = "unknown"
+
+        for vname in self.var_names_once:
+            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan, chunksizes=[data_shape[0]]))
+            getattr(self, vname).long_name = ""
+            getattr(self, vname).standard_name = vname
+            getattr(self, vname).units = "unknown"
 
         for name, message in self.metadata.items():
             setattr(self.dataset, name, message)
@@ -233,6 +245,7 @@ class ParticleFile(object):
 
     def dump_dict_to_npy(self, data_dict, data_dict_once):
         """Buffer data to set of temporary numpy files, using np.save"""
+
         if not os.path.exists(self.tempwritedir):
             os.mkdir(self.tempwritedir)
 
@@ -248,6 +261,16 @@ class ParticleFile(object):
 
         self.to_export = True
 
+    def dump_psetinfo_to_npy(self):
+        pset_info = {}
+        attrs_to_dump = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
+                         'file_list', 'file_list_once', 'maxid_written', 'time_written', 'parcels_mesh',
+                         'metadata']
+        for a in attrs_to_dump:
+            if hasattr(self, a):
+                pset_info[a] = getattr(self, a)
+        np.save(os.path.join(self.tempwritedir, 'pset_info.npy'), pset_info)
+
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to a temporary npy-file
         using a python dictionary. The data is saved in the folder 'out'.
@@ -258,6 +281,7 @@ class ParticleFile(object):
 
         data_dict, data_dict_once = self.convert_pset_to_dict(pset, time, deleted_only=deleted_only)
         self.dump_dict_to_npy(data_dict, data_dict_once)
+        self.dump_psetinfo_to_npy()
 
     def read_from_npy(self, file_list, time_steps, var):
         """Read NPY-files for one variable using a loop over all files.

@@ -20,9 +20,30 @@ def fieldset(xdim=40, ydim=100):
     return FieldSet.from_data(data, dimensions)
 
 
+def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
+    if assystemcall:
+        os.system('parcels_convert_npydir_to_netcdf %s' % ofile.tempwritedir)
+    else:
+        import parcels.scripts.convert_npydir_to_netcdf as convert
+        convert.convert_npydir_to_netcdf(ofile.tempwritedir)
+
+    ncfile1 = Dataset(filepath, 'r', 'NETCDF4')
+
+    ofile.export()
+    ncfile2 = Dataset(filepath, 'r', 'NETCDF4')
+
+    for v in ncfile2.variables.keys():
+        assert np.allclose(ncfile1.variables[v][:], ncfile2.variables[v][:])
+
+    for a in ncfile2.ncattrs():
+        assert getattr(ncfile1, a) == getattr(ncfile2, a)
+
+    return ncfile1, ncfile2
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
-    filepath = tmpdir.join("pfile_array_remove_particles")
+    filepath = tmpdir.join("pfile_array_remove_particles.nc")
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
                        lat=0.5*np.ones(npart))
@@ -30,12 +51,13 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
     pfile.write(pset, 0)
     pset.remove(3)
     pfile.write(pset, 1)
+    close_and_compare_netcdffiles(filepath, pfile)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
 
-    filepath = tmpdir.join("pfile_array_remove_particles")
+    filepath = tmpdir.join("pfile_array_remove_particles.nc")
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
                        lat=0.5*np.ones(npart))
@@ -45,10 +67,12 @@ def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
         pset.remove(-1)
     pfile.write(pset, 1)
     pfile.write(pset, 2)
+    close_and_compare_netcdffiles(filepath, pfile)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
+@pytest.mark.parametrize('assystemcall', [True, False])
+def test_variable_written_ondelete(fieldset, mode, tmpdir, assystemcall, npart=3):
     filepath = tmpdir.join("pfile_on_delete_written_variables.nc")
 
     def move_west(particle, fieldset, time):
@@ -71,8 +95,8 @@ def test_variable_written_ondelete(fieldset, mode, tmpdir, npart=3):
     outfile.add_metadata('runtime', runtime)
     pset.execute(move_west, runtime=runtime, dt=dt, output_file=outfile,
                  recovery={ErrorCode.ErrorOutOfBounds: DeleteP})
-    outfile.close()
-    ncfile = Dataset(filepath, 'r', 'NETCDF4')
+
+    ncfile, _ = close_and_compare_netcdffiles(filepath, outfile, assystemcall=assystemcall)
     assert ncfile.runtime == runtime
     lon = ncfile.variables['lon'][:]
     assert (lon.size == noutside)
@@ -86,9 +110,10 @@ def test_variable_write_double(fieldset, mode, tmpdir):
         particle.lon += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    pset.execute(pset.Kernel(Update_lon), endtime=1, dt=0.1,
-                 output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
-    ncfile = Dataset(filepath, 'r', 'NETCDF4')
+    ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
+    pset.execute(pset.Kernel(Update_lon), endtime=1, dt=0.1, output_file=ofile)
+
+    ncfile, _ = close_and_compare_netcdffiles(filepath, ofile)
     lons = ncfile.variables['lon'][:]
     assert (isinstance(lons[0, 0], np.float64))
 
@@ -109,12 +134,11 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     lat = np.linspace(1, 0, npart)
     time = np.arange(0, npart/10., 0.1, dtype=np.float64)
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=lon, lat=lat, time=time, v_once=time)
-    outfile = pset.ParticleFile(name=filepath, outputdt=0.1)
-    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1,
-                 output_file=outfile)
+    ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
+    pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
+
     assert np.allclose([p.v_once - vo - p.age*10 for p, vo in zip(pset, time)], 0, atol=1e-5)
-    outfile.close()
-    ncfile = Dataset(filepath, 'r', 'NETCDF4')
+    ncfile, _ = close_and_compare_netcdffiles(filepath, ofile)
     vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
     assert (vfile.shape == (npart, ))
     assert np.allclose(vfile, time)
@@ -143,10 +167,9 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
             particle.delete()
     for i in range(runtime):
         pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
-    pfile.close()
-    ncfile = Dataset(outfilepath, 'r', 'NETCDF4')
+
+    ncfile, _ = close_and_compare_netcdffiles(outfilepath, pfile)
     samplevar = ncfile.variables['sample_var'][:]
-    ncfile.close()
     if type == 'repeatdt':
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
         assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
