@@ -6,10 +6,14 @@ dependencies:
   - cachetools>=1.0.0
   - cgen
   - coverage
+  - openmp
   - enum34
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
   - git
+  - m2w64-toolchain
+  - gsl
+  - m2w64-gsl
   - jupyter
   - m2w64-toolchain
   - matplotlib>=2.0.2
