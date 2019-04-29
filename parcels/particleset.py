@@ -57,7 +57,8 @@ class ParticleSet(object):
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
             depth = np.ones(len(lon)) * mindepth
         depth = convert_to_list(depth)
-        assert len(lon) == len(lat) and len(lon) == len(depth)
+        assert len(lon) == len(lat) and len(lon) == len(depth), (
+            'lon, lat, depth don''t all have the same lenghts')
 
         time = time.tolist() if isinstance(time, np.ndarray) else time
         time = [time] * len(lat) if not isinstance(time, list) else time
@@ -71,7 +72,9 @@ class ParticleSet(object):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_list(kwargs[kwvar])
 
-        assert len(lon) == len(time)
+        assert len(lon) == len(time), (
+            'time and positions (lon, lat, depth) don''t have the same '
+            'lengths.')
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -111,7 +114,8 @@ class ParticleSet(object):
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
-            assert(size == len(lon) and size == len(lat))
+            assert size == len(lon) and size == len(lat), (
+                'Size of ParticleSet does not match lenght of lon and lat.')
 
             for i in range(size):
                 self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
@@ -124,7 +128,7 @@ class ParticleSet(object):
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, **kwargs):
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from lists of lon and lat
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -135,12 +139,15 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
        """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, **kwargs)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None):
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
         Note that this method uses simple numpy.linspace calls and does not take into account
         great circles, so may not be a exact on a globe
@@ -154,17 +161,19 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
-        lonlat_type = cls.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-        lon = np.linspace(start[0], finish[0], size, dtype=lonlat_type)
-        lat = np.linspace(start[1], finish[1], size, dtype=lonlat_type)
+        lon = np.linspace(start[0], finish[0], size)
+        lat = np.linspace(start[1], finish[1], size)
         if type(depth) in [int, float]:
             depth = [depth] * size
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
 
     @classmethod
-    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None):
+    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -176,6 +185,9 @@ class ParticleSet(object):
         :param depth: Optional list of initial depth values for particles. Default is 0m
         :param time: Optional start time value for particles. Default is fieldset.U.time[0]
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
         if mode == 'monte_carlo':
@@ -213,7 +225,7 @@ class ParticleSet(object):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
@@ -409,7 +421,8 @@ class ParticleSet(object):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass, **self.repeatkwargs)
+                                       pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
+                                       **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

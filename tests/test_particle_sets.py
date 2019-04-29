@@ -30,12 +30,15 @@ def test_pset_create_lon_lat(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_create_line(fieldset, mode, npart=100):
-    lon = np.linspace(0, 1, npart, dtype=np.float32)
-    lat = np.linspace(1, 0, npart, dtype=np.float32)
-    pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0), pclass=ptype[mode])
+@pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
+def test_pset_create_line(fieldset, mode, lonlatdepth_dtype, npart=100):
+    lon = np.linspace(0, 1, npart, dtype=lonlatdepth_dtype)
+    lat = np.linspace(1, 0, npart, dtype=lonlatdepth_dtype)
+    pset = ParticleSet.from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0),
+                                 pclass=ptype[mode], lonlatdepth_dtype=lonlatdepth_dtype)
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
+    assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -54,16 +57,19 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
-def test_pset_create_field(fieldset, mode, npart=100):
+@pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
+def test_pset_create_field(fieldset, mode, lonlatdepth_dtype, npart=100):
     np.random.seed(123456)
     shape = (fieldset.U.lon.size, fieldset.U.lat.size)
     K = Field('K', lon=fieldset.U.lon, lat=fieldset.U.lat,
               data=np.ones(shape, dtype=np.float32), transpose=True)
-    pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode], start_field=K)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=ptype[mode],
+                                  start_field=K, lonlatdepth_dtype=lonlatdepth_dtype)
     assert (np.array([p.lon for p in pset]) <= K.lon[-1]).all()
     assert (np.array([p.lon for p in pset]) >= K.lon[0]).all()
     assert (np.array([p.lat for p in pset]) <= K.lat[-1]).all()
     assert (np.array([p.lat for p in pset]) >= K.lat[0]).all()
+    assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
 def test_pset_create_field_curvi(npart=100):
@@ -415,6 +421,21 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     vfile = ncfile.variables['v_once'][:]
     assert (vfile.shape == (npart*11, ))
     assert [v == 0 for v in vfile]
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_variable_write_double(fieldset, mode, tmpdir):
+    filepath = tmpdir.join("pfile_variable_write_double")
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    pset.execute(pset.Kernel(Update_lon), endtime=1, dt=0.1,
+                 output_file=pset.ParticleFile(name=filepath, outputdt=0.1))
+    ncfile = Dataset(filepath+".nc", 'r', 'NETCDF4')
+    lons = ncfile.variables['lon'][:]
+    assert (isinstance(lons[0, 0], np.float64))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

@@ -1,10 +1,9 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode
 from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D
 import numpy as np
 import pytest
 import math
 from datetime import timedelta as delta
-from argparse import ArgumentParser
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -100,6 +99,25 @@ def test_advection_3D(mode, npart=11):
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
     assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], atol=1.e-1)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_advection_3D_outofbounds(mode):
+    xdim = ydim = zdim = 2
+    dimensions = {'lon': np.linspace(0., 1, xdim, dtype=np.float32),
+                  'lat': np.linspace(0., 1, ydim, dtype=np.float32),
+                  'depth': np.linspace(0., 1, zdim, dtype=np.float32)}
+    data = {'U': np.zeros((xdim, ydim, zdim), dtype=np.float32),
+            'V': np.zeros((xdim, ydim, zdim), dtype=np.float32),
+            'W': np.ones((xdim, ydim, zdim), dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    def DeleteParticle(particle, fieldset, time):
+        particle.delete()
+
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
+    pset.execute(AdvectionRK4_3D, runtime=1., dt=1,
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
 
 
 def periodicfields(xdim, ydim, uvel, vvel):
@@ -316,38 +334,3 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, npart=1):
     exp_lat = [truth_decaying(x, y, endtime)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
     assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
-
-
-if __name__ == "__main__":
-    p = ArgumentParser(description="""
-Example of particle advection around an idealised peninsula""")
-    p.add_argument('mode', choices=('scipy', 'jit'), nargs='?', default='jit',
-                   help='Execution mode for performing computation')
-    p.add_argument('-p', '--particles', type=int, default=1,
-                   help='Number of particles to advect')
-    p.add_argument('-v', '--verbose', action='store_true', default=False,
-                   help='Print particle information before and after execution')
-    p.add_argument('--fieldset', choices=('stationary', 'moving', 'decaying'),
-                   default='stationary', help='Generate fieldset file with given dimensions')
-    p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
-                   help='Numerical method used for advection')
-    args = p.parse_args()
-    filename = 'analytical_eddies'
-
-    # Generate fieldset files according to chosen test setup
-    if args.fieldset == 'stationary':
-        fieldset = fieldset_stationary()
-    elif args.fieldset == 'moving':
-        fieldset = fieldset_moving()
-    elif args.fieldset == 'decaying':
-        fieldset = fieldset_decaying()
-
-    npart = args.particles
-    pset = ParticleSet(fieldset, pclass=ptype[args.mode],
-                       lon=np.linspace(4000, 21000, npart),
-                       lat=np.linspace(12500, 12500, npart))
-    if args.verbose:
-        print("Initial particle positions:\n%s" % pset)
-    pset.execute(kernel[args.method], dt=delta(minutes=3), runtime=delta(hours=6))
-    if args.verbose:
-        print("Final particle positions:\n%s" % pset)

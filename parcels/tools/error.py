@@ -2,7 +2,7 @@
 from enum import IntEnum
 
 
-__all__ = ['ErrorCode', 'FieldSamplingError', 'TimeExtrapolationError',
+__all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
            'KernelError', 'OutOfBoundsError', 'recovery_map']
 
 
@@ -27,6 +27,20 @@ class FieldSamplingError(RuntimeError):
             field.name if field else "Field", self.x, self.y, self.z
         )
         super(FieldSamplingError, self).__init__(message)
+
+
+class FieldOutOfBoundError(RuntimeError):
+    """Utility error class to propagate out-of-bound field sampling in Scipy mode"""
+
+    def __init__(self, x, y, z, field=None):
+        self.field = field
+        self.x = x
+        self.y = y
+        self.z = z
+        message = "%s sampled out-of-bound, at (%f, %f, %f)" % (
+            field.name if field else "Field", self.x, self.y, self.z
+        )
+        super(FieldOutOfBoundError, self).__init__(message)
 
 
 class TimeExtrapolationError(RuntimeError):

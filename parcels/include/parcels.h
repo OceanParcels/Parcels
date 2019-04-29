@@ -14,11 +14,6 @@ extern "C" {
 #define min(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define max(X, Y) (((X) > (Y)) ? (X) : (Y))
 
-typedef enum
-  {
-    LINEAR=0, NEAREST=1, CGRID_VELOCITY=2, CGRID_TRACER=3,
-  } InterpCode;
-
 typedef struct
 {
   int xdim, ydim, zdim, tdim, igrid, allow_time_extrapolation, time_periodic;
@@ -124,11 +119,14 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
     float f0, f1;
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1); CHECKERROR(err);
-    if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY)){
-      if (interp_method == CGRID_VELOCITY){ // interpolate w
+    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, interp_method); CHECKERROR(err);
+    if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY) || (interp_method == BGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)){
+      if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)){ // interpolate w
         xsi = 1;
         eta = 1;
+      }
+      else if (interp_method == BGRID_VELOCITY){
+          zeta = 0;
       }
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
@@ -149,7 +147,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
                                               (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
       }
     }
-	else if  (interp_method == CGRID_TRACER){
+	else if  ((interp_method == CGRID_TRACER) || (interp_method == BGRID_TRACER)){
       if (grid->zdim==1){
         err = spatial_interpolation_tracer_c_grid_2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0);
         err = spatial_interpolation_tracer_c_grid_2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1);
@@ -167,14 +165,17 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
     return SUCCESS;
   } else {
     double t0 = grid->time[ti[igrid]];
-    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
-    if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY)){
-      if (interp_method == CGRID_VELOCITY){ // interpolate w
+    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, interp_method); CHECKERROR(err);
+    if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY) || (interp_method == BGRID_VELOCITY) ||(interp_method == BGRID_W_VELOCITY)){
+      if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)){ // interpolate w
         xsi = 1;
         eta = 1;
         if (grid->zdim==1)
           return ERROR;
       }
+      else if (interp_method == BGRID_VELOCITY){
+        zeta = 0;
+      }    
       if (grid->zdim==1){
         err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       }
@@ -192,8 +193,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
                                              (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       }
     }
-	else if (interp_method == CGRID_TRACER){
-		
+    else if ((interp_method == CGRID_TRACER) || (interp_method == BGRID_TRACER)){
       if (grid->zdim==1){
         err = spatial_interpolation_tracer_c_grid_2D(xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value);
 	  }
@@ -327,7 +327,7 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     float u0, u1, v0, v1;
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, CGRID_VELOCITY); CHECKERROR(err);
     if (grid->zdim==1){
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1); CHECKERROR(err);
@@ -340,7 +340,7 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     return SUCCESS;
   } else {
     double t0 = grid->time[ti[igrid]];
-    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY); CHECKERROR(err);
     if (grid->zdim==1){
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
     }
@@ -515,7 +515,7 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(type_coord x, type_coor
     float u0, u1, v0, v1, w0, w1;
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
-    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], time, t0, t1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], time, t0, t1, CGRID_VELOCITY); CHECKERROR(err);
     if (grid->zdim==1){
       return ERROR;
     } else {
@@ -528,7 +528,7 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(type_coord x, type_coor
     return SUCCESS;
   } else {
     double t0 = grid->time[ti[igrid]];
-    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], t0, t0, t0+1); CHECKERROR(err);
+    err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY); CHECKERROR(err);
     if (grid->zdim==1){
       return ERROR;
     }
@@ -601,6 +601,8 @@ static inline ErrorCode temporal_interpolationUVW(type_coord x, type_coord y, ty
     }
   }
   err = temporal_interpolationUV(x, y, z, time, U, V, vxi, vyi, vzi, vti, valueU, valueV, interp_method); CHECKERROR(err);
+  if (interp_method == BGRID_VELOCITY)
+    interp_method = BGRID_W_VELOCITY;
   err = temporal_interpolation(x, y, z, time, W, vxi, vyi, vzi, vti, valueW, interp_method); CHECKERROR(err);
   return SUCCESS;
 }

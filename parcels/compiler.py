@@ -75,7 +75,7 @@ class GNUCompiler(Compiler):
             ldargs = []
 
         opt_flags = ['-g', '-O3']
-        arch_flag = ['-m64' if calcsize("P") is 8 else '-m32']
+        arch_flag = ['-m64' if calcsize("P") == 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
         ldargs = ['-shared'] + ldargs + arch_flag
