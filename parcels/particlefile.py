@@ -250,14 +250,16 @@ class ParticleFile(object):
             os.mkdir(self.tempwritedir)
 
         if len(data_dict) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1))
-            np.save(tmpfilename, data_dict)
-            self.file_list.append(tmpfilename + ".npy")
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + ".npy")
+            with open(tmpfilename, 'wb') as f:
+                np.save(f, data_dict)
+            self.file_list.append(tmpfilename)
 
         if len(data_dict_once) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + '_once')
-            np.save(tmpfilename, data_dict_once)
-            self.file_list_once.append(tmpfilename + ".npy")
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + '_once.npy')
+            with open(tmpfilename, 'wb') as f:
+                np.save(f, data_dict_once)
+            self.file_list_once.append(tmpfilename)
 
         self.to_export = True
 
@@ -269,7 +271,8 @@ class ParticleFile(object):
         for a in attrs_to_dump:
             if hasattr(self, a):
                 pset_info[a] = getattr(self, a)
-        np.save(os.path.join(self.tempwritedir, 'pset_info.npy'), pset_info)
+        with open(os.path.join(self.tempwritedir, 'pset_info.npy'), 'wb') as f:
+            np.save(f, pset_info)
 
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to a temporary npy-file
