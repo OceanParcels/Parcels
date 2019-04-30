@@ -5,6 +5,7 @@ from datetime import timedelta as delta
 from parcels.tools.loggers import logger
 import os
 import psutil
+import shutil
 import string
 import random
 from parcels.tools.error import ErrorCode
@@ -98,7 +99,7 @@ class ParticleFile(object):
         extension = os.path.splitext(str(self.name))[1]
         fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         if os.path.exists(str(fname)):
-            os.system("rm -rf " + str(fname))
+            os.remove(str(fname))
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", data_shape[1])
         self.dataset.createDimension("traj", data_shape[0])
@@ -330,4 +331,4 @@ class ParticleFile(object):
     def delete_tempwritedir(self):
         """Deleted all temporary npy files"""
         if os.path.exists(self.tempwritedir):
-            os.system("rm -rf "+self.tempwritedir)
+            shutil.rmtree(self.tempwritedir)
