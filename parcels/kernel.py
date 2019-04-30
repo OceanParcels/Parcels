@@ -4,7 +4,8 @@ from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField
 from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
-from parcels.rng import _parcels_random_info
+#from parcels.rng import _parcels_random_info
+import parcels.rng as parcels_random
 from os import path, remove
 import numpy as np
 import numpy.ctypeslib as npct
@@ -214,7 +215,9 @@ class Kernel(object):
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
 
-        for p in pset.particles:
+        for pi, p in zip(range(len(pset)), pset.particles):
+            parcels_random.seed(1234+pi)
+            random.seed(1234+pi)
             ptype = p.getPType()
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)

@@ -48,7 +48,7 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     lats = np.array([p.lat for p in pset])
     lons = np.array([p.lon for p in pset])
 
-    tol = 200*mesh_conversion  # effectively 200 m errors
+    tol = 300*mesh_conversion  # effectively 200 m errors
     assert np.allclose(np.std(lats), expected_std_lat, atol=tol)
     assert np.allclose(np.std(lons), expected_std_lon, atol=tol)
     assert np.allclose(np.mean(lons), 0, atol=tol)

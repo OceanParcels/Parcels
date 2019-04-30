@@ -203,9 +203,11 @@ def test_print(fieldset, mode, capfd):
 
 def random_series(npart, rngfunc, rngargs, mode):
     random = parcels_random if mode == 'jit' else py_random
-    random.seed(1234)
     func = getattr(random, rngfunc)
-    series = [func(*rngargs) for _ in range(npart)]
+    series = [0] * npart
+    for i in range(npart):
+        random.seed(1234+i)
+        series[i] = func(*rngargs)
     random.seed(1234)  # Reset the RNG seed
     return series
 
