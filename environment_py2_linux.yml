@@ -11,6 +11,7 @@ dependencies:
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
   - git
+  - gcc_linux-64
   - gcc
   - gsl
   - openmp
