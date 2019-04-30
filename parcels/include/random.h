@@ -6,8 +6,8 @@ extern "C" {
 
 #include <gsl/gsl_rng.h>
 
-#define GSL_RNG_TYPE mt19937
-#define GSL_RNG_SEED 0x1UL
+//#define GSL_RNG_TYPE mt19937
+//#define GSL_RNG_SEED 0x1UL
 
 /**************************************************/
 
@@ -17,6 +17,7 @@ extern "C" {
 /**************************************************/
 
 extern gsl_rng *prng_state;
+#pragma omp threadprivate(prng_state)
 
 static inline void parcels_seed(int seed)
 {
@@ -46,7 +47,7 @@ static inline float parcels_uniform(float low, float high)
 
 static inline int parcels_randint(int low, int high)
 {
-  return (rand() % (high-low)) + low;
+  //return (rand() % (high-low)) + low;
   return (int)(gsl_rng_get(prng_state) % (high-low)) + low;
 }
 

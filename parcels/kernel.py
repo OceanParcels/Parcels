@@ -203,8 +203,9 @@ class Kernel(object):
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
         self._function(c_int(len(pset)), particle_data,
-                       c_double(endtime), c_float(dt), c_int(_parcels_random_info()[0]),
-                       c_int(_parcels_random_info()[1]), *fargs)
+                       #c_double(endtime), c_float(dt), c_int(_parcels_random_info()[0]),
+                       #c_int(_parcels_random_info()[1]), *fargs)
+                       c_double(endtime), c_float(dt), *fargs)
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
