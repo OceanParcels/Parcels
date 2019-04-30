@@ -11,6 +11,9 @@ dependencies:
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
   - git
+  - gcc
+  - gsl
+  - openmp
   - jupyter
   - matplotlib>=2.0.2
   - netcdf4>=1.1.9,<=1.4.1
