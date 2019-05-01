@@ -122,8 +122,8 @@ class ParticleFile(object):
         if self.time_origin.calendar is None:
             self.time.units = "seconds"
         else:
-            self.time.units = "seconds since " + str(self.particleset.time_origin)
-            self.time.calendar = 'standard' if self.particleset.time_origin.calendar == 'np_datetime64' else self.particleset.time_origin.calendar
+            self.time.units = "seconds since " + str(self.time_origin)
+            self.time.calendar = 'standard' if self.time_origin.calendar == 'np_datetime64' else self.time_origin.calendar
         self.time.axis = "T"
 
         if self.lonlatdepth_dtype is np.float64:
