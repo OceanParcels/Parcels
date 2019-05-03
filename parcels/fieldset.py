@@ -89,7 +89,7 @@ class FieldSet(object):
             time = np.array(time) if not isinstance(time, np.ndarray) else time
             if isinstance(time[0], np.datetime64):
                 time_origin = TimeConverter(time[0])
-                time = np.array([time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time])
+                time = np.array([time_origin.reltime(t) for t in time])
             else:
                 time_origin = TimeConverter(0)
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
