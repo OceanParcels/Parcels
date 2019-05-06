@@ -42,6 +42,19 @@ def test_fieldset_from_data(xdim, ydim):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
+@pytest.mark.parametrize('ttype', ['float', 'datetime64'])
+@pytest.mark.parametrize('tdim', [1, 20])
+def test_fieldset_from_data_timedims(ttype, tdim):
+    data, dimensions = generate_fieldset(10, 10, tdim=tdim)
+    if ttype == 'float':
+        dimensions['time'] = np.linspace(0, 5, tdim)
+    else:
+        dimensions['time'] = [np.datetime64('2018-01-01') + np.timedelta64(t, 'D') for t in range(tdim)]
+    fieldset = FieldSet.from_data(data, dimensions)
+    for i, dtime in enumerate(dimensions['time']):
+        assert fieldset.U.grid.time_origin.fulltime(fieldset.U.grid.time[i]) == dtime
+
+
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 50])
 def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
