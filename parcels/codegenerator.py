@@ -847,7 +847,6 @@ class LoopGenerator(object):
         # Add include for Parcels, math and OpenMP header
         ccode += [str(c.Include("parcels.h", system=False))]
         ccode += [str(c.Include("math.h", system=True))]
-        ccode += [str(c.Include("omp.h", system=True))]
 
         # Define and assign extern varriable
         ccode += ["gsl_rng *prng_state = (gsl_rng *)NULL;\n"]
@@ -922,9 +921,11 @@ class LoopGenerator(object):
                          dt_pos, c.Statement("break")]), c.Statement("break"))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
+        print_omp = c.Statement('printf("p[%d] Thread %d/%d [%d]\\n", p, omp_get_thread_num(), omp_get_num_threads(), omp_get_num_procs())')
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, notstarted_continue, dt_pos,
                                    c.Statement("parcels_seed(1234+p)"),
+                                   #print_omp,
                                    time_loop]))
         # check_rng = c.If("prng_state == NULL || prev_seed != seed",
         #                  c.Block([c.Statement("gsl_rng_env_setup()"),
@@ -943,11 +944,12 @@ class LoopGenerator(object):
                          #check_rng,
                          #c.For("", "rand_c < numbers_pulled", "++rand_c",c.Statement("gsl_rng_get(prng_state)")),
                          #c.Statement("omp_set_num_threads(omp_get_num_procs())"),
-                         c.Statement("omp_set_num_threads(4)"),
                          sign_dt,
                          particle_backup,
                          #c.Pragma("omp parallel for private(p,__dt,res,sign_end_part) schedule(static)"),
+                         c.Line("#ifdef USE_OPENMP"),
                          c.Pragma("omp parallel for private(p,__dt,res,sign_end_part)"),
+                         c.Line("#endif"),
                          part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]

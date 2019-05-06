@@ -12,6 +12,8 @@ import time as time_module
 import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
+import os
+import psutil
 
 __all__ = ['ParticleSet']
 
@@ -100,6 +102,7 @@ class ParticleSet(object):
         size = len(lon)
         self.particles = np.empty(size, dtype=pclass)
         self.ptype = pclass.getPType()
+        self.omp_num_threads = None
         self.kernel = None
 
         if self.ptype.uses_jit:
@@ -288,7 +291,7 @@ class ParticleSet(object):
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
-                verbose_progress=None):
+                verbose_progress=None, omp_num_threads=True):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -317,8 +320,17 @@ class ParticleSet(object):
 
         """
 
+        if omp_num_threads is True:
+            if 'OMP_NUM_THREADS' not in os.environ:
+                os.environ['OMP_NUM_THREADS'] = str(psutil.cpu_count(logical=False))
+        elif omp_num_threads > 0:
+            os.environ['OMP_NUM_THREADS'] = str(omp_num_threads)
+
+        omp_call_compile = True if (self.omp_num_threads == None or self.omp_num_threads*omp_num_threads == 0) else False
+        self.omp_num_threads = omp_num_threads
+
         # check if pyfunc has changed since last compile. If so, recompile
-        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc) or omp_call_compile:
             # Generate and store Kernel
             if isinstance(pyfunc, Kernel):
                 self.kernel = pyfunc
@@ -327,7 +339,9 @@ class ParticleSet(object):
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else []
+                if omp_num_threads > 0:
+                    cppargs.append('-DUSE_OPENMP')
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 

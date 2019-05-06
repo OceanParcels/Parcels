@@ -4,6 +4,9 @@
 extern "C" {
 #endif
 
+#ifdef USE_OPENMP
+#include <omp.h>
+#endif
 #include <gsl/gsl_rng.h>
 
 //#define GSL_RNG_TYPE mt19937
@@ -17,7 +20,9 @@ extern "C" {
 /**************************************************/
 
 extern gsl_rng *prng_state;
+#ifdef USE_OPENMP
 #pragma omp threadprivate(prng_state)
+#endif
 
 static inline void parcels_seed(int seed)
 {
