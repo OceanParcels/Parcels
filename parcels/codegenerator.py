@@ -894,6 +894,7 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
+                c.Value("int", "seed"),
                 c.Value("double", "endtime"), c.Value("float", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
@@ -924,7 +925,7 @@ class LoopGenerator(object):
         print_omp = c.Statement('printf("p[%d] Thread %d/%d [%d]\\n", p, omp_get_thread_num(), omp_get_num_threads(), omp_get_num_procs())')
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, notstarted_continue, dt_pos,
-                                   c.Statement("parcels_seed(1234+p)"),
+                                   c.Statement("parcels_seed(seed+p)"),
                                    #print_omp,
                                    time_loop]))
         # check_rng = c.If("prng_state == NULL || prev_seed != seed",

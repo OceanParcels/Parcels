@@ -205,8 +205,10 @@ def random_series(npart, rngfunc, rngargs, mode):
     random = parcels_random if mode == 'jit' else py_random
     func = getattr(random, rngfunc)
     series = [0] * npart
+    random.seed(1234)
     for i in range(npart):
-        random.seed(1234+i)
+        if mode == 'jit':
+            random.seed(1234+i)
         series[i] = func(*rngargs)
     random.seed(1234)  # Reset the RNG seed
     return series

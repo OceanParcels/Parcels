@@ -3,6 +3,8 @@ from parcels.tools.loggers import logger
 from os import path
 import numpy.ctypeslib as npct
 from ctypes import c_int, c_float
+import random as py_random
+import sys
 import uuid
 
 
@@ -51,7 +53,7 @@ extern float pcls_expovariate(float lamb){
 
     def __init__(self):
         self._lib = None
-        self.seed = 1
+        self.seed = py_random.randint(0, sys.maxsize)
         self.numbers_pulled = 0
 
     @property

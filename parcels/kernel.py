@@ -4,7 +4,7 @@ from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
 from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField
 from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
-#from parcels.rng import _parcels_random_info
+from parcels.rng import _parcels_random_info, seed
 import parcels.rng as parcels_random
 from os import path, remove
 import numpy as np
@@ -203,10 +203,13 @@ class Kernel(object):
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-        self._function(c_int(len(pset)), particle_data,
+
+        pset_seed = _parcels_random_info()[0]
+        self._function(c_int(len(pset)), particle_data, c_int(pset_seed),
                        #c_double(endtime), c_float(dt), c_int(_parcels_random_info()[0]),
                        #c_int(_parcels_random_info()[1]), *fargs)
                        c_double(endtime), c_float(dt), *fargs)
+        seed(pset_seed + len(pset))
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -215,9 +218,9 @@ class Kernel(object):
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
 
+        pset_seed = _parcels_random_info()[0]
+        seed(pset_seed)
         for pi, p in zip(range(len(pset)), pset.particles):
-            parcels_random.seed(1234+pi)
-            random.seed(1234+pi)
             ptype = p.getPType()
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
@@ -260,6 +263,7 @@ class Kernel(object):
                     break
                 else:
                     break  # Failure - stop time loop
+        seed(pset_seed + len(pset))
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
