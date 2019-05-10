@@ -93,7 +93,7 @@ def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
     tol = 2000*mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
     assert np.allclose(np.mean(lons), 0, atol=tol)
     assert np.allclose(np.mean(lats), 0, atol=tol)
-    assert(stats.skew(lons) > stats.skew(lats))
+    assert(stats.skew(lons) > 0.)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
