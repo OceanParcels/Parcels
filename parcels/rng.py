@@ -8,7 +8,7 @@ import sys
 import uuid
 
 
-__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', '_parcels_random_info']
+__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'get_seed']
 
 
 class Random(object):
@@ -54,7 +54,6 @@ extern float pcls_expovariate(float lamb){
     def __init__(self):
         self._lib = None
         self.seed = py_random.randint(0, sys.maxsize)
-        self.numbers_pulled = 0
 
     @property
     def lib(self, compiler=GNUCompiler()):
@@ -70,16 +69,15 @@ extern float pcls_expovariate(float lamb){
 parcels_random = Random()
 
 
-def _parcels_random_info():
-    """Give the current seed and the times a number was pulled of the rng object."""
-    return parcels_random.seed, parcels_random.numbers_pulled
+def get_seed():
+    """Give the current seed of the rng object."""
+    return parcels_random.seed
 
 
 def seed(seed):
     """Sets the seed for parcels internal RNG"""
     parcels_random.lib.pcls_seed(c_int(seed))
     parcels_random.seed = seed
-    parcels_random.numbers_pulled = 0
 
 
 def random():
@@ -87,7 +85,6 @@ def random():
     rnd = parcels_random.lib.pcls_random
     rnd.argtype = []
     rnd.restype = c_float
-    parcels_random.numbers_pulled += 1
     return rnd()
 
 
@@ -96,7 +93,6 @@ def uniform(low, high):
     rnd = parcels_random.lib.pcls_uniform
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
-    parcels_random.numbers_pulled += 1
     return rnd(c_float(low), c_float(high))
 
 
@@ -105,7 +101,6 @@ def randint(low, high):
     rnd = parcels_random.lib.pcls_randint
     rnd.argtype = [c_int, c_int]
     rnd.restype = c_int
-    parcels_random.numbers_pulled += 1
     return rnd(c_int(low), c_int(high))
 
 
@@ -114,7 +109,6 @@ def normalvariate(loc, scale):
     rnd = parcels_random.lib.pcls_normalvariate
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
-    parcels_random.numbers_pulled += 2
     return rnd(c_float(loc), c_float(scale))
 
 
