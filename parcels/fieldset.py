@@ -86,7 +86,13 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
+            time = np.array(time) if not isinstance(time, np.ndarray) else time
+            if isinstance(time[0], np.datetime64):
+                time_origin = TimeConverter(time[0])
+                time = np.array([time_origin.reltime(t) for t in time])
+            else:
+                time_origin = TimeConverter(0)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 
