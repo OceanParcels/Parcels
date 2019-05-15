@@ -12,6 +12,8 @@ import time as time_module
 import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
+from sklearn.cluster import KMeans
+from mpi4py import MPI
 
 __all__ = ['ParticleSet']
 
@@ -64,6 +66,28 @@ class ParticleSet(object):
         time = [time] * len(lat) if not isinstance(time, list) else time
         time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
         time = [np.datetime64(t) if isinstance(t, date) else t for t in time]
+
+
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        mpi_size = mpi_comm.Get_size()
+        if mpi_rank == 0:
+            coords = np.vstack((lon, lat)).transpose()
+            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+            partition = kmeans.labels_
+        else:
+            partition = None
+        partition = mpi_comm.bcast(partition, root=0)
+        lon = np.array(lon)[partition == mpi_rank]
+        lat = np.array(lat)[partition == mpi_rank]
+        time = np.array(time)[partition == mpi_rank]
+        depth = np.array(depth)[partition == mpi_rank]
+        lon = convert_to_list(lon)
+        lat = convert_to_list(lat)
+        time = convert_to_list(time)
+        depth = convert_to_list(depth)
+
+
         self.time_origin = fieldset.time_origin
         if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
