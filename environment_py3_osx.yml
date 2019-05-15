@@ -26,3 +26,5 @@ dependencies:
   - cftime
   - pytest<4.0
   - nbval
+  - conda-forge::mpi4py
+  - conda-forge::mpich
