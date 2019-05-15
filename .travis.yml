@@ -27,7 +27,7 @@ install:
     - export PATH="$HOME/miniconda/bin:$PATH"
     - conda env create --name parcels --file environment_py${PY_VERSION}_${TRAVIS_OS_NAME}.yml
     - source activate parcels
-    - conda install --yes libgcc=5.2.0 
+    - if [ "$TRAVIS_OS_NAME" = "linux" ]; then conda install --yes libgcc=5.2.0; fi
     - python setup.py install
 
 script:
