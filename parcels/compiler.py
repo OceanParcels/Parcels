@@ -2,6 +2,7 @@ import subprocess
 from os import path, getenv
 from tempfile import gettempdir
 from struct import calcsize
+import sys
 try:
     from pathlib import Path
 except ImportError:
@@ -79,4 +80,5 @@ class GNUCompiler(Compiler):
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
         ldargs = ['-shared'] + ldargs + arch_flag + ['-lgsl', '-lgslcblas', '-fopenmp']
-        super(GNUCompiler, self).__init__("mpicc", cppargs=cppargs, ldargs=ldargs)
+        ccompiler = "gcc" if sys.platform == "win32" else "mpicc"
+        super(GNUCompiler, self).__init__(ccompiler, cppargs=cppargs, ldargs=ldargs)
