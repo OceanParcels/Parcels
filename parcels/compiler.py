@@ -2,6 +2,7 @@ import subprocess
 from os import path, getenv
 from tempfile import gettempdir
 from struct import calcsize
+from parcels.tools.loggers import logger
 import sys
 try:
     from pathlib import Path
@@ -79,6 +80,12 @@ class GNUCompiler(Compiler):
         arch_flag = ['-m64' if calcsize("P") == 8 else '-m32']
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
-        ldargs = ['-shared'] + ldargs + arch_flag + ['-lgsl', '-lgslcblas', '-fopenmp']
+        ldargs = ['-shared'] + ldargs + arch_flag + ['-lgsl', '-lgslcblas']
+        if '-DUSE_OPENMP' in cppargs:
+            if sys.platform == 'win32' and sys.version_info.major == 2 and sys.version_info.minor == 7:
+                cppargs.remove('-DUSE_OPENMP')
+                logger.warning_once("OpenMP is disabled on Windows python 2.7. Please upgrade to Python 3 to use it.")
+            else:
+                ldargs += ['-fopenmp']
         ccompiler = "gcc" if sys.platform == "win32" else "mpicc"
         super(GNUCompiler, self).__init__(ccompiler, cppargs=cppargs, ldargs=ldargs)
