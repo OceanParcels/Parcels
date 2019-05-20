@@ -203,10 +203,10 @@ class Kernel(object):
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
 
-        pset_seed = parcels_random.get_seed()
+        pset_seed = parcels_random.get_seed()[0]
         self._function(c_int(len(pset)), particle_data, c_int(pset_seed),
                        c_double(endtime), c_float(dt), *fargs)
-        parcels_random.seed(pset_seed + len(pset))
+        parcels_random.seed(pset_seed + len(pset), c_seed=False)
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -215,8 +215,6 @@ class Kernel(object):
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
 
-        pset_seed = parcels_random.get_seed()
-        parcels_random.seed(pset_seed)
         for p in pset.particles:
             ptype = p.getPType()
             # Don't execute particles that aren't started yet
@@ -260,7 +258,9 @@ class Kernel(object):
                     break
                 else:
                     break  # Failure - stop time loop
-        parcels_random.seed(pset_seed + len(pset))
+        pset_seed = parcels_random.get_seed()
+        if pset_seed[1]:
+            parcels_random.seed(pset_seed[0] + len(pset))
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""

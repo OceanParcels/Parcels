@@ -54,6 +54,7 @@ extern float pcls_expovariate(float lamb){
     def __init__(self):
         self._lib = None
         self.seed = py_random.randint(0, sys.maxsize)
+        self.c_seeded = False
 
     @property
     def lib(self, compiler=GNUCompiler()):
@@ -71,17 +72,21 @@ parcels_random = Random()
 
 def get_seed():
     """Give the current seed of the rng object."""
-    return parcels_random.seed
+    return parcels_random.seed, parcels_random.c_seeded
 
 
-def seed(seed):
+def seed(seed, c_seed=True):
     """Sets the seed for parcels internal RNG"""
-    parcels_random.lib.pcls_seed(c_int(seed))
+    if c_seed:
+        parcels_random.lib.pcls_seed(c_int(seed))
     parcels_random.seed = seed
+    parcels_random.c_seeded = True
 
 
 def random():
     """Returns a random float between 0. and 1."""
+    if not parcels_random.c_seeded:
+        seed(parcels_random.seed)
     rnd = parcels_random.lib.pcls_random
     rnd.argtype = []
     rnd.restype = c_float
@@ -90,6 +95,8 @@ def random():
 
 def uniform(low, high):
     """Returns a random float between `low` and `high`"""
+    if not parcels_random.c_seeded:
+        seed(parcels_random.seed)
     rnd = parcels_random.lib.pcls_uniform
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
@@ -98,6 +105,8 @@ def uniform(low, high):
 
 def randint(low, high):
     """Returns a random int between `low` and `high`"""
+    if not parcels_random.c_seeded:
+        seed(parcels_random.seed)
     rnd = parcels_random.lib.pcls_randint
     rnd.argtype = [c_int, c_int]
     rnd.restype = c_int
@@ -106,6 +115,8 @@ def randint(low, high):
 
 def normalvariate(loc, scale):
     """Returns a random float on normal distribution with mean `loc` and width `scale`"""
+    if not parcels_random.c_seeded:
+        seed(parcels_random.seed)
     rnd = parcels_random.lib.pcls_normalvariate
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
@@ -114,6 +125,8 @@ def normalvariate(loc, scale):
 
 def expovariate(lamb):
     """Returns a randome float of an exponential distribution with parameter lamb"""
+    if not parcels_random.c_seeded:
+        seed(parcels_random.seed)
     rnd = parcels_random.lib.pcls_expovariate
     rnd.argtype = c_float
     rnd.restype = c_float
