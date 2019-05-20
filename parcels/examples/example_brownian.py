@@ -25,7 +25,7 @@ def zeros_fieldset(xdim=2, ydim=2, mesh='flat'):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_brownian_example(mode, mesh, npart=3000):
+def test_brownian_example(mode, mesh, npart=30000):
     fieldset = zeros_fieldset(mesh=mesh)
 
     # Set diffusion constants.
@@ -38,7 +38,7 @@ def test_brownian_example(mode, mesh, npart=3000):
     fieldset.add_field(Field('Kh_meridional', kh_meridional*np.ones((2, 2)), grid=grid))
 
     # Set random seed
-    random.seed(123456)
+    random.seed(1234)
 
     runtime = delta(days=1)
 
