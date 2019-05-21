@@ -605,6 +605,7 @@ class FieldSet(object):
 
         :param ds: xarray Dataset.
                Note that the built-in Advection kernels assume that U and V are in m/s
+        :param variables: Dictionary mapping parcels variable names to data variables in the xarray Dataset.
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the xarray Dataset.
                Note that dimensions can also be a dictionary of dictionaries if
