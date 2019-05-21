@@ -11,8 +11,8 @@ dependencies:
   - flake8>=2.1.0
   - git
   - gcc_linux-64
-  - conda-forge:mpi4py
-  - conda-forge:mpich
+  - mpi4py>=3.0.1
+  - mpich>=3.2.1
   - gsl
   - openmp
   - jupyter

@@ -11,8 +11,8 @@ dependencies:
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
   - git
-  - conda-forge:mpi4py
-  - conda-forge:mpich
+  - mpi4py>=3.0.1
+  - mpich>=3.2.1
   - gsl
   - openmp
   - jupyter
