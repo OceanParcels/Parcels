@@ -731,6 +731,13 @@ class FieldSet(object):
             f.advancetime(fnew, advance == 1)
 
     def computeTimeChunk(self, time, dt):
+        """Load a chunk of three data time steps into the FieldSet.
+        This is used when FieldSet uses data imported from netcdf,
+        with default option deferred_load. The loaded time steps are at or immediatly before time
+        and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+        :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
+        :param dt: time step of the integration scheme
+        """
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
 
