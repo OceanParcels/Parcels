@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable
+from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable
 from datetime import timedelta as delta
 from os import path
 from glob import glob
@@ -40,6 +40,14 @@ def test_globcurrent_fieldset(use_xarray):
     assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
     assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices['lon']])
     assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices['lat']])
+
+
+def test_fieldwildcard():
+    fieldset = set_globcurrent_fieldset()
+    U = Field.from_netcdf(path.join(path.dirname(__file__), 'GlobCurrent_example_data', '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc'),
+                          ('U', 'eastward_eulerian_current_velocity'),
+                          {'lat': 'lat', 'lon': 'lon', 'time': 'time'})
+    assert np.allclose(fieldset.U.grid.time, U.grid.time)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
