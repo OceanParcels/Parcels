@@ -281,8 +281,12 @@ class Field(object):
                 time[0] = 0
             time_origin = TimeConverter(time[0])
             time = time_origin.reltime(time)
-            assert np.all((time[1:]-time[:-1]) > 0), ('time must me strictly '
-                                                      'monotonically rising')
+            
+            if not np.all((time[1:]-time[:-1]) > 0):
+                id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
+                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s' 
+                                     % (dataFiles[id_not_ordered],dataFiles[id_not_ordered+1]))
+
 
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
