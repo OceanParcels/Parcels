@@ -231,7 +231,7 @@ class JITParticle(ScipyParticle):
 
         fieldset = kwargs.get('fieldset')
         for index in ['xi', 'yi', 'zi', 'ti']:
-            if index is not 'ti':
+            if index != 'ti':
                 setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
             else:
                 setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))

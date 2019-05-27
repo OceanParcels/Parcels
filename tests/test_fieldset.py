@@ -42,6 +42,19 @@ def test_fieldset_from_data(xdim, ydim):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
+@pytest.mark.parametrize('ttype', ['float', 'datetime64'])
+@pytest.mark.parametrize('tdim', [1, 20])
+def test_fieldset_from_data_timedims(ttype, tdim):
+    data, dimensions = generate_fieldset(10, 10, tdim=tdim)
+    if ttype == 'float':
+        dimensions['time'] = np.linspace(0, 5, tdim)
+    else:
+        dimensions['time'] = [np.datetime64('2018-01-01') + np.timedelta64(t, 'D') for t in range(tdim)]
+    fieldset = FieldSet.from_data(data, dimensions)
+    for i, dtime in enumerate(dimensions['time']):
+        assert fieldset.U.grid.time_origin.fulltime(fieldset.U.grid.time[i]) == dtime
+
+
 @pytest.mark.parametrize('xdim', [100, 200])
 @pytest.mark.parametrize('ydim', [100, 50])
 def test_fieldset_from_data_different_dimensions(xdim, ydim, zdim=4, tdim=2):
@@ -156,6 +169,25 @@ def test_add_field(xdim, ydim, tmpdir, filename='test_add'):
     fieldset.add_field(field)
     assert fieldset.newfld.data.shape == fieldset.U.data.shape
     fieldset.write(filepath)
+
+
+@pytest.mark.parametrize('dupobject', ['same', 'new'])
+def test_add_duplicate_field(dupobject):
+    data, dimensions = generate_fieldset(100, 100)
+    fieldset = FieldSet.from_data(data, dimensions)
+    field = Field('newfld', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
+    fieldset.add_field(field)
+    error_thrown = False
+    try:
+        if dupobject == 'same':
+            fieldset.add_field(field)
+        elif dupobject == 'new':
+            field2 = Field('newfld', np.ones((2, 2)), lon=np.array([0, 1]), lat=np.array([0, 2]))
+            fieldset.add_field(field2)
+    except RuntimeError:
+        error_thrown = True
+
+    assert error_thrown
 
 
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
@@ -305,6 +337,7 @@ def test_periodic(mode, time_periodic, dt_sign):
 
     U = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     V = np.zeros((2, 2, 2, tsize), dtype=np.float32)
+    V[0, 0, 0, :] = 1e-5
     W = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     temp = np.zeros((2, 2, 2, tsize), dtype=np.float32)
     temp[:, :, :, :] = temp_vec
@@ -318,9 +351,16 @@ def test_periodic(mode, time_periodic, dt_sign):
         # Indeed, sampleTemp is called at time=time, but the result is written
         # at time=time+dt, after the Kernel update
         particle.temp = fieldset.temp[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        # test if we can interpolate UV and UVW together
+        (particle.u1, particle.v1) = fieldset.UV[time+particle.dt, particle.depth, particle.lat, particle.lon]
+        (particle.u2, particle.v2, w_) = fieldset.UVW[time+particle.dt, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32, initial=20.)
+        u1 = Variable('u1', dtype=np.float32, initial=0.)
+        u2 = Variable('u2', dtype=np.float32, initial=0.)
+        v1 = Variable('v1', dtype=np.float32, initial=0.)
+        v2 = Variable('v2', dtype=np.float32, initial=0.)
 
     dt_sign = -1
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle,
@@ -336,6 +376,8 @@ def test_periodic(mode, time_periodic, dt_sign):
     elif dt_sign == -1:
         temp_theo = temp_vec[0]
     assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)
+    assert np.allclose(pset.particles[0].u1, pset.particles[0].u2)
+    assert np.allclose(pset.particles[0].v1, pset.particles[0].v2)
 
 
 @pytest.mark.parametrize('fail', [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])

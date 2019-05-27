@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldSamplingError, Field, SummedField, NestedField
+from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField
 from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -114,15 +114,12 @@ class Kernel(object):
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
-            for fname in self.vector_field_args:
-                f = getattr(fieldset, fname)
-                Wname = f.W.name if f.W else 'not_defined'
-                for sF in [f.U.name, f.V.name, Wname]:
-                    if sF not in self.field_args:
-                        try:
-                            self.field_args[sF] = getattr(fieldset, sF)
-                        except:
-                            continue
+            for f in self.vector_field_args.values():
+                Wname = f.W.ccode_name if f.W else 'not_defined'
+                for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
+                    if sF_name not in self.field_args:
+                        if sF_name != 'not_defined':
+                            self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
@@ -229,7 +226,7 @@ class Kernel(object):
                 try:
                     p.dt = sign_dt * dt_pos
                     res = self.pyfunc(p, pset.fieldset, p.time)
-                except FieldSamplingError as fse:
+                except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
                 except Exception as e:

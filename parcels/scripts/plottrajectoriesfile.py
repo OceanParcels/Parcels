@@ -51,7 +51,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         record = pfile.variables[recordedvar]
     pfile.close()
 
-    if tracerfile is not None and mode is not 'hist2d':
+    if tracerfile is not None and mode != 'hist2d':
         tracerfld = Field.from_netcdf(tracerfile, tracerfield, {'lon': tracerlon, 'lat': tracerlat})
         plt, fig, ax, cartopy = plotfield(tracerfld)
         if plt is None:
