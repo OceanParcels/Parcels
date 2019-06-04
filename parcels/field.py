@@ -10,7 +10,6 @@ from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
 import datetime
 import math
-from glob import glob
 from .grid import Grid, CGrid, GridCode
 
 
@@ -140,27 +139,14 @@ class Field(object):
         self.data_full_zdim = kwargs.pop('data_full_zdim', None)
 
     @classmethod
-    def parse_wildcards(cls, filenames):
-        if isinstance(filenames, str):
-            filenames = sorted(glob(str(filenames)))
-        if len(filenames) == 0:
-            raise IOError("Field files not found: %s" % str(filenames))
-        for fp in filenames:
-            if not path.exists(fp):
-                raise IOError("Field file not found: %s" % str(fp))
-        return filenames
-
-    @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, **kwargs):
         """Create field from netCDF file
 
-        :param filenames: list of filenames to read for the field.
-               Note that wildcards ('*') are also allowed
-               filenames can be a list [files]
-               or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
-               time values are in filenames[data]
+        :param filenames: list of filenames to read for the field. filenames can be a list [files] or
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
+               In the latetr case, time values are in filenames[data]
         :param variable: Tuple mapping field name to variable name in the NetCDF file.
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
@@ -205,7 +191,8 @@ class Field(object):
             if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
                 variable = (variable, variable)
             assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
-            filenames = cls.parse_wildcards(filenames)
+            if not isinstance(filenames, collections.Iterable) or isinstance(filenames, str):
+                filenames = [filenames]
 
             data_filenames = filenames['data'] if type(filenames) is dict else filenames
             if type(filenames) == dict:
