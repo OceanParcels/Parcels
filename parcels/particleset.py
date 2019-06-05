@@ -326,7 +326,7 @@ class ParticleSet(object):
         elif omp_num_threads > 0:
             os.environ['OMP_NUM_THREADS'] = str(omp_num_threads)
 
-        omp_call_compile = True if (self.omp_num_threads is None or self.omp_num_threads*omp_num_threads == 0) else False
+        omp_call_compile = True if (self.omp_num_threads is None or (self.omp_num_threads==False and omp_num_threads != False) or (self.omp_num_threads!=False and omp_num_threads == False)) else False
         self.omp_num_threads = omp_num_threads
 
         # check if pyfunc has changed since last compile. If so, recompile
