@@ -144,11 +144,9 @@ class Field(object):
                     deferred_load=True, **kwargs):
         """Create field from netCDF file
 
-        :param filenames: list of filenames to read for the field.
-               Note that wildcards ('*') are also allowed
-               filenames can be a list [files]
-               or a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
-               time values are in filenames[data]
+        :param filenames: list of filenames to read for the field. filenames can be a list [files] or
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data)
+               In the latetr case, time values are in filenames[data]
         :param variable: Tuple mapping field name to variable name in the NetCDF file.
         :param dimensions: Dictionary mapping variable names for the relevant dimensions in the NetCDF file
         :param indices: dictionary mapping indices for each dimension to read from file.
