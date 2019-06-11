@@ -1,6 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
-from parcels.tools.converters import TimeConverter
+from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -8,6 +8,7 @@ import xarray as xr
 import math
 import pytest
 from os import path
+import cftime
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -98,15 +99,12 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
-@pytest.mark.parametrize('calendar', ['noleap', '360day'])
-def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
-    from cftime import DatetimeNoLeap, Datetime360Day
+@pytest.mark.parametrize('calendar, cftime_datetime',
+                         zip(_get_cftime_calendars(),
+                            _get_cftime_datetimes()))
+def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
     filepath = tmpdir.join(filename)
-
-    if calendar == 'noleap':
-        dates = [DatetimeNoLeap(0, m, 1) for m in range(1, 13)]
-    else:
-        dates = [Datetime360Day(0, m, 1) for m in range(1, 13)]
+    dates = [getattr(cftime, cftime_datetime)(1, m, 1) for m in range(1, 13)]
     da = xr.DataArray(np.random.rand(12, xdim, ydim),
                       coords=[dates, range(xdim), range(ydim)],
                       dims=['time', 'lon', 'lat'], name='U')
@@ -114,7 +112,7 @@ def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardti
 
     dims = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
     field = Field.from_netcdf(filepath, 'U', dims)
-    assert field.grid.time_origin.calendar == 'cftime'
+    assert field.grid.time_origin.calendar == calendar
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])

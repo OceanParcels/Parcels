@@ -1,6 +1,9 @@
-from Parcels import _set_calendar
+from parcels.particlefile import _set_calendar
+from parcels.tools.converts import _get_cftime_calendars, _get_cftime_datetimes
 import cftime
 
-@pytest.mark.parametrize('time_origin', [])
 def test_set_calendar():
-    pass
+    for calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes()):
+        date = cf_datetime(1990,1,1)
+        assert _set_calendar(date.calendar) == date.calendar
+    assert _set_calendar('np_datetime64') == 'standard'
