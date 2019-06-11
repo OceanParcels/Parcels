@@ -1,5 +1,5 @@
 from parcels.particlefile import _set_calendar
-from parcels.tools.converts import _get_cftime_calendars, _get_cftime_datetimes
+from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 import cftime
 
 def test_set_calendar():
