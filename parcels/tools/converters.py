@@ -8,14 +8,16 @@ __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
            'GeographicPolarSquare', 'unitconverters_map',
            'TimeConverter']
 
+
 def _get_cftime_datetimes():
     # Is there a more elegant way to parse these from cftime?
     cftime_calendars = tuple(x[1].__name__ for x in inspect.getmembers(cftime._cftime, inspect.isclass))
     cftime_datetime_names = [ca for ca in cftime_calendars if 'Datetime' in ca]
     return cftime_datetime_names
 
+
 def _get_cftime_calendars():
-    return [getattr(cftime, cf_datetime)(1990,1,1).calendar for cf_datetime in _get_cftime_datetimes()]
+    return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
 
 
 class TimeConverter(object):

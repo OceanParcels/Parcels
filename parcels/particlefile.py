@@ -22,11 +22,13 @@ def _is_particle_started_yet(particle, time):
     """
     return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
 
+
 def _set_calendar(origin_calendar):
     if origin_calendar == 'np_datetime64':
         return 'standard'
     else:
         return origin_calendar
+
 
 class ParticleFile(object):
     """Initialise netCDF4.Dataset for trajectory output.
@@ -62,7 +64,6 @@ class ParticleFile(object):
 
         self.dataset = None
         self.particleset = particleset
-
 
     def open_dataset(self):
         extension = path.splitext(str(self.name))[1]

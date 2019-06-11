@@ -101,7 +101,7 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
 
 @pytest.mark.parametrize('calendar, cftime_datetime',
                          zip(_get_cftime_calendars(),
-                            _get_cftime_datetimes()))
+                             _get_cftime_datetimes()))
 def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
     filepath = tmpdir.join(filename)
     dates = [getattr(cftime, cftime_datetime)(1, m, 1) for m in range(1, 13)]
