@@ -9,8 +9,10 @@ dependencies:
   - coverage
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
-  - gcc_linux-64
   - git
+  - gcc_linux-64
+  - mpi4py>=3.0.1
+  - mpich>=3.2.1
   - jupyter
   - matplotlib>=2.0.2
   - netcdf4>=1.1.9,<=1.4.1
@@ -26,3 +28,4 @@ dependencies:
   - dask
   - pytest<4.0
   - nbval
+  - scikit-learn
