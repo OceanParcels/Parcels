@@ -223,6 +223,25 @@ class RectilinearGrid(Grid):
             self.ydim = self.lat.size
             self.meridional_halo = halosize
         self.lonlat_minmax = np.array([np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32)
+        if isinstance(self, RectilinearSGrid):
+            if zonal:
+                if len(self.depth.shape) == 3:
+                    self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
+                                                 self.depth[:, :, 0:halosize]), axis=len(self.depth.shape)-1)
+                    assert self.depth.shape[2] == self.xdim, "Third dim must be x."
+                else:
+                    self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
+                                                 self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                    assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
+            if meridional:
+                if len(self.depth.shape) == 3:
+                    self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
+                                                 self.depth[:, 0:halosize, :]), axis=len(self.depth.shape)-2)
+                    assert self.depth.shape[1] == self.ydim, "Second dim must be y."
+                else:
+                    self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
+                                                 self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                    assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -352,6 +371,25 @@ class CurvilinearGrid(Grid):
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
+        if isinstance(self, CurvilinearSGrid):
+            if zonal:
+                if len(self.depth.shape) == 3:
+                    self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
+                                                 self.depth[:, :, 0:halosize]), axis=len(self.depth.shape)-1)
+                    assert self.depth.shape[2] == self.xdim, "Third dim must be x."
+                else:
+                    self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
+                                                 self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                    assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
+            if meridional:
+                if len(self.depth.shape) == 3:
+                    self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
+                                                 self.depth[:, 0:halosize, :]), axis=len(self.depth.shape)-2)
+                    assert self.depth.shape[1] == self.ydim, "Second dim must be y."
+                else:
+                    self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
+                                                 self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                    assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
 
 class CurvilinearZGrid(CurvilinearGrid):
