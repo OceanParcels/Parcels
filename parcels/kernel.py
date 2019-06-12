@@ -1,7 +1,7 @@
 from parcels.codegenerator import KernelGenerator, LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField
+from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField, VectorField
 from parcels.tools.loggers import logger
 from parcels.kernels.advection import AdvectionRK4_3D
 from os import path, remove
@@ -180,6 +180,10 @@ class Kernel(object):
         self._function = self._lib.particle_loop
 
     def execute_jit(self, pset, endtime, dt):
+        for f in self.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            f.data = np.array(f.data)
         """Invokes JIT engine to perform the core update loop"""
         if len(pset.particles) > 0:
             assert pset.fieldset.gridset.size == len(pset.particles[0].xi), \
@@ -210,6 +214,11 @@ class Kernel(object):
 
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
+
+        for f in self.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            f.data = np.array(f.data)
 
         for p in pset.particles:
             ptype = p.getPType()

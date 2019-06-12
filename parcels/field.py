@@ -11,6 +11,7 @@ import xarray as xr
 import datetime
 import math
 from .grid import Grid, CGrid, GridCode
+import dask.array as da
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -279,12 +280,11 @@ class Field(object):
                 time[0] = 0
             time_origin = TimeConverter(time[0])
             time = time_origin.reltime(time)
-            
+
             if not np.all((time[1:]-time[:-1]) > 0):
                 id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s' 
-                                     % (dataFiles[id_not_ordered],dataFiles[id_not_ordered+1]))
-
+                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
+                                     % (dataFiles[id_not_ordered], dataFiles[id_not_ordered+1]))
 
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
@@ -299,6 +299,7 @@ class Field(object):
         if grid.time.size <= 3 or deferred_load is False:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+            data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
@@ -310,15 +311,16 @@ class Field(object):
                     else:
                         filebuffer.name = filebuffer.parse_name(variable[1])
                     if len(filebuffer.data.shape) == 2:
-                        data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
+                        data_list.append(filebuffer.data.reshape(sum(((len(tslice), 1), filebuffer.data.shape), ())))
                     elif len(filebuffer.data.shape) == 3:
                         if len(filebuffer.indices['depth']) > 1:
-                            data[ti:ti+len(tslice), :, :, :] = filebuffer.data
+                            data_list.append(filebuffer.data)
                         else:
-                            data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
+                            data_list.append(filebuffer.data.reshape(sum(((len(tslice), 1), filebuffer.data.shape[1:]), ())))
                     else:
-                        data[ti:ti+len(tslice), :, :, :] = filebuffer.data
+                        data_list.append(filebuffer.data)
                 ti += len(tslice)
+            data = da.concatenate(data_list, axis=0)
         else:
             grid.defer_load = True
             grid.ti = -1
@@ -343,9 +345,15 @@ class Field(object):
             logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
         if transpose:
-            data = np.transpose(data)
+            if isinstance(data, np.ndarray):
+                data = np.transpose(data)
+            else:
+                data = da.transpose(data)
         if self.grid.lat_flipped:
-            data = np.flip(data, axis=-2)
+            if isinstance(data, np.ndarray):
+                data = np.flip(data, axis=-2)
+            else:
+                data = da.flip(data, axis=-2)
 
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
@@ -965,15 +973,9 @@ class Field(object):
             filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
             if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.filebuffername)
-            if len(filebuffer.data.shape) == 2:
-                data[tindex, 0, :, :] = filebuffer.data
-            elif len(filebuffer.data.shape) == 3:
-                if g.zdim > 1:
-                    data[tindex, :, :, :] = filebuffer.data
-                else:
-                    data[tindex, 0, :, :] = filebuffer.data
-            else:
-                data[tindex, :, :, :] = filebuffer.data
+            buffer_data = filebuffer.data
+            data = da.concatenate([data[:tindex, :], da.reshape(buffer_data, sum(((1, ), buffer_data.shape), ())), data[tindex+1:, :]], axis=0)
+        return data
 
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
@@ -1485,7 +1487,7 @@ class NetcdfFileBuffer(object):
                 # Add a bottom level of zeros for B-grid if missing in the data.
                 # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
                 # to match Parcels data shape. for W, last level must be 0 for impermeability
-                data = np.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                data = da.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
                                        np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
             elif len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
@@ -1494,17 +1496,18 @@ class NetcdfFileBuffer(object):
         else:
             if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
                 if(type(ti) in [list, range]):
-                    data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                    data = da.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
                                            np.zeros((len(ti), 1, len(self.indices['lat']), len(self.indices['lon'])))), axis=1)
                 else:
-                    data = np.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
+                    data = da.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
                                            np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if np.ma.is_masked(data):  # convert masked array to ndarray
+            assert False
             data = np.ma.filled(data, np.nan)
-        return data
+        return da.from_array(data, chunks='auto')
 
     @property
     def time(self):

@@ -7,6 +7,7 @@ import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
+import dask.array as da
 
 
 __all__ = ['FieldSet']
@@ -756,10 +757,10 @@ class FieldSet(object):
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    f.computeTimeChunk(data, tind)
+                    data = f.computeTimeChunk(data, tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
@@ -774,17 +775,19 @@ class FieldSet(object):
             else:
                 f.loaded_time_indices = []
 
-            # do built-in computations on data
-            for tind in f.loaded_time_indices:
-                if f._scaling_factor:
-                    f.data[tind, :] *= f._scaling_factor
-                f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
-                if f.vmin is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
-                if f.vmax is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
-                if f.gradientx is not None:
-                    f.gradient(update=True, tindex=tind)
+            if f._scaling_factor:
+                assert False
+            # ### do built-in computations on data
+            # for tind in f.loaded_time_indices:
+            #     if f._scaling_factor:
+            #         f.data[tind, :] *= f._scaling_factor
+            #     f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
+            #     if f.vmin is not None:
+            #         f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
+            #     if f.vmax is not None:
+            #         f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
+            #     if f.gradientx is not None:
+            #         f.gradient(update=True, tindex=tind)
 
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
