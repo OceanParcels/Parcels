@@ -761,22 +761,42 @@ class FieldSet(object):
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
                     data = f.computeTimeChunk(data, tind)
+                # ### do built-in computations on data
+                if f._scaling_factor:
+                    data *= f._scaling_factor
+                data[np.isnan(data)] = 0
+                if f.vmin is not None:
+                    data[data < f.vmin] = 0
+                if f.vmax is not None:
+                    data[data > f.vmax] = 0
+                if f.gradientx is not None:
+                    assert False
+                    f.gradient(update=True, tindex=tind)
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.data[:2, :] = f.data[1:, :]
                     f.loaded_time_indices = [2]
                 else:
                     f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                f.computeTimeChunk(data, f.loaded_time_indices[0])
+                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                # ### do built-in computations on data
+                if f._scaling_factor:
+                    data *= f._scaling_factor
+                data[np.isnan(data)] = 0
+                if f.vmin is not None:
+                    data[data < f.vmin] = 0
+                if f.vmax is not None:
+                    data[data > f.vmax] = 0
+                if f.gradientx is not None:
+                    assert False
+                    f.gradient(update=True, tindex=tind)
                 f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
             else:
                 f.loaded_time_indices = []
 
-            if f._scaling_factor:
-                assert False
             # ### do built-in computations on data
             # for tind in f.loaded_time_indices:
             #     if f._scaling_factor:
