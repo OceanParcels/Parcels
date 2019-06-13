@@ -314,7 +314,7 @@ class Field(object):
                         data_list.append(filebuffer.data.reshape(sum(((len(tslice), 1), filebuffer.data.shape), ())))
                     elif len(filebuffer.data.shape) == 3:
                         if len(filebuffer.indices['depth']) > 1:
-                            data_list.append(filebuffer.data)
+                            data_list.append(filebuffer.data.reshape(sum(((1,), filebuffer.data.shape), ())))
                         else:
                             data_list.append(filebuffer.data.reshape(sum(((len(tslice), 1), filebuffer.data.shape[1:]), ())))
                     else:
@@ -974,7 +974,20 @@ class Field(object):
             if self.netcdf_engine != 'xarray':
                 filebuffer.name = filebuffer.parse_name(self.filebuffername)
             buffer_data = filebuffer.data
-            data = da.concatenate([data[:tindex, :], da.reshape(buffer_data, sum(((1, ), buffer_data.shape), ())), data[tindex+1:, :]], axis=0)
+            if len(buffer_data.shape) == 2:
+                buffer_data = da.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
+            elif len(buffer_data.shape) == 3 and g.zdim > 1:
+                buffer_data = da.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
+            elif len(buffer_data.shape) == 3:
+                buffer_data = da.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
+            if tindex == 0:
+                data = da.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
+            elif tindex == 1:
+                data = da.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
+            elif tindex == 2:
+                data = da.concatenate([data[:tindex, :], buffer_data], axis=0)
+            else:
+                assert False
         return data
 
     def __add__(self, field):
