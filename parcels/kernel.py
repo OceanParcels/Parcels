@@ -180,10 +180,10 @@ class Kernel(object):
         self._function = self._lib.particle_loop
 
     def execute_jit(self, pset, endtime, dt):
-        for f in self.fieldset.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField]:
-                continue
-            f.data = np.array(f.data)
+        #for f in self.fieldset.get_fields():
+        #    if type(f) in [VectorField, NestedField, SummedField]:
+        #        continue
+        #    f.data = np.array(f.data)
         """Invokes JIT engine to perform the core update loop"""
         if len(pset.particles) > 0:
             assert pset.fieldset.gridset.size == len(pset.particles[0].xi), \
@@ -192,9 +192,9 @@ class Kernel(object):
             g.cstruct = None  # This force to point newly the grids from Python to C
         # Make a copy of the transposed array to enforce
         # C-contiguous memory layout for JIT mode.
-        for f in self.field_args.values():
-            if not f.data.flags.c_contiguous:
-                f.data = f.data.copy()
+        #for f in self.field_args.values():
+        #    if not f.data.flags.c_contiguous:
+        #        f.data = f.data.copy()
         for g in pset.fieldset.gridset.grids:
             if not g.depth.flags.c_contiguous:
                 g.depth = g.depth.copy()

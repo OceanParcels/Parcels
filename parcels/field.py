@@ -139,6 +139,8 @@ class Field(object):
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop('data_full_zdim', None)
 
+        self.load_chunk = None
+
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
@@ -834,6 +836,62 @@ class Field(object):
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
+
+    def find_in_block(self, chunksize, ti, zi, yi, xi):
+        #index = (ti, zi, yi, xi)
+        index = (ti, yi, xi)
+        block = tuple((int(index[i]/chunksize[i]) for i in range(len(index))))
+        local_index = tuple(index[i] - chunksize[i]*block[i] for i in range(len(index)))
+        return block, local_index
+
+
+    def get_block_id(self, nchunks, block):
+        return np.ravel_multi_index(block, nchunks)
+
+
+    def get_block(self, nchunks, bid):
+        return np.unravel_index(bid, nchunks)
+
+
+    def chunk_data(self):
+        #print('Chunking data')
+        # Rechunking
+        self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), () ))
+
+
+        npartitions = self.data.npartitions
+        chunksize = self.data.chunksize
+        chunks = self.data.chunks
+        nchunks = tuple(len(chunks[i]) for i in range(len(chunks)))
+        self.data_chunks = [None] * npartitions
+        self.c_data_chunks = [None] * npartitions
+
+        if self.load_chunk is None:
+            self.load_chunk = np.zeros(npartitions, dtype=c_int)
+        print(self.load_chunk)
+
+        for block_id in range(len(self.load_chunk)):
+            if self.load_chunk[block_id] == 1:
+                #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
+                #block_id = self.get_block_id(nchunks, block)
+                block = self.get_block(nchunks, block_id)
+                self.data_chunks[block_id] = np.array(self.data.blocks[block])
+                #self.load_chunk[block_id] = 1
+
+        self.chunk_info = [[len(nchunks)], list(chunksize), list(nchunks), sum(list(list(ci) for ci in chunks), [])]
+        self.chunk_info = sum(self.chunk_info, [])
+        #print("chunk_info", self.chunk_info)
+        #print(self.data.chunks)
+        #print(self.data.chunksize)
+        #print("block_id", block, block_id)
+
+
+
+        #To put it as it use to be
+        self.datatmp = np.array(self.data)
+        if not self.datatmp.flags.c_contiguous:
+            self.datatmp = self.data.copy()
+
     @property
     def ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
@@ -846,14 +904,28 @@ class Field(object):
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
                         ('data', POINTER(POINTER(c_float))),
+                        ('chunk_info', POINTER(c_int)),
+                        ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
+                        ('load_chunk', POINTER(c_int)),
                         ('grid', POINTER(CGrid))]
+
+        self.chunk_data()
 
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
+        for i in range(len(self.load_chunk)):
+            if self.load_chunk[i] == 1:
+                if not self.data_chunks[i].flags.c_contiguous:
+                    self.data_chunks[i] = self.data_chunks[i].copy()
+                self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
+
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
-                         self.data.ctypes.data_as(POINTER(POINTER(c_float))),
+                         self.datatmp.ctypes.data_as(POINTER(POINTER(c_float))),
+                         (c_int * len(self.chunk_info))(*self.chunk_info),
+                         (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
+                         self.load_chunk.ctypes.data_as(POINTER(c_int)),
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
@@ -1520,7 +1592,10 @@ class NetcdfFileBuffer(object):
         if np.ma.is_masked(data):  # convert masked array to ndarray
             assert False
             data = np.ma.filled(data, np.nan)
-        return da.from_array(data, chunks='auto')
+        #data = da.from_array(data, chunks='auto')
+        data = da.from_array(data, chunks=(20,20))
+        #print(data)
+        return data
 
     @property
     def time(self):

@@ -18,6 +18,9 @@ typedef struct
 {
   int xdim, ydim, zdim, tdim, igrid, allow_time_extrapolation, time_periodic;
   float ***data;
+  int *chunk_info;
+  float ****data_chunks;
+  int *load_chunk;
   CGrid *grid;
 } CField;
 
@@ -95,6 +98,59 @@ static inline ErrorCode spatial_interpolation_tracer_c_grid_3D(int xi, int yi, i
   return SUCCESS;
 }
 
+static inline int find_block(int *chunk_info, int ti, int yi, int xi, int *block, int *index_local)
+{
+  int ndim = chunk_info[0];
+  int chunksize[ndim];
+  int shape[ndim];
+  int i;
+  for(i=0; i<ndim; ++i){
+    shape[i] = chunk_info[ndim+1+i];
+    chunksize[i] = chunk_info[1+i];
+  }
+  block[0] = (int) ti / chunksize[0];
+  block[1] = (int) yi / chunksize[1];
+  block[2] = (int) xi / chunksize[2];
+  index_local[0] = ti - chunksize[0] * block[0];
+  index_local[1] = yi - chunksize[1] * block[1];
+  index_local[2] = xi - chunksize[2] * block[2];
+
+  int bid =  block[0]*shape[1]*shape[2] +
+             block[1]*shape[2]+
+             block[2];
+  return bid;
+}
+
+static inline ErrorCode test_func(CField *f, double xsi, double eta, int xi, int yi, int ti, float* value)
+{
+  int *chunk_info = f->chunk_info;
+  int ndim = chunk_info[0];
+  int block[ndim];
+  int index_local[ndim];
+
+  int blockid = find_block(chunk_info, ti, yi, xi, block, index_local);
+  if (f->load_chunk[blockid] == 0){
+    f->load_chunk[blockid] = 1;
+    printf("CHUNK NOT LOADED\n");
+    return REPEAT;
+  }
+  //printf("xi yi %d %d\n", xi, yi);
+  //printf("%d %d %d %d %d %d\n", block[0], block[1], block[2], index_local[0], index_local[1], index_local[2]);
+  //printf("BLOCK ID %d\n", blockid);
+  ErrorCode err;
+  int ydim = chunk_info[1+2*ndim+1+block[1]];
+  int yshift = chunk_info[1+ndim+1];
+  int xdim = chunk_info[1+2*ndim+1+yshift+block[2]];
+  float (*data)[1][ydim][xdim] = (float (*)[1][ydim][xdim]) f->data_chunks[blockid];
+  err = spatial_interpolation_bilinear(xsi, eta, index_local[1], index_local[2],
+                                       xdim,
+                                       (float**)(data[index_local[0]]),
+                                       value);
+  //printf("  Chunk Interpolation: %g\n", *value);
+  return SUCCESS;
+
+}
+
 /* Linear interpolation along the time axis */
 static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, type_coord y, type_coord z, double time, CField *f,
                                                                GridCode gcode, int *xi, int *yi, int *zi, int *ti,
@@ -129,8 +185,11 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
           zeta = 0;
       }
       if (grid->zdim==1){
-        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
-        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
+        //err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
+        //printf("Full Interpolation:    %g\n", f0);
+        err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid], &f0); CHECKERROR(err);
+        //err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
+        err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid]+1, &f1); CHECKERROR(err);
       } else {
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
@@ -177,7 +236,9 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
         zeta = 0;
       }    
       if (grid->zdim==1){
-        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
+        //err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
+        //printf("Full Interpolation     %g\n", *value);
+        err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid], value); CHECKERROR(err);
       }
       else{
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,

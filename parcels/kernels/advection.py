@@ -19,6 +19,7 @@ def AdvectionRK4(particle, fieldset, time):
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
+    print("plon plat %g %g" % (particle.lon, particle.lat))
 
 
 def AdvectionRK4_3D(particle, fieldset, time):
