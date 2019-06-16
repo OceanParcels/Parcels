@@ -75,8 +75,8 @@ def test_globcurrent_particles(mode, use_xarray):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lonstart, lat=latstart)
 
-    #pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
-    pset.execute(AdvectionRK4, runtime=delta(minutes=50), dt=delta(minutes=5))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    #pset.execute(AdvectionRK4, runtime=delta(minutes=50), dt=delta(minutes=5))
 
     #assert(abs(pset[0].lon - 23.8) < 1)
     #assert(abs(pset[0].lat - -35.3) < 1)

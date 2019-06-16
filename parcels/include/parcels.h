@@ -32,6 +32,16 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, i
          +    xsi *(1-eta) * data[yi  ][xi+1]
          +    xsi *   eta  * data[yi+1][xi+1]
          + (1-xsi)*   eta  * data[yi+1][xi  ];
+  //printf("data %g %g %g %g\n", data[yi][xi], data[yi][xi+1], data[yi+1][xi+1], data[yi+1][xi]);
+  return SUCCESS;
+}
+static inline ErrorCode spatial_interpolation_bilinear2(double xsi, double eta, int xi, int yi, int xdim, float data[2][2], float *value)
+{
+  *value = (1-xsi)*(1-eta) * data[yi  ][xi  ]
+         +    xsi *(1-eta) * data[yi  ][xi+1]
+         +    xsi *   eta  * data[yi+1][xi+1]
+         + (1-xsi)*   eta  * data[yi+1][xi  ];
+  //printf("data %g %g %g %g\n", data[yi][xi], data[yi][xi+1], data[yi+1][xi+1], data[yi+1][xi]);
   return SUCCESS;
 }
 
@@ -97,30 +107,86 @@ static inline ErrorCode spatial_interpolation_tracer_c_grid_3D(int xi, int yi, i
   return SUCCESS;
 }
 
-static inline int find_block(int *chunk_info, int ti, int yi, int xi, int *block, int *index_local)
+static inline int getBlock3D(int *chunk_info, int ti, int yi, int xi, int *block, int *index_local)
 {
   int ndim = chunk_info[0];
-  int chunksize[ndim];
+  if (ndim != 3)
+    exit(-1);
+  int chunksize, i;
   int shape[ndim];
-  int i;
+  int index[3] = {ti, yi, xi};
   for(i=0; i<ndim; ++i){
     shape[i] = chunk_info[ndim+1+i];
-    chunksize[i] = chunk_info[1+i];
+    chunksize = chunk_info[1+i];
+    block[i] = (int) index[i] / chunksize;
+    index_local[i] = index[i] - chunksize * block[i];
   }
-  block[0] = (int) ti / chunksize[0];
-  block[1] = (int) yi / chunksize[1];
-  block[2] = (int) xi / chunksize[2];
-  index_local[0] = ti - chunksize[0] * block[0];
-  index_local[1] = yi - chunksize[1] * block[1];
-  index_local[2] = xi - chunksize[2] * block[2];
 
   int bid =  block[0]*shape[1]*shape[2] +
              block[1]*shape[2]+
              block[2];
-
-
-
   return bid;
+}
+
+static inline ErrorCode getCell3D(CField *f, double xsi, double eta, int xi, int yi, int ti, float cell_data[2][2][2])
+{
+  int *chunk_info = f->chunk_info;
+  int ndim = chunk_info[0];
+  int block[ndim];
+  int ilocal[ndim];
+  CStructuredGrid *grid = f->grid->grid;
+
+  int tii, yii, xii;
+
+  int blockid = getBlock3D(chunk_info, ti, yi, xi, block, ilocal);
+  if (grid->load_chunk[blockid] == 0){
+    grid->load_chunk[blockid] = 1;
+    printf("CHUNK NOT LOADED\n");
+    return REPEAT;
+  }
+  int tdim = chunk_info[1+2*ndim+block[0]];
+  int zdim = 1;
+  int tshift = chunk_info[1+ndim];
+  int ydim = chunk_info[1+2*ndim+tshift+block[1]];
+  int yshift = chunk_info[1+ndim+1];
+  int xdim = chunk_info[1+2*ndim+1+yshift+block[2]];
+
+  if ((ilocal[0] == tdim-1) || (ilocal[1] == ydim-1) || (ilocal[2] == xdim-1))
+  {
+    printf("Cell is on multiple chunks\n");
+    for (tii=0; tii<2; ++tii){
+      for (yii=0; yii<2; ++yii){
+        for (xii=0; xii<2; ++xii){
+          blockid = getBlock3D(chunk_info, ti+tii, yi+yii, xi+xii, block, ilocal);
+          if (grid->load_chunk[blockid] == 0){
+            grid->load_chunk[blockid] = 1;
+            printf("CHUNK NOT LOADED\n");
+            return REPEAT;
+          }
+          tdim = chunk_info[1+2*ndim+block[0]];
+          zdim = 1;
+          tshift = chunk_info[1+ndim];
+          ydim = chunk_info[1+2*ndim+tshift+block[1]];
+          yshift = chunk_info[1+ndim+1];
+          xdim = chunk_info[1+2*ndim+1+yshift+block[2]];
+          float (*data_block)[1][ydim][xdim] = (float (*)[1][ydim][xdim]) f->data_chunks[blockid];
+          float (*data)[xdim] = (float (*)[xdim]) (data_block[ilocal[0]]);
+          cell_data[tii][yii][xii] = data[ilocal[1]][ilocal[2]];
+        }
+      }
+    }
+  }
+  else
+  {
+    float (*data_block)[1][ydim][xdim] = (float (*)[1][ydim][xdim]) f->data_chunks[blockid];
+    for (tii=0; tii<2; ++tii){
+      float (*data)[xdim] = (float (*)[xdim]) (data_block[ilocal[0]+tii]);
+      for (yii=0; yii<2; ++yii)
+        for (xii=0; xii<2; ++xii)
+          cell_data[tii][yii][xii] = data[ilocal[1]+yii][ilocal[2]+xii];
+    }
+  }
+  return SUCCESS;
 }
 
 static inline ErrorCode test_func(CField *f, double xsi, double eta, int xi, int yi, int ti, float* value)
@@ -131,7 +197,7 @@ static inline ErrorCode test_func(CField *f, double xsi, double eta, int xi, int
   int index_local[ndim];
   CStructuredGrid *grid = f->grid->grid;
 
-  int blockid = find_block(chunk_info, ti, yi, xi, block, index_local);
+  int blockid = getBlock3D(chunk_info, ti, yi, xi, block, index_local);
   if (grid->load_chunk[blockid] == 0){
     grid->load_chunk[blockid] = 1;
     printf("CHUNK NOT LOADED\n");
@@ -188,11 +254,38 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
           zeta = 0;
       }
       if (grid->zdim==1){
-        //err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
-        //printf("Full Interpolation:    %g\n", f0);
-        err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid], &f0); CHECKERROR(err);
-        //err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
-        err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid]+1, &f1); CHECKERROR(err);
+        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
+        printf("Full Interpolation:    %g\n", f0);
+        //err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid], &f0); CHECKERROR(err);
+        //printf("Chunk Interpolation:    %g\n", f0);
+        //float ***data3D;
+        //data3D = malloc(sizeof(float***)*2);
+        //int tii, yii;
+        //for (tii=0; tii<2;++tii){
+        //  data3D[tii] = malloc(sizeof(float**)*2);
+        //  for (yii=0; yii<2;++yii){
+        //    data3D[tii][yii] = malloc(sizeof(float*)*2);
+        //  }
+        //}
+        float data3D[2][2][2];
+        err = getCell3D(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid], data3D); CHECKERROR(err);
+        err = spatial_interpolation_bilinear2(xsi, eta, 0, 0, 2, data3D[0], &f0); CHECKERROR(err);
+        printf("Chunk Interpolation: %g\n", f0);
+  //printf("TEST HERE\n");
+  //int tii, yii, xii;
+  //for (tii=0; tii<2; ++tii){
+  //  for (yii=0; yii<2; ++yii)
+  //    for (xii=0; xii<2; ++xii)
+  //      printf("%g ", data3D[tii][yii][xii]);
+  //}
+  //printf("\n");
+  //exit(0);
+        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
+        printf("Full Interpolation:    %g\n", f1);
+        //err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid]+1, &f1); CHECKERROR(err);
+        //printf("Chunk Interpolation:    %g\n", f1);
+        err = spatial_interpolation_bilinear2(xsi, eta, 0, 0, 2, data3D[1], &f1); CHECKERROR(err);
+        printf("Chunk Interpolation: %g\n", f1);
       } else {
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]]), &f0); CHECKERROR(err);
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim, (float**)(data[ti[igrid]+1]), &f1); CHECKERROR(err);
@@ -239,9 +332,7 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
         zeta = 0;
       }    
       if (grid->zdim==1){
-        //err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
-        //printf("Full Interpolation     %g\n", *value);
-        err = test_func(f, xsi, eta, xi[igrid], yi[igrid], ti[igrid], value); CHECKERROR(err);
+        err = spatial_interpolation_bilinear(xsi, eta, xi[igrid], yi[igrid], grid->xdim, (float**)(data[ti[igrid]]), value); CHECKERROR(err);
       }
       else{
         err = spatial_interpolation_trilinear(xsi, eta, zeta, xi[igrid], yi[igrid], zi[igrid], grid->xdim, grid->ydim,

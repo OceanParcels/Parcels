@@ -877,6 +877,8 @@ class Field(object):
                 self.data_chunks[block_id] = np.array(self.data.blocks[block])
                 #self.load_chunk[block_id] = 1
 
+        # self.chunk_info format: number of dimensions; typical chunksizes; number of chunks per dimensions;
+        #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.chunk_info = [[len(nchunks)], list(chunksize), list(nchunks), sum(list(list(ci) for ci in chunks), [])]
         self.chunk_info = sum(self.chunk_info, [])
         #print("chunk_info", self.chunk_info)
