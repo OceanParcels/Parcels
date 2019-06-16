@@ -37,6 +37,7 @@ typedef struct
   float *lonlat_minmax;
   float *lon, *lat, *depth;
   double *time;
+  int *load_chunk;
 } CStructuredGrid;
 
 

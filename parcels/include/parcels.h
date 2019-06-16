@@ -20,7 +20,6 @@ typedef struct
   float ***data;
   int *chunk_info;
   float ****data_chunks;
-  int *load_chunk;
   CGrid *grid;
 } CField;
 
@@ -118,6 +117,9 @@ static inline int find_block(int *chunk_info, int ti, int yi, int xi, int *block
   int bid =  block[0]*shape[1]*shape[2] +
              block[1]*shape[2]+
              block[2];
+
+
+
   return bid;
 }
 
@@ -127,10 +129,11 @@ static inline ErrorCode test_func(CField *f, double xsi, double eta, int xi, int
   int ndim = chunk_info[0];
   int block[ndim];
   int index_local[ndim];
+  CStructuredGrid *grid = f->grid->grid;
 
   int blockid = find_block(chunk_info, ti, yi, xi, block, index_local);
-  if (f->load_chunk[blockid] == 0){
-    f->load_chunk[blockid] = 1;
+  if (grid->load_chunk[blockid] == 0){
+    grid->load_chunk[blockid] = 1;
     printf("CHUNK NOT LOADED\n");
     return REPEAT;
   }

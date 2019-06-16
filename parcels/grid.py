@@ -51,6 +51,7 @@ class Grid(object):
         self.defer_load = False
         self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
         self.periods = 0
+        self.load_chunk = None
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
@@ -85,7 +86,8 @@ class Grid(object):
                         ('tfull_min', c_double), ('tfull_max', c_double), ('periods', POINTER(c_int)),
                         ('lonlat_minmax', POINTER(c_float)),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
-                        ('depth', POINTER(c_float)), ('time', POINTER(c_double))
+                        ('depth', POINTER(c_float)), ('time', POINTER(c_double)),
+                        ('load_chunk', POINTER(c_int))
                         ]
 
         # Create and populate the c-struct object
@@ -101,7 +103,8 @@ class Grid(object):
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
-                                           self.time.ctypes.data_as(POINTER(c_double)))
+                                           self.time.ctypes.data_as(POINTER(c_double)),
+                                           self.load_chunk.ctypes.data_as(POINTER(c_int)))
         return self.cstruct
 
     def lon_grid_to_target(self):

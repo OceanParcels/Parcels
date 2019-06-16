@@ -139,7 +139,6 @@ class Field(object):
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop('data_full_zdim', None)
 
-        self.load_chunk = None
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -866,12 +865,12 @@ class Field(object):
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
 
-        if self.load_chunk is None:
-            self.load_chunk = np.zeros(npartitions, dtype=c_int)
-        print(self.load_chunk)
+        if self.grid.load_chunk is None:
+            self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
+        print(self.grid.load_chunk)
 
-        for block_id in range(len(self.load_chunk)):
-            if self.load_chunk[block_id] == 1:
+        for block_id in range(len(self.grid.load_chunk)):
+            if self.grid.load_chunk[block_id] == 1:
                 #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
                 #block_id = self.get_block_id(nchunks, block)
                 block = self.get_block(nchunks, block_id)
@@ -906,7 +905,6 @@ class Field(object):
                         ('data', POINTER(POINTER(c_float))),
                         ('chunk_info', POINTER(c_int)),
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
-                        ('load_chunk', POINTER(c_int)),
                         ('grid', POINTER(CGrid))]
 
         self.chunk_data()
@@ -914,8 +912,8 @@ class Field(object):
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        for i in range(len(self.load_chunk)):
-            if self.load_chunk[i] == 1:
+        for i in range(len(self.grid.load_chunk)):
+            if self.grid.load_chunk[i] == 1:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
@@ -925,7 +923,6 @@ class Field(object):
                          self.datatmp.ctypes.data_as(POINTER(POINTER(c_float))),
                          (c_int * len(self.chunk_info))(*self.chunk_info),
                          (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
-                         self.load_chunk.ctypes.data_as(POINTER(c_int)),
                          pointer(self.grid.ctypes_struct))
         return cstruct
 
