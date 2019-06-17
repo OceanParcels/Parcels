@@ -836,12 +836,12 @@ class Field(object):
         return self.units.ccode_to_target(x, y, z)
 
 
-    def find_in_block(self, chunksize, ti, zi, yi, xi):
-        #index = (ti, zi, yi, xi)
-        index = (ti, yi, xi)
-        block = tuple((int(index[i]/chunksize[i]) for i in range(len(index))))
-        local_index = tuple(index[i] - chunksize[i]*block[i] for i in range(len(index)))
-        return block, local_index
+    #def find_in_block(self, chunksize, ti, zi, yi, xi):
+    #    #index = (ti, zi, yi, xi)
+    #    index = (ti, yi, xi)
+    #    block = tuple((int(index[i]/chunksize[i]) for i in range(len(index))))
+    #    local_index = tuple(index[i] - chunksize[i]*block[i] for i in range(len(index)))
+    #    return block, local_index
 
 
     def get_block_id(self, nchunks, block):
@@ -870,7 +870,7 @@ class Field(object):
 
         if self.grid.load_chunk is None:
             self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
-        print(self.grid.load_chunk)
+        #print(self.grid.load_chunk)
 
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
@@ -1600,7 +1600,7 @@ class NetcdfFileBuffer(object):
             data = np.ma.filled(data, np.nan)
         data = da.from_array(data, chunks='auto')
         #data = da.from_array(data, chunks=(20,20))
-        #print(data)
+        #data = da.from_array(data, chunks=(1,10,50,50))
         return data
 
     @property
