@@ -131,7 +131,6 @@ class Field(object):
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
-        self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.

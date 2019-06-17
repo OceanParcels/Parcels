@@ -758,8 +758,8 @@ class FieldSet(object):
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                f.loaded_time_indices = range(3)
-                for tind in f.loaded_time_indices:
+                loaded_time_indices = range(3)
+                for tind in loaded_time_indices:
                     data = f.computeTimeChunk(data, tind)
                 # ### do built-in computations on data
                 if f._scaling_factor:
@@ -775,7 +775,10 @@ class FieldSet(object):
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                data = f.computeTimeChunk(data, f.loaded_time_indices[0])
+                if signdt >= 0:
+                    data = f.computeTimeChunk(data, 2)
+                else:
+                    data = f.computeTimeChunk(data, 0)
                 # ### do built-in computations on data
                 if f._scaling_factor:
                     data *= f._scaling_factor
@@ -793,8 +796,6 @@ class FieldSet(object):
                 else:
                     data = f.reshape(data)[0:1, :]
                     f.data = da.concatenate([data[0, :], data], axis=0)
-            else:
-                f.loaded_time_indices = []
 
             # ### do built-in computations on data
             # for tind in f.loaded_time_indices:
