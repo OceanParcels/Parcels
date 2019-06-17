@@ -775,12 +775,6 @@ class FieldSet(object):
                 f.data = f.reshape(data)
             elif g.update_status == 'updated':
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                if signdt >= 0:
-                    f.data[:2, :] = f.data[1:, :]
-                    f.loaded_time_indices = [2]
-                else:
-                    f.data[1:, :] = f.data[:2, :]
-                    f.loaded_time_indices = [0]
                 data = f.computeTimeChunk(data, f.loaded_time_indices[0])
                 # ### do built-in computations on data
                 if f._scaling_factor:
@@ -793,7 +787,12 @@ class FieldSet(object):
                 if f.gradientx is not None:
                     assert False
                     f.gradient(update=True, tindex=tind)
-                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
+                if signdt >= 0:
+                    data = f.reshape(data)[2:, :]
+                    f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                else:
+                    data = f.reshape(data)[0:1, :]
+                    f.data = da.concatenate([data[0, :], data], axis=0)
             else:
                 f.loaded_time_indices = []
 
