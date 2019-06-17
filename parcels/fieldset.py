@@ -795,7 +795,7 @@ class FieldSet(object):
                     f.data = da.concatenate([f.data[1:, :], data], axis=0)
                 else:
                     data = f.reshape(data)[0:1, :]
-                    f.data = da.concatenate([data[0, :], data], axis=0)
+                    f.data = da.concatenate([data, f.data[:2, :]], axis=0)
 
             # ### do built-in computations on data
             # for tind in f.loaded_time_indices:
