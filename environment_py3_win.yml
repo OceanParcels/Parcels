@@ -24,5 +24,6 @@ dependencies:
   - dask
   - cftime
   - ipykernel<5.0
+  - psutil
   - pytest<4.0
   - nbval
