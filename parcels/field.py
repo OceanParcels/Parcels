@@ -310,15 +310,16 @@ class Field(object):
                         tslice = [tslice]
                     else:
                         filebuffer.name = filebuffer.parse_name(variable[1])
-                    if len(filebuffer.data.shape) == 2:
-                        data_list.append(filebuffer.data.reshape(sum(((len(tslice), 1), filebuffer.data.shape), ())))
-                    elif len(filebuffer.data.shape) == 3:
+                    buffer_data = filebuffer.data
+                    if len(buffer_data.shape) == 2:
+                        data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
+                    elif len(buffer_data.shape) == 3:
                         if len(filebuffer.indices['depth']) > 1:
-                            data_list.append(filebuffer.data.reshape(sum(((1,), filebuffer.data.shape), ())))
+                            data_list.append(buffer_data.reshape(sum(((1,), buffer_data.shape), ())))
                         else:
-                            data_list.append(filebuffer.data.reshape(sum(((len(tslice), 1), filebuffer.data.shape[1:]), ())))
+                            data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
                     else:
-                        data_list.append(filebuffer.data)
+                        data_list.append(buffer_data)
                 ti += len(tslice)
             data = da.concatenate(data_list, axis=0)
         else:
