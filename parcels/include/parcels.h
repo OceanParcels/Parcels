@@ -465,6 +465,82 @@ static inline ErrorCode spatial_interpolation_UV_c_grid(double xsi, double eta, 
 
   return SUCCESS;
 }
+static inline ErrorCode spatial_interpolation_UV_c_grid2(double xsi, double eta, int xi, int yi, CStructuredGrid *grid,
+                                                        GridCode gcode, float dataU[2][2], float dataV[2][2], float *u, float *v)
+{
+  /* Cast data array into data[lat][lon] as per NEMO convention */
+  int xdim = grid->xdim;
+
+  double xgrid_loc[4];
+  double ygrid_loc[4];
+  int iN;
+  if( (gcode == RECTILINEAR_Z_GRID) || (gcode == RECTILINEAR_S_GRID) ){
+    float *xgrid = grid->lon;
+    float *ygrid = grid->lat;
+    for (iN=0; iN < 4; ++iN){
+      xgrid_loc[iN] = xgrid[xi+min(1, (iN%3))];
+      ygrid_loc[iN] = ygrid[yi+iN/2];
+    }
+  }
+  else{
+    float (* xgrid)[xdim] = (float (*)[xdim]) grid->lon;
+    float (* ygrid)[xdim] = (float (*)[xdim]) grid->lat;
+    for (iN=0; iN < 4; ++iN){
+      xgrid_loc[iN] = xgrid[yi+iN/2][xi+min(1, (iN%3))];
+      ygrid_loc[iN] = ygrid[yi+iN/2][xi+min(1, (iN%3))];
+    }
+  }
+  int i4;
+  for (i4 = 1; i4 < 4; ++i4){
+    if (xgrid_loc[i4] < xgrid_loc[0] - 180) xgrid_loc[i4] += 360;
+    if (xgrid_loc[i4] > xgrid_loc[0] + 180) xgrid_loc[i4] -= 360;
+  }
+
+
+  double phi[4];
+  phi2D_lin(0., eta, phi);
+  double U0 = dataU[1][0] * dist(xgrid_loc[3], xgrid_loc[0], ygrid_loc[3], ygrid_loc[0], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  phi2D_lin(1., eta, phi);
+  double U1 = dataU[1][1] * dist(xgrid_loc[1], xgrid_loc[2], ygrid_loc[1], ygrid_loc[2], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  phi2D_lin(xsi, 0., phi);
+  double V0 = dataV[0][1] * dist(xgrid_loc[0], xgrid_loc[1], ygrid_loc[0], ygrid_loc[1], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  phi2D_lin(xsi, 1., phi);
+  double V1 = dataV[1][1] * dist(xgrid_loc[2], xgrid_loc[3], ygrid_loc[2], ygrid_loc[3], grid->sphere_mesh, dot_prod(phi, ygrid_loc, 4));
+  double U = (1-xsi) * U0 + xsi * U1;
+  double V = (1-eta) * V0 + eta * V1;
+
+  double dphidxsi[4] = {eta-1, 1-eta, eta, -eta};
+  double dphideta[4] = {xsi-1, -xsi, xsi, 1-xsi};
+  double dxdxsi = 0; double dxdeta = 0;
+  double dydxsi = 0; double dydeta = 0;
+  int i;
+  for(i=0; i<4; ++i){
+    dxdxsi += xgrid_loc[i] *dphidxsi[i];
+    dxdeta += xgrid_loc[i] *dphideta[i];
+    dydxsi += ygrid_loc[i] *dphidxsi[i];
+    dydeta += ygrid_loc[i] *dphideta[i];
+  }
+  double meshJac = 1;
+  if (grid->sphere_mesh == 1){
+    double deg2m = 1852 * 60.;
+    double rad = M_PI / 180.;
+    phi2D_lin(xsi, eta, phi);
+    double lat = dot_prod(phi, ygrid_loc, 4);
+    meshJac = deg2m * deg2m * cos(rad * lat);
+  }
+  double jac = (dxdxsi*dydeta - dxdeta * dydxsi) * meshJac;
+
+  *u = ( (-(1-eta) * U - (1-xsi) * V ) * xgrid_loc[0] +
+         ( (1-eta) * U -  xsi    * V ) * xgrid_loc[1] +
+         (    eta  * U +  xsi    * V ) * xgrid_loc[2] +
+         (   -eta  * U + (1-xsi) * V ) * xgrid_loc[3] ) / jac;
+  *v = ( (-(1-eta) * U - (1-xsi) * V ) * ygrid_loc[0] +
+         ( (1-eta) * U -  xsi    * V ) * ygrid_loc[1] +
+         (    eta  * U +  xsi    * V ) * ygrid_loc[2] +
+         (   -eta  * U + (1-xsi) * V ) * ygrid_loc[3] ) / jac;
+
+  return SUCCESS;
+}
 
 
 
@@ -495,11 +571,19 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, CGRID_VELOCITY); CHECKERROR(err);
     if (grid->zdim==1){
       float data3D_U[2][2][2], data3D_V[2][2][2];
-      float f0p, f1p;
+      float u0p, u1p, v0p, v1p;
       err = getCell3D(U, xi[igrid], yi[igrid], ti[igrid], data3D_U, 0); CHECKERROR(err);
       err = getCell3D(V, xi[igrid], yi[igrid], ti[igrid], data3D_V, 0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1); CHECKERROR(err);
+
+      err = spatial_interpolation_UV_c_grid2(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[0], data3D_V[0], &u0p, &v0p); CHECKERROR(err);
+      err = spatial_interpolation_UV_c_grid2(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[1], data3D_V[1], &u1p, &v1p); CHECKERROR(err);
+      if ( (fabs(u0-u0p) > 1e-12) || (fabs(u1-u1p) > 1e-12) ||(fabs(v0-v0p) > 1e-12) || (fabs(v1-v1p) > 1e-12) ) {
+        printf("error uv c 0\n");
+        return ERROR;
+      }
+
     } else {
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]),   &u0, &v0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1][zi[igrid]]), (float**)(dataV[ti[igrid]+1][zi[igrid]]), &u1, &v1); CHECKERROR(err);
@@ -512,10 +596,15 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY); CHECKERROR(err);
     if (grid->zdim==1){
       float data3D_U[2][2][2], data3D_V[2][2][2];
-      float valuep;
+      float up, vp;
       err = getCell3D(U, xi[igrid], yi[igrid], ti[igrid], data3D_U, 1); CHECKERROR(err);
       err = getCell3D(V, xi[igrid], yi[igrid], ti[igrid], data3D_V, 1); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
+      err = spatial_interpolation_UV_c_grid2(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[0], data3D_V[0], &up, &vp); CHECKERROR(err);
+      if ( (fabs(*u-up) > 1e-12) || (fabs(*v-vp) > 1e-12)  ) {
+        printf("error uv c 1\n");
+        return ERROR;
+      }
     }
     else{
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), u, v); CHECKERROR(err);
