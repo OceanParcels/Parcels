@@ -139,9 +139,9 @@ static inline ErrorCode getCell3D(CField *f, double xsi, double eta, int xi, int
   int tii, yii, xii;
 
   int blockid = getBlock3D(chunk_info, ti, yi, xi, block, ilocal);
-  if (grid->load_chunk[blockid] == 0){
-    grid->load_chunk[blockid] = 1;
-    printf("CHUNK NOT LOADED\n");
+  if (grid->load_chunk[blockid] != 1){
+    grid->load_chunk[blockid] = 2;
+    //printf("CHUNK NOT LOADED\n");
     return REPEAT;
   }
   int tdim = chunk_info[1+2*ndim+block[0]];
@@ -153,23 +153,22 @@ static inline ErrorCode getCell3D(CField *f, double xsi, double eta, int xi, int
 
   if (((ilocal[0] == tdim-1) && (first_tstep_only == 0)) || (ilocal[1] == ydim-1) || (ilocal[2] == xdim-1))
   {
-    printf("Cell is on multiple chunks\n");
+    //printf("Cell is on multiple chunks\n");
     for (tii=0; tii<2; ++tii){
       for (yii=0; yii<2; ++yii){
         for (xii=0; xii<2; ++xii){
           blockid = getBlock3D(chunk_info, ti+tii, yi+yii, xi+xii, block, ilocal);
-          if (grid->load_chunk[blockid] == 0){
-            grid->load_chunk[blockid] = 1;
-            printf("CHUNK NOT LOADED\n");
+          if (grid->load_chunk[blockid] != 1){
+            grid->load_chunk[blockid] = 2;
+            //printf("CHUNK NOT LOADED\n");
             return REPEAT;
           }
           tdim = chunk_info[1+2*ndim+block[0]];
-          zdim = 1;
           tshift = chunk_info[1+ndim];
           ydim = chunk_info[1+2*ndim+tshift+block[1]];
           yshift = chunk_info[1+ndim+1];
           xdim = chunk_info[1+2*ndim+1+yshift+block[2]];
-          float (*data_block)[1][ydim][xdim] = (float (*)[1][ydim][xdim]) f->data_chunks[blockid];
+          float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
           float (*data)[xdim] = (float (*)[xdim]) (data_block[ilocal[0]]);
           cell_data[tii][yii][xii] = data[ilocal[1]][ilocal[2]];
         }
@@ -180,7 +179,7 @@ static inline ErrorCode getCell3D(CField *f, double xsi, double eta, int xi, int
   }
   else
   {
-    float (*data_block)[1][ydim][xdim] = (float (*)[1][ydim][xdim]) f->data_chunks[blockid];
+    float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
     for (tii=0; tii<2; ++tii){
       float (*data)[xdim] = (float (*)[xdim]) (data_block[ilocal[0]+tii]);
       for (yii=0; yii<2; ++yii)

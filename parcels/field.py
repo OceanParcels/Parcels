@@ -852,14 +852,17 @@ class Field(object):
 
 
     def chunk_data(self):
-        #print('Chunking data')
-        # Rechunking
-        self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), () ))
+        if isinstance(self.data, da.core.Array):
+            if len(self.data.chunks[0]) > 1:
+                self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), () ))
+            npartitions = self.data.npartitions
+            chunksize = self.data.chunksize
+            chunks = self.data.chunks
+        else:
+            npartitions = 1
+            chunksize = self.data.shape
+            chunks = tuple((t,) for t in chunksize)
 
-
-        npartitions = self.data.npartitions
-        chunksize = self.data.chunksize
-        chunks = self.data.chunks
         nchunks = tuple(len(chunks[i]) for i in range(len(chunks)))
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
@@ -868,13 +871,17 @@ class Field(object):
             self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
         print(self.grid.load_chunk)
 
-        for block_id in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[block_id] == 1:
-                #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
-                #block_id = self.get_block_id(nchunks, block)
-                block = self.get_block(nchunks, block_id)
-                self.data_chunks[block_id] = np.array(self.data.blocks[block])
-                #self.load_chunk[block_id] = 1
+        if isinstance(self.data, da.core.Array):
+            for block_id in range(len(self.grid.load_chunk)):
+                if self.grid.load_chunk[block_id] >= 1 and self.data_chunks[block_id] == None:
+                    #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
+                    #block_id = self.get_block_id(nchunks, block)
+                    block = self.get_block(nchunks, block_id)
+                    self.data_chunks[block_id] = np.array(self.data.blocks[block])
+                    self.grid.load_chunk[block_id] = 1
+        else:
+            self.grid.load_chunk[0] = 1
+            self.data_chunks[0] = self.data
 
         # self.chunk_info format: number of dimensions; typical chunksizes; number of chunks per dimensions;
         #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
@@ -1590,8 +1597,8 @@ class NetcdfFileBuffer(object):
         if np.ma.is_masked(data):  # convert masked array to ndarray
             assert False
             data = np.ma.filled(data, np.nan)
-        #data = da.from_array(data, chunks='auto')
-        data = da.from_array(data, chunks=(20,20))
+        data = da.from_array(data, chunks='auto')
+        #data = da.from_array(data, chunks=(20,20))
         #print(data)
         return data
 
