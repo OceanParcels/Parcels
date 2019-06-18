@@ -298,7 +298,6 @@ class Field(object):
 
         if grid.time.size <= 3 or deferred_load is False:
             # Pre-allocate data before reading files into buffer
-            data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
@@ -685,6 +684,8 @@ class Field(object):
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
+            if isinstance(val, da.core.Array):
+                raise RuntimeError("This happens at p init from field")
             return val
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
