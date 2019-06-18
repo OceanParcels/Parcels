@@ -965,28 +965,29 @@ class Field(object):
         :param halosize: size of the halo (in grid points). Default is 5 grid points
         :param data: if data is not None, the periodic halo will be achieved on data instead of self.data and data will be returned
         """
-        dataNone = not isinstance(data, np.ndarray)
+        dataNone = not isinstance(data, (np.ndarray, da.core.Array))
         if self.grid.defer_load and dataNone:
             return
         data = self.data if dataNone else data
+        lib = np if isinstance(data, np.ndarray) else da
         if zonal:
             if len(data.shape) == 3:
-                data = np.concatenate((data[:, :, -halosize:], data,
+                data = lib.concatenate((data[:, :, -halosize:], data,
                                        data[:, :, 0:halosize]), axis=len(data.shape)-1)
                 assert data.shape[2] == self.grid.xdim, "Third dim must be x."
             else:
-                data = np.concatenate((data[:, :, :, -halosize:], data,
+                data = lib.concatenate((data[:, :, :, -halosize:], data,
                                        data[:, :, :, 0:halosize]), axis=len(data.shape) - 1)
                 assert data.shape[3] == self.grid.xdim, "Fourth dim must be x."
             self.lon = self.grid.lon
             self.lat = self.grid.lat
         if meridional:
             if len(data.shape) == 3:
-                data = np.concatenate((data[:, -halosize:, :], data,
+                data = lib.concatenate((data[:, -halosize:, :], data,
                                        data[:, 0:halosize, :]), axis=len(data.shape)-2)
                 assert data.shape[1] == self.grid.ydim, "Second dim must be y."
             else:
-                data = np.concatenate((data[:, :, -halosize:, :], data,
+                data = lib.concatenate((data[:, :, -halosize:, :], data,
                                        data[:, :, 0:halosize, :]), axis=len(data.shape) - 2)
                 assert data.shape[2] == self.grid.ydim, "Third dim must be y."
             self.lat = self.grid.lat
