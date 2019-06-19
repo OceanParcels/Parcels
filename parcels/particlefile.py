@@ -8,6 +8,8 @@ import psutil
 import shutil
 import string
 import random
+import pickle
+from mpi4py import MPI
 from parcels.tools.error import ErrorCode
 try:
     from parcels._version import version as parcels_version
@@ -22,6 +24,11 @@ except:
 
 
 __all__ = ['ParticleFile']
+
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
 
 
 def _is_particle_started_yet(particle, time):
@@ -86,6 +93,13 @@ class ParticleFile(object):
             self.tempwritedir = tempwritedir
 
         self.delete_tempwritedir()
+        
+        # Communicate tempwritedir and write to a binary file, to be interpreted by the export function later
+        temp_names = comm.gather(self.tempwritedir, root=0)
+        if rank == 0:
+            with open('tempwritedir_names', 'wb') as f:
+                pickle.dump(temp_names, f)
+        
 
     def open_netcdf_file(self, data_shape):
         """Initialise NetCDF4.Dataset for trajectory output.
