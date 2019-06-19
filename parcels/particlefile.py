@@ -180,14 +180,14 @@ class ParticleFile(object):
             setattr(self.dataset, name, message)
 
     def __del__(self):
-        if self.to_export:
+        if self.to_export and rank == 0: # only export once. TODO: Look into usefulness of to_export variable. TODO: move task to a separate script.
             self.close()
 
     def close(self):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""
         self.export()
-        self.delete_tempwritedir()
+        self.delete_tempwritedir() # TODO: replace by: remove all tempwritedirs from list
         self.dataset.close()
         self.to_export = False
 
@@ -308,15 +308,15 @@ class ParticleFile(object):
         :param var: name of the variable to read
         """
 
-        data = np.nan * np.zeros((self.maxid_written+1, time_steps))
+        data = np.nan * np.zeros((self.maxid_written+1, time_steps)) # TODO: maxid_written has to be deduced in some other way
         time_index = np.zeros(self.maxid_written+1, dtype=int)
         t_ind_used = np.zeros(time_steps, dtype=int)
 
         # loop over all files
-        for npyfile in file_list:
+        for npyfile in file_list: #TODO: create file_list here (not globally) from all tempwritedirs
             data_dict = np.load(npyfile, allow_pickle=True).item()
             id_ind = np.array(data_dict["id"], dtype=int)
-            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
+            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0 # Interesting one as well, how to handle _once files...
             t_ind_used[t_ind] = 1
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
@@ -327,12 +327,12 @@ class ParticleFile(object):
 
     def export(self):
         """Exports outputs in temporary NPY-files to NetCDF file"""
-        memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8
+        memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8 # TODO: this memory_estimate is not accurate if multiple processes are involved
         if memory_estimate_total > 0.9*psutil.virtual_memory().available:
             raise MemoryError("Not enough memory available for export. npy files are stored at %s", self.npy_path)
 
         for var in self.var_names:
-            data = self.read_from_npy(self.file_list, len(self.time_written), var)
+            data = self.read_from_npy(self.file_list, len(self.time_written), var) # TODO: read all files in the outputdirectory of each process. Keeping a file_list for each is not sustainable.
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
@@ -340,7 +340,7 @@ class ParticleFile(object):
 
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(self.file_list_once, 1, var)
+                getattr(self, var)[:] = self.read_from_npy(self.file_list_once, 1, var) # TODO: read the _once files separately?
 
     def delete_tempwritedir(self):
         """Deleted all temporary npy files"""
