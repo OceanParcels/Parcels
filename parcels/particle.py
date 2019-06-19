@@ -173,7 +173,7 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None, offset=0):
+    def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
