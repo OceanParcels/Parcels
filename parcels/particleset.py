@@ -38,8 +38,10 @@ class ParticleSet(object):
     """
 
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+        global lastID
         self.fieldset = fieldset
         self.fieldset.check_complete()
+        lastID = 0
 
         def convert_to_list(var):
             # Convert numpy arrays and single integers/floats to one-dimensional lists
