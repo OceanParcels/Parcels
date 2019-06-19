@@ -38,10 +38,8 @@ class ParticleSet(object):
     """
 
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        global lastID
         self.fieldset = fieldset
         self.fieldset.check_complete()
-        lastID = 0
 
         def convert_to_list(var):
             # Convert numpy arrays and single integers/floats to one-dimensional lists
@@ -89,6 +87,9 @@ class ParticleSet(object):
         time = convert_to_list(time)
         depth = convert_to_list(depth)
 
+        # Determine offset
+        offset = sum(i < mpi_rank for i in partition)
+        pclass.setLastID(offset)
 
         self.time_origin = fieldset.time_origin
         if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
