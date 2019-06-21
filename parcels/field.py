@@ -209,13 +209,14 @@ class Field(object):
 
             data_filenames = cls.get_dim_filenames(filenames, 'data')
             lonlat_filename = cls.get_dim_filenames(filenames, 'lon')
-            assert len(lonlat_filename) == 1
+            if isinstance(filenames, dict):
+                assert len(lonlat_filename) == 1
             if lonlat_filename != cls.get_dim_filenames(filenames, 'lat'):
                 raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
             lonlat_filename = lonlat_filename[0]
             if 'depth' in dimensions:
                 depth_filename = cls.get_dim_filenames(filenames, 'depth')
-                if len(depth_filename) != 1:
+                if isinstance(filenames, dict) and len(depth_filename) != 1:
                     raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
                 depth_filename = depth_filename[0]
 
