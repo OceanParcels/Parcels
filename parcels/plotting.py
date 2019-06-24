@@ -287,6 +287,7 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
             fig, ax = plt.subplots(1, 1)
             ax.grid()
         except:
+            logger.info("Visualisation is not possible. No Display found.")
             return None, None, None, None  # creating axes was not possible
     return plt, fig, ax, cartopy
 
