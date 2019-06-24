@@ -285,8 +285,10 @@ class ParticleSet(object):
         self.add(particles)
         return self
 
-    def add(self, particles):
+    def add(self, particles): # This does not align with the global ID
         """Method to add particles to the ParticleSet"""
+        raise NotImplementedError("Parallel execution currently does not allow for adding particles after initialization, "
+            "as there is currently no way to ensure a unique global ID when adding particles.")
         if isinstance(particles, ParticleSet):
             particles = particles.particles
         if not isinstance(particles, collections.Iterable):
