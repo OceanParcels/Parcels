@@ -308,12 +308,12 @@ class ParticleFile(object):
         :param var: name of the variable to read
         """
 
-        data = np.nan * np.zeros((self.maxid_written+1, time_steps)) # TODO: maxid_written has to be deduced in some other way
+        data = np.nan * np.zeros((self.maxid_written+1, time_steps)) # TODO: maxid_written has to be deduced in some other way (can be extracted from each pset_info.npy)
         time_index = np.zeros(self.maxid_written+1, dtype=int)
         t_ind_used = np.zeros(time_steps, dtype=int)
 
         # loop over all files
-        for npyfile in file_list: #TODO: create file_list here (not globally) from all tempwritedirs
+        for npyfile in file_list: #TODO: create file_list here (not globally) from all tempwritedirs (can be extracted from each pset_info.npy)
             data_dict = np.load(npyfile, allow_pickle=True).item()
             id_ind = np.array(data_dict["id"], dtype=int)
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0 # Interesting one as well, how to handle _once files...
@@ -327,12 +327,29 @@ class ParticleFile(object):
 
     def export(self):
         """Exports outputs in temporary NPY-files to NetCDF file"""
-        memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8 # TODO: this memory_estimate is not accurate if multiple processes are involved
+        
+        # Retrieve all temporary writing directories
+        with open('tempwritedir_names', 'rb') as f:
+            temp_names = pickle.load(f)
+        
+        global_maxid_written = -1
+        global_file_list = []
+        if len(self.var_names_once) > 0:
+            global_file_list_once = []
+        for tempwritedir in temp_names:
+            pset_info_local = np.load(tempwritedir + '/pset_info.npy', allow_pickle=True).item()
+            global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
+            global_file_list += pset_info_local['file_list']
+            if len(self.var_names_once) > 0:
+                global_file_list += pset_info_local['file_list_once']
+        self.maxid_written = global_maxid_written
+
+        memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8
         if memory_estimate_total > 0.9*psutil.virtual_memory().available:
             raise MemoryError("Not enough memory available for export. npy files are stored at %s", self.npy_path)
 
         for var in self.var_names:
-            data = self.read_from_npy(self.file_list, len(self.time_written), var) # TODO: read all files in the outputdirectory of each process. Keeping a file_list for each is not sustainable.
+            data = self.read_from_npy(global_file_list, len(self.time_written), var)
             if var == self.var_names[0]:
                 self.open_netcdf_file(data.shape)
             varout = 'z' if var == 'depth' else var
