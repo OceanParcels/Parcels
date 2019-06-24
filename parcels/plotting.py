@@ -258,6 +258,8 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
     except:
         logger.info("Visualisation is not possible. Matplotlib not found.")
         return None, None, None, None  # creating axes was not possible
+    print('here in plotting')
+    return
 
     if projection is not None and not spherical:
         raise RuntimeError('projection not accepted when Field doesn''t have geographic coordinates')
