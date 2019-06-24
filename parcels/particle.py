@@ -8,9 +8,6 @@ from ctypes import c_void_p
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 
-lastID = 0  # module-level variable keeping track of last Particle ID used
-
-
 class Variable(object):
     """Descriptor class that delegates data access to particle data
 
