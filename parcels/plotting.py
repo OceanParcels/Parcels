@@ -283,8 +283,11 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
             ax.coastlines()
     else:
         cartopy = None
-        fig, ax = plt.subplots(1, 1)
-        ax.grid()
+        try:
+            fig, ax = plt.subplots(1, 1)
+            ax.grid()
+        except:
+            return None, None, None, None  # creating axes was not possible
     return plt, fig, ax, cartopy
 
 
