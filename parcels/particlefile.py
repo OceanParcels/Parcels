@@ -357,9 +357,11 @@ class ParticleFile(object):
 
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
-                getattr(self, var)[:] = self.read_from_npy(self.file_list_once, 1, var) # TODO: read the _once files separately?
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
 
-    def delete_tempwritedir(self):
+    def delete_tempwritedir(self, tempwritedir=None):
         """Deleted all temporary npy files"""
-        if os.path.exists(self.tempwritedir):
-            shutil.rmtree(self.tempwritedir)
+        if tempwritedir is None:
+            tempwritedir = self.tempwritedir
+        if os.path.exists(tempwritedir):
+            shutil.rmtree(tempwritedir)
