@@ -194,6 +194,8 @@ class ParticleFile(object):
             temp_names = pickle.load(f)
         for tempwritedir in temp_names:
             self.delete_tempwritedir(tempwritedir=tempwritedir)
+        
+        os.remove('tempwritedir_names')
 
         self.dataset.close()
         self.to_export = False
