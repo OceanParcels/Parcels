@@ -59,9 +59,9 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         titlestr = ' and ' + tracerfield
     else:
         print('here in plottrajectorriesfile')
-        return
         spherical = False if mode == '3d' or mesh == 'flat' else True
         plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical)
+        return
         if plt is None:
             return  # creating axes was not possible
         titlestr = ''
