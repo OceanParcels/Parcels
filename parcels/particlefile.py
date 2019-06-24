@@ -344,11 +344,12 @@ class ParticleFile(object):
         if len(self.var_names_once) > 0:
             global_file_list_once = []
         for tempwritedir in temp_names:
-            pset_info_local = np.load(tempwritedir + '/pset_info.npy', allow_pickle=True).item()
-            global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
-            global_file_list += pset_info_local['file_list']
-            if len(self.var_names_once) > 0:
-                global_file_list += pset_info_local['file_list_once']
+            if os.path.exists(tempwritedir):
+                pset_info_local = np.load(tempwritedir + '/pset_info.npy', allow_pickle=True).item()
+                global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
+                global_file_list += pset_info_local['file_list']
+                if len(self.var_names_once) > 0:
+                    global_file_list += pset_info_local['file_list_once']
         self.maxid_written = global_maxid_written
 
         memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8
