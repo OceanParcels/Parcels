@@ -187,7 +187,12 @@ class ParticleFile(object):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""
         self.export()
-        self.delete_tempwritedir() # TODO: replace by: remove all tempwritedirs from list
+
+        with open('tempwritedir_names', 'rb') as f:
+            temp_names = pickle.load(f)
+        for tempwritedir in temp_names:
+            self.delete_tempwritedir(tempwritedir=tempwritedir)
+
         self.dataset.close()
         self.to_export = False
 
