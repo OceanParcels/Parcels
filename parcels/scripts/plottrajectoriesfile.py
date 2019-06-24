@@ -69,8 +69,8 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             lon[:, p] = [ln if ln < 180 else ln - 360 for ln in lon[:, p]]
 
     if mode == '3d':
-        from mpl_toolkits.mplot3d import Axes3D  # noqa
         return
+        from mpl_toolkits.mplot3d import Axes3D  # noqa
         plt.clf()  # clear the figure
         ax = fig.gca(projection='3d')
         for p in range(len(lon)):
