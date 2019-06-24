@@ -315,15 +315,15 @@ class ParticleFile(object):
         :param var: name of the variable to read
         """
 
-        data = np.nan * np.zeros((self.maxid_written+1, time_steps)) # TODO: maxid_written has to be deduced in some other way (can be extracted from each pset_info.npy)
+        data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(self.maxid_written+1, dtype=int)
         t_ind_used = np.zeros(time_steps, dtype=int)
 
         # loop over all files
-        for npyfile in file_list: #TODO: create file_list here (not globally) from all tempwritedirs (can be extracted from each pset_info.npy)
+        for npyfile in file_list: 
             data_dict = np.load(npyfile, allow_pickle=True).item()
             id_ind = np.array(data_dict["id"], dtype=int)
-            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0 # Interesting one as well, how to handle _once files...
+            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
             t_ind_used[t_ind] = 1
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
