@@ -32,7 +32,7 @@ def create_outputfiles(dir):
     return fp
 
 
-@pytest.mark.parametrize('mode', ['2d', 'movie2d', 'hist2d'])
+@pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d', 'hist2d'])
 def test_plotting(mode, tmpdir):
     fp = create_outputfiles(tmpdir)
     plotTrajectoriesFile(fp, mode=mode, show_plt=False)

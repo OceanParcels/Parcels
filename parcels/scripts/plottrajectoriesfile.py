@@ -70,6 +70,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
 
     if mode == '3d':
         from mpl_toolkits.mplot3d import Axes3D  # noqa
+        return
         plt.clf()  # clear the figure
         ax = fig.gca(projection='3d')
         for p in range(len(lon)):
