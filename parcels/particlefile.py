@@ -370,7 +370,9 @@ class ParticleFile(object):
                 getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
 
     def delete_tempwritedir(self, tempwritedir=None):
-        """Deleted all temporary npy files"""
+        """Deleted all temporary npy files
+        :param tempwritedir Optional path of the directory to delete
+        """
         if tempwritedir is None:
             tempwritedir = self.tempwritedir
         if os.path.exists(tempwritedir):
