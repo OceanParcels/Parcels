@@ -140,6 +140,26 @@ class Grid(object):
         dx = np.where(dx > 180, dx-360, dx)
         self.zonal_periodic = sum(dx) > 359.9
 
+    def add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
+        if zonal:
+            if len(self.depth.shape) == 3:
+                self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
+                                             self.depth[:, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                assert self.depth.shape[2] == self.xdim, "Third dim must be x."
+            else:
+                self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
+                                             self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
+        if meridional:
+            if len(self.depth.shape) == 3:
+                self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
+                                             self.depth[:, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                assert self.depth.shape[1] == self.ydim, "Second dim must be y."
+            else:
+                self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
+                                             self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                assert self.depth.shape[2] == self.ydim, "Third dim must be y."
+
     def computeTimeChunk(self, f, time, signdt):
         nextTime_loc = np.infty * signdt
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
@@ -224,24 +244,7 @@ class RectilinearGrid(Grid):
             self.meridional_halo = halosize
         self.lonlat_minmax = np.array([np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32)
         if isinstance(self, RectilinearSGrid):
-            if zonal:
-                if len(self.depth.shape) == 3:
-                    self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
-                                                 self.depth[:, :, 0:halosize]), axis=len(self.depth.shape)-1)
-                    assert self.depth.shape[2] == self.xdim, "Third dim must be x."
-                else:
-                    self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
-                                                 self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
-                    assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
-            if meridional:
-                if len(self.depth.shape) == 3:
-                    self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
-                                                 self.depth[:, 0:halosize, :]), axis=len(self.depth.shape)-2)
-                    assert self.depth.shape[1] == self.ydim, "Second dim must be y."
-                else:
-                    self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
-                                                 self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
-                    assert self.depth.shape[2] == self.ydim, "Third dim must be y."
+            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -372,24 +375,7 @@ class CurvilinearGrid(Grid):
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
         if isinstance(self, CurvilinearSGrid):
-            if zonal:
-                if len(self.depth.shape) == 3:
-                    self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
-                                                 self.depth[:, :, 0:halosize]), axis=len(self.depth.shape)-1)
-                    assert self.depth.shape[2] == self.xdim, "Third dim must be x."
-                else:
-                    self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
-                                                 self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
-                    assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
-            if meridional:
-                if len(self.depth.shape) == 3:
-                    self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
-                                                 self.depth[:, 0:halosize, :]), axis=len(self.depth.shape)-2)
-                    assert self.depth.shape[1] == self.ydim, "Second dim must be y."
-                else:
-                    self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
-                                                 self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
-                    assert self.depth.shape[2] == self.ydim, "Third dim must be y."
+            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class CurvilinearZGrid(CurvilinearGrid):
