@@ -18,6 +18,7 @@ import re
 from hashlib import md5
 import math  # noqa
 import random  # noqa
+from mpi4py import MPI
 
 
 __all__ = ['Kernel']
@@ -130,7 +131,14 @@ class Kernel(object):
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
 
-            basename = path.join(get_cache_dir(), self._cache_key)
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            if mpi_rank == 0:
+                basename = path.join(get_cache_dir(), self._cache_key)
+            else:
+                basename = None
+            basename = mpi_comm.bcast(basename, root=0)
+            basename = basename + "_%d" % mpi_rank
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
@@ -163,7 +171,12 @@ class Kernel(object):
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
             [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-            basename = path.join(get_cache_dir(), self._cache_key)
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            if mpi_rank == 0:
+                basename = path.join(get_cache_dir(), self._cache_key)
+            basename = mpi_comm.bcast(basename, root=0)
+            basename = basename + "_%d" % mpi_rank
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
