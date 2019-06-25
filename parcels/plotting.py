@@ -283,17 +283,8 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
             ax.coastlines()
     else:
         cartopy = None
-        print('here in plotting')
-        try:
-            print('here in plotting 1')
-            fig, ax = plt.subplots(1, 1)
-            print('here in plotting 1.1')
-            ax.grid()
-            print('here in plotting 2')
-        except:
-            print('here in plotting 3')
-            logger.info("Visualisation is not possible. No Display found.")
-            return None, None, None, None  # creating axes was not possible
+        fig, ax = plt.subplots(1, 1)
+        ax.grid()
     return plt, fig, ax, cartopy
 
 
