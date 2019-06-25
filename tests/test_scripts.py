@@ -37,5 +37,7 @@ def create_outputfiles(dir):
 def test_plotting(mode, tmpdir):
     if 'mode' == '3d' and sys.platform == 'linux':
         return
+    else:
+        print(sys.platform)
     fp = create_outputfiles(tmpdir)
     plotTrajectoriesFile(fp, mode=mode, show_plt=False)
