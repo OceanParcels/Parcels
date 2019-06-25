@@ -35,7 +35,7 @@ def create_outputfiles(dir):
 
 @pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d', 'hist2d'])
 def test_plotting(mode, tmpdir):
-    if 'mode' == 3d and sys.platform == 'linux':
+    if 'mode' == '3d' and sys.platform == 'linux':
         return
     fp = create_outputfiles(tmpdir)
     plotTrajectoriesFile(fp, mode=mode, show_plt=False)
