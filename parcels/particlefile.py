@@ -182,7 +182,7 @@ class ParticleFile(object):
     def __del__(self):
         # The export can only start when all threads are done.
         comm.Barrier()
-        if self.to_export and rank == 0: # only export once. TODO: Look into usefulness of to_export variable. TODO: move task to a separate script.
+        if self.to_export and rank == 0: # only export once.
             self.close()
 
     def close(self):
