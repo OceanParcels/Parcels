@@ -139,6 +139,7 @@ class Field(object):
         self.data_full_zdim = kwargs.pop('data_full_zdim', None)
         self.data_chunks = []
         self.c_data_chunks = []
+        self.nchunks = []
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,

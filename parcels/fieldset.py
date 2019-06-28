@@ -810,12 +810,18 @@ class FieldSet(object):
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:
+                                if len(f.nchunks) == 0:
+                                    break  # file chunks were never loaded.
+                                           # happens when field not called by kernel, but shares a grid with another field called by kernel
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
                                 f.data_chunks[block_id][2] = np.array(f.data.blocks[block][2])
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:
+                                if len(f.nchunks) == 0:
+                                    break  # file chunks were never loaded.
+                                           # happens when field not called by kernel, but shares a grid with another field called by kernel
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
                                 f.data_chunks[block_id][0] = np.array(f.data.blocks[block][0])
