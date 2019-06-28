@@ -795,9 +795,13 @@ class FieldSet(object):
                     f.gradient(update=True, tindex=tind)
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
+                    if isinstance(f.data, da.core.Array):
+                        data = data.rechunk(sum(((1,), f.data.chunksize[1:]), ()))
                     f.data = da.concatenate([f.data[1:, :], data], axis=0)
                 else:
                     data = f.reshape(data)[0:1, :]
+                    if isinstance(f.data, da.core.Array):
+                        data = data.rechunk(sum(((1,), f.data.chunksize[1:]), ()))
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
                 # # Option 1
                 # if len(g.load_chunk) > 0:
