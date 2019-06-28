@@ -137,7 +137,8 @@ class Field(object):
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
         # since some datasets do not provide the deeper level of data (which is ignored by the interpolation).
         self.data_full_zdim = kwargs.pop('data_full_zdim', None)
-
+        self.data_chunks = []
+        self.c_data_chunks = []
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -836,7 +837,6 @@ class Field(object):
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
-
     #def find_in_block(self, chunksize, ti, zi, yi, xi):
     #    #index = (ti, zi, yi, xi)
     #    index = (ti, yi, xi)
@@ -844,19 +844,16 @@ class Field(object):
     #    local_index = tuple(index[i] - chunksize[i]*block[i] for i in range(len(index)))
     #    return block, local_index
 
-
     def get_block_id(self, nchunks, block):
         return np.ravel_multi_index(block, nchunks)
-
 
     def get_block(self, nchunks, bid):
         return np.unravel_index(bid, nchunks)
 
-
     def chunk_data(self):
         if isinstance(self.data, da.core.Array):
             if len(self.data.chunks[0]) > 1:
-                self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), () ))
+                self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), ()))
             npartitions = self.data.npartitions
             chunksize = self.data.chunksize
             chunks = self.data.chunks
@@ -866,23 +863,32 @@ class Field(object):
             chunks = tuple((t,) for t in chunksize)
 
         nchunks = tuple(len(chunks[i]) for i in range(len(chunks)))
-        self.data_chunks = [None] * npartitions
-        self.c_data_chunks = [None] * npartitions
+        if len(self.data_chunks) == 0:
+            self.data_chunks = [None] * npartitions
+            self.c_data_chunks = [None] * npartitions
 
-        if self.grid.load_chunk is None:
+        if len(self.grid.load_chunk) == 0:
             self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
         #print(self.grid.load_chunk)
 
+        # self.grid.load_chunk code:
+        # 0: not loaded
+        # 1: was asked to load
+        # 2: is loaded and was touched last C call
+        # 3: is loaded
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
-                if self.grid.load_chunk[block_id] >= 1 and self.data_chunks[block_id] == None:
+                if self.grid.load_chunk[block_id] >= 1:
                     #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
                     #block_id = self.get_block_id(nchunks, block)
                     block = self.get_block(nchunks, block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[block])
-                    self.grid.load_chunk[block_id] = 1
+                    self.grid.load_chunk[block_id] = 2
+                elif self.grid.load_chunk[block_id] == 0:
+                    self.data_chunks[block_id] = None
+                    self.c_data_chunks[block_id] = None
         else:
-            self.grid.load_chunk[0] = 1
+            self.grid.load_chunk[0] = 3
             self.data_chunks[0] = self.data
 
         # self.chunk_info format: number of dimensions; typical chunksizes; number of chunks per dimensions;
@@ -893,8 +899,6 @@ class Field(object):
         #print(self.data.chunks)
         #print(self.data.chunksize)
         #print("block_id", block, block_id)
-
-
 
         #To put it as it use to be
         self.datatmp = np.array(self.data)
@@ -923,7 +927,7 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         for i in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[i] == 1:
+            if self.grid.load_chunk[i] > 1:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))

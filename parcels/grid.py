@@ -51,7 +51,7 @@ class Grid(object):
         self.defer_load = False
         self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
         self.periods = 0
-        self.load_chunk = None
+        self.load_chunk = []
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):

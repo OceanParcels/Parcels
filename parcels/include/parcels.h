@@ -184,11 +184,12 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int ti, float cell_
   int tii, yii, xii;
 
   int blockid = getBlock3D(chunk_info, ti, yi, xi, block, ilocal);
-  if (grid->load_chunk[blockid] != 1){
-    grid->load_chunk[blockid] = 2;
+  if (grid->load_chunk[blockid] < 2){
+    grid->load_chunk[blockid] = 1;
     //printf("CHUNK NOT LOADED\n");
     return REPEAT;
   }
+  grid->load_chunk[blockid] = 2;
   int tdim = chunk_info[1+2*ndim+block[0]];
   int zdim = 1;
   int tshift = chunk_info[1+ndim];
@@ -203,11 +204,12 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int ti, float cell_
       for (yii=0; yii<2; ++yii){
         for (xii=0; xii<2; ++xii){
           blockid = getBlock3D(chunk_info, ti+tii, yi+yii, xi+xii, block, ilocal);
-          if (grid->load_chunk[blockid] != 1){
-            grid->load_chunk[blockid] = 2;
+          if (grid->load_chunk[blockid] < 1){
+            grid->load_chunk[blockid] = 1;
             //printf("CHUNK NOT LOADED\n");
             return REPEAT;
           }
+          grid->load_chunk[blockid] = 2;
           tdim = chunk_info[1+2*ndim+block[0]];
           tshift = chunk_info[1+ndim];
           ydim = chunk_info[1+2*ndim+tshift+block[1]];
@@ -271,11 +273,11 @@ static inline ErrorCode getCell4D(CField *f, int xi, int yi, int zi, int ti, flo
   int tii, zii, yii, xii;
 
   int blockid = getBlock4D(chunk_info, ti, zi, yi, xi, block, ilocal);
-  if (grid->load_chunk[blockid] != 1){
-    grid->load_chunk[blockid] = 2;
-    //printf("CHUNK NOT LOADED\n");
+  if (grid->load_chunk[blockid] < 2){
+    grid->load_chunk[blockid] = 1;
     return REPEAT;
   }
+  grid->load_chunk[blockid] = 2;
   int tdim = chunk_info[1+2*ndim+block[0]];
   int tshift = chunk_info[1+ndim];
   int zdim = chunk_info[1+2*ndim+tshift+block[1]];
@@ -292,11 +294,12 @@ static inline ErrorCode getCell4D(CField *f, int xi, int yi, int zi, int ti, flo
         for (yii=0; yii<2; ++yii){
           for (xii=0; xii<2; ++xii){
             blockid = getBlock4D(chunk_info, ti+tii, zi+zii, yi+yii, xi+xii, block, ilocal);
-            if (grid->load_chunk[blockid] != 1){
-              grid->load_chunk[blockid] = 2;
+            if (grid->load_chunk[blockid] < 2){
+              grid->load_chunk[blockid] = 1;
               //printf("CHUNK NOT LOADED\n");
               return REPEAT;
             }
+            grid->load_chunk[blockid] = 2;
             tdim = chunk_info[1+2*ndim+block[0]];
             tshift = chunk_info[1+ndim];
             zdim = chunk_info[1+2*ndim+tshift+block[1]];
