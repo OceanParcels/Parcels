@@ -773,6 +773,9 @@ class FieldSet(object):
                     assert False
                     f.gradient(update=True, tindex=tind)
                 f.data = f.reshape(data)
+                if len(g.load_chunk) > 0:
+                    g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
@@ -796,6 +799,26 @@ class FieldSet(object):
                 else:
                     data = f.reshape(data)[0:1, :]
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                # # Option 1
+                # if len(g.load_chunk) > 0:
+                #     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
+                #     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                # Option 2
+                if len(f.data.chunks[0]) > 1:
+                    f.data = f.data.rechunk(sum(((f.grid.tdim,), f.data.chunksize[1:]), ()))
+                if len(g.load_chunk) > 0:
+                    if signdt >= 0:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
+                                f.data_chunks[block_id][2] = np.array(f.data.blocks[block][2])
+                    else:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[block][0])
 
             # ### do built-in computations on data
             # for tind in f.loaded_time_indices:

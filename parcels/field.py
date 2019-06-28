@@ -844,11 +844,11 @@ class Field(object):
     #    local_index = tuple(index[i] - chunksize[i]*block[i] for i in range(len(index)))
     #    return block, local_index
 
-    def get_block_id(self, nchunks, block):
-        return np.ravel_multi_index(block, nchunks)
+    def get_block_id(self, block):
+        return np.ravel_multi_index(block, self.nchunks)
 
-    def get_block(self, nchunks, bid):
-        return np.unravel_index(bid, nchunks)
+    def get_block(self, bid):
+        return np.unravel_index(bid, self.nchunks)
 
     def chunk_data(self):
         if isinstance(self.data, da.core.Array):
@@ -862,7 +862,7 @@ class Field(object):
             chunksize = self.data.shape
             chunks = tuple((t,) for t in chunksize)
 
-        nchunks = tuple(len(chunks[i]) for i in range(len(chunks)))
+        self.nchunks = tuple(len(chunks[i]) for i in range(len(chunks)))
         if len(self.data_chunks) == 0:
             self.data_chunks = [None] * npartitions
             self.c_data_chunks = [None] * npartitions
@@ -878,12 +878,11 @@ class Field(object):
         # 3: is loaded
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
-                if self.grid.load_chunk[block_id] >= 1:
+                if self.grid.load_chunk[block_id] == 1:
                     #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
                     #block_id = self.get_block_id(nchunks, block)
-                    block = self.get_block(nchunks, block_id)
+                    block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[block])
-                    self.grid.load_chunk[block_id] = 2
                 elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
@@ -893,7 +892,7 @@ class Field(object):
 
         # self.chunk_info format: number of dimensions; typical chunksizes; number of chunks per dimensions;
         #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
-        self.chunk_info = [[len(nchunks)], list(chunksize), list(nchunks), sum(list(list(ci) for ci in chunks), [])]
+        self.chunk_info = [[len(self.nchunks)], list(chunksize), list(self.nchunks), sum(list(list(ci) for ci in chunks), [])]
         self.chunk_info = sum(self.chunk_info, [])
         #print("chunk_info", self.chunk_info)
         #print(self.data.chunks)
@@ -921,12 +920,12 @@ class Field(object):
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
                         ('grid', POINTER(CGrid))]
 
-        self.chunk_data()
 
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         for i in range(len(self.grid.load_chunk)):
+            assert(self.grid.load_chunk[i] != 1)
             if self.grid.load_chunk[i] > 1:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
@@ -1605,8 +1604,8 @@ class NetcdfFileBuffer(object):
             assert False
             data = np.ma.filled(data, np.nan)
         data = da.from_array(data, chunks='auto')
-        #data = da.from_array(data, chunks=(20,20))
-        #data = da.from_array(data, chunks=(1,10,50,50))
+        # data = da.from_array(data, chunks=(20,20))
+        # data = da.from_array(data, chunks=(1,10,50,50))
         return data
 
     @property

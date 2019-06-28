@@ -180,10 +180,6 @@ class Kernel(object):
         self._function = self._lib.particle_loop
 
     def execute_jit(self, pset, endtime, dt):
-        #for f in self.fieldset.get_fields():
-        #    if type(f) in [VectorField, NestedField, SummedField]:
-        #        continue
-        #    f.data = np.array(f.data)
         """Invokes JIT engine to perform the core update loop"""
         if len(pset.particles) > 0:
             assert pset.fieldset.gridset.size == len(pset.particles[0].xi), \
@@ -195,13 +191,21 @@ class Kernel(object):
         #for f in self.field_args.values():
         #    if not f.data.flags.c_contiguous:
         #        f.data = f.data.copy()
+        for f in self.field_args.values():
+            f.chunk_data()
+
         for g in pset.fieldset.gridset.grids:
+            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                g.load_chunk = np.where(g.load_chunk > 0, 3, g.load_chunk)
+                if not g.load_chunk.flags.c_contiguous:
+                    g.load_chunk = g.load_chunk.copy()
             if not g.depth.flags.c_contiguous:
                 g.depth = g.depth.copy()
             if not g.lon.flags.c_contiguous:
                 g.lon = g.lon.copy()
             if not g.lat.flags.c_contiguous:
                 g.lat = g.lat.copy()
+
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
