@@ -4,6 +4,8 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 from os import path
+from parcels.tools.loggers import logger
+import sys
 
 
 def create_outputfiles(dir):
@@ -36,5 +38,8 @@ def create_outputfiles(dir):
 
 @pytest.mark.parametrize('mode', ['2d', '3d', 'movie2d', 'hist2d'])
 def test_plotting(mode, tmpdir):
+    if mode == '3d' and sys.platform in ['linux', 'linux2']:
+        logger.info('Skipping 3d test in linux Travis, since it fails to find display to connect')
+        return
     fp = create_outputfiles(tmpdir)
     plotTrajectoriesFile(fp, mode=mode, show_plt=False)

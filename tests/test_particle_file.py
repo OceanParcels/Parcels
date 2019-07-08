@@ -1,9 +1,12 @@
 from parcels import (FieldSet, ParticleSet, ScipyParticle, JITParticle,
                      Variable, ErrorCode)
+from parcels.particlefile import _set_calendar
+from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 import numpy as np
 import pytest
 import os
 from netCDF4 import Dataset
+import cftime
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -189,3 +192,10 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ncfile.close()
+
+
+def test_set_calendar():
+    for calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes()):
+        date = getattr(cftime, cf_datetime)(1990, 1, 1)
+        assert _set_calendar(date.calendar) == date.calendar
+    assert _set_calendar('np_datetime64') == 'standard'

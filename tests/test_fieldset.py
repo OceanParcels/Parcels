@@ -1,6 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
-from parcels.tools.converters import TimeConverter
+from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -8,6 +8,7 @@ import xarray as xr
 import math
 import pytest
 from os import path
+import cftime
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -40,6 +41,19 @@ def test_fieldset_from_data(xdim, ydim):
     assert len(fieldset.V.data.shape) == 3
     assert np.allclose(fieldset.U.data[0, :], data['U'], rtol=1e-12)
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
+
+
+@pytest.mark.parametrize('ttype', ['float', 'datetime64'])
+@pytest.mark.parametrize('tdim', [1, 20])
+def test_fieldset_from_data_timedims(ttype, tdim):
+    data, dimensions = generate_fieldset(10, 10, tdim=tdim)
+    if ttype == 'float':
+        dimensions['time'] = np.linspace(0, 5, tdim)
+    else:
+        dimensions['time'] = [np.datetime64('2018-01-01') + np.timedelta64(t, 'D') for t in range(tdim)]
+    fieldset = FieldSet.from_data(data, dimensions)
+    for i, dtime in enumerate(dimensions['time']):
+        assert fieldset.U.grid.time_origin.fulltime(fieldset.U.grid.time[i]) == dtime
 
 
 @pytest.mark.parametrize('xdim', [100, 200])
@@ -85,15 +99,12 @@ def test_fieldset_from_parcels(xdim, ydim, tmpdir, filename='test_parcels'):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
-@pytest.mark.parametrize('calendar', ['noleap', '360day'])
-def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
-    from cftime import DatetimeNoLeap, Datetime360Day
+@pytest.mark.parametrize('calendar, cftime_datetime',
+                         zip(_get_cftime_calendars(),
+                             _get_cftime_datetimes()))
+def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='test_nonstandardtime.nc', xdim=4, ydim=6):
     filepath = tmpdir.join(filename)
-
-    if calendar == 'noleap':
-        dates = [DatetimeNoLeap(0, m, 1) for m in range(1, 13)]
-    else:
-        dates = [Datetime360Day(0, m, 1) for m in range(1, 13)]
+    dates = [getattr(cftime, cftime_datetime)(1, m, 1) for m in range(1, 13)]
     da = xr.DataArray(np.random.rand(12, xdim, ydim),
                       coords=[dates, range(xdim), range(ydim)],
                       dims=['time', 'lon', 'lat'], name='U')
@@ -101,7 +112,18 @@ def test_fieldset_nonstandardtime(calendar, tmpdir, filename='test_nonstandardti
 
     dims = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
     field = Field.from_netcdf(filepath, 'U', dims)
-    assert field.grid.time_origin.calendar == 'cftime'
+    assert field.grid.time_origin.calendar == calendar
+
+
+def test_field_from_netcdf():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    filenames = {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                 'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                 'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'}
+    variable = 'U'
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+    Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])

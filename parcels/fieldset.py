@@ -86,7 +86,13 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
+            time = np.array(time) if not isinstance(time, np.ndarray) else time
+            if isinstance(time[0], np.datetime64):
+                time_origin = TimeConverter(time[0])
+                time = np.array([time_origin.reltime(t) for t in time])
+            else:
+                time_origin = TimeConverter(0)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 
@@ -599,6 +605,7 @@ class FieldSet(object):
 
         :param ds: xarray Dataset.
                Note that the built-in Advection kernels assume that U and V are in m/s
+        :param variables: Dictionary mapping parcels variable names to data variables in the xarray Dataset.
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the xarray Dataset.
                Note that dimensions can also be a dictionary of dictionaries if
@@ -724,6 +731,13 @@ class FieldSet(object):
             f.advancetime(fnew, advance == 1)
 
     def computeTimeChunk(self, time, dt):
+        """Load a chunk of three data time steps into the FieldSet.
+        This is used when FieldSet uses data imported from netcdf,
+        with default option deferred_load. The loaded time steps are at or immediatly before time
+        and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+        :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
+        :param dt: time step of the integration scheme
+        """
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
 

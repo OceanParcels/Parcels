@@ -33,6 +33,13 @@ def _is_particle_started_yet(particle, time):
     return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
 
 
+def _set_calendar(origin_calendar):
+    if origin_calendar == 'np_datetime64':
+        return 'standard'
+    else:
+        return origin_calendar
+
+
 class ParticleFile(object):
     """Initialise trajectory output.
     :param name: Basename of the output file
