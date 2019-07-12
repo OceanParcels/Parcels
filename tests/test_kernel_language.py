@@ -128,6 +128,16 @@ def test_nested_if(fieldset, mode):
     assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_dt_as_variable_in_kernel(fieldset, mode):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        dt = 1.  # noqa
+
+    pset.execute(kernel, endtime=10, dt=1.)
+
+
 def test_parcels_tmpvar_in_kernel(fieldset):
     """Tests for error thrown if vartiable with 'tmp' defined in custom kernel"""
     error_thrown = False
