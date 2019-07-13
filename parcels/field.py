@@ -687,7 +687,8 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             if isinstance(val, da.core.Array):
-                raise RuntimeError("This happens at p init from field")
+                val = val.compute()
+                #raise RuntimeError("This happens at p init from field")
             return val
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
