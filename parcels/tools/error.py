@@ -1,12 +1,11 @@
 """Collection of pre-built recovery kernels"""
-from enum import IntEnum
 
 
 __all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
            'KernelError', 'OutOfBoundsError', 'recovery_map']
 
 
-class ErrorCode(IntEnum):
+class ErrorCode(object):
     Success = 0
     Repeat = 1
     Delete = 2
