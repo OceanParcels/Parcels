@@ -64,13 +64,13 @@ def test_globcurrent_fieldset_advancetime(mode, dt, lonstart, latstart, use_xarr
     fieldsetall = set_globcurrent_fieldset(files[0:10], deferred_load=False, use_xarray=use_xarray)
     psetall = ParticleSet.from_list(fieldset=fieldsetall, pclass=ptype[mode], lon=[lonstart], lat=[latstart])
     if dt < 0:
-        psetsub[0].time = fieldsetsub.U.grid.time[-1]
-        psetall[0].time = fieldsetall.U.grid.time[-1]
+        psetsub.time[0] = fieldsetsub.U.grid.time[-1]
+        psetall.time[0] = fieldsetall.U.grid.time[-1]
 
     psetsub.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
     psetall.execute(AdvectionRK4, runtime=delta(days=7), dt=dt)
 
-    assert abs(psetsub[0].lon - psetall[0].lon) < 1e-4
+    assert abs(psetsub.lon[0] - psetall.lon[0]) < 1e-4
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -85,8 +85,8 @@ def test_globcurrent_particles(mode, use_xarray):
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
 
-    assert(abs(pset[0].lon - 23.8) < 1)
-    assert(abs(pset[0].lat - -35.3) < 1)
+    assert(abs(pset.lon[0] - 23.8) < 1)
+    assert(abs(pset.lat[0] - -35.3) < 1)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -105,7 +105,7 @@ def test_globcurrent_time_periodic(mode, rundays):
             particle.sample_var += fieldset.U[time, particle.depth, particle.lat, particle.lon]
 
         pset.execute(SampleU, runtime=delta(days=rundays), dt=delta(days=1))
-        sample_var.append(pset[0].sample_var)
+        sample_var.append(pset.sample_var[0])
 
     assert np.allclose(sample_var[0], sample_var[1])
 
@@ -122,8 +122,8 @@ def test_globcurrent_xarray_vs_netcdf(dt):
     psetX = ParticleSet(fieldsetxarray, pclass=JITParticle, lon=lonstart, lat=latstart)
     psetX.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
-    assert np.allclose(psetN[0].lon, psetX[0].lon)
-    assert np.allclose(psetN[0].lat, psetX[0].lat)
+    assert np.allclose(psetN.lon[0], psetX.lon[0])
+    assert np.allclose(psetN.lat[0], psetX.lat[0])
 
 
 @pytest.mark.parametrize('dt', [-300, 300])
@@ -139,8 +139,8 @@ def test_globcurrent_netcdf_timestamps(dt):
     psetT = ParticleSet(fieldsetTimestamps, pclass=JITParticle, lon=lonstart, lat=latstart)
     psetT.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
-    assert np.allclose(psetN[0].lon, psetT[0].lon)
-    assert np.allclose(psetN[0].lat, psetT[0].lat)
+    assert np.allclose(psetN.lon[0], psetT.lon[0])
+    assert np.allclose(psetN.lat[0], psetT.lat[0])
 
 
 def test__particles_init_time():
@@ -154,9 +154,9 @@ def test__particles_init_time():
     pset2 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=14*86400)
     pset3 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=np.array([np.datetime64('2002-01-15')]))
     pset4 = ParticleSet(fieldset, pclass=JITParticle, lon=lonstart, lat=latstart, time=[np.datetime64('2002-01-15')])
-    assert pset[0].time - pset2[0].time == 0
-    assert pset[0].time - pset3[0].time == 0
-    assert pset[0].time - pset4[0].time == 0
+    assert pset.time[0] - pset2.time[0] == 0
+    assert pset.time[0] - pset3.time[0] == 0
+    assert pset.time[0] - pset4.time[0] == 0
 
 
 @pytest.mark.xfail(reason="Time extrapolation error expected to be thrown", strict=True)
@@ -224,4 +224,4 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   runtime=delta(days=rundays),
                   dt=delta(minutes=5))
 
-    assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
+    assert np.allclose([pset0.lon[-1], pset0.lat[-1]], [pset1.lon[-1], pset1.lat[-1]])

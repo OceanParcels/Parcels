@@ -305,7 +305,7 @@ def test_fieldset_constant(mode):
     pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(pset.Kernel(addConst), dt=1, runtime=1)
-    assert abs(pset[0].lon - (0.5 + westval + eastval)) < 1e-4
+    assert abs(pset.lon[0] - (0.5 + westval + eastval)) < 1e-4
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -327,11 +327,11 @@ def test_vector_fields(mode, swapUV):
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
     if swapUV:
-        assert abs(pset[0].lon - .5) < 1e-9
-        assert abs(pset[0].lat - 1.5) < 1e-9
+        assert abs(pset.lon[0] - .5) < 1e-9
+        assert abs(pset.lat[0] - 1.5) < 1e-9
     else:
-        assert abs(pset[0].lon - 1.5) < 1e-9
-        assert abs(pset[0].lat - .5) < 1e-9
+        assert abs(pset.lon[0] - 1.5) < 1e-9
+        assert abs(pset.lat[0] - .5) < 1e-9
 
 
 @pytest.mark.parametrize('datetype', ['float', 'datetime64'])
@@ -405,15 +405,15 @@ def test_periodic(mode, time_periodic, dt_sign):
                  runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
 
     if time_periodic is not False:
-        t = pset.particles[0].time
+        t = pset.time[0]
         temp_theo = temp_func(t)
     elif dt_sign == 1:
         temp_theo = temp_vec[-1]
     elif dt_sign == -1:
         temp_theo = temp_vec[0]
-    assert np.allclose(temp_theo, pset.particles[0].temp, atol=1e-5)
-    assert np.allclose(pset.particles[0].u1, pset.particles[0].u2)
-    assert np.allclose(pset.particles[0].v1, pset.particles[0].v2)
+    assert np.allclose(temp_theo, pset.temp[0], atol=1e-5)
+    assert np.allclose(pset.u1[0], pset.u2[0])
+    assert np.allclose(pset.v1[0], pset.v2[0])
 
 
 @pytest.mark.parametrize('fail', [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])
@@ -512,7 +512,7 @@ def test_fieldset_from_xarray(maxlatind):
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
     pset.execute(AdvectionRK4, dt=1)
-    assert np.allclose(pset[0].lon, 4.5) and np.allclose(pset[0].lat, 10)
+    assert np.allclose(pset.lon[0], 4.5) and np.allclose(pset.lat[0], 10)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -545,8 +545,8 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    plon = [p.lon for p in pset]
-    plat = [p.lat for p in pset]
+    plon = pset.lon
+    plat = pset.lat
     # sol of  dx/dt = (init_depth+1)*x+0.1; x(0)=0
     assert np.allclose(plon, [0.17173462592827032, 0.2177736932123214])
     assert np.allclose(plat, [1, 1])
@@ -556,8 +556,8 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    assert np.allclose(plon, [p.lon for p in pset])
-    assert np.allclose(plat, [p.lat for p in pset])
+    assert np.allclose(plon, pset.lon)
+    assert np.allclose(plat, pset.lat)
 
     # Curvilinear Z grid
     dimensions['lon'] = lonm
@@ -566,13 +566,13 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    assert np.allclose(plon, [p.lon for p in pset])
-    assert np.allclose(plat, [p.lat for p in pset])
+    assert np.allclose(plon, pset.lon)
+    assert np.allclose(plat, pset.lat)
 
     # Curvilinear S grid
     dimensions['depth'] = depth_s
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     pset = ParticleSet(fieldset, ScipyParticle, [0, 0], [0, 0], [0, .4])
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
-    assert np.allclose(plon, [p.lon for p in pset])
-    assert np.allclose(plat, [p.lat for p in pset])
+    assert np.allclose(plon, pset.lon)
+    assert np.allclose(plat, pset.lat)

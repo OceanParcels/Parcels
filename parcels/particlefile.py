@@ -30,13 +30,14 @@ except:
 __all__ = ['ParticleFile']
 
 
-def _is_particle_started_yet(particle, time):
+def _started_particles(pset, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if:
       * particle.time is equal to time argument of pfile.write()
       * particle.time is before time (in case particle was deleted between previous export and current one)
     """
-    return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
+    return ((pset.particle_data['dt']*pset.particle_data['time'] <= pset.particle_data['dt']*time)
+            | np.isclose(pset.particle_data['time'], time))
 
 
 def _set_calendar(origin_calendar):
@@ -181,11 +182,21 @@ class ParticleFile(object):
                 getattr(self, vname).standard_name = vname
                 getattr(self, vname).units = "unknown"
 
-        for vname in self.var_names_once:
-            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
-            getattr(self, vname).long_name = ""
-            getattr(self, vname).standard_name = vname
-            getattr(self, vname).units = "unknown"
+        for v in self.particleset.ptype.variables:
+            if v.name in ['time', 'lat', 'lon', 'depth', 'z', 'id']:
+                continue
+            if v.to_write:
+                if v.to_write is True:
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", coords, fill_value=np.nan, chunksizes=self.chunksizes))
+                    self.user_vars += [v.name]
+                elif v.to_write == 'once':
+                    setattr(self, v.name, self.dataset.createVariable(v.name, "f4", "traj", fill_value=np.nan, chunksizes=[self.chunksizes[0]]))
+                    self.user_vars_once += [v.name]
+                getattr(self, v.name).long_name = ""
+                getattr(self, v.name).standard_name = v.name
+                getattr(self, v.name).units = "unknown"
+
+        self.idx = 0
 
         for name, message in self.metadata.items():
             setattr(self.dataset, name, message)
@@ -227,26 +238,29 @@ class ParticleFile(object):
 
         time = time.total_seconds() if isinstance(time, delta) else time
 
+        pd = pset.particle_data
+
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
             if pset.size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
                 tol = 1e-8
-                pset_towrite = [p for p in pset if p.dt * p.time < p.dt * time + tol and np.isfinite(p.id)]
-                if len(pset_towrite) > 0:
+                to_write = (pd['dt'] * pd['time'] < pd['dt'] * time + tol) & np.isfinite(pd['id'])
+                if np.count_nonzero(to_write) > 0:
                     for var in self.var_names:
-                        data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
-                    self.maxid_written = np.max([self.maxid_written, np.max(data_dict['id'])])
+                        data_dict[var] = pd[var][to_write]
+                    self.maxid_written = max(self.maxid_written, np.max(data_dict['id']))
 
-                pset_errs = [p for p in pset_towrite if p.state != ErrorCode.Delete and abs(time-p.time) > 1e-3]
-                for p in pset_errs:
+                pset_errs = to_write & (pd['state'] != ErrorCode.Delete) & (np.abs(time - pd['time']) > 1e-3)
+                if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once(
-                        'time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
+                        'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
 
                 if time not in self.time_written:
                     self.time_written.append(time)
 
+                ## =========================================================
                 if len(self.var_names_once) > 0:
                     first_write = [p for p in pset if (p.id not in self.written_once) and _is_particle_started_yet(p, time)]
                     data_dict_once['id'] = np.array([p.id for p in first_write])

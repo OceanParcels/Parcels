@@ -59,4 +59,4 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     pset.execute(pset.Kernel(TestLon), runtime=1, dt=1,
                  recovery={ErrorCode.Error: Error_RandomiseLon})
 
-    assert (np.array([p.lon for p in pset]) > fieldset.minlon).all()
+    assert (pset.lon > fieldset.minlon).all()

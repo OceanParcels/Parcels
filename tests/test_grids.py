@@ -77,7 +77,7 @@ def test_multi_structured_grids(mode):
 
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=1, dt=1)
 
-    assert np.allclose(pset.particles[0].temp0, pset.particles[0].temp1, atol=1e-3)
+    assert np.allclose(pset.temp0[0], pset.temp1[0], atol=1e-3)
 
 
 @pytest.mark.xfail(reason="Grid cannot be computed using a time vector which is neither float nor int", strict=True)
@@ -206,7 +206,7 @@ def test_rectilinear_s_grid_sampling(mode, z4d):
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[lon], lat=[lat], depth=[bath_func(lon)*ratio])
 
     pset.execute(pset.Kernel(sampleTemp), runtime=0, dt=0)
-    assert np.allclose(pset.particles[0].temp, ratio, atol=1e-4)
+    assert np.allclose(pset.temp[0], ratio, atol=1e-4)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -249,7 +249,7 @@ def test_rectilinear_s_grids_advect1(mode):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lon, lat=lat, depth=depth)
 
     pset.execute(AdvectionRK4_3D, runtime=10000, dt=500)
-    assert np.allclose([p.depth/bath_func(p.lon) for p in pset], ratio)
+    assert np.allclose(pset.depth/bath_func(pset.lon), ratio)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -294,7 +294,7 @@ def test_rectilinear_s_grids_advect2(mode):
     kernel = pset.Kernel(moveEast)
     for _ in range(10):
         pset.execute(kernel, runtime=100, dt=50)
-        assert np.allclose(pset[0].relDepth, depth/bath_func(pset[0].lon))
+        assert np.allclose(pset.relDepth[0], depth/bath_func(pset.lon[0]))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -330,7 +330,7 @@ def test_curvilinear_grids(mode):
 
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[400, -200], lat=[600, 600])
     pset.execute(pset.Kernel(sampleSpeed), runtime=0, dt=0)
-    assert(np.allclose(pset[0].speed, 1000))
+    assert(np.allclose(pset.speed[0], 1000))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -361,8 +361,8 @@ def test_nemo_grid(mode):
     latp = 81.5
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[lonp], lat=[latp])
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    u = field_set.U.units.to_source(pset[0].zonal, lonp, latp, 0)
-    v = field_set.V.units.to_source(pset[0].meridional, lonp, latp, 0)
+    u = field_set.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+    v = field_set.V.units.to_source(pset.meridional[0], lonp, latp, 0)
     assert abs(u - 1) < 1e-4
     assert abs(v) < 1e-4
 
@@ -385,7 +385,7 @@ def test_advect_nemo(mode):
     latp = 81.5
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=[lonp], lat=[latp])
     pset.execute(AdvectionRK4, runtime=delta(days=2), dt=delta(hours=6))
-    assert abs(pset[0].lat - latp) < 1e-3
+    assert abs(pset.lat[0] - latp) < 1e-3
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -416,8 +416,8 @@ def test_cgrid_uniform_2dvel(mode, time):
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    assert abs(pset[0].zonal - 1) < 1e-6
-    assert abs(pset[0].meridional - 1) < 1e-6
+    assert abs(pset.zonal[0] - 1) < 1e-6
+    assert abs(pset.meridional[0] - 1) < 1e-6
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -477,9 +477,9 @@ def test_cgrid_uniform_3dvel(mode, vert_mode, time):
 
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    assert abs(pset[0].zonal - 1) < 1e-6
-    assert abs(pset[0].meridional - 1) < 1e-6
-    assert abs(pset[0].vertical - 1) < 1e-6
+    assert abs(pset.zonal[0] - 1) < 1e-6
+    assert abs(pset.meridional[0] - 1) < 1e-6
+    assert abs(pset.vertical[0] - 1) < 1e-6
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -536,11 +536,11 @@ def test_cgrid_uniform_3dvel_spherical(mode, vert_mode, time):
     latp = 81.35
     pset = ParticleSet.from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
-    pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
-    assert abs(pset[0].zonal - 1) < 1e-3
-    assert abs(pset[0].meridional) < 1e-3
-    assert abs(pset[0].vertical - 1) < 1e-3
+    pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+    pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    assert abs(pset.zonal[0] - 1) < 1e-3
+    assert abs(pset.meridional[0]) < 1e-3
+    assert abs(pset.vertical[0] - 1) < 1e-3
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -583,17 +583,17 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
     pset.execute(pset.Kernel(sampleVel), runtime=1, dt=1,
                  recovery={ErrorCode.ErrorOutOfBounds: OutBoundsError})
     if vert_discretisation == 'slevel2':
-        assert np.isclose(pset[0].vert, 0.)
-        assert np.isclose(pset[0].zonal, 0.)
-        assert np.isclose(pset[0].tracer, 99.)
-        assert np.isclose(pset[1].vert, -0.0066666666)
-        assert np.isclose(pset[1].zonal, .015)
-        assert np.isclose(pset[1].tracer, 1.)
-        assert pset[0].out_of_bounds == 0
-        assert pset[1].out_of_bounds == 0
-        assert pset[2].out_of_bounds == 1
+        assert np.isclose(pset.vert[0], 0.)
+        assert np.isclose(pset.zonal[0], 0.)
+        assert np.isclose(pset.tracer[0], 99.)
+        assert np.isclose(pset.vert[1], -0.0066666666)
+        assert np.isclose(pset.zonal[1], .015)
+        assert np.isclose(pset.tracer[1], 1.)
+        assert pset.out_of_bounds[0] == 0
+        assert pset.out_of_bounds[1] == 0
+        assert pset.out_of_bounds[2] == 1
     else:
-        assert np.allclose([p.zonal for p in pset], 0.015)
-        assert np.allclose([p.meridional for p in pset], 0.01)
-        assert np.allclose([p.vert for p in pset], -0.01)
-        assert np.allclose([p.tracer for p in pset], 1)
+        assert np.allclose(pset.zonal, 0.015)
+        assert np.allclose(pset.meridional, 0.01)
+        assert np.allclose(pset.vert, -0.01)
+        assert np.allclose(pset.tracer, 1)

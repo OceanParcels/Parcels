@@ -131,10 +131,10 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
     outfile = tmpdir.join("Peninsula")
     pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
-    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    err_adv = np.abs(pset.p_start - pset.p)
     assert(err_adv <= 1.e-3).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
-    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.depth, p.lat, p.lon]) for p in pset])
+    err_smpl = np.array([abs(pset.p[i] - pset.fieldset.P[0., pset.depth[i], pset.lat[i], pset.lon[i]]) for i in range(pset.size)])
     assert(err_smpl <= 1.e-3).all()
 
 
@@ -155,10 +155,10 @@ def test_peninsula_file(mode, mesh, tmpdir):
     outfile = tmpdir.join("Peninsula")
     pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
-    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    err_adv = np.abs(pset.p_start - pset.p)
     assert(err_adv <= 1.e-3).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
-    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.depth, p.lat, p.lon]) for p in pset])
+    err_smpl = np.array([abs(pset.p[i] - pset.fieldset.P[0., pset.depth[i], pset.lat[i], pset.lon[i]]) for i in range(pset.size)])
     assert(err_smpl <= 1.e-3).all()
 
 
