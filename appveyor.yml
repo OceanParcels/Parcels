@@ -2,7 +2,7 @@ environment:
 
   matrix:
 
-    - PYTHON: "C:\\Miniconda27-x64"
+    - PYTHON: "C:\\Miniconda"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py2_win.yml"
