@@ -1,6 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
-from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes
+from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -124,6 +124,27 @@ def test_field_from_netcdf():
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
+
+
+def test_field_from_netcdf_fieldtypes():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    filenames = {'varU': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                          'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                          'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'varV': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                          'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                          'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
+    variables = {'varU': 'U', 'varV': 'V'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+
+    # first try without setting fieldtype
+    fset = FieldSet.from_nemo(filenames, variables, dimensions)
+    assert isinstance(fset.varU.units, UnitConverter)
+
+    # now try with setting fieldtype
+    fset = FieldSet.from_nemo(filenames, variables, dimensions, fieldtype={'varU': 'U', 'varV': 'V'})
+    assert isinstance(fset.varU.units, GeographicPolar)
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
