@@ -14,7 +14,7 @@ environment:
 
 matrix:
   allow_failures:
-    - PYTHON_VERSION: "3.6.x"
+    - PYTHON_VERSION: "2.7.x"
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
