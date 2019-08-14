@@ -194,7 +194,7 @@ class FieldSet(object):
         return paths
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices=None,
+    def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
@@ -216,6 +216,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -263,6 +265,7 @@ class FieldSet(object):
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
+            fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
 
             grid = None
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
@@ -286,7 +289,8 @@ class FieldSet(object):
                         break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load,
+                                            fieldtype=fieldtype, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -327,6 +331,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -387,6 +393,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -458,6 +466,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -522,6 +532,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -568,6 +580,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
@@ -614,6 +628,8 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
