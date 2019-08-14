@@ -237,7 +237,7 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
+    assert np.allclose(np.array([p.p for p in pset]), series, atol=1e-9)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
