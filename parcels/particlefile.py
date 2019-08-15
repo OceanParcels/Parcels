@@ -7,7 +7,6 @@ import os
 import shutil
 import string
 import random
-import pickle
 from mpi4py import MPI
 from parcels.tools.error import ErrorCode
 from glob import glob
@@ -193,7 +192,7 @@ class ParticleFile(object):
     def __del__(self):
         # The export can only start when all threads are done.
         comm.Barrier()
-        if self.to_export and rank == 0: # only export once.
+        if self.to_export and rank == 0:  # only export once.
             self.close()
 
     def close(self):
@@ -326,7 +325,7 @@ class ParticleFile(object):
         t_ind_used = np.zeros(time_steps, dtype=int)
 
         # loop over all files
-        for npyfile in file_list: 
+        for npyfile in file_list:
             data_dict = np.load(npyfile, allow_pickle=True).item()
             id_ind = np.array(data_dict["id"], dtype=int)
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0

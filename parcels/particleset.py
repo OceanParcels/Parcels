@@ -67,7 +67,6 @@ class ParticleSet(object):
         time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
         time = [np.datetime64(t) if isinstance(t, date) else t for t in time]
 
-
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         mpi_size = mpi_comm.Get_size()
@@ -285,7 +284,7 @@ class ParticleSet(object):
         self.add(particles)
         return self
 
-    def add(self, particles): # This does not align with the global ID
+    def add(self, particles):
         """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
