@@ -25,6 +25,5 @@ dependencies:
   - xarray>=0.10.8
   - dask
   - cftime
-  - psutil
   - pytest<4.0
   - nbval
