@@ -257,13 +257,13 @@ class ParticleFile(object):
             os.mkdir(self.tempwritedir)
 
         if len(data_dict) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + ".npy")
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy")
             with open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict)
             self.file_list.append(tmpfilename)
 
         if len(data_dict_once) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + '_once.npy')
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + '_once.npy')
             with open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict_once)
             self.file_list_once.append(tmpfilename)
