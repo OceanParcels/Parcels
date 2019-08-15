@@ -453,6 +453,10 @@ class KernelGenerator(ast.NodeVisitor):
                             args.append(a.ccode)
                         elif hasattr(a, 'id'):
                             args.append(a.id)
+                elif hasattr(node.args[0].right, 'ccode'):
+                    args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'id'):
+                    args = node.args[0].right.id
                 else:
                     args = []
                 s = 'printf("%s\\n"' % node.args[0].left.s
