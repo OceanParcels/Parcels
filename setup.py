@@ -15,5 +15,6 @@ setup(name='parcels',
       package_data={'parcels': ['include/*',
                                 'examples/*']},
       entry_points={'console_scripts': [
-          'parcels_get_examples = parcels.scripts.get_examples:main']}
+          'parcels_get_examples = parcels.scripts.get_examples:main',
+          'parcels_convert_npydir_to_netcdf = parcels.scripts.convert_npydir_to_netcdf:main']}
       )
