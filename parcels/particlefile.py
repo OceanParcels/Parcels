@@ -10,6 +10,7 @@ import random
 import pickle
 from mpi4py import MPI
 from parcels.tools.error import ErrorCode
+from glob import glob
 try:
     from parcels._version import version as parcels_version
 except:
@@ -54,9 +55,11 @@ class ParticleFile(object):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
-    :param tempwritedir: directory to write temporary files to during executing.
-                        Default is out-XXXXXX where Xs are random capitals
-    :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/pset_info.npy,
+    :param tempwritedir: directories to write temporary files to during executing.
+                        Default is out-XXXXXX where Xs are random capitals.
+                        Files for individual processors in MPI mode are written to
+                        subdirectories 0, 1, 2 etc under tempwritedir
+    :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
                       used to create NetCDF file from npy-files.
     """
 
@@ -93,19 +96,20 @@ class ParticleFile(object):
             self.maxid_written = -1
         self.to_export = False
 
-        if tempwritedir is None:
-            self.tempwritedir = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        if mpi_rank == 0:
+            if tempwritedir is None:
+                basename = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+            else:
+                basename = tempwritedir
         else:
-            self.tempwritedir = tempwritedir
+            basename = None
+
+        self.tempwritedir_base = mpi_comm.bcast(basename, root=0)
+        self.tempwritedir = self.tempwritedir_base + "/%d" % mpi_rank
 
         self.delete_tempwritedir()
-        
-        # Communicate tempwritedir and write to a binary file, to be interpreted by the export function later
-        temp_names = comm.gather(self.tempwritedir, root=0)
-        if rank == 0:
-            with open('tempwritedir_names', 'wb') as f:
-                pickle.dump(temp_names, f)
-        
 
     def open_netcdf_file(self, data_shape):
         """Initialise NetCDF4.Dataset for trajectory output.
@@ -196,12 +200,7 @@ class ParticleFile(object):
         the temporary npy files"""
         self.export()
 
-        with open('tempwritedir_names', 'rb') as f:
-            temp_names = pickle.load(f)
-        for tempwritedir in temp_names:
-            self.delete_tempwritedir(tempwritedir=tempwritedir)
-        
-        os.remove('tempwritedir_names')
+        self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
 
         self.dataset.close()
         self.to_export = False
@@ -277,7 +276,7 @@ class ParticleFile(object):
         """Buffer data to set of temporary numpy files, using np.save"""
 
         if not os.path.exists(self.tempwritedir):
-            os.mkdir(self.tempwritedir)
+            os.makedirs(self.tempwritedir, exist_ok=True)
 
         if len(data_dict) > 0:
             tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy")
@@ -344,9 +343,8 @@ class ParticleFile(object):
         """Exports outputs in temporary NPY-files to NetCDF file"""
 
         # Retrieve all temporary writing directories
-        with open('tempwritedir_names', 'rb') as f:
-            temp_names = pickle.load(f)
-        
+        temp_names = glob("%s/*/" % self.tempwritedir_base)
+
         global_maxid_written = -1
         global_file_list = []
         if len(self.var_names_once) > 0:

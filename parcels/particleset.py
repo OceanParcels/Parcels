@@ -439,9 +439,9 @@ class ParticleSet(object):
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
-                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir)
+                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
                     logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
-                                'to a NetCDF file during the run.' % output_file.tempwritedir)
+                                'to a NetCDF file during the run.' % output_file.tempwritedir_base)
                 pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
                 verbose_progress = True
             if dt > 0:
