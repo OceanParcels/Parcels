@@ -4,6 +4,7 @@ from parcels.grid import Grid
 from parcels.tools.loggers import logger
 from parcels.tools.converters import TimeConverter
 import numpy as np
+from mpi4py import MPI
 from os import path
 from glob import glob
 from copy import deepcopy
@@ -709,16 +710,18 @@ class FieldSet(object):
         """Write FieldSet to NetCDF file using NEMO convention
 
         :param filename: Basename of the output fileset"""
-        logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        if hasattr(self, 'U'):
-            self.U.write(filename, varname='vozocrtx')
-        if hasattr(self, 'V'):
-            self.V.write(filename, varname='vomecrty')
+        if MPI.COMM_WORLD.Get_rank() == 0:
+            logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        for v in self.get_fields():
-            if (v.name != 'U') and (v.name != 'V'):
-                v.write(filename)
+            if hasattr(self, 'U'):
+                self.U.write(filename, varname='vozocrtx')
+            if hasattr(self, 'V'):
+                self.V.write(filename, varname='vomecrty')
+
+            for v in self.get_fields():
+                if (v.name != 'U') and (v.name != 'V'):
+                    v.write(filename)
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
