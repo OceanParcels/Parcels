@@ -274,7 +274,7 @@ class ParticleFile(object):
         """Buffer data to set of temporary numpy files, using np.save"""
 
         if not os.path.exists(self.tempwritedir):
-            os.makedirs(self.tempwritedir, exist_ok=True)
+            os.makedirs(self.tempwritedir)
 
         if len(data_dict) > 0:
             tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy")
