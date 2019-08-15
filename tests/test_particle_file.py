@@ -1,9 +1,12 @@
 from parcels import (FieldSet, ParticleSet, ScipyParticle, JITParticle,
                      Variable, ErrorCode)
+from parcels.particlefile import _set_calendar
+from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 import numpy as np
 import pytest
 import os
 from netCDF4 import Dataset
+import cftime
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -189,3 +192,27 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB
     ncfile.close()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_write_timebackward(fieldset, mode, tmpdir):
+    outfilepath = tmpdir.join("pfile_write_timebackward.nc")
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon -= 0.1 * particle.dt
+
+    pset = ParticleSet(fieldset, pclass=JITParticle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
+                       time=[1, 2, 3])
+    pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
+    pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
+                 output_file=pfile)
+    ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
+    trajs = ncfile.variables['trajectory'][:, 0]
+    assert np.all(np.diff(trajs) > 0)  # all particles written in order of traj ID
+
+
+def test_set_calendar():
+    for calendar_name, cf_datetime in zip(_get_cftime_calendars(), _get_cftime_datetimes()):
+        date = getattr(cftime, cf_datetime)(1990, 1, 1)
+        assert _set_calendar(date.calendar) == date.calendar
+    assert _set_calendar('np_datetime64') == 'standard'

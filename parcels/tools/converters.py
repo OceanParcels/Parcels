@@ -1,12 +1,23 @@
 from math import cos, pi
 import numpy as np
-import cftime._cftime as cftime_mods
+import cftime
 import inspect
 from datetime import timedelta as delta
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
            'GeographicPolarSquare', 'unitconverters_map',
            'TimeConverter']
+
+
+def _get_cftime_datetimes():
+    # Is there a more elegant way to parse these from cftime?
+    cftime_calendars = tuple(x[1].__name__ for x in inspect.getmembers(cftime._cftime, inspect.isclass))
+    cftime_datetime_names = [ca for ca in cftime_calendars if 'Datetime' in ca]
+    return cftime_datetime_names
+
+
+def _get_cftime_calendars():
+    return [getattr(cftime, cf_datetime)(1990, 1, 1).calendar for cf_datetime in _get_cftime_datetimes()]
 
 
 class TimeConverter(object):
@@ -18,11 +29,10 @@ class TimeConverter(object):
 
     def __init__(self, time_origin=0):
         self.time_origin = 0 if time_origin is None else time_origin
-        cftime_calendars = tuple(x[1].__name__ for x in inspect.getmembers(cftime_mods, inspect.isclass))
         if isinstance(time_origin, np.datetime64):
             self.calendar = "np_datetime64"
-        elif type(time_origin).__name__ in cftime_calendars:
-            self.calendar = "cftime"
+        elif isinstance(time_origin, cftime._cftime.datetime):
+            self.calendar = time_origin.calendar
         else:
             self.calendar = None
 
@@ -36,7 +46,7 @@ class TimeConverter(object):
         time = time.time_origin if isinstance(time, TimeConverter) else time
         if self.calendar == 'np_datetime64':
             return (time - self.time_origin) / np.timedelta64(1, 's')
-        elif self.calendar == 'cftime':
+        elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
                 return np.array([(t - self.time_origin).total_seconds() for t in time])
             else:
@@ -58,7 +68,7 @@ class TimeConverter(object):
                 return [self.time_origin + np.timedelta64(int(t), 's') for t in time]
             else:
                 return self.time_origin + np.timedelta64(int(time), 's')
-        elif self.calendar == 'cftime':
+        elif self.calendar in _get_cftime_calendars():
             return self.time_origin + delta(seconds=time)
         elif self.calendar is None:
             return self.time_origin + time

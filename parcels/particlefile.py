@@ -4,7 +4,6 @@ import netCDF4
 from datetime import timedelta as delta
 from parcels.tools.loggers import logger
 import os
-import psutil
 import shutil
 import string
 import random
@@ -38,6 +37,13 @@ def _is_particle_started_yet(particle, time):
       * particle.time is before time (in case particle was deleted between previous export and current one)
     """
     return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
+
+
+def _set_calendar(origin_calendar):
+    if origin_calendar == 'np_datetime64':
+        return 'standard'
+    else:
+        return origin_calendar
 
 
 class ParticleFile(object):
@@ -125,12 +131,12 @@ class ParticleFile(object):
         self.dataset.parcels_mesh = self.parcels_mesh
 
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i4", coords, fill_value=-2147483647, chunksizes=data_shape)
+        self.id = self.dataset.createVariable("trajectory", "i4", coords)
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
 
         # Create time, lat, lon and z variables according to CF conventions:
-        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan, chunksizes=data_shape)
+        self.time = self.dataset.createVariable("time", "f8", coords, fill_value=np.nan)
         self.time.long_name = ""
         self.time.standard_name = "time"
         if self.time_origin.calendar is None:
@@ -145,19 +151,19 @@ class ParticleFile(object):
         else:
             lonlatdepth_precision = "f4"
 
-        self.lat = self.dataset.createVariable("lat", lonlatdepth_precision, coords, fill_value=np.nan, chunksizes=data_shape)
+        self.lat = self.dataset.createVariable("lat", lonlatdepth_precision, coords, fill_value=np.nan)
         self.lat.long_name = ""
         self.lat.standard_name = "latitude"
         self.lat.units = "degrees_north"
         self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", lonlatdepth_precision, coords, fill_value=np.nan, chunksizes=data_shape)
+        self.lon = self.dataset.createVariable("lon", lonlatdepth_precision, coords, fill_value=np.nan)
         self.lon.long_name = ""
         self.lon.standard_name = "longitude"
         self.lon.units = "degrees_east"
         self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", lonlatdepth_precision, coords, fill_value=np.nan, chunksizes=data_shape)
+        self.z = self.dataset.createVariable("z", lonlatdepth_precision, coords, fill_value=np.nan)
         self.z.long_name = ""
         self.z.standard_name = "depth"
         self.z.units = "m"
@@ -165,13 +171,13 @@ class ParticleFile(object):
 
         for vname in self.var_names:
             if vname not in ['time', 'lat', 'lon', 'depth', 'id']:
-                setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan, chunksizes=data_shape))
+                setattr(self, vname, self.dataset.createVariable(vname, "f4", coords, fill_value=np.nan))
                 getattr(self, vname).long_name = ""
                 getattr(self, vname).standard_name = vname
                 getattr(self, vname).units = "unknown"
 
         for vname in self.var_names_once:
-            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan, chunksizes=[data_shape[0]]))
+            setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
             getattr(self, vname).long_name = ""
             getattr(self, vname).standard_name = vname
             getattr(self, vname).units = "unknown"
@@ -274,13 +280,13 @@ class ParticleFile(object):
             os.mkdir(self.tempwritedir)
 
         if len(data_dict) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + ".npy")
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy")
             with open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict)
             self.file_list.append(tmpfilename)
 
         if len(data_dict_once) > 0:
-            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list) + 1) + '_once.npy')
+            tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + '_once.npy')
             with open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict_once)
             self.file_list_once.append(tmpfilename)
@@ -336,7 +342,7 @@ class ParticleFile(object):
 
     def export(self):
         """Exports outputs in temporary NPY-files to NetCDF file"""
-        
+
         # Retrieve all temporary writing directories
         with open('tempwritedir_names', 'rb') as f:
             temp_names = pickle.load(f)
@@ -353,10 +359,6 @@ class ParticleFile(object):
                 if len(self.var_names_once) > 0:
                     global_file_list += pset_info_local['file_list_once']
         self.maxid_written = global_maxid_written
-
-        memory_estimate_total = self.maxid_written+1 * len(self.time_written) * 8
-        if memory_estimate_total > 0.9*psutil.virtual_memory().available:
-            raise MemoryError("Not enough memory available for export. npy files are stored at %s", self.npy_path)
 
         for var in self.var_names:
             data = self.read_from_npy(global_file_list, len(self.time_written), var)
