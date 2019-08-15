@@ -70,6 +70,10 @@ class ParticleSet(object):
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         mpi_size = mpi_comm.Get_size()
+
+        if len(lon) < mpi_size:
+            raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
+
         if mpi_rank == 0:
             coords = np.vstack((lon, lat)).transpose()
             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
