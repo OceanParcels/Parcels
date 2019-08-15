@@ -88,7 +88,7 @@ class ParticleSet(object):
         depth = convert_to_list(depth)
 
         # Determine offset
-        offset = sum(i < mpi_rank for i in partition)
+        offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partition)
         pclass.setLastID(offset)
 
         self.time_origin = fieldset.time_origin

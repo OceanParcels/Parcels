@@ -200,9 +200,7 @@ class ParticleFile(object):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""
         self.export()
-
         self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
-
         self.dataset.close()
         self.to_export = False
 
@@ -356,7 +354,7 @@ class ParticleFile(object):
                 global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
-                    global_file_list += pset_info_local['file_list_once']
+                    global_file_list_once += pset_info_local['file_list_once']
         self.maxid_written = global_maxid_written
 
         for var in self.var_names:

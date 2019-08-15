@@ -5,11 +5,13 @@ from glob import glob
 from argparse import ArgumentParser
 
 
-def convert_npydir_to_netcdf(tempwritedir, tempwritedir_base):
+def convert_npydir_to_netcdf(tempwritedir_base):
     """Convert npy files in tempwritedir to a NetCDF file
-    :param tempwritedir: directory where the temporary npy files are stored (can be obtained from ParticleFile.tempwritedir attribute)
+    :param tempwritedir_base: directory where the directories for temporary npy files
+            are stored (can be obtained from ParticleFile.tempwritedir_base attribute)
     """
 
+    tempwritedir = sorted(glob("%s/*/" % tempwritedir_base), key=lambda x: int(x[:-1].rsplit('/', 1)[1]))[0]
     pyset_file = path.join(tempwritedir, 'pset_info.npy')
     if not path.isdir(tempwritedir):
         raise ValueError('Output directory "%s" does not exist' % tempwritedir)
@@ -29,9 +31,7 @@ def main(tempwritedir_base=None):
         args = p.parse_args()
         tempwritedir_base = args.tempwritedir
 
-    temp_names = sorted(glob("%s/*/" % tempwritedir_base), key=lambda x: int(x[:-1].rsplit('/', 1)[1]))
-
-    convert_npydir_to_netcdf(temp_names[0], tempwritedir_base)
+    convert_npydir_to_netcdf(tempwritedir_base)
 
 
 if __name__ == "__main__":
