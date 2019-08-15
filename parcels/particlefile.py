@@ -109,7 +109,8 @@ class ParticleFile(object):
         self.tempwritedir_base = mpi_comm.bcast(basename, root=0)
         self.tempwritedir = self.tempwritedir_base + "/%d" % mpi_rank
 
-        self.delete_tempwritedir()
+        if pset_info is None:  # otherwise arrive here from convert_npydir_to_netcdf
+            self.delete_tempwritedir()
 
     def open_netcdf_file(self, data_shape):
         """Initialise NetCDF4.Dataset for trajectory output.
@@ -342,8 +343,8 @@ class ParticleFile(object):
     def export(self):
         """Exports outputs in temporary NPY-files to NetCDF file"""
 
-        # Retrieve all temporary writing directories
-        temp_names = glob("%s/*/" % self.tempwritedir_base)
+        # Retrieve all temporary writing directories and sort them in numerical order
+        temp_names = sorted(glob("%s/*/" % self.tempwritedir_base), key=lambda x: int(x[:-1].rsplit('/', 1)[1]))
 
         global_maxid_written = -1
         global_file_list = []
