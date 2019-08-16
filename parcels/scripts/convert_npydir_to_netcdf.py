@@ -20,7 +20,7 @@ def convert_npydir_to_netcdf(tempwritedir_base, delete_tempfiles=False):
         raise ValueError('Output directory "%s" does not contain a pset_info.npy file' % tempwritedir)
 
     pset_info = np.load(pyset_file, allow_pickle=True).item()
-    pfile = ParticleFile(None, None, pset_info=pset_info, tempwritedir=tempwritedir_base)
+    pfile = ParticleFile(None, None, pset_info=pset_info, tempwritedir=tempwritedir_base, convert_at_end=False)
     if delete_tempfiles:
         pfile.close()
     else:

@@ -52,6 +52,7 @@ class ParticleFile(object):
                      while ParticleFile is given as an argument of ParticleSet.execute()
                      It is either a timedelta object or a positive double.
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
+    :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
     :param tempwritedir: directories to write temporary files to during executing.
                         Default is out-XXXXXX where Xs are random capitals.
                         Files for individual processors in MPI mode are written to
@@ -60,9 +61,11 @@ class ParticleFile(object):
                       used to create NetCDF file from npy-files.
     """
 
-    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, tempwritedir=None, pset_info=None):
+    def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
+                 tempwritedir=None, pset_info=None):
 
         self.write_ondelete = write_ondelete
+        self.convert_at_end = convert_at_end
         self.outputdt = outputdt
         self.lasttime_written = None  # variable to check if time has been written already
 
@@ -91,7 +94,6 @@ class ParticleFile(object):
             self.file_list = []
             self.time_written = []
             self.maxid_written = -1
-        self.to_export = False
 
         if MPI:
             mpi_comm = MPI.COMM_WORLD
@@ -203,7 +205,7 @@ class ParticleFile(object):
             rank = MPI.COMM_WORLD.Get_rank()
         else:
             rank = 0
-        if self.to_export and rank == 0:  # only export once.
+        if self.convert_at_end and rank == 0:  # only export once.
             self.close()
 
     def close(self):
@@ -212,7 +214,7 @@ class ParticleFile(object):
         self.export()
         self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
         self.dataset.close()
-        self.to_export = False
+        self.convert_at_end = False
 
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`
@@ -298,8 +300,6 @@ class ParticleFile(object):
             with open(tmpfilename, 'wb') as f:
                 np.save(f, data_dict_once)
             self.file_list_once.append(tmpfilename)
-
-        self.to_export = True
 
     def dump_psetinfo_to_npy(self):
         pset_info = {}
