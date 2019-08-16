@@ -128,6 +128,16 @@ def test_nested_if(fieldset, mode):
     assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_dt_as_variable_in_kernel(fieldset, mode):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        dt = 1.  # noqa
+
+    pset.execute(kernel, endtime=10, dt=1.)
+
+
 def test_parcels_tmpvar_in_kernel(fieldset):
     """Tests for error thrown if vartiable with 'tmp' defined in custom kernel"""
     error_thrown = False
@@ -200,6 +210,14 @@ def test_print(fieldset, mode, capfd):
     tol = 1e-8
     assert abs(float(lst[0]) - pset[0].id) < tol and abs(float(lst[1]) - pset[0].p) < tol and abs(float(lst[2]) - 5) < tol
 
+    def kernel2(particle, fieldset, time):
+        tmp = 3
+        print("%f" % (tmp))
+    pset.execute(kernel2, endtime=1., dt=1.)
+    out, err = capfd.readouterr()
+    lst = out.split(' ')
+    assert abs(float(lst[0]) - 3) < tol
+
 
 def random_series(npart, rngfunc, rngargs, mode):
     random = parcels_random if mode == 'jit' else py_random
@@ -227,7 +245,7 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
+    assert np.allclose(np.array([p.p for p in pset]), series, atol=1e-9)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
