@@ -355,6 +355,9 @@ class ParticleFile(object):
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
                             key=lambda x: int(os.path.basename(x)))
 
+        if len(temp_names) == 0:
+            raise RuntimeError("No npy files found in %s" % self.tempwritedir_base)
+
         global_maxid_written = -1
         global_file_list = []
         if len(self.var_names_once) > 0:
