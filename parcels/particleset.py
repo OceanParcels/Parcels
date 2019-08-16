@@ -12,8 +12,12 @@ import time as time_module
 import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
-from sklearn.cluster import KMeans
-from mpi4py import MPI
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+if MPI:
+    from sklearn.cluster import KMeans
 
 __all__ = ['ParticleSet']
 
@@ -40,6 +44,7 @@ class ParticleSet(object):
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
+        partition = kwargs.pop('partition', None)
 
         def convert_to_list(var):
             # Convert numpy arrays and single integers/floats to one-dimensional lists
@@ -67,26 +72,39 @@ class ParticleSet(object):
         time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
         time = [np.datetime64(t) if isinstance(t, date) else t for t in time]
 
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            mpi_size = mpi_comm.Get_size()
 
-        mpi_comm = MPI.COMM_WORLD
-        mpi_rank = mpi_comm.Get_rank()
-        mpi_size = mpi_comm.Get_size()
-        if mpi_rank == 0:
-            coords = np.vstack((lon, lat)).transpose()
-            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-            partition = kmeans.labels_
+            if len(lon) < mpi_size and mpi_size > 1:
+                raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
+
+            if mpi_size > 1:
+                if partition is None:
+                    if mpi_rank == 0:
+                        coords = np.vstack((lon, lat)).transpose()
+                        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                        partition = kmeans.labels_
+                    else:
+                        partition = None
+                    partition = mpi_comm.bcast(partition, root=0)
+                    lon = np.array(lon)[partition == mpi_rank]
+                    lat = np.array(lat)[partition == mpi_rank]
+                    time = np.array(time)[partition == mpi_rank]
+                    depth = np.array(depth)[partition == mpi_rank]
+                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partition)
+            else:
+                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX)
         else:
-            partition = None
-        partition = mpi_comm.bcast(partition, root=0)
-        lon = np.array(lon)[partition == mpi_rank]
-        lat = np.array(lat)[partition == mpi_rank]
-        time = np.array(time)[partition == mpi_rank]
-        depth = np.array(depth)[partition == mpi_rank]
+            offset = pclass.lastID
+
+        pclass.setLastID(offset)
+
         lon = convert_to_list(lon)
         lat = convert_to_list(lat)
         time = convert_to_list(time)
         depth = convert_to_list(depth)
-
 
         self.time_origin = fieldset.time_origin
         if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
@@ -111,6 +129,7 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
+            self.partition = partition
             self.repeatkwargs = kwargs
 
         if lonlatdepth_dtype is None:
@@ -436,9 +455,9 @@ class ParticleSet(object):
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
-                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir)
+                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
                     logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
-                                'to a NetCDF file during the run.' % output_file.tempwritedir)
+                                'to a NetCDF file during the run.' % output_file.tempwritedir_base)
                 pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
                 verbose_progress = True
             if dt > 0:
@@ -450,7 +469,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       **self.repeatkwargs)
+                                       partition=self.partition, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

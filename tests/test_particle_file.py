@@ -25,10 +25,10 @@ def fieldset(xdim=40, ydim=100):
 
 def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
     if assystemcall:
-        os.system('parcels_convert_npydir_to_netcdf %s' % ofile.tempwritedir)
+        os.system('parcels_convert_npydir_to_netcdf %s' % ofile.tempwritedir_base)
     else:
         import parcels.scripts.convert_npydir_to_netcdf as convert
-        convert.convert_npydir_to_netcdf(ofile.tempwritedir)
+        convert.convert_npydir_to_netcdf(ofile.tempwritedir_base)
 
     ncfile1 = Dataset(filepath, 'r', 'NETCDF4')
 
@@ -41,7 +41,8 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
         assert np.allclose(ncfile1.variables[v][:], ncfile2.variables[v][:])
 
     for a in ncfile2.ncattrs():
-        assert getattr(ncfile1, a) == getattr(ncfile2, a)
+        if a != 'parcels_version':
+            assert getattr(ncfile1, a) == getattr(ncfile2, a)
 
     ncfile2.close()
     return ncfile1
