@@ -293,7 +293,14 @@ class ParticleFile(object):
 
         # loop over all files
         for npyfile in file_list:
-            data_dict = np.load(npyfile, allow_pickle=True).item()
+            try:
+                data_dict = np.load(npyfile, allow_pickle=True).item()
+            except NameError:
+                raise RuntimeError('Cannot combine npy files into netcdf file because your ParticleFile is '
+                                   'still open on interpreter shutdown.\nYou can use '
+                                   '"parcels_convert_npydir_to_netcdf %s" to convert these to '
+                                   'a NetCDF file yourself.\nTo avoid this error, make sure you '
+                                   'close() your ParticleFile at the end of your script.' % self.tempwritedir)
             id_ind = np.array(data_dict["id"], dtype=int)
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
             t_ind_used[t_ind] = 1
