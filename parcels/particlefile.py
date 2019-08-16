@@ -351,7 +351,8 @@ class ParticleFile(object):
         """Exports outputs in temporary NPY-files to NetCDF file"""
 
         # Retrieve all temporary writing directories and sort them in numerical order
-        temp_names = sorted(glob("%s/*/" % self.tempwritedir_base), key=lambda x: int(x[:-1].rsplit('/', 1)[1]))
+        temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
+                          key=lambda x: int(os.path.basename(x)))[0]
 
         global_maxid_written = -1
         global_file_list = []

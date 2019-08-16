@@ -140,7 +140,7 @@ class Kernel(object):
                 basename = mpi_comm.bcast(basename, root=0)
                 basename = basename + "_%d" % mpi_rank
             else:
-                basename = path.join(get_cache_dir(), "%s_d" % self._cache_key)
+                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
 
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
@@ -181,7 +181,7 @@ class Kernel(object):
                 basename = mpi_comm.bcast(basename, root=0)
                 basename = basename + "_%d" % mpi_rank
             else:
-                basename = path.join(get_cache_dir(), "%s_d" % self._cache_key)
+                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
 
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
