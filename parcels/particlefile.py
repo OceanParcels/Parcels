@@ -141,7 +141,8 @@ class ParticleFile(object):
         self.dataset.parcels_mesh = self.parcels_mesh
 
         # Create ID variable according to CF conventions
-        self.id = self.dataset.createVariable("trajectory", "i4", coords)
+        self.id = self.dataset.createVariable("trajectory", "i4", coords,
+                                              fill_value=-2**(31))  # maxint32 fill_value
         self.id.long_name = "Unique identifier for each particle"
         self.id.cf_role = "trajectory_id"
 

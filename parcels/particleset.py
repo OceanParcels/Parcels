@@ -44,6 +44,7 @@ class ParticleSet(object):
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
+        partition = kwargs.pop('partition', None)
 
         def convert_to_list(var):
             # Convert numpy arrays and single integers/floats to one-dimensional lists
@@ -80,17 +81,18 @@ class ParticleSet(object):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if mpi_rank == 0:
-                    coords = np.vstack((lon, lat)).transpose()
-                    kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                    partition = kmeans.labels_
-                else:
-                    partition = None
-                partition = mpi_comm.bcast(partition, root=0)
-                lon = np.array(lon)[partition == mpi_rank]
-                lat = np.array(lat)[partition == mpi_rank]
-                time = np.array(time)[partition == mpi_rank]
-                depth = np.array(depth)[partition == mpi_rank]
+                if partition is None:
+                    if mpi_rank == 0:
+                        coords = np.vstack((lon, lat)).transpose()
+                        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                        partition = kmeans.labels_
+                    else:
+                        partition = None
+                    partition = mpi_comm.bcast(partition, root=0)
+                    lon = np.array(lon)[partition == mpi_rank]
+                    lat = np.array(lat)[partition == mpi_rank]
+                    time = np.array(time)[partition == mpi_rank]
+                    depth = np.array(depth)[partition == mpi_rank]
                 offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partition)
             else:
                 offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX)
@@ -127,6 +129,7 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
+            self.partition = partition
             self.repeatkwargs = kwargs
 
         if lonlatdepth_dtype is None:
@@ -466,7 +469,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       **self.repeatkwargs)
+                                       partition=self.partition, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
