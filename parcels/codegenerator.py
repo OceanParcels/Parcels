@@ -446,6 +446,8 @@ class KernelGenerator(ast.NodeVisitor):
             elif isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, 'ccode'):
                     args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'id'):
+                    args = node.args[0].right.id
                 elif hasattr(node.args[0].right, 'elts'):
                     args = []
                     for a in node.args[0].right.elts:
