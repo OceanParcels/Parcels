@@ -104,6 +104,8 @@ class ParticleFile(object):
                 basename = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
             else:
                 basename = tempwritedir
+        else:
+            basename = None
 
         if MPI:
             self.tempwritedir_base = mpi_comm.bcast(basename, root=0)

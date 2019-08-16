@@ -11,8 +11,8 @@ def convert_npydir_to_netcdf(tempwritedir_base):
             are stored (can be obtained from ParticleFile.tempwritedir_base attribute)
     """
 
-    tempwritedir = sorted(glob(path.join("%s" % tempwritedir_base, "*", "")),
-                          key=lambda x: int(x[:-1].rsplit('/', 1)[1]))[0]
+    tempwritedir = sorted(glob(path.join("%s" % tempwritedir_base, "*")),
+                          key=lambda x: int(path.basename(x)))[0]
     pyset_file = path.join(tempwritedir, 'pset_info.npy')
     if not path.isdir(tempwritedir):
         raise ValueError('Output directory "%s" does not exist' % tempwritedir)
