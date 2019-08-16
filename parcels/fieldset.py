@@ -4,10 +4,13 @@ from parcels.grid import Grid
 from parcels.tools.loggers import logger
 from parcels.tools.converters import TimeConverter
 import numpy as np
-from mpi4py import MPI
 from os import path
 from glob import glob
 from copy import deepcopy
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 
 __all__ = ['FieldSet']
@@ -711,7 +714,7 @@ class FieldSet(object):
 
         :param filename: Basename of the output fileset"""
 
-        if MPI.COMM_WORLD.Get_rank() == 0:
+        if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
             logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
             if hasattr(self, 'U'):

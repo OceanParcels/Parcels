@@ -7,9 +7,12 @@ import os
 import shutil
 import string
 import random
-from mpi4py import MPI
 from parcels.tools.error import ErrorCode
 from glob import glob
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 try:
     from parcels._version import version as parcels_version
 except:
@@ -23,11 +26,6 @@ except:
 
 
 __all__ = ['ParticleFile']
-
-
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
 
 
 def _is_particle_started_yet(particle, time):
@@ -95,18 +93,24 @@ class ParticleFile(object):
             self.maxid_written = -1
         self.to_export = False
 
-        mpi_comm = MPI.COMM_WORLD
-        mpi_rank = mpi_comm.Get_rank()
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+        else:
+            mpi_rank = 0
+
         if mpi_rank == 0:
             if tempwritedir is None:
                 basename = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
             else:
                 basename = tempwritedir
-        else:
-            basename = None
 
-        self.tempwritedir_base = mpi_comm.bcast(basename, root=0)
-        self.tempwritedir = self.tempwritedir_base + "/%d" % mpi_rank
+        if MPI:
+            self.tempwritedir_base = mpi_comm.bcast(basename, root=0)
+            self.tempwritedir = os.path.join(self.tempwritedir_base, "%d" % mpi_rank)
+        else:
+            self.tempwritedir_base = basename
+            self.tempwritedir = os.path.join(self.tempwritedir_base, "0")
 
         if pset_info is None:  # otherwise arrive here from convert_npydir_to_netcdf
             self.delete_tempwritedir()
@@ -191,7 +195,11 @@ class ParticleFile(object):
 
     def __del__(self):
         # The export can only start when all threads are done.
-        comm.Barrier()
+        if MPI:
+            MPI.COMM_WORLD.Barrier()
+            rank = MPI.COMM_WORLD.Get_rank()
+        else:
+            rank = 0
         if self.to_export and rank == 0:  # only export once.
             self.close()
 
