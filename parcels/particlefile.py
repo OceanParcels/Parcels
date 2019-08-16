@@ -352,7 +352,7 @@ class ParticleFile(object):
 
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
-                          key=lambda x: int(os.path.basename(x)))[0]
+                          key=lambda x: int(os.path.basename(x)))
 
         global_maxid_written = -1
         global_file_list = []
