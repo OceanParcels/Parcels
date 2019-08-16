@@ -211,39 +211,26 @@ class ParticleFile(object):
             if pset.size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                for var in self.var_names:
-                    data_dict[var] = np.nan * np.zeros(len(pset))
+                pset_towrite = [p for p in pset if p.dt * p.time <= p.dt * time and np.isfinite(p.id)]
+                if len(pset_towrite) > 0:
+                    for var in self.var_names:
+                        data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
+                    self.maxid_written = np.max([self.maxid_written, np.max(data_dict['id'])])
 
-                i = 0
-                for p in pset:
-                    if p.dt*p.time <= p.dt*time:
-                        for var in self.var_names:
-                            data_dict[var][i] = getattr(p, var)
-                        if p.state != ErrorCode.Delete and not np.allclose(p.time, time):
-                            logger.warning_once('time argument in pfile.write() is %g, but a particle has time %g.' % (time, p.time))
-                        self.maxid_written = np.max([self.maxid_written, p.id])
-                        i += 1
-
-                save_ind = np.isfinite(data_dict["id"])
-                for key in self.var_names:
-                    data_dict[key] = data_dict[key][save_ind]
+                pset_errs = [p for p in pset_towrite if p.state != ErrorCode.Delete and abs(time-p.time) > 1e-3]
+                for p in pset_errs:
+                    logger.warning_once(
+                        'time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
 
                 if time not in self.time_written:
                     self.time_written.append(time)
 
                 if len(self.var_names_once) > 0:
                     first_write = [p for p in pset if (p.id not in self.written_once) and _is_particle_started_yet(p, time)]
-                    data_dict_once['id'] = np.nan * np.zeros(len(first_write))
+                    data_dict_once['id'] = np.array([p.id for p in first_write])
                     for var in self.var_names_once:
-                        data_dict_once[var] = np.nan * np.zeros(len(first_write))
-
-                    i = 0
-                    for p in first_write:
-                        self.written_once.append(p.id)
-                        data_dict_once['id'][i] = p.id
-                        for var in self.var_names_once:
-                            data_dict_once[var][i] = getattr(p, var)
-                        i += 1
+                        data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                    self.written_once.append([p.id for p in first_write])
 
             if not deleted_only:
                 self.lasttime_written = time
