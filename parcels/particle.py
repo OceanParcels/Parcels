@@ -8,9 +8,6 @@ from ctypes import c_void_p
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 
-lastID = 0  # module-level variable keeping track of last Particle ID used
-
-
 class Variable(object):
     """Descriptor class that delegates data access to particle data
 
@@ -112,6 +109,7 @@ class ParticleType(object):
 
 class _Particle(object):
     """Private base class for all particle types"""
+    lastID = 0  # class-level variable keeping track of last Particle ID used
 
     def __init__(self):
         ptype = self.getPType()
@@ -146,6 +144,10 @@ class _Particle(object):
     def getInitialValue(cls, ptype, name):
         return next((v.initial for v in ptype.variables if v.name is name), None)
 
+    @classmethod
+    def setLastID(cls, offset):
+        _Particle.lastID = offset
+
 
 class ScipyParticle(_Particle):
     """Class encapsulating the basic attributes of a particle,
@@ -169,15 +171,14 @@ class ScipyParticle(_Particle):
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
     def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
-        global lastID
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).depth.initial = depth
         type(self).time.initial = time
-        type(self).id.initial = lastID
-        lastID += 1
+        type(self).id.initial = _Particle.lastID
+        _Particle.lastID += 1
         type(self).dt.initial = None
         super(ScipyParticle, self).__init__()
 
