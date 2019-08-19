@@ -715,7 +715,7 @@ class FieldSet(object):
         :param filename: Basename of the output fileset"""
 
         if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
-            logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
+            logger.info("Generating FieldSet output with basename: %s" % filename)
 
             if hasattr(self, 'U'):
                 self.U.write(filename, varname='vozocrtx')
