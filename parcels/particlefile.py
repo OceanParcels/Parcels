@@ -94,26 +94,17 @@ class ParticleFile(object):
             self.time_written = []
             self.maxid_written = -1
 
+        if tempwritedir is None:
+            tempwritedir = os.path.join(os.path.dirname(str(self.name)), "out-%s"
+                                        % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+
         if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
+            mpi_rank = MPI.COMM_WORLD.Get_rank()
+            self.tempwritedir_base = MPI.COMM_WORLD.bcast(tempwritedir, root=0)
         else:
+            self.tempwritedir_base = tempwritedir
             mpi_rank = 0
-
-        if mpi_rank == 0:
-            if tempwritedir is None:
-                basename = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
-            else:
-                basename = tempwritedir
-        else:
-            basename = None
-
-        if MPI:
-            self.tempwritedir_base = mpi_comm.bcast(basename, root=0)
-            self.tempwritedir = os.path.join(self.tempwritedir_base, "%d" % mpi_rank)
-        else:
-            self.tempwritedir_base = basename
-            self.tempwritedir = os.path.join(self.tempwritedir_base, "0")
+        self.tempwritedir = os.path.join(self.tempwritedir_base, "%d" % mpi_rank)
 
         if pset_info is None:  # otherwise arrive here from convert_npydir_to_netcdf
             self.delete_tempwritedir()
