@@ -9,9 +9,9 @@ except:
 
 def test_mpi_run():
     if MPI:
-        releasedt = 200*86400
-        os.system('mpirun -np 2 python parcels/examples/example_stommel.py -p 4 -o StommelMPI.nc -r %d' % releasedt)
-        os.system('python parcels/examples/example_stommel.py -p 4 -o StommelNoMPI.nc -r %d' % releasedt)
+        repeatdt = 200*86400
+        os.system('mpirun -np 2 python parcels/examples/example_stommel.py -p 4 -o StommelMPI.nc -r %d' % repeatdt)
+        os.system('python parcels/examples/example_stommel.py -p 4 -o StommelNoMPI.nc -r %d' % repeatdt)
 
         ncfile1 = Dataset('StommelMPI.nc', 'r', 'NETCDF4')
         ncfile2 = Dataset('StommelNoMPI.nc', 'r', 'NETCDF4')

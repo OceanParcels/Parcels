@@ -14,10 +14,9 @@ from datetime import timedelta as delta
 from datetime import datetime, date
 try:
     from mpi4py import MPI
+    from sklearn.cluster import KMeans
 except:
     MPI = None
-if MPI:
-    from sklearn.cluster import KMeans
 
 __all__ = ['ParticleSet']
 
@@ -44,7 +43,7 @@ class ParticleSet(object):
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
-        partition = kwargs.pop('partition', None)
+        partitions = kwargs.pop('partitions', None)
 
         def convert_to_array(var):
             # Convert lists and single integers/floats to one-dimensional numpy arrays
@@ -91,23 +90,23 @@ class ParticleSet(object):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if partition is None:
+                if partitions is None:
                     if mpi_rank == 0:
                         coords = np.vstack((lon, lat)).transpose()
                         kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                        partition = kmeans.labels_
+                        partitions = kmeans.labels_
                     else:
-                        partition = None
-                    partition = mpi_comm.bcast(partition, root=0)
-                    lon = lon[partition == mpi_rank]
-                    lat = lat[partition == mpi_rank]
-                    time = time[partition == mpi_rank]
-                    depth = depth[partition == mpi_rank]
+                        partitions = None
+                    partitions = mpi_comm.bcast(partitions, root=0)
+                    lon = lon[partitions == mpi_rank]
+                    lat = lat[partitions == mpi_rank]
+                    time = time[partitions == mpi_rank]
+                    depth = depth[partitions == mpi_rank]
                     for kwvar in kwargs:
-                        kwargs[kwvar] = kwargs[kwvar][partition == mpi_rank]
-                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partition)
+                        kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
+                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partitions)
             else:
-                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX)
+                offset = pclass.lastID
         else:
             offset = pclass.lastID
 
@@ -124,7 +123,7 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
-            self.partition = partition
+            self.partitions = partitions
             self.repeatkwargs = kwargs
 
         if lonlatdepth_dtype is None:
@@ -463,7 +462,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       partition=self.partition, **self.repeatkwargs)
+                                       partitions=self.partitions, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

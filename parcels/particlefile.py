@@ -198,11 +198,12 @@ class ParticleFile(object):
         if self.convert_at_end and rank == 0:  # only export once.
             self.close()
 
-    def close(self):
+    def close(self, delete_tempfiles=True):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""
         self.export()
-        self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
+        if delete_tempfiles:
+            self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
         self.dataset.close()
         self.convert_at_end = False
 

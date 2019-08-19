@@ -21,11 +21,7 @@ def convert_npydir_to_netcdf(tempwritedir_base, delete_tempfiles=False):
 
     pset_info = np.load(pyset_file, allow_pickle=True).item()
     pfile = ParticleFile(None, None, pset_info=pset_info, tempwritedir=tempwritedir_base, convert_at_end=False)
-    if delete_tempfiles:
-        pfile.close()
-    else:
-        pfile.export()
-        pfile.dataset.close()
+    pfile.close(delete_tempfiles)
 
 
 def main(tempwritedir_base=None, delete_tempfiles=False):
