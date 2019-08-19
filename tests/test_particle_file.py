@@ -166,6 +166,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
+        v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
     if type == 'repeatdt':
         pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     elif type == 'timearr':

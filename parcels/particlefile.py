@@ -254,7 +254,7 @@ class ParticleFile(object):
                     data_dict_once['id'] = np.array([p.id for p in first_write])
                     for var in self.var_names_once:
                         data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
-                    self.written_once.append([p.id for p in first_write])
+                    self.written_once += [p.id for p in first_write]
 
             if not deleted_only:
                 self.lasttime_written = time
