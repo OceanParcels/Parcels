@@ -54,11 +54,10 @@ class ParticleFile(object):
     :param write_ondelete: Boolean to write particle data only when they are deleted. Default is False
     :param convert_at_end: Boolean to convert npy files to netcdf at end of run. Default is True
     :param tempwritedir: directories to write temporary files to during executing.
-                        Default is out-XXXXXX where Xs are random capitals.
-                        Files for individual processors in MPI mode are written to
-                        subdirectories 0, 1, 2 etc under tempwritedir
+                     Default is out-XXXXXX where Xs are random capitals. Files for individual
+                     processors are written to subdirectories 0, 1, 2 etc under tempwritedir
     :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
-                      used to create NetCDF file from npy-files.
+                     used to create NetCDF file from npy-files.
     """
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
@@ -364,7 +363,7 @@ class ParticleFile(object):
             global_file_list_once = []
         for tempwritedir in temp_names:
             if os.path.exists(tempwritedir):
-                pset_info_local = np.load(tempwritedir + '/pset_info.npy', allow_pickle=True).item()
+                pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
