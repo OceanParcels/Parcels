@@ -37,7 +37,9 @@ example_data_files = (
         "ORCA025-N06_20000104d05U.nc", "ORCA025-N06_20000109d05U.nc",
         "ORCA025-N06_20000104d05V.nc", "ORCA025-N06_20000109d05V.nc",
         "ORCA025-N06_20000104d05W.nc", "ORCA025-N06_20000109d05W.nc",
-        "coordinates.nc"]])
+        "coordinates.nc"]]
+    + ["WOA_data/" + fn for fn in ["woa18_decav_t%.2d_04.nc" % m
+                                   for m in range(1, 13)]])
 
 example_data_url = "http://oceanparcels.org/examples-data"
 

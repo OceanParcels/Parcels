@@ -1528,7 +1528,13 @@ class NetcdfFileBuffer(object):
             if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
                 time_da.attrs['units'] = time_da.attrs['Unit']
             ds = xr.Dataset({self.dimensions['time']: time_da})
-            ds = xr.decode_cf(ds)
+            try:
+                ds = xr.decode_cf(ds)
+            except ValueError:
+                raise RuntimeError('Xarray could not convert the calendar. Try using the timestamps '
+                                   'keyword in the construction of your Field %s. See also the tutorial '
+                                   'at https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master'
+                                   '/parcels/examples/tutorial_timestamps.ipynb' % self.filename)
             da = ds[self.dimensions['time']]
             time = np.array([da]) if len(da.shape) == 0 else np.array(da)
         if isinstance(time[0], datetime.datetime):
