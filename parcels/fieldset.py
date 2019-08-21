@@ -806,7 +806,6 @@ class FieldSet(object):
                 if len(g.load_chunk) > 0:
                     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
-                #f.data = np.zeros(f.data.shape)
             elif g.update_status == 'updated':
                 #timer.fset_computeTimeChunk_1.start()
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
@@ -831,28 +830,10 @@ class FieldSet(object):
                     f.gradient(update=True, tindex=tind)
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
-                    if isinstance(f.data, da.core.Array):
-                        assert data.chunksize == sum(((1,), f.data.chunksize[1:]), ())
-                        # is it necessary?
-                    #busyfiles('******** BEFORE ********, %s' % f.name)
                     f.data = da.concatenate([f.data[1:, :], data], axis=0)
-                    #np.array(f.data[:])
-                    #busyfiles('******** AFTER  ********')
-                    #exit(0)
-                    #print('here  f.data.shape', f.data.shape)
                 else:
                     data = f.reshape(data)[0:1, :]
-                    if isinstance(f.data, da.core.Array):
-                        assert data.chunksize == sum(((1,), f.data.chunksize[1:]), ())
-                        # is it necessary?
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
-                # # Option 1
-                # if len(g.load_chunk) > 0:
-                #     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
-                #     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
-                # Option 2
-                #if len(f.data.chunks[0]) > 1:
-                #    f.data = f.data.rechunk(sum(((f.grid.tdim,), f.data.chunksize[1:]), ()))
                 #timer.fset_computeTimeChunk_1.stop()
                 #timer.fset_computeTimeChunk_2.start()
                 if len(g.load_chunk) > 0:
@@ -867,9 +848,7 @@ class FieldSet(object):
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
                                 #timer.fset_computeTimeChunk_21.stop()
                                 #timer.fset_computeTimeChunk_22.start()
-                                #busyfiles('fset computeTimeChunk 0')
                                 f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
-                                #busyfiles('fset computeTimeChunk 1')
                                 #timer.fset_computeTimeChunk_22.stop()
                     else:
                         for block_id in range(len(g.load_chunk)):
@@ -881,7 +860,6 @@ class FieldSet(object):
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
                                 f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
                 #timer.fset_computeTimeChunk_2.stop()
-                #gc.collect()
 
             # ### do built-in computations on data
             # for tind in f.loaded_time_indices:

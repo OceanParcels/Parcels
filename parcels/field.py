@@ -880,8 +880,6 @@ class Field(object):
 
     def chunk_data(self):
         if isinstance(self.data, da.core.Array):
-            #if len(self.data.chunks[0]) > 1:
-            #    self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), ()))
             npartitions = self.data.npartitions
             chunks = self.data.chunks
         else:
@@ -895,7 +893,6 @@ class Field(object):
 
         if len(self.grid.load_chunk) == 0:
             self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
-        #print(self.grid.load_chunk)
 
         # self.grid.load_chunk code:
         # 0: not loaded
@@ -909,34 +906,22 @@ class Field(object):
                     #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
                     #block_id = self.get_block_id(nchunks, block)
                     block = self.get_block(block_id)
-                    #print(self.data.shape)
-                    #print(self.data.blocks[0,0,0].shape)
-                    #print(self.data.blocks[:,0,0].shape)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[:,0,0])#block])
+                    self.data_chunks[block_id] = np.array(self.data.blocks[f.data.blocks[(slice(3),)+block])
                 elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
         else:
             self.grid.load_chunk[0] = 3
             self.data_chunks[0] = self.data
-        #busyfiles('in chunk_data 2')
 
         # self.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
         self.chunk_info = sum(self.chunk_info, [])
-        #print(self.chunk_info)
-        #exit(0)
-        #print("chunk_info", self.chunk_info)
-        #print(self.data.chunks)
-        #print(self.data.chunksize)
-        #print("block_id", block, block_id)
 
         #To put it as it use to be
         #timer.fChunk.start()
-        #busyfiles('in chunk_data 3')
         self.datatmp = np.array(self.data)
-        #busyfiles('in chunk_data 4')
         #timer.fChunk.stop()
         if not self.datatmp.flags.c_contiguous:
             self.datatmp = self.datatmp.copy()
@@ -967,7 +952,6 @@ class Field(object):
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
-                #print(self.data_chunks[i].shape)
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
