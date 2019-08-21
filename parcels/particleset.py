@@ -40,7 +40,7 @@ class ParticleSet(object):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
@@ -56,6 +56,10 @@ class ParticleSet(object):
 
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
+        if pid_orig is None:
+            pid = np.arange(lon.size) + pclass.lastID
+        else:
+            pid = pid_orig
 
         if depth is None:
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
@@ -102,15 +106,21 @@ class ParticleSet(object):
                     lat = lat[partitions == mpi_rank]
                     time = time[partitions == mpi_rank]
                     depth = depth[partitions == mpi_rank]
+                    pid = pid[partitions == mpi_rank]
                     for kwvar in kwargs:
                         kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
-                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partitions)
+                offset = MPI.COMM_WORLD.allreduce(max(pid) + pclass.lastID + 1, op=MPI.MAX)
             else:
                 offset = pclass.lastID
         else:
             offset = pclass.lastID
 
         pclass.setLastID(offset)
+
+        if pid_orig is not None:
+            pid = pid_orig + pclass.lastID
+
+        print(MPI.COMM_WORLD.Get_rank(), pclass.lastID, pid_orig, pid)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -121,6 +131,8 @@ class ParticleSet(object):
             self.repeat_starttime = time[0]
             self.repeatlon = lon
             self.repeatlat = lat
+            if not hasattr(self, 'repeatpid'):
+                self.repeatpid = pid
             self.repeatdepth = depth
             self.repeatpclass = pclass
             self.partitions = partitions
@@ -154,7 +166,7 @@ class ParticleSet(object):
                 'Size of ParticleSet does not match lenght of lon and lat.')
 
             for i in range(lon.size):
-                self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
+                self.particles[i] = pclass(lon[i], lat[i], pid[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
                 # Set other Variables if provided
                 for kwvar in kwargs:
                     if not hasattr(self.particles[i], kwvar):
@@ -462,7 +474,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       partitions=self.partitions, **self.repeatkwargs)
+                                       partitions=self.partitions, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
