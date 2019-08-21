@@ -907,7 +907,7 @@ class Field(object):
                     #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
                     #block_id = self.get_block_id(nchunks, block)
                     block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(3),)+block])
+                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block])
                 elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
