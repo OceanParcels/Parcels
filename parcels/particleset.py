@@ -49,7 +49,7 @@ class ParticleSet(object):
             # Convert lists and single integers/floats to one-dimensional numpy arrays
             if isinstance(var, np.ndarray):
                 return var.flatten()
-            elif isinstance(var, (int, float)):
+            elif isinstance(var, (int, float, np.float32, np.int32)):
                 return np.array([var])
             else:
                 return np.array(var)
@@ -298,8 +298,8 @@ class ParticleSet(object):
         """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
-        if not isinstance(particles, collections.Iterable):
-            particles = [particles]
+        else:
+            raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
         self.particles = np.append(self.particles, particles)
         if self.ptype.uses_jit:
             particles_data = [p._cptr for p in particles]
