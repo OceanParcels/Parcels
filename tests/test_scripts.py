@@ -25,7 +25,7 @@ def create_outputfiles(dir):
 
     for t in range(npart):
         time = 0 if len(pset) == 0 else pset[0].time
-        pset.add(JITParticle(lon=x, lat=lat[t], fieldset=fieldset, time=time))
+        pset.add(ParticleSet(pclass=JITParticle, lon=x, lat=lat[t], fieldset=fieldset, time=time))
         pset.execute(AdvectionRK4, runtime=delaytime, dt=delta(minutes=5),
                      output_file=output_file)
 
