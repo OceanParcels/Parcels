@@ -200,7 +200,6 @@ class ParticleFile(object):
         if mpi_rank == 0:
             if delete_tempfiles:
                 self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
-            self.dataset.close()
         self.convert_at_end = False
 
     def add_metadata(self, name, message):
@@ -371,6 +370,8 @@ class ParticleFile(object):
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
                 getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
+
+        self.dataset.close()
 
     def delete_tempwritedir(self, tempwritedir=None):
         """Deleted all temporary npy files

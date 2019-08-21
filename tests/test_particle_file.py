@@ -34,7 +34,6 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
 
     ofile.name = filepath + 'b.nc'
     ofile.export()
-    ofile.dataset.close()
     ncfile2 = Dataset(filepath + 'b.nc', 'r', 'NETCDF4')
 
     for v in ncfile2.variables.keys():
