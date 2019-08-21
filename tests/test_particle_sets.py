@@ -187,7 +187,8 @@ def test_pset_add_explicit(fieldset, mode, npart=100):
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for i in range(npart):
-        particle = ptype[mode](lon=lon[i], lat=lat[i], fieldset=fieldset)
+        particle = ParticleSet(pclass=ptype[mode], lon=lon[i], lat=lat[i],
+                               fieldset=fieldset, lonlatdepth_dtype=np.float64)
         pset.add(particle)
     assert(pset.size == 100)
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
@@ -200,7 +201,7 @@ def test_pset_add_shorthand(fieldset, mode, npart=100):
     lat = np.linspace(1, 0, npart, dtype=np.float32)
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode])
     for i in range(npart):
-        pset += ptype[mode](lon=lon[i], lat=lat[i], fieldset=fieldset)
+        pset += ParticleSet(pclass=ptype[mode], lon=lon[i], lat=lat[i], fieldset=fieldset)
     assert(pset.size == 100)
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
@@ -213,7 +214,7 @@ def test_pset_add_execute(fieldset, mode, npart=10):
 
     pset = ParticleSet(fieldset, lon=[], lat=[], pclass=ptype[mode])
     for i in range(npart):
-        pset += ptype[mode](lon=0.1, lat=0.1, fieldset=fieldset)
+        pset += ParticleSet(pclass=ptype[mode], lon=0.1, lat=0.1, fieldset=fieldset)
     for _ in range(3):
         pset.execute(pset.Kernel(AddLat), runtime=1., dt=1.0)
     assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
