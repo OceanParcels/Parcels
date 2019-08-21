@@ -930,12 +930,12 @@ class Field(object):
         self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
         self.chunk_info = sum(self.chunk_info, [])
 
-        #To put it as it use to be
-        #timer.fChunk.start()
-        self.datatmp = np.array(self.data)
-        #timer.fChunk.stop()
-        if not self.datatmp.flags.c_contiguous:
-            self.datatmp = self.datatmp.copy()
+        ##To put it as it use to be
+        ##timer.fChunk.start()
+        #self.datatmp = np.array(self.data)
+        ##timer.fChunk.stop()
+        #if not self.datatmp.flags.c_contiguous:
+        #    self.datatmp = self.datatmp.copy()
 
     @property
     def ctypes_struct(self):
@@ -948,7 +948,7 @@ class Field(object):
                         ('tdim', c_int), ('igrid', c_int),
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
-                        ('data', POINTER(POINTER(c_float))),
+                        #('data', POINTER(POINTER(c_float))),
                         ('chunk_info', POINTER(c_int)),
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
                         ('grid', POINTER(CGrid))]
@@ -966,7 +966,7 @@ class Field(object):
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
-                         self.datatmp.ctypes.data_as(POINTER(POINTER(c_float))),
+                         #self.datatmp.ctypes.data_as(POINTER(POINTER(c_float))),
                          (c_int * len(self.chunk_info))(*self.chunk_info),
                          (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
                          pointer(self.grid.ctypes_struct))
