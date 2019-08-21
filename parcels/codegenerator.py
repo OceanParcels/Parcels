@@ -357,7 +357,7 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'fieldset', 'time', 'dt', 'output_time', 'tol']
+    kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
     array_vars = []
 
     def __init__(self, fieldset, ptype):
@@ -446,6 +446,8 @@ class KernelGenerator(ast.NodeVisitor):
             elif isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, 'ccode'):
                     args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'id'):
+                    args = node.args[0].right.id
                 elif hasattr(node.args[0].right, 'elts'):
                     args = []
                     for a in node.args[0].right.elts:

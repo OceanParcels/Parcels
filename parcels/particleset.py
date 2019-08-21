@@ -12,6 +12,11 @@ import time as time_module
 import collections
 from datetime import timedelta as delta
 from datetime import datetime, date
+try:
+    from mpi4py import MPI
+    from sklearn.cluster import KMeans
+except:
+    MPI = None
 
 __all__ = ['ParticleSet']
 
@@ -38,43 +43,74 @@ class ParticleSet(object):
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
+        partitions = kwargs.pop('partitions', None)
 
-        def convert_to_list(var):
-            # Convert numpy arrays and single integers/floats to one-dimensional lists
-            if isinstance(var, (int, float)):
-                return [var]
-            elif isinstance(var, np.ndarray):
+        def convert_to_array(var):
+            # Convert lists and single integers/floats to one-dimensional numpy arrays
+            if isinstance(var, np.ndarray):
                 return var.flatten()
-            return var
-        if lon is None:
-            lon = []
-        if lat is None:
-            lat = []
+            elif isinstance(var, (int, float, np.float32, np.int32)):
+                return np.array([var])
+            else:
+                return np.array(var)
 
-        lon = convert_to_list(lon)
-        lat = convert_to_list(lat)
+        lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
+        lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
+
         if depth is None:
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
-            depth = np.ones(len(lon)) * mindepth
-        depth = convert_to_list(depth)
-        assert len(lon) == len(lat) and len(lon) == len(depth), (
+            depth = np.ones(lon.size) * mindepth
+        else:
+            depth = convert_to_array(depth)
+        assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        time = time.tolist() if isinstance(time, np.ndarray) else time
-        time = [time] * len(lat) if not isinstance(time, list) else time
-        time = [np.datetime64(t) if isinstance(t, datetime) else t for t in time]
-        time = [np.datetime64(t) if isinstance(t, date) else t for t in time]
+        time = convert_to_array(time)
+        time = np.repeat(time, lon.size) if time.size == 1 else time
+        if time.size > 0 and type(time[0]) in [datetime, date]:
+            time = np.array([np.datetime64(t) for t in time])
         self.time_origin = fieldset.time_origin
-        if len(time) > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
+        if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        time = [self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time]
+        time = np.array([self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time])
+        assert lon.size == time.size, (
+            'time and positions (lon, lat, depth) don''t have the same lengths.')
 
         for kwvar in kwargs:
-            kwargs[kwvar] = convert_to_list(kwargs[kwvar])
+            kwargs[kwvar] = convert_to_array(kwargs[kwvar])
+            assert lon.size == kwargs[kwvar].size, (
+                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
-        assert len(lon) == len(time), (
-            'time and positions (lon, lat, depth) don''t have the same '
-            'lengths.')
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            mpi_size = mpi_comm.Get_size()
+
+            if lon.size < mpi_size and mpi_size > 1:
+                raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
+
+            if mpi_size > 1:
+                if partitions is None:
+                    if mpi_rank == 0:
+                        coords = np.vstack((lon, lat)).transpose()
+                        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                        partitions = kmeans.labels_
+                    else:
+                        partitions = None
+                    partitions = mpi_comm.bcast(partitions, root=0)
+                    lon = lon[partitions == mpi_rank]
+                    lat = lat[partitions == mpi_rank]
+                    time = time[partitions == mpi_rank]
+                    depth = depth[partitions == mpi_rank]
+                    for kwvar in kwargs:
+                        kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
+                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partitions)
+            else:
+                offset = pclass.lastID
+        else:
+            offset = pclass.lastID
+
+        pclass.setLastID(offset)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -87,6 +123,7 @@ class ParticleSet(object):
             self.repeatlat = lat
             self.repeatdepth = depth
             self.repeatpclass = pclass
+            self.partitions = partitions
             self.repeatkwargs = kwargs
 
         if lonlatdepth_dtype is None:
@@ -97,14 +134,13 @@ class ParticleSet(object):
             'lon lat depth precision should be set to either np.float32 or np.float64'
         JITParticle.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
-        size = len(lon)
-        self.particles = np.empty(size, dtype=pclass)
+        self.particles = np.empty(lon.size, dtype=pclass)
         self.ptype = pclass.getPType()
         self.kernel = None
 
         if self.ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
-            self._particle_data = np.empty(size, dtype=self.ptype.dtype)
+            self._particle_data = np.empty(lon.size, dtype=self.ptype.dtype)
 
             def cptr(i):
                 return self._particle_data[i]
@@ -113,11 +149,11 @@ class ParticleSet(object):
                 return None
 
         if lon is not None and lat is not None:
-            # Initialise from lists of lon/lat coordinates
-            assert size == len(lon) and size == len(lat), (
+            # Initialise from arrays of lon/lat coordinates
+            assert self.particles.size == lon.size and self.particles.size == lat.size, (
                 'Size of ParticleSet does not match lenght of lon and lat.')
 
-            for i in range(size):
+            for i in range(lon.size):
                 self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
                 # Set other Variables if provided
                 for kwvar in kwargs:
@@ -262,8 +298,8 @@ class ParticleSet(object):
         """Method to add particles to the ParticleSet"""
         if isinstance(particles, ParticleSet):
             particles = particles.particles
-        if not isinstance(particles, collections.Iterable):
-            particles = [particles]
+        else:
+            raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
         self.particles = np.append(self.particles, particles)
         if self.ptype.uses_jit:
             particles_data = [p._cptr for p in particles]
@@ -411,6 +447,10 @@ class ParticleSet(object):
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
+                if output_file:
+                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
+                    logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
+                                'to a NetCDF file during the run.' % output_file.tempwritedir_base)
                 pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
                 verbose_progress = True
             if dt > 0:
@@ -422,7 +462,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       **self.repeatkwargs)
+                                       partitions=self.partitions, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

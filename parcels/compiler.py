@@ -3,6 +3,10 @@ from os import path, getenv
 from tempfile import gettempdir
 from struct import calcsize
 try:
+    from mpi4py import MPI
+except:
+    MPI = None
+try:
     from pathlib import Path
 except ImportError:
     from pathlib2 import Path  # python 2 backport
@@ -79,4 +83,5 @@ class GNUCompiler(Compiler):
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
         ldargs = ['-shared'] + ldargs + arch_flag
-        super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
+        compiler = "mpicc" if MPI else "gcc"
+        super(GNUCompiler, self).__init__(compiler, cppargs=cppargs, ldargs=ldargs)
