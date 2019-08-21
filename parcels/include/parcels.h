@@ -211,7 +211,7 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
       for (yii=0; yii<2; ++yii){
         for (xii=0; xii<2; ++xii){
           blockid = getBlock2D(chunk_info, yi+yii, xi+xii, block, ilocal);
-          if (grid->load_chunk[blockid] < 1){
+          if (grid->load_chunk[blockid] < 2){
             grid->load_chunk[blockid] = 1;
             //printf("CHUNK NOT LOADED\n");
             return REPEAT;
