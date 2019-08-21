@@ -168,6 +168,21 @@ class Field(object):
         self.filebuffers = [None] * 3
 
     @classmethod
+    def get_dim_filenames(cls, filenames, dim):
+        if isinstance(filenames, str) or not isinstance(filenames, collections.Iterable):
+            return [filenames]
+        elif isinstance(filenames, dict):
+            assert dim in filenames.keys(), \
+                'filename dimension keys must be lon, lat, depth or data'
+            filename = filenames[dim]
+            if isinstance(filename, str):
+                return [filename]
+            else:
+                return filename
+        else:
+            return filenames
+
+    @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, **kwargs):
@@ -220,27 +235,20 @@ class Field(object):
             if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
                 variable = (variable, variable)
             assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
-            if not isinstance(filenames, collections.Iterable) or isinstance(filenames, str):
-                filenames = [filenames]
 
-            data_filenames = filenames['data'] if type(filenames) is dict else filenames
-            if type(filenames) == dict:
-                for k in filenames.keys():
-                    assert k in ['lon', 'lat', 'depth', 'data'], \
-                        'filename dimension keys must be lon, lat, depth or data'
-                assert len(filenames['lon']) == 1
-                if filenames['lon'] != filenames['lat']:
-                    raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
-                lonlat_filename = filenames['lon'][0]
-                if 'depth' in dimensions:
-                    if not isinstance(filenames['depth'], collections.Iterable) or isinstance(filenames['depth'], str):
-                        filenames['depth'] = [filenames['depth']]
-                    if len(filenames['depth']) != 1:
-                        raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
-                    depth_filename = filenames['depth'][0]
-            else:
-                lonlat_filename = filenames[0]
-                depth_filename = filenames[0]
+            data_filenames = cls.get_dim_filenames(filenames, 'data')
+            lonlat_filename = cls.get_dim_filenames(filenames, 'lon')
+            if isinstance(filenames, dict):
+                assert len(lonlat_filename) == 1
+            if lonlat_filename != cls.get_dim_filenames(filenames, 'lat'):
+                raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
+            lonlat_filename = lonlat_filename[0]
+            if 'depth' in dimensions:
+                depth_filename = cls.get_dim_filenames(filenames, 'depth')
+                if isinstance(filenames, dict) and len(depth_filename) != 1:
+                    raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+                depth_filename = depth_filename[0]
+
             netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
 
         indices = {} if indices is None else indices.copy()
