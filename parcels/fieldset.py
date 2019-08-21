@@ -8,6 +8,35 @@ from os import path
 from glob import glob
 from copy import deepcopy
 import dask.array as da
+#from parcels.tools import timer
+#import gc
+def has_handle(fpath):
+    import psutil
+    for proc in psutil.process_iter():
+        try:
+            for item in proc.open_files():
+                if fpath == item.path:
+                    return True
+        except Exception:
+            pass
+    return False
+
+def busyfiles(init_message, n=30):
+    print(init_message)
+    print('   ', end='')
+    from os import path
+    from glob import glob
+    filenames = path.join('GlobCurrent_example_data',
+                         '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    filenames = sorted(glob(filenames))[:200]
+    full_path = '/Users/delandmeter/sources/parcels/parcels/examples/'
+    sum = 0
+    for i in range(n):
+        print("%d" % has_handle(full_path+filenames[i]), end='')
+        sum += int(has_handle(full_path+filenames[i]))
+    print('')
+    #if sum > 3:
+    #    exit(-1)
 
 
 __all__ = ['FieldSet']
@@ -739,6 +768,7 @@ class FieldSet(object):
         :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
         :param dt: time step of the integration scheme
         """
+        #timer.fset_computeTimeChunk.start()
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
 
@@ -776,13 +806,19 @@ class FieldSet(object):
                 if len(g.load_chunk) > 0:
                     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                #f.data = np.zeros(f.data.shape)
             elif g.update_status == 'updated':
+                #timer.fset_computeTimeChunk_1.start()
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
+                    f.filebuffers[0].dataset.close()
+                    f.filebuffers[:2] = f.filebuffers[1:]
                     data = f.computeTimeChunk(data, 2)
                 else:
+                    f.filebuffers[2].dataset.close()
+                    f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
-                # ### do built-in computations on data
+                 ### do built-in computations on data
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 data[np.isnan(data)] = 0
@@ -796,20 +832,29 @@ class FieldSet(object):
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
                     if isinstance(f.data, da.core.Array):
-                        data = data.rechunk(sum(((1,), f.data.chunksize[1:]), ()))
+                        assert data.chunksize == sum(((1,), f.data.chunksize[1:]), ())
+                        # is it necessary?
+                    #busyfiles('******** BEFORE ********, %s' % f.name)
                     f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                    #np.array(f.data[:])
+                    #busyfiles('******** AFTER  ********')
+                    #exit(0)
+                    #print('here  f.data.shape', f.data.shape)
                 else:
                     data = f.reshape(data)[0:1, :]
                     if isinstance(f.data, da.core.Array):
-                        data = data.rechunk(sum(((1,), f.data.chunksize[1:]), ()))
+                        assert data.chunksize == sum(((1,), f.data.chunksize[1:]), ())
+                        # is it necessary?
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
                 # # Option 1
                 # if len(g.load_chunk) > 0:
                 #     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                 #     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
                 # Option 2
-                if len(f.data.chunks[0]) > 1:
-                    f.data = f.data.rechunk(sum(((f.grid.tdim,), f.data.chunksize[1:]), ()))
+                #if len(f.data.chunks[0]) > 1:
+                #    f.data = f.data.rechunk(sum(((f.grid.tdim,), f.data.chunksize[1:]), ()))
+                #timer.fset_computeTimeChunk_1.stop()
+                #timer.fset_computeTimeChunk_2.start()
                 if len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
@@ -818,8 +863,14 @@ class FieldSet(object):
                                     break  # file chunks were never loaded.
                                            # happens when field not called by kernel, but shares a grid with another field called by kernel
                                 block = f.get_block(block_id)
+                                #timer.fset_computeTimeChunk_21.start()
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
-                                f.data_chunks[block_id][2] = np.array(f.data.blocks[block][2])
+                                #timer.fset_computeTimeChunk_21.stop()
+                                #timer.fset_computeTimeChunk_22.start()
+                                #busyfiles('fset computeTimeChunk 0')
+                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                                #busyfiles('fset computeTimeChunk 1')
+                                #timer.fset_computeTimeChunk_22.stop()
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:
@@ -828,7 +879,9 @@ class FieldSet(object):
                                            # happens when field not called by kernel, but shares a grid with another field called by kernel
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[block][0])
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
+                #timer.fset_computeTimeChunk_2.stop()
+                #gc.collect()
 
             # ### do built-in computations on data
             # for tind in f.loaded_time_indices:
@@ -845,6 +898,7 @@ class FieldSet(object):
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
+        #timer.fset_computeTimeChunk.stop()
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

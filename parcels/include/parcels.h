@@ -152,28 +152,37 @@ static inline ErrorCode spatial_interpolation_tracer_c_grid_3D2(float data[2][2]
   return SUCCESS;
 }
 
-static inline int getBlock3D(int *chunk_info, int ti, int yi, int xi, int *block, int *index_local)
+static inline int getBlock2D(int *chunk_info, int yi, int xi, int *block, int *index_local)
 {
   int ndim = chunk_info[0];
-  if (ndim != 3)
+  if (ndim != 2)
     exit(-1);
-  int chunksize, i;
+  int i, j;
+
   int shape[ndim];
-  int index[3] = {ti, yi, xi};
+  int index[2] = {yi, xi};
   for(i=0; i<ndim; ++i){
-    shape[i] = chunk_info[ndim+1+i];
-    chunksize = chunk_info[1+i];
-    block[i] = (int) index[i] / chunksize;
-    index_local[i] = index[i] - chunksize * block[i];
+    int chunk_sum = 0, shift = 0;
+    // shift index into chunksizes
+    for (j = 0; j < i; j++) shift += chunk_info[1+j];
+    shape[i] = chunk_info[1+i];
+    for (j=0; j<shape[i]; j++) {
+      chunk_sum += chunk_info[1+ndim+shift+j];
+      if (index[i] < chunk_sum) {
+        chunk_sum -= chunk_info[1+ndim+shift+j];
+        break;
+      }
+    }
+    block[i] = j;
+    index_local[i] = index[i] - chunk_sum;
   }
 
-  int bid =  block[0]*shape[1]*shape[2] +
-             block[1]*shape[2]+
-             block[2];
+  int bid =  block[0]*shape[1] +
+             block[1];
   return bid;
 }
 
-static inline ErrorCode getCell3D(CField *f, int xi, int yi, int ti, float cell_data[2][2][2], int first_tstep_only)
+static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_data[2][2][2], int first_tstep_only)
 {
   int *chunk_info = f->chunk_info;
   int ndim = chunk_info[0];
@@ -183,41 +192,38 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int ti, float cell_
 
   int tii, yii, xii;
 
-  int blockid = getBlock3D(chunk_info, ti, yi, xi, block, ilocal);
+  int blockid = getBlock2D(chunk_info, yi, xi, block, ilocal);
   if (grid->load_chunk[blockid] < 2){
     grid->load_chunk[blockid] = 1;
     //printf("CHUNK NOT LOADED\n");
     return REPEAT;
   }
   grid->load_chunk[blockid] = 2;
-  int tdim = chunk_info[1+2*ndim+block[0]];
   int zdim = 1;
-  int tshift = chunk_info[1+ndim];
-  int ydim = chunk_info[1+2*ndim+tshift+block[1]];
-  int yshift = chunk_info[1+ndim+1];
-  int xdim = chunk_info[1+2*ndim+1+yshift+block[2]];
+  int ydim = chunk_info[1+ndim+block[0]];
+  int yshift = chunk_info[1];
+  int xdim = chunk_info[1+ndim+yshift+block[1]];
 
-  if (((ilocal[0] == tdim-1) && (first_tstep_only == 0)) || (ilocal[1] == ydim-1) || (ilocal[2] == xdim-1))
+  if ((ilocal[0] == ydim-1) || (ilocal[1] == xdim-1))
   {
     //printf("Cell is on multiple chunks\n");
     for (tii=0; tii<2; ++tii){
       for (yii=0; yii<2; ++yii){
         for (xii=0; xii<2; ++xii){
-          blockid = getBlock3D(chunk_info, ti+tii, yi+yii, xi+xii, block, ilocal);
+          blockid = getBlock2D(chunk_info, yi+yii, xi+xii, block, ilocal);
           if (grid->load_chunk[blockid] < 1){
             grid->load_chunk[blockid] = 1;
             //printf("CHUNK NOT LOADED\n");
             return REPEAT;
           }
           grid->load_chunk[blockid] = 2;
-          tdim = chunk_info[1+2*ndim+block[0]];
-          tshift = chunk_info[1+ndim];
-          ydim = chunk_info[1+2*ndim+tshift+block[1]];
-          yshift = chunk_info[1+ndim+1];
-          xdim = chunk_info[1+2*ndim+tshift+yshift+block[2]];
+          zdim = 1;
+          ydim = chunk_info[1+ndim+block[0]];
+          yshift = chunk_info[1];
+          xdim = chunk_info[1+ndim+yshift+block[1]];
           float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
-          float (*data)[xdim] = (float (*)[xdim]) (data_block[ilocal[0]]);
-          cell_data[tii][yii][xii] = data[ilocal[1]][ilocal[2]];
+          float (*data)[xdim] = (float (*)[xdim]) (data_block[ti+tii]);
+          cell_data[tii][yii][xii] = data[ilocal[0]][ilocal[1]];
         }
       }
       if (first_tstep_only == 1)
@@ -228,10 +234,10 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int ti, float cell_
   {
     float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
     for (tii=0; tii<2; ++tii){
-      float (*data)[xdim] = (float (*)[xdim]) (data_block[ilocal[0]+tii]);
+      float (*data)[xdim] = (float (*)[xdim]) (data_block[ti+tii]);
       for (yii=0; yii<2; ++yii)
         for (xii=0; xii<2; ++xii)
-          cell_data[tii][yii][xii] = data[ilocal[1]+yii][ilocal[2]+xii];
+          cell_data[tii][yii][xii] = data[ilocal[0]+yii][ilocal[1]+xii];
       if (first_tstep_only == 1)
          break;
     }
@@ -239,30 +245,38 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int ti, float cell_
   return SUCCESS;
 }
 
-static inline int getBlock4D(int *chunk_info, int ti, int zi, int yi, int xi, int *block, int *index_local)
+static inline int getBlock3D(int *chunk_info, int zi, int yi, int xi, int *block, int *index_local)
 {
   int ndim = chunk_info[0];
-  if (ndim != 4)
+  if (ndim != 3)
     exit(-1);
-  int chunksize, i;
+  int i, j;
+
   int shape[ndim];
-  int index[4] = {ti, zi, yi, xi};
+  int index[3] = {zi, yi, xi};
   for(i=0; i<ndim; ++i){
-    shape[i] = chunk_info[ndim+1+i];
-    chunksize = chunk_info[1+i];
-    block[i] = (int) index[i] / chunksize;
-    index_local[i] = index[i] - chunksize * block[i];
+    int chunk_sum = 0, shift = 0;
+    // shift index into chunksizes
+    for (j = 0; j < i; j++) shift += chunk_info[1+j];
+    shape[i] = chunk_info[1+i];
+    for (j=0; j<shape[i]; j++) {
+      chunk_sum += chunk_info[1+ndim+shift+j];
+      if (index[i] < chunk_sum) {
+        chunk_sum -= chunk_info[1+ndim+shift+j];
+        break;
+      }
+    }
+    block[i] = j;
+    index_local[i] = index[i] - chunk_sum;
   }
 
-  int bid =  block[0]*shape[1]*shape[2]*shape[3] +
-             block[1]*shape[2]*shape[3]+
-             block[2]*shape[3]+
-             block[3];
+  int bid =  block[0]*shape[1]*shape[2] +
+             block[1]*shape[2] +
+             block[2];
   return bid;
 }
 
-
-static inline ErrorCode getCell4D(CField *f, int xi, int yi, int zi, int ti, float cell_data[2][2][2][2], int first_tstep_only)
+static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, float cell_data[2][2][2][2], int first_tstep_only)
 {
   int *chunk_info = f->chunk_info;
   int ndim = chunk_info[0];
@@ -272,45 +286,40 @@ static inline ErrorCode getCell4D(CField *f, int xi, int yi, int zi, int ti, flo
 
   int tii, zii, yii, xii;
 
-  int blockid = getBlock4D(chunk_info, ti, zi, yi, xi, block, ilocal);
+  int blockid = getBlock3D(chunk_info, zi, yi, xi, block, ilocal);
   if (grid->load_chunk[blockid] < 2){
     grid->load_chunk[blockid] = 1;
     return REPEAT;
   }
   grid->load_chunk[blockid] = 2;
-  int tdim = chunk_info[1+2*ndim+block[0]];
-  int tshift = chunk_info[1+ndim];
-  int zdim = chunk_info[1+2*ndim+tshift+block[1]];
-  int zshift = chunk_info[1+ndim+1];
-  int ydim = chunk_info[1+2*ndim+tshift+zshift+block[2]];
-  int yshift = chunk_info[1+ndim+2];
-  int xdim = chunk_info[1+2*ndim+tshift+zshift+yshift+block[3]];
+  int zdim = chunk_info[1+ndim+block[0]];
+  int zshift = chunk_info[1];
+  int ydim = chunk_info[1+ndim+zshift+block[1]];
+  int yshift = chunk_info[1+1];
+  int xdim = chunk_info[1+ndim+zshift+yshift+block[2]];
 
-  if (((ilocal[0] == tdim-1) && (first_tstep_only == 0)) || (ilocal[1] == zdim-1) || (ilocal[2] == ydim-1) || (ilocal[3] == xdim-1))
+  if ((ilocal[0] == zdim-1) || (ilocal[1] == ydim-1) || (ilocal[2] == xdim-1))
   {
     //printf("Cell is on multiple chunks\n");
     for (tii=0; tii<2; ++tii){
       for (zii=0; zii<2; ++zii){
         for (yii=0; yii<2; ++yii){
           for (xii=0; xii<2; ++xii){
-            blockid = getBlock4D(chunk_info, ti+tii, zi+zii, yi+yii, xi+xii, block, ilocal);
+            blockid = getBlock3D(chunk_info, zi+zii, yi+yii, xi+xii, block, ilocal);
             if (grid->load_chunk[blockid] < 2){
               grid->load_chunk[blockid] = 1;
               //printf("CHUNK NOT LOADED\n");
               return REPEAT;
             }
             grid->load_chunk[blockid] = 2;
-            tdim = chunk_info[1+2*ndim+block[0]];
-            tshift = chunk_info[1+ndim];
-            zdim = chunk_info[1+2*ndim+tshift+block[1]];
-            zshift = chunk_info[1+ndim+1];
-            ydim = chunk_info[1+2*ndim+tshift+zshift+block[2]];
-            yshift = chunk_info[1+ndim+2];
-            xdim = chunk_info[1+2*ndim+tshift+zshift+yshift+block[3]];
-
+            zdim = chunk_info[1+ndim+block[0]];
+            zshift = chunk_info[1];
+            ydim = chunk_info[1+ndim+zshift+block[1]];
+            yshift = chunk_info[1+1];
+            xdim = chunk_info[1+ndim+zshift+yshift+block[2]];
             float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
-            float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) (data_block[ilocal[0]]);
-            cell_data[tii][zii][yii][xii] = data[ilocal[1]][ilocal[2]][ilocal[3]];
+            float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) (data_block[ti+tii]);
+            cell_data[tii][zii][yii][xii] = data[ilocal[0]][ilocal[1]][ilocal[2]];
           }
         }
       }
@@ -322,11 +331,11 @@ static inline ErrorCode getCell4D(CField *f, int xi, int yi, int zi, int ti, flo
   {
     float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
     for (tii=0; tii<2; ++tii){
-      float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) (data_block[ilocal[0]+tii]);
+      float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) (data_block[ti+tii]);
       for (zii=0; zii<2; ++zii)
         for (yii=0; yii<2; ++yii)
           for (xii=0; xii<2; ++xii)
-            cell_data[tii][zii][yii][xii] = data[ilocal[1]+zii][ilocal[2]+yii][ilocal[3]+xii];
+            cell_data[tii][zii][yii][xii] = data[ilocal[0]+zii][ilocal[1]+yii][ilocal[2]+xii];
       if (first_tstep_only == 1)
          break;
     }
@@ -366,9 +375,9 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, interp_method); CHECKERROR(err);
     if (grid->zdim==1){
-      err = getCell3D(f, xi[igrid], yi[igrid], ti[igrid], data3D, 0); CHECKERROR(err);
+      err = getCell2D(f, xi[igrid], yi[igrid], ti[igrid], data3D, 0); CHECKERROR(err);
     } else{
-      err = getCell4D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D, 0); CHECKERROR(err);
+      err = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D, 0); CHECKERROR(err);
     }
     if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY) || (interp_method == BGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)){
       if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)){ // interpolate w
@@ -478,9 +487,9 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, interp_method); CHECKERROR(err);
     if (grid->zdim==1){
-      err = getCell3D(f, xi[igrid], yi[igrid], ti[igrid], data3D, 1); CHECKERROR(err);
+      err = getCell2D(f, xi[igrid], yi[igrid], ti[igrid], data3D, 1); CHECKERROR(err);
     } else{
-      err = getCell4D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D, 1); CHECKERROR(err);
+      err = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D, 1); CHECKERROR(err);
     }
     if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY) || (interp_method == BGRID_VELOCITY) ||(interp_method == BGRID_W_VELOCITY)){
       if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)){ // interpolate w
@@ -749,8 +758,8 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     if (grid->zdim==1){
       float data3D_U[2][2][2], data3D_V[2][2][2];
       float u0p, u1p, v0p, v1p;
-      err = getCell3D(U, xi[igrid], yi[igrid], ti[igrid], data3D_U, 0); CHECKERROR(err);
-      err = getCell3D(V, xi[igrid], yi[igrid], ti[igrid], data3D_V, 0); CHECKERROR(err);
+      err = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data3D_U, 0); CHECKERROR(err);
+      err = getCell2D(V, xi[igrid], yi[igrid], ti[igrid], data3D_V, 0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]),   &u0, &v0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1]), (float**)(dataV[ti[igrid]+1]), &u1, &v1); CHECKERROR(err);
 
@@ -764,8 +773,8 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     } else {
       float data4D_U[2][2][2][2], data4D_V[2][2][2][2];
       float u0p, u1p, v0p, v1p;
-      err = getCell4D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 0); CHECKERROR(err);
-      err = getCell4D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 0); CHECKERROR(err);
+      err = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 0); CHECKERROR(err);
+      err = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]),   &u0, &v0); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]+1][zi[igrid]]), (float**)(dataV[ti[igrid]+1][zi[igrid]]), &u1, &v1); CHECKERROR(err);
 
@@ -785,8 +794,8 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     if (grid->zdim==1){
       float data3D_U[2][2][2], data3D_V[2][2][2];
       float up, vp;
-      err = getCell3D(U, xi[igrid], yi[igrid], ti[igrid], data3D_U, 1); CHECKERROR(err);
-      err = getCell3D(V, xi[igrid], yi[igrid], ti[igrid], data3D_V, 1); CHECKERROR(err);
+      err = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data3D_U, 1); CHECKERROR(err);
+      err = getCell2D(V, xi[igrid], yi[igrid], ti[igrid], data3D_V, 1); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]])  , (float**)(dataV[ti[igrid]]), u, v); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid2(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data3D_U[0], data3D_V[0], &up, &vp); CHECKERROR(err);
       if ( (fabs(*u-up) > 1e-12) || (fabs(*v-vp) > 1e-12)  ) {
@@ -797,8 +806,8 @@ static inline ErrorCode temporal_interpolationUV_c_grid(type_coord x, type_coord
     else{
       float data4D_U[2][2][2][2], data4D_V[2][2][2][2];
       float up, vp;
-      err = getCell4D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 1); CHECKERROR(err);
-      err = getCell4D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 1); CHECKERROR(err);
+      err = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 1); CHECKERROR(err);
+      err = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 1); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid(xsi, eta, xi[igrid], yi[igrid], grid, gcode, (float**)(dataU[ti[igrid]][zi[igrid]])  , (float**)(dataV[ti[igrid]][zi[igrid]]), u, v); CHECKERROR(err);
       err = spatial_interpolation_UV_c_grid2(xsi, eta, xi[igrid], yi[igrid], grid, gcode, data4D_U[0][0], data4D_V[0][0], &up, &vp); CHECKERROR(err);
       if ( (fabs(*u-up) > 1e-12) || (fabs(*v-vp) > 1e-12)  ) {
@@ -1114,9 +1123,9 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(type_coord x, type_coor
     double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
     /* Identify grid cell to sample through local linear search */
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], time, t0, t1, CGRID_VELOCITY); CHECKERROR(err);
-    err = getCell4D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 0); CHECKERROR(err);
-    err = getCell4D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 0); CHECKERROR(err);
-    err = getCell4D(W, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_W, 0); CHECKERROR(err);
+    err = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 0); CHECKERROR(err);
+    err = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 0); CHECKERROR(err);
+    err = getCell3D(W, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_W, 0); CHECKERROR(err);
     if (grid->zdim==1){
       return ERROR;
     } else {
@@ -1137,9 +1146,9 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(type_coord x, type_coor
   } else {
     double t0 = grid->time[ti[igrid]];
     err = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zet, gcode, ti[igrid], t0, t0, t0+1, CGRID_VELOCITY); CHECKERROR(err);
-    err = getCell4D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 1); CHECKERROR(err);
-    err = getCell4D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 1); CHECKERROR(err);
-    err = getCell4D(W, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_W, 1); CHECKERROR(err);
+    err = getCell3D(U, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_U, 1); CHECKERROR(err);
+    err = getCell3D(V, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_V, 1); CHECKERROR(err);
+    err = getCell3D(W, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data4D_W, 1); CHECKERROR(err);
     if (grid->zdim==1){
       return ERROR;
     }

@@ -12,6 +12,31 @@ import datetime
 import math
 from .grid import Grid, CGrid, GridCode
 import dask.array as da
+#from parcels.tools import timer
+def has_handle(fpath):
+    import psutil
+    for proc in psutil.process_iter():
+        try:
+            for item in proc.open_files():
+                if fpath == item.path:
+                    return True
+        except Exception:
+            pass
+    return False
+
+def busyfiles(init_message, n=30):
+    print(init_message)
+    print('   ', end='')
+    from os import path
+    from glob import glob
+    filenames = path.join('GlobCurrent_example_data',
+                         '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    filenames = sorted(glob(filenames))[:200]
+    full_path = '/Users/delandmeter/sources/parcels/parcels/examples/'
+    for i in range(n):
+        print("%d" % has_handle(full_path+filenames[i]), end='')
+    print('')
+
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -140,6 +165,7 @@ class Field(object):
         self.data_chunks = []
         self.c_data_chunks = []
         self.nchunks = []
+        self.filebuffers = [None] * 3
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -850,19 +876,17 @@ class Field(object):
         return np.ravel_multi_index(block, self.nchunks)
 
     def get_block(self, bid):
-        return np.unravel_index(bid, self.nchunks)
+        return np.unravel_index(bid, self.nchunks[1:])
 
     def chunk_data(self):
         if isinstance(self.data, da.core.Array):
-            if len(self.data.chunks[0]) > 1:
-                self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), ()))
+            #if len(self.data.chunks[0]) > 1:
+            #    self.data = self.data.rechunk(sum(((self.grid.tdim,), self.data.chunksize[1:]), ()))
             npartitions = self.data.npartitions
-            chunksize = self.data.chunksize
             chunks = self.data.chunks
         else:
             npartitions = 1
-            chunksize = self.data.shape
-            chunks = tuple((t,) for t in chunksize)
+            chunks = tuple((t,) for t in self.data.shape)
 
         self.nchunks = tuple(len(chunks[i]) for i in range(len(chunks)))
         if len(self.data_chunks) == 0:
@@ -878,33 +902,44 @@ class Field(object):
         # 1: was asked to load
         # 2: is loaded and was touched last C call
         # 3: is loaded
+        #busyfiles('in chunk_data 1')
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1:
                     #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
                     #block_id = self.get_block_id(nchunks, block)
                     block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[block])
+                    #print(self.data.shape)
+                    #print(self.data.blocks[0,0,0].shape)
+                    #print(self.data.blocks[:,0,0].shape)
+                    self.data_chunks[block_id] = np.array(self.data.blocks[:,0,0])#block])
                 elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
         else:
             self.grid.load_chunk[0] = 3
             self.data_chunks[0] = self.data
+        #busyfiles('in chunk_data 2')
 
-        # self.chunk_info format: number of dimensions; typical chunksizes; number of chunks per dimensions;
+        # self.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
-        self.chunk_info = [[len(self.nchunks)], list(chunksize), list(self.nchunks), sum(list(list(ci) for ci in chunks), [])]
+        self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
         self.chunk_info = sum(self.chunk_info, [])
+        #print(self.chunk_info)
+        #exit(0)
         #print("chunk_info", self.chunk_info)
         #print(self.data.chunks)
         #print(self.data.chunksize)
         #print("block_id", block, block_id)
 
         #To put it as it use to be
+        #timer.fChunk.start()
+        #busyfiles('in chunk_data 3')
         self.datatmp = np.array(self.data)
+        #busyfiles('in chunk_data 4')
+        #timer.fChunk.stop()
         if not self.datatmp.flags.c_contiguous:
-            self.datatmp = self.data.copy()
+            self.datatmp = self.datatmp.copy()
 
     @property
     def ctypes_struct(self):
@@ -932,6 +967,7 @@ class Field(object):
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
+                #print(self.data_chunks[i].shape)
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
@@ -1052,27 +1088,29 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        with NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, interp_method=self.interp_method, data_full_zdim=self.data_full_zdim) as filebuffer:
-            time_data = filebuffer.time
-            time_data = g.time_origin.reltime(time_data)
-            filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
-            if self.netcdf_engine != 'xarray':
-                filebuffer.name = filebuffer.parse_name(self.filebuffername)
-            buffer_data = filebuffer.data
-            if len(buffer_data.shape) == 2:
-                buffer_data = da.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
-            elif len(buffer_data.shape) == 3 and g.zdim > 1:
-                buffer_data = da.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
-            elif len(buffer_data.shape) == 3:
-                buffer_data = da.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
-            if tindex == 0:
-                data = da.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
-            elif tindex == 1:
-                data = da.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
-            elif tindex == 2:
-                data = da.concatenate([data[:tindex, :], buffer_data], axis=0)
-            else:
-                assert False
+        filebuffer = NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices, self.netcdf_engine, timestamp=timestamp, interp_method=self.interp_method, data_full_zdim=self.data_full_zdim)
+        filebuffer.__enter__()
+        time_data = filebuffer.time
+        time_data = g.time_origin.reltime(time_data)
+        filebuffer.ti = (time_data <= g.time[tindex]).argmin() - 1
+        if self.netcdf_engine != 'xarray':
+            filebuffer.name = filebuffer.parse_name(self.filebuffername)
+        buffer_data = filebuffer.data
+        if len(buffer_data.shape) == 2:
+            buffer_data = da.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
+        elif len(buffer_data.shape) == 3 and g.zdim > 1:
+            buffer_data = da.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
+        elif len(buffer_data.shape) == 3:
+            buffer_data = da.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
+        if tindex == 0:
+            data = da.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
+        elif tindex == 1:
+            data = da.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
+        elif tindex == 2:
+            data = da.concatenate([data[:tindex, :], buffer_data], axis=0)
+        else:
+            assert False
+        self.filebuffers[tindex] = filebuffer
         return data
 
     def __add__(self, field):
