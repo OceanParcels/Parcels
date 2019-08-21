@@ -261,18 +261,20 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline void func(CField *f, float *lon, float *dt)
+                 static inline ErrorCode func(CField *f, float *lon, float *dt)
                  {
-                   float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
-                   float u = data[2][1];
+                   float data2D[2][2][2];
+                   ErrorCode err = getCell2D(f, 1, 2, 0, data2D, 1); CHECKERROR(err);
+                   float u = data2D[0][0][0];
                    *lon += u * *dt;
+                   return SUCCESS;
                  }
                  """
     else:
         c_include = path.join(path.dirname(__file__), 'customed_header.h')
 
     def ckernel(particle, fieldset, time):
-        func('pointer_args', fieldset.U, particle.lon, particle.dt)
+        func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle.lon, particle.dt)
 
     def pykernel(particle, fieldset, time):
         particle.lon = func(fieldset.U, particle.lon, particle.dt)
