@@ -880,13 +880,15 @@ class Field(object):
 
     def chunk_data(self):
         if isinstance(self.data, da.core.Array):
-            npartitions = self.data.npartitions
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks
-        else:
             npartitions = 1
+            for n in self.nchunks[1:]:
+                npartitions *= n
+        else:
             chunks = tuple((t,) for t in self.data.shape)
             self.nchunks = (1,) * len(self.data.shape)
+            npartitions = 1
 
         if len(self.data_chunks) == 0:
             self.data_chunks = [None] * npartitions
