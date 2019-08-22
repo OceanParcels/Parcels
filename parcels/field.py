@@ -965,7 +965,6 @@ class Field(object):
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
                         ('grid', POINTER(CGrid))]
 
-
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
@@ -1107,25 +1106,22 @@ class Field(object):
         if self.netcdf_engine != 'xarray':
             filebuffer.name = filebuffer.parse_name(self.filebuffername)
         buffer_data = filebuffer.data
+        lib_data = da if isinstance(buffer_data, da.core.Array) else np
         if len(buffer_data.shape) == 2:
-            buffer_data = da.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
+            buffer_data = lib_data.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3 and g.zdim > 1:
-            buffer_data = da.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
+            buffer_data = lib_data.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3:
-            buffer_data = da.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
+            buffer_data = lib_data.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
         if tindex == 0:
-            data = da.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
+            data = lib_data.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
-            data = da.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
+            data = lib_data.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
         elif tindex == 2:
-            data = da.concatenate([data[:tindex, :], buffer_data], axis=0)
+            data = lib_data.concatenate([data[:tindex, :], buffer_data], axis=0)
         else:
             assert False
         self.filebuffers[tindex] = filebuffer
-        if self.field_chunksize is False or \
-                self.field_chunksize == 'auto' and (data.shape[-2:] == data.chunksize[-2:]):
-            return np.array(data)
-
         return data
 
     def __add__(self, field):
@@ -1656,10 +1652,16 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
-        if np.ma.is_masked(data):  # convert masked array to ndarray
-            assert False
-            data = np.ma.filled(data, np.nan)
         data = da.from_array(data, chunks=self.field_chunksize)
+        if self.field_chunksize is False:
+            data = np.array(data)
+        else:
+            da_data = da.from_array(data, chunks=self.field_chunksize)
+            if self.field_chunksize == 'auto' and data.shape[-2:] == da_data.chunksize[-2:]:
+                data = np.array(data)
+            else:
+                data = da_data
+
         return data
 
     @property
