@@ -17,7 +17,6 @@ extern "C" {
 typedef struct
 {
   int xdim, ydim, zdim, tdim, igrid, allow_time_extrapolation, time_periodic;
-  //float ***data;
   int *chunk_info;
   float ****data_chunks;
   CGrid *grid;
@@ -30,7 +29,6 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
          +    xsi *(1-eta) * data[0][1]
          +    xsi *   eta  * data[1][1]
          + (1-xsi)*   eta  * data[1][0];
-  //printf("data %g %g %g %g\n", data[yi][xi], data[yi][xi+1], data[yi+1][xi+1], data[yi+1][xi]);
   return SUCCESS;
 }
 
@@ -132,7 +130,6 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
   int blockid = getBlock2D(chunk_info, yi, xi, block, ilocal);
   if (grid->load_chunk[blockid] < 2){
     grid->load_chunk[blockid] = 1;
-    //printf("CHUNK NOT LOADED\n");
     return REPEAT;
   }
   grid->load_chunk[blockid] = 2;
@@ -143,14 +140,13 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
 
   if ((ilocal[0] == ydim-1) || (ilocal[1] == xdim-1))
   {
-    //printf("Cell is on multiple chunks\n");
+    // Cell is on multiple chunks
     for (tii=0; tii<2; ++tii){
       for (yii=0; yii<2; ++yii){
         for (xii=0; xii<2; ++xii){
           blockid = getBlock2D(chunk_info, yi+yii, xi+xii, block, ilocal);
           if (grid->load_chunk[blockid] < 2){
             grid->load_chunk[blockid] = 1;
-            //printf("CHUNK NOT LOADED\n");
             return REPEAT;
           }
           grid->load_chunk[blockid] = 2;
@@ -237,7 +233,7 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, flo
 
   if ((ilocal[0] == zdim-1) || (ilocal[1] == ydim-1) || (ilocal[2] == xdim-1))
   {
-    //printf("Cell is on multiple chunks\n");
+    // Cell is on multiple chunks\n
     for (tii=0; tii<2; ++tii){
       for (zii=0; zii<2; ++zii){
         for (yii=0; yii<2; ++yii){
@@ -245,7 +241,6 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, flo
             blockid = getBlock3D(chunk_info, zi+zii, yi+yii, xi+xii, block, ilocal);
             if (grid->load_chunk[blockid] < 2){
               grid->load_chunk[blockid] = 1;
-              //printf("CHUNK NOT LOADED\n");
               return REPEAT;
             }
             grid->load_chunk[blockid] = 2;

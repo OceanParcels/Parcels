@@ -7,11 +7,11 @@ import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
+import dask.array as da
 try:
     from mpi4py import MPI
 except:
     MPI = None
-import dask.array as da
 
 
 __all__ = ['FieldSet']
@@ -761,7 +761,6 @@ class FieldSet(object):
         :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
         :param dt: time step of the integration scheme
         """
-        #timer.fset_computeTimeChunk.start()
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
 
@@ -774,7 +773,6 @@ class FieldSet(object):
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
-        # load in new data
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
                 continue
@@ -800,7 +798,6 @@ class FieldSet(object):
                     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
-                #timer.fset_computeTimeChunk_1.start()
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.filebuffers[0].dataset.close()
@@ -810,7 +807,7 @@ class FieldSet(object):
                     f.filebuffers[2].dataset.close()
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
-                 ### do built-in computations on data
+                # do built-in computations on data
                 if f._scaling_factor:
                     data *= f._scaling_factor
                 data[np.isnan(data)] = 0
@@ -827,49 +824,31 @@ class FieldSet(object):
                 else:
                     data = f.reshape(data)[0:1, :]
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
-                #timer.fset_computeTimeChunk_1.stop()
-                #timer.fset_computeTimeChunk_2.start()
                 if len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:
                                 if len(f.nchunks) == 0:
-                                    break  # file chunks were never loaded.
-                                           # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
                                 block = f.get_block(block_id)
-                                #timer.fset_computeTimeChunk_21.start()
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
-                                #timer.fset_computeTimeChunk_21.stop()
-                                #timer.fset_computeTimeChunk_22.start()
                                 f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
-                                #timer.fset_computeTimeChunk_22.stop()
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:
                                 if len(f.nchunks) == 0:
-                                    break  # file chunks were never loaded.
-                                           # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
                                 f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
-                #timer.fset_computeTimeChunk_2.stop()
-
-            # ### do built-in computations on data
-            # for tind in f.loaded_time_indices:
-            #     if f._scaling_factor:
-            #         f.data[tind, :] *= f._scaling_factor
-            #     f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
-            #     if f.vmin is not None:
-            #         f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
-            #     if f.vmax is not None:
-            #         f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
-            #     if f.gradientx is not None:
-            #         f.gradient(update=True, tindex=tind)
 
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
-        #timer.fset_computeTimeChunk.stop()
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

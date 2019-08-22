@@ -143,12 +143,10 @@ class Field(object):
         self.nchunks = []
         self.filebuffers = [None] * 3
 
-
     def __del__(self):
         for fb in self.filebuffers:
             if fb is not None:
                 fb.dataset.close()
-
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
@@ -709,7 +707,7 @@ class Field(object):
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             if isinstance(val, da.core.Array):
                 val = val.compute()
-                #raise RuntimeError("This happens at p init from field")
+                # raise RuntimeError("This happens at p init from field")
             return val
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
@@ -860,13 +858,6 @@ class Field(object):
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
 
-    #def find_in_block(self, chunksize, ti, zi, yi, xi):
-    #    #index = (ti, zi, yi, xi)
-    #    index = (ti, yi, xi)
-    #    block = tuple((int(index[i]/chunksize[i]) for i in range(len(index))))
-    #    local_index = tuple(index[i] - chunksize[i]*block[i] for i in range(len(index)))
-    #    return block, local_index
-
     def get_block_id(self, block):
         return np.ravel_multi_index(block, self.nchunks)
 
@@ -900,8 +891,6 @@ class Field(object):
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1:
-                    #block, local_index = self.find_in_block(chunksize, 0, 0, 20, 40)
-                    #block_id = self.get_block_id(nchunks, block)
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block])
                 elif self.grid.load_chunk[block_id] == 0:
@@ -916,13 +905,6 @@ class Field(object):
         self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
         self.chunk_info = sum(self.chunk_info, [])
 
-        ##To put it as it use to be
-        ##timer.fChunk.start()
-        #self.datatmp = np.array(self.data)
-        ##timer.fChunk.stop()
-        #if not self.datatmp.flags.c_contiguous:
-        #    self.datatmp = self.datatmp.copy()
-
     @property
     def ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
@@ -934,7 +916,6 @@ class Field(object):
                         ('tdim', c_int), ('igrid', c_int),
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
-                        #('data', POINTER(POINTER(c_float))),
                         ('chunk_info', POINTER(c_int)),
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
                         ('grid', POINTER(CGrid))]
@@ -951,7 +932,6 @@ class Field(object):
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
-                         #self.datatmp.ctypes.data_as(POINTER(POINTER(c_float))),
                          (c_int * len(self.chunk_info))(*self.chunk_info),
                          (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
                          pointer(self.grid.ctypes_struct))
