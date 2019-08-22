@@ -1626,7 +1626,6 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
-        data = da.from_array(data, chunks=self.field_chunksize)
         if self.field_chunksize is False:
             data = np.array(data)
         else:
