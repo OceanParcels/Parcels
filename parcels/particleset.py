@@ -109,18 +109,11 @@ class ParticleSet(object):
                     pid = pid[partitions == mpi_rank]
                     for kwvar in kwargs:
                         kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
-                offset = MPI.COMM_WORLD.allreduce(max(pid) + pclass.lastID + 1, op=MPI.MAX)
-            else:
-                offset = pclass.lastID
-        else:
-            offset = pclass.lastID
-
-        pclass.setLastID(offset)
+                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX)
+                pclass.setLastID(offset)
 
         if pid_orig is not None:
-            pid = pid_orig + pclass.lastID
-
-        print(MPI.COMM_WORLD.Get_rank(), pclass.lastID, pid_orig, pid)
+            pid = pid_orig + pclass.lastID + 1
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:

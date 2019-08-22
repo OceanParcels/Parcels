@@ -178,7 +178,7 @@ class ScipyParticle(_Particle):
         type(self).depth.initial = depth
         type(self).time.initial = time
         type(self).id.initial = pid
-        _Particle.lastID += 1
+        _Particle.lastID = max(_Particle.lastID, pid)
         type(self).dt.initial = None
         super(ScipyParticle, self).__init__()
 
