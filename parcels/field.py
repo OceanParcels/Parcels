@@ -914,7 +914,7 @@ class Field(object):
 
         # self.grid.load_chunk code:
         # 0: not loaded
-        # 1: was asked to load
+        # 1: was asked to load by kernel in JIT
         # 2: is loaded and was touched last C call
         # 3: is loaded
         #busyfiles('in chunk_data 1')
