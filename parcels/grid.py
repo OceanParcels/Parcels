@@ -87,7 +87,7 @@ class Grid(object):
                         ('tfull_min', c_double), ('tfull_max', c_double), ('periods', POINTER(c_int)),
                         ('lonlat_minmax', POINTER(c_float)),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
-                        ('depth', POINTER(c_float)), ('time', POINTER(c_double)),
+                        ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
