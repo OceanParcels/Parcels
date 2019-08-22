@@ -212,12 +212,12 @@ class Kernel(object):
         #        f.data = f.data.copy()
         for f in self.field_args.values():
             f.chunk_data()
+            if len(f.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                f.load_chunk = np.where(f.load_chunk > 0, 3, f.load_chunk)
+                if not f.load_chunk.flags.c_contiguous:
+                    f.load_chunk = f.load_chunk.copy()
 
         for g in pset.fieldset.gridset.grids:
-            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                g.load_chunk = np.where(g.load_chunk > 0, 3, g.load_chunk)
-                if not g.load_chunk.flags.c_contiguous:
-                    g.load_chunk = g.load_chunk.copy()
             if not g.depth.flags.c_contiguous:
                 g.depth = g.depth.copy()
             if not g.lon.flags.c_contiguous:

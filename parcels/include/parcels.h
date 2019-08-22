@@ -18,6 +18,7 @@ typedef struct
 {
   int xdim, ydim, zdim, tdim, igrid, allow_time_extrapolation, time_periodic;
   int *chunk_info;
+  int *load_chunk;
   float ****data_chunks;
   CGrid *grid;
 } CField;
@@ -123,16 +124,15 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
   int ndim = chunk_info[0];
   int block[ndim];
   int ilocal[ndim];
-  CStructuredGrid *grid = f->grid->grid;
 
   int tii, yii, xii;
 
   int blockid = getBlock2D(chunk_info, yi, xi, block, ilocal);
-  if (grid->load_chunk[blockid] < 2){
-    grid->load_chunk[blockid] = 1;
+  if (f->load_chunk[blockid] < 2){
+    f->load_chunk[blockid] = 1;
     return REPEAT;
   }
-  grid->load_chunk[blockid] = 2;
+  f->load_chunk[blockid] = 2;
   int zdim = 1;
   int ydim = chunk_info[1+ndim+block[0]];
   int yshift = chunk_info[1];
@@ -145,11 +145,11 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
       for (yii=0; yii<2; ++yii){
         for (xii=0; xii<2; ++xii){
           blockid = getBlock2D(chunk_info, yi+yii, xi+xii, block, ilocal);
-          if (grid->load_chunk[blockid] < 2){
-            grid->load_chunk[blockid] = 1;
+          if (f->load_chunk[blockid] < 2){
+            f->load_chunk[blockid] = 1;
             return REPEAT;
           }
-          grid->load_chunk[blockid] = 2;
+          f->load_chunk[blockid] = 2;
           zdim = 1;
           ydim = chunk_info[1+ndim+block[0]];
           yshift = chunk_info[1];
@@ -215,16 +215,15 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, flo
   int ndim = chunk_info[0];
   int block[ndim];
   int ilocal[ndim];
-  CStructuredGrid *grid = f->grid->grid;
 
   int tii, zii, yii, xii;
 
   int blockid = getBlock3D(chunk_info, zi, yi, xi, block, ilocal);
-  if (grid->load_chunk[blockid] < 2){
-    grid->load_chunk[blockid] = 1;
+  if (f->load_chunk[blockid] < 2){
+    f->load_chunk[blockid] = 1;
     return REPEAT;
   }
-  grid->load_chunk[blockid] = 2;
+  f->load_chunk[blockid] = 2;
   int zdim = chunk_info[1+ndim+block[0]];
   int zshift = chunk_info[1];
   int ydim = chunk_info[1+ndim+zshift+block[1]];
@@ -239,11 +238,11 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, flo
         for (yii=0; yii<2; ++yii){
           for (xii=0; xii<2; ++xii){
             blockid = getBlock3D(chunk_info, zi+zii, yi+yii, xi+xii, block, ilocal);
-            if (grid->load_chunk[blockid] < 2){
-              grid->load_chunk[blockid] = 1;
+            if (f->load_chunk[blockid] < 2){
+              f->load_chunk[blockid] = 1;
               return REPEAT;
             }
-            grid->load_chunk[blockid] = 2;
+            f->load_chunk[blockid] = 2;
             zdim = chunk_info[1+ndim+block[0]];
             zshift = chunk_info[1];
             ydim = chunk_info[1+ndim+zshift+block[1]];
