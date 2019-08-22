@@ -1122,6 +1122,10 @@ class Field(object):
         else:
             assert False
         self.filebuffers[tindex] = filebuffer
+        if self.field_chunksize is False or \
+                self.field_chunksize == 'auto' and (data.shape[-2:] == data.chunksize[-2:]):
+            return np.array(data)
+
         return data
 
     def __add__(self, field):
