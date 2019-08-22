@@ -141,6 +141,7 @@ class Field(object):
         self.data_chunks = []
         self.c_data_chunks = []
         self.nchunks = []
+        self.chunk_set = False
         self.filebuffers = [None] * 3
 
     def __del__(self):
@@ -864,7 +865,7 @@ class Field(object):
     def get_block(self, bid):
         return np.unravel_index(bid, self.nchunks[1:])
 
-    def chunk_data(self):
+    def chunk_setup(self):
         if isinstance(self.data, da.core.Array):
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks
@@ -883,6 +884,15 @@ class Field(object):
         if len(self.grid.load_chunk) == 0:
             self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
 
+        # self.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
+        #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
+        self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
+        self.chunk_info = sum(self.chunk_info, [])
+        self.chunk_set = True
+
+    def chunk_data(self):
+        if not self.chunk_set:
+            self.chunk_setup()
         # self.grid.load_chunk code:
         # 0: not loaded
         # 1: was asked to load by kernel in JIT
@@ -900,10 +910,6 @@ class Field(object):
             self.grid.load_chunk[0] = 3
             self.data_chunks[0] = self.data
 
-        # self.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
-        #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
-        self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
-        self.chunk_info = sum(self.chunk_info, [])
 
     @property
     def ctypes_struct(self):
