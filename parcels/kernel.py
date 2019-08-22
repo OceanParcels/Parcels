@@ -207,9 +207,6 @@ class Kernel(object):
             g.cstruct = None  # This force to point newly the grids from Python to C
         # Make a copy of the transposed array to enforce
         # C-contiguous memory layout for JIT mode.
-        #for f in self.field_args.values():
-        #    if not f.data.flags.c_contiguous:
-        #        f.data = f.data.copy()
         for f in self.field_args.values():
             f.chunk_data()
             if len(f.load_chunk) > 0:  # not the case if a field in not called in the kernel

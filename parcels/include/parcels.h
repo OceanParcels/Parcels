@@ -17,7 +17,6 @@ extern "C" {
 typedef struct
 {
   int xdim, ydim, zdim, tdim, igrid, allow_time_extrapolation, time_periodic;
-  int *chunk_info;
   int *load_chunk;
   float ****data_chunks;
   CGrid *grid;
@@ -120,7 +119,8 @@ static inline int getBlock2D(int *chunk_info, int yi, int xi, int *block, int *i
 
 static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_data[2][2][2], int first_tstep_only)
 {
-  int *chunk_info = f->chunk_info;
+  CStructuredGrid *grid = f->grid->grid;
+  int *chunk_info = grid->chunk_info;
   int ndim = chunk_info[0];
   int block[ndim];
   int ilocal[ndim];
@@ -211,7 +211,8 @@ static inline int getBlock3D(int *chunk_info, int zi, int yi, int xi, int *block
 
 static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, float cell_data[2][2][2][2], int first_tstep_only)
 {
-  int *chunk_info = f->chunk_info;
+  CStructuredGrid *grid = f->grid->grid;
+  int *chunk_info = grid->chunk_info;
   int ndim = chunk_info[0];
   int block[ndim];
   int ilocal[ndim];

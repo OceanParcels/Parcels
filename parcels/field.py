@@ -883,10 +883,10 @@ class Field(object):
 
         self.load_chunk = np.zeros(npartitions, dtype=c_int)
 
-        # self.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
+        # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
-        self.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
-        self.chunk_info = sum(self.chunk_info, [])
+        self.grid.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
+        self.grid.chunk_info = sum(self.grid.chunk_info, [])
         self.chunk_set = True
 
     def chunk_data(self):
@@ -909,7 +909,6 @@ class Field(object):
             self.load_chunk[0] = 3
             self.data_chunks[0] = self.data
 
-
     @property
     def ctypes_struct(self):
         """Returns a ctypes struct object containing all relevant
@@ -921,7 +920,6 @@ class Field(object):
                         ('tdim', c_int), ('igrid', c_int),
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
-                        ('chunk_info', POINTER(c_int)),
                         ('load_chunk', POINTER(c_int)),
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
                         ('grid', POINTER(CGrid))]
@@ -938,7 +936,6 @@ class Field(object):
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
-                         (c_int * len(self.chunk_info))(*self.chunk_info),
                          self.load_chunk.ctypes.data_as(POINTER(c_int)),
                          (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
                          pointer(self.grid.ctypes_struct))
