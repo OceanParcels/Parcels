@@ -13,36 +13,6 @@ except:
     MPI = None
 import dask.array as da
 
-#from parcels.tools import timer
-#import gc
-def has_handle(fpath):
-    import psutil
-    for proc in psutil.process_iter():
-        try:
-            for item in proc.open_files():
-                if fpath == item.path:
-                    return True
-        except Exception:
-            pass
-    return False
-
-def busyfiles(init_message, n=30):
-    print(init_message)
-    print('   ', end='')
-    from os import path
-    from glob import glob
-    filenames = path.join('GlobCurrent_example_data',
-                         '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
-    filenames = sorted(glob(filenames))[:200]
-    full_path = '/Users/delandmeter/sources/parcels/parcels/examples/'
-    sum = 0
-    for i in range(n):
-        print("%d" % has_handle(full_path+filenames[i]), end='')
-        sum += int(has_handle(full_path+filenames[i]))
-    print('')
-    #if sum > 3:
-    #    exit(-1)
-
 
 __all__ = ['FieldSet']
 
