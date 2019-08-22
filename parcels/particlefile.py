@@ -189,22 +189,17 @@ class ParticleFile(object):
             setattr(self.dataset, name, message)
 
     def __del__(self):
-        # The export can only start when all threads are done.
-        if MPI:
-            MPI.COMM_WORLD.Barrier()
-            rank = MPI.COMM_WORLD.Get_rank()
-        else:
-            rank = 0
-        if self.convert_at_end and rank == 0:  # only export once.
+        if self.convert_at_end:
             self.close()
 
     def close(self, delete_tempfiles=True):
         """Close the ParticleFile object by exporting and then deleting
         the temporary npy files"""
         self.export()
-        if delete_tempfiles:
-            self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
-        self.dataset.close()
+        mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI else 0
+        if mpi_rank == 0:
+            if delete_tempfiles:
+                self.delete_tempwritedir(tempwritedir=self.tempwritedir_base)
         self.convert_at_end = False
 
     def add_metadata(self, name, message):
@@ -336,6 +331,12 @@ class ParticleFile(object):
     def export(self):
         """Exports outputs in temporary NPY-files to NetCDF file"""
 
+        if MPI:
+            # The export can only start when all threads are done.
+            MPI.COMM_WORLD.Barrier()
+            if MPI.COMM_WORLD.Get_rank() > 0:
+                return  # export only on threat 0
+
         # Retrieve all temporary writing directories and sort them in numerical order
         temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
                             key=lambda x: int(os.path.basename(x)))
@@ -344,6 +345,7 @@ class ParticleFile(object):
             raise RuntimeError("No npy files found in %s" % self.tempwritedir_base)
 
         global_maxid_written = -1
+        global_time_written = []
         global_file_list = []
         if len(self.var_names_once) > 0:
             global_file_list_once = []
@@ -351,10 +353,12 @@ class ParticleFile(object):
             if os.path.exists(tempwritedir):
                 pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
                 global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
+                global_time_written += pset_info_local['time_written']
                 global_file_list += pset_info_local['file_list']
                 if len(self.var_names_once) > 0:
                     global_file_list_once += pset_info_local['file_list_once']
         self.maxid_written = global_maxid_written
+        self.time_written = np.unique(global_time_written)
 
         for var in self.var_names:
             data = self.read_from_npy(global_file_list, len(self.time_written), var)
@@ -366,6 +370,8 @@ class ParticleFile(object):
         if len(self.var_names_once) > 0:
             for var in self.var_names_once:
                 getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
+
+        self.dataset.close()
 
     def delete_tempwritedir(self, tempwritedir=None):
         """Deleted all temporary npy files
