@@ -671,9 +671,6 @@ class Field(object):
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
-            if isinstance(val, da.core.Array):
-                val = val.compute()
-                # raise RuntimeError("This happens at p init from field")
             return val
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
@@ -748,6 +745,8 @@ class Field(object):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldOutOfBoundError(x, y, z, field=self)
         else:
+            if isinstance(val, da.core.Array):
+                val = val.compute()
             return val
 
     def time_index(self, time):
@@ -1157,6 +1156,9 @@ class VectorField(object):
              + ((1-eta) * U - xsi * V) * py[1]
              + (eta * U + xsi * V) * py[2]
              + (-eta * U + (1-xsi) * V) * py[3]) / jac
+        if isinstance(u, da.core.Array):
+            u = u.compute()
+            v = v.compute()
         return (u, v)
 
     def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time):
@@ -1258,6 +1260,11 @@ class VectorField(object):
         u = np.dot(dphidxsi, px) * dxsidt + np.dot(dphideta, px) * detadt + np.dot(dphidzet, px) * dzetdt
         v = np.dot(dphidxsi, py) * dxsidt + np.dot(dphideta, py) * detadt + np.dot(dphidzet, py) * dzetdt
         w = np.dot(dphidxsi, pz) * dxsidt + np.dot(dphideta, pz) * detadt + np.dot(dphidzet, pz) * dzetdt
+
+        if isinstance(u, da.core.Array):
+            u = u.compute()
+            v = v.compute()
+            w = w.compute()
         return (u, v, w)
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
