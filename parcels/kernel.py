@@ -207,8 +207,14 @@ class Kernel(object):
             g.cstruct = None  # This force to point newly the grids from Python to C
         # Make a copy of the transposed array to enforce
         # C-contiguous memory layout for JIT mode.
-        for f in self.field_args.values():
-            f.chunk_data()
+        for f in pset.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            if f in self.field_args.values():
+                f.chunk_data()
+            else:
+                for block_id in range(len(f.data_chunks)):
+                    f.data_chunks[block_id] = None
 
         for g in pset.fieldset.gridset.grids:
             if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
