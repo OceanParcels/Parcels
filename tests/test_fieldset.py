@@ -5,7 +5,6 @@ from datetime import timedelta as delta
 import datetime
 import numpy as np
 import xarray as xr
-import math
 import pytest
 from os import path
 import cftime
@@ -289,26 +288,6 @@ def test_fieldset_cellareas(mesh):
             assert np.allclose(cell_areas[y, :], cell_areas[y, 0], rtol=1e-3)
 
 
-@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_fieldset_gradient(mesh):
-    data, dimensions = generate_fieldset(5, 3)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
-
-    # Calculate field gradients for testing against numpy gradients.
-    dFdx, dFdy = fieldset.V.gradient()
-
-    # Create numpy fields.
-    conv_factor = 6.371e6 * np.pi / 180. if mesh == 'spherical' else 1.
-    np_dFdx = np.gradient(fieldset.V.data[0, :, :], (np.diff(fieldset.V.lon) * conv_factor)[0], axis=1)
-    np_dFdy = np.gradient(fieldset.V.data[0, :, :], (np.diff(fieldset.V.lat) * conv_factor)[0], axis=0)
-    if mesh == 'spherical':
-        for y in range(np_dFdx.shape[0]):
-            np_dFdx[:, y] /= math.cos(fieldset.V.grid.lat[y] * math.pi / 180.)
-
-    assert np.allclose(dFdx.data, np_dFdx, rtol=5e-2)  # Field gradient dx.
-    assert np.allclose(dFdy.data, np_dFdy, rtol=5e-2)  # Field gradient dy.
-
-
 def addConst(particle, fieldset, time):
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 
@@ -460,7 +439,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
 
     # testing for scaling factors
     fieldset.U.set_scaling_factor(scale_fac)
-
 
     dz = np.gradient(fieldset.U.depth)
     DZ = np.moveaxis(np.tile(dz, (fieldset.U.grid.ydim, fieldset.U.grid.xdim, 1)), [0, 1, 2], [1, 2, 0])
