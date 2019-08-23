@@ -129,6 +129,7 @@ class Field(object):
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
         self.field_chunksize = kwargs.pop('field_chunksize', 'auto')
 
@@ -1012,6 +1013,18 @@ class Field(object):
             data[data > self.vmax] = 0
         return data
 
+    def data_concatenate(self, data, data_to_concat, tindex):
+        lib = np if isinstance(data_to_concat, np.ndarray) else da
+        if tindex == 0:
+            data = lib.concatenate([data_to_concat, data[tindex+1:, :]], axis=0)
+        elif tindex == 1:
+            data = lib.concatenate([data[:tindex, :], data_to_concat, data[tindex+1:, :]], axis=0)
+        elif tindex == 2:
+            data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
+        else:
+            assert False
+        return data
+
     def advancetime(self, field_new, advanceForward):
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
@@ -1042,14 +1055,7 @@ class Field(object):
             buffer_data = lib.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3:
             buffer_data = lib.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
-        if tindex == 0:
-            data = lib.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
-        elif tindex == 1:
-            data = lib.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
-        elif tindex == 2:
-            data = lib.concatenate([data[:tindex, :], buffer_data], axis=0)
-        else:
-            assert False
+        data = self.data_concatenate(data, buffer_data, tindex)
         self.filebuffers[tindex] = filebuffer
         return data
 

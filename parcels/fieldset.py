@@ -779,8 +779,8 @@ class FieldSet(object):
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                loaded_time_indices = range(3)
-                for tind in loaded_time_indices:
+                f.loaded_time_indices = range(3)
+                for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
                             fb.dataset.close()
@@ -796,10 +796,12 @@ class FieldSet(object):
             elif g.update_status == 'updated':
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
+                    f.loaded_time_indices = [2]
                     f.filebuffers[0].dataset.close()
                     f.filebuffers[:2] = f.filebuffers[1:]
                     data = f.computeTimeChunk(data, 2)
                 else:
+                    f.loaded_time_indices = [0]
                     f.filebuffers[2].dataset.close()
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
