@@ -366,16 +366,11 @@ class Field(object):
         if not data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
+        lib = np if isinstance(data, np.ndarray) else da
         if transpose:
-            if isinstance(data, np.ndarray):
-                data = np.transpose(data)
-            else:
-                data = da.transpose(data)
+            data = lib.transpose(data)
         if self.grid.lat_flipped:
-            if isinstance(data, np.ndarray):
-                data = np.flip(data, axis=-2)
-            else:
-                data = da.flip(data, axis=-2)
+            data = lib.flip(data, axis=-2)
 
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
@@ -1038,6 +1033,16 @@ class Field(object):
                                                       vname_depth: self.grid.depth}, attrs=attrs)
         dset.to_netcdf(filepath)
 
+    def rescale_and_set_minmax(self, data):
+        if self._scaling_factor:
+            data *= self._scaling_factor
+        data[np.isnan(data)] = 0
+        if self.vmin is not None:
+            data[data < self.vmin] = 0
+        if self.vmax is not None:
+            data[data > self.vmax] = 0
+        return data
+
     def advancetime(self, field_new, advanceForward):
         if advanceForward == 1:  # forward in time, so appending at end
             self.data = np.concatenate((self.data[1:, :, :], field_new.data[:, :, :]), 0)
@@ -1061,19 +1066,19 @@ class Field(object):
         if self.netcdf_engine != 'xarray':
             filebuffer.name = filebuffer.parse_name(self.filebuffername)
         buffer_data = filebuffer.data
-        lib_data = da if isinstance(buffer_data, da.core.Array) else np
+        lib = np if isinstance(buffer_data, np.ndarray) else da
         if len(buffer_data.shape) == 2:
-            buffer_data = lib_data.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
+            buffer_data = lib.reshape(buffer_data, sum(((1, 1), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3 and g.zdim > 1:
-            buffer_data = lib_data.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
+            buffer_data = lib.reshape(buffer_data, sum(((1, ), buffer_data.shape), ()))
         elif len(buffer_data.shape) == 3:
-            buffer_data = lib_data.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
+            buffer_data = lib.reshape(buffer_data, sum(((buffer_data.shape[0], 1, ), buffer_data.shape[1:]), ()))
         if tindex == 0:
-            data = lib_data.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
+            data = lib.concatenate([buffer_data, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
-            data = lib_data.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
+            data = lib.concatenate([data[:tindex, :], buffer_data, data[tindex+1:, :]], axis=0)
         elif tindex == 2:
-            data = lib_data.concatenate([data[:tindex, :], buffer_data], axis=0)
+            data = lib.concatenate([data[:tindex, :], buffer_data], axis=0)
         else:
             assert False
         self.filebuffers[tindex] = filebuffer

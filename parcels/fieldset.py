@@ -786,17 +786,7 @@ class FieldSet(object):
                             fb.dataset.close()
 
                     data = f.computeTimeChunk(data, tind)
-                # ### do built-in computations on data
-                if f._scaling_factor:
-                    data *= f._scaling_factor
-                data[np.isnan(data)] = 0
-                if f.vmin is not None:
-                    data[data < f.vmin] = 0
-                if f.vmax is not None:
-                    data[data > f.vmax] = 0
-                if f.gradientx is not None:
-                    assert False
-                    f.gradient(update=True, tindex=tind)
+                data = f.rescale_and_set_minmax(data)
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
@@ -813,17 +803,7 @@ class FieldSet(object):
                     f.filebuffers[2].dataset.close()
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
-                # do built-in computations on data
-                if f._scaling_factor:
-                    data *= f._scaling_factor
-                data[np.isnan(data)] = 0
-                if f.vmin is not None:
-                    data[data < f.vmin] = 0
-                if f.vmax is not None:
-                    data[data > f.vmax] = 0
-                if f.gradientx is not None:
-                    assert False
-                    f.gradient(update=True, tindex=tind)
+                data = f.rescale_and_set_minmax(data)
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
                     f.data = da.concatenate([f.data[1:, :], data], axis=0)
