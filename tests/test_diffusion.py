@@ -71,14 +71,6 @@ def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
     fieldset.add_field(Field('Kh_zonal', Kh, grid=grid))
     fieldset.add_field(Field('Kh_meridional', Kh, grid=grid))
 
-    dKh_zonal_dx, _ = fieldset.Kh_zonal.gradient()
-    _, dKh_meridional_dy = fieldset.Kh_meridional.gradient()
-    fieldset.add_field(dKh_zonal_dx)
-    fieldset.add_field(dKh_meridional_dy)
-    if mesh == 'spherical':
-        fieldset.dKh_zonal_dx.units = GeographicPolar()
-        fieldset.dKh_meridional_dy.units = Geographic()
-
     npart = 100
     runtime = delta(days=1)
 

@@ -30,8 +30,14 @@ def SpatiallyVaryingBrownianMotion2D(particle, fieldset, time):
     Rx = random.uniform(-1., 1.) * math.sqrt(2*math.fabs(particle.dt)*kh_zonal/r)
 
     # Deterministic 'boost' out of areas of low diffusivity
-    dKdx = fieldset.dKh_zonal_dx[time, particle.depth, particle.lat, particle.lon]
-    dKdy = fieldset.dKh_meridional_dy[time, particle.depth, particle.lat, particle.lon]
+    dx = .01  # for spherical coords, dx is in degrees
+    Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat+dx, particle.lon]
+    Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat-dx, particle.lon]
+    dKdy = (Kyp1-Kym1) / (2*dx)
+    Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon+dx]
+    Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon-dx]
+    dKdx = (Kxp1-Kxm1) / (2*dx)
+
     CorrectionX = dKdx * math.fabs(particle.dt)
     CorrectionY = dKdy * math.fabs(particle.dt)
 

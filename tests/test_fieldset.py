@@ -461,7 +461,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     # testing for scaling factors
     fieldset.U.set_scaling_factor(scale_fac)
 
-    dFdx, dFdy = fieldset.V.gradient()
 
     dz = np.gradient(fieldset.U.depth)
     DZ = np.moveaxis(np.tile(dz, (fieldset.U.grid.ydim, fieldset.U.grid.xdim, 1)), [0, 1, 2], [1, 2, 0])
@@ -475,7 +474,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
-    assert np.allclose(dFdx.data, 0)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
@@ -484,7 +482,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
 
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
-    assert np.allclose(dFdx.data, 0)
 
 
 @pytest.mark.parametrize('maxlatind', [3, pytest.param(2, marks=pytest.mark.xfail(strict=True))])

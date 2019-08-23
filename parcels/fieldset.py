@@ -774,7 +774,7 @@ class FieldSet(object):
 
         # load in new data
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
@@ -805,8 +805,6 @@ class FieldSet(object):
                     f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
                 if f.vmax is not None:
                     f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
-                if f.gradientx is not None:
-                    f.gradient(update=True, tindex=tind)
 
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
