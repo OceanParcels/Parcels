@@ -782,8 +782,9 @@ class FieldSet(object):
                 loaded_time_indices = range(3)
                 for tind in loaded_time_indices:
                     for fb in f.filebuffers:
-                        if fb:
+                        if fb is not None:
                             fb.dataset.close()
+
                     data = f.computeTimeChunk(data, tind)
                 # ### do built-in computations on data
                 if f._scaling_factor:
