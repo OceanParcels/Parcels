@@ -891,7 +891,8 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         for i in range(len(self.grid.load_chunk)):
-            assert(self.grid.load_chunk[i] != 1)
+            if self.grid.load_chunk[i] == 1:
+                raise ValueError('data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1')
             if self.grid.load_chunk[i] > 1:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
@@ -1022,7 +1023,7 @@ class Field(object):
         elif tindex == 2:
             data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
         else:
-            assert False
+            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1, 2]")
         return data
 
     def advancetime(self, field_new, advanceForward):
