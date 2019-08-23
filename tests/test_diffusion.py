@@ -1,6 +1,5 @@
 from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, BrownianMotion2D,
-                     SpatiallyVaryingBrownianMotion2D, JITParticle, ScipyParticle,
-                     Geographic, GeographicPolar)
+                     SpatiallyVaryingBrownianMotion2D, JITParticle, ScipyParticle)
 from parcels import rng as random
 from datetime import timedelta as delta
 import numpy as np
