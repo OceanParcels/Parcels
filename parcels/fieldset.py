@@ -781,6 +781,9 @@ class FieldSet(object):
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 loaded_time_indices = range(3)
                 for tind in loaded_time_indices:
+                    for fb in f.filebuffers:
+                        if fb:
+                            fb.dataset.close()
                     data = f.computeTimeChunk(data, tind)
                 # ### do built-in computations on data
                 if f._scaling_factor:
