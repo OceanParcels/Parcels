@@ -800,9 +800,9 @@ class FieldSet(object):
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
-                if len(f.load_chunk) > 0:
-                    f.load_chunk = np.where(f.load_chunk == 2, 1, f.load_chunk)
-                    f.load_chunk = np.where(f.load_chunk == 3, 0, f.load_chunk)
+                if len(g.load_chunk) > 0:
+                    g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
@@ -830,11 +830,11 @@ class FieldSet(object):
                 else:
                     data = f.reshape(data)[0:1, :]
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
-                if len(f.load_chunk) > 0:
+                if len(g.load_chunk) > 0:
                     if signdt >= 0:
-                        for block_id in range(len(f.load_chunk)):
-                            if f.load_chunk[block_id] == 2:
-                                if len(f.nchunks) == 0:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
@@ -842,9 +842,9 @@ class FieldSet(object):
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
                                 f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
                     else:
-                        for block_id in range(len(f.load_chunk)):
-                            if f.load_chunk[block_id] == 2:
-                                if len(f.nchunks) == 0:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break

@@ -141,7 +141,6 @@ class Field(object):
         self.data_chunks = []
         self.c_data_chunks = []
         self.nchunks = []
-        self.load_chunk = []
         self.chunk_set = False
         self.filebuffers = [None] * 3
 
@@ -881,7 +880,7 @@ class Field(object):
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
 
-        self.load_chunk = np.zeros(npartitions, dtype=c_int)
+        self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
 
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
         #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
@@ -892,21 +891,21 @@ class Field(object):
     def chunk_data(self):
         if not self.chunk_set:
             self.chunk_setup()
-        # self.load_chunk code:
+        # self.grid.load_chunk code:
         # 0: not loaded
         # 1: was asked to load by kernel in JIT
         # 2: is loaded and was touched last C call
         # 3: is loaded
         if isinstance(self.data, da.core.Array):
-            for block_id in range(len(self.load_chunk)):
-                if self.load_chunk[block_id] == 1:
+            for block_id in range(len(self.grid.load_chunk)):
+                if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block])
-                elif self.load_chunk[block_id] == 0:
+                elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
         else:
-            self.load_chunk[0] = 3
+            self.grid.load_chunk[0] = 3
             self.data_chunks[0] = self.data
 
     @property
@@ -920,23 +919,21 @@ class Field(object):
                         ('tdim', c_int), ('igrid', c_int),
                         ('allow_time_extrapolation', c_int),
                         ('time_periodic', c_int),
-                        ('load_chunk', POINTER(c_int)),
                         ('data_chunks', POINTER(POINTER(POINTER(c_float)))),
                         ('grid', POINTER(CGrid))]
 
         # Create and populate the c-struct object
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
-        for i in range(len(self.load_chunk)):
-            assert(self.load_chunk[i] != 1)
-            if self.load_chunk[i] > 1:
+        for i in range(len(self.grid.load_chunk)):
+            assert(self.grid.load_chunk[i] != 1)
+            if self.grid.load_chunk[i] > 1:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,
-                         self.load_chunk.ctypes.data_as(POINTER(c_int)),
                          (POINTER(POINTER(c_float)) * len(self.c_data_chunks))(*self.c_data_chunks),
                          pointer(self.grid.ctypes_struct))
         return cstruct
