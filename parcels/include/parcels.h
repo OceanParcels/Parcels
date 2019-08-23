@@ -97,7 +97,6 @@ static inline int getBlock2D(int *chunk_info, int yi, int xi, int *block, int *i
   int index[2] = {yi, xi};
   for(i=0; i<ndim; ++i){
     int chunk_sum = 0, shift = 0;
-    // shift index into chunksizes
     for (j = 0; j < i; j++) shift += chunk_info[1+j];
     shape[i] = chunk_info[1+i];
     for (j=0; j<shape[i]; j++) {
@@ -188,7 +187,6 @@ static inline int getBlock3D(int *chunk_info, int zi, int yi, int xi, int *block
   int index[3] = {zi, yi, xi};
   for(i=0; i<ndim; ++i){
     int chunk_sum = 0, shift = 0;
-    // shift index into chunksizes
     for (j = 0; j < i; j++) shift += chunk_info[1+j];
     shape[i] = chunk_info[1+i];
     for (j=0; j<shape[i]; j++) {
