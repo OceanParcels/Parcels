@@ -774,7 +774,7 @@ class FieldSet(object):
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
@@ -831,7 +831,6 @@ class FieldSet(object):
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
                                 f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
-
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
