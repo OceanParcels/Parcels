@@ -130,6 +130,18 @@ def test_pset_repeated_release(fieldset, mode, npart=10):
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_dt0(fieldset, mode, npart=10):
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                       pclass=ptype[mode])
+
+    def IncrLon(particle, fieldset, time):
+        particle.lon += 1
+    pset.execute(IncrLon, dt=0., runtime=npart)
+    assert np.allclose([p.lon for p in pset], 1.)
+    assert np.allclose([p.time for p in pset], 0.)
+
+
 def test_pset_repeatdt_check_dt(fieldset):
     pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
 
