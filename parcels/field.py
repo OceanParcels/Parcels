@@ -1631,7 +1631,7 @@ class NetcdfFileBuffer(object):
                 if(type(ti) in [list, range]):
                     if version_info[0] < 3:
                         t0 = ti[0]
-                        t1 = ti[-1]
+                        t1 = ti[-1]+1
                     else:
                         t0 = ti.start
                         t1 = ti.stop
