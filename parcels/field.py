@@ -1585,11 +1585,11 @@ class NetcdfFileBuffer(object):
                     assert isinstance(self.indices['lat'], list)
                     assert isinstance(self.indices['lon'], list)
                     d0 = self.indices['depth'][0]
-                    d1 = self.indices['depth'][-1]
+                    d1 = self.indices['depth'][-1]+1
                     lat0 = self.indices['lat'][0]
-                    lat1 = self.indices['lat'][-1]
+                    lat1 = self.indices['lat'][-1]+1
                     lon0 = self.indices['lon'][0]
-                    lon1 = self.indices['lon'][-1]
+                    lon1 = self.indices['lon'][-1]+1
                 else:
                     assert isinstance(self.indices['depth'], range)
                     assert isinstance(self.indices['lat'], range)
@@ -1613,11 +1613,11 @@ class NetcdfFileBuffer(object):
                     assert isinstance(self.indices['lat'], list)
                     assert isinstance(self.indices['lon'], list)
                     d0 = self.indices['depth'][0]
-                    d1 = self.indices['depth'][-1]
+                    d1 = self.indices['depth'][-1]+1
                     lat0 = self.indices['lat'][0]
-                    lat1 = self.indices['lat'][-1]
+                    lat1 = self.indices['lat'][-1]+1
                     lon0 = self.indices['lon'][0]
-                    lon1 = self.indices['lon'][-1]
+                    lon1 = self.indices['lon'][-1]+1
                 else:
                     assert isinstance(self.indices['depth'], range)
                     assert isinstance(self.indices['lat'], range)
