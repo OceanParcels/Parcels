@@ -1630,11 +1630,11 @@ class NetcdfFileBuffer(object):
                     lon1 = self.indices['lon'].stop
                 if(type(ti) in [list, range]):
                     if version_info[0] < 3:
-                        t0 = ti.start
-                        t1 = ti.stop
-                    else:
                         t0 = ti[0]
                         t1 = ti[-1]
+                    else:
+                        t0 = ti.start
+                        t1 = ti.stop
                     data = da.concatenate((data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1],
                                            da.zeros((t1-t0, 1, lat1-lat0, lon1-lon0))), axis=1)
                 else:
