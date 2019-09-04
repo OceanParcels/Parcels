@@ -143,11 +143,6 @@ class Field(object):
         self.chunk_set = False
         self.filebuffers = [None] * 3
 
-    def __del__(self):
-        for fb in self.filebuffers:
-            if fb is not None:
-                fb.dataset.close()
-
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
         if isinstance(filenames, str) or not isinstance(filenames, collections.Iterable):
