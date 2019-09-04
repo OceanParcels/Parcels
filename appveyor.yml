@@ -28,5 +28,5 @@ build: false
 test_script:
   - "py.test -v -s tests/"
   - "parcels_get_examples examples/"
-  - "py.test -v -s examples/*.py"
-  - "py.test -v -s --nbval-lax examples/*tutorial*"
+  - "py.test -v -s examples\*.py"
+  - "py.test -v -s --nbval-lax examples\*tutorial*"
