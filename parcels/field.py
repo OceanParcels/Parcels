@@ -5,7 +5,6 @@ from parcels.tools.error import FieldSamplingError, FieldOutOfBoundError, TimeEx
 import parcels.tools.interpolation_utils as i_u
 import collections
 from py import path
-from sys import version_info
 import numpy as np
 from ctypes import Structure, c_int, c_float, POINTER, pointer
 import xarray as xr
@@ -1580,26 +1579,16 @@ class NetcdfFileBuffer(object):
                 # Add a bottom level of zeros for B-grid if missing in the data.
                 # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
                 # to match Parcels data shape. for W, last level must be 0 for impermeability
-                if version_info[0] < 3:
-                    assert isinstance(self.indices['depth'], list)
-                    assert isinstance(self.indices['lat'], list)
-                    assert isinstance(self.indices['lon'], list)
-                    d0 = self.indices['depth'][0]
-                    d1 = self.indices['depth'][-1]+1
-                    lat0 = self.indices['lat'][0]
-                    lat1 = self.indices['lat'][-1]+1
-                    lon0 = self.indices['lon'][0]
-                    lon1 = self.indices['lon'][-1]+1
-                else:
-                    assert isinstance(self.indices['depth'], range)
-                    assert isinstance(self.indices['lat'], range)
-                    assert isinstance(self.indices['lon'], range)
-                    d0 = self.indices['depth'].start
-                    d1 = self.indices['depth'].stop
-                    lat0 = self.indices['lat'].start
-                    lat1 = self.indices['lat'].stop
-                    lon0 = self.indices['lon'].start
-                    lon1 = self.indices['lon'].stop
+                for dim in ['depth', 'lat', 'lon']:
+                    if not isinstance(self.indices[dim], (list, range)):
+                        raise NotImplementedError("For B grids, indices must be provided as a range")
+                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+                d0 = self.indices['depth'][0]
+                d1 = self.indices['depth'][-1]+1
+                lat0 = self.indices['lat'][0]
+                lat1 = self.indices['lat'][-1]+1
+                lon0 = self.indices['lon'][0]
+                lon1 = self.indices['lon'][-1]+1
                 data = da.concatenate((data[d0:d1-1, lat0:lat1, lon0:lon1],
                                        da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
             elif len(self.indices['depth']) > 1:
@@ -1608,33 +1597,19 @@ class NetcdfFileBuffer(object):
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
             if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                if version_info[0] < 3:
-                    assert isinstance(self.indices['depth'], list)
-                    assert isinstance(self.indices['lat'], list)
-                    assert isinstance(self.indices['lon'], list)
-                    d0 = self.indices['depth'][0]
-                    d1 = self.indices['depth'][-1]+1
-                    lat0 = self.indices['lat'][0]
-                    lat1 = self.indices['lat'][-1]+1
-                    lon0 = self.indices['lon'][0]
-                    lon1 = self.indices['lon'][-1]+1
-                else:
-                    assert isinstance(self.indices['depth'], range)
-                    assert isinstance(self.indices['lat'], range)
-                    assert isinstance(self.indices['lon'], range)
-                    d0 = self.indices['depth'].start
-                    d1 = self.indices['depth'].stop
-                    lat0 = self.indices['lat'].start
-                    lat1 = self.indices['lat'].stop
-                    lon0 = self.indices['lon'].start
-                    lon1 = self.indices['lon'].stop
+                for dim in ['depth', 'lat', 'lon']:
+                    if not isinstance(self.indices[dim], (list, range)):
+                        raise NotImplementedError("For B grids, indices must be provided as a range")
+                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+                d0 = self.indices['depth'][0]
+                d1 = self.indices['depth'][-1]+1
+                lat0 = self.indices['lat'][0]
+                lat1 = self.indices['lat'][-1]+1
+                lon0 = self.indices['lon'][0]
+                lon1 = self.indices['lon'][-1]+1
                 if(type(ti) in [list, range]):
-                    if version_info[0] < 3:
-                        t0 = ti[0]
-                        t1 = ti[-1]+1
-                    else:
-                        t0 = ti.start
-                        t1 = ti.stop
+                    t0 = ti[0]
+                    t1 = ti[-1]+1
                     data = da.concatenate((data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1],
                                            da.zeros((t1-t0, 1, lat1-lat0, lon1-lon0))), axis=1)
                 else:
