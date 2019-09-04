@@ -7,6 +7,7 @@ import numpy as np
 from os import path
 from glob import glob
 from copy import deepcopy
+import dask.array as da
 try:
     from mpi4py import MPI
 except:
@@ -239,6 +240,7 @@ class FieldSet(object):
                fully load them (default: True). It is advised to deferred load the data, since in
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
+        :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -772,40 +774,66 @@ class FieldSet(object):
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
-        # load in new data
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    f.computeTimeChunk(data, tind)
+                    for fb in f.filebuffers:
+                        if fb is not None:
+                            fb.dataset.close()
+
+                    data = f.computeTimeChunk(data, tind)
+                data = f.rescale_and_set_minmax(data)
                 f.data = f.reshape(data)
+                if not f.chunk_set:
+                    f.chunk_setup()
+                if len(g.load_chunk) > 0:
+                    g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
-                    f.data[:2, :] = f.data[1:, :]
                     f.loaded_time_indices = [2]
+                    f.filebuffers[0].dataset.close()
+                    f.filebuffers[:2] = f.filebuffers[1:]
+                    data = f.computeTimeChunk(data, 2)
                 else:
-                    f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                f.computeTimeChunk(data, f.loaded_time_indices[0])
-                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
-            else:
-                f.loaded_time_indices = []
-
-            # do built-in computations on data
-            for tind in f.loaded_time_indices:
-                if f._scaling_factor:
-                    f.data[tind, :] *= f._scaling_factor
-                f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
-                if f.vmin is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
-                if f.vmax is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
-
+                    f.filebuffers[2].dataset.close()
+                    f.filebuffers[1:] = f.filebuffers[:2]
+                    data = f.computeTimeChunk(data, 0)
+                data = f.rescale_and_set_minmax(data)
+                if signdt >= 0:
+                    data = f.reshape(data)[2:, :]
+                    f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                else:
+                    data = f.reshape(data)[0:1, :]
+                    f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                if len(g.load_chunk) > 0:
+                    if signdt >= 0:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
+                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                    else:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)

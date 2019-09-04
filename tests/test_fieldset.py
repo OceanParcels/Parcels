@@ -447,7 +447,9 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
         # Calculating vertical weighted average
         for f in [fieldset.U, fieldset.V]:
             for tind in f.loaded_time_indices:
-                f.data[tind, :] = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+                data = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+                data = np.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
+                f.data = f.data_concatenate(f.data, data, tind)
 
     fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)

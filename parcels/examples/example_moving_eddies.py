@@ -6,6 +6,7 @@ import math
 import pytest
 from datetime import timedelta as delta
 from os import path
+import gc
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -161,6 +162,7 @@ def fieldsetfile(mesh):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_moving_eddies_file(mode, mesh):
+    gc.collect()
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
     if mesh == 'flat':
