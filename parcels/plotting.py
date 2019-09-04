@@ -169,10 +169,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             data[1] = d
 
         spd = data[0] ** 2 + data[1] ** 2
-        try:
-            speed = np.sqrt(spd, where=spd > 0, out=np.zeros(spd.shape))
-        except:
-            speed = np.where(spd > 0, np.sqrt(spd), 0)
+        speed = np.where(spd > 0, np.sqrt(spd), 0)
         vmin = speed.min() if vmin is None else vmin
         vmax = speed.max() if vmax is None else vmax
         if isinstance(field[0].grid, CurvilinearGrid):
