@@ -164,6 +164,14 @@ def test_globcurrent_time_extrapolation_error(mode, use_xarray):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_dt0(mode, use_xarray):
+    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35])
+    pset.execute(AdvectionRK4, dt=0.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
