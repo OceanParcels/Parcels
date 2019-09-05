@@ -143,11 +143,6 @@ class Field(object):
         self.chunk_set = False
         self.filebuffers = [None] * 3
 
-    def __del__(self):
-        for fb in self.filebuffers:
-            if fb is not None:
-                fb.dataset.close()
-
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
         if isinstance(filenames, str) or not isinstance(filenames, collections.Iterable):
@@ -1579,31 +1574,59 @@ class NetcdfFileBuffer(object):
                 # Add a bottom level of zeros for B-grid if missing in the data.
                 # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
                 # to match Parcels data shape. for W, last level must be 0 for impermeability
-                data = da.concatenate((data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
-                                       np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+                for dim in ['depth', 'lat', 'lon']:
+                    if not isinstance(self.indices[dim], (list, range)):
+                        raise NotImplementedError("For B grids, indices must be provided as a range")
+                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+                d0 = self.indices['depth'][0]
+                d1 = self.indices['depth'][-1]+1
+                lat0 = self.indices['lat'][0]
+                lat1 = self.indices['lat'][-1]+1
+                lon0 = self.indices['lon'][0]
+                lon1 = self.indices['lon'][-1]+1
+                data = da.concatenate((data[d0:d1-1, lat0:lat1, lon0:lon1],
+                                       da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
             elif len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
             if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+                for dim in ['depth', 'lat', 'lon']:
+                    if not isinstance(self.indices[dim], (list, range)):
+                        raise NotImplementedError("For B grids, indices must be provided as a range")
+                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+                d0 = self.indices['depth'][0]
+                d1 = self.indices['depth'][-1]+1
+                lat0 = self.indices['lat'][0]
+                lat1 = self.indices['lat'][-1]+1
+                lon0 = self.indices['lon'][0]
+                lon1 = self.indices['lon'][-1]+1
                 if(type(ti) in [list, range]):
-                    data = da.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
-                                           np.zeros((len(ti), 1, len(self.indices['lat']), len(self.indices['lon'])))), axis=1)
+                    t0 = ti[0]
+                    t1 = ti[-1]+1
+                    data = da.concatenate((data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1],
+                                           da.zeros((t1-t0, 1, lat1-lat0, lon1-lon0))), axis=1)
                 else:
-                    data = da.concatenate((data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']],
-                                           np.zeros((1, len(self.indices['lat']), len(self.indices['lon'])))), axis=0)
+                    data = da.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
+                                           da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
         if self.field_chunksize is False:
             data = np.array(data)
         else:
-            da_data = da.from_array(data, chunks=self.field_chunksize)
-            if self.field_chunksize == 'auto' and data.shape[-2:] == da_data.chunksize[-2:]:
-                data = np.array(data)
+            if isinstance(data, da.core.Array):
+                if self.field_chunksize == 'auto' and data.shape[-2:] == data.chunksize[-2:]:
+                    data = np.array(data)
+                elif self.field_chunksize != 'auto':
+                    data = data.rechunk(self.field_chunksize)
             else:
-                data = da_data
+                da_data = da.from_array(data, chunks=self.field_chunksize)
+                if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
+                    data = np.array(data)
+                else:
+                    data = da_data
 
         return data
 

@@ -227,10 +227,11 @@ class ParticleSet(object):
         """
 
         if mode == 'monte_carlo':
+            data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
             if start_field.interp_method == 'cgrid_tracer':
-                p_interior = np.squeeze(start_field.data[0, 1:, 1:])
+                p_interior = np.squeeze(data[0, 1:, 1:])
             else:  # if A-grid
-                d = start_field.data
+                d = data
                 p_interior = (d[0, :-1, :-1] + d[0, 1:, :-1] + d[0, :-1, 1:] + d[0, 1:, 1:])/4.
                 p_interior = np.where(d[0, :-1, :-1] == 0, 0, p_interior)
                 p_interior = np.where(d[0, 1:, :-1] == 0, 0, p_interior)
