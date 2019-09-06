@@ -20,3 +20,6 @@ See [oceanparcels.org](http://oceanparcels.org/) for further information about [
 ### Launch Parcels Tutorials on mybinder.org
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/OceanParcels/parcels_examples_binder/master?urlpath=lab/tree/parcels_examples/parcels_tutorial.ipynb)
+[![Travis-ci](https://travis-ci.org/OceanParcels/parcels.svg?branch=master)](https://travis-ci.org/OceanParcels/parcels)
+[![Anaconda-release](https://anaconda.org/conda-forge/parcels/badges/version.svg)](https://anaconda.org/conda-forge/parcels/)
+[![Anaconda-date](https://anaconda.org/conda-forge/parcels/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/parcels/)
