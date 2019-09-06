@@ -167,7 +167,7 @@ class Grid(object):
                 assert self.depth.shape[2] == self.ydim, "Third dim must be y."
 
     def computeTimeChunk(self, f, time, signdt):
-        nextTime_loc = np.infty * signdt
+        nextTime_loc = np.infty if signdt >= 0 else -np.infty
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         if self.update_status == 'not_updated':
             if self.ti >= 0:
