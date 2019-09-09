@@ -179,7 +179,7 @@ class Grid(object):
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
-                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time[1] and self.ti > 0:
+                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
