@@ -173,7 +173,9 @@ class Grid(object):
             if self.ti >= 0:
                 if (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
                     self.ti = -1  # reset
-                elif (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                elif signdt >= 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                    self.ti = -1  # reset
+                elif signdt < 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time_full[-1]):
                     self.ti = -1  # reset
                 elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
@@ -185,8 +187,12 @@ class Grid(object):
                     self.update_status = 'updated'
             if self.ti == -1:
                 self.time = self.time_full
-                self.ti, _ = f.time_index(time)
+                self.ti, _ = f.time_index(time)#, signdt=signdt)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+                if signdt == -1 and self.ti == 0 and time == self.time[0]:
+                    self.ti = self.time[-2]
+                    periods -= 1
+
                 if self.ti > 0 and signdt == -1:
                     self.ti -= 1
                 if self.ti >= len(self.time_full) - 2:
