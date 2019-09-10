@@ -475,7 +475,8 @@ class ParticleSet(object):
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
-            next_input = self.fieldset.computeTimeChunk(time, dt)
+            if time != endtime:
+                next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
                 break
             if verbose_progress:
