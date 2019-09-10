@@ -3,6 +3,7 @@ from parcels.gridset import GridSet
 from parcels.grid import Grid
 from parcels.tools.loggers import logger
 from parcels.tools.converters import TimeConverter
+from parcels.tools.error import TimeExtrapolationError
 import numpy as np
 from os import path
 from glob import glob
@@ -772,6 +773,8 @@ class FieldSet(object):
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+                if time == nextTime_loc and signdt != 0:
+                    raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
         for f in self.get_fields():
