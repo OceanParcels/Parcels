@@ -3,6 +3,7 @@ from parcels.field import Field
 from operator import attrgetter
 import numpy as np
 from ctypes import c_void_p
+from parcels.tools.loggers import logger
 
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
@@ -125,8 +126,9 @@ class _Particle(object):
                 if time is None:
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
-                v.initial.fieldset.computeTimeChunk(time, 1)
+                v.initial.fieldset.computeTimeChunk(time, 0)
                 initial = v.initial[time, depth, lat, lon]
+                logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
                 initial = v.initial
             # Enforce type of initial value

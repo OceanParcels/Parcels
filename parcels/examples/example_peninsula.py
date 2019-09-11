@@ -5,6 +5,7 @@ import numpy as np
 import math  # NOQA
 import pytest
 from datetime import timedelta as delta
+import gc
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -140,6 +141,7 @@ def fieldsetfile(mesh):
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_peninsula_file(mode, mesh):
     """Open fieldset files and execute"""
+    gc.collect()
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values

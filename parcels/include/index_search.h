@@ -32,6 +32,8 @@ typedef struct
 {
   int xdim, ydim, zdim, tdim, z4d;
   int sphere_mesh, zonal_periodic;
+  int *chunk_info;
+  int *load_chunk;
   double tfull_min, tfull_max;
   int* periods;
   float *lonlat_minmax;

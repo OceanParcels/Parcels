@@ -4,6 +4,7 @@ import pytest
 import xarray as xr
 import numpy as np
 from os import path
+import gc
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -48,6 +49,7 @@ def test_ofam_xarray_vs_netcdf(dt):
 @pytest.mark.parametrize('use_xarray', [True, False])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_ofam_particles(mode, use_xarray):
+    gc.collect()
     fieldset = set_ofam_fieldset(use_xarray=use_xarray)
 
     lonstart = [180]

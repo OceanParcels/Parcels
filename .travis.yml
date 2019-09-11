@@ -57,5 +57,7 @@ script:
     - |
       # evaluate example scripts and notebooks on linux only
       if [[ "${TRAVIS_OS_NAME}" = "linux" ]]; then
-        py.test -v -s --nbval-lax examples/;
+        py.test -v -s examples/*.py;
+        py.test -v -s --nbval-lax examples/*tutorial*;
+
       fi
