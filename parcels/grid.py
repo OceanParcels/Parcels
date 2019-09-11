@@ -189,8 +189,8 @@ class Grid(object):
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)#, signdt=signdt)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
-                if signdt == -1 and self.ti == 0 and time == self.time[0]:
-                    self.ti = self.time[-2]
+                if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0]:
+                    self.ti = len(self.time)-2
                     periods -= 1
 
                 if self.ti > 0 and signdt == -1:
