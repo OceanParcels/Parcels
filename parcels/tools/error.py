@@ -54,6 +54,8 @@ class TimeExtrapolationError(RuntimeError):
             message += " Try setting allow_time_extrapolation to True"
         elif msg == 'show_time':
             message += " Try explicitly providing a 'show_time'"
+        else:
+            message += msg + " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(message)
 
 
