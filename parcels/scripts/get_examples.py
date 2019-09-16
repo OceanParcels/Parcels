@@ -27,7 +27,7 @@ example_data_files = (
         "%s000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc" % (
             date.strftime("%Y%m%d"))
         for date in ([datetime(2002, 1, 1) + timedelta(days=x)
-                     for x in range(0, 365)] + [datetime(2003, 1, 1)])]]
+                     for x in range(0, 365)])]]
     + ["DecayingMovingEddy_data/" + fn for fn in [
         "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]]
     + ["NemoCurvilinear_data/" + fn for fn in [
