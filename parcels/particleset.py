@@ -57,9 +57,8 @@ class ParticleSet(object):
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
         if pid_orig is None:
-            pid = np.arange(lon.size) + pclass.lastID
-        else:
-            pid = pid_orig + pclass.lastID
+            pid_orig = np.arange(lon.size)
+        pid = pid_orig + pclass.lastID
 
         if depth is None:
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
@@ -85,7 +84,7 @@ class ParticleSet(object):
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
-        offset = np.max(pid)
+        offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -112,9 +111,6 @@ class ParticleSet(object):
                         kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
                 offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
 
-
-        pclass.setLastID(offset+1)
-
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
             if self.repeatdt <= 0:
@@ -125,11 +121,12 @@ class ParticleSet(object):
             self.repeatlon = lon
             self.repeatlat = lat
             if not hasattr(self, 'repeatpid'):
-                self.repeatpid = pid - pclass.lastID + 1
+                self.repeatpid = pid - pclass.lastID
             self.repeatdepth = depth
             self.repeatpclass = pclass
             self.partitions = partitions
             self.repeatkwargs = kwargs
+        pclass.setLastID(offset+1)
 
         if lonlatdepth_dtype is None:
             self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
