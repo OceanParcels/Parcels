@@ -1,4 +1,4 @@
-import os
+from os import path, system
 from netCDF4 import Dataset
 import numpy as np
 try:
@@ -7,15 +7,19 @@ except:
     MPI = None
 
 
-def test_mpi_run():
+def test_mpi_run(tmpdir):
     if MPI:
         repeatdt = 200*86400
-        parcels_path = os.path.dirname(__file__) + '/../parcels'
-        os.system('mpirun -np 2 python %s/examples/example_stommel.py -p 4 -o StommelMPI.nc -r %d' % (parcels_path, repeatdt))
-        os.system('python %s/examples/example_stommel.py -p 4 -o StommelNoMPI.nc -r %d' % (parcels_path, repeatdt))
+        stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
+                                 'examples', 'example_stommel.py')
+        outputMPI = tmpdir.join('StommelMPI.nc')
+        outputNoMPI = tmpdir.join('StommelNoMPI.nc')
 
-        ncfile1 = Dataset('StommelMPI.nc', 'r', 'NETCDF4')
-        ncfile2 = Dataset('StommelNoMPI.nc', 'r', 'NETCDF4')
+        system('mpirun -np 2 python %s -p 4 -o %s -r %d' % (stommel_file, outputMPI, repeatdt))
+        system('python %s -p 4 -o %s -r %d' % (stommel_file, outputNoMPI, repeatdt))
+
+        ncfile1 = Dataset(outputMPI, 'r', 'NETCDF4')
+        ncfile2 = Dataset(outputNoMPI, 'r', 'NETCDF4')
 
         for v in ncfile2.variables.keys():
             assert np.allclose(ncfile1.variables[v][:], ncfile2.variables[v][:])
