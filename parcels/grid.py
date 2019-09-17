@@ -187,7 +187,7 @@ class Grid(object):
                     self.update_status = 'updated'
             if self.ti == -1:
                 self.time = self.time_full
-                self.ti, _ = f.time_index(time)#, signdt=signdt)
+                self.ti, _ = f.time_index(time)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
                 if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0]:
                     self.ti = len(self.time)-2
