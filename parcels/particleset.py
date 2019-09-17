@@ -37,6 +37,8 @@ class ParticleSet(object):
     :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
            and np.float64 if the interpolation method is 'cgrid_velocity'
+    :param partitions: List of cores on which distribute the particles for MPI runs. Default: None, in which case particles
+           are distributed automatically on the processors
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
@@ -79,6 +81,9 @@ class ParticleSet(object):
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
+        if partitions is not None and partitions is not False:
+            partitions = convert_to_array(partitions)
+
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
@@ -94,14 +99,17 @@ class ParticleSet(object):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if partitions is None:
-                    if mpi_rank == 0:
-                        coords = np.vstack((lon, lat)).transpose()
-                        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                        partitions = kmeans.labels_
-                    else:
-                        partitions = None
-                    partitions = mpi_comm.bcast(partitions, root=0)
+                if partitions is not False:
+                    if partitions is None:
+                        if mpi_rank == 0:
+                            coords = np.vstack((lon, lat)).transpose()
+                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                            partitions = kmeans.labels_
+                        else:
+                            partitions = None
+                        partitions = mpi_comm.bcast(partitions, root=0)
+                    elif np.max(partitions >= mpi_rank):
+                        raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[partitions == mpi_rank]
                     lat = lat[partitions == mpi_rank]
                     time = time[partitions == mpi_rank]
@@ -465,7 +473,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       partitions=self.partitions, pid_orig=self.repeatpid, **self.repeatkwargs)
+                                       partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
