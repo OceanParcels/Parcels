@@ -107,6 +107,9 @@ class Field(object):
             logger.warning_once("allow_time_extrapolation and time_periodic cannot be used together.\n \
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
+        if self.time_periodic:
+            logger.warning_once("When using time_periodic=True, it is necessary that the first and last time steps\n \
+                                 of the series are the same, with time[-1] = time[0] + T")
 
         self.vmin = vmin
         self.vmax = vmax
