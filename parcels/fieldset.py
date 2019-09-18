@@ -816,6 +816,7 @@ class FieldSet(object):
                 else:
                     data = f.reshape(data)[0:1, :]
                     f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
                 if len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
