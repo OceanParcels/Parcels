@@ -37,10 +37,12 @@ class ParticleSet(object):
     :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
            and np.float64 if the interpolation method is 'cgrid_velocity'
+    :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
+           are distributed automatically on the processors
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
@@ -56,6 +58,9 @@ class ParticleSet(object):
 
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
+        if pid_orig is None:
+            pid_orig = np.arange(lon.size)
+        pid = pid_orig + pclass.lastID
 
         if depth is None:
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
@@ -76,11 +81,15 @@ class ParticleSet(object):
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
+        if partitions is not None and partitions is not False:
+            partitions = convert_to_array(partitions)
+
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
+        offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -90,27 +99,25 @@ class ParticleSet(object):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if partitions is None:
-                    if mpi_rank == 0:
-                        coords = np.vstack((lon, lat)).transpose()
-                        kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                        partitions = kmeans.labels_
-                    else:
-                        partitions = None
-                    partitions = mpi_comm.bcast(partitions, root=0)
+                if partitions is not False:
+                    if partitions is None:
+                        if mpi_rank == 0:
+                            coords = np.vstack((lon, lat)).transpose()
+                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                            partitions = kmeans.labels_
+                        else:
+                            partitions = None
+                        partitions = mpi_comm.bcast(partitions, root=0)
+                    elif np.max(partitions >= mpi_rank):
+                        raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[partitions == mpi_rank]
                     lat = lat[partitions == mpi_rank]
                     time = time[partitions == mpi_rank]
                     depth = depth[partitions == mpi_rank]
+                    pid = pid[partitions == mpi_rank]
                     for kwvar in kwargs:
                         kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
-                offset = MPI.COMM_WORLD.allreduce(pclass.lastID, op=MPI.MAX) + sum(i < mpi_rank for i in partitions)
-            else:
-                offset = pclass.lastID
-        else:
-            offset = pclass.lastID
-
-        pclass.setLastID(offset)
+                offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -121,10 +128,13 @@ class ParticleSet(object):
             self.repeat_starttime = time[0]
             self.repeatlon = lon
             self.repeatlat = lat
+            if not hasattr(self, 'repeatpid'):
+                self.repeatpid = pid - pclass.lastID
             self.repeatdepth = depth
             self.repeatpclass = pclass
             self.partitions = partitions
             self.repeatkwargs = kwargs
+        pclass.setLastID(offset+1)
 
         if lonlatdepth_dtype is None:
             self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
@@ -154,7 +164,7 @@ class ParticleSet(object):
                 'Size of ParticleSet does not match lenght of lon and lat.')
 
             for i in range(lon.size):
-                self.particles[i] = pclass(lon[i], lat[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
+                self.particles[i] = pclass(lon[i], lat[i], pid[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
                 # Set other Variables if provided
                 for kwvar in kwargs:
                     if not hasattr(self.particles[i], kwvar):
@@ -463,7 +473,7 @@ class ParticleSet(object):
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
-                                       partitions=self.partitions, **self.repeatkwargs)
+                                       partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)

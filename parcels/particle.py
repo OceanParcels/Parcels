@@ -172,15 +172,15 @@ class ScipyParticle(_Particle):
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
+    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).depth.initial = depth
         type(self).time.initial = time
-        type(self).id.initial = _Particle.lastID
-        _Particle.lastID += 1
+        type(self).id.initial = pid
+        _Particle.lastID = max(_Particle.lastID, pid)
         type(self).dt.initial = None
         super(ScipyParticle, self).__init__()
 
