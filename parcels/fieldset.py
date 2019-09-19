@@ -1,6 +1,7 @@
 from parcels.field import Field, VectorField, SummedField, NestedField
 from parcels.gridset import GridSet
 from parcels.grid import Grid
+from parcels.grid import RectilinearSGrid
 from parcels.tools.loggers import logger
 from parcels.tools.converters import TimeConverter
 import numpy as np
@@ -790,6 +791,23 @@ class FieldSet(object):
         if self.compute_on_defer:
             self.compute_on_defer(self)
 
+        # update time varying grid depth 
+        for f in self.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField] or f.is_gradient or f.dataFiles is None:
+                continue
+            elif isinstance(f.grid, RectilinearSGrid) and f.grid.z4d == True:
+                if type(self.depth_u.data) == np.ndarray:
+                    if f.name == 'U' or f.name=='V' or f.name=='depth_u':
+                        f.grid.depth=self.depth_u.data
+                    if f.name == 'W' or f.name=='depth':
+                        f.grid.depth=self.depth.data
+                else:
+                    if f.name == 'U' or f.name=='V' or f.name=='depth_u':
+                        f.grid.depth=np.array(self.depth_u.data)
+                    if f.name == 'W' or f.name=='depth':
+                        f.grid.depth=np.array(self.depth.data)
+
+        
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
         else:

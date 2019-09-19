@@ -310,7 +310,8 @@ class RectilinearSGrid(RectilinearGrid):
         self.zdim = self.depth.shape[-3]
         self.z4d = len(self.depth.shape) == 4
         if self.z4d:
-            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            print('overruled the tdim (total time steps) and depth.shape time (=1 in case of netcdf per time) dimension need to be the same')
+            #assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:

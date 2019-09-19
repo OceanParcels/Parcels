@@ -249,6 +249,7 @@ class Field(object):
             with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 depth = filebuffer.read_depth
+                print('Temporary print rather than error: Time varying depth data cannot be read in netcdf files yet')
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
@@ -306,6 +307,7 @@ class Field(object):
         if grid.time.size <= 3 or deferred_load is False:
             # Pre-allocate data before reading files into buffer
             data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
+            #grid.depth = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
@@ -316,7 +318,7 @@ class Field(object):
                         tslice = [tslice]
                     else:
                         filebuffer.name = filebuffer.parse_name(variable[1])
-                    if len(filebuffer.data.shape) == 2:
+                    if len(filebuffer.data.shape) == 2:   
                         data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     elif len(filebuffer.data.shape) == 3:
                         if len(filebuffer.indices['depth']) > 1:
@@ -325,7 +327,10 @@ class Field(object):
                             data[ti:ti+len(tslice), 0, :, :] = filebuffer.data
                     else:
                         data[ti:ti+len(tslice), :, :, :] = filebuffer.data
+                        #grid.depth[ti:ti+len(tslice),:,:,:] = filebuffer.read_depth # alternative method for setting time varying grid depths, only worked for full load not for defer load so discarded. 
+
                 ti += len(tslice)
+        
         else:
             grid.defer_load = True
             grid.ti = -1
@@ -482,12 +487,26 @@ class Field(object):
                 (1-xsi)*eta * grid.depth[:, yi+1, xi]
         z = np.float32(z)
         depth_index = depth_vector <= z
-        if z >= depth_vector[-1]:
-            zi = len(depth_vector) - 2
+        
+        # conditions for downward positive or negative otherwise all downward negative crash. 
+
+        if depth_vector[-1]>depth_vector[0] and z>=depth_vector[-1] or depth_vector[-1]<depth_vector[0] and z<=depth_vector[-1]:
+            zi= len(depth_vector) - 2
+        if depth_vector[-1]>depth_vector[0] and z >= depth_vector[0]:
+            zi = depth_index.argmin() - 1
+            if z < depth_vector[zi] or z > depth_vector[zi+1]:
+                raise FieldOutOfBoundError(x, y, z, field=self)
+        elif depth_vector[-1]<depth_vector[0] and z <= depth_vector[0]:
+            zi = depth_index.argmax() - 1
         else:
-            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        if z < depth_vector[zi] or z > depth_vector[zi+1]:
-            raise FieldOutOfBoundError(x, y, z, field=self)
+            zi = 0
+        if depth_vector[-1]>depth_vector[0] and z >= depth_vector[0]:
+            if z < depth_vector[zi] or z > depth_vector[zi+1]:
+                raise FieldOutOfBoundError(x, y, z, field=self)
+
+        if depth_vector[-1]<depth_vector[0] and z <= depth_vector[0]:
+            if z > depth_vector[zi] or z < depth_vector[zi+1]:
+                raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
@@ -981,6 +1000,7 @@ class Field(object):
                     data[tindex, 0, :, :] = filebuffer.data
             else:
                 data[tindex, :, :, :] = filebuffer.data
+        
 
     def __add__(self, field):
         if isinstance(self, Field) and isinstance(field, Field):
@@ -1472,11 +1492,14 @@ class NetcdfFileBuffer(object):
             elif len(depth.shape) == 3:
                 return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
             elif len(depth.shape) == 4:
-                raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
+                #raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
                 return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
         else:
             self.indices['depth'] = [0]
             return np.zeros(1)
+
+
+
 
     @property
     def data(self):
