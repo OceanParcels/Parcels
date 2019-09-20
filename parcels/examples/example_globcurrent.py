@@ -216,6 +216,4 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   runtime=delta(days=rundays),
                   dt=delta(minutes=5))
 
-
-    print([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
     assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
