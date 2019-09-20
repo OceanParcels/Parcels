@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable, ErrorCode
 from datetime import timedelta as delta
 from os import path
 from glob import glob
@@ -183,3 +183,37 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35], time=time)
 
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_globcurrent_particle_independence(mode, rundays=5):
+    fieldset = set_globcurrent_fieldset()
+    time0 = fieldset.U.grid.time[0]
+
+    def DeleteP0(particle, fieldset, time):
+        if particle.id == 0:
+            return ErrorCode.ErrorOutOfBounds  # we want to pass through recov loop
+
+    def DeleteParticle(particle, fieldset, time):
+        particle.delete()
+
+    pset0 = ParticleSet(fieldset, pclass=JITParticle,
+                        lon=[25, 25],
+                        lat=[-35, -35],
+                        time=time0)
+
+    pset0.execute(pset0.Kernel(DeleteP0)+AdvectionRK4,
+                  runtime=delta(days=rundays),
+                  dt=delta(minutes=5),
+                  recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+
+    pset1 = ParticleSet(fieldset, pclass=JITParticle,
+                        lon=[25, 25],
+                        lat=[-35, -35],
+                        time=time0)
+
+    pset1.execute(AdvectionRK4,
+                  runtime=delta(days=rundays),
+                  dt=delta(minutes=5))
+
+    assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])

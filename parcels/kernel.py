@@ -218,7 +218,6 @@ class Kernel(object):
 
         for g in pset.fieldset.gridset.grids:
             if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                g.load_chunk = np.where(g.load_chunk > 0, 3, g.load_chunk)
                 if not g.load_chunk.flags.c_contiguous:
                     g.load_chunk = g.load_chunk.copy()
             if not g.depth.flags.c_contiguous:
@@ -305,6 +304,10 @@ class Kernel(object):
             recovery = {}
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
+
+        for g in pset.fieldset.gridset.grids:
+            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                g.load_chunk = np.where(g.load_chunk > 0, 3, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
