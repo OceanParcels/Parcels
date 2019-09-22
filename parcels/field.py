@@ -197,14 +197,14 @@ class Field(object):
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
-        if timestamps is not None:
-            if isinstance(filenames, list):
-                assert len(filenames) == len(timestamps), 'Number of files and number of timestamps must be equal.'
-            elif isinstance(filenames, dict):
-                for k in filenames.keys():
-                    assert(len(filenames[k]) == len(timestamps)), 'Number of files and number of timestamps must be equal.'
-            else:
-                raise TypeError("filenames type is inconsistent with manual timestamp provision.")
+ #       if timestamps is not None:
+#            if isinstance(filenames, list):
+#                assert len(filenames) == len(timestamps), 'Number of files and number of timestamps must be equal.'
+  #          elif isinstance(filenames, dict):
+   #             for k in filenames.keys():
+    #                assert(len(filenames[k]) == len(timestamps)), 'Number of files and number of timestamps must be equal.'
+     #       else:
+      #          raise TypeError("filenames type is inconsistent with manual timestamp provision.")
 
         if isinstance(variable, xr.core.dataarray.DataArray):
             lonlat_filename = variable
@@ -1036,7 +1036,12 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        filebuffer = NetcdfFileBuffer(self.dataFiles[g.ti+tindex], self.dimensions, self.indices,
+        # Temporary override for timestamp issue
+        if self.dataFiles.shape[0] == 1:
+            ftindex = 0
+        else:
+            ftindex = g.ti+tindex
+        filebuffer = NetcdfFileBuffer(self.dataFiles[ftindex], self.dimensions, self.indices,
                                       self.netcdf_engine, timestamp=timestamp,
                                       interp_method=self.interp_method,
                                       data_full_zdim=self.data_full_zdim,
