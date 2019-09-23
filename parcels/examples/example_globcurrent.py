@@ -217,6 +217,4 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   dt=delta(minutes=5),
                   recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
 
-
-    print([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
     assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
