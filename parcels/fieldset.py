@@ -230,7 +230,9 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+        :param timestamps: list of list or array of arrays containing the timestamps for 
+               each of the files in filenames. Outer list/array corresponds to files, inner
+               array corresponds to indices within files.
                Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
@@ -250,12 +252,19 @@ class FieldSet(object):
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
 
-        # Typecast timestamps to numpy array & correct shape.
+        # Typecast timestamps to (nested) numpy array.
         if timestamps is not None:
             if isinstance(timestamps, list):
                 timestamps = np.array(timestamps)
-            timestamps = np.reshape(timestamps, [timestamps.size, 1])
-
+                if any(isinstance(i, list) for i in timestamps):
+                    timestamps = np.array([np.array(sub) for sub in timestamps])
+            assert(isinstance(timestamps, np.ndarray), 
+                   "Timestamps must be nested list or array")
+            assert(all(isinstance(file, np.ndarray) for file in timestamps),  
+                   "Timestamps must be nested list or array")
+            assert(all(isinstance(stamp, np.datetime64) for file in timestamps for stamp in file),  
+                   "Timestamps must be nested list or array. Outer array corresponds to files, "
+                   "while inner array corresponds to time indices within each file.")
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'

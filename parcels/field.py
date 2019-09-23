@@ -84,7 +84,17 @@ class Field(object):
         else:
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         self.timestamps = timestamps
-
+        # Check whether flattened or not
+        if all(isinstance(file, np.ndarray) for file in timestamps):
+            # Flatten
+            self.timestamps = np.array([stamp for file in timestamps for stamp in file])
+        if all(isinstance(stamp, np.datetime64) for stamp in timestamps):
+            # Pass
+            self.timestamps = timestamps
+        # Note by DaanR: self.timestamps seems to be assigned twice: first as  
+        # flattened array, second as nested array. Uncomment next line to see
+        # this behavior.
+        # print("self.timestamps:", timestamps)
         if type(interp_method) is dict:
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -196,15 +206,18 @@ class Field(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
-        # Ensure the timestamps array is compatible with the user-provided datafiles.
- #       if timestamps is not None:
-#            if isinstance(filenames, list):
-#                assert len(filenames) == len(timestamps), 'Number of files and number of timestamps must be equal.'
-  #          elif isinstance(filenames, dict):
-   #             for k in filenames.keys():
-    #                assert(len(filenames[k]) == len(timestamps)), 'Number of files and number of timestamps must be equal.'
-     #       else:
-      #          raise TypeError("filenames type is inconsistent with manual timestamp provision.")
+#         Ensure the timestamps array is compatible with the user-provided datafiles.
+        if timestamps is not None:
+            if isinstance(filenames, list):
+                assert len(filenames) == len(timestamps), \
+                'Outer dimension of timestamps should correspond to number of files.'
+            elif isinstance(filenames, dict):
+                for k in filenames.keys():
+                    assert(len(filenames[k]) == len(timestamps)), \
+                    'Outer dimension of timestamps should correspond to number of files.'    
+            else:
+                raise TypeError("Filenames type is inconsistent with manual timestamp provision." \
+                                + "Should be dict or list")
 
         if isinstance(variable, xr.core.dataarray.DataArray):
             lonlat_filename = variable
@@ -273,9 +286,15 @@ class Field(object):
             # Concatenate time variable to determine overall dimension
             # across multiple files
             if timestamps is not None:
+                dataFiles = []
+                # Timesteps are nested.
+                for findex in range(len(data_filenames)):
+                    for f in [data_filenames[findex]] * len(timestamps[findex]):
+                        dataFiles.append(f)
+                # Flatten back
+                timestamps = np.array([stamp for file in timestamps for stamp in file])
                 timeslices = timestamps
-                time = np.concatenate(timeslices)
-                dataFiles = np.array(data_filenames)
+                time = timeslices
             elif netcdf_engine == 'xarray':
                 with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
                     time = filebuffer.time
@@ -1036,12 +1055,7 @@ class Field(object):
     def computeTimeChunk(self, data, tindex):
         g = self.grid
         timestamp = None if self.timestamps is None else self.timestamps[tindex]
-        # Temporary override for timestamp issue
-        if self.dataFiles.shape[0] == 1:
-            ftindex = 0
-        else:
-            ftindex = g.ti+tindex
-        filebuffer = NetcdfFileBuffer(self.dataFiles[ftindex], self.dimensions, self.indices,
+        filebuffer = NetcdfFileBuffer(self.dataFiles[tindex], self.dimensions, self.indices,
                                       self.netcdf_engine, timestamp=timestamp,
                                       interp_method=self.interp_method,
                                       data_full_zdim=self.data_full_zdim,
