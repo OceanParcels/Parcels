@@ -93,7 +93,7 @@ class Grid(object):
                         ]
 
         # Create and populate the c-struct object
-        if False:#not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+        if True:#not self.cstruct:  # Not to point to the same grid various times if grid in various fields
             if not isinstance(self.periods, c_int):
                 self.periods = c_int()
                 self.periods.value = 0
