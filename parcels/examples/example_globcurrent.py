@@ -208,6 +208,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   dt=delta(minutes=5))
 
     fieldset.U.grid.ti = -1
+    fieldset.U.grid.load_chunk *= 0
     pset0 = ParticleSet(fieldset, pclass=JITParticle,
                         lon=[25, 25],
                         lat=[-35, -35],
