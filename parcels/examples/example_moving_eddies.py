@@ -1,12 +1,19 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
-from argparse import ArgumentParser
-import numpy as np
+import gc
 import math
-import pytest
+from argparse import ArgumentParser
 from datetime import timedelta as delta
 from os import path
-import gc
+
+import numpy as np
+import pytest
+
+from parcels import AdvectionEE
+from parcels import AdvectionRK4
+from parcels import AdvectionRK45
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

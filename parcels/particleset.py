@@ -1,17 +1,21 @@
-from parcels.kernel import Kernel
-from parcels.particle import JITParticle
-from parcels.compiler import GNUCompiler
-from parcels.kernels.advection import AdvectionRK4
-from parcels.particlefile import ParticleFile
-from parcels.tools.loggers import logger
-from parcels.grid import GridCode
-from parcels.field import NestedField, SummedField
+import collections
+import time as time_module
+from datetime import date
+from datetime import datetime
+from datetime import timedelta as delta
+
 import numpy as np
 import progressbar
-import time as time_module
-import collections
-from datetime import timedelta as delta
-from datetime import datetime, date
+
+from parcels.compiler import GNUCompiler
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.grid import GridCode
+from parcels.kernel import Kernel
+from parcels.kernels.advection import AdvectionRK4
+from parcels.particle import JITParticle
+from parcels.particlefile import ParticleFile
+from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
     from sklearn.cluster import KMeans

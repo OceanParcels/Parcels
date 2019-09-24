@@ -1,6 +1,7 @@
 """Collection of pre-built diffusion kernels"""
-from parcels import rng as random
 import math
+
+from parcels import rng as random
 
 
 __all__ = ['BrownianMotion2D', 'SpatiallyVaryingBrownianMotion2D']
