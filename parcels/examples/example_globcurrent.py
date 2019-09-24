@@ -189,7 +189,6 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
 def test_globcurrent_particle_independence(mode, rundays=5):
     fieldset = set_globcurrent_fieldset()
     time0 = fieldset.U.grid.time[0]
-    fieldset1 = set_globcurrent_fieldset()
 
     def DeleteP0(particle, fieldset, time):
         if particle.id == 0:
@@ -199,7 +198,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
         particle.delete()
 
 
-    pset1 = ParticleSet(fieldset1, pclass=JITParticle,
+    pset1 = ParticleSet(fieldset, pclass=JITParticle,
                         lon=[25, 25],
                         lat=[-35, -35],
                         time=time0)
@@ -208,6 +207,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   runtime=delta(days=rundays),
                   dt=delta(minutes=5))
 
+    fieldset.U.grid.ti = -1
     pset0 = ParticleSet(fieldset, pclass=JITParticle,
                         lon=[25, 25],
                         lat=[-35, -35],
