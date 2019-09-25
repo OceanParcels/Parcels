@@ -1,14 +1,19 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.gridset import GridSet
+from copy import deepcopy
+from glob import glob
+from os import path
+
+import dask.array as da
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
 from parcels.grid import Grid
-from parcels.tools.loggers import logger
+from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import TimeExtrapolationError
-import numpy as np
-from os import path
-from glob import glob
-from copy import deepcopy
-import dask.array as da
+from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
 except:

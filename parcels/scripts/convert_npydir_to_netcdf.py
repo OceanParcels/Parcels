@@ -1,8 +1,10 @@
-from parcels import ParticleFile
-import numpy as np
-from os import path
-from glob import glob
 from argparse import ArgumentParser
+from glob import glob
+from os import path
+
+import numpy as np
+
+from parcels import ParticleFile
 
 
 def convert_npydir_to_netcdf(tempwritedir_base, delete_tempfiles=False):

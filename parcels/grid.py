@@ -1,8 +1,17 @@
-from parcels.tools.loggers import logger
-from parcels.tools.converters import TimeConverter
-import numpy as np
-from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
+from ctypes import c_double
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import c_void_p
+from ctypes import cast
+from ctypes import POINTER
+from ctypes import pointer
+from ctypes import Structure
 from enum import IntEnum
+
+import numpy as np
+
+from parcels.tools.converters import TimeConverter
+from parcels.tools.loggers import logger
 
 __all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
 
