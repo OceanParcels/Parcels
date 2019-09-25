@@ -813,10 +813,18 @@ class FieldSet(object):
                 data = f.rescale_and_set_minmax(data)
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
-                    f.data = lib.concatenate([f.data[1:, :], data], axis=0)
+                    if lib is da:
+                        f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                    else:
+                        f.data[:2, :] = f.data[1:, :]
+                        f.data[2, :] = data
                 else:
                     data = f.reshape(data)[0:1, :]
-                    f.data = lib.concatenate([data, f.data[:2, :]], axis=0)
+                    if lib is da:
+                        f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                    else: 
+                        f.data[1:, :] = f.data[:2, :]
+                        f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
                 if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
                     if signdt >= 0:
