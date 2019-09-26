@@ -1,7 +1,15 @@
 import subprocess
-from os import path, getenv
-from tempfile import gettempdir
+from os import getenv
+from os import path
 from struct import calcsize
+from tempfile import gettempdir
+
+try:
+    from os import getuid
+except:
+    # Windows does not have getuid(), so define to simply return 'tmp'
+    def getuid():
+        return 'tmp'
 try:
     from mpi4py import MPI
 except:
@@ -10,12 +18,6 @@ try:
     from pathlib import Path
 except ImportError:
     from pathlib2 import Path  # python 2 backport
-try:
-    from os import getuid
-except:
-    # Windows does not have getuid(), so define to simply return 'tmp'
-    def getuid():
-        return 'tmp'
 
 
 def get_package_dir():

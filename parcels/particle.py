@@ -1,8 +1,10 @@
-from parcels.tools.error import ErrorCode
-from parcels.field import Field
-from operator import attrgetter
-import numpy as np
 from ctypes import c_void_p
+from operator import attrgetter
+
+import numpy as np
+
+from parcels.field import Field
+from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 
 

@@ -1,6 +1,7 @@
 from __future__ import print_function
-import time
+
 import datetime
+import time
 try:
     from mpi4py import MPI
 except:

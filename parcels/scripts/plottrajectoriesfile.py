@@ -1,11 +1,15 @@
 #!/usr/bin/env python
-import xarray as xr
-import numpy as np
-from argparse import ArgumentParser
-from parcels import Field
-from os import environ
-from parcels.plotting import create_parcelsfig_axis, plotfield, cartopy_colorbar
 import sys
+from argparse import ArgumentParser
+from os import environ
+
+import numpy as np
+import xarray as xr
+
+from parcels import Field
+from parcels.plotting import cartopy_colorbar
+from parcels.plotting import create_parcelsfig_axis
+from parcels.plotting import plotfield
 try:
     if sys.platform == 'darwin' and sys.version_info[0] == 3:
         import matplotlib

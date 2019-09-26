@@ -1,8 +1,10 @@
-from math import cos, pi
-import numpy as np
-import cftime
 import inspect
 from datetime import timedelta as delta
+from math import cos
+from math import pi
+
+import cftime
+import numpy as np
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
            'GeographicPolarSquare', 'unitconverters_map',

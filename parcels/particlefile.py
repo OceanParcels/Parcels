@@ -1,14 +1,16 @@
 """Module controlling the writing of ParticleSets to NetCDF file"""
-import numpy as np
-import netCDF4
-from datetime import timedelta as delta
-from parcels.tools.loggers import logger
 import os
+import random
 import shutil
 import string
-import random
-from parcels.tools.error import ErrorCode
+from datetime import timedelta as delta
 from glob import glob
+
+import netCDF4
+import numpy as np
+
+from parcels.tools.error import ErrorCode
+from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
 except:
