@@ -217,6 +217,7 @@ class Kernel(object):
                     f.data_chunks[block_id] = None
 
         for g in pset.fieldset.gridset.grids:
+            g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
             if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
                 if not g.load_chunk.flags.c_contiguous:
                     g.load_chunk = g.load_chunk.copy()

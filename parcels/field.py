@@ -864,7 +864,6 @@ class Field(object):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block])
-                    self.grid.load_chunk[block_id] = 2
                 elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
