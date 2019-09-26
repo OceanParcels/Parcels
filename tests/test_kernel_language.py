@@ -295,7 +295,3 @@ def test_dt_modif_by_kernel(fieldset, mode, capfd):
         particle.dt = 2
 
     pset.execute(modif_dt, endtime=4., dt=1.)
-    if mode == 'jit':
-        out, err = capfd.readouterr()
-        err_msg = "Particle.dt was modified in the kernel. This has spurious effects on the particle integration. You should return a REPEAT error if you modify the time step.\n"
-        assert out[:50] == err_msg[:50]

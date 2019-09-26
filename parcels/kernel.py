@@ -277,7 +277,7 @@ class Kernel(object):
                     pdt = sign_dt * dt_pos
                     p.dt = pdt
                     res = self.pyfunc(p, pset.fieldset, p.time)
-                    if not np.isclose(p.dt, pdt):
+                    if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt):
                         logger.warning('Particle.dt was modified in the kernel. This has spurious effects on the particle integration. You should return a REPEAT error if you modify the time step.')
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
