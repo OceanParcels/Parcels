@@ -1,14 +1,19 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.gridset import GridSet
+from copy import deepcopy
+from glob import glob
+from os import path
+
+import dask.array as da
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
 from parcels.grid import Grid
-from parcels.tools.loggers import logger
+from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import TimeExtrapolationError
-import numpy as np
-from os import path
-from glob import glob
-from copy import deepcopy
-import dask.array as da
+from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
 except:
@@ -807,7 +812,8 @@ class FieldSet(object):
                     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
-                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                lib = np if isinstance(f.data, np.ndarray) else da
+                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.loaded_time_indices = [2]
                     f.filebuffers[0].dataset.close()
@@ -821,12 +827,20 @@ class FieldSet(object):
                 data = f.rescale_and_set_minmax(data)
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
-                    f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                    if lib is da:
+                        f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                    else:
+                        f.data[:2, :] = f.data[1:, :]
+                        f.data[2, :] = data
                 else:
                     data = f.reshape(data)[0:1, :]
-                    f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                    if lib is da:
+                        f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                    else: 
+                        f.data[1:, :] = f.data[:2, :]
+                        f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
-                if len(g.load_chunk) > 0:
+                if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:

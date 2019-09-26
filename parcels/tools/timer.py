@@ -1,6 +1,7 @@
 from __future__ import print_function
-import time
+
 import datetime
+import time
 try:
     from mpi4py import MPI
 except:
@@ -22,6 +23,8 @@ class Timer():
     def start(self):
         if self._parent:
             assert(self._parent._start), ("Timer '%s' cannot be started. Its parent timer does not run" % self._name)
+        if self._start is not None:
+            raise RuntimeError('Timer %s cannot start since it is already running' % self._name)
         self._start = time.time()
 
     def stop(self):

@@ -1,17 +1,30 @@
-from parcels.tools.loggers import logger
-from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
-from parcels.tools.converters import TimeConverter
-from parcels.tools.error import FieldSamplingError, FieldOutOfBoundError, TimeExtrapolationError
-import parcels.tools.interpolation_utils as i_u
 import collections
-from py import path
-import numpy as np
-from ctypes import Structure, c_int, c_float, POINTER, pointer
-import xarray as xr
 import datetime
 import math
-from .grid import Grid, CGrid, GridCode
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import POINTER
+from ctypes import pointer
+from ctypes import Structure
+
 import dask.array as da
+import numpy as np
+import xarray as xr
+from py import path
+
+import parcels.tools.interpolation_utils as i_u
+from .grid import CGrid
+from .grid import Grid
+from .grid import GridCode
+from parcels.tools.converters import Geographic
+from parcels.tools.converters import GeographicPolar
+from parcels.tools.converters import TimeConverter
+from parcels.tools.converters import UnitConverter
+from parcels.tools.converters import unitconverters_map
+from parcels.tools.error import FieldOutOfBoundError
+from parcels.tools.error import FieldSamplingError
+from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.loggers import logger
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -885,7 +898,6 @@ class Field(object):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block])
-                    self.grid.load_chunk[block_id] = 2
                 elif self.grid.load_chunk[block_id] == 0:
                     self.data_chunks[block_id] = None
                     self.c_data_chunks[block_id] = None
@@ -917,6 +929,8 @@ class Field(object):
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
+            else:
+                self.c_data_chunks[i] = None
 
         cstruct = CField(self.grid.xdim, self.grid.ydim, self.grid.zdim,
                          self.grid.tdim, self.igrid, allow_time_extrapolation, time_periodic,

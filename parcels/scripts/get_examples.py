@@ -1,20 +1,23 @@
 """Get example scripts, notebooks, and data files."""
-
 import argparse
-from datetime import datetime, timedelta
-from glob import glob
 import json
 import os
+from datetime import datetime
+from datetime import timedelta
+from glob import glob
+import shutil
+import sys
+
 import pkg_resources
 from progressbar import ProgressBar
+
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen
 except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
-import shutil
-import sys
+
 
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [

@@ -1,12 +1,17 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.tools.loggers import logger
 import ast
-import cgen as c
 import collections
 import math
-import numpy as np
 import random
 from copy import copy
+
+import cgen as c
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.tools.loggers import logger
 
 
 class IntrinsicNode(ast.AST):
