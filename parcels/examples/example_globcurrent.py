@@ -205,19 +205,6 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     def DeleteParticle(particle, fieldset, time):
         particle.delete()
 
-
-    pset1 = ParticleSet(fieldset, pclass=JITParticle,
-                        lon=[25, 25],
-                        lat=[-35, -35],
-                        time=time0)
-
-    pset1.execute(AdvectionRK4,
-                  runtime=delta(days=rundays),
-                  dt=delta(minutes=5))
-
-    #fieldset.U.grid.ti = -1
-    #fieldset.U.grid.load_chunk *= 0
-    print('NEXT PSET')
     pset0 = ParticleSet(fieldset, pclass=JITParticle,
                         lon=[25, 25],
                         lat=[-35, -35],
@@ -227,5 +214,14 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   runtime=delta(days=rundays),
                   dt=delta(minutes=5),
                   recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+
+    pset1 = ParticleSet(fieldset, pclass=JITParticle,
+                        lon=[25, 25],
+                        lat=[-35, -35],
+                        time=time0)
+
+    pset1.execute(AdvectionRK4,
+                  runtime=delta(days=rundays),
+                  dt=delta(minutes=5))
 
     assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])

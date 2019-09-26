@@ -782,16 +782,11 @@ class FieldSet(object):
                     raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
-
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                #g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
-                #g.load_chunk = np.where(g.load_chunk > 0, 1, g.load_chunk)
-                #f.data_chunks = [None] * len(g.load_chunk) 
-                #g.cstruct = None
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:

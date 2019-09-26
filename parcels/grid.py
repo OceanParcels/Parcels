@@ -106,7 +106,6 @@ class Grid(object):
             if not isinstance(self.periods, c_int):
                 self.periods = c_int()
                 self.periods.value = 0
-            self.load_chunk = self.load_chunk.copy()
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
                                            self.mesh == 'spherical', self.zonal_periodic,
