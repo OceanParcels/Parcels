@@ -783,10 +783,10 @@ class FieldSet(object):
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
-                g.load_chunk = np.where(g.load_chunk > 0, 1, g.load_chunk)
-                f.data_chunks = [None] * len(g.load_chunk) 
-                g.cstruct = None
+                #g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                #g.load_chunk = np.where(g.load_chunk > 0, 1, g.load_chunk)
+                #f.data_chunks = [None] * len(g.load_chunk) 
+                #g.cstruct = None
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:

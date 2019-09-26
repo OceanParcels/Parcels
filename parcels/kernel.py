@@ -308,7 +308,7 @@ class Kernel(object):
 
         for g in pset.fieldset.gridset.grids:
             if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                g.load_chunk = np.where(g.load_chunk > 0, 3, g.load_chunk)
+                g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
