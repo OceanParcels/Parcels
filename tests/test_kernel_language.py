@@ -285,3 +285,17 @@ def test_c_kernel(fieldset, mode, c_inc):
         kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=3., dt=3.)
     assert np.allclose(pset[0].lon, 0.81578948)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_dt_modif_by_kernel(fieldset, mode, capfd):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0])
+
+    def modif_dt(particle, fieldset, time):
+        particle.dt = 2
+
+    pset.execute(modif_dt, endtime=4., dt=1.)
+    if mode == 'jit':
+        out, err = capfd.readouterr()
+        err_msg = "Particle.dt was modified in the kernel. This has spurious effects on the particle integration. You should return a REPEAT error if you modify the time step.\n"
+        assert out[:50] == err_msg[:50]

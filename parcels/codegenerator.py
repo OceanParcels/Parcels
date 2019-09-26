@@ -918,15 +918,18 @@ class LoopGenerator(object):
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
-        pdt_eq_dt_pos = c.Assign("particles[p].dt", "__dt * sign_dt")
+        pdt_eq_dt_pos = c.Assign("__pdt", "__dt * sign_dt")
+        partdt = c.Assign("particles[p].dt", "__pdt")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
+        check_pdt = c.If("__pdt != particles[p].dt", c.Statement('printf("Particle.dt was modified in the kernel. This has spurious effects on the particle integration. You should return a REPEAT error if you modify the time step.\\n")'))
         body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
         body += [pdt_eq_dt_pos]
+        body += [partdt]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
-        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
+        body += [c.If("res == SUCCESS", c.Block([check_pdt, c.Statement("particles[p].time += sign_dt * __dt"),
                                                  dt_pos, dt_0_break, c.Statement("continue")]))]
         body += [c.If("res == REPEAT",
                  c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
@@ -936,7 +939,7 @@ class LoopGenerator(object):
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
-                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
+                         c.Value("double", "__dt, __tol, __pdt"), c.Assign("__tol", "1.e-6"),
                          sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
