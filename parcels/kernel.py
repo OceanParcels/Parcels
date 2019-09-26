@@ -1,27 +1,43 @@
-from parcels.codegenerator import KernelGenerator, LoopGenerator
-from parcels.compiler import get_cache_dir
-from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField, VectorField
-from parcels.tools.loggers import logger
-from parcels.kernels.advection import AdvectionRK4_3D
-from os import path, remove
-import numpy as np
-import numpy.ctypeslib as npct
-import time
-from ctypes import c_int, c_float, c_double, c_void_p, byref
 import _ctypes
-from sys import platform, version_info
-from ast import parse, FunctionDef, Module
 import inspect
-from copy import deepcopy
-import re
-from hashlib import md5
 import math  # noqa
 import random  # noqa
+import re
+import time
+from ast import FunctionDef
+from ast import Module
+from ast import parse
+from copy import deepcopy
+from ctypes import byref
+from ctypes import c_double
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import c_void_p
+from hashlib import md5
+from os import path
+from os import remove
+from sys import platform
+from sys import version_info
+
+import numpy as np
+import numpy.ctypeslib as npct
 try:
     from mpi4py import MPI
 except:
     MPI = None
+
+from parcels.codegenerator import KernelGenerator
+from parcels.codegenerator import LoopGenerator
+from parcels.compiler import get_cache_dir
+from parcels.field import Field
+from parcels.field import FieldOutOfBoundError
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.tools.error import ErrorCode
+from parcels.tools.error import recovery_map as recovery_base_map
+from parcels.tools.loggers import logger
 
 
 __all__ = ['Kernel']

@@ -1,17 +1,30 @@
-from parcels.tools.loggers import logger
-from parcels.tools.converters import unitconverters_map, UnitConverter, Geographic, GeographicPolar
-from parcels.tools.converters import TimeConverter
-from parcels.tools.error import FieldSamplingError, FieldOutOfBoundError, TimeExtrapolationError
-import parcels.tools.interpolation_utils as i_u
 import collections
-from py import path
-import numpy as np
-from ctypes import Structure, c_int, c_float, POINTER, pointer
-import xarray as xr
 import datetime
 import math
-from .grid import Grid, CGrid, GridCode
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import POINTER
+from ctypes import pointer
+from ctypes import Structure
+
 import dask.array as da
+import numpy as np
+import xarray as xr
+from py import path
+
+import parcels.tools.interpolation_utils as i_u
+from .grid import CGrid
+from .grid import Grid
+from .grid import GridCode
+from parcels.tools.converters import Geographic
+from parcels.tools.converters import GeographicPolar
+from parcels.tools.converters import TimeConverter
+from parcels.tools.converters import UnitConverter
+from parcels.tools.converters import unitconverters_map
+from parcels.tools.error import FieldOutOfBoundError
+from parcels.tools.error import FieldSamplingError
+from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.loggers import logger
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']

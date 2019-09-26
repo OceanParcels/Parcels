@@ -1,6 +1,7 @@
 """Collection of pre-built advection kernels"""
-from parcels.tools.error import ErrorCode
 import math
+
+from parcels.tools.error import ErrorCode
 
 
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D']

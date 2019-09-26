@@ -1,10 +1,18 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable, ErrorCode
 from datetime import timedelta as delta
-from os import path
 from glob import glob
+from os import path
+
 import numpy as np
 import pytest
 import xarray as xr
+
+from parcels import AdvectionRK4
+from parcels import ErrorCode
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
+from parcels import Variable
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}

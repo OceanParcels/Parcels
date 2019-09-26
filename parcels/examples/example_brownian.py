@@ -1,8 +1,15 @@
-from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, BrownianMotion2D
-import numpy as np
 from datetime import timedelta as delta
-from parcels import random
+
+import numpy as np
 import pytest
+
+from parcels import BrownianMotion2D
+from parcels import Field
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import random
+from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
