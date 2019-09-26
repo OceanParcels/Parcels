@@ -1,12 +1,17 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.tools.loggers import logger
 import ast
-import cgen as c
 import collections
 import math
-import numpy as np
 import random
 from copy import copy
+
+import cgen as c
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.tools.loggers import logger
 
 
 class IntrinsicNode(ast.AST):
@@ -437,6 +442,7 @@ class KernelGenerator(ast.NodeVisitor):
         note that starred and keyword arguments are currently not
         supported."""
         pointer_args = False
+        parcels_customed_Cfunc = False
         if isinstance(node.func, PrintNode):
             # Write our own Print parser because Python3-AST does not seem to have one
             if isinstance(node.args[0], ast.Str):
@@ -446,6 +452,8 @@ class KernelGenerator(ast.NodeVisitor):
             elif isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, 'ccode'):
                     args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'id'):
+                    args = node.args[0].right.id
                 elif hasattr(node.args[0].right, 'elts'):
                     args = []
                     for a in node.args[0].right.elts:
@@ -468,10 +476,12 @@ class KernelGenerator(ast.NodeVisitor):
         else:
             for a in node.args:
                 self.visit(a)
-                if a.ccode == 'pointer_args':
+                if a.ccode == 'parcels_customed_Cfunc_pointer_args':
                     pointer_args = True
-                    continue
-                if isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
+                    parcels_customed_Cfunc = True
+                elif a.ccode == 'parcels_customed_Cfunc':
+                    parcels_customed_Cfunc = True
+                elif isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
                     a.ccode = a.obj.ccode_name
                 elif isinstance(a, ParticleNode):
                     continue
@@ -480,7 +490,12 @@ class KernelGenerator(ast.NodeVisitor):
             ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
             try:
                 self.visit(node.func)
-                node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+                rhs = "%s(%s)" % (node.func.ccode, ccode_args)
+                if parcels_customed_Cfunc:
+                    node.ccode = str(c.Block([c.Assign("err", rhs),
+                                              c.Statement("CHECKERROR(err)")]))
+                else:
+                    node.ccode = rhs
             except:
                 raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 

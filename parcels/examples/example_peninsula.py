@@ -1,10 +1,19 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
-from argparse import ArgumentParser
-import numpy as np
+import gc
 import math  # NOQA
-import pytest
+from argparse import ArgumentParser
 from datetime import timedelta as delta
+
+import numpy as np
+import pytest
+
+from parcels import AdvectionEE
+from parcels import AdvectionRK4
+from parcels import AdvectionRK45
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
+from parcels import Variable
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -140,6 +149,7 @@ def fieldsetfile(mesh):
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_peninsula_file(mode, mesh):
     """Open fieldset files and execute"""
+    gc.collect()
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
     pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values

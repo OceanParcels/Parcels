@@ -1,11 +1,10 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
-from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes
+from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
 from datetime import timedelta as delta
 import datetime
 import numpy as np
 import xarray as xr
-import math
 import pytest
 from os import path
 import cftime
@@ -111,8 +110,13 @@ def test_fieldset_nonstandardtime(calendar, cftime_datetime, tmpdir, filename='t
     da.to_netcdf(str(filepath))
 
     dims = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
-    field = Field.from_netcdf(filepath, 'U', dims)
-    assert field.grid.time_origin.calendar == calendar
+    try:
+        field = Field.from_netcdf(filepath, 'U', dims)
+    except NotImplementedError:
+        field = None
+
+    if field is not None:
+        assert field.grid.time_origin.calendar == calendar
 
 
 def test_field_from_netcdf():
@@ -124,6 +128,27 @@ def test_field_from_netcdf():
     variable = 'U'
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
     Field.from_netcdf(filenames, variable, dimensions, interp_method='cgrid_velocity')
+
+
+def test_field_from_netcdf_fieldtypes():
+    data_path = path.join(path.dirname(__file__), 'test_data/')
+
+    filenames = {'varU': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                          'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                          'data': data_path + 'Uu_eastward_nemo_cross_180lon.nc'},
+                 'varV': {'lon': data_path + 'mask_nemo_cross_180lon.nc',
+                          'lat': data_path + 'mask_nemo_cross_180lon.nc',
+                          'data': data_path + 'Vv_eastward_nemo_cross_180lon.nc'}}
+    variables = {'varU': 'U', 'varV': 'V'}
+    dimensions = {'lon': 'glamf', 'lat': 'gphif'}
+
+    # first try without setting fieldtype
+    fset = FieldSet.from_nemo(filenames, variables, dimensions)
+    assert isinstance(fset.varU.units, UnitConverter)
+
+    # now try with setting fieldtype
+    fset = FieldSet.from_nemo(filenames, variables, dimensions, fieldtype={'varU': 'U', 'varV': 'V'})
+    assert isinstance(fset.varU.units, GeographicPolar)
 
 
 @pytest.mark.parametrize('indslon', [range(10, 20), [1]])
@@ -261,26 +286,6 @@ def test_fieldset_cellareas(mesh):
         assert all((np.gradient(cell_areas, axis=0) < 0).flatten())  # areas should decrease with latitude in spherical mesh
         for y in range(cell_areas.shape[0]):
             assert np.allclose(cell_areas[y, :], cell_areas[y, 0], rtol=1e-3)
-
-
-@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_fieldset_gradient(mesh):
-    data, dimensions = generate_fieldset(5, 3)
-    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
-
-    # Calculate field gradients for testing against numpy gradients.
-    dFdx, dFdy = fieldset.V.gradient()
-
-    # Create numpy fields.
-    conv_factor = 6.371e6 * np.pi / 180. if mesh == 'spherical' else 1.
-    np_dFdx = np.gradient(fieldset.V.data[0, :, :], (np.diff(fieldset.V.lon) * conv_factor)[0], axis=1)
-    np_dFdy = np.gradient(fieldset.V.data[0, :, :], (np.diff(fieldset.V.lat) * conv_factor)[0], axis=0)
-    if mesh == 'spherical':
-        for y in range(np_dFdx.shape[0]):
-            np_dFdx[:, y] /= math.cos(fieldset.V.grid.lat[y] * math.pi / 180.)
-
-    assert np.allclose(dFdx.data, np_dFdx, rtol=5e-2)  # Field gradient dx.
-    assert np.allclose(dFdy.data, np_dFdy, rtol=5e-2)  # Field gradient dy.
 
 
 def addConst(particle, fieldset, time):
@@ -435,8 +440,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     # testing for scaling factors
     fieldset.U.set_scaling_factor(scale_fac)
 
-    dFdx, dFdy = fieldset.V.gradient()
-
     dz = np.gradient(fieldset.U.depth)
     DZ = np.moveaxis(np.tile(dz, (fieldset.U.grid.ydim, fieldset.U.grid.xdim, 1)), [0, 1, 2], [1, 2, 0])
 
@@ -444,12 +447,13 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
         # Calculating vertical weighted average
         for f in [fieldset.U, fieldset.V]:
             for tind in f.loaded_time_indices:
-                f.data[tind, :] = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+                data = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+                data = np.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
+                f.data = f.data_concatenate(f.data, data, tind)
 
     fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
-    assert np.allclose(dFdx.data, 0)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
 
@@ -458,7 +462,6 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
 
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
-    assert np.allclose(dFdx.data, 0)
 
 
 @pytest.mark.parametrize('maxlatind', [3, pytest.param(2, marks=pytest.mark.xfail(strict=True))])

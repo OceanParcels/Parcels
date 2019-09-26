@@ -1,11 +1,19 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
-from argparse import ArgumentParser
-import numpy as np
+import gc
 import math
-import pytest
+from argparse import ArgumentParser
 from datetime import timedelta as delta
 from os import path
+
+import numpy as np
+import pytest
+
+from parcels import AdvectionEE
+from parcels import AdvectionRK4
+from parcels import AdvectionRK45
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -161,6 +169,7 @@ def fieldsetfile(mesh):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_moving_eddies_file(mode, mesh):
+    gc.collect()
     fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'})
     pset = moving_eddies_example(fieldset, 2, mode=mode)
     if mesh == 'flat':

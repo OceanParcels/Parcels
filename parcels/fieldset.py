@@ -1,13 +1,25 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.gridset import GridSet
+from copy import deepcopy
+from glob import glob
+from os import path
+
+import dask.array as da
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.grid import RectilinearSGrid
 from parcels.tools.loggers import logger
+from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter
-import numpy as np
-from os import path
-from glob import glob
-from copy import deepcopy
+from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.loggers import logger
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 
 __all__ = ['FieldSet']
@@ -152,7 +164,7 @@ class FieldSet(object):
             g.check_zonal_periodic()
             if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
             g.time = g.time + self.time_origin.reltime(g.time_origin)
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
@@ -195,7 +207,7 @@ class FieldSet(object):
         return paths
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices=None,
+    def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
@@ -217,6 +229,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -234,6 +248,7 @@ class FieldSet(object):
                fully load them (default: True). It is advised to deferred load the data, since in
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
+        :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -264,6 +279,7 @@ class FieldSet(object):
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
+            fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
 
             grid = None
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
@@ -287,7 +303,8 @@ class FieldSet(object):
                         break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load,
+                                            fieldtype=fieldtype, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -328,6 +345,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -388,6 +407,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -459,6 +480,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -523,6 +546,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -569,6 +594,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
@@ -615,6 +642,8 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -694,16 +723,18 @@ class FieldSet(object):
         """Write FieldSet to NetCDF file using NEMO convention
 
         :param filename: Basename of the output fileset"""
-        logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        if hasattr(self, 'U'):
-            self.U.write(filename, varname='vozocrtx')
-        if hasattr(self, 'V'):
-            self.V.write(filename, varname='vomecrty')
+        if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
+            logger.info("Generating FieldSet output with basename: %s" % filename)
 
-        for v in self.get_fields():
-            if (v.name != 'U') and (v.name != 'V'):
-                v.write(filename)
+            if hasattr(self, 'U'):
+                self.U.write(filename, varname='vozocrtx')
+            if hasattr(self, 'V'):
+                self.V.write(filename, varname='vomecrty')
+
+            for v in self.get_fields():
+                if (v.name != 'U') and (v.name != 'V'):
+                    v.write(filename)
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
@@ -749,51 +780,78 @@ class FieldSet(object):
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+                if time == nextTime_loc and signdt != 0:
+                    raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
-        # load in new data
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    f.computeTimeChunk(data, tind)
+                    for fb in f.filebuffers:
+                        if fb is not None:
+                            fb.dataset.close()
+
+                    data = f.computeTimeChunk(data, tind)
+                data = f.rescale_and_set_minmax(data)
                 f.data = f.reshape(data)
+                if not f.chunk_set:
+                    f.chunk_setup()
+                if len(g.load_chunk) > 0:
+                    g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
-                    f.data[:2, :] = f.data[1:, :]
                     f.loaded_time_indices = [2]
+                    f.filebuffers[0].dataset.close()
+                    f.filebuffers[:2] = f.filebuffers[1:]
+                    data = f.computeTimeChunk(data, 2)
                 else:
-                    f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                f.computeTimeChunk(data, f.loaded_time_indices[0])
-                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
-            else:
-                f.loaded_time_indices = []
-
-            # do built-in computations on data
-            for tind in f.loaded_time_indices:
-                if f._scaling_factor:
-                    f.data[tind, :] *= f._scaling_factor
-                f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
-                if f.vmin is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
-                if f.vmax is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
-                if f.gradientx is not None:
-                    f.gradient(update=True, tindex=tind)
-
+                    f.filebuffers[2].dataset.close()
+                    f.filebuffers[1:] = f.filebuffers[:2]
+                    data = f.computeTimeChunk(data, 0)
+                data = f.rescale_and_set_minmax(data)
+                if signdt >= 0:
+                    data = f.reshape(data)[2:, :]
+                    f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                else:
+                    data = f.reshape(data)[0:1, :]
+                    f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                if len(g.load_chunk) > 0:
+                    if signdt >= 0:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
+                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                    else:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
 
         # update time varying grid depth 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or f.is_gradient or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
                 continue
             elif isinstance(f.grid, RectilinearSGrid) and f.grid.z4d == True:
                 if type(self.depth_u.data) == np.ndarray:

@@ -1,10 +1,14 @@
-from parcels.field import Field, VectorField
-from parcels.grid import CurvilinearGrid, GridCode
-from parcels.tools.loggers import logger
-from parcels.tools.error import TimeExtrapolationError
-import numpy as np
-from datetime import timedelta as delta
 from datetime import datetime
+from datetime import timedelta as delta
+
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import VectorField
+from parcels.grid import CurvilinearGrid
+from parcels.grid import GridCode
+from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.loggers import logger
 
 
 def plotparticles(particles, with_particles=True, show_time=None, field=None, domain=None, projection=None,
@@ -169,17 +173,15 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             data[1] = d
 
         spd = data[0] ** 2 + data[1] ** 2
-        speed = np.sqrt(spd, where=spd > 0)
+        speed = np.where(spd > 0, np.sqrt(spd), 0)
         vmin = speed.min() if vmin is None else vmin
         vmax = speed.max() if vmax is None else vmax
         if isinstance(field[0].grid, CurvilinearGrid):
             x, y = plotlon[0], plotlat[0]
         else:
             x, y = np.meshgrid(plotlon[0], plotlat[0])
-        nonzerospd = speed != 0
-        u, v = (np.zeros_like(data[0]) * np.nan, np.zeros_like(data[1]) * np.nan)
-        np.place(u, nonzerospd, data[0][nonzerospd] / speed[nonzerospd])
-        np.place(v, nonzerospd, data[1][nonzerospd] / speed[nonzerospd])
+        u = np.where(speed > 0., data[0]/speed, 0)
+        v = np.where(speed > 0., data[1]/speed, 0)
         if cartopy:
             cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
         else:

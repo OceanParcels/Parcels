@@ -1,23 +1,43 @@
-from parcels.codegenerator import KernelGenerator, LoopGenerator
-from parcels.compiler import get_cache_dir
-from parcels.tools.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldOutOfBoundError, Field, SummedField, NestedField
-from parcels.tools.loggers import logger
-from parcels.kernels.advection import AdvectionRK4_3D
-from os import path, remove
-import numpy as np
-import numpy.ctypeslib as npct
-import time
-from ctypes import c_int, c_float, c_double, c_void_p, byref
 import _ctypes
-from sys import platform, version_info
-from ast import parse, FunctionDef, Module
 import inspect
-from copy import deepcopy
-import re
-from hashlib import md5
 import math  # noqa
 import random  # noqa
+import re
+import time
+from ast import FunctionDef
+from ast import Module
+from ast import parse
+from copy import deepcopy
+from ctypes import byref
+from ctypes import c_double
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import c_void_p
+from hashlib import md5
+from os import path
+from os import remove
+from sys import platform
+from sys import version_info
+
+import numpy as np
+import numpy.ctypeslib as npct
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+
+from parcels.codegenerator import KernelGenerator
+from parcels.codegenerator import LoopGenerator
+from parcels.compiler import get_cache_dir
+from parcels.field import Field
+from parcels.field import FieldOutOfBoundError
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.tools.error import ErrorCode
+from parcels.tools.error import recovery_map as recovery_base_map
+from parcels.tools.loggers import logger
 
 
 __all__ = ['Kernel']
@@ -129,8 +149,15 @@ class Kernel(object):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
+            if MPI:
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
+                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+                basename = mpi_comm.bcast(basename, root=0)
+                basename = basename + "_%d" % mpi_rank
+            else:
+                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
 
-            basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
@@ -163,7 +190,15 @@ class Kernel(object):
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
             [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-            basename = path.join(get_cache_dir(), self._cache_key)
+            if MPI:
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
+                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+                basename = mpi_comm.bcast(basename, root=0)
+                basename = basename + "_%d" % mpi_rank
+            else:
+                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
+
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
@@ -188,16 +223,26 @@ class Kernel(object):
             g.cstruct = None  # This force to point newly the grids from Python to C
         # Make a copy of the transposed array to enforce
         # C-contiguous memory layout for JIT mode.
-        for f in self.field_args.values():
-            if not f.data.flags.c_contiguous:
-                f.data = f.data.copy()
+        for f in pset.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            if f in self.field_args.values():
+                f.chunk_data()
+            else:
+                for block_id in range(len(f.data_chunks)):
+                    f.data_chunks[block_id] = None
+
         for g in pset.fieldset.gridset.grids:
+            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                if not g.load_chunk.flags.c_contiguous:
+                    g.load_chunk = g.load_chunk.copy()
             if not g.depth.flags.c_contiguous:
                 g.depth = g.depth.copy()
             if not g.lon.flags.c_contiguous:
                 g.lon = g.lon.copy()
             if not g.lat.flags.c_contiguous:
                 g.lat = g.lat.copy()
+
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_float(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
@@ -210,6 +255,11 @@ class Kernel(object):
 
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
+
+        for f in self.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            f.data = np.array(f.data)
 
         for p in pset.particles:
             ptype = p.getPType()
@@ -270,6 +320,10 @@ class Kernel(object):
             recovery = {}
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
+
+        for g in pset.fieldset.gridset.grids:
+            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                g.load_chunk = np.where(g.load_chunk > 0, 3, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:

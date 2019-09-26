@@ -1,9 +1,16 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4
+import gc
 from datetime import timedelta as delta
+from os import path
+
+import numpy as np
 import pytest
 import xarray as xr
-import numpy as np
-from os import path
+
+from parcels import AdvectionRK4
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -48,6 +55,7 @@ def test_ofam_xarray_vs_netcdf(dt):
 @pytest.mark.parametrize('use_xarray', [True, False])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_ofam_particles(mode, use_xarray):
+    gc.collect()
     fieldset = set_ofam_fieldset(use_xarray=use_xarray)
 
     lonstart = [180]

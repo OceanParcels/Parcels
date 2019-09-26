@@ -2,24 +2,23 @@ environment:
 
   matrix:
 
-    - PYTHON: "C:\\Python27-miniconda"
+    - PYTHON: "C:\\Miniconda"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py2_win.yml"
 
-    - PYTHON: "C:\\Python36-miniconda"
+    - PYTHON: "C:\\Miniconda36-x64"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py3_win.yml"
 
 matrix:
   allow_failures:
-    - PYTHON_VERSION: "3.6.x"
+    - PYTHON_VERSION: "2.7.x"
 
 install:
-  - "powershell ./appveyor/install_miniconda.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "conda update --yes conda"
+  - "conda update -q --yes conda"
   - "conda env create -f %ENV_NAME% -n parcels"
   - "activate parcels"
   - "python setup.py install"
@@ -29,4 +28,4 @@ build: false
 test_script:
   - "py.test -v -s tests/"
   - "parcels_get_examples examples/"
-  - "py.test -v -s --nbval-lax examples/"
+  - 'py.test -v -s --nbval-lax examples/ -k "not documentation" '
