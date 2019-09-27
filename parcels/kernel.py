@@ -278,7 +278,11 @@ class Kernel(object):
                     p.dt = pdt
                     res = self.pyfunc(p, pset.fieldset, p.time)
                     if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt):
-                        logger.warning('Particle.dt was modified in the kernel. This has spurious effects on the particle integration. You should return a REPEAT error if you modify the time step.')
+                        next_time = p.time + sign_dt * dt_pos
+                        next_dt_pos = min(abs(p.dt), abs(endtime - next_time))
+                        if pdt < next_dt_pos:
+                            print('here', p.dt, pdt, next_dt_pos)
+                            res = ErrorCode.Repeat
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
