@@ -278,11 +278,8 @@ class Kernel(object):
                     p.dt = pdt
                     res = self.pyfunc(p, pset.fieldset, p.time)
                     if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt):
-                        next_time = p.time + sign_dt * dt_pos
-                        next_dt_pos = min(abs(p.dt), abs(endtime - next_time))
-                        if pdt < next_dt_pos:
-                            print('here', p.dt, pdt, next_dt_pos)
-                            res = ErrorCode.Repeat
+                        res = ErrorCode.Repeat
+                    p.update_next_dt()
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
