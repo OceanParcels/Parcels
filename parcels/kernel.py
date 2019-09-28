@@ -279,7 +279,6 @@ class Kernel(object):
                     res = self.pyfunc(p, pset.fieldset, p.time)
                     if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt):
                         res = ErrorCode.Repeat
-                    p.update_next_dt()
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
@@ -294,7 +293,8 @@ class Kernel(object):
                 # Handle particle time and time loop
                 if res is None or res == ErrorCode.Success:
                     # Update time and repeat
-                    p.time += sign_dt * dt_pos
+                    p.time += p.dt
+                    p.update_next_dt()
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     if dt == 0:
                         break
