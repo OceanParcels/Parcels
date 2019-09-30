@@ -241,6 +241,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         node.value = self.visit(node.value)
         if isinstance(node.value, IntrinsicNode):
+            if node.attr == 'update_next_dt':
+                return 'update_next_dt'
             return getattr(node.value, node.attr)
         else:
             if node.value.id in ['np', 'numpy']:
@@ -489,13 +491,16 @@ class KernelGenerator(ast.NodeVisitor):
                     a.ccode = "&%s" % a.ccode
             ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
             try:
-                self.visit(node.func)
-                rhs = "%s(%s)" % (node.func.ccode, ccode_args)
-                if parcels_customed_Cfunc:
-                    node.ccode = str(c.Block([c.Assign("err", rhs),
-                                              c.Statement("CHECKERROR(err)")]))
+                if isinstance(node.func, str):
+                    node.ccode = node.func + '(' + ccode_args + ')'
                 else:
-                    node.ccode = rhs
+                    self.visit(node.func)
+                    rhs = "%s(%s)" % (node.func.ccode, ccode_args)
+                    if parcels_customed_Cfunc:
+                        node.ccode = str(c.Block([c.Assign("err", rhs),
+                                                  c.Statement("CHECKERROR(err)")]))
+                    else:
+                        node.ccode = rhs
             except:
                 raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
@@ -862,6 +867,8 @@ class LoopGenerator(object):
         # Add include for Parcels and math header
         ccode += [str(c.Include("parcels.h", system=False))]
         ccode += [str(c.Include("math.h", system=False))]
+        ccode += [str(c.Assign('double _next_dt', '0'))]
+        ccode += [str(c.Assign('size_t _next_dt_set', '0'))]
 
         # Generate type definition for particle type
         vdecl = []
@@ -897,6 +904,15 @@ class LoopGenerator(object):
         p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
         ccode += [p_back_get]
 
+        update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
+                                                             spec='inline')), [c.Value('double', 'dt')])
+        body = []
+        body += [c.Assign("_next_dt", "dt")]
+        body += [c.Assign("_next_dt_set", "1")]
+        update_next_dt_body = c.Block(body)
+        update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+        ccode += [update_next_dt]
+
         if c_include:
             ccode += [c_include]
 
@@ -923,13 +939,15 @@ class LoopGenerator(object):
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
-        check_pdt = c.If("__pdt != particles[p].dt", c.Statement('printf("Particle.dt was modified in the kernel. This has spurious effects on the particle integration. You should return a REPEAT error if you modify the time step.\\n")'))
         body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
         body += [pdt_eq_dt_pos]
         body += [partdt]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
+        check_pdt = c.If("res == SUCCESS & __pdt != particles[p].dt", c.Assign("res", "REPEAT"))
+        body += [check_pdt]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
-        body += [c.If("res == SUCCESS", c.Block([check_pdt, c.Statement("particles[p].time += sign_dt * __dt"),
+        update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
+        body += [c.If("res == SUCCESS", c.Block([c.Statement("particles[p].time += particles[p].dt"), update_pdt,
                                                  dt_pos, dt_0_break, c.Statement("continue")]))]
         body += [c.If("res == REPEAT",
                  c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
