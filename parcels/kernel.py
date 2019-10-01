@@ -275,10 +275,10 @@ class Kernel(object):
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
-                    pdt = sign_dt * dt_pos
-                    p.dt = pdt
+                    pdt_prekernels = sign_dt * dt_pos
+                    p.dt = pdt_prekernels
                     res = self.pyfunc(p, pset.fieldset, p.time)
-                    if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt):
+                    if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
