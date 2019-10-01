@@ -329,10 +329,7 @@ class Field(object):
 
         if grid.time.size <= 3 or deferred_load is False:
             # Pre-allocate data before reading files into buffer
-            data = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
-            #grid.depth = np.empty((grid.tdim, grid.zdim, grid.ydim, grid.xdim), dtype=np.float32)
             data_list = []
-
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
@@ -354,7 +351,6 @@ class Field(object):
                             data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
                     else:
                         data_list.append(buffer_data)
-                        #grid.depth[ti:ti+len(tslice),:,:,:] = filebuffer.read_depth # alternative method for setting time varying grid depths, only worked for full load not for defer load so discarded. 
                 ti += len(tslice)
             data = da.concatenate(data_list, axis=0)
         else:
@@ -1596,14 +1592,10 @@ class NetcdfFileBuffer(object):
             elif len(depth.shape) == 3:
                 return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
             elif len(depth.shape) == 4:
-                #raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
-                return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
+                return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
         else:
             self.indices['depth'] = [0]
             return np.zeros(1)
-
-
-
 
     @property
     def data(self):
