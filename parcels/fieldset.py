@@ -11,7 +11,7 @@ from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.grid import RectilinearSGrid
-from parcels.tools.loggers import logger
+from parcels.grid import CurvilinearSGrid
 from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import TimeExtrapolationError
@@ -193,6 +193,21 @@ class FieldSet(object):
                 fld.ccode_name = fld.name + str(counter)
                 counter += 1
             ccode_fieldnames.append(fld.ccode_name)
+
+        for f in self.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField] or f.grid.defer_load or f.dataFiles is None:
+                continue
+            if isinstance(f.grid, (RectilinearSGrid, CurvilinearSGrid)) and f.grid.z4d == True:
+                if type(self.depth_u.data) == np.ndarray:
+                    if f.name == 'U' or f.name=='V' or f.name=='depth_u':
+                        f.grid.depth=self.depth_u.data
+                    if f.name == 'W' or f.name=='depth':
+                        f.grid.depth=self.depth.data
+                else:
+                    if f.name == 'U' or f.name=='V' or f.name=='depth_u':
+                        f.grid.depth=np.array(self.depth_u.data)
+                    if f.name == 'W' or f.name=='depth':
+                        f.grid.depth=np.array(self.depth.data)
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
@@ -851,9 +866,9 @@ class FieldSet(object):
 
         # update time varying grid depth 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
-            elif isinstance(f.grid, RectilinearSGrid) and f.grid.z4d == True:
+            if isinstance(f.grid, (RectilinearSGrid, CurvilinearSGrid)) and f.grid.z4d == True:
                 if type(self.depth_u.data) == np.ndarray:
                     if f.name == 'U' or f.name=='V' or f.name=='depth_u':
                         f.grid.depth=self.depth_u.data
