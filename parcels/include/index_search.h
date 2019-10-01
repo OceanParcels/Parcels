@@ -54,9 +54,16 @@ typedef enum
 
 static inline ErrorCode search_indices_vertical_z(type_coord z, int zdim, float *zvals, int *zi, double *zeta)
 {
-  if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
-  while (*zi > 0 && z < zvals[*zi]) --(*zi);
+  if (zvals[zdim-1] > zvals[0]){
+    if (z < zvals[0] || z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
+    while (*zi > 0 && z < zvals[*zi]) --(*zi);
+  }
+  else{
+    if (z > zvals[0] || z < zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*zi < zdim-1 && z < zvals[*zi+1]) ++(*zi);
+    while (*zi > 0 && z > zvals[*zi]) --(*zi);
+  }
   if (*zi == zdim-1) {--*zi;}
 
   *zeta = (z - zvals[*zi]) / (zvals[*zi+1] - zvals[*zi]);
@@ -102,9 +109,16 @@ static inline ErrorCode search_indices_vertical_s(type_coord z, int xdim, int yd
     }
   }
 
-  if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
-  while (*zi < zdim-1 && z > zcol[*zi+1]) ++(*zi);
-  while (*zi > 0 && z < zcol[*zi]) --(*zi);
+  if (zcol[zdim-1] > zcol[0]){
+    if (z < zcol[0] || z > zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*zi < zdim-1 && z > zcol[*zi+1]) ++(*zi);
+    while (*zi > 0 && z < zcol[*zi]) --(*zi);
+  }
+  else{
+    if (z > zcol[0] || z < zcol[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
+    while (*zi < zdim-1 && z < zcol[*zi+1]) ++(*zi);
+    while (*zi > 0 && z > zcol[*zi]) --(*zi);
+  }
   if (*zi == zdim-1) {--*zi;}
 
   *zeta = (z - zcol[*zi]) / (zcol[*zi+1] - zcol[*zi]);
