@@ -62,6 +62,7 @@ class Grid(object):
         self.periods = 0
         self.load_chunk = []
         self.chunk_info = None
+        self.depth_field = None
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
@@ -333,8 +334,8 @@ class RectilinearSGrid(RectilinearGrid):
         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
@@ -464,8 +465,8 @@ class CurvilinearSGrid(CurvilinearGrid):
         if self.z4d:
             # self.depth.shape[0] is 0 for S grids loaded from netcdf file
             assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'

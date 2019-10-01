@@ -10,8 +10,6 @@ from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
-from parcels.grid import RectilinearSGrid
-from parcels.grid import CurvilinearSGrid
 from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter
 from parcels.tools.error import TimeExtrapolationError
@@ -197,17 +195,9 @@ class FieldSet(object):
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or f.grid.defer_load or f.dataFiles is None:
                 continue
-            if isinstance(f.grid, (RectilinearSGrid, CurvilinearSGrid)) and f.grid.z4d:
-                if isinstance(self.depth_u.data, np.ndarray):
-                    if f.name == 'U' or f.name == 'V' or f.name == 'depth_u':
-                        f.grid.depth = self.depth_u.data
-                    if f.name == 'W' or f.name == 'depth':
-                        f.grid.depth = self.depth.data
-                else:
-                    if f.name == 'U' or f.name == 'V' or f.name == 'depth_u':
-                        f.grid.depth = np.array(self.depth_u.data)
-                    if f.name == 'W' or f.name == 'depth':
-                        f.grid.depth = np.array(self.depth.data)
+            if f.grid.depth_field is not None:
+                fdepth = getattr(self, f.grid.depth_field)
+                f.grid.depth = fdepth.data if isinstance(fdepth.data, np.ndarray) else np.array(fdepth.data)
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
@@ -844,7 +834,7 @@ class FieldSet(object):
                     data = f.reshape(data)[0:1, :]
                     if lib is da:
                         f.data = da.concatenate([data, f.data[:2, :]], axis=0)
-                    else: 
+                    else:
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
@@ -877,17 +867,9 @@ class FieldSet(object):
         for f in self.get_fields():
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
-            if isinstance(f.grid, (RectilinearSGrid, CurvilinearSGrid)) and f.grid.z4d:
-                if isinstance(self.depth_u.data, np.ndarray):
-                    if f.name == 'U' or f.name == 'V' or f.name == 'depth_u':
-                        f.grid.depth = self.depth_u.data
-                    if f.name == 'W' or f.name == 'depth':
-                        f.grid.depth = self.depth.data
-                else:
-                    if f.name == 'U' or f.name == 'V' or f.name == 'depth_u':
-                        f.grid.depth = np.array(self.depth_u.data)
-                    if f.name == 'W' or f.name == 'depth':
-                        f.grid.depth = np.array(self.depth.data)
+            if f.grid.depth_field is not None:
+                fdepth = getattr(self, f.grid.depth_field)
+                f.grid.depth = fdepth.data if isinstance(fdepth.data, np.ndarray) else np.ndarray(fdepth.data)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime
