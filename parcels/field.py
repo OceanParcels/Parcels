@@ -449,13 +449,22 @@ class Field(object):
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
-        if z < grid.depth[0] or z > grid.depth[-1]:
-            raise FieldOutOfBoundError(0, 0, z, field=self)
-        depth_index = grid.depth <= z
-        if z >= grid.depth[-1]:
-            zi = len(grid.depth) - 2
+        if grid.depth[-1] > grid.depth[0]:
+            if z < grid.depth[0] or z > grid.depth[-1]:
+                raise FieldOutOfBoundError(0, 0, z, field=self)
+            depth_index = grid.depth <= z
+            if z >= grid.depth[-1]:
+                zi = len(grid.depth) - 2
+            else:
+                zi = depth_index.argmin() - 1 if z >= grid.depth[0] else 0
         else:
-            zi = depth_index.argmin() - 1 if z >= grid.depth[0] else 0
+            if z > grid.depth[0] or z < grid.depth[-1]:
+                raise FieldOutOfBoundError(0, 0, z, field=self)
+            depth_index = grid.depth >= z
+            if z <= grid.depth[-1]:
+                zi = len(grid.depth) - 2
+            else:
+                zi = depth_index.argmin() - 1 if z <= grid.depth[0] else 0
         zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
         return (zi, zeta)
 
@@ -486,27 +495,24 @@ class Field(object):
                 xsi*eta * grid.depth[:, yi+1, xi+1] + \
                 (1-xsi)*eta * grid.depth[:, yi+1, xi]
         z = np.float32(z)
-        depth_index = depth_vector <= z
-        
-        # conditions for downward positive or negative otherwise all downward negative crash. 
 
-        if depth_vector[-1]>depth_vector[0] and z>=depth_vector[-1] or depth_vector[-1]<depth_vector[0] and z<=depth_vector[-1]:
-            zi= len(depth_vector) - 2
-        if depth_vector[-1]>depth_vector[0] and z >= depth_vector[0]:
-            zi = depth_index.argmin() - 1
+        if depth_vector[-1] > depth_vector[0]:
+            depth_index = depth_vector <= z
+            if z >= depth_vector[-1]:
+                zi = len(depth_vector) - 2
+            else:
+                zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
             if z < depth_vector[zi] or z > depth_vector[zi+1]:
                 raise FieldOutOfBoundError(x, y, z, field=self)
-        elif depth_vector[-1]<depth_vector[0] and z <= depth_vector[0]:
-            zi = depth_index.argmax() - 1
         else:
-            zi = 0
-        if depth_vector[-1]>depth_vector[0] and z >= depth_vector[0]:
-            if z < depth_vector[zi] or z > depth_vector[zi+1]:
-                raise FieldOutOfBoundError(x, y, z, field=self)
-
-        if depth_vector[-1]<depth_vector[0] and z <= depth_vector[0]:
+            depth_index = depth_vector >= z
+            if z <= depth_vector[-1]:
+                zi = len(depth_vector) - 2
+            else:
+                zi = depth_index.argmin() - 1 if z <= depth_vector[0] else 0
             if z > depth_vector[zi] or z < depth_vector[zi+1]:
                 raise FieldOutOfBoundError(x, y, z, field=self)
+
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
