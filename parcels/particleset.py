@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta as delta
 
 import numpy as np
+import xarray as xr
 import progressbar
 
 from parcels.compiler import GNUCompiler
@@ -275,6 +276,37 @@ class ParticleSet(object):
                     (1-xsi)*eta * grid.lat[j+1, i]
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
+
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+
+    @classmethod
+    def from_particlefile(cls, fieldset, pclass, filename, repeatdt=None, lonlatdepth_dtype=None):
+        """Initialise the ParticleSet from a ParticleFile
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param filename: Name of the particlefile from which to read initial conditions
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        """
+
+        pfile = xr.open_dataset(str(filename), decode_cf=True)
+
+        lon = np.ma.filled(pfile.variables['lon'][:, -1], np.nan)
+        lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
+        depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
+        time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
+        if isinstance(time[0], np.timedelta64):
+            time = np.array([t/np.timedelta64(1, 's') for t in time])
+
+        inds = np.where(np.isfinite(lon))[0]
+        lon = lon[inds]
+        lat = lat[inds]
+        depth = depth[inds]
+        time = time[inds]
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
