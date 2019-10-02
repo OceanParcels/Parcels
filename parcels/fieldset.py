@@ -80,7 +80,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
@@ -240,7 +240,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
@@ -354,7 +354,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
@@ -416,7 +416,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
@@ -489,7 +489,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
@@ -555,7 +555,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
@@ -598,7 +598,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
@@ -651,7 +651,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
