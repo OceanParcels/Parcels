@@ -54,6 +54,27 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
     assert np.allclose([p.v for p in pset], v_vals, rtol=1e-12)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_create_fromparticlefile(fieldset, mode, tmpdir):
+    filename = tmpdir.join("pset_fromparticlefile.nc")
+    lon = np.linspace(0, 1, 10, dtype=np.float32)
+    lat = np.linspace(1, 0, 10, dtype=np.float32)
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
+    pfile = pset.ParticleFile(filename, outputdt=1)
+
+    def DeleteLast(particle, fieldset, time):
+        if particle.lon == 1.:
+            particle.delete()
+
+    pset.execute(DeleteLast, runtime=2, dt=1, output_file=pfile)
+    pfile.close()
+
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
+
+    for var in ['lon', 'lat', 'depth', 'time']:
+        assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
+
+
 @pytest.mark.parametrize('mode', ['scipy'])
 @pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
 def test_pset_create_field(fieldset, mode, lonlatdepth_dtype, npart=100):
