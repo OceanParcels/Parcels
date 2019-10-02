@@ -228,18 +228,19 @@ def test_globcurrent_particle_independence(mode, rundays=5):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_globcurrent_pset_fromfile(mode, tmpdir):
+@pytest.mark.parametrize('dt', [-300, 300])
+def test_globcurrent_pset_fromfile(mode, dt, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.nc")
     fieldset = set_globcurrent_fieldset()
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
     pfile = pset.ParticleFile(filename, outputdt=delta(hours=6))
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5), output_file=pfile)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
     pfile.close()
 
     pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
-    pset_new.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+    pset_new.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
     for var in ['lon', 'lat', 'depth', 'time']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
