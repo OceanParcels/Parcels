@@ -827,7 +827,7 @@ class FieldSet(object):
                     data = f.reshape(data)[0:1, :]
                     if lib is da:
                         f.data = da.concatenate([data, f.data[:2, :]], axis=0)
-                    else: 
+                    else:
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)

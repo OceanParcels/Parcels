@@ -21,7 +21,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, use_xarray=False, time_periodic=False, timestamps=None):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                             '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+                             '2002*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     if timestamps is None:
         dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
@@ -94,7 +94,7 @@ def test_globcurrent_particles(mode, use_xarray):
 def test_globcurrent_time_periodic(mode, rundays):
     sample_var = []
     for deferred_load in [True, False]:
-        fieldset = set_globcurrent_fieldset(time_periodic=True, deferred_load=deferred_load)
+        fieldset = set_globcurrent_fieldset(time_periodic=(86400*365), deferred_load=deferred_load)
 
         class MyParticle(ptype[mode]):
             sample_var = Variable('sample_var', initial=fieldset.U)
