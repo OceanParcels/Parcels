@@ -64,7 +64,7 @@ class Field(object):
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
-    :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.time_delta object).
+    :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
            The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
     """
@@ -122,9 +122,9 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
-            raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.time_delta object.")
+            raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object.")
         if self.time_periodic is not False:
-            if isinstance(self.time_periodic, datetime.time_delta):
+            if isinstance(self.time_periodic, datetime.timedelta):
                 self.time_periodic = self.time_periodic.total_seconds()
             if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
                 if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
