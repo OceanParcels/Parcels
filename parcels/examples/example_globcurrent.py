@@ -94,7 +94,7 @@ def test_globcurrent_particles(mode, use_xarray):
 def test_globcurrent_time_periodic(mode, rundays):
     sample_var = []
     for deferred_load in [True, False]:
-        fieldset = set_globcurrent_fieldset(time_periodic=(86400*365), deferred_load=deferred_load)
+        fieldset = set_globcurrent_fieldset(time_periodic=delta(days=365), deferred_load=deferred_load)
 
         class MyParticle(ptype[mode]):
             sample_var = Variable('sample_var', initial=fieldset.U)

@@ -64,7 +64,8 @@ class Field(object):
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
-    :param time_periodic: To loop periodically over the time component of the Field. It is either set to False or to the value of the period. The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
+    :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.time_delta object).
+           The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
@@ -121,13 +122,16 @@ class Field(object):
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
         if self.time_periodic is True:
-            raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the period value")
-        if self.time_periodic is not False and not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
-            if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
-                raise ValueError("Time series provided is longer than the time_periodic parameter")
-            self.grid._add_last_periodic_data_timestep = True
-            self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
-            self.grid.time_full = self.grid.time
+            raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.time_delta object.")
+        if self.time_periodic is not False:
+            if isinstance(self.time_periodic, datetime.time_delta):
+                self.time_periodic = self.time_periodic.total_seconds()
+            if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
+                if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
+                    raise ValueError("Time series provided is longer than the time_periodic parameter")
+                self.grid._add_last_periodic_data_timestep = True
+                self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
+                self.grid.time_full = self.grid.time
 
         self.vmin = vmin
         self.vmax = vmax
