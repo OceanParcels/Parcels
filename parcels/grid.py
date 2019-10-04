@@ -62,6 +62,7 @@ class Grid(object):
         self.periods = 0
         self.load_chunk = []
         self.chunk_info = None
+        self._add_last_periodic_data_timestep = False
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
