@@ -232,7 +232,8 @@ class ParticleFile(object):
             if pset.size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                pset_towrite = [p for p in pset if p.dt * p.time <= p.dt * time and np.isfinite(p.id)]
+                tol = 1e-8
+                pset_towrite = [p for p in pset if p.dt * p.time < p.dt * time + tol and np.isfinite(p.id)]
                 if len(pset_towrite) > 0:
                     for var in self.var_names:
                         data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
