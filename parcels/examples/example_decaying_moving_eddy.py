@@ -1,8 +1,13 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
-from parcels import AdvectionRK4
-import numpy as np
 from datetime import timedelta as delta
+
+import numpy as np
 import pytest
+
+from parcels import AdvectionRK4
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -50,7 +55,7 @@ def true_values(t, x_0, y_0):  # Calculate the expected values for particles at 
     return np.array([x, y])
 
 
-def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
+def decaying_moving_example(fieldset, outfile, mode='scipy', method=AdvectionRK4):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=start_lon, lat=start_lat)
 
     dt = delta(minutes=5)
@@ -58,22 +63,24 @@ def decaying_moving_example(fieldset, mode='scipy', method=AdvectionRK4):
     outputdt = delta(hours=1)
 
     pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
-                 output_file=pset.ParticleFile(name="DecayingMovingParticle.nc", outputdt=outputdt))
+                 output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     return pset
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_rotation_example(mode):
+def test_rotation_example(mode, tmpdir):
+    outfile = tmpdir.join('DecayingMovingParticle.nc')
     fieldset = decaying_moving_eddy_fieldset()
-    pset = decaying_moving_example(fieldset, mode=mode)
+    pset = decaying_moving_example(fieldset, outfile, mode=mode)
     vals = true_values(pset[0].time, start_lon, start_lat)  # Calculate values for the particle.
     assert(np.allclose(np.array([[pset[0].lon], [pset[0].lat]]), vals, 1e-2))   # Check advected values against calculated values.
 
 
 if __name__ == "__main__":
-    filename = 'decaying_moving_eddy'
+    fset_filename = 'decaying_moving_eddy'
+    outfile = 'DecayingMovingParticle.nc'
     fieldset = decaying_moving_eddy_fieldset()
-    fieldset.write(filename)
+    fieldset.write(fset_filename)
 
-    pset = decaying_moving_example(fieldset)
+    pset = decaying_moving_example(fieldset, outfile)

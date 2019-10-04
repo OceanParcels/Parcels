@@ -1,12 +1,17 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.tools.loggers import logger
 import ast
-import cgen as c
 import collections
 import math
-import numpy as np
 import random
 from copy import copy
+
+import cgen as c
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.tools.loggers import logger
 
 
 class IntrinsicNode(ast.AST):
@@ -236,6 +241,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
     def visit_Attribute(self, node):
         node.value = self.visit(node.value)
         if isinstance(node.value, IntrinsicNode):
+            if node.attr == 'update_next_dt':
+                return 'update_next_dt'
             return getattr(node.value, node.attr)
         else:
             if node.value.id in ['np', 'numpy']:
@@ -357,7 +364,7 @@ class KernelGenerator(ast.NodeVisitor):
     attriibute on nodes in the Python AST."""
 
     # Intrinsic variables that appear as function arguments
-    kernel_vars = ['particle', 'fieldset', 'time', 'dt', 'output_time', 'tol']
+    kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
     array_vars = []
 
     def __init__(self, fieldset, ptype):
@@ -437,6 +444,7 @@ class KernelGenerator(ast.NodeVisitor):
         note that starred and keyword arguments are currently not
         supported."""
         pointer_args = False
+        parcels_customed_Cfunc = False
         if isinstance(node.func, PrintNode):
             # Write our own Print parser because Python3-AST does not seem to have one
             if isinstance(node.args[0], ast.Str):
@@ -446,6 +454,8 @@ class KernelGenerator(ast.NodeVisitor):
             elif isinstance(node.args[0], ast.BinOp):
                 if hasattr(node.args[0].right, 'ccode'):
                     args = node.args[0].right.ccode
+                elif hasattr(node.args[0].right, 'id'):
+                    args = node.args[0].right.id
                 elif hasattr(node.args[0].right, 'elts'):
                     args = []
                     for a in node.args[0].right.elts:
@@ -468,10 +478,12 @@ class KernelGenerator(ast.NodeVisitor):
         else:
             for a in node.args:
                 self.visit(a)
-                if a.ccode == 'pointer_args':
+                if a.ccode == 'parcels_customed_Cfunc_pointer_args':
                     pointer_args = True
-                    continue
-                if isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
+                    parcels_customed_Cfunc = True
+                elif a.ccode == 'parcels_customed_Cfunc':
+                    parcels_customed_Cfunc = True
+                elif isinstance(a, FieldNode) or isinstance(a, VectorFieldNode):
                     a.ccode = a.obj.ccode_name
                 elif isinstance(a, ParticleNode):
                     continue
@@ -479,8 +491,16 @@ class KernelGenerator(ast.NodeVisitor):
                     a.ccode = "&%s" % a.ccode
             ccode_args = ", ".join([a.ccode for a in node.args[pointer_args:]])
             try:
-                self.visit(node.func)
-                node.ccode = "%s(%s)" % (node.func.ccode, ccode_args)
+                if isinstance(node.func, str):
+                    node.ccode = node.func + '(' + ccode_args + ')'
+                else:
+                    self.visit(node.func)
+                    rhs = "%s(%s)" % (node.func.ccode, ccode_args)
+                    if parcels_customed_Cfunc:
+                        node.ccode = str(c.Block([c.Assign("err", rhs),
+                                                  c.Statement("CHECKERROR(err)")]))
+                    else:
+                        node.ccode = rhs
             except:
                 raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
 
@@ -847,6 +867,8 @@ class LoopGenerator(object):
         # Add include for Parcels and math header
         ccode += [str(c.Include("parcels.h", system=False))]
         ccode += [str(c.Include("math.h", system=False))]
+        ccode += [str(c.Assign('double _next_dt', '0'))]
+        ccode += [str(c.Assign('size_t _next_dt_set', '0'))]
 
         # Generate type definition for particle type
         vdecl = []
@@ -882,6 +904,15 @@ class LoopGenerator(object):
         p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
         ccode += [p_back_get]
 
+        update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
+                                                             spec='inline')), [c.Value('double', 'dt')])
+        body = []
+        body += [c.Assign("_next_dt", "dt")]
+        body += [c.Assign("_next_dt_set", "1")]
+        update_next_dt_body = c.Block(body)
+        update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+        ccode += [update_next_dt]
+
         if c_include:
             ccode += [c_include]
 
@@ -903,16 +934,21 @@ class LoopGenerator(object):
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
-        pdt_eq_dt_pos = c.Assign("particles[p].dt", "__dt * sign_dt")
+        pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
+        partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
         body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
         body += [pdt_eq_dt_pos]
+        body += [partdt]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
+        check_pdt = c.If("res == SUCCESS & __pdt_prekernels != particles[p].dt", c.Assign("res", "REPEAT"))
+        body += [check_pdt]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
-        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += sign_dt * __dt"),
-                                                                  dt_pos, dt_0_break, c.Statement("continue")]),
+        update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
+        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += particles[p].dt"), update_pdt,
+                                                 dt_pos, dt_0_break, c.Statement("continue")]),
                  c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
                           dt_pos, c.Statement("break")]))]
 
@@ -920,6 +956,7 @@ class LoopGenerator(object):
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
+                         c.Value("float", "__pdt_prekernels"),
                          c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
                          sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)

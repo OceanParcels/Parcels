@@ -1,7 +1,9 @@
 
-static inline void func(CField *f, double *lon, float *dt)
+static inline ErrorCode func(CField *f, double *lon, float *dt)
 {
-  float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
-  float u = data[2][1];
+  float data2D[2][2][2];
+  ErrorCode err = getCell2D(f, 1, 2, 0, data2D, 1); CHECKERROR(err);
+  float u = data2D[0][0][0];
   *lon += u * *dt;
+  return SUCCESS;
 }

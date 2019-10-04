@@ -1,14 +1,14 @@
-from parcels.tools.error import ErrorCode
-from parcels.field import Field
-from operator import attrgetter
-import numpy as np
 from ctypes import c_void_p
+from operator import attrgetter
+
+import numpy as np
+
+from parcels.field import Field
+from parcels.tools.error import ErrorCode
+from parcels.tools.loggers import logger
 
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
-
-
-lastID = 0  # module-level variable keeping track of last Particle ID used
 
 
 class Variable(object):
@@ -112,6 +112,7 @@ class ParticleType(object):
 
 class _Particle(object):
     """Private base class for all particle types"""
+    lastID = 0  # class-level variable keeping track of last Particle ID used
 
     def __init__(self):
         ptype = self.getPType()
@@ -127,8 +128,9 @@ class _Particle(object):
                 if time is None:
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
-                v.initial.fieldset.computeTimeChunk(time, 1)
+                v.initial.fieldset.computeTimeChunk(time, 0)
                 initial = v.initial[time, depth, lat, lon]
+                logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
                 initial = v.initial
             # Enforce type of initial value
@@ -145,6 +147,10 @@ class _Particle(object):
     @classmethod
     def getInitialValue(cls, ptype, name):
         return next((v.initial for v in ptype.variables if v.name is name), None)
+
+    @classmethod
+    def setLastID(cls, offset):
+        _Particle.lastID = offset
 
 
 class ScipyParticle(_Particle):
@@ -165,23 +171,21 @@ class ScipyParticle(_Particle):
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
-    fileid = Variable('fileid', dtype=np.int32, to_write=False)
     dt = Variable('dt', dtype=np.float32, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
 
-    def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
-        global lastID
+    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).depth.initial = depth
         type(self).time.initial = time
-        type(self).id.initial = lastID
-        lastID += 1
-        type(self).fileid.initial = -1  # -1 means particle is not written yet
+        type(self).id.initial = pid
+        _Particle.lastID = max(_Particle.lastID, pid)
         type(self).dt.initial = None
         super(ScipyParticle, self).__init__()
+        self._next_dt = None
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
@@ -199,6 +203,14 @@ class ScipyParticle(_Particle):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
         cls.depth.dtype = dtype
+
+    def update_next_dt(self, next_dt=None):
+        if next_dt is None:
+            if self._next_dt is not None:
+                self.dt = self._next_dt
+                self._next_dt = None
+        else:
+            self._next_dt = next_dt
 
 
 class JITParticle(ScipyParticle):

@@ -1,5 +1,4 @@
 """Collection of pre-built recovery kernels"""
-from enum import IntEnum
 
 
 __all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
@@ -7,7 +6,7 @@ __all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtra
            'recovery_map']
 
 
-class ErrorCode(IntEnum):
+class ErrorCode(object):
     Success = 0
     Repeat = 1
     Delete = 2
@@ -72,6 +71,8 @@ class TimeExtrapolationError(RuntimeError):
             message += " Try setting allow_time_extrapolation to True"
         elif msg == 'show_time':
             message += " Try explicitly providing a 'show_time'"
+        else:
+            message += msg + " Try setting allow_time_extrapolation to True"
         super(TimeExtrapolationError, self).__init__(message)
 
 

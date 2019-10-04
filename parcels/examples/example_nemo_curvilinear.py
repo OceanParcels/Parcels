@@ -1,10 +1,17 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, ParticleFile
 from argparse import ArgumentParser
+from datetime import timedelta as delta
+from glob import glob
+from os import path
+
 import numpy as np
 import pytest
-from glob import glob
-from datetime import timedelta as delta
-from os import path
+
+from parcels import AdvectionRK4
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleFile
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -64,8 +71,8 @@ def make_plot(trajfile):
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear(mode):
-    outfile = 'nemo_particles'
+def test_nemo_curvilinear(mode, tmpdir):
+    outfile = tmpdir.join('nemo_particles')
     run_nemo_curvilinear(mode, outfile)
 
 

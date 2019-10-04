@@ -12,9 +12,11 @@ dependencies:
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
   - git
+  - mpi4py>=3.0.1
+  - mpich>=3.2.1
   - jupyter
   - matplotlib>=2.0.2
-  - netcdf4>=1.1.9,<=1.4.1
+  - netcdf4>=1.1.9
   - numpy>=1.9.1
   - progressbar2
   - py>=1.4.27
@@ -25,6 +27,6 @@ dependencies:
   - xarray>=0.10.8
   - dask
   - cftime
-  - pip:
-      - pytest<4.0
-      - nbval
+  - pytest<4.0
+  - nbval
+  - scikit-learn

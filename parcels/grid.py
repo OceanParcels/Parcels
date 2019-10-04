@@ -1,8 +1,17 @@
-from parcels.tools.loggers import logger
-from parcels.tools.converters import TimeConverter
-import numpy as np
-from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
+from ctypes import c_double
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import c_void_p
+from ctypes import cast
+from ctypes import POINTER
+from ctypes import pointer
+from ctypes import Structure
 from enum import IntEnum
+
+import numpy as np
+
+from parcels.tools.converters import TimeConverter
+from parcels.tools.loggers import logger
 
 __all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
 
@@ -51,6 +60,9 @@ class Grid(object):
         self.defer_load = False
         self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
         self.periods = 0
+        self.load_chunk = []
+        self.chunk_info = None
+        self._add_last_periodic_data_timestep = False
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
@@ -82,6 +94,8 @@ class Grid(object):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('z4d', c_int),
                         ('mesh_spherical', c_int), ('zonal_periodic', c_int),
+                        ('chunk_info', POINTER(c_int)),
+                        ('load_chunk', POINTER(c_int)),
                         ('tfull_min', c_double), ('tfull_max', c_double), ('periods', POINTER(c_int)),
                         ('lonlat_minmax', POINTER(c_float)),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
@@ -96,6 +110,8 @@ class Grid(object):
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
                                            self.mesh == 'spherical', self.zonal_periodic,
+                                           (c_int * len(self.chunk_info))(*self.chunk_info),
+                                           self.load_chunk.ctypes.data_as(POINTER(c_int)),
                                            self.time_full[0], self.time_full[-1], pointer(self.periods),
                                            self.lonlat_minmax.ctypes.data_as(POINTER(c_float)),
                                            self.lon.ctypes.data_as(POINTER(c_float)),
@@ -140,20 +156,42 @@ class Grid(object):
         dx = np.where(dx > 180, dx-360, dx)
         self.zonal_periodic = sum(dx) > 359.9
 
+    def add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
+        if zonal:
+            if len(self.depth.shape) == 3:
+                self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
+                                             self.depth[:, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                assert self.depth.shape[2] == self.xdim, "Third dim must be x."
+            else:
+                self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
+                                             self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
+        if meridional:
+            if len(self.depth.shape) == 3:
+                self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
+                                             self.depth[:, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                assert self.depth.shape[1] == self.ydim, "Second dim must be y."
+            else:
+                self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
+                                             self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                assert self.depth.shape[2] == self.ydim, "Third dim must be y."
+
     def computeTimeChunk(self, f, time, signdt):
-        nextTime_loc = np.infty * signdt
+        nextTime_loc = np.infty if signdt >= 0 else -np.infty
         periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
         if self.update_status == 'not_updated':
             if self.ti >= 0:
                 if (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
                     self.ti = -1  # reset
-                elif (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                elif signdt >= 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                    self.ti = -1  # reset
+                elif signdt < 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time_full[-1]):
                     self.ti = -1  # reset
                 elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
-                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time[1] and self.ti > 0:
+                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
@@ -161,6 +199,10 @@ class Grid(object):
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)
                 periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+                if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0]:
+                    self.ti = len(self.time)-2
+                    periods -= 1
+
                 if self.ti > 0 and signdt == -1:
                     self.ti -= 1
                 if self.ti >= len(self.time_full) - 2:
@@ -223,6 +265,8 @@ class RectilinearGrid(Grid):
             self.ydim = self.lat.size
             self.meridional_halo = halosize
         self.lonlat_minmax = np.array([np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32)
+        if isinstance(self, RectilinearSGrid):
+            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -352,6 +396,8 @@ class CurvilinearGrid(Grid):
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
+        if isinstance(self, CurvilinearSGrid):
+            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class CurvilinearZGrid(CurvilinearGrid):

@@ -1,10 +1,18 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, Variable
 from datetime import timedelta as delta
-from os import path
 from glob import glob
+from os import path
+
 import numpy as np
 import pytest
 import xarray as xr
+
+from parcels import AdvectionRK4
+from parcels import ErrorCode
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
+from parcels import Variable
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -13,7 +21,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, use_xarray=False, time_periodic=False, timestamps=None):
     if filename is None:
         filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                             '20*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+                             '2002*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     if timestamps is None:
         dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
@@ -86,7 +94,7 @@ def test_globcurrent_particles(mode, use_xarray):
 def test_globcurrent_time_periodic(mode, rundays):
     sample_var = []
     for deferred_load in [True, False]:
-        fieldset = set_globcurrent_fieldset(time_periodic=True, deferred_load=deferred_load)
+        fieldset = set_globcurrent_fieldset(time_periodic=delta(days=365), deferred_load=deferred_load)
 
         class MyParticle(ptype[mode]):
             sample_var = Variable('sample_var', initial=fieldset.U)
@@ -164,6 +172,14 @@ def test_globcurrent_time_extrapolation_error(mode, use_xarray):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('use_xarray', [True, False])
+def test_globcurrent_dt0(mode, use_xarray):
+    fieldset = set_globcurrent_fieldset(use_xarray=use_xarray)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[25], lat=[-35])
+    pset.execute(AdvectionRK4, dt=0.)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('dt', [-300, 300])
 @pytest.mark.parametrize('use_xarray', [True, False])
 def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
@@ -177,17 +193,35 @@ def test_globcurrent_variable_fromfield(mode, dt, use_xarray):
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 
 
-@pytest.mark.parametrize('deferred_load', [True, False])
-@pytest.mark.parametrize('use_xarray', [True, False])
-def test_globcurrent_deferred_fieldset_gradient(deferred_load, use_xarray):
-    fieldset = set_globcurrent_fieldset(deferred_load=deferred_load, use_xarray=use_xarray)
-    (dU_dx, dU_dy) = fieldset.U.gradient()
-    fieldset.add_field(dU_dy)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_globcurrent_particle_independence(mode, rundays=5):
+    fieldset = set_globcurrent_fieldset()
+    time0 = fieldset.U.grid.time[0]
 
-    pset = ParticleSet(fieldset, pclass=JITParticle, lon=25, lat=-35)
-    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(days=1))
+    def DeleteP0(particle, fieldset, time):
+        if particle.id == 0:
+            return ErrorCode.ErrorOutOfBounds  # we want to pass through recov loop
 
-    tdim = 3 if deferred_load else 366
-    assert(dU_dx.data.shape == (tdim, 41, 81))
-    assert(fieldset.dU_dy.data.shape == (tdim, 41, 81))
-    assert(dU_dx is fieldset.U.gradientx)
+    def DeleteParticle(particle, fieldset, time):
+        particle.delete()
+
+    pset0 = ParticleSet(fieldset, pclass=JITParticle,
+                        lon=[25, 25],
+                        lat=[-35, -35],
+                        time=time0)
+
+    pset0.execute(pset0.Kernel(DeleteP0)+AdvectionRK4,
+                  runtime=delta(days=rundays),
+                  dt=delta(minutes=5),
+                  recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+
+    pset1 = ParticleSet(fieldset, pclass=JITParticle,
+                        lon=[25, 25],
+                        lat=[-35, -35],
+                        time=time0)
+
+    pset1.execute(AdvectionRK4,
+                  runtime=delta(days=rundays),
+                  dt=delta(minutes=5))
+
+    assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])

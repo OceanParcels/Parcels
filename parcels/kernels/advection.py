@@ -1,6 +1,7 @@
 """Collection of pre-built advection kernels"""
-from parcels.tools.error import ErrorCode
 import math
+
+from parcels.tools.error import ErrorCode
 
 
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D']
@@ -95,7 +96,7 @@ def AdvectionRK45(particle, fieldset, time):
         particle.lon = lon_4th
         particle.lat = lat_4th
         if kappa <= math.fabs(particle.dt * tol[0] / 10):
-            particle.dt *= 2
+            particle.update_next_dt(particle.dt * 2)
     else:
         particle.dt /= 2
         return ErrorCode.Repeat

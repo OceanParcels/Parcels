@@ -128,6 +128,16 @@ def test_nested_if(fieldset, mode):
     assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_dt_as_variable_in_kernel(fieldset, mode):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        dt = 1.  # noqa
+
+    pset.execute(kernel, endtime=10, dt=1.)
+
+
 def test_parcels_tmpvar_in_kernel(fieldset):
     """Tests for error thrown if vartiable with 'tmp' defined in custom kernel"""
     error_thrown = False
@@ -200,6 +210,14 @@ def test_print(fieldset, mode, capfd):
     tol = 1e-8
     assert abs(float(lst[0]) - pset[0].id) < tol and abs(float(lst[1]) - pset[0].p) < tol and abs(float(lst[2]) - 5) < tol
 
+    def kernel2(particle, fieldset, time):
+        tmp = 3
+        print("%f" % (tmp))
+    pset.execute(kernel2, endtime=1., dt=1.)
+    out, err = capfd.readouterr()
+    lst = out.split(' ')
+    assert abs(float(lst[0]) - 3) < tol
+
 
 def random_series(npart, rngfunc, rngargs, mode):
     random = parcels_random if mode == 'jit' else py_random
@@ -227,7 +245,7 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), series, rtol=1e-12)
+    assert np.allclose(np.array([p.p for p in pset]), series, atol=1e-9)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -243,18 +261,20 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline void func(CField *f, float *lon, float *dt)
+                 static inline ErrorCode func(CField *f, float *lon, float *dt)
                  {
-                   float (*data)[f->xdim] = (float (*)[f->xdim]) f->data;
-                   float u = data[2][1];
+                   float data2D[2][2][2];
+                   ErrorCode err = getCell2D(f, 1, 2, 0, data2D, 1); CHECKERROR(err);
+                   float u = data2D[0][0][0];
                    *lon += u * *dt;
+                   return SUCCESS;
                  }
                  """
     else:
         c_include = path.join(path.dirname(__file__), 'customed_header.h')
 
     def ckernel(particle, fieldset, time):
-        func('pointer_args', fieldset.U, particle.lon, particle.dt)
+        func('parcels_customed_Cfunc_pointer_args', fieldset.U, particle.lon, particle.dt)
 
     def pykernel(particle, fieldset, time):
         particle.lon = func(fieldset.U, particle.lon, particle.dt)
@@ -265,3 +285,18 @@ def test_c_kernel(fieldset, mode, c_inc):
         kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=3., dt=3.)
     assert np.allclose(pset[0].lon, 0.81578948)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_dt_modif_by_kernel(fieldset, mode):
+    class TestParticle(ptype[mode]):
+        age = Variable('age', dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0])
+
+    def modif_dt(particle, fieldset, time):
+        particle.age += particle.dt
+        particle.dt = 2
+
+    endtime = 4
+    pset.execute(modif_dt, endtime=endtime, dt=1.)
+    assert np.isclose(pset[0].age, endtime)

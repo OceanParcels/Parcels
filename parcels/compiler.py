@@ -1,17 +1,23 @@
 import subprocess
-from os import path, getenv
-from tempfile import gettempdir
+from os import getenv
+from os import path
 from struct import calcsize
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path  # python 2 backport
+from tempfile import gettempdir
+
 try:
     from os import getuid
 except:
     # Windows does not have getuid(), so define to simply return 'tmp'
     def getuid():
         return 'tmp'
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path  # python 2 backport
 
 
 def get_package_dir():
@@ -79,4 +85,5 @@ class GNUCompiler(Compiler):
         cppargs = ['-Wall', '-fPIC', '-I%s' % path.join(get_package_dir(), 'include')] + opt_flags + cppargs
         cppargs += arch_flag
         ldargs = ['-shared'] + ldargs + arch_flag
-        super(GNUCompiler, self).__init__("gcc", cppargs=cppargs, ldargs=ldargs)
+        compiler = "mpicc" if MPI else "gcc"
+        super(GNUCompiler, self).__init__(compiler, cppargs=cppargs, ldargs=ldargs)

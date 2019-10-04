@@ -1,11 +1,19 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
-from parcels import timer
-from argparse import ArgumentParser
-import numpy as np
 import math
-import pytest
+from argparse import ArgumentParser
 from datetime import timedelta as delta
+
+import numpy as np
+import pytest
+
+from parcels import AdvectionEE
+from parcels import AdvectionRK4
+from parcels import AdvectionRK45
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
+from parcels import timer
+from parcels import Variable
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -56,11 +64,13 @@ def UpdateP(particle, fieldset, time):
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
-def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
+def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4,
+                    outfile="StommelParticle.nc", repeatdt=None, write_fields=True):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset()
-    filename = 'stommel'
-    fieldset.write(filename)
+    if write_fields:
+        filename = 'stommel'
+        fieldset.write(filename)
     timer.fieldset.stop()
 
     # Determine particle class according to mode
@@ -72,7 +82,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
         p = Variable('p', dtype=np.float32, initial=0.)
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
 
-    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle,
+    pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
                                  start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
 
     if verbose:
@@ -86,7 +96,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
     pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt,
-                 moviedt=None, output_file=pset.ParticleFile(name="StommelParticle", outputdt=outputdt))
+                 moviedt=None, output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     if verbose:
         print("Final particle positions:\n%s" % pset)
@@ -97,11 +107,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4):
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_stommel_fieldset(mode):
+def test_stommel_fieldset(mode, tmpdir):
     timer.root = timer.Timer('Main')
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
-    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'])
-    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'])
+    outfile = tmpdir.join("StommelParticle")
+    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], outfile=outfile, write_fields=False)
+    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], outfile=outfile, write_fields=False)
     assert np.allclose([p.lon for p in psetRK4], [p.lon for p in psetRK45], rtol=1e-3)
     assert np.allclose([p.lat for p in psetRK4], [p.lat for p in psetRK45], rtol=1e-3)
     err_adv = np.array([abs(p.p_start - p.p) for p in psetRK4])
@@ -126,12 +137,16 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Print particle information before and after execution')
     p.add_argument('-m', '--method', choices=('RK4', 'EE', 'RK45'), default='RK4',
                    help='Numerical method used for advection')
+    p.add_argument('-o', '--outfile', default='StommelParticle.nc',
+                   help='Name of output file')
+    p.add_argument('-r', '--repeatdt', default=None, type=int,
+                   help='repeatdt of the ParticleSet')
     args = p.parse_args()
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
-    stommel_example(args.particles, mode=args.mode,
-                    verbose=args.verbose, method=method[args.method])
+    stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
+                    outfile=args.outfile, repeatdt=args.repeatdt)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()

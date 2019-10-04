@@ -1,12 +1,23 @@
-from parcels.field import Field, VectorField, SummedField, NestedField
-from parcels.gridset import GridSet
-from parcels.grid import Grid
-from parcels.tools.loggers import logger
-from parcels.tools.converters import TimeConverter
-import numpy as np
-from os import path
-from glob import glob
 from copy import deepcopy
+from glob import glob
+from os import path
+
+import dask.array as da
+import numpy as np
+
+from parcels.field import Field
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.grid import Grid
+from parcels.gridset import GridSet
+from parcels.tools.converters import TimeConverter
+from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.loggers import logger
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 
 __all__ = ['FieldSet']
@@ -69,7 +80,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
@@ -86,7 +97,13 @@ class FieldSet(object):
             lat = dims['lat']
             depth = np.zeros(1, dtype=np.float32) if 'depth' not in dims else dims['depth']
             time = np.zeros(1, dtype=np.float64) if 'time' not in dims else dims['time']
-            grid = Grid.create_grid(lon, lat, depth, time, time_origin=TimeConverter(), mesh=mesh)
+            time = np.array(time) if not isinstance(time, np.ndarray) else time
+            if isinstance(time[0], np.datetime64):
+                time_origin = TimeConverter(time[0])
+                time = np.array([time_origin.reltime(t) for t in time])
+            else:
+                time_origin = TimeConverter(0)
+            grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             if 'creation_log' not in kwargs.keys():
                 kwargs['creation_log'] = 'from_data'
 
@@ -145,7 +162,7 @@ class FieldSet(object):
             g.check_zonal_periodic()
             if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin, type(self.time_origin)), 'time origins of different grids must be have the same type'
+            assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
             g.time = g.time + self.time_origin.reltime(g.time_origin)
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
@@ -188,7 +205,7 @@ class FieldSet(object):
         return paths
 
     @classmethod
-    def from_netcdf(cls, filenames, variables, dimensions, indices=None,
+    def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
@@ -210,6 +227,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -221,12 +240,13 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
+        :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
@@ -257,6 +277,7 @@ class FieldSet(object):
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
+            fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
 
             grid = None
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
@@ -280,7 +301,8 @@ class FieldSet(object):
                         break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
+                                            time_periodic=time_periodic, deferred_load=deferred_load,
+                                            fieldtype=fieldtype, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -321,6 +343,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -330,7 +354,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
@@ -381,6 +405,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -390,7 +416,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
@@ -452,6 +478,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -461,7 +489,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
@@ -516,6 +544,8 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
@@ -525,7 +555,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
@@ -562,11 +592,13 @@ class FieldSet(object):
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
                Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param extra_fields: Extra fields to read beyond U and V
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
@@ -599,6 +631,7 @@ class FieldSet(object):
 
         :param ds: xarray Dataset.
                Note that the built-in Advection kernels assume that U and V are in m/s
+        :param variables: Dictionary mapping parcels variable names to data variables in the xarray Dataset.
         :param dimensions: Dictionary mapping data dimensions (lon,
                lat, depth, time, data) to dimensions in the xarray Dataset.
                Note that dimensions can also be a dictionary of dictionaries if
@@ -607,6 +640,8 @@ class FieldSet(object):
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
 
@@ -616,7 +651,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
@@ -686,16 +721,18 @@ class FieldSet(object):
         """Write FieldSet to NetCDF file using NEMO convention
 
         :param filename: Basename of the output fileset"""
-        logger.info("Generating NEMO FieldSet output with basename: %s" % filename)
 
-        if hasattr(self, 'U'):
-            self.U.write(filename, varname='vozocrtx')
-        if hasattr(self, 'V'):
-            self.V.write(filename, varname='vomecrty')
+        if MPI is None or MPI.COMM_WORLD.Get_rank() == 0:
+            logger.info("Generating FieldSet output with basename: %s" % filename)
 
-        for v in self.get_fields():
-            if (v.name != 'U') and (v.name != 'V'):
-                v.write(filename)
+            if hasattr(self, 'U'):
+                self.U.write(filename, varname='vozocrtx')
+            if hasattr(self, 'V'):
+                self.V.write(filename, varname='vomecrty')
+
+            for v in self.get_fields():
+                if (v.name != 'U') and (v.name != 'V'):
+                    v.write(filename)
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
@@ -724,6 +761,13 @@ class FieldSet(object):
             f.advancetime(fnew, advance == 1)
 
     def computeTimeChunk(self, time, dt):
+        """Load a chunk of three data time steps into the FieldSet.
+        This is used when FieldSet uses data imported from netcdf,
+        with default option deferred_load. The loaded time steps are at or immediatly before time
+        and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+        :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
+        :param dt: time step of the integration scheme
+        """
         signdt = np.sign(dt)
         nextTime = np.infty if dt > 0 else -np.infty
 
@@ -734,44 +778,80 @@ class FieldSet(object):
                 continue
             if f.grid.update_status == 'not_updated':
                 nextTime_loc = f.grid.computeTimeChunk(f, time, signdt)
+                if time == nextTime_loc and signdt != 0:
+                    raise TimeExtrapolationError(time, field=f, msg='In fset.computeTimeChunk')
             nextTime = min(nextTime, nextTime_loc) if signdt >= 0 else max(nextTime, nextTime_loc)
 
-        # load in new data
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.is_gradient or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
-                    f.computeTimeChunk(data, tind)
+                    for fb in f.filebuffers:
+                        if fb is not None:
+                            fb.dataset.close()
+
+                    data = f.computeTimeChunk(data, tind)
+                data = f.rescale_and_set_minmax(data)
                 f.data = f.reshape(data)
+                if not f.chunk_set:
+                    f.chunk_setup()
+                if len(g.load_chunk) > 0:
+                    g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
             elif g.update_status == 'updated':
-                data = np.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                lib = np if isinstance(f.data, np.ndarray) else da
+                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
-                    f.data[:2, :] = f.data[1:, :]
                     f.loaded_time_indices = [2]
+                    f.filebuffers[0].dataset.close()
+                    f.filebuffers[:2] = f.filebuffers[1:]
+                    data = f.computeTimeChunk(data, 2)
                 else:
-                    f.data[1:, :] = f.data[:2, :]
                     f.loaded_time_indices = [0]
-                f.computeTimeChunk(data, f.loaded_time_indices[0])
-                f.data[f.loaded_time_indices[0], :] = f.reshape(data)[f.loaded_time_indices[0], :]
-            else:
-                f.loaded_time_indices = []
-
-            # do built-in computations on data
-            for tind in f.loaded_time_indices:
-                if f._scaling_factor:
-                    f.data[tind, :] *= f._scaling_factor
-                f.data[tind, :] = np.where(np.isnan(f.data[tind, :]), 0, f.data[tind, :])
-                if f.vmin is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] < f.vmin, 0, f.data[tind, :])
-                if f.vmax is not None:
-                    f.data[tind, :] = np.where(f.data[tind, :] > f.vmax, 0, f.data[tind, :])
-                if f.gradientx is not None:
-                    f.gradient(update=True, tindex=tind)
-
+                    f.filebuffers[2].dataset.close()
+                    f.filebuffers[1:] = f.filebuffers[:2]
+                    data = f.computeTimeChunk(data, 0)
+                data = f.rescale_and_set_minmax(data)
+                if signdt >= 0:
+                    data = f.reshape(data)[2:, :]
+                    if lib is da:
+                        f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                    else:
+                        f.data[:2, :] = f.data[1:, :]
+                        f.data[2, :] = data
+                else:
+                    data = f.reshape(data)[0:1, :]
+                    if lib is da:
+                        f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                    else:
+                        f.data[1:, :] = f.data[:2, :]
+                        f.data[0, :] = data
+                g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
+                    if signdt >= 0:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
+                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                    else:
+                        for block_id in range(len(g.load_chunk)):
+                            if g.load_chunk[block_id] == 2:
+                                if f.data_chunks[block_id] is None:
+                                    # file chunks were never loaded.
+                                    # happens when field not called by kernel, but shares a grid with another field called by kernel
+                                    break
+                                block = f.get_block(block_id)
+                                f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)

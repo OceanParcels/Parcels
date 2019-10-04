@@ -1,10 +1,19 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45
-from argparse import ArgumentParser
-import numpy as np
+import gc
 import math  # NOQA
-import pytest
+from argparse import ArgumentParser
 from datetime import timedelta as delta
+
+import numpy as np
+import pytest
+
+from parcels import AdvectionEE
+from parcels import AdvectionRK4
+from parcels import AdvectionRK45
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
+from parcels import Variable
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -71,8 +80,8 @@ def UpdateP(particle, fieldset, time):
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
-def pensinsula_example(fieldset, npart, mode='jit', degree=1,
-                       verbose=False, output=True, method=AdvectionRK4):
+def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
+                      verbose=False, output=True, method=AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input fieldset
@@ -104,7 +113,7 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
     dt = delta(minutes=5)
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    out = pset.ParticleFile(name="MyParticle", outputdt=delta(hours=1)) if output else None
+    out = pset.ParticleFile(name=outfile, outputdt=delta(hours=1)) if output else None
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
     pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 
@@ -116,10 +125,11 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_peninsula_fieldset(mode, mesh):
+def test_peninsula_fieldset(mode, mesh, tmpdir):
     """Execute peninsula test from fieldset generated in memory"""
     fieldset = peninsula_fieldset(100, 50, mesh)
-    pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
+    outfile = tmpdir.join("Peninsula")
+    pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
@@ -128,9 +138,9 @@ def test_peninsula_fieldset(mode, mesh):
     assert(err_smpl <= 1.e-3).all()
 
 
-def fieldsetfile(mesh):
+def fieldsetfile(mesh, tmpdir):
     """Generate fieldset files for peninsula test"""
-    filename = 'peninsula'
+    filename = tmpdir.join('peninsula')
     fieldset = peninsula_fieldset(100, 50, mesh=mesh)
     fieldset.write(filename)
     return filename
@@ -138,10 +148,12 @@ def fieldsetfile(mesh):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_peninsula_file(mode, mesh):
+def test_peninsula_file(mode, mesh, tmpdir):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
-    pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
+    gc.collect()
+    fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    outfile = tmpdir.join("Peninsula")
+    pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
@@ -171,23 +183,26 @@ Example of particle advection around an idealised peninsula""")
                    help='Numerical method used for advection')
     args = p.parse_args()
 
+    filename = 'peninsula'
     if args.fieldset is not None:
-        filename = 'peninsula'
         fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='flat')
-        fieldset.write(filename)
+    else:
+        fieldset = peninsula_fieldset(100, 50, mesh='flat')
+    fieldset.write(filename)
 
     # Open fieldset file set
     fieldset = FieldSet.from_parcels('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    outfile = "Peninsula"
 
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("pensinsula_example(fieldset, args.particles, mode=args.mode,\
+        runctx("peninsula_example(fieldset, outfile, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
                                    output=not args.nooutput, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        pensinsula_example(fieldset, args.particles, mode=args.mode,
-                           degree=args.degree, verbose=args.verbose,
-                           output=not args.nooutput, method=method[args.method])
+        peninsula_example(fieldset, outfile, args.particles, mode=args.mode,
+                          degree=args.degree, verbose=args.verbose,
+                          output=not args.nooutput, method=method[args.method])
