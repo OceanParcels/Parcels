@@ -285,3 +285,18 @@ def test_c_kernel(fieldset, mode, c_inc):
         kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=3., dt=3.)
     assert np.allclose(pset[0].lon, 0.81578948)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_dt_modif_by_kernel(fieldset, mode):
+    class TestParticle(ptype[mode]):
+        age = Variable('age', dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=[0.5], lat=[0])
+
+    def modif_dt(particle, fieldset, time):
+        particle.age += particle.dt
+        particle.dt = 2
+
+    endtime = 4
+    pset.execute(modif_dt, endtime=endtime, dt=1.)
+    assert np.isclose(pset[0].age, endtime)

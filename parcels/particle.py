@@ -185,6 +185,7 @@ class ScipyParticle(_Particle):
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).dt.initial = None
         super(ScipyParticle, self).__init__()
+        self._next_dt = None
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
@@ -202,6 +203,14 @@ class ScipyParticle(_Particle):
         cls.lon.dtype = dtype
         cls.lat.dtype = dtype
         cls.depth.dtype = dtype
+
+    def update_next_dt(self, next_dt=None):
+        if next_dt is None:
+            if self._next_dt is not None:
+                self.dt = self._next_dt
+                self._next_dt = None
+        else:
+            self._next_dt = next_dt
 
 
 class JITParticle(ScipyParticle):
