@@ -31,6 +31,7 @@ from parcels.codegenerator import LoopGenerator
 from parcels.compiler import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
+from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -283,6 +284,9 @@ class Kernel(object):
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
                     p.exception = fse
+                except FieldOutOfBoundSurfaceError as fse_z:
+                    res = ErrorCode.ErrorThroughSurface
+                    p.exception = fse_z
                 except Exception as e:
                     res = ErrorCode.Error
                     p.exception = e
@@ -300,15 +304,13 @@ class Kernel(object):
                     if dt == 0:
                         break
                     continue
-                elif res == ErrorCode.Repeat:
+                else:
                     # Try again without time update
                     for var in ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     break
-                else:
-                    break  # Failure - stop time loop
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
@@ -323,6 +325,8 @@ class Kernel(object):
 
         if recovery is None:
             recovery = {}
+        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
+            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
 

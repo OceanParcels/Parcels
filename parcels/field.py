@@ -22,6 +22,7 @@ from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
 from parcels.tools.error import FieldOutOfBoundError
+from parcels.tools.error import FieldOutOfBoundSurfaceError
 from parcels.tools.error import FieldSamplingError
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
@@ -460,7 +461,9 @@ class Field(object):
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
-        if z < grid.depth[0] or z > grid.depth[-1]:
+        if z < grid.depth[0]:
+            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+        elif z > grid.depth[-1]:
             raise FieldOutOfBoundError(0, 0, z, field=self)
         depth_index = grid.depth <= z
         if z >= grid.depth[-1]:
@@ -502,7 +505,9 @@ class Field(object):
             zi = len(depth_vector) - 2
         else:
             zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        if z < depth_vector[zi] or z > depth_vector[zi+1]:
+        if z < depth_vector[zi]:
+            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+        elif z > depth_vector[zi+1]:
             raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
@@ -591,6 +596,8 @@ class Field(object):
                     (zi, zeta) = self.search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
+                except FieldOutOfBoundSurfaceError:
+                    raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
