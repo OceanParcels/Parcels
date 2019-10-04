@@ -71,8 +71,8 @@ def make_plot(trajfile):
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear(mode):
-    outfile = 'nemo_particles'
+def test_nemo_curvilinear(mode, tmpdir):
+    outfile = tmpdir.join('nemo_particles')
     run_nemo_curvilinear(mode, outfile)
 
 
