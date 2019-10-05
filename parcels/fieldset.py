@@ -235,7 +235,7 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: list of list or array of arrays containing the timestamps for 
+        :param timestamps: list of list or array of arrays containing the timestamps for
                each of the files in filenames. Outer list/array corresponds to files, inner
                array corresponds to indices within files.
                Default is None if dimensions includes time.
@@ -263,13 +263,10 @@ class FieldSet(object):
                 timestamps = np.array(timestamps)
                 if any(isinstance(i, list) for i in timestamps):
                     timestamps = np.array([np.array(sub) for sub in timestamps])
-            assert(isinstance(timestamps, np.ndarray), 
-                   "Timestamps must be nested list or array")
-            assert(all(isinstance(file, np.ndarray) for file in timestamps),  
-                   "Timestamps must be nested list or array")
-            assert(all(isinstance(stamp, np.datetime64) for file in timestamps for stamp in file),  
-                   "Timestamps must be nested list or array. Outer array corresponds to files, "
-                   "while inner array corresponds to time indices within each file.")
+            assert isinstance(timestamps, np.ndarray), "Timestamps must be nested list or array"
+            assert all(isinstance(file, np.ndarray) for file in timestamps), "Timestamps must be nested list or array"
+            if all(isinstance(stamp, np.datetime64) for file in timestamps for stamp in file):
+                raise AssertionError("Timestamps must be nested list or array. Outer array corresponds to files, while inner array corresponds to time indices within each file.")
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'

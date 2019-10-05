@@ -108,7 +108,7 @@ class Field(object):
                 self.timestamps = timestamps
         else:
             self.timestamps = timestamps
-        # Note by DaanR: self.timestamps seems to be assigned twice: first as  
+        # Note by DaanR: self.timestamps seems to be assigned twice: first as
         # flattened array, second as nested array. Uncomment next line to see
         # this behavior.
         # print("self.timestamps:", timestamps)
@@ -240,14 +240,12 @@ class Field(object):
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
             if isinstance(filenames, list):
-                assert len(filenames) == len(timestamps), \
-                'Outer dimension of timestamps should correspond to number of files.'
+                assert len(filenames) == len(timestamps), 'Outer dimension of timestamps should correspond to number of files.'
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
-                    assert(len(filenames[k]) == len(timestamps)), \
-                    'Outer dimension of timestamps should correspond to number of files.'    
+                    assert(len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
             else:
-                raise TypeError("Filenames type is inconsistent with manual timestamp provision." \
+                raise TypeError("Filenames type is inconsistent with manual timestamp provision."
                                 + "Should be dict or list")
 
         if isinstance(variable, xr.core.dataarray.DataArray):

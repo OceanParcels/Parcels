@@ -948,7 +948,7 @@ class LoopGenerator(object):
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += particles[p].dt"), update_pdt,
-                                                 dt_pos, dt_0_break, c.Statement("continue")]),
+                                                                  dt_pos, dt_0_break, c.Statement("continue")]),
                  c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
                           dt_pos, c.Statement("break")]))]
 
