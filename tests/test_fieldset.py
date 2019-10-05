@@ -353,7 +353,7 @@ def test_timestaps(datetype, tmpdir):
 
     fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'))
     timestamps = [dims1['time'], dims2['time']]
-    fieldset4 = FieldSet.from_parcels('file*', timestamps=timestamps)
+    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps)
     assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
 
 
