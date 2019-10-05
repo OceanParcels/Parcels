@@ -100,18 +100,12 @@ class Field(object):
             raise ValueError("Unsupported mesh type. Choose either: 'spherical' or 'flat'")
         if timestamps is not None:
             # Check whether flattened or not
-            if all(isinstance(file, np.ndarray) for file in timestamps):
-                # Flatten
-                self.timestamps = np.array([stamp for file in timestamps for stamp in file])
+            if all(isinstance(f, np.ndarray) for f in timestamps):
+                self.timestamps = np.array([stamp for f in timestamps for stamp in f])
             if all(isinstance(stamp, np.datetime64) for stamp in timestamps):
-                # Pass
                 self.timestamps = timestamps
         else:
             self.timestamps = timestamps
-        # Note by DaanR: self.timestamps seems to be assigned twice: first as
-        # flattened array, second as nested array. Uncomment next line to see
-        # this behavior.
-        # print("self.timestamps:", timestamps)
         if type(interp_method) is dict:
             if self.name in interp_method:
                 self.interp_method = interp_method[self.name]
@@ -316,11 +310,9 @@ class Field(object):
             # across multiple files
             if timestamps is not None:
                 dataFiles = []
-                # Timesteps are nested.
                 for findex in range(len(data_filenames)):
                     for f in [data_filenames[findex]] * len(timestamps[findex]):
                         dataFiles.append(f)
-                # Flatten back
                 timestamps = np.array([stamp for file in timestamps for stamp in file])
                 timeslices = timestamps
                 time = timeslices

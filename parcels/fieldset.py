@@ -235,7 +235,7 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: list of list or array of arrays containing the timestamps for
+        :param timestamps: list of lists or array of arrays containing the timestamps for
                each of the files in filenames. Outer list/array corresponds to files, inner
                array corresponds to indices within files.
                Default is None if dimensions includes time.
