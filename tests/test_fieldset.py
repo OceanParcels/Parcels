@@ -334,6 +334,23 @@ def test_vector_fields(mode, swapUV):
         assert abs(pset[0].lat - .5) < 1e-9
 
 
+def test_timestaps(tmpdir):
+    data1, dims1 = generate_fieldset(10, 10, 1, 10)
+    dims1['time'] = np.arange(0, 10, 1) * 3600
+    fieldset1 = FieldSet.from_data(data1, dims1)
+    fieldset1.write(tmpdir.join('file1'))
+
+    data2, dims2 = generate_fieldset(10, 10, 1, 4)
+    dims2['time'] = np.arange(11, 15, 1) * 3600
+    fieldset2 = FieldSet.from_data(data2, dims2)
+    fieldset2.write(tmpdir.join('file2'))
+
+    fieldset3 = FieldSet.from_parcels('file*')
+    timestamps = [dims1['time'], dims2['time']]
+    fieldset4 = FieldSet.from_parcels('file*', timestamps=timestamps)
+    assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [True, False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
