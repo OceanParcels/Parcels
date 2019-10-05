@@ -265,8 +265,6 @@ class FieldSet(object):
                     timestamps = np.array([np.array(sub) for sub in timestamps])
             assert isinstance(timestamps, np.ndarray), "Timestamps must be nested list or array"
             assert all(isinstance(file, np.ndarray) for file in timestamps), "Timestamps must be nested list or array"
-            if all(isinstance(stamp, np.datetime64) for file in timestamps for stamp in file):
-                raise AssertionError("Timestamps must be nested list or array. Outer array corresponds to files, while inner array corresponds to time indices within each file.")
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'

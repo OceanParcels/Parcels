@@ -334,14 +334,20 @@ def test_vector_fields(mode, swapUV):
         assert abs(pset[0].lat - .5) < 1e-9
 
 
-def test_timestaps(tmpdir):
+@pytest.mark.parametrize('datetype', ['float', 'datetime64'])
+def test_timestaps(datetype, tmpdir):
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
-    dims1['time'] = np.arange(0, 10, 1) * 3600
+    data2, dims2 = generate_fieldset(10, 10, 1, 4)
+    if datetype == 'float':
+        dims1['time'] = np.arange(0, 10, 1) * 3600
+        dims2['time'] = np.arange(10, 14, 1) * 3600
+    else:
+        dims1['time'] = np.arange('2005-02-01', '2005-02-11', dtype='datetime64[D]')
+        dims2['time'] = np.arange('2005-02-11', '2005-02-15', dtype='datetime64[D]')
+
     fieldset1 = FieldSet.from_data(data1, dims1)
     fieldset1.write(tmpdir.join('file1'))
 
-    data2, dims2 = generate_fieldset(10, 10, 1, 4)
-    dims2['time'] = np.arange(11, 15, 1) * 3600
     fieldset2 = FieldSet.from_data(data2, dims2)
     fieldset2.write(tmpdir.join('file2'))
 
