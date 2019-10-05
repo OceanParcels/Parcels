@@ -352,7 +352,7 @@ def test_timestaps(tmpdir):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('time_periodic', [True, False])
+@pytest.mark.parametrize('time_periodic', [86400., False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
 def test_periodic(mode, time_periodic, dt_sign):
     lon = np.array([0, 1], dtype=np.float32)
@@ -393,13 +393,12 @@ def test_periodic(mode, time_periodic, dt_sign):
         v1 = Variable('v1', dtype=np.float32, initial=0.)
         v2 = Variable('v2', dtype=np.float32, initial=0.)
 
-    dt_sign = -1
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle,
                                  lon=[0.5], lat=[0.5], depth=[0.5])
     pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp),
                  runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
 
-    if time_periodic:
+    if time_periodic is not False:
         t = pset.particles[0].time
         temp_theo = temp_func(t)
     elif dt_sign == 1:

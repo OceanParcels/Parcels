@@ -88,7 +88,7 @@ def moving_eddies_fieldset(xdim=200, ydim=350, mesh='flat'):
     return FieldSet.from_data(data, dimensions, transpose=True, mesh=mesh)
 
 
-def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
+def moving_eddies_example(fieldset, outfile, npart=2, mode='jit', verbose=False,
                           method=AdvectionRK4):
     """Configuration of a particle set that follows two moving eddies
 
@@ -108,7 +108,7 @@ def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
     runtime = delta(days=7)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
     pset.execute(method, runtime=runtime, dt=delta(hours=1),
-                 output_file=pset.ParticleFile(name="EddyParticle", outputdt=delta(hours=1)),
+                 output_file=pset.ParticleFile(name=outfile, outputdt=delta(hours=1)),
                  moviedt=None)
 
     if verbose:
@@ -119,7 +119,7 @@ def moving_eddies_example(fieldset, npart=2, mode='jit', verbose=False,
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_moving_eddies_fwdbwd(mode, mesh, npart=2):
+def test_moving_eddies_fwdbwd(mode, mesh, tmpdir, npart=2):
     method = AdvectionRK4
     fieldset = moving_eddies_fieldset(mesh=mesh)
 
@@ -133,12 +133,14 @@ def test_moving_eddies_fwdbwd(mode, mesh, npart=2):
     dt = delta(minutes=5)
     outputdt = delta(hours=1)
     print("MovingEddies: Advecting %d particles for %s" % (npart, str(runtime)))
+    outfile = tmpdir.join("EddyParticlefwd")
     pset.execute(method, runtime=runtime, dt=dt,
-                 output_file=pset.ParticleFile(name="EddyParticlefwd", outputdt=outputdt))
+                 output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     print("Now running in backward time mode")
+    outfile = tmpdir.join("EddyParticlebwd")
     pset.execute(method, endtime=0, dt=-dt,
-                 output_file=pset.ParticleFile(name="EddyParticlebwd", outputdt=outputdt))
+                 output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     assert np.allclose([p.lon for p in pset], lons)
     assert np.allclose([p.lat for p in pset], lats)
@@ -147,9 +149,10 @@ def test_moving_eddies_fwdbwd(mode, mesh, npart=2):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_moving_eddies_fieldset(mode, mesh):
+def test_moving_eddies_fieldset(mode, mesh, tmpdir):
     fieldset = moving_eddies_fieldset(mesh=mesh)
-    pset = moving_eddies_example(fieldset, 2, mode=mode)
+    outfile = tmpdir.join("EddyParticle")
+    pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
@@ -158,9 +161,9 @@ def test_moving_eddies_fieldset(mode, mesh):
         assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
-def fieldsetfile(mesh):
+def fieldsetfile(mesh, tmpdir):
     """Generate fieldset files for moving_eddies test"""
-    filename = 'moving_eddies'
+    filename = tmpdir.join('moving_eddies')
     fieldset = moving_eddies_fieldset(200, 350, mesh=mesh)
     fieldset.write(filename)
     return filename
@@ -168,10 +171,11 @@ def fieldsetfile(mesh):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_moving_eddies_file(mode, mesh):
+def test_moving_eddies_file(mode, mesh, tmpdir):
     gc.collect()
-    fieldset = FieldSet.from_parcels(fieldsetfile(mesh), extra_fields={'P': 'P'})
-    pset = moving_eddies_example(fieldset, 2, mode=mode)
+    fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'})
+    outfile = tmpdir.join("EddyParticle")
+    pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     if mesh == 'flat':
         assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
         assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
@@ -237,14 +241,15 @@ Example of particle advection around an idealised peninsula""")
 
     # Open fieldset files
     fieldset = FieldSet.from_parcels(filename, extra_fields={'P': 'P'})
+    outfile = "EddyParticle"
 
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("moving_eddies_example(fieldset, args.particles, mode=args.mode, \
+        runctx("moving_eddies_example(fieldset, outfile, args.particles, mode=args.mode, \
                               verbose=args.verbose, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        moving_eddies_example(fieldset, args.particles, mode=args.mode,
+        moving_eddies_example(fieldset, outfile, args.particles, mode=args.mode,
                               verbose=args.verbose, method=method[args.method])

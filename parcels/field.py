@@ -22,6 +22,7 @@ from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
 from parcels.tools.error import FieldOutOfBoundError
+from parcels.tools.error import FieldOutOfBoundSurfaceError
 from parcels.tools.error import FieldSamplingError
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
@@ -64,7 +65,8 @@ class Field(object):
     :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
-    :param time_periodic: boolean whether to loop periodically over the time component of the Field
+    :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
+           The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
     """
 
@@ -128,13 +130,21 @@ class Field(object):
             self.allow_time_extrapolation = allow_time_extrapolation
 
         self.time_periodic = time_periodic
-        if self.time_periodic and self.allow_time_extrapolation:
+        if self.time_periodic is not False and self.allow_time_extrapolation:
             logger.warning_once("allow_time_extrapolation and time_periodic cannot be used together.\n \
                                  allow_time_extrapolation is set to False")
             self.allow_time_extrapolation = False
-        if self.time_periodic:
-            logger.warning_once("When using time_periodic=True, it is necessary that the first and last time steps\n \
-                                 of the series are the same, with time[-1] = time[0] + T")
+        if self.time_periodic is True:
+            raise ValueError("Unsupported time_periodic=True. time_periodic must now be either False or the length of the period (either float in seconds or datetime.timedelta object.")
+        if self.time_periodic is not False:
+            if isinstance(self.time_periodic, datetime.timedelta):
+                self.time_periodic = self.time_periodic.total_seconds()
+            if not np.isclose(self.grid.time[-1] - self.grid.time[0], self.time_periodic):
+                if self.grid.time[-1] - self.grid.time[0] > self.time_periodic:
+                    raise ValueError("Time series provided is longer than the time_periodic parameter")
+                self.grid._add_last_periodic_data_timestep = True
+                self.grid.time = np.append(self.grid.time, self.grid.time[0] + self.time_periodic)
+                self.grid.time_full = self.grid.time
 
         self.vmin = vmin
         self.vmax = vmax
@@ -150,12 +160,18 @@ class Field(object):
             if self.vmax is not None:
                 self.data[self.data > self.vmax] = 0.
 
+            if self.grid._add_last_periodic_data_timestep:
+                lib = np if isinstance(self.data, np.ndarray) else da
+                self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
+
         self._scaling_factor = None
 
         # Variable names in JIT code
         self.dimensions = kwargs.pop('dimensions', None)
         self.indices = kwargs.pop('indices', None)
         self.dataFiles = kwargs.pop('dataFiles', None)
+        if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
+            self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
@@ -372,7 +388,8 @@ class Field(object):
                     else:
                         data_list.append(buffer_data)
                 ti += len(tslice)
-            data = da.concatenate(data_list, axis=0)
+            lib = np if isinstance(data_list[0], np.ndarray) else da
+            data = lib.concatenate(data_list, axis=0)
         else:
             grid.defer_load = True
             grid.ti = -1
@@ -465,7 +482,9 @@ class Field(object):
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
-        if z < grid.depth[0] or z > grid.depth[-1]:
+        if z < grid.depth[0]:
+            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+        elif z > grid.depth[-1]:
             raise FieldOutOfBoundError(0, 0, z, field=self)
         depth_index = grid.depth <= z
         if z >= grid.depth[-1]:
@@ -507,7 +526,9 @@ class Field(object):
             zi = len(depth_vector) - 2
         else:
             zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        if z < depth_vector[zi] or z > depth_vector[zi+1]:
+        if z < depth_vector[zi]:
+            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+        elif z > depth_vector[zi+1]:
             raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
@@ -596,6 +617,8 @@ class Field(object):
                     (zi, zeta) = self.search_indices_vertical_z(z)
                 except FieldOutOfBoundError:
                     raise FieldOutOfBoundError(x, y, z, field=self)
+                except FieldOutOfBoundSurfaceError:
+                    raise FieldOutOfBoundSurfaceError(x, y, z, field=self)
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
