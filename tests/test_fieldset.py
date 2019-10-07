@@ -515,6 +515,17 @@ def test_fieldset_from_xarray(maxlatind):
     assert np.allclose(pset[0].lon, 4.5) and np.allclose(pset[0].lat, 10)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_frompop(mode):
+    filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    variables = {'U': 'U', 'V': 'V', 'W': 'W', 'T': 'T'}
+    dimensions = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
+
+    fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat')
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[3, 5, 1], lat=[3, 5, 1])
+    pset.execute(AdvectionRK4, runtime=3, dt=1)
+
+
 def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     """ Simple test for fieldset initialisation from data. """
     lon = np.linspace(0., 10., xdim, dtype=np.float32)

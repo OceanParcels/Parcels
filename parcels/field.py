@@ -712,7 +712,7 @@ class Field(object):
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
             return self.data[ti, yii, xii]
-        elif self.interp_method == 'linear':
+        elif self.interp_method in ['linear', 'bgrid_velocity']:
             val = (1-xsi)*(1-eta) * self.data[ti, yi, xi] + \
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
