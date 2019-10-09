@@ -1052,9 +1052,9 @@ class Field(object):
         dset.to_netcdf(filepath)
 
     def rescale_and_set_minmax(self, data):
+        data[np.isnan(data)] = 0
         if self._scaling_factor:
             data *= self._scaling_factor
-        data[np.isnan(data)] = 0
         if self.vmin is not None:
             data[data < self.vmin] = 0
         if self.vmax is not None:
