@@ -183,7 +183,7 @@ class Field(object):
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
-        if isinstance(filenames, str) or not isinstance(filenames, collections.Iterable):
+        if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
             return [filenames]
         elif isinstance(filenames, dict):
             assert dim in filenames.keys(), \
