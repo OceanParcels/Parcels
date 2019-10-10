@@ -279,7 +279,6 @@ class Field(object):
                     kwargs['depth_field'] = 'not_yet_set'
                 else:
                     depth = filebuffer.read_depth
-                print('Temporary print rather than error: Time varying depth data cannot be read in netcdf files yet')
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
