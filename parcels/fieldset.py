@@ -193,11 +193,14 @@ class FieldSet(object):
             ccode_fieldnames.append(fld.ccode_name)
 
         for f in self.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField] or f.grid.defer_load or f.dataFiles is None:
+            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
-                fdepth = getattr(self, f.grid.depth_field)
-                f.grid.depth = fdepth.data if isinstance(fdepth.data, np.ndarray) else np.array(fdepth.data)
+                if f.grid.depth_field == 'not_yet_set':
+                    raise ValueError("If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)")
+                if not f.grid.defer_load:
+                    depth_data = f.grid.depth_field.data
+                    f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
@@ -294,6 +297,8 @@ class FieldSet(object):
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
                 if procdims == dims and procinds == inds and procpaths == nowpaths:
+                    if 'depth' in dims and dims['depth'] == 'not_yet_set':
+                        break
                     sameGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         sameGrid = True
@@ -868,8 +873,8 @@ class FieldSet(object):
             if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
                 continue
             if f.grid.depth_field is not None:
-                fdepth = getattr(self, f.grid.depth_field)
-                f.grid.depth = fdepth.data if isinstance(fdepth.data, np.ndarray) else np.ndarray(fdepth.data)
+                depth_data = f.grid.depth_field.data
+                f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

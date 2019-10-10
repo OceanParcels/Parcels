@@ -150,7 +150,7 @@ class Field(object):
         self.field_chunksize = kwargs.pop('field_chunksize', 'auto')
         self.grid.depth_field = kwargs.pop('depth_field', None)
 
-        if self.grid.depth_field is not None:
+        if self.grid.depth_field == 'not_yet_set':
             assert self.grid.z4d, 'Providing the depth dimensions from another field data is only available for 4d S grids'
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
@@ -274,9 +274,9 @@ class Field(object):
         if 'depth' in dimensions:
             with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
-                if dimensions['depth'][:6] == 'Field.':
-                    depth = filebuffer.read_depth_dim
-                    kwargs['depth_field'] = dimensions['depth'][6:]
+                if dimensions['depth'] == 'not_yet_set':
+                    depth = filebuffer.read_depth_dimensions
+                    kwargs['depth_field'] = 'not_yet_set'
                 else:
                     depth = filebuffer.read_depth
                 print('Temporary print rather than error: Time varying depth data cannot be read in netcdf files yet')
@@ -418,6 +418,9 @@ class Field(object):
         self._scaling_factor = factor
         if not self.grid.defer_load:
             self.data *= factor
+
+    def set_depth_from_field(self, field):
+        self.grid.depth_field = field
 
     def __getitem__(self, key):
         return self.eval(*key)
@@ -1607,7 +1610,7 @@ class NetcdfFileBuffer(object):
             return np.zeros(1)
 
     @property
-    def read_depth_dim(self):
+    def read_depth_dimensions(self):
         if 'depth' in self.dimensions:
             data = self.dataset[self.name]
             depthsize = data.shape[-3]
