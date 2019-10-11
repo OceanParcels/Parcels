@@ -96,7 +96,7 @@ def AdvectionRK45(particle, fieldset, time):
         particle.lon = lon_4th
         particle.lat = lat_4th
         if kappa <= math.fabs(particle.dt * tol[0] / 10):
-            particle.dt *= 2
+            particle.update_next_dt(particle.dt * 2)
     else:
         particle.dt /= 2
         return ErrorCode.Repeat

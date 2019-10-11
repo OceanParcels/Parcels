@@ -80,7 +80,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
@@ -245,12 +245,14 @@ class FieldSet(object):
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat: No conversion, lat/lon are assumed to be in m.
-        :param timestamps: A numpy array containing the timestamps for each of the files in filenames.
+        :param timestamps: list of lists or array of arrays containing the timestamps for
+               each of the files in filenames. Outer list/array corresponds to files, inner
+               array corresponds to indices within files.
                Default is None if dimensions includes time.
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
@@ -265,12 +267,14 @@ class FieldSet(object):
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
 
-        # Typecast timestamps to numpy array & correct shape.
+        # Typecast timestamps to (nested) numpy array.
         if timestamps is not None:
             if isinstance(timestamps, list):
                 timestamps = np.array(timestamps)
-            timestamps = np.reshape(timestamps, [timestamps.size, 1])
-
+                if any(isinstance(i, list) for i in timestamps):
+                    timestamps = np.array([np.array(sub) for sub in timestamps])
+            assert isinstance(timestamps, np.ndarray), "Timestamps must be nested list or array"
+            assert all(isinstance(file, np.ndarray) for file in timestamps), "Timestamps must be nested list or array"
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
@@ -366,7 +370,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
@@ -428,7 +432,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
@@ -501,7 +505,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
@@ -567,7 +571,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
@@ -610,7 +614,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in
@@ -663,7 +667,7 @@ class FieldSet(object):
         :param allow_time_extrapolation: boolean whether to allow for extrapolation
                (i.e. beyond the last available time snapshot)
                Default is False if dimensions includes time, else True
-        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
         :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
                fully load them (default: True). It is advised to deferred load the data, since in

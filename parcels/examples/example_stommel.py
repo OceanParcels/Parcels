@@ -65,11 +65,12 @@ def UpdateP(particle, fieldset, time):
 
 
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4,
-                    outfile="StommelParticle.nc", repeatdt=None):
+                    outfile="StommelParticle.nc", repeatdt=None, write_fields=True):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset()
-    filename = 'stommel'
-    fieldset.write(filename)
+    if write_fields:
+        filename = 'stommel'
+        fieldset.write(filename)
     timer.fieldset.stop()
 
     # Determine particle class according to mode
@@ -106,11 +107,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_stommel_fieldset(mode):
+def test_stommel_fieldset(mode, tmpdir):
     timer.root = timer.Timer('Main')
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
-    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'])
-    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'])
+    outfile = tmpdir.join("StommelParticle")
+    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], outfile=outfile, write_fields=False)
+    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], outfile=outfile, write_fields=False)
     assert np.allclose([p.lon for p in psetRK4], [p.lon for p in psetRK45], rtol=1e-3)
     assert np.allclose([p.lat for p in psetRK4], [p.lat for p in psetRK45], rtol=1e-3)
     err_adv = np.array([abs(p.p_start - p.p) for p in psetRK4])
