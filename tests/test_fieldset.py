@@ -350,6 +350,7 @@ def test_timestaps(datetype, tmpdir):
     fieldset1.write(tmpdir.join('file1'))
 
     fieldset2 = FieldSet.from_data(data2, dims2)
+    fieldset2.U.data[0, :, :] = 0.
     fieldset2.write(tmpdir.join('file2'))
 
     fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'))
@@ -357,9 +358,10 @@ def test_timestaps(datetype, tmpdir):
     fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps)
     assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
 
-    fieldset3.computeTimeChunk(0, 1)
-    fieldset4.computeTimeChunk(0, 1)
-    assert np.allclose(fieldset3.U.data, fieldset4.U.data)
+    for d in [0, 8, 10]:
+        fieldset3.computeTimeChunk(d*3600, 1)
+        fieldset4.computeTimeChunk(d*3600, 1)
+        assert np.allclose(fieldset3.U.data, fieldset4.U.data)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

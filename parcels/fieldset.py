@@ -257,14 +257,6 @@ class FieldSet(object):
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
 
-        # Typecast timestamps to (nested) numpy array.
-        if timestamps is not None:
-            if isinstance(timestamps, list):
-                timestamps = np.array(timestamps)
-                if any(isinstance(i, list) for i in timestamps):
-                    timestamps = np.array([np.array(sub) for sub in timestamps])
-            assert isinstance(timestamps, np.ndarray), "Timestamps must be nested list or array"
-            assert all(isinstance(file, np.ndarray) for file in timestamps), "Timestamps must be nested list or array"
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
