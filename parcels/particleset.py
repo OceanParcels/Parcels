@@ -281,7 +281,9 @@ class ParticleSet(object):
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, repeatdt=None, lonlatdepth_dtype=None):
-        """Initialise the ParticleSet from a ParticleFile
+        """Initialise the ParticleSet from a netcdf ParticleFile.
+        This creates a new ParticleSet based on the last locations and time of all particles
+        in the netcdf ParticleFile. Particle IDs are conserved
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -299,6 +301,7 @@ class ParticleSet(object):
         lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
         depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
         time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
+        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan)
         if isinstance(time[0], np.timedelta64):
             time = np.array([t/np.timedelta64(1, 's') for t in time])
 
@@ -307,8 +310,10 @@ class ParticleSet(object):
         lat = lat[inds]
         depth = depth[inds]
         time = time[inds]
+        pid = pid[inds]
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
+                   pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
