@@ -6,13 +6,7 @@ notifications:
 matrix:
   include:
     - os: linux
-      python: 2.7
-      env: PY_VERSION=2 MINICONDA_NAME=Miniconda2-latest-Linux-x86_64.sh
-    - os: linux
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-Linux-x86_64.sh
-    - os: osx
-      language: generic
-      env: PY_VERSION=2 MINICONDA_NAME=Miniconda2-latest-MacOSX-x86_64.sh
     - os: osx
       language: generic
       env: PY_VERSION=3 MINICONDA_NAME=Miniconda3-latest-MacOSX-x86_64.sh

@@ -2,19 +2,10 @@ environment:
 
   matrix:
 
-    - PYTHON: "C:\\Miniconda"
-      PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "64"
-      ENV_NAME: "environment_py2_win.yml"
-
     - PYTHON: "C:\\Miniconda36-x64"
       PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
       ENV_NAME: "environment_py3_win.yml"
-
-matrix:
-  allow_failures:
-    - PYTHON_VERSION: "2.7.x"
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"

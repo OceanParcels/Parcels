@@ -334,8 +334,38 @@ def test_vector_fields(mode, swapUV):
         assert abs(pset[0].lat - .5) < 1e-9
 
 
+@pytest.mark.parametrize('datetype', ['float', 'datetime64'])
+def test_timestaps(datetype, tmpdir):
+    data1, dims1 = generate_fieldset(10, 10, 1, 10)
+    data2, dims2 = generate_fieldset(10, 10, 1, 4)
+    if datetype == 'float':
+        dims1['time'] = np.arange(0, 10, 1) * 86400
+        dims2['time'] = np.arange(10, 14, 1) * 86400
+    else:
+        dims1['time'] = np.arange('2005-02-01', '2005-02-11', dtype='datetime64[D]')
+        dims2['time'] = np.arange('2005-02-11', '2005-02-15', dtype='datetime64[D]')
+
+    fieldset1 = FieldSet.from_data(data1, dims1)
+    fieldset1.U.data[0, :, :] = 2.
+    fieldset1.write(tmpdir.join('file1'))
+
+    fieldset2 = FieldSet.from_data(data2, dims2)
+    fieldset2.U.data[0, :, :] = 0.
+    fieldset2.write(tmpdir.join('file2'))
+
+    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'), time_periodic=delta(days=14))
+    timestamps = [dims1['time'], dims2['time']]
+    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps, time_periodic=delta(days=14))
+    assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
+
+    for d in [0, 8, 10, 13]:
+        fieldset3.computeTimeChunk(d*86400, 1)
+        fieldset4.computeTimeChunk(d*86400, 1)
+        assert np.allclose(fieldset3.U.data, fieldset4.U.data)
+
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('time_periodic', [True, False])
+@pytest.mark.parametrize('time_periodic', [86400., False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
 def test_periodic(mode, time_periodic, dt_sign):
     lon = np.array([0, 1], dtype=np.float32)
@@ -376,13 +406,12 @@ def test_periodic(mode, time_periodic, dt_sign):
         v1 = Variable('v1', dtype=np.float32, initial=0.)
         v2 = Variable('v2', dtype=np.float32, initial=0.)
 
-    dt_sign = -1
     pset = ParticleSet.from_list(fieldset, pclass=MyParticle,
                                  lon=[0.5], lat=[0.5], depth=[0.5])
     pset.execute(AdvectionRK4_3D + pset.Kernel(sampleTemp),
                  runtime=delta(hours=51), dt=delta(hours=dt_sign*1))
 
-    if time_periodic:
+    if time_periodic is not False:
         t = pset.particles[0].time
         temp_theo = temp_func(t)
     elif dt_sign == 1:
@@ -491,6 +520,17 @@ def test_fieldset_from_xarray(maxlatind):
 
     pset.execute(AdvectionRK4, dt=1)
     assert np.allclose(pset[0].lon, 4.5) and np.allclose(pset[0].lat, 10)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_frompop(mode):
+    filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+    variables = {'U': 'U', 'V': 'V', 'W': 'W', 'T': 'T'}
+    dimensions = {'lon': 'lon', 'lat': 'lat', 'time': 'time'}
+
+    fieldset = FieldSet.from_pop(filenames, variables, dimensions, mesh='flat')
+    pset = ParticleSet.from_list(fieldset, ptype[mode], lon=[3, 5, 1], lat=[3, 5, 1])
+    pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
 def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
