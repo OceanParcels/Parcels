@@ -1078,7 +1078,11 @@ class Field(object):
         timestamp = self.timestamps
         if timestamp is not None:
             summedlen = np.cumsum([len(ls) for ls in self.timestamps])
-            timestamp = self.timestamps[np.where(g.ti + tindex < summedlen)[0][0]]
+            if g.ti + tindex >= summedlen[-1]:
+                ti = g.ti + tindex - summedlen[-1]
+            else:
+                ti = g.ti + tindex
+            timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
         filebuffer = NetcdfFileBuffer(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
                                       self.netcdf_engine, timestamp=timestamp,
