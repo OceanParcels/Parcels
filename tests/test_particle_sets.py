@@ -55,7 +55,8 @@ def test_pset_create_list_with_customvariable(fieldset, mode, npart=100):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_pset_create_fromparticlefile(fieldset, mode, tmpdir):
+@pytest.mark.parametrize('restart', [True, False])
+def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.nc")
     lon = np.linspace(0, 1, 10, dtype=np.float32)
     lat = np.linspace(1, 0, 10, dtype=np.float32)
@@ -69,10 +70,15 @@ def test_pset_create_fromparticlefile(fieldset, mode, tmpdir):
     pset.execute(DeleteLast, runtime=2, dt=1, output_file=pfile)
     pfile.close()
 
-    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
+    if restart:
+        ptype[mode].setLastID(0)  # need to reset to zero
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restart=restart)
 
     for var in ['lon', 'lat', 'depth', 'time']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
+
+    if restart:
+        assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
 
 
 @pytest.mark.parametrize('mode', ['scipy'])

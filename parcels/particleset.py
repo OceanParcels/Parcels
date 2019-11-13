@@ -280,15 +280,17 @@ class ParticleSet(object):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @classmethod
-    def from_particlefile(cls, fieldset, pclass, filename, repeatdt=None, lonlatdepth_dtype=None):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet from a netcdf ParticleFile.
         This creates a new ParticleSet based on the last locations and time of all particles
-        in the netcdf ParticleFile. Particle IDs are conserved
+        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
                  object that defines custom particle
         :param filename: Name of the particlefile from which to read initial conditions
+        :param restart: Boolean to signal if pset is used for a restart (default is True).
+               In that case, Particle IDs are preserved.
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -310,7 +312,7 @@ class ParticleSet(object):
         lat = lat[inds]
         depth = depth[inds]
         time = time[inds]
-        pid = pid[inds]
+        pid = pid[inds] if restart else None
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
