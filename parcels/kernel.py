@@ -321,7 +321,7 @@ class Kernel(object):
             """Utility to remove all particles that signalled deletion"""
             indices = pset.particle_data['state'] == ErrorCode.Delete
             if np.count_nonzero(indices) > 0 and output_file is not None:
-                output_file.write(pset[indices], endtime, deleted_only=True)
+                output_file.write(pset, endtime, deleted_only=indices)
             pset.remove(indices)
 
         if recovery is None:
