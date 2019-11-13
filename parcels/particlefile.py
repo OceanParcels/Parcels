@@ -245,9 +245,13 @@ class ParticleFile(object):
             if pset.size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                tol = 1e-8
-                to_write = (pd['dt'] * pd['time'] < pd['dt'] * time + tol) & np.isfinite(pd['id'])
-                if np.count_nonzero(to_write) > 0:
+                if deleted_only:
+                    pset_towrite = pset
+                elif pset[0].dt > 0:
+                    pset_towrite = [p for p in pset if time <= p.time < time + p.dt and np.isfinite(p.id)]
+                else:
+                    pset_towrite = [p for p in pset if time + p.dt < p.time <= time and np.isfinite(p.id)]
+                if len(pset_towrite) > 0:
                     for var in self.var_names:
                         data_dict[var] = pd[var][to_write]
                     self.maxid_written = max(self.maxid_written, np.max(data_dict['id']))

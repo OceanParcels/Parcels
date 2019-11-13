@@ -339,22 +339,29 @@ def test_timestaps(datetype, tmpdir):
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
     data2, dims2 = generate_fieldset(10, 10, 1, 4)
     if datetype == 'float':
-        dims1['time'] = np.arange(0, 10, 1) * 3600
-        dims2['time'] = np.arange(10, 14, 1) * 3600
+        dims1['time'] = np.arange(0, 10, 1) * 86400
+        dims2['time'] = np.arange(10, 14, 1) * 86400
     else:
         dims1['time'] = np.arange('2005-02-01', '2005-02-11', dtype='datetime64[D]')
         dims2['time'] = np.arange('2005-02-11', '2005-02-15', dtype='datetime64[D]')
 
     fieldset1 = FieldSet.from_data(data1, dims1)
+    fieldset1.U.data[0, :, :] = 2.
     fieldset1.write(tmpdir.join('file1'))
 
     fieldset2 = FieldSet.from_data(data2, dims2)
+    fieldset2.U.data[0, :, :] = 0.
     fieldset2.write(tmpdir.join('file2'))
 
-    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'))
+    fieldset3 = FieldSet.from_parcels(tmpdir.join('file*'), time_periodic=delta(days=14))
     timestamps = [dims1['time'], dims2['time']]
-    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps)
+    fieldset4 = FieldSet.from_parcels(tmpdir.join('file*'), timestamps=timestamps, time_periodic=delta(days=14))
     assert np.allclose(fieldset3.U.grid.time_full, fieldset4.U.grid.time_full)
+
+    for d in [0, 8, 10, 13]:
+        fieldset3.computeTimeChunk(d*86400, 1)
+        fieldset4.computeTimeChunk(d*86400, 1)
+        assert np.allclose(fieldset3.U.data, fieldset4.U.data)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

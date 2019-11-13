@@ -1,0 +1,48 @@
+name: test-suite
+on: [push, pull_request]
+jobs:
+  test_macOS:
+    name: Testing on macOS
+    runs-on: macOS-latest
+    steps:  
+      - uses: actions/checkout@master
+      - name: Test OSX
+        env: 
+          OS_NAME: osx
+          PY_VERSION: 3
+          MINICONDA_NAME: Miniconda3-latest-MacOSX-x86_64.sh
+        run: |
+          ./.github/scripts/linux_install.sh
+          ./.github/scripts/osx_test.sh
+        shell: bash
+  test_linux:
+    name: Testing on Linux
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@master
+      - name: Test linux
+        env: 
+          OS_NAME: linux
+          PY_VERSION: 3
+          MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
+        run: |
+          ./.github/scripts/linux_install.sh
+          ./.github/scripts/linux_test.sh
+        shell: bash
+  test_windows:
+    name: Testing on Windows
+    runs-on: windows-2016
+    steps:
+      - uses: actions/checkout@master
+      - name: Test Windows
+        env: 
+          OS_NAME: win
+          PY_VERSION: 3
+          PYTHON_ARCH: 64
+          PYTHON: C:\Miniconda36-x64
+        run: |
+          ./.github/scripts/install_miniconda.ps1
+          ./.github/scripts/windows_install.bat
+          ./.github/scripts/windows_test.bat
+        shell: powershell
+      
