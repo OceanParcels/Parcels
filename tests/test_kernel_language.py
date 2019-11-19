@@ -334,7 +334,7 @@ def test_seawaterdensity_kernels(mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pressure', ['0', '10'])
+@pytest.mark.parametrize('pressure', [0, 10])
 def test_UNESCOdensity_kernel(mode, pressure):
 
     def generate_fieldset(p, xdim=2, ydim=2, zdim=2, tdim=1):
@@ -354,7 +354,7 @@ def test_UNESCOdensity_kernel(mode, pressure):
                 'cons_temperature': np.array(cons_temperature, dtype=np.float32)}
         return (data, dimensions)
 
-    data, dimensions = generate_fieldset(float(pressure))
+    data, dimensions = generate_fieldset(pressure)
     fieldset = FieldSet.from_data(data, dimensions)
 
     class DensParticle(ptype[mode]):
@@ -364,7 +364,7 @@ def test_UNESCOdensity_kernel(mode, pressure):
 
     pset.execute(UNESCO_Density, runtime=0, dt=0)
 
-    if(pressure == '0'):
+    if(pressure == 0):
         assert np.allclose(pset[0].density, 1005.9465)
-    elif(pressure == '10'):
+    elif(pressure == 10):
         assert np.allclose(pset[0].density, 1006.4179)
