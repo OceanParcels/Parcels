@@ -1,4 +1,5 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable
+from parcels.kernels.seawaterdensity import polyTEOS10_bsq
 from parcels import random as parcels_random
 import numpy as np
 import pytest
@@ -300,3 +301,33 @@ def test_dt_modif_by_kernel(fieldset, mode):
     endtime = 4
     pset.execute(modif_dt, endtime=endtime, dt=1.)
     assert np.isclose(pset[0].age, endtime)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_seawaterdensity_kernels(mode):
+
+    def generate_fieldset(xdim=2, ydim=2, zdim=2, tdim=1):
+        lon = np.linspace(0., 10., xdim, dtype=np.float32)
+        lat = np.linspace(0., 10., ydim, dtype=np.float32)
+        depth = np.linspace(0, 2000, zdim, dtype=np.float32)
+        time = np.zeros(tdim, dtype=np.float64)
+        U = np.ones((tdim, zdim, ydim, xdim))
+        V = np.ones((tdim, zdim, ydim, xdim))
+        abs_salinity = 30 * np.ones((tdim, zdim, ydim, xdim))
+        cons_temperature = 10 * np.ones((tdim, zdim, ydim, xdim))
+        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+        data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32),
+                'abs_salinity': np.array(abs_salinity, dtype=np.float32),
+                'cons_temperature': np.array(cons_temperature, dtype=np.float32)}
+        return (data, dimensions)
+
+    data, dimensions = generate_fieldset()
+    fieldset = FieldSet.from_data(data, dimensions)
+
+    class DensParticle(ptype[mode]):
+        density = Variable('density', dtype=np.float32)
+
+    pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
+
+    pset.execute(polyTEOS10_bsq, runtime=0, dt=0)
+    assert np.allclose(pset[0].density, 1022.85377)
