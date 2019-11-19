@@ -10,6 +10,15 @@ def polyTEOS10_bsq(particle, fieldset, time):
     # https://www.sciencedirect.com/science/article/pii/S1463500315000566
     # requires fieldset.abs_salinity and fieldset.cons_temperature Fields in the fieldset
     # and a particle.density Variable in the ParticleSet
+    #
+    # References:
+    #  Roquet, F., Madec, G., McDougall, T. J., Barker, P. M., 2014: Accurate
+    #   polynomial expressions for the density and specific volume of
+    #   seawater using the TEOS-10 standard. Ocean Modelling.
+    #  McDougall, T. J., D. R. Jackett, D. G. Wright and R. Feistel, 2003:
+    #   Accurate and computationally efficient algorithms for potential
+    #   temperature and density of seawater.  Journal of Atmospheric and
+    #   Oceanic Technology, 20, 730-741.
 
     Z = - particle.depth  # note: use negative depths!
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]
