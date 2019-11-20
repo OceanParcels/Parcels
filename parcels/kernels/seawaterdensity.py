@@ -115,7 +115,7 @@ def UNESCO_Density(particle, fieldset, time):
     b1 = -0.0040899
     b2 = 0.000076438
     b3 = -0.00000082467
-    b4 = 0.0000000053875
+    b_four = 0.0000000053875
 
     c0 = -0.0057246
     c1 = 0.00010227
@@ -123,7 +123,7 @@ def UNESCO_Density(particle, fieldset, time):
 
     d0 = 0.00048314
 
-    B1 = b0 + b1*T + b2*math.pow(T, 2) + b3*math.pow(T, 3) + b4*math.pow(T, 4)
+    B1 = b0 + b1*T + b2*math.pow(T, 2) + b3*math.pow(T, 3) + b_four*math.pow(T, 4)
     C1 = c0 + c1*T + c2*math.pow(T, 2)
 
     rho_st0 = rsmow + B1*S + C1*math.pow(S, 1.5) + d0*math.pow(S, 2)
