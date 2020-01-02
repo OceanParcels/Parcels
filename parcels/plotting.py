@@ -113,10 +113,6 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     :param animation: Boolean whether result is a single plot, or an animation
     """
 
-    if field.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
-        logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
-                       'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
-
     if type(field) is VectorField:
         spherical = True if field.U.grid.mesh == 'spherical' else False
         field = [field.U, field.V]
@@ -127,6 +123,10 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         plottype = 'scalar'
     else:
         raise RuntimeError('field needs to be a Field or VectorField object')
+
+    if field[0].grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+        logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
+                       'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
 
     plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection)
     if plt is None:
