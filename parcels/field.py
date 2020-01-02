@@ -369,6 +369,8 @@ class Field(object):
                             data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
                     else:
                         data_list.append(buffer_data)
+                    if type(tslice) not in [list, np.ndarray]:
+                        tslice = [tslice]
                 ti += len(tslice)
             lib = np if isinstance(data_list[0], np.ndarray) else da
             data = lib.concatenate(data_list, axis=0)
