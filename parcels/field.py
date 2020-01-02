@@ -176,7 +176,7 @@ class Field(object):
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
-        if isinstance(filenames, str) or not isinstance(filenames, collections.Iterable):
+        if isinstance(filenames, str) or not isinstance(filenames, collections.abc.Iterable):
             return [filenames]
         elif isinstance(filenames, dict):
             assert dim in filenames.keys(), \
@@ -369,6 +369,8 @@ class Field(object):
                             data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape[1:]), ())))
                     else:
                         data_list.append(buffer_data)
+                    if type(tslice) not in [list, np.ndarray]:
+                        tslice = [tslice]
                 ti += len(tslice)
             lib = np if isinstance(data_list[0], np.ndarray) else da
             data = lib.concatenate(data_list, axis=0)
@@ -1078,7 +1080,11 @@ class Field(object):
         timestamp = self.timestamps
         if timestamp is not None:
             summedlen = np.cumsum([len(ls) for ls in self.timestamps])
-            timestamp = self.timestamps[np.where(g.ti + tindex < summedlen)[0][0]]
+            if g.ti + tindex >= summedlen[-1]:
+                ti = g.ti + tindex - summedlen[-1]
+            else:
+                ti = g.ti + tindex
+            timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
         filebuffer = NetcdfFileBuffer(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
                                       self.netcdf_engine, timestamp=timestamp,
