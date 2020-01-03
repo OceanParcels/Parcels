@@ -240,7 +240,7 @@ class ParticleSet(object):
 
     def __getattr__(self, name):
         if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
-            return self.__dict__['particle_data']
+            return self.__dict__['particle_data'][name]
         elif name in self.__dict__:
             return self.__dict__[name]
         else:
