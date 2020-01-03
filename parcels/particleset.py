@@ -92,7 +92,7 @@ class ParticleSet(object):
 
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
-        if pid_orig is None:
+        if pid_orig in [None, False]:
             pid_orig = np.arange(lon.size)
         pid = pid_orig + pclass.lastID
 
@@ -178,7 +178,6 @@ class ParticleSet(object):
             'lon lat depth precision should be set to either np.float32 or np.float64'
         pclass.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
-        self.size = len(lon)
         self.ptype = pclass.getPType()
         self.kernel = None
 
@@ -186,7 +185,7 @@ class ParticleSet(object):
         self.particle_data = {}
         initialised = set()
         for v in self.ptype.variables:
-            self.particle_data[v.name] = np.empty(self.size, dtype=v.dtype)
+            self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
@@ -198,7 +197,7 @@ class ParticleSet(object):
             self.particle_data['lon'][:] = lon
             self.particle_data['depth'][:] = depth
             self.particle_data['time'][:] = time
-            self.particle_data['id'][:] = np.arange(self.size)
+            self.particle_data['id'][:] = pid
             self.particle_data['fileid'][:] = -1
 
             # special case for exceptions which can only be handled from scipy
@@ -211,6 +210,7 @@ class ParticleSet(object):
                 if not hasattr(pclass, kwvar):
                     raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                 self.particle_data[kwvar][:] = kwval
+                initialised.add(kwvar)
 
             # initialise the rest to their default values
             for v in self.ptype.variables:
@@ -238,7 +238,12 @@ class ParticleSet(object):
         return ParticleAccessor(self)
 
     def __getattr__(self, name):
-        return self.particle_data[name]
+        if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
+            return self.__dict__['particle_data']
+        elif name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            return False
 
     @property
     def ctypes_struct(self):
@@ -361,6 +366,13 @@ class ParticleSet(object):
                 return np.float64
         return np.float32
 
+    @property
+    def size(self):
+        return len(self.particle_data['lon'])
+
+    def __repr__(self):
+        return "\n".join([str(p) for p in self])
+
     def __len__(self):
         return self.size
 
@@ -376,14 +388,15 @@ class ParticleSet(object):
         for d in self.particle_data:
             self.particle_data[d] = np.append(self.particle_data[d], particles.particle_data[d])
 
-        self.size += particles.size
-
-    def remove(self, indices):
+    def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
         for d in self.particle_data:
-            self.particle_data[d] = self.particle_data[d][~indices]
+            self.particle_data[d] = np.delete(self.particle_data[d], indices)
 
-        self.size = np.count_nonzero(~indices)
+    def remove(self, indices):
+        """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        for d in self.particle_data:
+            self.particle_data[d] = self.particle_data[d][~indices]
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
@@ -522,7 +535,9 @@ class ParticleSet(object):
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
                                        partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
-                for p in pset_new:
+                p = pset_new.data_accessor()
+                for i in range(pset_new.size):
+                    p.set_index(i)
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)

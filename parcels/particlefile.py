@@ -30,14 +30,14 @@ except:
 __all__ = ['ParticleFile']
 
 
-def _started_particles(pset, time):
+def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
-    Particle will be written if:
-      * particle.time is equal to time argument of pfile.write()
-      * particle.time is before time (in case particle was deleted between previous export and current one)
+    Particle will be written if particle.time is between time-dt/2 and time+dt/2
     """
-    return ((pset.particle_data['dt']*pset.particle_data['time'] <= pset.particle_data['dt']*time)
-            | np.isclose(pset.particle_data['time'], time))
+    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & (np.isfinite(pd['id']))
+            & (np.isfinite(pd['time'])))
 
 
 def _set_calendar(origin_calendar):
@@ -237,18 +237,15 @@ class ParticleFile(object):
             else:
                 if deleted_only is not False:
                     to_write = deleted_only
-                elif np.any(pd['dt'] > 0):
-                    to_write = (time <= pd['time']) & (pd['time'] < time + pd['dt'] - 1e-2) & (np.isfinite(pd['id']))
-                    print(pd['time'])
-                    print(to_write)
                 else:
-                    to_write = np.isfinite(pd['time']) & ((time + pd['dt'] < pd['time']) & (pd['time'] <= time) & (np.isfinite(pd['id'])))
+                    to_write = _to_write_particles(pd, time)
                 if np.any(to_write) > 0:
                     for var in self.var_names:
                         data_dict[var] = pd[var][to_write]
                     self.maxid_written = max(self.maxid_written, np.max(data_dict['id']))
 
-                pset_errs = to_write & (pd['state'] != ErrorCode.Delete) & (np.abs(time - pd['time']) > 1e-3)
+                pset_errs = (to_write & (pd['state'] != ErrorCode.Delete)
+                             & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
                 if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once(
                         'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
@@ -257,12 +254,13 @@ class ParticleFile(object):
                     self.time_written.append(time)
 
                 if len(self.var_names_once) > 0:
-                    first_write = (pd['id'] not in self.written_once) & np.isfinite(pd['id']) & (pd['id'] in _started_particles(pset, time))
+                    first_write = (_to_write_particles(pd, time)
+                                   & [True if p not in self.written_once else False for p in pd['id']])
                     if np.any(first_write):
                         data_dict_once['id'] = pd['id'][first_write]
                         for var in self.var_names_once:
                             data_dict_once[var] = pd[var][first_write]
-                        self.written_once.append(pd['id'][first_write])
+                        self.written_once.extend([pid for pid in pd['id'][first_write]])
 
             if deleted_only is False:
                 self.lasttime_written = time
