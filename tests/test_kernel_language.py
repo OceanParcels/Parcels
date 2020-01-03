@@ -330,7 +330,7 @@ def test_seawaterdensity_kernels(mode):
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
     pset.execute(polyTEOS10_bsq, runtime=0, dt=0)
-    assert np.allclose(pset.density[0], 1022.85377)
+    assert np.allclose(pset[0].density, 1022.85377)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -365,6 +365,6 @@ def test_UNESCOdensity_kernel(mode, pressure):
     pset.execute(UNESCO_Density, runtime=0, dt=0)
 
     if(pressure == 0):
-        assert np.allclose(pset.density[0], 1005.9465)
+        assert np.allclose(pset[0].density, 1005.9465)
     elif(pressure == 10):
-        assert np.allclose(pset.density[0], 1006.4179)
+        assert np.allclose(pset[0].density, 1006.4179)
