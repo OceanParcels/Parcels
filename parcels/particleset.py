@@ -6,6 +6,7 @@ from datetime import timedelta as delta
 
 import numpy as np
 import xarray as xr
+from operator import attrgetter
 import progressbar
 
 from parcels.compiler import GNUCompiler
@@ -245,6 +246,8 @@ class ParticleSet(object):
                             time[i], depth[i], lat[i], lon[i]
                         ]
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
+                elif isinstance(v.initial, attrgetter):
+                    self.particle_data[v.name][:] = v.initial(self)
                 else:
                     self.particle_data[v.name][:] = v.initial
 
