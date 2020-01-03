@@ -12,7 +12,6 @@ from ctypes import byref
 from ctypes import c_double
 from ctypes import c_float
 from ctypes import c_int
-from ctypes import c_void_p
 from hashlib import md5
 from os import path
 from os import remove
@@ -322,7 +321,7 @@ class Kernel(object):
             indices = pset.particle_data['state'] == ErrorCode.Delete
             if np.count_nonzero(indices) > 0 and output_file is not None:
                 output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove(indices)
+            pset.remove_booleanvector(indices)
 
         if recovery is None:
             recovery = {}

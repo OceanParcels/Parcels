@@ -55,7 +55,7 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
                        lat=0.5*np.ones(npart))
     pfile = pset.ParticleFile(filepath)
     pfile.write(pset, 0)
-    pset.remove(3)
+    pset.remove_indices(3)
     pfile.write(pset, 1)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
     ncfile.close()

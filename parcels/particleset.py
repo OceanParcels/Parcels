@@ -1,4 +1,3 @@
-import collections
 from ctypes import Structure, POINTER
 import time as time_module
 from datetime import date
@@ -28,6 +27,7 @@ except:
 
 __all__ = ['ParticleSet']
 
+
 class ParticleAccessor(object):
     def __init__(self, pset):
         self.pset = pset
@@ -54,6 +54,23 @@ class ParticleAccessor(object):
         else:
             # avoid recursion
             self.pset.particle_data[name][self._index] = value
+
+
+class ParticleSetIterator:
+    def __init__(self, pset):
+        self.p = pset.data_accessor()
+        self.max_len = pset.size
+        self._index = 0
+
+    def __next__(self):
+        ''''Returns the next value from ParticleSet object's lists '''
+        if self._index < self.max_len:
+            self.p.set_index(self._index)
+            result = self.p
+            self._index += 1
+            return result
+        # End of Iteration
+        raise StopIteration
 
 
 class ParticleSet(object):
@@ -93,7 +110,7 @@ class ParticleSet(object):
 
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
-        if pid_orig in [None, False]:
+        if isinstance(pid_orig, (type(None), type(False))):
             pid_orig = np.arange(lon.size)
         pid = pid_orig + pclass.lastID
 
@@ -245,6 +262,14 @@ class ParticleSet(object):
             return self.__dict__[name]
         else:
             return False
+
+    def __iter__(self):
+        return ParticleSetIterator(self)
+
+    def __getitem__(self, index):
+        self.p = self.data_accessor()
+        self.p.set_index(index)
+        return self.p
 
     @property
     def ctypes_struct(self):
@@ -432,7 +457,7 @@ class ParticleSet(object):
         for d in self.particle_data:
             self.particle_data[d] = np.delete(self.particle_data[d], indices)
 
-    def remove(self, indices):
+    def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
         for d in self.particle_data:
             self.particle_data[d] = self.particle_data[d][~indices]
@@ -505,9 +530,9 @@ class ParticleSet(object):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
-
         mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
-        self.particle_data['time'][np.isnan(self.particle_data['time'])] = mintime if dt >= 0 else maxtime
+        if np.any(np.isnan(self.particle_data['time'])):
+            self.particle_data['time'][np.isnan(self.particle_data['time'])] = mintime if dt >= 0 else maxtime
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
