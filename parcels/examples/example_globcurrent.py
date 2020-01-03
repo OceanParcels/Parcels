@@ -225,3 +225,25 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   dt=delta(minutes=5))
 
     assert np.allclose([pset0.lon[-1], pset0.lat[-1]], [pset1.lon[-1], pset1.lat[-1]])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('dt', [-300, 300])
+@pytest.mark.parametrize('pid_offset', [0, 20])
+def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
+    filename = tmpdir.join("pset_fromparticlefile.nc")
+    fieldset = set_globcurrent_fieldset()
+
+    ptype[mode].setLastID(pid_offset)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+    pfile = pset.ParticleFile(filename, outputdt=delta(hours=6))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
+    pfile.close()
+
+    ptype[mode].setLastID(0)  # need to reset to zero
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+    pset_new.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+
+    for var in ['lon', 'lat', 'depth', 'time', 'id']:
+        assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])

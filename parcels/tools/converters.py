@@ -33,6 +33,8 @@ class TimeConverter(object):
         self.time_origin = 0 if time_origin is None else time_origin
         if isinstance(time_origin, np.datetime64):
             self.calendar = "np_datetime64"
+        elif isinstance(time_origin, np.timedelta64):
+            self.calendar = "np_timedelta64"
         elif isinstance(time_origin, cftime._cftime.datetime):
             self.calendar = time_origin.calendar
         else:
@@ -46,7 +48,7 @@ class TimeConverter(object):
         :return: time - self.time_origin
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar == 'np_datetime64':
+        if self.calendar in ['np_datetime64', 'np_timedelta64']:
             return (time - self.time_origin) / np.timedelta64(1, 's')
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
@@ -65,7 +67,7 @@ class TimeConverter(object):
         :return: self.time_origin + time
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar == 'np_datetime64':
+        if self.calendar in ['np_datetime64', 'np_timedelta64']:
             if isinstance(time, (list, np.ndarray)):
                 return [self.time_origin + np.timedelta64(int(t), 's') for t in time]
             else:
