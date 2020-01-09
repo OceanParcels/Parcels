@@ -116,7 +116,7 @@ def test_variable_write_double(fieldset, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.nc")
 
     def Update_lon(particle, fieldset, time):
-        particle.lon += 0.00001
+        particle.lon += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.00001)
