@@ -48,8 +48,8 @@ def test_ofam_xarray_vs_netcdf(dt):
     psetX = ParticleSet(fieldsetxarray, pclass=JITParticle, lon=lonstart, lat=latstart)
     psetX.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
-    assert np.allclose(psetN.lon[0], psetX.lon[0])
-    assert np.allclose(psetN.lat[0], psetX.lat[0])
+    assert np.allclose(psetN[0].lon, psetX[0].lon)
+    assert np.allclose(psetN[0].lat, psetX[0].lat)
 
 
 @pytest.mark.parametrize('use_xarray', [True, False])
@@ -66,5 +66,5 @@ def test_ofam_particles(mode, use_xarray):
 
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5))
 
-    assert(abs(pset.lon[0] - 173) < 1)
-    assert(abs(pset.lat[0] - 11) < 1)
+    assert(abs(pset[0].lon - 173) < 1)
+    assert(abs(pset[0].lat - 11) < 1)

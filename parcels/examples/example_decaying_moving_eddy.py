@@ -73,8 +73,8 @@ def test_rotation_example(mode, tmpdir):
     outfile = tmpdir.join('DecayingMovingParticle.nc')
     fieldset = decaying_moving_eddy_fieldset()
     pset = decaying_moving_example(fieldset, outfile, mode=mode)
-    vals = true_values(pset.time[0], start_lon, start_lat)  # Calculate values for the particle.
-    assert(np.allclose(np.array([pset.lon, pset.lat]), vals, 1e-2))   # Check advected values against calculated values.
+    vals = true_values(pset[0].time, start_lon, start_lat)  # Calculate values for the particle.
+    assert (np.allclose(np.array([[pset[0].lon], [pset[0].lat]]), vals, 1e-2))   # Check advected values against calculated values.
 
 
 if __name__ == "__main__":

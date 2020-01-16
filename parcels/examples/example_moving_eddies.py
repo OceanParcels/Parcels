@@ -154,11 +154,11 @@ def test_moving_eddies_fieldset(mode, mesh, tmpdir):
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     if mesh == 'flat':
-        assert (pset.lon[0] < 2.2e5 and 1.1e5 < pset.lat[0] < 1.2e5)
-        assert (pset.lon[1] < 2.2e5 and 3.7e5 < pset.lat[1] < 3.8e5)
+        assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
+        assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
     else:
-        assert(pset.lon[0] < 2.0 and 46.2 < pset.lat[0] < 46.25)
-        assert(pset.lon[1] < 2.0 and 48.8 < pset.lat[1] < 48.85)
+        assert(pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
+        assert(pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
 def fieldsetfile(mesh, tmpdir):
@@ -177,11 +177,11 @@ def test_moving_eddies_file(mode, mesh, tmpdir):
     outfile = tmpdir.join("EddyParticle")
     pset = moving_eddies_example(fieldset, outfile, 2, mode=mode)
     if mesh == 'flat':
-        assert (pset.lon[0] < 2.2e5 and 1.1e5 < pset.lat[0] < 1.2e5)
-        assert (pset.lon[1] < 2.2e5 and 3.7e5 < pset.lat[1] < 3.8e5)
+        assert (pset[0].lon < 2.2e5 and 1.1e5 < pset[0].lat < 1.2e5)
+        assert (pset[1].lon < 2.2e5 and 3.7e5 < pset[1].lat < 3.8e5)
     else:
-        assert(pset.lon[0] < 2.0 and 46.2 < pset.lat[0] < 46.25)
-        assert(pset.lon[1] < 2.0 and 48.8 < pset.lat[1] < 48.85)
+        assert (pset[0].lon < 2.0 and 46.2 < pset[0].lat < 46.25)
+        assert (pset[1].lon < 2.0 and 48.8 < pset[1].lat < 48.85)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
