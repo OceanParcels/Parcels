@@ -119,8 +119,8 @@ def test_variable_write_double(fieldset, mode, tmpdir):
         particle.lon += 0.1
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
-    ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
-    pset.execute(pset.Kernel(Update_lon), endtime=1, dt=0.1, output_file=ofile)
+    ofile = pset.ParticleFile(name=filepath, outputdt=0.00001)
+    pset.execute(pset.Kernel(Update_lon), endtime=0.001, dt=0.00001, output_file=ofile)
 
     ncfile = close_and_compare_netcdffiles(filepath, ofile)
     lons = ncfile.variables['lon'][:]

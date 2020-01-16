@@ -234,10 +234,8 @@ class ParticleFile(object):
             else:
                 if deleted_only:
                     pset_towrite = pset
-                elif pset[0].dt > 0:
-                    pset_towrite = [p for p in pset if time <= p.time < time + p.dt and np.isfinite(p.id)]
                 else:
-                    pset_towrite = [p for p in pset if time + p.dt < p.time <= time and np.isfinite(p.id)]
+                    pset_towrite = [p for p in pset if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
                 if len(pset_towrite) > 0:
                     for var in self.var_names:
                         data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])

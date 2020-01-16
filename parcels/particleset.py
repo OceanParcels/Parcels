@@ -166,7 +166,7 @@ class ParticleSet(object):
         if lon is not None and lat is not None:
             # Initialise from arrays of lon/lat coordinates
             assert self.particles.size == lon.size and self.particles.size == lat.size, (
-                'Size of ParticleSet does not match lenght of lon and lat.')
+                'Size of ParticleSet does not match length of lon and lat.')
 
             for i in range(lon.size):
                 self.particles[i] = pclass(lon[i], lat[i], pid[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
