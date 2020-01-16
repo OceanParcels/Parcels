@@ -181,8 +181,7 @@ class ParticleSet(object):
             self.repeat_starttime = time[0]
             self.repeatlon = lon
             self.repeatlat = lat
-            if not hasattr(self, 'repeatpid'):
-                self.repeatpid = pid - pclass.lastID
+            self.repeatpid = pid - pclass.lastID
             self.repeatdepth = depth
             self.repeatpclass = pclass
             self.partitions = partitions
