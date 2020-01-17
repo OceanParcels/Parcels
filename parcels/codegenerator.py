@@ -1,6 +1,7 @@
 import ast
 import collections
 import math
+import numpy as np
 import random
 from copy import copy
 
@@ -886,7 +887,7 @@ class LoopGenerator(object):
                                                          spec='inline')), args)
         body = []
         for v in self.ptype.variables:
-            if v.name not in ['dt', 'state']:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
                 body += [c.Assign(("particle_backup->%s" % v.name), ("particles->%s[p]" % v.name))]
         p_back_set_body = c.Block(body)
         p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
@@ -899,7 +900,7 @@ class LoopGenerator(object):
                                                          spec='inline')), args)
         body = []
         for v in self.ptype.variables:
-            if v.name not in ['dt', 'state']:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
                 body += [c.Assign(("particles->%s[p]" % v.name), ("particle_backup->%s" % v.name))]
         p_back_get_body = c.Block(body)
         p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
