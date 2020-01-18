@@ -599,10 +599,13 @@ class ParticleSet(object):
 
         return density
 
-    def Kernel(self, pyfunc, c_include=""):
+    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
-        based on `fieldset` and `ptype` of the ParticleSet"""
-        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include)
+        based on `fieldset` and `ptype` of the ParticleSet
+        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        """
+        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+                      delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
