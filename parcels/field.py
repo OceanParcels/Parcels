@@ -115,6 +115,7 @@ class Field(object):
             self.allow_time_extrapolation = True if len(self.grid.time) == 1 else False
         else:
             self.allow_time_extrapolation = allow_time_extrapolation
+        print(self.allow_time_extrapolation, allow_time_extrapolation, self.grid.time)
 
         self.time_periodic = time_periodic
         if self.time_periodic is not False and self.allow_time_extrapolation:
@@ -391,6 +392,43 @@ class Field(object):
         variable = kwargs['var_name'] if netcdf_engine == 'xarray' else variable
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
+
+    @classmethod
+    def from_xarray(cls, da, name, dimensions, mesh='spherical', allow_time_extrapolation=None,
+                    time_periodic=False, **kwargs):
+        """Create field from xarray Variable
+
+        :param da: Xarray DataArray
+        :param name: Name of the Field
+        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the DataArray
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        """
+
+        print(da)
+        data = da.values
+        interp_method = kwargs.pop('interp_method', 'linear')
+
+        time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
+        depth = da[dimensions['depth']].values if 'depth' in dimensions else np.array([0])
+        lon = da[dimensions['lon']].values
+        lat = da[dimensions['lat']].values
+
+        time_origin = TimeConverter(time[0])
+        time = time_origin.reltime(time)
+
+        grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
+                   interp_method=interp_method, **kwargs)
 
     def reshape(self, data, transpose=False):
 

@@ -621,8 +621,8 @@ class FieldSet(object):
                                time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
 
     @classmethod
-    def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
-                            time_periodic=False, deferred_load=True, **kwargs):
+    def from_xarray_dataset(cls, ds, variables, dimensions, mesh='spherical', allow_time_extrapolation=None,
+                            time_periodic=False, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
         :param ds: xarray Dataset.
@@ -633,9 +633,6 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable
                (e.g. dimensions['U'], dimensions['V'], etc).
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
@@ -649,24 +646,17 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
-        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
-               fully load them (default: True). It is advised to deferred load the data, since in
-               that case Parcels deals with a better memory management during particle set execution.
-               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
         for var, name in variables.items():
-
-            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
-            inds = indices[var] if (indices and var in indices) else indices
+            cls.checkvaliddimensionsdict(dims)
 
-            fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
-                                            allow_time_extrapolation=allow_time_extrapolation, var_name=var,
-                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
+            fields[var] = Field.from_xarray(ds[name], var, dims, mesh=mesh, allow_time_extrapolation=allow_time_extrapolation,
+                                            time_periodic=time_periodic, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
