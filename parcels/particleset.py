@@ -208,7 +208,7 @@ class ParticleSet(object):
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
             assert self.size == len(lon) and self.size == len(lat), (
-                'Size of ParticleSet does not match lenght of lon and lat.')
+                'Size of ParticleSet does not match length of lon and lat.')
 
             # mimic the variables that get initialised in the constructor
             self.particle_data['lat'][:] = lat
