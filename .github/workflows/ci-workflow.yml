@@ -31,7 +31,7 @@ jobs:
         shell: bash
   test_windows:
     name: Testing on Windows
-    runs-on: windows-2016
+    runs-on: windows-2019
     steps:
       - uses: actions/checkout@master
       - name: Test Windows
