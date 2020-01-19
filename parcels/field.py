@@ -21,6 +21,7 @@ from parcels.tools.converters import GeographicPolar
 from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
+from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.error import FieldOutOfBoundError
 from parcels.tools.error import FieldOutOfBoundSurfaceError
 from parcels.tools.error import FieldSamplingError
@@ -1709,21 +1710,8 @@ class NetcdfFileBuffer(object):
             return np.array([None])
 
         time_da = self.dataset[self.dimensions['time']]
-        if self.dataset['decoded'] and 'Unit' not in time_da.attrs:
-            time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
-        else:
-            if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
-                time_da.attrs['units'] = time_da.attrs['Unit']
-            ds = xr.Dataset({self.dimensions['time']: time_da})
-            try:
-                ds = xr.decode_cf(ds)
-            except ValueError:
-                raise RuntimeError('Xarray could not convert the calendar. Try using the timestamps '
-                                   'keyword in the construction of your Field %s. See also the tutorial '
-                                   'at https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master'
-                                   '/parcels/examples/tutorial_timestamps.ipynb' % self.filename)
-            da = ds[self.dimensions['time']]
-            time = np.array([da]) if len(da.shape) == 0 else np.array(da)
+        convert_xarray_time_units(time_da, self.dimensions['time'])
+        time = np.array([time_da['time']]) if len(time_da.shape) == 0 else np.array(time_da['time'])
         if isinstance(time[0], datetime.datetime):
             raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
         return time

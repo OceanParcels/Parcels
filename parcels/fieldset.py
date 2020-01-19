@@ -11,7 +11,7 @@ from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
-from parcels.tools.converters import TimeConverter
+from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
 try:
@@ -651,6 +651,10 @@ class FieldSet(object):
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
+        if 'units' not in ds[dimensions['time']].attrs and 'Unit' in ds[dimensions['time']].attrs:
+            # Fix DataArrays that have time.Unit instead of expected time.units
+            convert_xarray_time_units(ds, dimensions['time'])
+
         for var, name in variables.items():
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
