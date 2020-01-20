@@ -651,9 +651,10 @@ class FieldSet(object):
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
-        if 'units' not in ds[dimensions['time']].attrs and 'Unit' in ds[dimensions['time']].attrs:
-            # Fix DataArrays that have time.Unit instead of expected time.units
-            convert_xarray_time_units(ds, dimensions['time'])
+        if 'time' in dimensions:
+            if 'units' not in ds[dimensions['time']].attrs and 'Unit' in ds[dimensions['time']].attrs:
+                # Fix DataArrays that have time.Unit instead of expected time.units
+                convert_xarray_time_units(ds, dimensions['time'])
 
         for var, name in variables.items():
             dims = dimensions[var] if var in dimensions else dimensions
