@@ -214,7 +214,7 @@ def convert_xarray_time_units(ds, time):
     """
     if 'units' not in ds[time].attrs and 'Unit' in ds[time].attrs:
         ds[time].attrs['units'] = ds[time].attrs['Unit']
-    ds2 = xr.Dataset({'time': ds[time]})
+    ds2 = xr.Dataset({time: ds[time]})
     try:
         ds2 = xr.decode_cf(ds2)
     except ValueError:
@@ -222,4 +222,4 @@ def convert_xarray_time_units(ds, time):
                            'try using the timestamps keyword in the construction of your Field. '
                            'See also the tutorial at https://nbviewer.jupyter.org/github/OceanParcels/'
                            'parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb')
-    ds[time] = ds2['time']
+    ds[time] = ds2[time]

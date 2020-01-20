@@ -1711,7 +1711,7 @@ class NetcdfFileBuffer(object):
 
         time_da = self.dataset[self.dimensions['time']]
         convert_xarray_time_units(time_da, self.dimensions['time'])
-        time = np.array([time_da['time']]) if len(time_da.shape) == 0 else np.array(time_da['time'])
+        time = np.array([time_da[self.dimensions['time']]]) if len(time_da.shape) == 0 else np.array(time_da[self.dimensions['time']])
         if isinstance(time[0], datetime.datetime):
             raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
         return time
