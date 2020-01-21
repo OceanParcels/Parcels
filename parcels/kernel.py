@@ -70,7 +70,7 @@ class Kernel(object):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=False):
+                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
         self.fieldset = fieldset
         self.ptype = ptype
         self._lib = None
