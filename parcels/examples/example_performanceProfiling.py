@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4, Kernel
+from parcels import FieldSet, ParticleSet, JITParticle, AdvectionRK4
 from datetime import timedelta as delta
 from argparse import ArgumentParser
 import numpy as np
@@ -24,19 +24,21 @@ with_ChunkInfoPrint = False
 global_t_0 = 0
 global_m_0 = 0
 global_samples = []
-samplenr=0
-global_memory_step=[]
-global_time_steps=[]
-global_fds_step=[]
+samplenr = 0
+global_memory_step = []
+global_time_steps = []
+global_fds_step = []
+
 
 class IterationCounter():
-    _iter=0
+    _iter = 0
 
     @classmethod
     def advance(self):
         old_iter = self._iter
-        self._iter+=1
+        self._iter += 1
         return old_iter
+
 
 class PerformanceLog():
     samples = []
@@ -59,14 +61,15 @@ class PerformanceLog():
                 self.memory_steps.append(mem_B_used_total)
                 self.fds_steps.append(fds_open_total)
                 self.samples.append(self._iter)
-                self._iter+=1
+                self._iter += 1
         else:
             process = psutil.Process(os.getpid())
             self.times_steps.append(ostime.time())
             self.memory_steps.append(process.memory_info().rss)
             self.fds_steps.append(len(process.open_files()))
             self.samples.append(self._iter)
-            self._iter+=1
+            self._iter += 1
+
 
 def set_cmems_fieldset(cs, deferLoadFlag=True, periodicFlag=False):
     ddir_head = "/data/oceanparcels/input_data"
@@ -83,6 +86,7 @@ def set_cmems_fieldset(cs, deferLoadFlag=True, periodicFlag=False):
     else:
         return FieldSet.from_netcdf(files, variables, dimensions, allow_time_extrapolation=True, deferred_load=deferLoadFlag, field_chunksize=cs)
 
+
 def print_field_info(fieldset):
     for f in fieldset.get_fields():
         if type(f) in [parcels.VectorField, parcels.NestedField, parcels.SummedField] or not f.grid.defer_load:
@@ -93,16 +97,14 @@ def print_field_info(fieldset):
                 "Chunk info of Field[name={}]: field.nchunks={}; shape(field.data.nchunks)={}; field.data.numblocks={}; shape(f.data)={}\n".format(
                     f.name, f.nchunks, (len(f.data.chunks[0]), len(f.data.chunks[1]), len(f.data.chunks[2])),
                     f.data.numblocks, f.data.shape))
-        sys.stdout.write("Chunk info of Grid[field.name={}]: g.chunk_info={}; g.load_chunk={}; len(g.load_chunk)={}\n".format(f.name,
-                                                                                                                 f.grid.chunk_info,
-                                                                                                                 f.grid.load_chunk,
-                                                                                                                 len(
-                                                                                                                     f.grid.load_chunk)))
+        sys.stdout.write("Chunk info of Grid[field.name={}]: g.chunk_info={}; g.load_chunk={}; len(g.load_chunk)={}\n".format(
+            f.name, f.grid.chunk_info, f.grid.load_chunk, len(f.grid.load_chunk)))
+
 
 def plot(x, times, memory_used, nfiledescriptors, imageFilePath):
     plot_t = []
     for i in range(len(times)):
-        if i==0:
+        if i == 0:
             plot_t.append(times[i]-global_t_0)
         else:
             plot_t.append(times[i]-times[i-1])
@@ -120,16 +122,17 @@ def plot(x, times, memory_used, nfiledescriptors, imageFilePath):
     ax.set_xlabel('iteration')
     plt.savefig(os.path.join(odir, imageFilePath), dpi=300, format='png')
 
+
 def LogMemTimeFds():
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         process = psutil.Process(os.getpid())
-        mem_B_used =  process.memory_info().rss
+        mem_B_used = process.memory_info().rss
         fds_open = len(psutil.Process().open_files())
         mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
         fds_open_total = mpi_comm.reduce(fds_open, op=MPI.SUM, root=0)
-        if mpi_rank==0:
+        if mpi_rank == 0:
             global_time_steps.append(ostime.time())
             global_memory_step.append(mem_B_used_total)
             global_fds_step.append(fds_open_total)
@@ -140,11 +143,12 @@ def LogMemTimeFds():
         global_memory_step.append(process.memory_info().rss)
         global_fds_step.append(len(psutil.Process().open_files()))
 
+
 def perIterGC():
-    import gc
     gc.collect()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     field_chunksize = 1
     do_chunking = False
     auto_chunking = False
@@ -160,17 +164,17 @@ if __name__=='__main__':
     parser.add_argument("-r", "--repeatdt", dest="repeatdt", action='store_true', default=False, help="continuously add particles via repeatdt (default: False)")
     args = parser.parse_args()
 
-    auto_chunking=args.auto_chunking
-    do_chunking=args.do_chunking
+    auto_chunking = args.auto_chunking
+    do_chunking = args.do_chunking
     if auto_chunking:
-        do_chunking=True
+        do_chunking = True
     elif do_chunking:
-        field_chunksize=args.fieldsize
-    imageFileName=args.imageFileName
+        field_chunksize = args.fieldsize
+    imageFileName = args.imageFileName
     deferLoadFlag = args.defer
-    periodicFlag=args.periodic
+    periodicFlag = args.periodic
     backwardSimulation = args.backwards
-    repeatdtFlag=args.repeatdt
+    repeatdtFlag = args.repeatdt
 
     odir = "/scratch/{}/experiments".format(os.environ['USER'])
     func_time = []
@@ -187,18 +191,18 @@ if __name__=='__main__':
     else:
         print("Dask global config - array.chunk-size: {}\n".format(da.config.get('array.chunk-size')))
 
-    if do_chunking==False:
-        fieldset = set_cmems_fieldset(False,deferLoadFlag,periodicFlag)
+    if not do_chunking:
+        fieldset = set_cmems_fieldset(False, deferLoadFlag, periodicFlag)
     elif auto_chunking:
-        fieldset = set_cmems_fieldset('auto',deferLoadFlag,periodicFlag)
+        fieldset = set_cmems_fieldset('auto', deferLoadFlag, periodicFlag)
     else:
-        fieldset = set_cmems_fieldset(field_chunksize,deferLoadFlag,periodicFlag)
+        fieldset = set_cmems_fieldset(field_chunksize, deferLoadFlag, periodicFlag)
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         process = psutil.Process(os.getpid())
-        if mpi_rank==0:
+        if mpi_rank == 0:
             global_t_0 = ostime.time()
             global_m_0 = process.memory_info().rss
     else:
@@ -217,14 +221,13 @@ if __name__=='__main__':
         else:
             print_field_info()
 
-
     simStart = None
     for f in fieldset.get_fields():
         if type(f) in [parcels.VectorField, parcels.NestedField, parcels.SummedField]:
             continue
         else:
             if backwardSimulation:
-                simStart=f.grid.time_full[-1]
+                simStart = f.grid.time_full[-1]
             else:
                 simStart = f.grid.time_full[0]
             break
@@ -238,12 +241,12 @@ if __name__=='__main__':
     else:
         # ==== forward simulation ==== #
         if repeatdtFlag:
-            pset = ParticleSet(fieldset=fieldset, pclass=JITParticle, lon=np.random.rand(96,1)*1e-5, lat=np.random.rand(96,1)*1e-5, repeatdt=delta(hours=1))
+            pset = ParticleSet(fieldset=fieldset, pclass=JITParticle, lon=np.random.rand(96, 1) * 1e-5, lat=np.random.rand(96, 1) * 1e-5, repeatdt=delta(hours=1))
         else:
             pset = ParticleSet(fieldset=fieldset, pclass=JITParticle, lon=np.random.rand(96, 1) * 1e-5, lat=np.random.rand(96, 1) * 1e-5)
 
     perflog = PerformanceLog()
-    postProcessFuncs = [perflog.advance,]
+    postProcessFuncs = [perflog.advance, ]
     if with_GC:
         postProcessFuncs.append(perIterGC)
 

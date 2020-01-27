@@ -211,11 +211,11 @@ class Grid(object):
 
                 self.time = self.time_full[self.ti:self.ti+3]
                 self.tdim = 3
-                if prev_time_indices is None or len(prev_time_indices)!=3 or len(prev_time_indices)!=len(self.time):
+                if prev_time_indices is None or len(prev_time_indices) != 3 or len(prev_time_indices) != len(self.time):
                     self.update_status = 'first_updated'
-                elif functools.reduce(lambda i, j : i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True) and len(prev_time_indices)==len(self.time):
+                elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True) and len(prev_time_indices) == len(self.time):
                     self.update_status = 'not_updated'
-                elif functools.reduce(lambda i, j : i and j, map(lambda m, k: m == k, self.time[:2], prev_time_indices[:2]), True) and len(prev_time_indices)==len(self.time):
+                elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time[:2], prev_time_indices[:2]), True) and len(prev_time_indices) == len(self.time):
                     self.update_status = 'updated'
                 else:
                     self.update_status = 'first_updated'

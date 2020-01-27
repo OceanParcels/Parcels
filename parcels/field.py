@@ -1581,7 +1581,7 @@ class NetcdfFileBuffer(object):
                 init_chunk_dict[self.dimensions['lon']] = self.field_chunksize[2]
             else:
                 init_chunk_dict['lon'] = self.field_chunksize[2]
-        elif self.field_chunksize=='auto':
+        elif self.field_chunksize == 'auto':
             av_mem = psutil.virtual_memory().available
             chunk_cap = av_mem * (1/8) * (1/3)
             if 'array.chunk-size' in da_conf.config.keys():
@@ -1593,9 +1593,9 @@ class NetcdfFileBuffer(object):
             if 'time' in self.dimensions:
                 init_chunk_dict[self.dimensions['time']] = 1
             if 'depth' in self.dimensions:
-                init_chunk_dict[self.dimensions['depth']]=1
+                init_chunk_dict[self.dimensions['depth']] = 1
             else:
-                init_chunk_dict['depth']=1
+                init_chunk_dict['depth'] = 1
 
         try:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
@@ -1688,7 +1688,7 @@ class NetcdfFileBuffer(object):
     def data_access(self):
         if self.chunk_mapping is None and self.field_chunksize not in ['auto', False]:
             self.chunk_mapping = {}
-            tdim=len(self.dataset.dims)
+            tdim = len(self.dataset.dims)
             coord_dim = self.dataset.dims[self.dimensions['time']]
             for i in range(self.dataset[self.name].ndim):
                 if self.dataset[self.name].shape[i] == coord_dim:
@@ -1699,9 +1699,9 @@ class NetcdfFileBuffer(object):
                     continue
                 coord_dim = self.dataset.dims[coordinate_name]
                 coord_id = 0
-                for i in range (self.dataset[self.name].ndim):
+                for i in range(self.dataset[self.name].ndim):
                     if self.dataset[self.name].shape[i] == coord_dim:
-                        coord_id=i-1 if i>tdim else i
+                        coord_id = i-1 if i > tdim else i
                         break
                 self.chunk_mapping[coord_id] = 1 if coordinate_name not in self.dimensions.values() else self.field_chunksize[coordinate_name]
         data = self.dataset[self.name]
@@ -1763,10 +1763,10 @@ class NetcdfFileBuffer(object):
                 elif self.field_chunksize == 'auto' and self.rechunk_callback_fieldsis is not None:
                     data = data.rechunk(self.field_chunksize)
                     self.chunk_mapping = {}
-                    chunkIndex=0
+                    chunkIndex = 0
                     for chunkDim in data.numblocks[1:]:
-                        self.chunk_mapping[chunkIndex]=chunkDim
-                        chunkIndex+=1
+                        self.chunk_mapping[chunkIndex] = chunkDim
+                        chunkIndex += 1
                     self.rechunk_callback_fields()
                 elif self.field_chunksize != 'auto':
                     data = data.rechunk(self.chunk_mapping)

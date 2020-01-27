@@ -802,14 +802,14 @@ class FieldSet(object):
                     f.loaded_time_indices = [2]
                     if f.filebuffers[0] is not None:
                         f.filebuffers[0].dataset.close()
-                        f.filebuffers[0]=None
+                        f.filebuffers[0] = None
                     f.filebuffers[:2] = f.filebuffers[1:]
                     data = f.computeTimeChunk(data, 2)
                 else:
                     f.loaded_time_indices = [0]
                     if f.filebuffers[2] is not None:
                         f.filebuffers[2].dataset.close()
-                        f.filebuffers[2]=None
+                        f.filebuffers[2] = None
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
                 data = f.rescale_and_set_minmax(data)
