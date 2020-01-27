@@ -837,10 +837,10 @@ class Field(object):
             # If given time > last known field time, use
             # the last field frame without interpolation
             return (len(self.grid.time) - 1, 0)
-        if time_index.all():
-            # If given time > last known field time, use
-            # the last field frame without interpolation
-            return (len(self.grid.time) - 1, 0)
+        elif np.logical_not(time_index).all():
+            # If given time < any time in the field, use
+            # the first field frame without interpolation
+            return (0, 0)
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
