@@ -5,7 +5,7 @@ from os import path
 import dask.array as da
 import numpy as np
 
-from parcels.field import Field
+from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -787,6 +787,8 @@ class FieldSet(object):
 
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
+                if(isinstance(f.data, DeferredArray)):
+                    f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
