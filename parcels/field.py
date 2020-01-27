@@ -1551,12 +1551,12 @@ class NetcdfFileBuffer(object):
             self.dataset = self.filename
             return self
         try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks={})
             self.dataset['decoded'] = True
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine)
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={})
             self.dataset['decoded'] = False
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
@@ -1687,12 +1687,14 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
+        if isinstance(data, xr.DataArray):
+            data = data.data
         if self.field_chunksize is False:
             data = np.array(data)
         else:
             if isinstance(data, da.core.Array):
                 if self.field_chunksize == 'auto' and data.shape[-2:] == data.chunksize[-2:]:
-                    data = np.array(data)
+                    pass
                 elif self.field_chunksize != 'auto':
                     data = data.rechunk(self.field_chunksize)
             else:
