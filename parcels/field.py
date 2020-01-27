@@ -1636,6 +1636,9 @@ class NetcdfFileBuffer(object):
 
     @property
     def data(self):
+        return self.data_access()
+
+    def data_access(self):
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
