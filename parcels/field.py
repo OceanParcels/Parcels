@@ -21,6 +21,7 @@ from parcels.tools.converters import GeographicPolar
 from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
+from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.error import FieldOutOfBoundError
 from parcels.tools.error import FieldOutOfBoundSurfaceError
 from parcels.tools.error import FieldSamplingError
@@ -221,8 +222,6 @@ class Field(object):
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
         :param field_chunksize: size of the chunks in dask loading
-        :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
-               but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
@@ -235,30 +234,24 @@ class Field(object):
                 raise TypeError("Filenames type is inconsistent with manual timestamp provision."
                                 + "Should be dict or list")
 
-        if isinstance(variable, xr.core.dataarray.DataArray):
-            lonlat_filename = variable
-            depth_filename = variable
-            data_filenames = variable
-            netcdf_engine = 'xarray'
-        else:
-            if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
-                variable = (variable, variable)
-            assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
+        if isinstance(variable, str):  # for backward compatibility with Parcels < 2.0.0
+            variable = (variable, variable)
+        assert len(variable) == 2, 'The variable tuple must have length 2. Use FieldSet.from_netcdf() for multiple variables'
 
-            data_filenames = cls.get_dim_filenames(filenames, 'data')
-            lonlat_filename = cls.get_dim_filenames(filenames, 'lon')
-            if isinstance(filenames, dict):
-                assert len(lonlat_filename) == 1
-            if lonlat_filename != cls.get_dim_filenames(filenames, 'lat'):
-                raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
-            lonlat_filename = lonlat_filename[0]
-            if 'depth' in dimensions:
-                depth_filename = cls.get_dim_filenames(filenames, 'depth')
-                if isinstance(filenames, dict) and len(depth_filename) != 1:
-                    raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
-                depth_filename = depth_filename[0]
+        data_filenames = cls.get_dim_filenames(filenames, 'data')
+        lonlat_filename = cls.get_dim_filenames(filenames, 'lon')
+        if isinstance(filenames, dict):
+            assert len(lonlat_filename) == 1
+        if lonlat_filename != cls.get_dim_filenames(filenames, 'lat'):
+            raise NotImplementedError('longitude and latitude dimensions are currently processed together from one single file')
+        lonlat_filename = lonlat_filename[0]
+        if 'depth' in dimensions:
+            depth_filename = cls.get_dim_filenames(filenames, 'depth')
+            if isinstance(filenames, dict) and len(depth_filename) != 1:
+                raise NotImplementedError('Vertically adaptive meshes not implemented for from_netcdf()')
+            depth_filename = depth_filename[0]
 
-            netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
+        netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
 
         indices = {} if indices is None else indices.copy()
         for ind in indices.values():
@@ -308,11 +301,6 @@ class Field(object):
                         dataFiles.append(f)
                 timeslices = np.array([stamp for file in timestamps for stamp in file])
                 time = timeslices
-            elif netcdf_engine == 'xarray':
-                with NetcdfFileBuffer(data_filenames, dimensions, indices, netcdf_engine) as filebuffer:
-                    time = filebuffer.time
-                    timeslices = time if isinstance(time, (list, np.ndarray)) else [time]
-                    dataFiles = data_filenames if isinstance(data_filenames, (list, np.ndarray)) else [data_filenames] * len(time)
             else:
                 timeslices = []
                 dataFiles = []
@@ -355,10 +343,7 @@ class Field(object):
                                       field_chunksize=field_chunksize) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
-                    if netcdf_engine == 'xarray':
-                        tslice = [tslice]
-                    else:
-                        filebuffer.name = filebuffer.parse_name(variable[1])
+                    filebuffer.name = filebuffer.parse_name(variable[1])
                     buffer_data = filebuffer.data
                     if len(buffer_data.shape) == 2:
                         data_list.append(buffer_data.reshape(sum(((len(tslice), 1), buffer_data.shape), ())))
@@ -388,9 +373,44 @@ class Field(object):
         kwargs['netcdf_engine'] = netcdf_engine
         kwargs['field_chunksize'] = field_chunksize
 
-        variable = kwargs['var_name'] if netcdf_engine == 'xarray' else variable
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
+
+    @classmethod
+    def from_xarray(cls, da, name, dimensions, mesh='spherical', allow_time_extrapolation=None,
+                    time_periodic=False, **kwargs):
+        """Create field from xarray Variable
+
+        :param da: Xarray DataArray
+        :param name: Name of the Field
+        :param dimensions: Dictionary mapping variable names for the relevant dimensions in the DataArray
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: boolean whether to loop periodically over the time component of the FieldSet
+               This flag overrides the allow_time_interpolation and sets it to False
+        """
+
+        data = da.values
+        interp_method = kwargs.pop('interp_method', 'linear')
+
+        time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
+        depth = da[dimensions['depth']].values if 'depth' in dimensions else np.array([0])
+        lon = da[dimensions['lon']].values
+        lat = da[dimensions['lat']].values
+
+        time_origin = TimeConverter(time[0])
+        time = time_origin.reltime(time)
+
+        grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+        return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
+                   interp_method=interp_method, **kwargs)
 
     def reshape(self, data, transpose=False):
 
@@ -1616,10 +1636,7 @@ class NetcdfFileBuffer(object):
 
     @property
     def data(self):
-        if self.netcdf_engine == 'xarray':
-            data = self.dataset
-        else:
-            data = self.dataset[self.name]
+        data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
@@ -1693,21 +1710,8 @@ class NetcdfFileBuffer(object):
             return np.array([None])
 
         time_da = self.dataset[self.dimensions['time']]
-        if self.netcdf_engine != 'xarray' and (self.dataset['decoded'] and 'Unit' not in time_da.attrs):
-            time = np.array([time_da]) if len(time_da.shape) == 0 else np.array(time_da)
-        else:
-            if 'units' not in time_da.attrs and 'Unit' in time_da.attrs:
-                time_da.attrs['units'] = time_da.attrs['Unit']
-            ds = xr.Dataset({self.dimensions['time']: time_da})
-            try:
-                ds = xr.decode_cf(ds)
-            except ValueError:
-                raise RuntimeError('Xarray could not convert the calendar. Try using the timestamps '
-                                   'keyword in the construction of your Field %s. See also the tutorial '
-                                   'at https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master'
-                                   '/parcels/examples/tutorial_timestamps.ipynb' % self.filename)
-            da = ds[self.dimensions['time']]
-            time = np.array([da]) if len(da.shape) == 0 else np.array(da)
+        convert_xarray_time_units(time_da, self.dimensions['time'])
+        time = np.array([time_da[self.dimensions['time']]]) if len(time_da.shape) == 0 else np.array(time_da[self.dimensions['time']])
         if isinstance(time[0], datetime.datetime):
             raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
         return time

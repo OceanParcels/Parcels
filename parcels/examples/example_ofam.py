@@ -23,8 +23,8 @@ def set_ofam_fieldset(deferred_load=True, use_xarray=False):
     dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
                   'time': 'Time'}
     if use_xarray:
-        ds = xr.open_mfdataset([filenames['U'], filenames['V']])
-        return FieldSet.from_xarray_dataset(ds, variables, dimensions, allow_time_extrapolation=True, deferred_load=deferred_load)
+        ds = xr.open_mfdataset([filenames['U'], filenames['V']], combine='by_coords')
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, allow_time_extrapolation=True)
     else:
         return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, deferred_load=deferred_load)
 
