@@ -1561,41 +1561,60 @@ class NetcdfFileBuffer(object):
             self.dataset = self.filename
             return self
 
+        # ==== check-opening ==== #
+        try:
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks={})
+            self.dataset['decoded'] = True
+        except:
+            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
+                                % (self.filename, xr.__version__))
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={})
+            self.dataset['decoded'] = False
+
         init_chunk_dict = {}
         if isinstance(self.field_chunksize, dict):
             init_chunk_dict = self.field_chunksize
         elif isinstance(self.field_chunksize, tuple):
-            if 'time' in self.dimensions:
-                init_chunk_dict[self.dimensions['time']] = self.field_chunksize[0]
+            spatStart = 0
+            if 'time' in self.dimensions and self.dimensions['time'] in self.dataset.dims:
+                if(len(self.dimensions) > 2):
+                    init_chunk_dict[self.dimensions['time']] = self.field_chunksize[0]
+                    spatStart += 1
+                else:
+                    init_chunk_dict[self.dimensions['time']] = 1
             else:
-                init_chunk_dict['time'] = 1
-            if 'depth' in self.dimensions:
-                init_chunk_dict[self.dimensions['depth']] = 1
+                raise RuntimeWarning("Did not find {} in NetCDF dims - Please specify field_chunksize as dictionary for NetCDF dimension names.".format(self.dimensions['depth']))
+            if 'depth' in self.dimensions and self.dimensions['depth'] in self.dataset.dims:
+                if(len(self.dimensions) > 3):
+                    init_chunk_dict[self.dimensions['depth']] = self.field_chunksize[1]
+                    spatStart += 1
+                else:
+                    init_chunk_dict[self.dimensions['depth']] = 1
             else:
-                init_chunk_dict['depth'] = self.field_chunksize[0]
-            if 'lat' in self.dimensions:
-                init_chunk_dict[self.dimensions['lat']] = self.field_chunksize[1]
+                raise RuntimeWarning("Did not find {} in NetCDF dims - Please specify field_chunksize as dictionary for NetCDF dimension names.".format(self.dimensions['depth']))
+            if 'lat' in self.dimensions and self.dimensions['lat'] in self.dataset.dims:
+                init_chunk_dict[self.dimensions['lat']] = self.field_chunksize[spatStart]
             else:
-                init_chunk_dict['lat'] = self.field_chunksize[1]
-            if 'lon' in self.dimensions:
-                init_chunk_dict[self.dimensions['lon']] = self.field_chunksize[2]
+                raise RuntimeWarning("Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names.".format(self.dimensions['lat']))
+            if 'lon' in self.dimensions and self.dimensions['lon'] in self.dataset.dims:
+                init_chunk_dict[self.dimensions['lon']] = self.field_chunksize[spatStart+1]
             else:
-                init_chunk_dict['lon'] = self.field_chunksize[2]
+                raise RuntimeWarning("Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names.".format(self.dimensions['lon']))
         elif self.field_chunksize == 'auto':
             av_mem = psutil.virtual_memory().available
             chunk_cap = av_mem * (1/8) * (1/3)
             if 'array.chunk-size' in da_conf.config.keys():
                 chunk_cap = da_utils.parse_bytes(da_conf.config.get('array.chunk-size'))
-            if 'lat' in self.dimensions and 'lon' in self.dimensions:
+            if ('lat' in self.dimensions and self.dimensions['lat'] in self.dataset.dims) and ('lon' in self.dimensions and self.dimensions['lon'] in self.dataset.dims):
                 pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
                 init_chunk_dict[self.dimensions['lat']] = pDim
                 init_chunk_dict[self.dimensions['lon']] = pDim
-            if 'time' in self.dimensions:
+            if 'time' in self.dimensions and self.dimensions['time'] in self.dataset.dims:
                 init_chunk_dict[self.dimensions['time']] = 1
-            if 'depth' in self.dimensions:
+            if 'depth' in self.dimensions and self.dimensions['depth'] in self.dataset.dims:
                 init_chunk_dict[self.dimensions['depth']] = 1
-            else:
-                init_chunk_dict['depth'] = 1
+
+        self.dataset.close()
 
         try:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
@@ -1688,22 +1707,34 @@ class NetcdfFileBuffer(object):
     def data_access(self):
         if self.chunk_mapping is None and self.field_chunksize not in ['auto', False]:
             self.chunk_mapping = {}
-            tdim = len(self.dataset.dims)
-            coord_dim = self.dataset.dims[self.dimensions['time']]
-            for i in range(self.dataset[self.name].ndim):
-                if self.dataset[self.name].shape[i] == coord_dim:
-                    tdim = i
-                    break
-            for coordinate_name in self.dataset.coords:
-                if coordinate_name == self.dimensions['time']:
-                    continue
-                coord_dim = self.dataset.dims[coordinate_name]
-                coord_id = 0
+            if(isinstance(self.field_chunksize, tuple)):
+                for i in range(len(self.field_chunksize)):
+                    self.chunk_mapping[i] = self.field_chunksize[i]
+            else:
+                ref_name_array = None
+                names_match_dims = True
+                names_match_coords = True
+                for dimName in self.dimensions:
+                    names_match_dims &= dimName in self.dataset.dims
+                    names_match_coords &= dimName in self.dataset.coords
+                ref_name_array = self.dataset.dims if names_match_dims else self.dataset.coords
+
+                tdim = len(self.dataset.dims)
+                coord_dim = ref_name_array[self.dimensions['time']]
                 for i in range(self.dataset[self.name].ndim):
                     if self.dataset[self.name].shape[i] == coord_dim:
-                        coord_id = i-1 if i > tdim else i
+                        tdim = i
                         break
-                self.chunk_mapping[coord_id] = 1 if coordinate_name not in self.dimensions.values() else self.field_chunksize[coordinate_name]
+                for coordinate_name in ref_name_array:
+                    if coordinate_name == self.dimensions['time']:
+                        continue
+                    coord_dim = self.dataset.dims[coordinate_name]
+                    coord_id = 0
+                    for i in range(self.dataset[self.name].ndim):
+                        if self.dataset[self.name].shape[i] == coord_dim:
+                            coord_id = i-1 if i > tdim else i
+                            break
+                    self.chunk_mapping[coord_id] = 1 if coordinate_name not in self.dimensions.values() else self.field_chunksize[coordinate_name]
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
