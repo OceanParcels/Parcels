@@ -272,7 +272,7 @@ class Field(object):
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
 
-        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
+        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine, field_chunksize=False) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -280,7 +280,7 @@ class Field(object):
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
+            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method, field_chunksize=False) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 depth = filebuffer.read_depth
                 data_full_zdim = filebuffer.data_full_zdim
@@ -309,7 +309,7 @@ class Field(object):
                 dataFiles = []
                 for fname in data_filenames:
                     with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                          field_chunksize=field_chunksize) as filebuffer:
+                                          field_chunksize=False) as filebuffer:
                         ftime = filebuffer.time
                         timeslices.append(ftime)
                         dataFiles.append([fname] * len(ftime))
@@ -343,7 +343,7 @@ class Field(object):
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
                                       interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                      field_chunksize=field_chunksize) as filebuffer:
+                                      field_chunksize=False) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -1728,13 +1728,16 @@ class NetcdfFileBuffer(object):
                 for coordinate_name in ref_name_array:
                     if coordinate_name == self.dimensions['time']:
                         continue
-                    coord_dim = self.dataset.dims[coordinate_name]
+                    coord_dim = ref_name_array[coordinate_name] if names_match_dims else ref_name_array[coordinate_name].shape[0]
                     coord_id = 0
                     for i in range(self.dataset[self.name].ndim):
                         if self.dataset[self.name].shape[i] == coord_dim:
                             coord_id = i-1 if i > tdim else i
                             break
-                    self.chunk_mapping[coord_id] = 1 if coordinate_name not in self.dimensions.values() else self.field_chunksize[coordinate_name]
+                    if coordinate_name in self.dimensions.values() and coordinate_name in self.field_chunksize:
+                        self.chunk_mapping[coord_id] = self.field_chunksize[coordinate_name]
+                    else:
+                        self.chunk_mapping[coord_id] = 1
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
