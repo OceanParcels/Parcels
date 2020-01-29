@@ -5,7 +5,7 @@ from os import path
 import dask.array as da
 import numpy as np
 
-from parcels.field import Field
+from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -787,6 +787,8 @@ class FieldSet(object):
 
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
+                if(isinstance(f.data, DeferredArray)):
+                    f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
@@ -798,12 +800,16 @@ class FieldSet(object):
                 data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.loaded_time_indices = [2]
-                    f.filebuffers[0].dataset.close()
+                    if f.filebuffers[0] is not None:
+                        f.filebuffers[0].dataset.close()
+                        f.filebuffers[0] = None
                     f.filebuffers[:2] = f.filebuffers[1:]
                     data = f.computeTimeChunk(data, 2)
                 else:
                     f.loaded_time_indices = [0]
-                    f.filebuffers[2].dataset.close()
+                    if f.filebuffers[2] is not None:
+                        f.filebuffers[2].dataset.close()
+                        f.filebuffers[2] = None
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
                 data = f.rescale_and_set_minmax(data)
@@ -812,6 +818,7 @@ class FieldSet(object):
                     if lib is da:
                         f.data = da.concatenate([f.data[1:, :], data], axis=0)
                     else:
+                        f.data[0] = None
                         f.data[:2, :] = f.data[1:, :]
                         f.data[2, :] = data
                 else:
@@ -819,6 +826,7 @@ class FieldSet(object):
                     if lib is da:
                         f.data = da.concatenate([data, f.data[:2, :]], axis=0)
                     else:
+                        f.data[2] = None
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
