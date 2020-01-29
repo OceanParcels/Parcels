@@ -232,7 +232,8 @@ class Field(object):
                 assert len(filenames) == len(timestamps), 'Outer dimension of timestamps should correspond to number of files.'
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
-                    assert(len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
+                    if k not in ['lat','lon','depth','time']:
+                        assert(len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
             else:
                 raise TypeError("Filenames type is inconsistent with manual timestamp provision."
                                 + "Should be dict or list")
