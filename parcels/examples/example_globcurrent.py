@@ -28,8 +28,8 @@ def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, us
     else:
         dimensions = {'lat': 'lat', 'lon': 'lon'}
     if use_xarray:
-        ds = xr.open_mfdataset(filename)
-        return FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, deferred_load=deferred_load, time_periodic=time_periodic)
+        ds = xr.open_mfdataset(filename, combine='by_coords')
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, time_periodic=time_periodic)
     else:
         return FieldSet.from_netcdf(filename, variables, dimensions, indices, deferred_load=deferred_load, time_periodic=time_periodic, timestamps=timestamps)
 
@@ -42,12 +42,13 @@ def test_globcurrent_fieldset(use_xarray):
     assert(fieldset.V.lon.size == 81)
     assert(fieldset.V.lat.size == 41)
 
-    indices = {'lon': [5], 'lat': range(20, 30)}
-    fieldsetsub = set_globcurrent_fieldset(indices=indices, use_xarray=use_xarray)
-    assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
-    assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices['lat']])
+    if not use_xarray:
+        indices = {'lon': [5], 'lat': range(20, 30)}
+        fieldsetsub = set_globcurrent_fieldset(indices=indices, use_xarray=use_xarray)
+        assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices['lon']])
+        assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
+        assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices['lon']])
+        assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices['lat']])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
