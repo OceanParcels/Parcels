@@ -1,3 +1,4 @@
+from os import path
 from parcels import (
     FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode, KernelError,
     OutOfBoundsError
@@ -262,3 +263,15 @@ def test_errorcode_repeat(fieldset, mode):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.], lat=[0.])
     pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)
+
+
+@pytest.mark.parametrize('delete_cfiles', [True, False])
+def test_execution_keep_cfiles(fieldset, delete_cfiles):
+    pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
+    pset.execute(pset.Kernel(DoNothing, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
+    cfile = pset.kernel.src_file
+    del pset.kernel
+    if delete_cfiles:
+        assert not path.exists(cfile)
+    else:
+        assert path.exists(cfile)
