@@ -128,7 +128,7 @@ def main(target_path=None):
         args = parser.parse_args()
         target_path = args.target_path
 
-    if os.path.exists(target_path):
+    if os.path.exists(os.path.join(target_path, "MovingEddies_data")):
         print("Error: {} already exists.".format(target_path))
         return
 

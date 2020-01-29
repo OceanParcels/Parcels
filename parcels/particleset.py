@@ -378,7 +378,7 @@ class ParticleSet(object):
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
-                verbose_progress=None):
+                verbose_progress=None, postIterationFunctions=None):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -404,7 +404,7 @@ class ParticleSet(object):
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-
+        :param postIterationFunctions: Array of functions that are to be called after each iteration (post-process, non-Kernel)
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -528,6 +528,10 @@ class ParticleSet(object):
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
+            # ==== insert post-process here to also allow for memory clean-up via external func ==== #
+            if postIterationFunctions is not None:
+                for extFunc in postIterationFunctions:
+                    extFunc()
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
