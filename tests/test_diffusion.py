@@ -114,7 +114,7 @@ def test_randomexponential(mode, lambd, npart=1000):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mu', [0.8*np.pi, np.pi])
 @pytest.mark.parametrize('kappa', [2, 4])
-def test_randomvonmises(mode, mu, kappa, npart=1000):
+def test_randomvonmises(mode, mu, kappa, npart=10000):
     fieldset = zeros_fieldset()
 
     # Parameters for random.vonmisesvariate
@@ -129,7 +129,6 @@ def test_randomvonmises(mode, mu, kappa, npart=1000):
     pset = ParticleSet(fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     def vonmises(particle, fieldset, time):
-        # Kernel for random exponential variable in depth direction
         particle.angle = random.vonmisesvariate(fieldset.mu, fieldset.kappa)
 
     pset.execute(vonmises, runtime=1, dt=1)
@@ -137,3 +136,6 @@ def test_randomvonmises(mode, mu, kappa, npart=1000):
     angles = np.array([p.angle for p in pset])
 
     assert np.allclose(np.mean(angles), mu, atol=.1)
+    scipy_mises = stats.vonmises.rvs(kappa, loc=mu, size=10000)
+    assert np.allclose(np.mean(angles), np.mean(scipy_mises), atol=.1)
+    assert np.allclose(np.std(angles), np.std(scipy_mises), atol=.1)
