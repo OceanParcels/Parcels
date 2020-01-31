@@ -149,6 +149,7 @@ class RandomNode(IntrinsicNode):
                   'randint': 'parcels_randint',
                   'normalvariate': 'parcels_normalvariate',
                   'expovariate': 'parcels_expovariate',
+                  'vonmisesvariate': 'parcels_vonmisesvariate',
                   'seed': 'parcels_seed'}
 
     def __getattr__(self, attr):
