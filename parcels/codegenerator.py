@@ -692,6 +692,9 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Break(self, node):
         node.ccode = c.Statement("break")
 
+    def visit_Pass(self, node):
+        node.ccode = c.Statement("")
+
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.ccode_name] = node.obj
