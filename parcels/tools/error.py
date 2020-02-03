@@ -11,10 +11,11 @@ class ErrorCode(object):
     Repeat = 1
     Delete = 2
     Error = 3
-    ErrorInterpolation = 31
-    ErrorOutOfBounds = 4
-    ErrorThroughSurface = 41
-    ErrorTimeExtrapolation = 5
+    ErrorOutOfBounds = 31
+    ErrorThroughSurface = 32
+    ErrorTimeExtrapolation = 33
+    ErrorInterpolation = 34
+    Skip = 4
 
 
 class FieldSamplingError(RuntimeError):

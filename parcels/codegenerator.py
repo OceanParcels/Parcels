@@ -945,6 +945,7 @@ class LoopGenerator(object):
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
+        skip_continue = c.If("particles[p].state == SKIP", c.Statement("continue"))
         body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
         body += [pdt_eq_dt_pos]
         body += [partdt]
@@ -960,7 +961,7 @@ class LoopGenerator(object):
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
-                          c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
+                          c.Block([sign_end_part, notstarted_continue, skip_continue, dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
                          c.Value("float", "__pdt_prekernels"),
                          c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),

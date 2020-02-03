@@ -271,6 +271,9 @@ class Kernel(object):
             sign_end_part = np.sign(endtime - p.time)
             if (sign_end_part != sign_dt) and (dt != 0):
                 continue
+            # don't execute particles that we're meant to skip
+            if p.state == ErrorCode.Skip:
+                continue
 
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
@@ -347,7 +350,7 @@ class Kernel(object):
 
         # Identify particles that threw errors
         error_particles = [p for p in pset.particles
-                           if p.state != ErrorCode.Success]
+                           if p.state != ErrorCode.Success and p.state != ErrorCode.Skip]
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
@@ -368,7 +371,7 @@ class Kernel(object):
                 self.execute_python(pset, endtime, dt)
 
             error_particles = [p for p in pset.particles
-                               if p.state != ErrorCode.Success]
+                               if p.state != ErrorCode.Success and p.state != ErrorCode.Skip]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
