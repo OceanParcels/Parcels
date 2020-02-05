@@ -1623,7 +1623,7 @@ class NetcdfFileBuffer(object):
             if 'array.chunk-size' in da_conf.config.keys():
                 chunk_cap = da_utils.parse_bytes(da_conf.config.get('array.chunk-size'))
             else:
-                logger.warning_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.dask.org).")
+                logger.warning_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.dask.org). Further details are available in the Parcels FAQ (http://oceanparcels.org/faq.html#performance).")
             if self._is_dimension_available('lat') and self._is_dimension_available('lon;'):
                 pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
                 init_chunk_dict[self.dimensions['lat']] = pDim
@@ -1644,7 +1644,7 @@ class NetcdfFileBuffer(object):
         return (dimension_name in self.dimensions and self.dimensions[dimension_name] in self.dataset.dims)
 
     def _netcdf_DimNotFound_warning_message(self, dimension_name):
-        return "Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names, e.g.\n field_chunksize=\{ '{}': <number>, ... \}.".format(self.dimensions[dimension_name], self.dimensions[dimension_name])
+        return "Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names, e.g.\n field_chunksize=\{ '{}': <number>, ... \}. More information are found in the Parcels FAQ (http://oceanparcels.org/faq.html#performance)".format(self.dimensions[dimension_name], self.dimensions[dimension_name])
 
     def parse_name(self, name):
         if isinstance(name, list):
