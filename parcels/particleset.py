@@ -25,7 +25,8 @@ if MPI:
     try:
         from sklearn.cluster import KMeans
     except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed')
+        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
+                               'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSet']
 
