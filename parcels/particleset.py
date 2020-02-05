@@ -19,9 +19,13 @@ from parcels.particlefile import ParticleFile
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
-    from sklearn.cluster import KMeans
 except:
     MPI = None
+if MPI:
+    try:
+        from sklearn.cluster import KMeans
+    except:
+        raise EnvironmentError('sklearn needs to be available if MPI is installed')
 
 __all__ = ['ParticleSet']
 
