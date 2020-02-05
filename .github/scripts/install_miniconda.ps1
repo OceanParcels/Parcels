@@ -61,7 +61,7 @@ function ParsePythonVersion ($python_version) {
 
 
 function DownloadMiniconda ($python_version, $platform_suffix) {
-    if ($python_version -eq "3.4") {
+    if ($python_version -like "3*") {
         $filename = "Miniconda3-latest-Windows-" + $platform_suffix + ".exe"
     } else {
         $filename = "Miniconda2-latest-Windows-" + $platform_suffix + ".exe"
@@ -100,7 +100,7 @@ function InstallMiniconda ($python_version, $architecture, $python_home) {
 
 
 function main () {
-    InstallMiniconda $env:PYTHON_VERSION $env:PYTHON_ARCH $env:PYTHON
+    InstallMiniconda $env:PY_VERSION $env:PYTHON_ARCH $env:PYTHON
 }
 
 main
