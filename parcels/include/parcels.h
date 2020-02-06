@@ -595,7 +595,6 @@ static inline ErrorCode spatial_interpolation_UVW_c_grid(double xsi, double eta,
     }
   }
   else{
-    //float (*zvals)[ydim][xdim] = (float (*)[zdim][ydim][xdim]) grid->depth;
     float (*zvals)[ydim][xdim] = (float (*)[ydim][xdim]) grid->depth;
     for (iN=0; iN < 4; ++iN){
       pz[iN] = zvals[zi][yi+iN/2][xi+min(1, (iN%3))];
