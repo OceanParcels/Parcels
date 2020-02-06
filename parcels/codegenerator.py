@@ -910,12 +910,13 @@ class LoopGenerator(object):
 
         update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
                                                              spec='inline')), [c.Value('double', 'dt')])
-        body = []
-        body += [c.Assign("_next_dt", "dt")]
-        body += [c.Assign("_next_dt_set", "1")]
-        update_next_dt_body = c.Block(body)
-        update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
-        ccode += [update_next_dt]
+        if 'update_next_dt' in str(kernel_ast):
+            body = []
+            body += [c.Assign("_next_dt", "dt")]
+            body += [c.Assign("_next_dt_set", "1")]
+            update_next_dt_body = c.Block(body)
+            update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+            ccode += [update_next_dt]
 
         if c_include:
             ccode += [c_include]
