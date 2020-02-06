@@ -947,7 +947,7 @@ class LoopGenerator(object):
         body += [pdt_eq_dt_pos]
         body += [partdt]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
-        check_pdt = c.If("res == SUCCESS & __pdt_prekernels != particles[p].dt", c.Assign("res", "REPEAT"))
+        check_pdt = c.If("(res == SUCCESS) & (__pdt_prekernels != particles[p].dt)", c.Assign("res", "REPEAT"))
         body += [check_pdt]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
