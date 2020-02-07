@@ -28,8 +28,8 @@ def set_globcurrent_fieldset(filename=None, indices=None, deferred_load=True, us
     else:
         dimensions = {'lat': 'lat', 'lon': 'lon'}
     if use_xarray:
-        ds = xr.open_mfdataset(filename)
-        return FieldSet.from_xarray_dataset(ds, variables, dimensions, indices, deferred_load=deferred_load, time_periodic=time_periodic)
+        ds = xr.open_mfdataset(filename, combine='by_coords')
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, time_periodic=time_periodic)
     else:
         return FieldSet.from_netcdf(filename, variables, dimensions, indices, deferred_load=deferred_load, time_periodic=time_periodic, timestamps=timestamps)
 
@@ -42,12 +42,13 @@ def test_globcurrent_fieldset(use_xarray):
     assert(fieldset.V.lon.size == 81)
     assert(fieldset.V.lat.size == 41)
 
-    indices = {'lon': [5], 'lat': range(20, 30)}
-    fieldsetsub = set_globcurrent_fieldset(indices=indices, use_xarray=use_xarray)
-    assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
-    assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices['lon']])
-    assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices['lat']])
+    if not use_xarray:
+        indices = {'lon': [5], 'lat': range(20, 30)}
+        fieldsetsub = set_globcurrent_fieldset(indices=indices, use_xarray=use_xarray)
+        assert np.allclose(fieldsetsub.U.lon, fieldset.U.lon[indices['lon']])
+        assert np.allclose(fieldsetsub.U.lat, fieldset.U.lat[indices['lat']])
+        assert np.allclose(fieldsetsub.V.lon, fieldset.V.lon[indices['lon']])
+        assert np.allclose(fieldsetsub.V.lat, fieldset.V.lat[indices['lat']])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -225,3 +226,25 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   dt=delta(minutes=5))
 
     assert np.allclose([pset0[-1].lon, pset0[-1].lat], [pset1[-1].lon, pset1[-1].lat])
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('dt', [-300, 300])
+@pytest.mark.parametrize('pid_offset', [0, 20])
+def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
+    filename = tmpdir.join("pset_fromparticlefile.nc")
+    fieldset = set_globcurrent_fieldset()
+
+    ptype[mode].setLastID(pid_offset)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=25, lat=-35)
+    pfile = pset.ParticleFile(filename, outputdt=delta(hours=6))
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
+    pfile.close()
+
+    ptype[mode].setLastID(0)  # need to reset to zero
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+    pset_new.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
+
+    for var in ['lon', 'lat', 'depth', 'time', 'id']:
+        assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])

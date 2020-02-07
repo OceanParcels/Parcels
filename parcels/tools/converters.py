@@ -2,13 +2,14 @@ import inspect
 from datetime import timedelta as delta
 from math import cos
 from math import pi
+import xarray as xr
 
 import cftime
 import numpy as np
 
 __all__ = ['UnitConverter', 'Geographic', 'GeographicPolar', 'GeographicSquare',
-           'GeographicPolarSquare', 'unitconverters_map',
-           'TimeConverter']
+           'GeographicPolarSquare', 'unitconverters_map', 'TimeConverter',
+           'convert_xarray_time_units']
 
 
 def _get_cftime_datetimes():
@@ -33,6 +34,8 @@ class TimeConverter(object):
         self.time_origin = 0 if time_origin is None else time_origin
         if isinstance(time_origin, np.datetime64):
             self.calendar = "np_datetime64"
+        elif isinstance(time_origin, np.timedelta64):
+            self.calendar = "np_timedelta64"
         elif isinstance(time_origin, cftime._cftime.datetime):
             self.calendar = time_origin.calendar
         else:
@@ -46,7 +49,7 @@ class TimeConverter(object):
         :return: time - self.time_origin
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar == 'np_datetime64':
+        if self.calendar in ['np_datetime64', 'np_timedelta64']:
             return (time - self.time_origin) / np.timedelta64(1, 's')
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
@@ -65,7 +68,7 @@ class TimeConverter(object):
         :return: self.time_origin + time
         """
         time = time.time_origin if isinstance(time, TimeConverter) else time
-        if self.calendar == 'np_datetime64':
+        if self.calendar in ['np_datetime64', 'np_timedelta64']:
             if isinstance(time, (list, np.ndarray)):
                 return [self.time_origin + np.timedelta64(int(t), 's') for t in time]
             else:
@@ -204,3 +207,19 @@ class GeographicPolarSquare(UnitConverter):
 unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
                       'Kh_zonal': GeographicPolarSquare(),
                       'Kh_meridional': GeographicSquare()}
+
+
+def convert_xarray_time_units(ds, time):
+    """ Fixes DataArrays that have time.Unit instead of expected time.units
+    """
+    if 'units' not in ds[time].attrs and 'Unit' in ds[time].attrs:
+        ds[time].attrs['units'] = ds[time].attrs['Unit']
+    ds2 = xr.Dataset({time: ds[time]})
+    try:
+        ds2 = xr.decode_cf(ds2)
+    except ValueError:
+        raise RuntimeError('Xarray could not convert the calendar. If you''re using from_netcdf, '
+                           'try using the timestamps keyword in the construction of your Field. '
+                           'See also the tutorial at https://nbviewer.jupyter.org/github/OceanParcels/'
+                           'parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb')
+    ds[time] = ds2[time]

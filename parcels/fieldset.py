@@ -5,13 +5,13 @@ from os import path
 import dask.array as da
 import numpy as np
 
-from parcels.field import Field
+from parcels.field import Field, DeferredArray
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
-from parcels.tools.converters import TimeConverter
+from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
 try:
@@ -267,14 +267,6 @@ class FieldSet(object):
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
 
-        # Typecast timestamps to (nested) numpy array.
-        if timestamps is not None:
-            if isinstance(timestamps, list):
-                timestamps = np.array(timestamps)
-                if any(isinstance(i, list) for i in timestamps):
-                    timestamps = np.array([np.array(sub) for sub in timestamps])
-            assert isinstance(timestamps, np.ndarray), "Timestamps must be nested list or array"
-            assert all(isinstance(file, np.ndarray) for file in timestamps), "Timestamps must be nested list or array"
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_netcdf'
@@ -641,8 +633,8 @@ class FieldSet(object):
                                time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
 
     @classmethod
-    def from_xarray_dataset(cls, ds, variables, dimensions, indices=None, mesh='spherical', allow_time_extrapolation=None,
-                            time_periodic=False, deferred_load=True, **kwargs):
+    def from_xarray_dataset(cls, ds, variables, dimensions, mesh='spherical', allow_time_extrapolation=None,
+                            time_periodic=False, **kwargs):
         """Initialises FieldSet data from xarray Datasets.
 
         :param ds: xarray Dataset.
@@ -653,9 +645,6 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable
                (e.g. dimensions['U'], dimensions['V'], etc).
-        :param indices: Optional dictionary of indices for each dimension
-               to read from file(s), to allow for reading of subset of data.
-               Default is to read the full extent of each dimension.
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
@@ -669,24 +658,22 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
-        :param deferred_load: boolean whether to only pre-load data (in deferred mode) or
-               fully load them (default: True). It is advised to deferred load the data, since in
-               that case Parcels deals with a better memory management during particle set execution.
-               deferred_load=False is however sometimes necessary for plotting the fields.
         """
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_xarray_dataset'
+        if 'time' in dimensions:
+            if 'units' not in ds[dimensions['time']].attrs and 'Unit' in ds[dimensions['time']].attrs:
+                # Fix DataArrays that have time.Unit instead of expected time.units
+                convert_xarray_time_units(ds, dimensions['time'])
+
         for var, name in variables.items():
-
-            # Use dimensions[var] and indices[var] if either of them is a dict of dicts
             dims = dimensions[var] if var in dimensions else dimensions
-            inds = indices[var] if (indices and var in indices) else indices
+            cls.checkvaliddimensionsdict(dims)
 
-            fields[var] = Field.from_netcdf(None, ds[name], dimensions=dims, indices=inds, grid=None, mesh=mesh,
-                                            allow_time_extrapolation=allow_time_extrapolation, var_name=var,
-                                            time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
+            fields[var] = Field.from_xarray(ds[name], var, dims, mesh=mesh, allow_time_extrapolation=allow_time_extrapolation,
+                                            time_periodic=time_periodic, **kwargs)
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -812,6 +799,8 @@ class FieldSet(object):
 
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
+                if(isinstance(f.data, DeferredArray)):
+                    f.data = DeferredArray()
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
@@ -823,12 +812,16 @@ class FieldSet(object):
                 data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.loaded_time_indices = [2]
-                    f.filebuffers[0].dataset.close()
+                    if f.filebuffers[0] is not None:
+                        f.filebuffers[0].dataset.close()
+                        f.filebuffers[0] = None
                     f.filebuffers[:2] = f.filebuffers[1:]
                     data = f.computeTimeChunk(data, 2)
                 else:
                     f.loaded_time_indices = [0]
-                    f.filebuffers[2].dataset.close()
+                    if f.filebuffers[2] is not None:
+                        f.filebuffers[2].dataset.close()
+                        f.filebuffers[2] = None
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)
                 data = f.rescale_and_set_minmax(data)
@@ -837,6 +830,7 @@ class FieldSet(object):
                     if lib is da:
                         f.data = da.concatenate([f.data[1:, :], data], axis=0)
                     else:
+                        f.data[0] = None
                         f.data[:2, :] = f.data[1:, :]
                         f.data[2, :] = data
                 else:
@@ -844,6 +838,7 @@ class FieldSet(object):
                     if lib is da:
                         f.data = da.concatenate([data, f.data[:2, :]], axis=0)
                     else:
+                        f.data[2] = None
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)

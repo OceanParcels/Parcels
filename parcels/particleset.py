@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta as delta
 
 import numpy as np
+import xarray as xr
 import progressbar
 
 from parcels.compiler import GNUCompiler
@@ -18,9 +19,14 @@ from parcels.particlefile import ParticleFile
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
-    from sklearn.cluster import KMeans
 except:
     MPI = None
+if MPI:
+    try:
+        from sklearn.cluster import KMeans
+    except:
+        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
+                               'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSet']
 
@@ -165,7 +171,7 @@ class ParticleSet(object):
         if lon is not None and lat is not None:
             # Initialise from arrays of lon/lat coordinates
             assert self.particles.size == lon.size and self.particles.size == lat.size, (
-                'Size of ParticleSet does not match lenght of lon and lat.')
+                'Size of ParticleSet does not match length of lon and lat.')
 
             for i in range(lon.size):
                 self.particles[i] = pclass(lon[i], lat[i], pid[i], fieldset=fieldset, depth=depth[i], cptr=cptr(i), time=time[i])
@@ -278,6 +284,44 @@ class ParticleSet(object):
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
+    @classmethod
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, repeatdt=None, lonlatdepth_dtype=None):
+        """Initialise the ParticleSet from a netcdf ParticleFile.
+        This creates a new ParticleSet based on the last locations and time of all particles
+        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param filename: Name of the particlefile from which to read initial conditions
+        :param restart: Boolean to signal if pset is used for a restart (default is True).
+               In that case, Particle IDs are preserved.
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        """
+
+        pfile = xr.open_dataset(str(filename), decode_cf=True)
+
+        lon = np.ma.filled(pfile.variables['lon'][:, -1], np.nan)
+        lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
+        depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
+        time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
+        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan)
+        if isinstance(time[0], np.timedelta64):
+            time = np.array([t/np.timedelta64(1, 's') for t in time])
+
+        inds = np.where(np.isfinite(lon))[0]
+        lon = lon[inds]
+        lat = lat[inds]
+        depth = depth[inds]
+        time = time[inds]
+        pid = pid[inds] if restart else None
+
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
+                   pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
         if type(field) in [SummedField, NestedField]:
@@ -339,7 +383,7 @@ class ParticleSet(object):
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
-                verbose_progress=None):
+                verbose_progress=None, postIterationFunctions=None):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -365,7 +409,7 @@ class ParticleSet(object):
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-
+        :param postIterationFunctions: Array of functions that are to be called after each iteration (post-process, non-Kernel)
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -489,6 +533,10 @@ class ParticleSet(object):
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
+            # ==== insert post-process here to also allow for memory clean-up via external func ==== #
+            if postIterationFunctions is not None:
+                for extFunc in postIterationFunctions:
+                    extFunc()
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
@@ -560,10 +608,13 @@ class ParticleSet(object):
 
         return density
 
-    def Kernel(self, pyfunc, c_include=""):
+    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
-        based on `fieldset` and `ptype` of the ParticleSet"""
-        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include)
+        based on `fieldset` and `ptype` of the ParticleSet
+        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        """
+        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+                      delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
