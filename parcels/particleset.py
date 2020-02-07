@@ -22,9 +22,14 @@ from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
-    from sklearn.cluster import KMeans
 except:
     MPI = None
+if MPI:
+    try:
+        from sklearn.cluster import KMeans
+    except:
+        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
+                               'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSet']
 

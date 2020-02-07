@@ -1623,7 +1623,7 @@ class NetcdfFileBuffer(object):
             if 'array.chunk-size' in da_conf.config.keys():
                 chunk_cap = da_utils.parse_bytes(da_conf.config.get('array.chunk-size'))
             else:
-                logger.warning_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see https://docs.dask.org).")
+                logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
             if self._is_dimension_available('lat') and self._is_dimension_available('lon;'):
                 pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
                 init_chunk_dict[self.dimensions['lat']] = pDim

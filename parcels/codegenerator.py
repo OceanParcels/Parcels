@@ -149,6 +149,7 @@ class RandomNode(IntrinsicNode):
                   'randint': 'parcels_randint',
                   'normalvariate': 'parcels_normalvariate',
                   'expovariate': 'parcels_expovariate',
+                  'vonmisesvariate': 'parcels_vonmisesvariate',
                   'seed': 'parcels_seed'}
 
     def __getattr__(self, attr):
@@ -692,6 +693,9 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Break(self, node):
         node.ccode = c.Statement("break")
+
+    def visit_Pass(self, node):
+        node.ccode = c.Statement("")
 
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
