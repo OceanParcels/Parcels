@@ -255,12 +255,12 @@ class ParticleFile(object):
 
                 if len(self.var_names_once) > 0:
                     first_write = (_to_write_particles(pd, time)
-                                   & [True if p not in self.written_once else False for p in pd['id']])
+                                   & np.isin(pd['id'], self.written_once, invert=True))
                     if np.any(first_write):
                         data_dict_once['id'] = pd['id'][first_write]
                         for var in self.var_names_once:
                             data_dict_once[var] = pd[var][first_write]
-                        self.written_once.extend([pid for pid in pd['id'][first_write]])
+                        self.written_once.extend(pd['id'][first_write])
 
             if deleted_only is False:
                 self.lasttime_written = time
