@@ -33,8 +33,8 @@ jobs:
         run: |
           pip install wheel
           pip install flake8
-          flake8 parcels
-          flake8 tests
+          python -m flake8 parcels/
+          python -m flake8 tests/
         shell: bash
   test_windows:
     name: Testing on Windows
