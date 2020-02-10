@@ -309,7 +309,7 @@ class Field(object):
                 timeslices = []
                 dataFiles = []
                 for fname in data_filenames:
-                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False) as filebuffer:
+                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
                         ftime = filebuffer.time
                         timeslices.append(ftime)
                         dataFiles.append([fname] * len(ftime))
@@ -1565,7 +1565,8 @@ class NetcdfFileBuffer(object):
 
         init_chunk_dict = self._get_initial_chunk_dictionary()
         try:
-            # unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we we rather want to have auto-managed)
+            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we would rather want to have it auto-managed).
+            # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
             if self.lock_file:
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
             else:
@@ -1864,7 +1865,7 @@ class NetcdfFileBuffer(object):
                     self._chunkmap_to_chunksize()
                     self.rechunk_callback_fields()
                     self.chunking_finalized = True
-                elif self.field_chunksize != 'auto' and not self.chunking_finalized:    # why ? why here ? why at every single data access, instead of fixing that size when you open the file ?!
+                elif self.field_chunksize != 'auto' and not self.chunking_finalized:
                     data = data.rechunk(self.chunk_mapping)
                     self.chunking_finalized = True
             else:
