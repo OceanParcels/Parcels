@@ -331,11 +331,11 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
     }
     else if  ((interp_method == CGRID_TRACER) || (interp_method == BGRID_TRACER)){
       if (grid->zdim==1){
-        err = spatial_interpolation_tracer_c_grid_2D(data2D[0], &f0);
-        err = spatial_interpolation_tracer_c_grid_2D(data2D[1], &f1);
+        err = spatial_interpolation_tracer_c_grid_2D(data2D[0], &f0); CHECKERROR(err);
+        err = spatial_interpolation_tracer_c_grid_2D(data2D[1], &f1); CHECKERROR(err);
       } else {
-        err = spatial_interpolation_tracer_c_grid_3D(data3D[0], &f0);
-        err = spatial_interpolation_tracer_c_grid_3D(data3D[1], &f1);
+        err = spatial_interpolation_tracer_c_grid_3D(data3D[0], &f0); CHECKERROR(err);
+        err = spatial_interpolation_tracer_c_grid_3D(data3D[1], &f1); CHECKERROR(err);
       }
     }
     else {
@@ -378,10 +378,10 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
     }
     else if ((interp_method == CGRID_TRACER) || (interp_method == BGRID_TRACER)){
       if (grid->zdim==1){
-        err = spatial_interpolation_tracer_c_grid_2D(data2D[0], value);
+        err = spatial_interpolation_tracer_c_grid_2D(data2D[0], value); CHECKERROR(err);
       }
       else {
-        err = spatial_interpolation_tracer_c_grid_3D(data3D[0], value);
+        err = spatial_interpolation_tracer_c_grid_3D(data3D[0], value); CHECKERROR(err);
       }
     }
     else {
@@ -595,7 +595,7 @@ static inline ErrorCode spatial_interpolation_UVW_c_grid(double xsi, double eta,
     }
   }
   else{
-    float (*zvals)[ydim][xdim] = (float (*)[zdim][ydim][xdim]) grid->depth;
+    float (*zvals)[ydim][xdim] = (float (*)[ydim][xdim]) grid->depth;
     for (iN=0; iN < 4; ++iN){
       pz[iN] = zvals[zi][yi+iN/2][xi+min(1, (iN%3))];
       pz[iN+4] = zvals[zi+1][yi+iN/2][xi+min(1, (iN%3))];
