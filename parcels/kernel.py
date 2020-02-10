@@ -210,7 +210,7 @@ class Kernel(object):
         with open(self.src_file, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
-        logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+        # logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')

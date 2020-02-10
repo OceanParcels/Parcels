@@ -65,7 +65,6 @@ Source file: %s
 Log file: %s
 
 Log output: %s""" % (" ".join(cc), src, logfile.name, logfile2.read())
-                print(err)  # DEBUG
                 raise RuntimeError(err)
 
 
