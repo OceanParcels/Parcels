@@ -912,12 +912,13 @@ class LoopGenerator(object):
 
         update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
                                                              spec='inline')), [c.Value('double', 'dt')])
-        body = []
-        body += [c.Assign("_next_dt", "dt")]
-        body += [c.Assign("_next_dt_set", "1")]
-        update_next_dt_body = c.Block(body)
-        update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
-        ccode += [update_next_dt]
+        if 'update_next_dt' in str(kernel_ast):
+            body = []
+            body += [c.Assign("_next_dt", "dt")]
+            body += [c.Assign("_next_dt_set", "1")]
+            update_next_dt_body = c.Block(body)
+            update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+            ccode += [update_next_dt]
 
         if c_include:
             ccode += [c_include]
@@ -949,7 +950,7 @@ class LoopGenerator(object):
         body += [pdt_eq_dt_pos]
         body += [partdt]
         body += [c.Assign("res", "%s(particles, p, %s)" % (funcname, fargs_str))]
-        check_pdt = c.If("res == SUCCESS && __pdt_prekernels != particles->dt[p]", c.Assign("res", "REPEAT"))
+        check_pdt = c.If("(res == SUCCESS) && (__pdt_prekernels != particles->dt[p])", c.Assign("res", "REPEAT"))
         body += [check_pdt]
         body += [c.Assign("particles->state[p]", "res")]  # Store return code on particle
         update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[p]", "_next_dt")]))
