@@ -232,7 +232,7 @@ class Field(object):
                 assert len(filenames) == len(timestamps), 'Outer dimension of timestamps should correspond to number of files.'
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
-                    if k not in ['lat','lon','depth','time']:
+                    if k not in ['lat', 'lon', 'depth', 'time']:
                         assert(len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
             else:
                 raise TypeError("Filenames type is inconsistent with manual timestamp provision."
@@ -1715,12 +1715,11 @@ class NetcdfFileBuffer(object):
             self.field_chunksize[self.dimensions['depth']] = chunk_map[0]
             self.field_chunksize[self.dimensions['lat']] = chunk_map[1]
             self.field_chunksize[self.dimensions['lon']] = chunk_map[2]
-            dim_index=3
+            dim_index = 3
             for dim_name in self.dimensions:
                 if dim_name not in ['time', 'depth', 'lat', 'lon']:
                     self.field_chunksize[self.dimensions[dim_name]] = chunk_map[dim_index]
                     dim_index += 1
-
 
     def parse_name(self, name):
         if isinstance(name, list):

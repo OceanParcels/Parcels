@@ -784,7 +784,7 @@ class FieldSet(object):
                     for fb in f.filebuffers:
                         if fb is not None:
                             fb.close()
-                        fb=None
+                        fb = None
 
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
