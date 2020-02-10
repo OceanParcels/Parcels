@@ -27,7 +27,7 @@ def fieldset(xdim=20, ydim=20):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('start, end, substeps, dt', [
-    (0., 10., 1, 1.),
+    (0.,10., 1, 1.),
     (0., 10., 4, 1.),
     (0., 10., 1, 3.),
     (2., 16., 5, 3.),
