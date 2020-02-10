@@ -1,6 +1,7 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
+import dask.array as da
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -461,7 +462,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath)
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
 
     # testing for combination of deferred-loaded and numpy Fields
     fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
@@ -476,12 +477,13 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
         # Calculating vertical weighted average
         for f in [fieldset.U, fieldset.V]:
             for tind in f.loaded_time_indices:
-                data = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
-                data = np.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
+                data = da.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+                data = da.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
                 f.data = f.data_concatenate(f.data, data, tind)
 
     fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
+    assert isinstance(fieldset.U.data, da.core.Array)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
