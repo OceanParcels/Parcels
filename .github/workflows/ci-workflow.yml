@@ -29,6 +29,13 @@ jobs:
           ./.github/scripts/linux_install.sh
           ./.github/scripts/linux_test.sh
         shell: bash
+      - name: Lint with flake8
+        run: |
+          pip install wheel
+          pip install flake8
+          python -m flake8 parcels/
+          python -m flake8 tests/
+        shell: bash
   test_windows:
     name: Testing on Windows
     runs-on: windows-2016
