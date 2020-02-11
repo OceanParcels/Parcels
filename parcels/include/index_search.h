@@ -44,7 +44,7 @@ typedef struct
 
 typedef enum
   {
-    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_OUT_OF_BOUNDS=4, ERROR_THROUGH_SURFACE=41, ERROR_TIME_EXTRAPOLATION=5
+    SUCCESS=0, REPEAT=1, DELETE=2, ERROR=3, ERROR_INTERPOLATION=31, ERROR_OUT_OF_BOUNDS=4, ERROR_THROUGH_SURFACE=41, ERROR_TIME_EXTRAPOLATION=5
   } ErrorCode;
 
 typedef enum
@@ -218,16 +218,16 @@ static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, t
                                         z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
-        err = ERROR;
+        err = ERROR_INTERPOLATION;
     }
     CHECKERROR(err);
   }
   else
     *zeta = 0;
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION;
 
   return SUCCESS;
 }
@@ -354,16 +354,16 @@ static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, t
                                         z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
-        err = ERROR;
+        err = ERROR_INTERPOLATION;
     }
     CHECKERROR(err);
   }
   else
     *zeta = 0;
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION;
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION;
 
   return SUCCESS;
 }
