@@ -45,11 +45,11 @@ def test_fieldset_from_data(xdim, ydim):
 def test_fieldset_extra_syntax():
     """ Simple test for fieldset initialisation from data. """
     data, dimensions = generate_fieldset(10, 10)
-    failed=False
+    failed = False
     try:
         FieldSet.from_data(data, dimensions, unknown_keyword=5)
     except SyntaxError:
-        failed=True
+        failed = True
     assert failed
 
 
