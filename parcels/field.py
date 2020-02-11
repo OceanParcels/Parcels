@@ -177,6 +177,8 @@ class Field(object):
         self.nchunks = []
         self.chunk_set = False
         self.filebuffers = [None] * 3
+        if len(kwargs) > 0:
+            raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
