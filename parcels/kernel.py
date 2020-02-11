@@ -375,7 +375,7 @@ class Kernel(object):
         func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
                                body=self.py_ast.body + kernel.py_ast.body,
                                decorator_list=[], lineno=1, col_offset=0)
-        delete_cfiles = self.delete_cfiles or kernel.delete_cfiles
+        delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         return Kernel(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
