@@ -795,7 +795,8 @@ class FieldSet(object):
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
-                            fb.dataset.close()
+                            fb.close()
+                        fb = None
 
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
@@ -813,14 +814,14 @@ class FieldSet(object):
                 if signdt >= 0:
                     f.loaded_time_indices = [2]
                     if f.filebuffers[0] is not None:
-                        f.filebuffers[0].dataset.close()
+                        f.filebuffers[0].close()
                         f.filebuffers[0] = None
                     f.filebuffers[:2] = f.filebuffers[1:]
                     data = f.computeTimeChunk(data, 2)
                 else:
                     f.loaded_time_indices = [0]
                     if f.filebuffers[2] is not None:
-                        f.filebuffers[2].dataset.close()
+                        f.filebuffers[2].close()
                         f.filebuffers[2] = None
                     f.filebuffers[1:] = f.filebuffers[:2]
                     data = f.computeTimeChunk(data, 0)

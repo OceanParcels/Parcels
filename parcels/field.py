@@ -181,6 +181,8 @@ class Field(object):
         self.nchunks = []
         self.chunk_set = False
         self.filebuffers = [None] * 3
+        if len(kwargs) > 0:
+            raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
 
     @classmethod
     def get_dim_filenames(cls, filenames, dim):
@@ -236,7 +238,7 @@ class Field(object):
                 assert len(filenames) == len(timestamps), 'Outer dimension of timestamps should correspond to number of files.'
             elif isinstance(filenames, dict):
                 for k in filenames.keys():
-                    if k not in ['lat','lon','depth','time']:
+                    if k not in ['lat', 'lon', 'depth', 'time']:
                         assert(len(filenames[k]) == len(timestamps)), 'Outer dimension of timestamps should correspond to number of files.'
             else:
                 raise TypeError("Filenames type is inconsistent with manual timestamp provision."
@@ -277,7 +279,7 @@ class Field(object):
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
 
-        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine, field_chunksize=False) as filebuffer:
+        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=False) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -285,7 +287,7 @@ class Field(object):
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method, field_chunksize=False) as filebuffer:
+            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method, field_chunksize=False, lock_file=False) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions['depth'] == 'not_yet_set':
                     depth = filebuffer.read_depth_dimensions
@@ -317,8 +319,7 @@ class Field(object):
                 timeslices = []
                 dataFiles = []
                 for fname in data_filenames:
-                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                          field_chunksize=False) as filebuffer:
+                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
                         ftime = filebuffer.time
                         timeslices.append(ftime)
                         dataFiles.append([fname] * len(ftime))
@@ -1577,7 +1578,7 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     """ Class that encapsulates and manages deferred access to file data. """
     def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', data_full_zdim=None, field_chunksize='auto', rechunk_callback_fields=None):
+                 interp_method='linear', data_full_zdim=None, field_chunksize='auto', rechunk_callback_fields=None, lock_file=True):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1590,55 +1591,73 @@ class NetcdfFileBuffer(object):
         self.field_chunksize = field_chunksize
         self.chunk_mapping = None
         self.rechunk_callback_fields = rechunk_callback_fields
+        self.chunking_finalized = False
+        self.lock_file = lock_file
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
             self.dataset = self.filename
             return self
+
         init_chunk_dict = self._get_initial_chunk_dictionary()
         try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
+            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we would rather want to have it auto-managed).
+            # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
+            if self.lock_file:
+                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
+            else:
+                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = True
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
+            if self.lock_file:
+                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
+            else:
+                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = False
+
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
                 raise RuntimeError('Indices for field subsetting need to be a list')
         return self
 
     def __exit__(self, type, value, traceback):
+        self.close()
+
+    def close(self):
         if self.netcdf_engine == 'xarray':
             pass
         else:
-            self.dataset.close()
-            self.dataset = None
+            if self.dataset is not None:
+                self.dataset.close()
+                self.dataset = None
+        self.chunking_finalized = False
+        self.chunk_mapping = None
 
     def _get_initial_chunk_dictionary(self):
         # ==== check-opening requested dataset to access metadata ==== #
         try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks={})
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks={}, lock=False)
             self.dataset['decoded'] = True
         except:
             logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
                                 % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={})
+            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
             self.dataset['decoded'] = False
         # ==== self.dataset temporarily available ==== #
         init_chunk_dict = {}
         if isinstance(self.field_chunksize, dict):
             init_chunk_dict = self.field_chunksize
-        elif isinstance(self.field_chunksize, tuple) and (len(self.dimensions) == self.field_chunksize):
+        elif isinstance(self.field_chunksize, tuple) and (len(self.dimensions) == len(self.field_chunksize)):
             chunk_index = 0
             if self._is_dimension_available('time'):
-                init_chunk_dict[self.dimensions['time']] = self.field_chunksize[chunk_index] if len(self.dimensions) > 2 else 1
+                init_chunk_dict[self.dimensions['time']] = self.field_chunksize[chunk_index] if (len(self.dimensions) > 2 and len(self.field_chunksize) > 2) else 1
                 chunk_index += 1 if len(self.dimensions) > 2 else 0
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('time'))
             if self._is_dimension_available('depth'):
-                init_chunk_dict[self.dimensions['depth']] = self.field_chunksize[chunk_index] if len(self.dimensions) > 3 else 1
+                init_chunk_dict[self.dimensions['depth']] = self.field_chunksize[chunk_index] if (len(self.dimensions) > 3 and len(self.field_chunksize) > 3) else 1
                 chunk_index += 1 if len(self.dimensions) > 3 else 0
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('depth'))
@@ -1647,7 +1666,7 @@ class NetcdfFileBuffer(object):
                 chunk_index += 1
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lat'))
-            if self._is_dimension_available('lom'):
+            if self._is_dimension_available('lon'):
                 init_chunk_dict[self.dimensions['lon']] = self.field_chunksize[chunk_index]
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lon'))
@@ -1678,7 +1697,66 @@ class NetcdfFileBuffer(object):
         return (dimension_name in self.dimensions and self.dimensions[dimension_name] in self.dataset.dims)
 
     def _netcdf_DimNotFound_warning_message(self, dimension_name):
-        return "Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names, e.g.\n field_chunksize=\{ '{}': <number>, ... \}.".format(self.dimensions[dimension_name], self.dimensions[dimension_name])
+        display_name = dimension_name if (dimension_name not in self.dimensions) else self.dimensions[dimension_name]
+        return "Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names, e.g.\n field_chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
+
+    def _chunksize_to_chunkmap(self):
+        if self.field_chunksize in [False, 'auto', None]:
+            return
+        self.chunk_mapping = {}
+        if (isinstance(self.field_chunksize, tuple)):
+            for i in range(len(self.field_chunksize)):
+                self.chunk_mapping[i] = self.field_chunksize[i]
+        else:
+            dim_index = 0
+            if len(self.field_chunksize) == 2:
+                if self._is_dimension_available('time'):
+                    self.chunk_mapping[dim_index] = 1
+                    dim_index += 1
+                elif self._is_dimension_available('depth'):
+                    self.chunk_mapping[dim_index] = 1
+                    dim_index += 1
+                self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['lat']]
+                dim_index += 1
+                self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['lon']]
+                dim_index += 1
+            elif len(self.field_chunksize) >= 3:
+                if self._is_dimension_available('depth'):
+                    self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['depth']]
+                    dim_index += 1
+                elif self._is_dimension_available('time'):
+                    self.chunk_mapping[dim_index] = 1
+                    dim_index += 1
+                self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['lat']]
+                dim_index += 1
+                self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['lon']]
+                dim_index += 1
+
+    def _chunkmap_to_chunksize(self):
+        self.field_chunksize = {}
+        chunk_map = self.chunk_mapping
+        if self._is_dimension_available('depth') and self._is_dimension_available('time'):
+            chunk_map[-1] = 1
+        if len(chunk_map) == 2:
+            self.field_chunksize[self.dimensions['lat']] = chunk_map[0]
+            self.field_chunksize[self.dimensions['lon']] = chunk_map[1]
+        elif len(chunk_map) == 3:
+            if self._is_dimension_available('depth'):
+                self.field_chunksize[self.dimensions['depth']] = chunk_map[0]
+            else:
+                self.field_chunksize[self.dimensions['time']] = chunk_map[0]
+            self.field_chunksize[self.dimensions['lat']] = chunk_map[1]
+            self.field_chunksize[self.dimensions['lon']] = chunk_map[2]
+        if len(chunk_map) >= 4:
+            self.field_chunksize[self.dimensions['time']] = 1
+            self.field_chunksize[self.dimensions['depth']] = chunk_map[0]
+            self.field_chunksize[self.dimensions['lat']] = chunk_map[1]
+            self.field_chunksize[self.dimensions['lon']] = chunk_map[2]
+            dim_index = 3
+            for dim_name in self.dimensions:
+                if dim_name not in ['time', 'depth', 'lat', 'lon']:
+                    self.field_chunksize[self.dimensions[dim_name]] = chunk_map[dim_index]
+                    dim_index += 1
 
     def parse_name(self, name):
         if isinstance(name, list):
@@ -1764,15 +1842,7 @@ class NetcdfFileBuffer(object):
                 for i in range(len(self.field_chunksize)):
                     self.chunk_mapping[i] = self.field_chunksize[i]
             else:
-                dim_max_index = len(self.dimensions)-1
-                dim_index = 0
-                for dim_name in self.dimensions:
-                    coord_id = dim_max_index - dim_index
-                    if self.dimensions[dim_name] in self.field_chunksize:
-                        self.chunk_mapping[coord_id] = self.field_chunksize[self.dimensions[dim_name]]
-                    else:
-                        self.chunk_mapping[coord_id] = 1
-                    dim_index += 1
+                self._chunksize_to_chunkmap()
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
         if len(data.shape) == 2:
@@ -1827,19 +1897,23 @@ class NetcdfFileBuffer(object):
             data = np.array(data)
         else:
             if isinstance(data, da.core.Array):
-                if self.field_chunksize == 'auto' and data.shape[-2:] == data.chunksize[-2:]:
-                    pass
-                elif self.field_chunksize == 'auto' and self.rechunk_callback_fields is not None:
+                if self.field_chunksize == 'auto' and data.shape[-2:] == data.chunksize[-2:] and not self.chunking_finalized:
+                    self.chunking_finalized = True
+                elif self.field_chunksize == 'auto' and self.rechunk_callback_fields is not None and not self.chunking_finalized:
                     data = data.rechunk(self.field_chunksize)
                     self.chunk_mapping = {}
                     chunkIndex = 0
                     for chunkDim in data.numblocks[1:]:
                         self.chunk_mapping[chunkIndex] = chunkDim
                         chunkIndex += 1
+                    self._chunkmap_to_chunksize()
                     self.rechunk_callback_fields()
-                elif self.field_chunksize != 'auto':
+                    self.chunking_finalized = True
+                elif self.field_chunksize != 'auto' and not self.chunking_finalized:
                     data = data.rechunk(self.chunk_mapping)
+                    self.chunking_finalized = True
             else:
+                self.chunking_finalized = True
                 da_data = da.from_array(data, chunks=self.field_chunksize)
                 if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
                     data = np.array(data)
@@ -1850,6 +1924,9 @@ class NetcdfFileBuffer(object):
 
     @property
     def time(self):
+        return self.time_access()
+
+    def time_access(self):
         if self.timestamp is not None:
             return self.timestamp
 
