@@ -90,13 +90,13 @@ static inline float parcels_vonmisesvariate(float mu, float kappa)
   u3 = (float)rand()/(float)(RAND_MAX);
 
   if (u3 > 0.5){
-    theta = mu + acos(f), 2*M_PI ;
+    theta = fmod(mu + acos(f), 2.0*M_PI);
   }
   else {
-    theta = mu - acos(f), 2*M_PI;
+    theta = fmod(mu - acos(f), 2.0*M_PI);
   }
   if (theta < 0){
-    theta = 2*M_PI+theta;
+    theta = 2.0*M_PI+theta;
   }
 
   return theta;

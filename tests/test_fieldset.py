@@ -42,6 +42,17 @@ def test_fieldset_from_data(xdim, ydim):
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
 
 
+def test_fieldset_extra_syntax():
+    """ Simple test for fieldset initialisation from data. """
+    data, dimensions = generate_fieldset(10, 10)
+    failed = False
+    try:
+        FieldSet.from_data(data, dimensions, unknown_keyword=5)
+    except SyntaxError:
+        failed = True
+    assert failed
+
+
 @pytest.mark.parametrize('ttype', ['float', 'datetime64'])
 @pytest.mark.parametrize('tdim', [1, 20])
 def test_fieldset_from_data_timedims(ttype, tdim):
