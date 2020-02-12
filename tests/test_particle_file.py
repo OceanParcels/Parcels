@@ -154,7 +154,6 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     assert np.allclose(vfile, time)
     ncfile.close()
 
-# test_variable_written_once(fieldset(), 'jit', '', 2)
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
