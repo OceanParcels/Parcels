@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode, OutOfTimeError
 from parcels.field import Field, VectorField
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
 import dask.array as da
@@ -493,6 +493,40 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
 
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
+
+
+@pytest.mark.parametrize('time2', [2, 7])
+def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parcels_defer_loading'):
+    filepath = tmpdir.join(filename)
+    data0, dims0 = generate_fieldset(3, 3, 4, 10)
+    data0['U'] = np.random.rand(10, 4, 3, 3)
+    dims0['time'] = np.arange(0, 10, 1)
+    dims0['depth'] = np.arange(0, 4, 1)
+    fieldset_out = FieldSet.from_data(data0, dims0)
+    fieldset_out.write(filepath)
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
+
+    def SampleField(particle, fieldset, time):
+        particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+
+    class SampleParticle(JITParticle):
+        u_kernel = Variable('u_kernel', dtype=np.float32, initial=0.)
+        u_scipy = Variable('u_scipy', dtype=np.float32, initial=fieldset.U)
+
+    pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2],
+                       lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
+
+    if time2 > 2:
+        failed = False
+        try:
+            pset.execute(SampleField, dt=0.)
+        except OutOfTimeError:
+            failed = True
+        assert failed
+    else:
+        pset.execute(SampleField, dt=0.)
+        assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset])
+        assert isinstance(fieldset.U.data, da.core.Array)
 
 
 @pytest.mark.parametrize('tdim', [10, None])
