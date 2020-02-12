@@ -506,21 +506,21 @@ class Field(object):
                 raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z > grid.depth[-1]:
                 raise FieldOutOfBoundError(0, 0, z, field=self)
-            depth_index = grid.depth <= z
+            depth_indices = grid.depth <= z
             if z >= grid.depth[-1]:
                 zi = len(grid.depth) - 2
             else:
-                zi = depth_index.argmin() - 1 if z >= grid.depth[0] else 0
+                zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
         else:
             if z > grid.depth[0]:
                 raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z < grid.depth[-1]:
                 raise FieldOutOfBoundError(0, 0, z, field=self)
-            depth_index = grid.depth >= z
+            depth_indices = grid.depth >= z
             if z <= grid.depth[-1]:
                 zi = len(grid.depth) - 2
             else:
-                zi = depth_index.argmin() - 1 if z <= grid.depth[0] else 0
+                zi = depth_indices.argmin() - 1 if z <= grid.depth[0] else 0
         zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
         return (zi, zeta)
 
@@ -553,21 +553,21 @@ class Field(object):
         z = np.float32(z)
 
         if depth_vector[-1] > depth_vector[0]:
-            depth_index = depth_vector <= z
+            depth_indices = depth_vector <= z
             if z >= depth_vector[-1]:
                 zi = len(depth_vector) - 2
             else:
-                zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
+                zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
             if z < depth_vector[zi]:
                 raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z > depth_vector[zi+1]:
                 raise FieldOutOfBoundError(x, y, z, field=self)
         else:
-            depth_index = depth_vector >= z
+            depth_indices = depth_vector >= z
             if z <= depth_vector[-1]:
                 zi = len(depth_vector) - 2
             else:
-                zi = depth_index.argmin() - 1 if z <= depth_vector[0] else 0
+                zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
             if z > depth_vector[zi]:
                 raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z < depth_vector[zi+1]:
