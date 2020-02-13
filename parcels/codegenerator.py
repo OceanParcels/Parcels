@@ -963,7 +963,7 @@ class LoopGenerator(object):
                           c.Block([sign_end_part, notstarted_continue, dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"), c.Value("ErrorCode", "res"),
                          c.Value("float", "__pdt_prekernels"),
-                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
+                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-5"),
                          sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
