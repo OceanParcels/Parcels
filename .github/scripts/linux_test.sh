@@ -10,10 +10,6 @@ sleep 3;
 # only get examples on linux
 parcels_get_examples examples/;
 
-# run linter on linux
-flake8 parcels;
-flake8 tests;
-
 # evaluate example scripts and notebooks on linux only
 py.test -v -s examples/*.py;
 py.test -v -s --nbval-lax examples/*tutorial*;

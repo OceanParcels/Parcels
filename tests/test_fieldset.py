@@ -1,6 +1,7 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, RectilinearZGrid, ErrorCode, OutOfTimeError
 from parcels.field import Field, VectorField
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
+import dask.array as da
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -40,6 +41,17 @@ def test_fieldset_from_data(xdim, ydim):
     assert len(fieldset.V.data.shape) == 3
     assert np.allclose(fieldset.U.data[0, :], data['U'], rtol=1e-12)
     assert np.allclose(fieldset.V.data[0, :], data['V'], rtol=1e-12)
+
+
+def test_fieldset_extra_syntax():
+    """ Simple test for fieldset initialisation from data. """
+    data, dimensions = generate_fieldset(10, 10)
+    failed = False
+    try:
+        FieldSet.from_data(data, dimensions, unknown_keyword=5)
+    except SyntaxError:
+        failed = True
+    assert failed
 
 
 @pytest.mark.parametrize('ttype', ['float', 'datetime64'])
@@ -461,7 +473,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath)
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
 
     # testing for combination of deferred-loaded and numpy Fields
     fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
@@ -476,12 +488,13 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
         # Calculating vertical weighted average
         for f in [fieldset.U, fieldset.V]:
             for tind in f.loaded_time_indices:
-                data = np.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
-                data = np.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
+                data = da.sum(f.data[tind, :] * DZ, axis=0) / sum(dz)
+                data = da.broadcast_to(data, (1, f.grid.zdim, f.grid.ydim, f.grid.xdim))
                 f.data = f.data_concatenate(f.data, data, tind)
 
     fieldset.compute_on_defer = compute
     fieldset.computeTimeChunk(1, 1)
+    assert isinstance(fieldset.U.data, da.core.Array)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
 
     pset = ParticleSet(fieldset, JITParticle, 0, 0)
@@ -491,6 +504,40 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
 
     pset.execute(DoNothing, dt=3600)
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
+
+
+@pytest.mark.parametrize('time2', [2, 7])
+def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parcels_defer_loading'):
+    filepath = tmpdir.join(filename)
+    data0, dims0 = generate_fieldset(3, 3, 4, 10)
+    data0['U'] = np.random.rand(10, 4, 3, 3)
+    dims0['time'] = np.arange(0, 10, 1)
+    dims0['depth'] = np.arange(0, 4, 1)
+    fieldset_out = FieldSet.from_data(data0, dims0)
+    fieldset_out.write(filepath)
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
+
+    def SampleField(particle, fieldset, time):
+        particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+
+    class SampleParticle(JITParticle):
+        u_kernel = Variable('u_kernel', dtype=np.float32, initial=0.)
+        u_scipy = Variable('u_scipy', dtype=np.float32, initial=fieldset.U)
+
+    pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2],
+                       lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
+
+    if time2 > 2:
+        failed = False
+        try:
+            pset.execute(SampleField, dt=0.)
+        except OutOfTimeError:
+            failed = True
+        assert failed
+    else:
+        pset.execute(SampleField, dt=0.)
+        assert np.allclose([p.u_kernel for p in pset], [p.u_scipy for p in pset])
+        assert isinstance(fieldset.U.data, da.core.Array)
 
 
 @pytest.mark.parametrize('tdim', [10, None])

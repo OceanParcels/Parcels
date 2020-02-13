@@ -2,7 +2,7 @@
 
 
 __all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
-           'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError',
+           'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError', 'OutOfTimeError',
            'recovery_map']
 
 
@@ -11,6 +11,7 @@ class ErrorCode(object):
     Repeat = 1
     Delete = 2
     Error = 3
+    ErrorInterpolation = 31
     ErrorOutOfBounds = 4
     ErrorThroughSurface = 41
     ErrorTimeExtrapolation = 5
@@ -101,6 +102,21 @@ def recovery_kernel_error(particle, fieldset, time):
     raise KernelError(particle, fieldset=fieldset, msg=msg)
 
 
+class InterpolationError(KernelError):
+    """Particle kernel error for interpolation error"""
+
+    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
+        if lon and lat:
+            message = "Field interpolation error at (%f, %f, %f)" % (
+                lon, lat, depth
+            )
+        else:
+            message = "Field interpolation error for particle at (%f, %f, %f)" % (
+                particle.lon, particle.lat, particle.depth
+            )
+        super(InterpolationError, self).__init__(particle, fieldset=fieldset, msg=message)
+
+
 class OutOfBoundsError(KernelError):
     """Particle kernel error for out-of-bounds field sampling"""
 
@@ -142,6 +158,17 @@ class OutOfTimeError(KernelError):
         super(OutOfTimeError, self).__init__(particle, fieldset=fieldset, msg=message)
 
 
+def recovery_kernel_interpolation(particle, fieldset, time):
+    """Default sampling error kernel that throws InterpolationError"""
+    if particle.exception is None:
+        # TODO: JIT does not yet provide the context that created
+        # the exception. We need to pass that info back from C.
+        raise InterpolationError(particle, fieldset)
+    else:
+        error = particle.exception
+        raise InterpolationError(particle, fieldset, error.x, error.y, error.z)
+
+
 def recovery_kernel_out_of_bounds(particle, fieldset, time):
     """Default sampling error kernel that throws OutOfBoundsError"""
     if particle.exception is None:
@@ -172,6 +199,7 @@ def recovery_kernel_time_extrapolation(particle, fieldset, time):
 # Default mapping of failure types (KernelOp)
 # to recovery kernels.
 recovery_map = {ErrorCode.Error: recovery_kernel_error,
+                ErrorCode.ErrorInterpolation: recovery_kernel_interpolation,
                 ErrorCode.ErrorOutOfBounds: recovery_kernel_out_of_bounds,
                 ErrorCode.ErrorTimeExtrapolation: recovery_kernel_time_extrapolation,
                 ErrorCode.ErrorThroughSurface: recovery_kernel_through_surface}
