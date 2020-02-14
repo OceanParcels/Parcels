@@ -2,7 +2,7 @@
 
 
 __all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
-           'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError',
+           'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError', 'OutOfTimeError',
            'recovery_map']
 
 

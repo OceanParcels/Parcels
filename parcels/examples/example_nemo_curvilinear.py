@@ -28,7 +28,9 @@ def run_nemo_curvilinear(mode, outfile):
                        'data': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
+    field_chunksize = {'lon': 2, 'lat': 2}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=field_chunksize)
+    assert field_set.U.field_chunksize == field_chunksize
 
     # Now run particles as normal
     npart = 20
