@@ -265,6 +265,21 @@ def test_errorcode_repeat(fieldset, mode):
     pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_particle_skip(fieldset, mode, npart=10):
+    def moveRight(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=[0, 0],
+                       lat=[0.5, 0.5])
+
+    pset[0].state = ErrorCode.Skip
+    pset.execute(moveRight, endtime=5.0, dt=1.0)
+
+    assert np.allclose([p.lon for p in pset], [0.0, 0.5], rtol=1e-5)
+
+
 @pytest.mark.parametrize('delete_cfiles', [True, False])
 def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfiles):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
