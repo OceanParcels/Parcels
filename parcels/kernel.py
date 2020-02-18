@@ -353,7 +353,7 @@ class Kernel(object):
             for p in error_particles:
                 if p.state == ErrorCode.Repeat:
                     p.state = ErrorCode.Success
-                elif p.state in recovery_map:
+                elif p.state in recovery_map:               # hotfix for #749, #737 and related issues
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time)
