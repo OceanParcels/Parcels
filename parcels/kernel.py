@@ -358,6 +358,7 @@ class Kernel(object):
                     p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time)
                 else:
+                    logger.warning_once('Deleting particle because of bug in #749 and #737')
                     p.delete()
 
             # Remove all particles that signalled deletion
