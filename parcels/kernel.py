@@ -353,10 +353,13 @@ class Kernel(object):
             for p in error_particles:
                 if p.state == ErrorCode.Repeat:
                     p.state = ErrorCode.Success
-                else:
+                elif p.state in recovery_map:               # hotfix for #749, #737 and related issues
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time)
+                else:
+                    logger.warning_once('Deleting particle because of bug in #749 and #737')
+                    p.delete()
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
