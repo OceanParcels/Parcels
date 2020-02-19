@@ -5,7 +5,6 @@ import random  # noqa
 import re
 import time
 from ast import FunctionDef
-from ast import Module
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
@@ -113,7 +112,8 @@ class Kernel(object):
             finally:
                 del stack  # Remove cyclic references
             # Compile and generate Python function from AST
-            py_mod = Module(body=[self.py_ast])
+            py_mod = parse("")
+            py_mod.body=[self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
         else:
