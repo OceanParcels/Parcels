@@ -451,6 +451,17 @@ class ParticleSet(object):
         self.add(particles)
         return self
 
+    def __create_progressbar(self, starttime, endtime):
+        pbar = None
+        try:
+            pbar = progressbar.ProgressBar(max_value=abs(endtime - starttime)).start()
+        except:  # for old versions of progressbar
+            try:
+                pbar = progressbar.ProgressBar(maxvalue=abs(endtime - starttime)).start()
+            except:  # for even older OR newer versions
+                pbar = progressbar.ProgressBar(maxval=abs(endtime - starttime)).start()
+        return pbar
+
     def add(self, particles):
         """Method to add particles to the ParticleSet"""
         if not isinstance(particles, ParticleSet):
@@ -583,10 +594,7 @@ class ParticleSet(object):
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
-            try:
-                pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
-            except:  # for old versions of progressbar
-                pbar = progressbar.ProgressBar(maxvalue=abs(endtime - _starttime)).start()
+            pbar = self.__create_progressbar(_starttime, endtime)
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
@@ -594,7 +602,7 @@ class ParticleSet(object):
                     logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
                     logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
                                 'to a NetCDF file during the run.' % output_file.tempwritedir_base)
-                pbar = progressbar.ProgressBar(max_value=abs(endtime - _starttime)).start()
+                pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
             if dt > 0:
                 time = min(next_prelease, next_input, next_output, next_movie, endtime)

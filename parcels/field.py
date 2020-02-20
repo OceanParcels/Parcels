@@ -198,7 +198,7 @@ class Field(object):
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
-                    deferred_load=True, field_chunksize='auto', **kwargs):
+                    deferred_load=True, **kwargs):
         """Create field from netCDF file
 
         :param filenames: list of filenames to read for the field. filenames can be a list [files] or
@@ -376,7 +376,6 @@ class Field(object):
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
-        kwargs['field_chunksize'] = field_chunksize
 
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
