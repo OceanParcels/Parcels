@@ -348,14 +348,17 @@ class Kernel(object):
         particles = pset.data_accessor()
 
         # Identify particles that threw errors
-        error_particles = pset.particle_data['state'] != ErrorCode.Success
-        while np.count_nonzero(error_particles) > 0:
+        repeat_particles = pset.particle_data['state'] == ErrorCode.Repeat
+        error_particles = ((pset.particle_data['state'] != ErrorCode.Success)
+                           & ~repeat_particles)
+        while np.any(error_particles) or np.any(repeat_particles):
+            # mark repeat particles as success
+            pset.particle_data['state'][repeat_particles] = ErrorCode.Success
+
             # Apply recovery kernel
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
-                if particles.state == ErrorCode.Repeat:
-                    particles.state = ErrorCode.Success
-                elif particles.state in recovery_map:
+                if particles.state in recovery_map:
                     recovery_kernel = recovery_map[particles.state]
                     particles.state = ErrorCode.Success
                     recovery_kernel(particles, self.fieldset, particles.time)
@@ -372,7 +375,9 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = pset.particle_data['state'] != ErrorCode.Success
+            repeat_particles = pset.particle_data['state'] == ErrorCode.Repeat
+            error_particles = ((pset.particle_data['state'] != ErrorCode.Success)
+                               & ~repeat_particles)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
