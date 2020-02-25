@@ -1564,7 +1564,10 @@ class NetcdfFileBuffer(object):
             self.dataset = self.filename
             return self
 
-        init_chunk_dict = self._get_initial_chunk_dictionary()
+        init_chunk_dict = None
+        if self.field_chunksize not in [False, None]:
+            init_chunk_dict = self._get_initial_chunk_dictionary()
+
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we would rather want to have it auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
@@ -1602,14 +1605,9 @@ class NetcdfFileBuffer(object):
 
     def _get_initial_chunk_dictionary(self):
         # ==== check-opening requested dataset to access metadata ==== #
-        try:
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks={}, lock=False)
-            self.dataset['decoded'] = True
-        except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
-            self.dataset['decoded'] = False
+        # ==== opening the file for getting the dimensions does not require a decode - so don't even try. Save some computation ==== #
+        self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
+        self.dataset['decoded'] = False
         # ==== self.dataset temporarily available ==== #
         init_chunk_dict = {}
         if isinstance(self.field_chunksize, dict):
@@ -1793,7 +1791,7 @@ class NetcdfFileBuffer(object):
         return self.data_access()
 
     def data_access(self):
-        if self.chunk_mapping is None and self.field_chunksize not in ['auto', False]:
+        if self.chunk_mapping is None and self.field_chunksize not in ['auto', False, None]:
             self.chunk_mapping = {}
             if(isinstance(self.field_chunksize, tuple)):
                 for i in range(len(self.field_chunksize)):
