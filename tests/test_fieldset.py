@@ -381,20 +381,18 @@ def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
     mem_0 = process.memory_info().rss
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
-    #ufiles = [fnameU, ] * 4
-    ufiles = [fnameU, ]
-    #vfiles = [fnameV, ] * 4
-    vfiles = [fnameV, ]
+    ufiles = [fnameU, ] * 4
+    #ufiles = [fnameU, ]
+    vfiles = [fnameV, ] * 4
+    #vfiles = [fnameV, ]
     timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 0)
+    #timestamps = np.expand_dims(timestamps, 0)
+    timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     #dimensions = {'time': 'time_counter', 'lon': 'nav_lon', 'lat': 'nav_lat'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    #if cs not in ['auto', False]:
-    #    if isinstance(cs, tuple):
-    #        cs = {'time_counter': 1, 'x': cs, 'y': cs}
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, mesh='flat', timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic not in [False, None] else False, field_chunksize=cs)
     perflog = PerformanceLog()
     postProcessFuncs = [perflog.advance,]
@@ -414,12 +412,13 @@ def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
 def test_from_netcdf_field_chunking(mode,time_periodic,cs,deferLoad):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
-    #ufiles = [fnameU, ] * 4
-    ufiles = [fnameU, ]
-    #vfiles = [fnameV, ] * 4
-    vfiles = [fnameV, ]
+    ufiles = [fnameU, ] * 4
+    #ufiles = [fnameU, ]
+    vfiles = [fnameV, ] * 4
+    #vfiles = [fnameV, ]
     timestamps = np.arange(0, 4, 1) * 86400.0
-    timestamps = np.expand_dims(timestamps, 0)
+    #timestamps = np.expand_dims(timestamps, 0)
+    timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     #dimensions = {'time': 'time_counter', 'lon': 'nav_lon', 'lat': 'nav_lat'}
