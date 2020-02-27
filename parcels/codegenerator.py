@@ -149,6 +149,7 @@ class RandomNode(IntrinsicNode):
                   'randint': 'parcels_randint',
                   'normalvariate': 'parcels_normalvariate',
                   'expovariate': 'parcels_expovariate',
+                  'vonmisesvariate': 'parcels_vonmisesvariate',
                   'seed': 'parcels_seed'}
 
     def __getattr__(self, attr):
@@ -163,7 +164,8 @@ class RandomNode(IntrinsicNode):
 
 class ErrorCodeNode(IntrinsicNode):
     symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
-                  'Error': 'ERROR', 'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS'}
+                  'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
+                  'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
@@ -692,6 +694,9 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_Break(self, node):
         node.ccode = c.Statement("break")
 
+    def visit_Pass(self, node):
+        node.ccode = c.Statement("")
+
     def visit_FieldNode(self, node):
         """Record intrinsic fields used in kernel"""
         self.field_args[node.obj.ccode_name] = node.obj
@@ -906,12 +911,13 @@ class LoopGenerator(object):
 
         update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
                                                              spec='inline')), [c.Value('double', 'dt')])
-        body = []
-        body += [c.Assign("_next_dt", "dt")]
-        body += [c.Assign("_next_dt_set", "1")]
-        update_next_dt_body = c.Block(body)
-        update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
-        ccode += [update_next_dt]
+        if 'update_next_dt' in str(kernel_ast):
+            body = []
+            body += [c.Assign("_next_dt", "dt")]
+            body += [c.Assign("_next_dt_set", "1")]
+            update_next_dt_body = c.Block(body)
+            update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+            ccode += [update_next_dt]
 
         if c_include:
             ccode += [c_include]
@@ -943,7 +949,7 @@ class LoopGenerator(object):
         body += [pdt_eq_dt_pos]
         body += [partdt]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
-        check_pdt = c.If("res == SUCCESS & __pdt_prekernels != particles[p].dt", c.Assign("res", "REPEAT"))
+        check_pdt = c.If("(res == SUCCESS) & (__pdt_prekernels != particles[p].dt)", c.Assign("res", "REPEAT"))
         body += [check_pdt]
         body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))

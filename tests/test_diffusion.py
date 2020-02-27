@@ -1,5 +1,5 @@
 from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, BrownianMotion2D,
-                     SpatiallyVaryingBrownianMotion2D, JITParticle, ScipyParticle)
+                     SpatiallyVaryingBrownianMotion2D, JITParticle, ScipyParticle, Variable)
 from parcels import rng as random
 from datetime import timedelta as delta
 import numpy as np
@@ -109,3 +109,33 @@ def test_randomexponential(mode, lambd, npart=1000):
     depth = np.array([particle.depth for particle in pset.particles])
     expected_mean = 1./fieldset.lambd
     assert np.allclose(np.mean(depth), expected_mean, rtol=.1)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('mu', [0.8*np.pi, np.pi])
+@pytest.mark.parametrize('kappa', [2, 4])
+def test_randomvonmises(mode, mu, kappa, npart=10000):
+    fieldset = zeros_fieldset()
+
+    # Parameters for random.vonmisesvariate
+    fieldset.mu = mu
+    fieldset.kappa = kappa
+
+    # Set random seed
+    random.seed(1234)
+
+    class AngleParticle(ptype[mode]):
+        angle = Variable('angle')
+    pset = ParticleSet(fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
+
+    def vonmises(particle, fieldset, time):
+        particle.angle = random.vonmisesvariate(fieldset.mu, fieldset.kappa)
+
+    pset.execute(vonmises, runtime=1, dt=1)
+
+    angles = np.array([p.angle for p in pset])
+
+    assert np.allclose(np.mean(angles), mu, atol=.1)
+    scipy_mises = stats.vonmises.rvs(kappa, loc=mu, size=10000)
+    assert np.allclose(np.mean(angles), np.mean(scipy_mises), atol=.1)
+    assert np.allclose(np.std(angles), np.std(scipy_mises), atol=.1)

@@ -124,6 +124,10 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     else:
         raise RuntimeError('field needs to be a Field or VectorField object')
 
+    if field[0].grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearSGrid]:
+        logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
+                       'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
+
     plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection)
     if plt is None:
         return None, None, None, None  # creating axes was not possible
@@ -183,7 +187,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         u = np.where(speed > 0., data[0]/speed, 0)
         v = np.where(speed > 0., data[1]/speed, 0)
         if cartopy:
-            cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
+            cs = ax.quiver(np.asarray(x), np.asarray(y), np.asarray(u), np.asarray(v), speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
         else:
             cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
     else:

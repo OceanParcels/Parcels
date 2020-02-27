@@ -130,6 +130,21 @@ def test_nested_if(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pass(fieldset, mode):
+    """Test pass commands"""
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.int32, initial=0)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        particle.p = -1
+        pass
+
+    pset.execute(kernel, endtime=10, dt=1.)
+    assert np.allclose(pset[0].p, -1)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_dt_as_variable_in_kernel(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
 

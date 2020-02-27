@@ -61,6 +61,7 @@ class Kernel(object):
 
     :arg fieldset: FieldSet object providing the field information
     :arg ptype: PType object for the kernel particle
+    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
 
     Note: A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
@@ -69,10 +70,11 @@ class Kernel(object):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include=""):
+                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
         self.fieldset = fieldset
         self.ptype = ptype
         self._lib = None
+        self.delete_cfiles = delete_cfiles
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
@@ -171,7 +173,7 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
-            if path.isfile(self.lib_file):
+            if path.isfile(self.lib_file) and self.delete_cfiles:
                 [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
 
     @property
@@ -351,10 +353,13 @@ class Kernel(object):
             for p in error_particles:
                 if p.state == ErrorCode.Repeat:
                     p.state = ErrorCode.Success
-                else:
+                elif p.state in recovery_map:               # hotfix for #749, #737 and related issues
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time)
+                else:
+                    logger.warning_once('Deleting particle because of bug in #749 and #737')
+                    p.delete()
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
@@ -373,9 +378,11 @@ class Kernel(object):
         func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
                                body=self.py_ast.body + kernel.py_ast.body,
                                decorator_list=[], lineno=1, col_offset=0)
+        delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         return Kernel(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
-                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
+                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
+                      delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
         if not isinstance(kernel, Kernel):
