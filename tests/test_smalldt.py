@@ -27,7 +27,7 @@ def deleteparticle(particle, fieldset, time):
     print('Particle '+str(particle.id)+' has died at t = '+str(time)+' at lon, lat, depth = '+str(particle.lon)+', '+str(particle.lat)+', '+str(particle.depth))
     particle.delete()
 
-def run(outputdt=0.1,dt=0.004,runtime=1.2):
+def run(outputdt=0.1,dt=0.004,runtime=1.5):
     datafile = path.join(path.dirname(__file__), 'test_data', 'dt_field')
 
     fieldset = FieldSet.from_parcels(datafile, allow_time_extrapolation=True)
