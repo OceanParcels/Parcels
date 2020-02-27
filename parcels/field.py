@@ -1696,6 +1696,8 @@ class NetcdfFileBuffer(object):
                 dim_index += 1
 
     def _chunkmap_to_chunksize(self):
+        if self.field_chunksize in [False, None]:
+            return
         self.field_chunksize = {}
         chunk_map = self.chunk_mapping
         if self._is_dimension_available('depth') and self._is_dimension_available('time'):
