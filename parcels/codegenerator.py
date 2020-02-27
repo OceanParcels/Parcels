@@ -933,7 +933,7 @@ class LoopGenerator(object):
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
         sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
-        dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")
+        dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), (endtime - particles[p].time) * sign_dt)")
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
         dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
