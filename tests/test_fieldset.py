@@ -348,15 +348,17 @@ def test_vector_fields(mode, swapUV):
         assert abs(pset[0].lon - 1.5) < 1e-9
         assert abs(pset[0].lat - .5) < 1e-9
 
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('cs', [False,'auto',(1,32,32)])
+@pytest.mark.parametrize('cs', [False, 'auto', (1, 32, 32)])
 @pytest.mark.parametrize('with_GC', [False, True])
-def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
+def test_from_netcdf_memory_containment(mode, time_periodic, cs, with_GC):
     class PerformanceLog():
         samples = []
         memory_steps = []
         _iter = 0
+
         def advance(self):
             process = psutil.Process(os.getpid())
             self.memory_steps.append(process.memory_info().rss)
@@ -381,23 +383,19 @@ def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
-    #ufiles = [fnameU, ]
     vfiles = [fnameV, ] * 4
-    #vfiles = [fnameV, ]
     timestamps = np.arange(0, 4, 1) * 86400.0
-    #timestamps = np.expand_dims(timestamps, 0)
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
-    #dimensions = {'time': 'time_counter', 'lon': 'nav_lon', 'lat': 'nav_lat'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=cs)
     perflog = PerformanceLog()
-    postProcessFuncs = [perflog.advance,]
+    postProcessFuncs = [perflog.advance, ]
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[0.5,], lat=[0.5,])
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[0.5, ], lat=[0.5, ])
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
@@ -406,33 +404,27 @@ def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
     if with_GC:
-        assert np.allclose(mem_steps_np[7:],perflog.memory_steps[-1], rtol=0.01)
+        assert np.allclose(mem_steps_np[7:], perflog.memory_steps[-1], rtol=0.01)
     if cs is not False or with_GC:
         assert np.alltrue((mem_steps_np-mem_0) < 4712832)   # represents 4 x [U|V] * sizeof(field data)
     assert not mem_exhausted
 
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('cs', [False,'auto',{'x':32,'y':32},{'time_counter':1,'x':32,'y':32},(32,32),(1,32,32)])
-@pytest.mark.parametrize('deferLoad',[True, False])
-def test_from_netcdf_field_chunking(mode,time_periodic,cs,deferLoad):
+@pytest.mark.parametrize('cs', [False, 'auto', {'x': 32, 'y': 32}, {'time_counter': 1, 'x': 32, 'y': 32}, (32, 32), (1, 32, 32)])
+@pytest.mark.parametrize('deferLoad', [True, False])
+def test_from_netcdf_field_chunking(mode, time_periodic, cs, deferLoad):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
-    #ufiles = [fnameU, ]
     vfiles = [fnameV, ] * 4
-    #vfiles = [fnameV, ]
     timestamps = np.arange(0, 4, 1) * 86400.0
-    #timestamps = np.expand_dims(timestamps, 0)
     timestamps = np.expand_dims(timestamps, 1)
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
-    #dimensions = {'time': 'time_counter', 'lon': 'nav_lon', 'lat': 'nav_lat'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    #if cs not in ['auto', False]:
-    #    if isinstance(cs, tuple):
-    #        cs = {'time_counter': 1, 'x': cs, 'y': cs}
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=cs)
     pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
