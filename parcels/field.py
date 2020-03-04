@@ -1613,6 +1613,11 @@ class NetcdfFileBuffer(object):
             self.dataset = self.filename
             return self
 
+        if self.field_chunksize not in [False, None, 'auto'] and type(self.field_chunksize) not in [list, tuple, dict]:
+            raise AttributeError("'field_chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
+        if isinstance(self.field_chunksize, list):
+            self.field_chunksize = tuple(self.field_chunksize)
+
         init_chunk_dict = None
         if self.field_chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
