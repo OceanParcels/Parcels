@@ -778,7 +778,7 @@ class FieldSet(object):
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
-                if f.data is not None and not isinstance(f.data,DeferredArray):
+                if f.data is not None and not isinstance(f.data, DeferredArray):
                     if not isinstance(f.data, list):
                         f.data = None
                     else:
@@ -831,7 +831,7 @@ class FieldSet(object):
                             if isinstance(f.data, list):
                                 del f.data[0, :]
                             else:
-                                f.data[0,:] = None
+                                f.data[0, :] = None
                         f.data[:2, :] = f.data[1:, :]
                         f.data[2, :] = data
                 else:
@@ -843,7 +843,7 @@ class FieldSet(object):
                             if isinstance(f.data, list):
                                 del f.data[2, :]
                             else:
-                                f.data[2,:] = None
+                                f.data[2, :] = None
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
