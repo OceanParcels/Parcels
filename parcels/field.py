@@ -303,7 +303,7 @@ class Field(object):
             if timestamps is not None:
                 dataFiles = []
                 for findex in range(len(data_filenames)):
-                    for f in [data_filenames[findex]] * len(timestamps[findex]):
+                    for f in [data_filenames[findex],] * len(timestamps[findex]):
                         dataFiles.append(f)
                 timeslices = np.array([stamp for file in timestamps for stamp in file])
                 time = timeslices
@@ -370,6 +370,7 @@ class Field(object):
             grid.defer_load = True
             grid.ti = -1
             data = DeferredArray()
+            data.compute_shape(grid.xdim,grid.ydim,grid.zdim,grid.tdim,len(grid.timeslices))
 
         if allow_time_extrapolation is None:
             allow_time_extrapolation = False if 'time' in dimensions else True
@@ -900,16 +901,23 @@ class Field(object):
         return np.unravel_index(bid, self.nchunks[1:])
 
     def chunk_setup(self):
+        if self.chunk_set:
+            return
         if isinstance(self.data, da.core.Array):
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks
             npartitions = 1
             for n in self.nchunks[1:]:
                 npartitions *= n
-        else:
+        elif isinstance(self.data, np.ndarray):
             chunks = tuple((t,) for t in self.data.shape)
             self.nchunks = (1,) * len(self.data.shape)
             npartitions = 1
+        elif isinstance(self.data, DeferredArray):
+            self.nchunks = (1,) * len(self.data.data_shape)
+            return
+        else:
+            return
 
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
@@ -934,13 +942,21 @@ class Field(object):
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block])
+                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block], order='C')
                 elif self.grid.load_chunk[block_id] == 0:
-                    self.data_chunks[block_id] = None
+                    if isinstance(self.data_chunks, list):
+                        self.data_chunks[block_id]=None
+                    else:
+                        self.data_chunks[block_id, :] = None
                     self.c_data_chunks[block_id] = None
         else:
+            if isinstance(self.data_chunks, list):
+                self.data_chunks[0] = None
+            else:
+                self.data_chunks[0, :] = None
+            self.c_data_chunks[0] = None
             self.grid.load_chunk[0] = 2
-            self.data_chunks[0] = self.data
+            self.data_chunks[0] = np.array(self.data, order='C')
 
     @property
     def ctypes_struct(self):
@@ -1086,7 +1102,12 @@ class Field(object):
         return data
 
     def data_concatenate(self, data, data_to_concat, tindex):
-        lib = np if isinstance(data_to_concat, np.ndarray) else da
+        if data[tindex] is not None:
+            if isinstance(data, np.ndarray):
+                data[tindex] = None
+            elif isinstance(data, list):
+                del data[tindex]
+        lib = np if isinstance(data, np.ndarray) else da
         if tindex == 0:
             data = lib.concatenate([data_to_concat, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
@@ -1437,8 +1458,25 @@ class VectorField(object):
 
 class DeferredArray():
     """Class used for throwing error when Field.data is not read in deferred loading mode"""
+    data_shape = ()
+
+    def __init__(self):
+        self.data_shape=(1,)
+
+    def compute_shape(self, xdim, ydim, zdim, tdim, tslices):
+        if zdim==1 and tdim==1:
+            self.data_shape = (tslices, 1, ydim, xdim)
+        elif zdim>1 or tdim>1:
+            if zdim > 1:
+                self.data_shape = (1,zdim,ydim,xdim)
+            else:
+                self.data_shape = (max(tdim, tslices),1,ydim,xdim)
+        else:
+            self.data_shape = (tdim,zdim,ydim,xdim)
+        return self.data_shape
+
     def __getitem__(self, key):
-        raise RuntimeError('Field is in deferred_load mode, so can''t be accessed. Use .computeTimeChunk() method to force loading of  data')
+        raise RuntimeError("Field is in deferred_load mode, so can't be accessed. Use .computeTimeChunk() method to force loading of data")
 
 
 class SummedField(list):
@@ -1624,13 +1662,13 @@ class NetcdfFileBuffer(object):
             init_chunk_dict = self.field_chunksize
         elif isinstance(self.field_chunksize, tuple): # and (len(self.dimensions) == len(self.field_chunksize)):
             chunk_index = len(self.field_chunksize)-1
-            loni, lonname = self._is_dimension_in_dataset('lon')
+            loni, lonname, _ = self._is_dimension_in_dataset('lon')
             if loni >= 0:
                 init_chunk_dict[lonname] = self.field_chunksize[chunk_index]
                 chunk_index -= 1
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lon'))
-            lati, latname = self._is_dimension_in_dataset('lat')
+            lati, latname, _ = self._is_dimension_in_dataset('lat')
             if lati >= 0:
                 init_chunk_dict[latname] = self.field_chunksize[chunk_index]
                 chunk_index -= 1
