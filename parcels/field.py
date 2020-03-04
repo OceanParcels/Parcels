@@ -439,7 +439,7 @@ class Field(object):
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
             assert data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
-                                 ('Field %s expecting a data shape of a [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.' % self.name)
+                                 ('Field %s expecting a data shape of a [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.' % (self.name))
         else:
             assert data.shape == (self.grid.tdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
                                  ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim]. Flag transpose=True could help to reorder the data.' % (self.name))
@@ -942,7 +942,7 @@ class Field(object):
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),)+block], order='C')
+                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
                 elif self.grid.load_chunk[block_id] == 0:
                     if isinstance(self.data_chunks, list):
                         self.data_chunks[block_id] = None
@@ -956,7 +956,7 @@ class Field(object):
                 self.data_chunks[0, :] = None
             self.c_data_chunks[0] = None
             self.grid.load_chunk[0] = 2
-            self.data_chunks[0] = np.array(self.data, order='C')
+            self.data_chunks[0] = np.array(self.data)
 
     @property
     def ctypes_struct(self):
@@ -1780,8 +1780,6 @@ class NetcdfFileBuffer(object):
         chunk_map = self.chunk_mapping
         timei, _, timevalue = self._is_dimension_in_chunksize_request('time')
         depthi, _, depthvalue = self._is_dimension_in_chunksize_request('depth')
-        if self._is_dimension_available('time') or (timei >= 0 and timevalue > 1):
-            chunk_map[-1] = 1
         if len(chunk_map) == 2:
             self.field_chunksize[self.dimensions['lat']] = chunk_map[0]
             self.field_chunksize[self.dimensions['lon']] = chunk_map[1]
@@ -1791,7 +1789,8 @@ class NetcdfFileBuffer(object):
                 self.field_chunksize[self.dimensions['depth']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1
             elif self._is_dimension_available('time') or (timei >= 0 and timevalue > 1):
-                self.field_chunksize[self.dimensions['time']] = chunk_map[-1]
+                self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
+                chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lat']] = chunk_map[chunk_dim_index]
             chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lon']] = chunk_map[chunk_dim_index]
