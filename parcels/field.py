@@ -1778,7 +1778,8 @@ class NetcdfFileBuffer(object):
             return
         self.field_chunksize = {}
         chunk_map = self.chunk_mapping
-        timei, timename, timevalue = self._is_dimension_in_chunksize_request('time')
+        timei, _, timevalue = self._is_dimension_in_chunksize_request('time')
+        depthi, _, depthvalue = self._is_dimension_in_chunksize_request('depth')
         if self._is_dimension_available('time') or (timei >= 0 and timevalue > 1):
             chunk_map[-1] = 1
         if len(chunk_map) == 2:
