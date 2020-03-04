@@ -348,9 +348,9 @@ def test_vector_fields(mode, swapUV):
         assert abs(pset[0].lon - 1.5) < 1e-9
         assert abs(pset[0].lat - .5) < 1e-9
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('cs', [False,'auto',(1,32,32)])
-@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('with_GC', [False, True])
 def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
     class PerformanceLog():
@@ -366,16 +366,15 @@ def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
     def perIterGC():
         gc.collect()
 
-    def periodicBC(particle, fieldSet, time):
-        #    print('periodicBC  %f  %f  %f  '%(particle.depth,particle.lat,particle.lon))
-        if particle.lon > 180:
-            particle.lon -= 360
-        if particle.lon < -180:
-            particle.lon += 360
-        if particle.lat > 90.:
-            particle.lat -= 90.
-        if particle.lat < -90.:
-            particle.lat += 90.
+    def periodicBoundaryConditions(particle, fieldset, time):
+        while particle.lon > 180.:
+            particle.lon -= 360.
+        while particle.lon < -180.:
+            particle.lon += 360.
+        while particle.lat > 90.:
+            particle.lat -= 180.
+        while particle.lat < -90.:
+            particle.lat += 180.
 
     process = psutil.Process(os.getpid())
     mem_0 = process.memory_info().rss
@@ -393,17 +392,24 @@ def test_from_netcdf_memory_containment(mode,time_periodic,cs,with_GC):
     #dimensions = {'time': 'time_counter', 'lon': 'nav_lon', 'lat': 'nav_lat'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, mesh='flat', timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic not in [False, None] else False, field_chunksize=cs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=cs)
     perflog = PerformanceLog()
     postProcessFuncs = [perflog.advance,]
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
-                                 start=(0.5, 0.5), finish=(0.5, 0.5))
-    pset.execute(pset.Kernel(AdvectionRK4)+pset.Kernel(periodicBC), dt=delta(hours=1), runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[0.5,], lat=[0.5,])
+    mem_0 = process.memory_info().rss
+    mem_exhausted = False
+    try:
+        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=delta(hours=1), runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+    except MemoryError:
+        mem_exhausted = True
+    mem_steps_np = np.array(perflog.memory_steps)
     if with_GC:
-        assert np.allclose(np.array(perflog.memory_steps)[7:])
-    assert np.alltrue((np.array(perflog.memory_steps)-mem_0) < 1000000)
+        assert np.allclose(mem_steps_np[7:],perflog.memory_steps[-1], rtol=0.01)
+    if cs is not False or with_GC:
+        assert np.alltrue((mem_steps_np-mem_0) < 4712832)   # represents 4 x [U|V] * sizeof(field data)
+    assert not mem_exhausted
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
@@ -427,7 +433,7 @@ def test_from_netcdf_field_chunking(mode,time_periodic,cs,deferLoad):
     #if cs not in ['auto', False]:
     #    if isinstance(cs, tuple):
     #        cs = {'time_counter': 1, 'x': cs, 'y': cs}
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, mesh='flat', timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic not in [False, None] else False, field_chunksize=cs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=cs)
     pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)

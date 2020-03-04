@@ -1,6 +1,11 @@
 from parcels import FieldSet, Grid, GridCode
 import numpy as np
 import math
+try:
+    from pympler import asizeof
+except:
+    asizeof = None
+
 from os import path
 import xarray as xr
 try:
@@ -50,8 +55,11 @@ def generate_perlin_testfield():
     V = np.expand_dims(V,0)
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False)
-    #fieldset.write("perlinfields")
+    if asizeof is not None:
+        print("Perlin U-field requires {} bytes of memory.".format(U.size * U.itemsize))
+        print("Perlin V-field requires {} bytes of memory.".format(V.size * V.itemsize))
+    fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=False)
+    #fieldset.write("perlinfields") # can also be used, but then has a ghost depth dimension
     write_simple_2Dt(fieldset.U, path.join(path.dirname(__file__), 'perlinfields'), varname='vozocrtx')
     write_simple_2Dt(fieldset.V, path.join(path.dirname(__file__), 'perlinfields'), varname='vomecrty')
 
@@ -90,6 +98,16 @@ def write_simple_2Dt(field, filename, varname=None):
                                                   'nav_lat': nav_lat,
                                                   'time_counter': time_counter}, attrs=attrs)
     dset.to_netcdf(filepath)
+    if asizeof is not None:
+        mem = 0
+        mem += asizeof.asizeof(field)
+        mem += asizeof.asizeof(field.data[:])
+        mem += asizeof.asizeof(field.grid)
+        mem += asizeof.asizeof(vardata)
+        mem += asizeof.asizeof(nav_lat)
+        mem += asizeof.asizeof(nav_lon)
+        mem += asizeof.asizeof(time_counter)
+        print("Field '{}' requires {} bytes of memory.".format(field.name, mem))
 
 if __name__ == "__main__":
     generate_testfieldset(xdim=5, ydim=3, zdim=2, tdim=15)

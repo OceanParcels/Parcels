@@ -56,6 +56,7 @@ class ParticleSet(object):
         self.fieldset = fieldset
         self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
+        self.aborted=False
 
         def convert_to_array(var):
             # Convert lists and single integers/floats to one-dimensional numpy arrays
@@ -511,7 +512,8 @@ class ParticleSet(object):
             walltime_start = time_module.time()
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
-        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+        aborted = False
+        while (((time < endtime and dt > 0) or (time > endtime and dt < 0)) and not aborted) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
@@ -551,6 +553,8 @@ class ParticleSet(object):
                 break
             if verbose_progress:
                 pbar.update(abs(time - _starttime))
+
+            aborted = self.aborted
 
         if output_file:
             output_file.write(self, time)
