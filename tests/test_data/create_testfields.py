@@ -28,7 +28,7 @@ def generate_testfieldset(xdim, ydim, zdim, tdim):
     V = np.zeros((xdim, ydim, zdim, tdim), dtype=np.float32)
     P = 2.*np.ones((xdim, ydim, zdim, tdim), dtype=np.float32)
     data = {'U': U, 'V': V, 'P': P}
-    dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth, 'time': time}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
     fieldset.write('testfields')
 

@@ -351,9 +351,9 @@ def test_vector_fields(mode, swapUV):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('cs', [False, 'auto', (1, 32, 32)])
+@pytest.mark.parametrize('field_chunksize', [False, 'auto', (1, 32, 32)])
 @pytest.mark.parametrize('with_GC', [False, True])
-def test_from_netcdf_memory_containment(mode, time_periodic, cs, with_GC):
+def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, with_GC):
     class PerformanceLog():
         samples = []
         memory_steps = []
@@ -390,7 +390,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, cs, with_GC):
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=cs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=field_chunksize)
     perflog = PerformanceLog()
     postProcessFuncs = [perflog.advance, ]
     if with_GC:
@@ -405,16 +405,16 @@ def test_from_netcdf_memory_containment(mode, time_periodic, cs, with_GC):
     mem_steps_np = np.array(perflog.memory_steps)
     if with_GC:
         assert np.allclose(mem_steps_np[7:], perflog.memory_steps[-1], rtol=0.01)
-    if cs is not False or with_GC:
+    if (field_chunksize is not False or with_GC) and mode is not 'scipy':
         assert np.alltrue((mem_steps_np-mem_0) < 4712832)   # represents 4 x [U|V] * sizeof(field data)
     assert not mem_exhausted
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('cs', [False, 'auto', {'x': 32, 'y': 32}, {'time_counter': 1, 'x': 32, 'y': 32}, (32, 32), (1, 32, 32)])
+@pytest.mark.parametrize('field_chunksize', [False, 'auto', {'x': 32, 'y': 32}, {'time_counter': 1, 'x': 32, 'y': 32}, (32, 32), (1, 32, 32)])
 @pytest.mark.parametrize('deferLoad', [True, False])
-def test_from_netcdf_field_chunking(mode, time_periodic, cs, deferLoad):
+def test_from_netcdf_field_chunking(mode, time_periodic, field_chunksize, deferLoad):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
@@ -425,7 +425,7 @@ def test_from_netcdf_field_chunking(mode, time_periodic, cs, deferLoad):
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=cs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=field_chunksize)
     pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
