@@ -394,7 +394,7 @@ class ParticleSet(object):
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
-                verbose_progress=None, postIterationFunctions=None):
+                verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for
         multiple timesteps. Optionally also provide sub-timestepping
         for particle output.
@@ -420,7 +420,8 @@ class ParticleSet(object):
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-        :param postIterationFunctions: Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param postIterationCallbacks: Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -455,6 +456,8 @@ class ParticleSet(object):
             outputdt = outputdt.total_seconds()
         if isinstance(moviedt, delta):
             moviedt = moviedt.total_seconds()
+        if isinstance(callbackdt, delta):
+            callbackdt = callbackdt.total_seconds()
 
         assert runtime is None or runtime >= 0, 'runtime must be positive'
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
@@ -497,6 +500,11 @@ class ParticleSet(object):
 
         if moviedt is None:
             moviedt = np.infty
+        if callbackdt is None:
+            interupt_dts = [np.infty, moviedt, outputdt]
+            if self.repeatdt is not None:
+                interupt_dts.append(self.repeatdt)
+            callbackdt = np.min(np.array(interupt_dts))
         time = _starttime
         if self.repeatdt:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
@@ -504,6 +512,7 @@ class ParticleSet(object):
             next_prelease = np.infty if dt > 0 else - np.infty
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
+        next_callback = time + callbackdt if dt > 0 else time - callbackdt
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
@@ -521,9 +530,9 @@ class ParticleSet(object):
                 pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
             if dt > 0:
-                time = min(next_prelease, next_input, next_output, next_movie, endtime)
+                time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
-                time = max(next_prelease, next_input, next_output, next_movie, endtime)
+                time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
@@ -542,9 +551,11 @@ class ParticleSet(object):
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
-            if postIterationFunctions is not None:
-                for extFunc in postIterationFunctions:
-                    extFunc()
+            if abs(time-next_callback) < tol:
+                if postIterationCallbacks is not None:
+                    for extFunc in postIterationCallbacks:
+                        extFunc()
+                next_callback += callbackdt * np.sign(dt)
             if time != endtime:
                 next_input = self.fieldset.computeTimeChunk(time, dt)
             if dt == 0:
