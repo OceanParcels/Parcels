@@ -163,16 +163,19 @@ class RandomNode(IntrinsicNode):
 
 
 class ErrorCodeNode(IntrinsicNode):
-    symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
+    symbol_map = {'Success': 'SUCCESS', 'Evaluate' : 'EVALUATE', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
                   'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
                   'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE'}
+    #symbol_map = {'Success': 'SUCCESS', 'Repeat': 'REPEAT', 'Delete': 'DELETE',
+    #              'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
+    #              'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
             attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown math function encountered: %s"""
+            raise AttributeError("""Unknown error code encountered: %s"""
                                  % attr)
 
 
