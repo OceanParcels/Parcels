@@ -273,8 +273,8 @@ class Kernel(object):
             if (sign_end_part != sign_dt) and (dt != 0):
                 continue
             # === NEW: Don't execute particles that are already computed === #
-            #if p.succeeded():
-            #    continue
+            if p.succeeded():
+                continue
 
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
