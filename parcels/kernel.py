@@ -272,6 +272,9 @@ class Kernel(object):
             sign_end_part = np.sign(endtime - p.time)
             if (sign_end_part != sign_dt) and (dt != 0):
                 continue
+            # === NEW: Don't execute particles that are already computed === #
+            #if p.succeeded():
+            #    continue
 
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
@@ -282,7 +285,10 @@ class Kernel(object):
                     pdt_prekernels = sign_dt * dt_pos
                     p.dt = pdt_prekernels
                     res = self.pyfunc(p, pset.fieldset, p.time)
-                    if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt_prekernels):
+                    if res is None:
+                        res = ErrorCode.Success
+                    #if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt_prekernels):
+                    if res == ErrorCode.Success and not np.isclose(p.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
                 except FieldOutOfBoundError as fse:
                     res = ErrorCode.ErrorOutOfBounds
@@ -295,19 +301,22 @@ class Kernel(object):
                     p.exception = e
 
                 # Update particle state for explicit returns
-                if res is not None:
-                    p.state = res
+                #if res is not None:
+                #    p.state = res
 
                 # Handle particle time and time loop
-                if res is None or res == ErrorCode.Success:
+                #if res is None or res == ErrorCode.Success:
+                if res == ErrorCode.Success:
                     # Update time and repeat
                     p.time += p.dt
                     p.update_next_dt()
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
                     if dt == 0:
+                        p.state = res
                         break
                     continue
                 else:
+                    p.state = res
                     # Try again without time update
                     for var in ptype.variables:
                         if var.name not in ['dt', 'state']:
@@ -317,6 +326,8 @@ class Kernel(object):
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
+        for p in pset.particles:
+            p.reset_state()
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
@@ -353,10 +364,12 @@ class Kernel(object):
             # Apply recovery kernel
             for p in error_particles:
                 if p.state == ErrorCode.Repeat:
-                    p.state = ErrorCode.Success
+                    #p.state = ErrorCode.Success
+                    p.reset_state()
                 elif p.state in recovery_map:               # hotfix for #749, #737 and related issues
                     recovery_kernel = recovery_map[p.state]
-                    p.state = ErrorCode.Success
+                    #p.state = ErrorCode.Success
+                    p.reset_state()
                     recovery_kernel(p, self.fieldset, p.time)
                 else:
                     logger.warning_once('Deleting particle because of bug in #749 and #737')

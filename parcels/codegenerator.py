@@ -945,7 +945,8 @@ class LoopGenerator(object):
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), (endtime - particles[p].time) * sign_dt)")
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
-        dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
+        #dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
+        dt_0_break = c.If("particles[p].dt == 0", c.Block([c.Assign("particles[p].state", "res"), c.Statement("break")]))
         notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)",
                                    c.Statement("continue"))
         body = [c.Statement("set_particle_backup(&particle_backup, &(particles[p]))")]
@@ -954,12 +955,12 @@ class LoopGenerator(object):
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
         check_pdt = c.If("(res == SUCCESS) & (__pdt_prekernels != particles[p].dt)", c.Assign("res", "REPEAT"))
         body += [check_pdt]
-        body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
+        #body += [c.Assign("particles[p].state", "res")]  # Store return code on particle
         update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += particles[p].dt"), update_pdt,
                                                                   dt_pos, dt_0_break, c.Statement("continue")]),
                  c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
-                          dt_pos, c.Statement("break")]))]
+                          c.Assign("particles[p].state", "res"), dt_pos, c.Statement("break")]))]
 
         time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
