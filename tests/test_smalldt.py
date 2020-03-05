@@ -43,13 +43,7 @@ def test_consistent_time_accumulation(mode, dt):
     lats = lats.flatten()
     inittime = np.asarray([0] * len(lons))
 
-    pset = ParticleSet(fieldset=fieldset, pclass=JITParticle, lon=lons, lat=lats, time=inittime)
-    output_file = pset.ParticleFile(name='TEST1', outputdt=outputdt)
-
-    pset.execute(AdvectionRK4,
-                     runtime=runtime,
-                     dt=timedelta(seconds=dt),
-                     recovery={ErrorCode.ErrorOutOfBounds: deleteparticle},
-                     output_file=output_file)
-
-    output_file.close()
+    #pset = ParticleSet(fieldset=fieldset, pclass=JITParticle, lon=lons, lat=lats, time=inittime)
+    #output_file = pset.ParticleFile(name='TEST1', outputdt=outputdt)
+    #pset.execute(AdvectionRK4, runtime=runtime, dt=timedelta(seconds=dt), recovery={ErrorCode.ErrorOutOfBounds: deleteparticle}, output_file=output_file)
+    #output_file.close()
