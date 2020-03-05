@@ -234,6 +234,7 @@ class Kernel(object):
             else:
                 for block_id in range(len(f.data_chunks)):
                     f.data_chunks[block_id] = None
+                    f.c_data_chunks[block_id] = None
 
         for g in pset.fieldset.gridset.grids:
             g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
@@ -346,8 +347,8 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        error_particles = [p for p in pset.particles
-                           if p.state != ErrorCode.Success]
+        error_particles = [p for p in pset.particles if p.state != ErrorCode.Success]
+
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
@@ -370,8 +371,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = [p for p in pset.particles
-                               if p.state != ErrorCode.Success]
+            error_particles = [p for p in pset.particles if p.state != ErrorCode.Success]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
