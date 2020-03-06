@@ -6,7 +6,9 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
+#include <float.h>
 #include "random.h"
 #include "index_search.h"
 #include "interpolation_utils.h"
@@ -20,6 +22,22 @@ typedef struct
   float ****data_chunks;
   CGrid *grid;
 } CField;
+
+static inline bool is_close_dbl(double a, double b) {
+    return (fabs(a-b) <= DBL_EPSILON * fabs(a));
+}
+
+static inline bool is_close_flt(float a, float b) {
+    return (fabs(a-b) <= FLT_EPSILON * fabs(a));
+}
+
+static inline bool is_zero_dbl(double a) {
+    return (fabs(a) <= DBL_EPSILON);
+}
+
+static inline bool is_zero_flt(float a) {
+    return (fabs(a) <= FLT_EPSILON);
+}
 
 /* Bilinear interpolation routine for 2D grid */
 static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, float data[2][2], float *value)
