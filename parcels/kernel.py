@@ -32,6 +32,8 @@ from parcels.compiler import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
+from parcels.field import FieldSamplingError
+from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -270,32 +272,39 @@ class Kernel(object):
             ptype = p.getPType()
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
-            if (sign_end_part != sign_dt) and (dt != 0):
-                continue
-            # === NEW: Don't execute particles that are already computed === #
-            if p.succeeded():
+            #if (sign_end_part != sign_dt) and (dt != 0):
+            if (sign_end_part != sign_dt) and not np.isclose(dt,0):
                 continue
 
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
-            while dt_pos > 1e-6 or dt == 0:
+            # while dt_pos > 1e-6 or dt == 0:
+            while p.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
                     pdt_prekernels = sign_dt * dt_pos
                     p.dt = pdt_prekernels
+                    state_prev = p.state
                     res = self.pyfunc(p, pset.fieldset, p.time)
                     if res is None:
                         res = ErrorCode.Success
                     #if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt_prekernels):
                     if res == ErrorCode.Success and not np.isclose(p.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
-                except FieldOutOfBoundError as fse:
+
+                    if p.state != state_prev:
+                        res = p.state
+
+                except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
-                    p.exception = fse
+                    p.exception = fse_xy
                 except FieldOutOfBoundSurfaceError as fse_z:
                     res = ErrorCode.ErrorThroughSurface
                     p.exception = fse_z
+                except TimeExtrapolationError as fse_t:
+                    res = ErrorCode.ErrorTimeExtrapolation
+                    p.exception = fse_t
                 except Exception as e:
                     res = ErrorCode.Error
                     p.exception = e
@@ -311,8 +320,15 @@ class Kernel(object):
                     p.time += p.dt
                     p.update_next_dt()
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
+
+                    sign_end_part = np.sign(endtime - p.time)
+                    if dt_pos > 1e-6 and (sign_end_part == sign_dt):
+                        res = ErrorCode.Evaluate
+                    if sign_end_part != sign_dt:
+                        dt_pos = 0
+
+                    p.state = res
                     if dt == 0:
-                        p.state = res
                         break
                     continue
                 else:
@@ -322,6 +338,10 @@ class Kernel(object):
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
+
+                    sign_end_part = np.sign(endtime - p.time)
+                    if sign_end_part != sign_dt:
+                        dt_pos = 0
                     break
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):

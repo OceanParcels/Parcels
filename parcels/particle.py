@@ -200,11 +200,12 @@ class ScipyParticle(_Particle):
         self.state = ErrorCode.Delete
 
     def succeeded(self):
-        self.state = ErrorCode.Success
+        return (self.state == ErrorCode.Success)
+        #self.state = ErrorCode.Success
 
     def reset_state(self):
-        #self.state = ErrorCode.Success
         self.state = ErrorCode.Evaluate
+        #self.state = ErrorCode.Success
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
