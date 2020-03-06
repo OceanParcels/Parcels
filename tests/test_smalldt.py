@@ -51,7 +51,7 @@ def test_consistent_time_accumulation(mode, dt):
     lon = fieldset.U.lon
     lat = fieldset.U.lat
 
-    lons, lats = np.meshgrid(lon, lat)  # meshgrid at all gridpoints in the flow data
+    lons, lats = np.meshgrid(lon[::2], lat[::2])  # meshgrid at all gridpoints in the flow data
     lons = lons.flatten()
     lats = lats.flatten()
     inittime = np.asarray([0] * len(lons))
@@ -77,3 +77,11 @@ def test_consistent_time_accumulation(mode, dt):
     #     time_prev = particles[i].time
     # result = np.array(result, dtype=np.float64)
     # assert np.allclose(result,dt)
+
+    target_t = np.sign(dt) * iruntime
+    particles = pset.particles
+    result = []
+    for i in range(len(particles)):
+        result.append(particles[i].time)
+    result = np.asarray(result)
+    assert np.allclose(result,target_t)
