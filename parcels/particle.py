@@ -200,6 +200,9 @@ class ScipyParticle(_Particle):
         self.state = ErrorCode.Delete
 
     def succeeded(self):
+        self.state = ErrorCode.Success
+
+    def isComputed(self):
         return (self.state == ErrorCode.Success)
         #self.state = ErrorCode.Success
 

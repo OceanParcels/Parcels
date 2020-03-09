@@ -273,13 +273,24 @@ class Kernel(object):
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
             #if (sign_end_part != sign_dt) and (dt != 0):
+            # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
+            # as they fulfil the condition here on entering at the final calculation here. ==== #
+            print("p.time: {}; endtime: {}, dt: {}, p.dt: {}".format(p.time, endtime, dt, p.dt))
             if (sign_end_part != sign_dt) and not np.isclose(dt,0):
+                if abs(p.time) >= abs(endtime):
+                    p.state = ErrorCode.Success
                 continue
 
             # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
             # while dt_pos > 1e-6 or dt == 0:
             while p.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
+
+                #if abs(p.time) >= abs(endtime):
+                #    p.succeeded()
+                #    p.dt=0
+                #    continue
+
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
@@ -289,12 +300,13 @@ class Kernel(object):
                     res = self.pyfunc(p, pset.fieldset, p.time)
                     if res is None:
                         res = ErrorCode.Success
+
+                    if res is ErrorCode.Success and p.state != state_prev:
+                        res = p.state
+
                     #if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt_prekernels):
                     if res == ErrorCode.Success and not np.isclose(p.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
-
-                    if p.state != state_prev:
-                        res = p.state
 
                 except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
@@ -315,14 +327,15 @@ class Kernel(object):
 
                 # Handle particle time and time loop
                 #if res is None or res == ErrorCode.Success:
-                if res == ErrorCode.Success:
+                #if res == ErrorCode.Success:
+                if res in [ErrorCode.Success, ErrorCode.Delete]:
                     # Update time and repeat
                     p.time += p.dt
                     p.update_next_dt()
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
                     sign_end_part = np.sign(endtime - p.time)
-                    if dt_pos > 1e-6 and (sign_end_part == sign_dt):
+                    if res != ErrorCode.Delete and dt_pos > 1e-6 and (sign_end_part == sign_dt):
                         res = ErrorCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
@@ -330,7 +343,7 @@ class Kernel(object):
                     p.state = res
                     if dt == 0:
                         break
-                    continue
+                    #continue
                 else:
                     p.state = res
                     # Try again without time update
@@ -388,9 +401,10 @@ class Kernel(object):
                     p.reset_state()
                 elif p.state in recovery_map:               # hotfix for #749, #737 and related issues
                     recovery_kernel = recovery_map[p.state]
-                    #p.state = ErrorCode.Success
-                    p.reset_state()
+                    p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time)
+                    if(p.isComputed()):
+                        p.reset_state()
                 else:
                     logger.warning_once('Deleting particle because of bug in #749 and #737')
                     p.delete()
