@@ -275,7 +275,7 @@ class Kernel(object):
             #if (sign_end_part != sign_dt) and (dt != 0):
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
-            print("p.time: {}; endtime: {}, dt: {}, p.dt: {}".format(p.time, endtime, dt, p.dt))
+            #print("p.time: {}; endtime: {}, dt: {}, p.dt: {}".format(p.time, endtime, dt, p.dt))
             if (sign_end_part != sign_dt) and not np.isclose(dt,0):
                 if abs(p.time) >= abs(endtime):
                     p.state = ErrorCode.Success
