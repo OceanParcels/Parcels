@@ -13,7 +13,7 @@ from dask import config as da_conf
 from dask import utils as da_utils
 import numpy as np
 import xarray as xr
-from py import path
+from pathlib import Path
 
 import parcels.tools.interpolation_utils as i_u
 from .grid import CGrid
@@ -1057,7 +1057,7 @@ class Field(object):
 
         :param filename: Basename of the file
         :param varname: Name of the field, to be appended to the filename"""
-        filepath = str(path.local('%s%s.nc' % (filename, self.name)))
+        filepath = str(Path('%s%s.nc' % (filename, self.name)))
         if varname is None:
             varname = self.name
         # Derive name of 'depth' variable for NEMO convention
