@@ -14,10 +14,7 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path  # python 2 backport
+from pathlib import Path
 
 
 def get_package_dir():
