@@ -391,7 +391,7 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        error_particles = [p for p in pset.particles if p.state != ErrorCode.Success]
+        error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
         while len(error_particles) > 0:
             # Apply recovery kernel
@@ -418,7 +418,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = [p for p in pset.particles if p.state != ErrorCode.Success]
+            error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
