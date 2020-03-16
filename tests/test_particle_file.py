@@ -181,11 +181,13 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
         particle.sample_var += 1.
         if particle.sample_var > fieldset.maxvar:
             particle.delete()
+
     for i in range(runtime):
-        pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
+        pset.execute(pset.Kernel(IncrLon, delete_cfiles=False), dt=dt, runtime=1., output_file=pfile)
 
     ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
     samplevar = ncfile.variables['sample_var'][:]
+    #pids = ncfile.variables['trajectory'][:]
     if type == 'repeatdt':
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
         assert np.allclose([p.sample_var for p in pset], np.arange(maxvar, -1, -repeatdt))
@@ -193,6 +195,8 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
         assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
     # test whether samplevar[:, k] = k
     for k in range(samplevar.shape[1]):
+    #    print([id for id in pids[:, k]])
+    #    print([p for p in samplevar[:, k] if np.isfinite(p)], k)
         assert np.allclose([p for p in samplevar[:, k] if np.isfinite(p)], k)
     filesize = os.path.getsize(str(outfilepath))
     assert filesize < 1024 * 65  # test that chunking leads to filesize less than 65KB

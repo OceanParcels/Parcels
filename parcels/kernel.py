@@ -280,7 +280,8 @@ class Kernel(object):
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             #print("p.time: {}; endtime: {}, dt: {}, p.dt: {}".format(p.time, endtime, dt, p.dt))
-            if ((sign_end_part != sign_dt) or (dt_pos <= tol)) and not np.isclose(dt,0):
+            #if ((sign_end_part != sign_dt) or (dt_pos <= tol)) and not np.isclose(dt,0):
+            if ((sign_end_part != sign_dt) or np.isclose(dt_pos,0)) and not np.isclose(dt, 0):
                 if abs(p.time) >= abs(endtime):
                     p.state = ErrorCode.Success
                 continue
@@ -340,7 +341,8 @@ class Kernel(object):
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
                     sign_end_part = np.sign(endtime - p.time)
-                    if res != ErrorCode.Delete and dt_pos > tol and (sign_end_part == sign_dt):
+                    #if res != ErrorCode.Delete and dt_pos > tol and (sign_end_part == sign_dt):
+                    if res != ErrorCode.Delete and not np.isclose(dt_pos,0) and (sign_end_part == sign_dt):
                         res = ErrorCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0

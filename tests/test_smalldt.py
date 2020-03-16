@@ -87,7 +87,7 @@ def test_consistent_time_accumulation(mode, dt):
     assert np.allclose(result,target_t)
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+@pytest.mark.parametrize('dt', [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
 def test_numerical_stability(mode, dt):
     # [1e-8, 1e-7, 1e-6, ] are inherently unstable { ~ 1 microsencond and below)
     def deleteparticle(particle, fieldset, time):
