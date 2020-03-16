@@ -32,11 +32,11 @@ static inline bool is_close_flt(float a, float b) {
 }
 
 static inline bool is_zero_dbl(double a) {
-    return (fabs(a) <= DBL_EPSILON);
+    return (fabs(a) <= DBL_EPSILON * fabs(a));
 }
 
 static inline bool is_zero_flt(float a) {
-    return (fabs(a) <= FLT_EPSILON);
+    return (fabs(a) <= FLT_EPSILON * fabs(a));
 }
 
 /* Bilinear interpolation routine for 2D grid */

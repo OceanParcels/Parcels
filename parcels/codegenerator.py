@@ -894,7 +894,8 @@ class LoopGenerator(object):
                                                          spec='inline')), args)
         body = []
         for v in self.ptype.variables:
-            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+            #if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+            if v.dtype != np.uint64:
                 body += [c.Assign(("particle_backup->%s" % v.name), ("particle->%s" % v.name))]
         p_back_set_body = c.Block(body)
         p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
@@ -941,7 +942,7 @@ class LoopGenerator(object):
         # Inner loop nest for forward runs
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
-        sign_end_part = c.Assign("sign_end_part", "endtime - particles[p].time > 0 ? 1 : -1")
+        sign_end_part = c.Assign("sign_end_part", "(endtime - particles[p].time) > 0 ? 1 : -1")
 
         #reset_res_state = c.Assign("res", "EVALUATE")
         reset_res_state = c.Assign("res", "particles[p].state")
@@ -956,12 +957,14 @@ class LoopGenerator(object):
 
         #dt_0_break = c.If("particles[p].dt == 0", c.Statement("break"))
         #dt_0_break = c.If("is_zero_dbl(particles[p].dt)", c.Block([update_state, c.Statement("break")]))
-        dt_0_break = c.If("is_zero_dbl(particles[p].dt)", c.Statement("break"))
+        dt_0_break = c.If("is_zero_flt(particles[p].dt)", c.Statement("break"))
+        #dt_0_break = c.If("is_zero_flt(dt)", c.Statement("break"))
 
         #notstarted_continue = c.If("(sign_end_part != sign_dt) && (particles[p].dt != 0)", c.Statement("continue"))
         # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
         # as they fulfil the condition here on entering at the final calculation here. ==== #
-        notstarted_continue = c.If("(sign_end_part != sign_dt) && (is_zero_dbl(particles[p].dt)==false)",
+        notstarted_continue = c.If("((sign_end_part != sign_dt) || (__dt <= __tol)) && !is_zero_flt(particles[p].dt)",
+        #notstarted_continue = c.If("(sign_end_part != sign_dt) && !is_zero_flt(dt)",
                                    c.Block([
                                        c.If("fabs(particles[p].time) >= fabs(endtime)",
                                             c.Assign("particles[p].state", "SUCCESS")),
@@ -977,7 +980,8 @@ class LoopGenerator(object):
         body += [c.If("(res==SUCCESS) && (particles[p].state != state_prev)", c.Assign("res","particles[p].state"))]
 
         # check_pdt = c.If("(res == SUCCESS) & (__pdt_prekernels != particles[p].dt)", c.Assign("res", "REPEAT"))
-        check_pdt = c.If("(res == SUCCESS) & !is_close_flt(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
+        check_pdt = c.If("(res == SUCCESS) & !is_close_flt(particles[p].dt, __pdt_prekernels)", c.Assign("res", "REPEAT"))
+        #check_pdt = c.If("(res == SUCCESS) & !is_close_dbl(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
 
         body += [check_pdt]
         #body += [update_state]  # Store return code on particle
@@ -985,8 +989,10 @@ class LoopGenerator(object):
 
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([
         #body += [c.If("res == SUCCESS", c.Block([
+                    #c.Value("double", "tmp_time"), c.Assign("tmp_time", "particles[p].time"),
                     c.Statement("particles[p].time += particles[p].dt"),
                     update_pdt,
+                    #c.Statement("printf(\"[SUCCESS]: p.id %d p.dt: %.03f p.time (before): %.03f p.time (after): %.03f endtime: %.03f\\n\", particles[p].id, particles[p].dt, tmp_time, particles[p].time, endtime)"),
                     dt_pos,
 
                     sign_end_part,
@@ -999,22 +1005,25 @@ class LoopGenerator(object):
                     dt_0_break ]),
                     #, c.Statement("continue")]),
                  c.Block([
-                     update_state,
+                     #c.Value("double", "tmp_time"), c.Assign("tmp_time", "particles[p].time"),
                      c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
+                     #c.Statement("printf(\"[FAILURE]: p.id %d p.dt: %.03f p.time (before): %.03f p.time (after): %.03f endtime: %.03f\\n\", particles[p].id, particles[p].dt, tmp_time, particles[p].time, endtime)"),
                      dt_pos,
 
-                    sign_end_part,
-                    c.If("sign_dt != sign_end_part",
+                     sign_end_part,
+                     c.If("sign_dt != sign_end_part",
                          c.Assign("__dt", "0")),
+                     update_state,
 
                      c.Statement("break")])
                 )]
 
         #time_loop = c.While("__dt > __tol || particles[p].dt == 0", c.Block(body))
         #time_loop = c.While("__dt > __tol || is_zero_dbl(particles[p].dt)", c.Block(body))
-        time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_dbl(particles[p].dt)", c.Block(body))
+        time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_flt(particles[p].dt)", c.Block(body))
+        #time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_flt(dt)", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
-                          c.Block([sign_end_part, reset_res_state, notstarted_continue, dt_pos, time_loop]))
+                          c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
                           #c.Block([sign_end_part, reset_res_state, notstarted_continue, skip_success_continue, dt_pos, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
                          # c.Value("ErrorCode", "res")

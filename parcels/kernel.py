@@ -258,6 +258,7 @@ class Kernel(object):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
+        tol = 1e-6
         sign_dt = np.sign(dt)
 
         # back up variables in case of ErrorCode.Repeat
@@ -272,17 +273,21 @@ class Kernel(object):
             ptype = p.getPType()
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
+
+            dt_pos = min(abs(p.dt), abs(endtime - p.time))
+
             #if (sign_end_part != sign_dt) and (dt != 0):
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             #print("p.time: {}; endtime: {}, dt: {}, p.dt: {}".format(p.time, endtime, dt, p.dt))
-            if (sign_end_part != sign_dt) and not np.isclose(dt,0):
+            if ((sign_end_part != sign_dt) or (dt_pos <= tol)) and not np.isclose(dt,0):
                 if abs(p.time) >= abs(endtime):
                     p.state = ErrorCode.Success
                 continue
 
             # Compute min/max dt for first timestep
-            dt_pos = min(abs(p.dt), abs(endtime - p.time))
+            #dt_pos = min(abs(p.dt), abs(endtime - p.time))
+
             # while dt_pos > 1e-6 or dt == 0:
             while p.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
 
@@ -335,13 +340,14 @@ class Kernel(object):
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
                     sign_end_part = np.sign(endtime - p.time)
-                    if res != ErrorCode.Delete and dt_pos > 1e-6 and (sign_end_part == sign_dt):
+                    if res != ErrorCode.Delete and dt_pos > tol and (sign_end_part == sign_dt):
                         res = ErrorCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
                     p.state = res
-                    if dt == 0:
+                    #if dt == 0:
+                    if np.isclose(dt, 0):
                         break
                     #continue
                 else:
