@@ -19,6 +19,7 @@ from os import path
 import threading
 import pytest
 
+ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 ### Functions ###
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -56,7 +57,7 @@ def test_consistent_time_accumulation(mode, dt):
     lats = lats.flatten()
     inittime = np.asarray([0] * len(lons))
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=lons, lat=lats, time=inittime)
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats, time=inittime)
     abort_object = Abortion(pset)
     timer = threading.Timer(iruntime/ioutputdt+1000.,abort_object.abort)
 
@@ -69,14 +70,6 @@ def test_consistent_time_accumulation(mode, dt):
     timer.cancel()
     output_file.close()
     assert abort_object.aborted == False
-    # particles = pset.particles
-    # result = []
-    # time_prev = 0
-    # for i in range(len(particles)):
-    #     result.append(particles[i].time-time_prev)
-    #     time_prev = particles[i].time
-    # result = np.array(result, dtype=np.float64)
-    # assert np.allclose(result,dt)
 
     target_t = np.sign(dt) * iruntime
     particles = pset.particles
@@ -122,7 +115,7 @@ def test_numerical_stability(mode, dt):
     lats = lats.flatten()
     inittime = np.asarray([0] * len(lons))
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ScipyParticle, lon=lons, lat=lats, time=inittime)
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats, time=inittime)
     abort_object = Abortion(pset)
     #timer = threading.Timer(iruntime/ioutputdt+1000.,abort_object.abort)
     timer = threading.Timer(len(lats) * len(lons) * 0.5, abort_object.abort)
