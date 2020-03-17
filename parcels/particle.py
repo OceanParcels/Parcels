@@ -172,7 +172,6 @@ class ScipyParticle(_Particle):
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
     dt = Variable('dt', dtype=np.float32, to_write=False)
-    #state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
@@ -203,12 +202,10 @@ class ScipyParticle(_Particle):
         self.state = ErrorCode.Success
 
     def isComputed(self):
-        return (self.state == ErrorCode.Success)
-        #self.state = ErrorCode.Success
+        return self.state == ErrorCode.Success
 
     def reset_state(self):
         self.state = ErrorCode.Evaluate
-        #self.state = ErrorCode.Success
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):

@@ -32,7 +32,6 @@ from parcels.compiler import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
-from parcels.field import FieldSamplingError
 from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -258,7 +257,6 @@ class Kernel(object):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
-        tol = 1e-6
         sign_dt = np.sign(dt)
 
         # back up variables in case of ErrorCode.Repeat
@@ -276,26 +274,14 @@ class Kernel(object):
 
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
-            #if (sign_end_part != sign_dt) and (dt != 0):
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
-            #print("p.time: {}; endtime: {}, dt: {}, p.dt: {}".format(p.time, endtime, dt, p.dt))
-            #if ((sign_end_part != sign_dt) or (dt_pos <= tol)) and not np.isclose(dt,0):
-            if ((sign_end_part != sign_dt) or np.isclose(dt_pos,0)) and not np.isclose(dt, 0):
+            if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
                 if abs(p.time) >= abs(endtime):
                     p.state = ErrorCode.Success
                 continue
 
-            # Compute min/max dt for first timestep
-            #dt_pos = min(abs(p.dt), abs(endtime - p.time))
-
-            # while dt_pos > 1e-6 or dt == 0:
             while p.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
-
-                #if abs(p.time) >= abs(endtime):
-                #    p.succeeded()
-                #    p.dt=0
-                #    continue
 
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
@@ -310,7 +296,6 @@ class Kernel(object):
                     if res is ErrorCode.Success and p.state != state_prev:
                         res = p.state
 
-                    #if (res is None or res == ErrorCode.Success) and not np.isclose(p.dt, pdt_prekernels):
                     if res == ErrorCode.Success and not np.isclose(p.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
 
@@ -327,13 +312,7 @@ class Kernel(object):
                     res = ErrorCode.Error
                     p.exception = e
 
-                # Update particle state for explicit returns
-                #if res is not None:
-                #    p.state = res
-
                 # Handle particle time and time loop
-                #if res is None or res == ErrorCode.Success:
-                #if res == ErrorCode.Success:
                 if res in [ErrorCode.Success, ErrorCode.Delete]:
                     # Update time and repeat
                     p.time += p.dt
@@ -341,17 +320,14 @@ class Kernel(object):
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
                     sign_end_part = np.sign(endtime - p.time)
-                    #if res != ErrorCode.Delete and dt_pos > tol and (sign_end_part == sign_dt):
-                    if res != ErrorCode.Delete and not np.isclose(dt_pos,0) and (sign_end_part == sign_dt):
+                    if res != ErrorCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
                         res = ErrorCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
                     p.state = res
-                    #if dt == 0:
                     if np.isclose(dt, 0):
                         break
-                    #continue
                 else:
                     p.state = res
                     # Try again without time update
@@ -369,6 +345,9 @@ class Kernel(object):
         """Execute this Kernel over a ParticleSet for several timesteps"""
         for p in pset.particles:
             p.reset_state()
+
+        if abs(dt) < 1e-6:
+            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
@@ -405,9 +384,8 @@ class Kernel(object):
             # Apply recovery kernel
             for p in error_particles:
                 if p.state == ErrorCode.Repeat:
-                    #p.state = ErrorCode.Success
                     p.reset_state()
-                elif p.state in recovery_map:               # hotfix for #749, #737 and related issues
+                elif p.state in recovery_map:
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
                     recovery_kernel(p, self.fieldset, p.time)

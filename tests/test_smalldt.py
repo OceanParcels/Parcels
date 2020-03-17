@@ -12,7 +12,7 @@ Created on Thu Feb 27 14:44:03 2020
 #
 # sys.path.insert(0, "\\Users\\Gebruiker\\Documents\\GitHub\\parcels\\")  # Set path to find the newest parcels code
 
-from parcels import FieldSet, ParticleSet, JITParticle, ScipyParticle, AdvectionRK4, ErrorCode, plotTrajectoriesFile
+from parcels import FieldSet, ParticleSet, JITParticle, ScipyParticle, AdvectionRK4, ErrorCode
 import numpy as np
 from datetime import timedelta
 from os import path
@@ -21,9 +21,10 @@ import pytest
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
-### Functions ###
+
+# Functions #
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt', [0.004,  -0.004, 0.01, -0.01, 0.1, -0.1])
+@pytest.mark.parametrize('dt', [0.004, -0.004, 0.01, -0.01, 0.1, -0.1])
 def test_consistent_time_accumulation(mode, dt):
     def deleteparticle(particle, fieldset, time):
         """ This function deletes particles as they exit the domain and prints a message about their attributes at that moment
@@ -35,6 +36,7 @@ def test_consistent_time_accumulation(mode, dt):
     class Abortion():
         abort_object = None
         aborted = False
+
         def __init__(self, object):
             self.abort_object = object
 
@@ -59,7 +61,7 @@ def test_consistent_time_accumulation(mode, dt):
 
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats, time=inittime)
     abort_object = Abortion(pset)
-    timer = threading.Timer(iruntime/ioutputdt+1000.,abort_object.abort)
+    timer = threading.Timer(iruntime/ioutputdt+1000., abort_object.abort)
 
     output_file = pset.ParticleFile(name='test_data/TEST2', outputdt=outputdt)
     timer.start()
@@ -69,7 +71,7 @@ def test_consistent_time_accumulation(mode, dt):
                  recovery={ErrorCode.ErrorOutOfBounds: deleteparticle}, output_file=output_file)
     timer.cancel()
     output_file.close()
-    assert abort_object.aborted == False
+    assert abort_object.aborted is False
 
     target_t = np.sign(dt) * iruntime
     particles = pset.particles
@@ -77,10 +79,11 @@ def test_consistent_time_accumulation(mode, dt):
     for i in range(len(particles)):
         result.append(particles[i].time)
     result = np.asarray(result)
-    assert np.allclose(result,target_t)
+    assert np.allclose(result, target_t)
+
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt', [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+@pytest.mark.parametrize('dt', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
 def test_numerical_stability(mode, dt):
     # [1e-8, 1e-7, 1e-6, ] are inherently unstable { ~ 1 microsencond and below)
     def deleteparticle(particle, fieldset, time):
@@ -93,6 +96,7 @@ def test_numerical_stability(mode, dt):
     class Abortion():
         abort_object = None
         aborted = False
+
         def __init__(self, object):
             self.abort_object = object
 
@@ -117,7 +121,6 @@ def test_numerical_stability(mode, dt):
 
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=lons, lat=lats, time=inittime)
     abort_object = Abortion(pset)
-    #timer = threading.Timer(iruntime/ioutputdt+1000.,abort_object.abort)
     timer = threading.Timer(len(lats) * len(lons) * 0.5, abort_object.abort)
 
     output_file = pset.ParticleFile(name='test_data/TEST2', outputdt=outputdt)
@@ -128,7 +131,7 @@ def test_numerical_stability(mode, dt):
                  recovery={ErrorCode.ErrorOutOfBounds: deleteparticle}, output_file=output_file)
     timer.cancel()
     output_file.close()
-    assert abort_object.aborted == False
+    assert abort_object.aborted is False
 
     target_t = np.sign(dt) * iruntime
     particles = pset.particles
@@ -136,4 +139,4 @@ def test_numerical_stability(mode, dt):
     for i in range(len(particles)):
         result.append(particles[i].time)
     result = np.asarray(result)
-    assert np.allclose(result,target_t)
+    assert np.allclose(result, target_t)
