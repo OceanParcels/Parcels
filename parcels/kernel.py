@@ -10,7 +10,6 @@ from ast import parse
 from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
-from ctypes import c_float
 from ctypes import c_int
 from ctypes import c_void_p
 from hashlib import md5
@@ -250,13 +249,11 @@ class Kernel(object):
                 g.lat = g.lat.copy()
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        # fargs += [c_float(f) for f in self.const_args.values()]
         fargs += [c_double(f) for f in self.const_args.values()]
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
         self._function(c_int(len(pset)), particle_data,
                        c_double(endtime),
                        c_double(dt),
-                       #c_float(dt),
                        *fargs)
 
     def execute_python(self, pset, endtime, dt):

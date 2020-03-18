@@ -930,12 +930,10 @@ class LoopGenerator(object):
                 c.Pointer(c.Value(self.ptype.name, "particles")),
                 c.Value("double", "endtime"),
                 c.Value("double", "dt")
-                #c.Value("float", "dt")
                 ]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
-            # args += [c.Value("float", const)]
             args += [c.Value("double", const)]
         fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys())
                               + list(const_args.keys()))
@@ -954,12 +952,12 @@ class LoopGenerator(object):
 
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
-        check_pdt = c.If("(res == SUCCESS) & !is_equal_flt(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
+        check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
 
-        dt_0_break = c.If("is_zero_flt(particles[p].dt)", c.Statement("break"))
-        # dt_0_break = c.If("is_zero_flt(dt)", c.Statement("break"))
+        dt_0_break = c.If("is_zero_dbl(particles[p].dt)", c.Statement("break"))
+        # dt_0_break = c.If("is_zero_dbl(dt)", c.Statement("break"))
 
-        notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl_tol(__dt, 0, __tol) ) && !is_zero_flt(particles[p].dt)",
+        notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles[p].dt)",
                                    c.Block([
                                        c.If("fabs(particles[p].time) >= fabs(endtime)",
                                             c.Assign("particles[p].state", "SUCCESS")),
@@ -978,7 +976,7 @@ class LoopGenerator(object):
                                                                   update_pdt,
                                                                   dt_pos,
                                                                   sign_end_part,
-                                                                  c.If("(res != DELETE) && !is_close_dbl_tol(__dt, 0, __tol) && (sign_dt == sign_end_part)",
+                                                                  c.If("(res != DELETE) && !is_close_dbl(__dt, 0) && (sign_dt == sign_end_part)",
                                                                        c.Assign("res", "EVALUATE")),
                                                                   c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
                                                                   update_state,
@@ -992,14 +990,13 @@ class LoopGenerator(object):
                                c.Statement("break")])
                       )]
 
-        time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_flt(particles[p].dt)", c.Block(body))
+        time_loop = c.While("(particles[p].state == EVALUATE || particles[p].state == REPEAT) || is_zero_dbl(particles[p].dt)", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
                          c.Value("ErrorCode", "res"),
                          c.Value("double", "__pdt_prekernels"),
-                         # c.Value("float", "__pdt_prekernels"),
-                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-8"),  # 1e-8 = built-in tolerance for np.isclose()
+                         c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]

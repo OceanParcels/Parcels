@@ -171,7 +171,6 @@ class ScipyParticle(_Particle):
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
-    # dt = Variable('dt', dtype=np.float32, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
 
