@@ -928,11 +928,15 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(self.ptype.name, "particles")),
-                c.Value("double", "endtime"), c.Value("float", "dt")]
+                c.Value("double", "endtime"),
+                c.Value("double", "dt")
+                #c.Value("float", "dt")
+                ]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
-            args += [c.Value("float", const)]
+            # args += [c.Value("float", const)]
+            args += [c.Value("double", const)]
         fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys())
                               + list(const_args.keys()))
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
@@ -971,12 +975,20 @@ class LoopGenerator(object):
         body += [c.If("(res==SUCCESS) && (particles[p].state != state_prev)", c.Assign("res", "particles[p].state"))]
         body += [check_pdt]
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += particles[p].dt"),
-                                                                  update_pdt, dt_pos, sign_end_part,
+                                                                  update_pdt,
+                                                                  dt_pos,
+                                                                  sign_end_part,
                                                                   c.If("(res != DELETE) && !is_close_dbl_tol(__dt, 0, __tol) && (sign_dt == sign_end_part)",
-                                                                       c.Assign("res", "EVALUATE")), c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
-                                                                  update_state, dt_0_break]),
+                                                                       c.Assign("res", "EVALUATE")),
+                                                                  c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
+                                                                  update_state,
+                                                                  dt_0_break
+                                                                  ]),
                       c.Block([c.Statement("get_particle_backup(&particle_backup, &(particles[p]))"),
-                               dt_pos, sign_end_part, c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")), update_state,
+                               dt_pos,
+                               sign_end_part,
+                               c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
+                               update_state,
                                c.Statement("break")])
                       )]
 
@@ -985,9 +997,9 @@ class LoopGenerator(object):
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
                          c.Value("ErrorCode", "res"),
-                         c.Value("float", "__pdt_prekernels"),
-                         # c.Value("double", "__pdt_prekernels"),
-                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),  # 1e-8 = built-in tolerance for np.isclose()
+                         c.Value("double", "__pdt_prekernels"),
+                         # c.Value("float", "__pdt_prekernels"),
+                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-8"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
