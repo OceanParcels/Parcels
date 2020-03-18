@@ -83,9 +83,9 @@ def test_consistent_time_accumulation(mode, dt):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('dt', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+@pytest.mark.parametrize('dt', [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
 def test_numerical_stability(mode, dt):
-    # [1e-8, 1e-7, 1e-6, ] are inherently unstable { ~ 1 microsencond and below)
+    # [1e-8, 1e-7] are inherently unstable { ~ 100 picoseconds and below)
     def deleteparticle(particle, fieldset, time):
         """ This function deletes particles as they exit the domain and prints a message about their attributes at that moment
         """
@@ -133,7 +133,10 @@ def test_numerical_stability(mode, dt):
     output_file.close()
     assert abort_object.aborted is False
 
-    target_t = np.sign(dt) * iruntime
+    if not np.isclose(dt,0):
+        target_t = np.sign(dt) * iruntime
+    else:
+        target_t = 0
     particles = pset.particles
     result = []
     for i in range(len(particles)):
