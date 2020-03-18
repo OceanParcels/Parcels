@@ -281,7 +281,7 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline ErrorCode func(CField *f, float *lon, float *dt)
+                 static inline ErrorCode func(CField *f, float *lon, double *dt)
                  {
                    float data2D[2][2][2];
                    ErrorCode err = getCell2D(f, 1, 2, 0, data2D, 1); CHECKERROR(err);
