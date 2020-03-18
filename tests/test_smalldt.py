@@ -133,7 +133,7 @@ def test_numerical_stability(mode, dt):
     output_file.close()
     assert abort_object.aborted is False
 
-    if not np.isclose(dt,0):
+    if not np.isclose(dt, 0, atol=1e-7):
         target_t = np.sign(dt) * iruntime
     else:
         target_t = 0
