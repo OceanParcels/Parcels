@@ -9,7 +9,7 @@ jobs:
       - name: Test OSX
         env: 
           OS_NAME: osx
-          PY_VERSION: 3
+          PY_VERSION: 3.8
           MINICONDA_NAME: Miniconda3-latest-MacOSX-x86_64.sh
         run: |
           ./.github/scripts/linux_install.sh

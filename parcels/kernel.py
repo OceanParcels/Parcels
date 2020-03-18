@@ -113,7 +113,7 @@ class Kernel(object):
                 del stack  # Remove cyclic references
             # Compile and generate Python function from AST
             py_mod = parse("")
-            py_mod.body=[self.py_ast]
+            py_mod.body = [self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
         else:
