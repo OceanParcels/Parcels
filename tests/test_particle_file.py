@@ -183,7 +183,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
             particle.delete()
 
     for i in range(runtime):
-        pset.execute(pset.Kernel(IncrLon, delete_cfiles=False), dt=dt, runtime=1., output_file=pfile)
+        pset.execute(IncrLon, dt=dt, runtime=1., output_file=pfile)
 
     ncfile = close_and_compare_netcdffiles(outfilepath, pfile)
     samplevar = ncfile.variables['sample_var'][:]

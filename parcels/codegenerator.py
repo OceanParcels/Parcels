@@ -958,15 +958,12 @@ class LoopGenerator(object):
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
 
         dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")                   # original
-        # dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), (endtime - particles[p].time) * sign_dt)")           # reint
-        # dt_pos = c.Assign("__dt", "fmax(fmin(fabs(particles[p].dt), (endtime - particles[p].time) * sign_dt), 0)")  # christian
 
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
         check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
 
         dt_0_break = c.If("is_zero_dbl(particles[p].dt)", c.Statement("break"))
-        # dt_0_break = c.If("is_zero_dbl(dt)", c.Statement("break"))
 
         notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles[p].dt)",
                                    c.Block([
