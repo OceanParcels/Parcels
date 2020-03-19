@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, ErrorCode
 from parcels.kernels.seawaterdensity import polyTEOS10_bsq, UNESCO_Density
 from parcels import random as parcels_random
 import numpy as np
@@ -281,7 +281,7 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline ErrorCode func(CField *f, float *lon, float *dt)
+                 static inline ErrorCode func(CField *f, float *lon, double *dt)
                  {
                    float data2D[2][2][2];
                    ErrorCode err = getCell2D(f, 1, 2, 0, data2D, 1); CHECKERROR(err);
@@ -320,6 +320,19 @@ def test_dt_modif_by_kernel(fieldset, mode):
     endtime = 4
     pset.execute(modif_dt, endtime=endtime, dt=1.)
     assert np.isclose(pset[0].age, endtime)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('dt', [1e-2, 1e-6])
+def test_small_dt(fieldset, mode, dt, npart=10):
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=np.zeros(npart),
+                       lat=np.zeros(npart), time=np.arange(0, npart)*dt*10)
+
+    def DoNothing(particle, fieldset, time):
+        return ErrorCode.Success
+
+    pset.execute(DoNothing, dt=dt, runtime=dt*100)
+    assert np.allclose([p.time for p in pset], dt*100)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
