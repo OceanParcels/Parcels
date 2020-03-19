@@ -778,6 +778,13 @@ class FieldSet(object):
                 continue
             g = f.grid
             if g.update_status == 'first_updated':  # First load of data
+                if f.data is not None and not isinstance(f.data, DeferredArray):
+                    if not isinstance(f.data, list):
+                        f.data = None
+                    else:
+                        for i in range(len(f.data)):
+                            del f.data[i, :]
+
                 data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
@@ -785,9 +792,9 @@ class FieldSet(object):
                         if fb is not None:
                             fb.close()
                         fb = None
-
                     data = f.computeTimeChunk(data, tind)
                 data = f.rescale_and_set_minmax(data)
+
                 if(isinstance(f.data, DeferredArray)):
                     f.data = DeferredArray()
                 f.data = f.reshape(data)
@@ -796,6 +803,7 @@ class FieldSet(object):
                 if len(g.load_chunk) > 0:
                     g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                     g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+
             elif g.update_status == 'updated':
                 lib = np if isinstance(f.data, np.ndarray) else da
                 data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
@@ -817,17 +825,25 @@ class FieldSet(object):
                 if signdt >= 0:
                     data = f.reshape(data)[2:, :]
                     if lib is da:
-                        f.data = da.concatenate([f.data[1:, :], data], axis=0)
+                        f.data = lib.concatenate([f.data[1:, :], data], axis=0)
                     else:
-                        f.data[0] = None
+                        if not isinstance(f.data, DeferredArray):
+                            if isinstance(f.data, list):
+                                del f.data[0, :]
+                            else:
+                                f.data[0, :] = None
                         f.data[:2, :] = f.data[1:, :]
                         f.data[2, :] = data
                 else:
                     data = f.reshape(data)[0:1, :]
                     if lib is da:
-                        f.data = da.concatenate([data, f.data[:2, :]], axis=0)
+                        f.data = lib.concatenate([data, f.data[:2, :]], axis=0)
                     else:
-                        f.data[2] = None
+                        if not isinstance(f.data, DeferredArray):
+                            if isinstance(f.data, list):
+                                del f.data[2, :]
+                            else:
+                                f.data[2, :] = None
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
@@ -840,6 +856,7 @@ class FieldSet(object):
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
+                                f.data_chunks[block_id][0] = None
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
                                 f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
                     else:
@@ -850,6 +867,7 @@ class FieldSet(object):
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
+                                f.data_chunks[block_id][2] = None
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
                                 f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
         # do user-defined computations on fieldset data

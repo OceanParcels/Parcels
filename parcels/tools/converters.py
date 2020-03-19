@@ -212,14 +212,15 @@ unitconverters_map = {'U': GeographicPolar(), 'V': Geographic(),
 def convert_xarray_time_units(ds, time):
     """ Fixes DataArrays that have time.Unit instead of expected time.units
     """
-    if 'units' not in ds[time].attrs and 'Unit' in ds[time].attrs:
-        ds[time].attrs['units'] = ds[time].attrs['Unit']
-    ds2 = xr.Dataset({time: ds[time]})
+    da = ds[time] if isinstance(ds, xr.Dataset) else ds
+    if 'units' not in da.attrs and 'Unit' in da.attrs:
+        da.attrs['units'] = da.attrs['Unit']
+    da2 = xr.Dataset({time: da})
     try:
-        ds2 = xr.decode_cf(ds2)
+        da2 = xr.decode_cf(da2)
     except ValueError:
         raise RuntimeError('Xarray could not convert the calendar. If you''re using from_netcdf, '
                            'try using the timestamps keyword in the construction of your Field. '
                            'See also the tutorial at https://nbviewer.jupyter.org/github/OceanParcels/'
                            'parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb')
-    ds[time] = ds2[time]
+    ds[time] = da2[time]
