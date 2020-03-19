@@ -140,7 +140,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
     if wErrorThroughSurface:
         recovery_dict[ErrorCode.ErrorThroughSurface] = SubmergeParticle
 
-        pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
+    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
     pset.execute(AdvectionRK4_3D, runtime=10., dt=1, recovery=recovery_dict)
 
     if direction == 'up' and wErrorThroughSurface:
