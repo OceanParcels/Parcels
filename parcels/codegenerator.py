@@ -861,7 +861,7 @@ class KernelGenerator(ast.NodeVisitor):
 
         def _isdocstr(node):
             # Check if node is docstr. Comparison only on text, not whitespace etc
-           return [c for c in node.s if c.isalpha()] == [c for c in self.docstr if c.isalpha()]
+            return [c for c in node.s if c.isalpha()] == [c for c in self.docstr if c.isalpha()]
 
         if _isdocstr(node):
             node.ccode = ''
