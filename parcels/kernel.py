@@ -343,10 +343,10 @@ class Kernel(object):
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        # particles = pset.data_accessor()
-        # for p in range(pset.size):
-        #     particles.set_index(p)
-        #     particles.reset_state()
+        particles = pset.data_accessor()
+        for p in range(pset.size):
+            particles.set_index(p)
+            particles.state = ErrorCode.Evaluate
 
         if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -378,8 +378,6 @@ class Kernel(object):
         # Remove all particles that signalled deletion
         remove_deleted(pset)
 
-        particles = pset.data_accessor()
-
         # Identify particles that threw errors
         error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
         while np.any(error_particles):
@@ -387,13 +385,13 @@ class Kernel(object):
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
                 if particles.state == ErrorCode.Repeat:
-                    particles.reset_state()
+                    particles.state = ErrorCode.Evaluate
                 elif particles.state in recovery_map:
                     recovery_kernel = recovery_map[particles.state]
                     particles.state = ErrorCode.Success
                     recovery_kernel(particles, self.fieldset, particles.time)
-                    if (particles.isComputed()):
-                        particles.reset_state()
+                    if particles.state == ErrorCode.Success:
+                        particles.state = ErrorCode.Evaluate
                 else:
                     logger.warning_once('Deleting particle because of bug in #749 and #737')
                     particles.delete()
@@ -407,7 +405,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = (pset.particle_data['state'] not in [ErrorCode.Success, ErrorCode.Evaluate])
+            error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

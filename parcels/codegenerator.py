@@ -998,7 +998,7 @@ class LoopGenerator(object):
                                c.Statement("break")])
                       )]
 
-        time_loop = c.While("(particles[p].state == EVALUATE || particles->state[p] == REPEAT) || is_zero_dbl(particles->dt[p])", c.Block(body))
+        time_loop = c.While("(particles->state[p] == EVALUATE || particles->state[p] == REPEAT) || is_zero_dbl(particles->dt[p])", c.Block(body))
         part_loop = c.For("p = 0", "p < num_particles", "++p",
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),

@@ -201,15 +201,6 @@ class ScipyParticle(_Particle):
     def delete(self):
         self.state = ErrorCode.Delete
 
-    def succeeded(self):
-        self.state = ErrorCode.Success
-
-    def isComputed(self):
-        return self.state == ErrorCode.Success
-
-    def reset_state(self):
-        self.state = ErrorCode.Evaluate
-
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
         cls.lon.dtype = dtype
