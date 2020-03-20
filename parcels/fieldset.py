@@ -14,6 +14,7 @@ from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
+import functools
 try:
     from mpi4py import MPI
 except:
@@ -256,6 +257,9 @@ class FieldSet(object):
         if timestamps is not None and 'time' in dimensions:
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
             timestamps = None
+        field_chunksize = None
+        if 'field_chunksize' in kwargs.keys():
+            field_chunksize = kwargs.pop('field_chunksize')
 
         fields = {}
         if 'creation_log' not in kwargs.keys():
@@ -274,6 +278,7 @@ class FieldSet(object):
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
+            field_chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize
 
             grid = None
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
@@ -295,10 +300,19 @@ class FieldSet(object):
                         grid = fields[procvar].grid
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
-            fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
-                                            allow_time_extrapolation=allow_time_extrapolation,
-                                            time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, **kwargs)
+            #if 'field_chunksize' not in kwargs.keys():
+            if field_chunksize is None:
+                fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
+                                                allow_time_extrapolation=allow_time_extrapolation,
+                                                time_periodic=time_periodic, deferred_load=deferred_load,
+                                                fieldtype=fieldtype, **kwargs)
+            else:
+                fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
+                                                allow_time_extrapolation=allow_time_extrapolation,
+                                                time_periodic=time_periodic, deferred_load=deferred_load,
+                                                fieldtype=fieldtype, field_chunksize = field_chunksize, **kwargs)
+
+
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
