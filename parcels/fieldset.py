@@ -14,7 +14,6 @@ from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
-import functools
 try:
     from mpi4py import MPI
 except:
@@ -302,7 +301,6 @@ class FieldSet(object):
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
                                             fieldtype=fieldtype, field_chunksize=field_chunksize, **kwargs)
-
 
         u = fields.pop('U', None)
         v = fields.pop('V', None)
