@@ -11,7 +11,6 @@ import cftime
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-@pytest.fixture
 def fieldset(xdim=40, ydim=100):
     U = np.zeros((ydim, xdim), dtype=np.float32)
     V = np.zeros((ydim, xdim), dtype=np.float32)
@@ -21,6 +20,11 @@ def fieldset(xdim=40, ydim=100):
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
     dimensions = {'lat': lat, 'lon': lon, 'depth': depth}
     return FieldSet.from_data(data, dimensions)
+
+
+@pytest.fixture(name="fieldset")
+def fieldset_ficture(xdim=40, ydim=100):
+    return fieldset(xdim=xdim, ydim=ydim)
 
 
 def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):

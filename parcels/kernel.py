@@ -5,12 +5,10 @@ import random  # noqa
 import re
 import time
 from ast import FunctionDef
-from ast import Module
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
-from ctypes import c_float
 from ctypes import c_int
 from hashlib import md5
 from os import path
@@ -31,6 +29,7 @@ from parcels.compiler import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
+from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -112,7 +111,8 @@ class Kernel(object):
             finally:
                 del stack  # Remove cyclic references
             # Compile and generate Python function from AST
-            py_mod = Module(body=[self.py_ast])
+            py_mod = parse("")
+            py_mod.body = [self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
         else:
@@ -231,6 +231,7 @@ class Kernel(object):
             else:
                 for block_id in range(len(f.data_chunks)):
                     f.data_chunks[block_id] = None
+                    f.c_data_chunks[block_id] = None
 
         for g in pset.fieldset.gridset.grids:
             g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
@@ -245,10 +246,10 @@ class Kernel(object):
                 g.lat = g.lat.copy()
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        fargs += [c_float(f) for f in self.const_args.values()]
+        fargs += [c_double(f) for f in self.const_args.values()]
         particle_data = byref(pset.ctypes_struct)
         return self._function(c_int(len(pset)), particle_data,
-                              c_double(endtime), c_float(dt), *fargs)
+                              c_double(endtime), c_double(dt), *fargs)
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -269,54 +270,86 @@ class Kernel(object):
 
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - particles.time)
-            if (sign_end_part != sign_dt) and (dt != 0):
+
+            dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+
+            # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
+            # as they fulfil the condition here on entering at the final calculation here. ==== #
+            if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
+                if abs(particles.time) >= abs(endtime):
+                    particles.state = ErrorCode.Success
                 continue
 
-            # Compute min/max dt for first timestep
-            dt_pos = min(abs(particles.dt),
-                         abs(endtime - particles.time))
-            while dt_pos > 1e-6 or dt == 0:
+            while particles.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
+
                 for var in pset.ptype.variables:
                     p_var_back[var.name] = getattr(particles, var.name)
                 try:
                     pdt_prekernels = sign_dt * dt_pos
                     particles.dt = pdt_prekernels
+                    state_prev = particles.state
                     res = self.pyfunc(particles, pset.fieldset, particles.time)
-                    if (res is None or res == ErrorCode.Success) and not np.isclose(particles.dt, pdt_prekernels):
+                    if res is None:
+                        res = ErrorCode.Success
+
+                    if res is ErrorCode.Success and particles.state != state_prev:
+                        res = particles.state
+
+                    if res == ErrorCode.Success and not np.isclose(particles.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
-                except FieldOutOfBoundError as fse:
+
+                except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
-                    particles.exception = fse
+                    particles.exception = fse_xy
                 except FieldOutOfBoundSurfaceError as fse_z:
                     res = ErrorCode.ErrorThroughSurface
                     particles.exception = fse_z
+                except TimeExtrapolationError as fse_t:
+                    res = ErrorCode.ErrorTimeExtrapolation
+                    particles.exception = fse_t
+
                 except Exception as e:
                     res = ErrorCode.Error
                     particles.exception = e
 
-                # Update particle state for explicit returns
-                if res is not None:
-                    particles.state = res
-
                 # Handle particle time and time loop
-                if res is None or res == ErrorCode.Success:
+                if res in [ErrorCode.Success, ErrorCode.Delete]:
                     # Update time and repeat
                     particles.time += particles.dt
                     particles.update_next_dt()
                     dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
-                    if dt == 0:
+
+                    sign_end_part = np.sign(endtime - particles.time)
+                    if res != ErrorCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                        res = ErrorCode.Evaluate
+                    if sign_end_part != sign_dt:
+                        dt_pos = 0
+
+                    particles.state = res
+                    if np.isclose(dt, 0):
                         break
-                    continue
                 else:
+                    particles.state = res
                     # Try again without time update
                     for var in pset.ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(particles, var.name, p_var_back[var.name])
                     dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+
+                    sign_end_part = np.sign(endtime - particles.time)
+                    if sign_end_part != sign_dt:
+                        dt_pos = 0
                     break
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
+        # particles = pset.data_accessor()
+        # for p in range(pset.size):
+        #     particles.set_index(p)
+        #     particles.reset_state()
+
+        if abs(dt) < 1e-6:
+            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
@@ -348,20 +381,19 @@ class Kernel(object):
         particles = pset.data_accessor()
 
         # Identify particles that threw errors
-        repeat_particles = pset.particle_data['state'] == ErrorCode.Repeat
-        error_particles = ((pset.particle_data['state'] != ErrorCode.Success)
-                           & ~repeat_particles)
-        while np.any(error_particles) or np.any(repeat_particles):
-            # mark repeat particles as success
-            pset.particle_data['state'][repeat_particles] = ErrorCode.Success
-
+        error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
+        while np.any(error_particles):
             # Apply recovery kernel
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
-                if particles.state in recovery_map:
+                if particles.state == ErrorCode.Repeat:
+                    particles.reset_state()
+                elif particles.state in recovery_map:
                     recovery_kernel = recovery_map[particles.state]
                     particles.state = ErrorCode.Success
                     recovery_kernel(particles, self.fieldset, particles.time)
+                    if (particles.isComputed()):
+                        particles.reset_state()
                 else:
                     logger.warning_once('Deleting particle because of bug in #749 and #737')
                     particles.delete()
@@ -375,9 +407,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            repeat_particles = pset.particle_data['state'] == ErrorCode.Repeat
-            error_particles = ((pset.particle_data['state'] != ErrorCode.Success)
-                               & ~repeat_particles)
+            error_particles = (pset.particle_data['state'] not in [ErrorCode.Success, ErrorCode.Evaluate])
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

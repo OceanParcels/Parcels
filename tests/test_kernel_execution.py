@@ -14,7 +14,6 @@ def DoNothing(particle, fieldset, time):
     return ErrorCode.Success
 
 
-@pytest.fixture
 def fieldset(xdim=20, ydim=20):
     """ Standard unit mesh fieldset """
     lon = np.linspace(0., 1., xdim, dtype=np.float32)
@@ -23,6 +22,11 @@ def fieldset(xdim=20, ydim=20):
     data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32)}
     dimensions = {'lat': lat, 'lon': lon}
     return FieldSet.from_data(data, dimensions, mesh='flat')
+
+
+@pytest.fixture(name="fieldset")
+def fieldset_fixture(xdim=20, ydim=20):
+    return fieldset(xdim=xdim, ydim=ydim)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

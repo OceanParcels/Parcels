@@ -172,8 +172,8 @@ class ScipyParticle(_Particle):
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
-    dt = Variable('dt', dtype=np.float32, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
+    dt = Variable('dt', dtype=np.float64, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
@@ -200,6 +200,15 @@ class ScipyParticle(_Particle):
 
     def delete(self):
         self.state = ErrorCode.Delete
+
+    def succeeded(self):
+        self.state = ErrorCode.Success
+
+    def isComputed(self):
+        return self.state == ErrorCode.Success
+
+    def reset_state(self):
+        self.state = ErrorCode.Evaluate
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):

@@ -7,13 +7,17 @@ from operator import attrgetter
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
-@pytest.fixture
 def fieldset(xdim=100, ydim=100):
     data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
             'V': np.zeros((ydim, xdim), dtype=np.float32)}
     dimensions = {'lon': np.linspace(0, 1, xdim, dtype=np.float32),
                   'lat': np.linspace(0, 1, ydim, dtype=np.float32)}
     return FieldSet.from_data(data, dimensions, mesh='flat')
+
+
+@pytest.fixture(name="fieldset")
+def fieldset_fixture(xdim=100, ydim=100):
+    return fieldset(xdim=xdim, ydim=ydim)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

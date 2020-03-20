@@ -17,19 +17,31 @@ gamma = 1/(86400. * 2.89)
 gamma_g = 1/(86400. * 28.9)
 
 
-@pytest.fixture
 def lon(xdim=200):
     return np.linspace(-170, 170, xdim, dtype=np.float32)
 
 
-@pytest.fixture
+@pytest.fixture(name="lon")
+def lon_fixture(xdim=200):
+    return lon(xdim=xdim)
+
+
 def lat(ydim=100):
     return np.linspace(-80, 80, ydim, dtype=np.float32)
 
 
-@pytest.fixture
+@pytest.fixture(name="lat")
+def lat_fixture(ydim=100):
+    return lat(ydim=ydim)
+
+
 def depth(zdim=2):
     return np.linspace(0, 30, zdim, dtype=np.float32)
+
+
+@pytest.fixture(name="depth")
+def depth_fixture(zdim=2):
+    return depth(zdim=zdim)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -122,6 +134,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         particle.depth = 0
         AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
+        particle.succeeded()
 
     recovery_dict = {ErrorCode.ErrorOutOfBounds: DeleteParticle}
     if wErrorThroughSurface:
