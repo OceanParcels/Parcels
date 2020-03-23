@@ -273,6 +273,7 @@ class Kernel(object):
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
 
+            # Compute min/max dt for first timestep
             dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
@@ -352,8 +353,7 @@ class Kernel(object):
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
-            indices = [i for i, p in enumerate(pset.particles)
-                       if p.state in [ErrorCode.Delete]]
+            indices = [i for i, p in enumerate(pset.particles) if p.state in [ErrorCode.Delete]]
             if len(indices) > 0 and output_file is not None:
                 output_file.write(pset[indices], endtime, deleted_only=True)
             pset.remove(indices)

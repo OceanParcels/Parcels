@@ -10,6 +10,7 @@ from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
+indicators_64bit = [np.float64, np.int64, c_void_p]
 
 class Variable(object):
     """Descriptor class that delegates data access to particle data
@@ -47,8 +48,7 @@ class Variable(object):
 
     def is64bit(self):
         """Check whether variable is 64-bit"""
-        return True if self.dtype == np.float64 or self.dtype == np.int64 \
-                       or self.dtype == c_void_p else False
+        return True if self.dtype in indicators_64bit else False
 
 
 class ParticleType(object):
