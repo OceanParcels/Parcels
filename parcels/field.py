@@ -1738,7 +1738,7 @@ class NetcdfFileBuffer(object):
                     max_overlay_dims = n_overlay_dims
             self.name = max_field
             for dname in max_dim_names:
-                init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname])
+                init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname].size)
         finally:
             self.dataset.close()
         self.dataset = None
