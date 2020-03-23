@@ -16,7 +16,7 @@ from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
-def test_nemo_3D(chunk_mode):
+def fieldset_from_nemo_3D(chunk_mode):
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
     vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
@@ -45,7 +45,7 @@ def test_nemo_3D(chunk_mode):
     return fieldset
 
 
-def test_globcurrent(chunk_mode):
+def fieldset_from_globcurrent(chunk_mode):
     filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
                              '20020101000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
@@ -87,8 +87,8 @@ def compute_globcurrent_particle_advection(field_set, mode, lonp, latp):
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
-def run_nemo_3D_test(mode, chunk_mode):
-    field_set = test_nemo_3D(chunk_mode)
+def test_nemo_3D(mode, chunk_mode):
+    field_set = fieldset_from_nemo_3D(chunk_mode)
     # Now run particles as normal
     npart = 20
     lonp = 30 * np.ones(npart)
@@ -108,8 +108,8 @@ def run_nemo_3D_test(mode, chunk_mode):
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
-def run_globcurrent_test(mode, chunk_mode):
-    field_set = test_globcurrent(chunk_mode)
+def test_globcurrent(mode, chunk_mode):
+    field_set = fieldset_from_globcurrent(chunk_mode)
     lonp = [25]
     latp = [-35]
     pset = compute_globcurrent_particle_advection(field_set, mode, lonp, latp)
