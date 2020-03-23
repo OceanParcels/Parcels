@@ -90,6 +90,9 @@ def fset_nemo_3D_samegrid():
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    #filenames = {'U': ufiles,
+    #             'V': vfiles,
+    #             'W': wfiles}
 
     variables = {'U': 'uo',
                  'V': 'vo',
@@ -97,8 +100,11 @@ def fset_nemo_3D_samegrid():
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    #dimensions = {'U': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthu', 'time': 'time_counter'},
+    #              'V': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthv', 'time': 'time_counter'},
+    #              'W': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthw', 'time': 'time_counter'}}
 
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize='auto')
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
 
     return fieldset
 
@@ -113,6 +119,9 @@ def fset_nemo_3D_samegrid_auto_chunking():
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    #filenames = {'U': ufiles,
+    #             'V': vfiles,
+    #             'W': wfiles}
 
     variables = {'U': 'uo',
                  'V': 'vo',
@@ -120,6 +129,9 @@ def fset_nemo_3D_samegrid_auto_chunking():
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    #dimensions = {'U': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthu', 'time': 'time_counter'},
+    #              'V': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthv', 'time': 'time_counter'},
+    #              'W': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthw', 'time': 'time_counter'}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize='auto')
 
@@ -136,6 +148,9 @@ def fset_nemo_3D_samegrid_no_chunking():
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    #filenames = {'U': ufiles,
+    #             'V': vfiles,
+    #             'W': wfiles}
 
     variables = {'U': 'uo',
                  'V': 'vo',
@@ -143,12 +158,11 @@ def fset_nemo_3D_samegrid_no_chunking():
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    #dimensions = {'U': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthu', 'time': 'time_counter'},
+    #              'V': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthv', 'time': 'time_counter'},
+    #              'W': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthw', 'time': 'time_counter'}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
-    # Nemo sample file dimensions: depthu=75, y=201, x=151
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
-    assert (fieldset.U.grid.load_chunk.count() == 0)
 
     return fieldset
 
@@ -163,6 +177,9 @@ def fset_nemo_3D_samegrid_specific_chunking():
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    #filenames = {'U': ufiles,
+    #             'V': vfiles,
+    #             'W': wfiles}
 
     variables = {'U': 'uo',
                  'V': 'vo',
@@ -170,11 +187,14 @@ def fset_nemo_3D_samegrid_specific_chunking():
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    #dimensions = {'U': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthu', 'time': 'time_counter'},
+    #              'V': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthv', 'time': 'time_counter'},
+    #              'W': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthw', 'time': 'time_counter'}}
     chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
            'V': {'depthv': 75, 'y': 16, 'x': 16},
            'W': {'depthw': 75, 'y': 16, 'x': 16}}
 
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
 
     return fieldset
 
@@ -196,48 +216,48 @@ def compute_particle_advection(field_set, mode, lonp, latp):
     return pset
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear_normal(mode):
-    field_set = fset_nemo_3D_samegrid()
-    assert field_set.U.dataFiles is not field_set.W.dataFiles
-    # Now run particles as normal
-    npart = 20
-    lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 88, npart)]
-    pset = compute_particle_advection(field_set, mode, lonp, latp)
-    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
+#@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
+#def test_nemo_curvilinear_normal(mode):
+#    field_set = fset_nemo_3D_samegrid()
+#    assert field_set.U.dataFiles is not field_set.W.dataFiles
+#    # Now run particles as normal
+#    npart = 20
+#    lonp = 30 * np.ones(npart)
+#    latp = [i for i in np.linspace(-70, 88, npart)]
+#    pset = compute_particle_advection(field_set, mode, lonp, latp)
+#    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear_auto_chunking(mode):
-    field_set = fset_nemo_3D_samegrid_auto_chunking()
-    assert field_set.U.dataFiles is not field_set.W.dataFiles
-    # Now run particles as normal
-    npart = 20
-    lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 88, npart)]
-    pset = compute_particle_advection(field_set, mode, lonp, latp)
-    # Nemo sample file dimensions: depthu=75, y=201, x=151
-    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    assert (len(field_set.U.grid.load_chunk) != 0)
-    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
+#@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
+#def test_nemo_curvilinear_auto_chunking(mode):
+#    field_set = fset_nemo_3D_samegrid_auto_chunking()
+#    assert field_set.U.dataFiles is not field_set.W.dataFiles
+#    # Now run particles as normal
+#    npart = 20
+#    lonp = 30 * np.ones(npart)
+#    latp = [i for i in np.linspace(-70, 88, npart)]
+#    pset = compute_particle_advection(field_set, mode, lonp, latp)
+#    # Nemo sample file dimensions: depthu=75, y=201, x=151
+#    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+#    assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
+#    assert (len(field_set.U.grid.load_chunk) != 0)
+#    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear_no_chunking(mode):
-    field_set = fset_nemo_3D_samegrid_no_chunking()
-    assert field_set.U.dataFiles is not field_set.W.dataFiles
-    # Now run particles as normal
-    npart = 20
-    lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 88, npart)]
-    pset = compute_particle_advection(field_set, mode, lonp, latp)
-    # Nemo sample file dimensions: depthu=75, y=201, x=151
-    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    assert (len(field_set.U.grid.load_chunk) == 1)
-    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
+#@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
+#def test_nemo_curvilinear_no_chunking(mode):
+#    field_set = fset_nemo_3D_samegrid_no_chunking()
+#    assert field_set.U.dataFiles is not field_set.W.dataFiles
+#    # Now run particles as normal
+#    npart = 20
+#    lonp = 30 * np.ones(npart)
+#    latp = [i for i in np.linspace(-70, 88, npart)]
+#    pset = compute_particle_advection(field_set, mode, lonp, latp)
+#    # Nemo sample file dimensions: depthu=75, y=201, x=151
+#    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+#    assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
+#    assert (len(field_set.U.grid.load_chunk) == 1)
+#    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
