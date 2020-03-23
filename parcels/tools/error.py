@@ -8,13 +8,14 @@ __all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtra
 
 class ErrorCode(object):
     Success = 0
-    Repeat = 1
-    Delete = 2
-    Error = 3
-    ErrorInterpolation = 31
-    ErrorOutOfBounds = 4
-    ErrorThroughSurface = 41
-    ErrorTimeExtrapolation = 5
+    Evaluate = 1
+    Repeat = 2
+    Delete = 3
+    Error = 4
+    ErrorInterpolation = 41
+    ErrorOutOfBounds = 5
+    ErrorThroughSurface = 51
+    ErrorTimeExtrapolation = 6
 
 
 class FieldSamplingError(RuntimeError):
