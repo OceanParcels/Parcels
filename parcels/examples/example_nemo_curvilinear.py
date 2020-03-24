@@ -80,7 +80,7 @@ def test_nemo_curvilinear(mode, tmpdir):
     run_nemo_curvilinear(mode, outfile)
 
 
-def fset_nemo_3D_samegrid():
+def test_nemo_3D_samegrid():
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
     vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
@@ -90,9 +90,6 @@ def fset_nemo_3D_samegrid():
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
-    #filenames = {'U': ufiles,
-    #             'V': vfiles,
-    #             'W': wfiles}
 
     variables = {'U': 'uo',
                  'V': 'vo',
@@ -100,13 +97,10 @@ def fset_nemo_3D_samegrid():
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    #dimensions = {'U': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthu', 'time': 'time_counter'},
-    #              'V': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthv', 'time': 'time_counter'},
-    #              'W': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthw', 'time': 'time_counter'}}
 
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
 
-    return fieldset
+    assert fieldset.U.dataFiles is not fieldset.W.dataFiles
 
 
 def fset_nemo_3D_samegrid_auto_chunking():
@@ -214,18 +208,6 @@ def compute_particle_advection(field_set, mode, lonp, latp):
     pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
                  output_file=pfile, recovery={ErrorCode.ErrorOutOfBounds: OutOfBounds_reinitialisation})
     return pset
-
-
-#@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-#def test_nemo_curvilinear_normal(mode):
-#    field_set = fset_nemo_3D_samegrid()
-#    assert field_set.U.dataFiles is not field_set.W.dataFiles
-#    # Now run particles as normal
-#    npart = 20
-#    lonp = 30 * np.ones(npart)
-#    latp = [i for i in np.linspace(-70, 88, npart)]
-#    pset = compute_particle_advection(field_set, mode, lonp, latp)
-#    #assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
 
 
 #@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
