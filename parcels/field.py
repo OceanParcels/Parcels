@@ -1756,10 +1756,10 @@ class NetcdfFileBuffer(object):
         # ==== self.dataset not available ==== #
         return init_chunk_dict
 
-    # def _is_dimension_available(self, dimension_name):
-    #     if self.dimensions is None or self.dataset is None:
-    #         return False
-    #     return (dimension_name in self.dimensions and self.dimensions[dimension_name] in self.dataset.dims)
+    def _is_dimension_available(self, dimension_name):
+        if self.dimensions is None or self.dataset is None:
+            return False
+        return (dimension_name in self.dimensions and self.dimensions[dimension_name] in self.dataset.dims)
 
     def _is_dimension_in_dataset(self, dimension_name):
         k, dname, dvalue = (-1, '', 0)
@@ -1809,7 +1809,7 @@ class NetcdfFileBuffer(object):
                 self.chunk_mapping[dim_index] = lonvalue
                 dim_index += 1
             elif len(self.field_chunksize) >= 3:
-                if depthi >= 0:
+                if depthi >= 0 and self._is_dimension_available('depth'):
                     # self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['depth']]
                     self.chunk_mapping[dim_index] = depthvalue
                     dim_index += 1
@@ -1831,11 +1831,11 @@ class NetcdfFileBuffer(object):
         elif len(chunk_map) == 3:
             chunk_dim_index = 0
             # if self._is_dimension_available('depth') or (depthi >= 0 and depthvalue > 1):
-            if depthi >= 0 and depthvalue > 1:
+            if depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
                 self.field_chunksize[self.dimensions['depth']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1
             # elif self._is_dimension_available('time') or (timei >= 0 and timevalue > 1):
-            elif timei >= 0 and timevalue > 1:
+            elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
                 self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lat']] = chunk_map[chunk_dim_index]
@@ -2001,8 +2001,8 @@ class NetcdfFileBuffer(object):
                         chunkIndex = 0
                         timei, _, timevalue = self._is_dimension_in_dataset('time')
                         depthi, _, depthvalue = self._is_dimension_in_dataset('depth')
-                        has_time = timei >= 0 and timevalue > 1
-                        has_depth = depthi >= 0 and depthvalue > 1
+                        has_time = timei >= 0 and timevalue > 1 and self._is_dimension_available('time')
+                        has_depth = depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth')
                         startblock = 0
                         # startblock += 1 if has_time and not self._is_dimension_available('time') else 0
                         startblock += 1 if has_time else 0
