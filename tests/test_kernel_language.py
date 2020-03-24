@@ -49,7 +49,7 @@ def test_expression_int(fieldset, mode, name, expr, result, npart=10):
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
-    assert(np.array([result == particle.p for particle in pset]).all())
+    assert(np.all(result == pset.p))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -68,7 +68,7 @@ def test_expression_float(fieldset, mode, name, expr, result, npart=10):
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
-    assert(np.array([result == particle.p for particle in pset]).all())
+    assert(np.all(result == pset.p))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -92,9 +92,9 @@ def test_expression_bool(fieldset, mode, name, expr, result, npart=10):
                        lat=np.zeros(npart) + 0.5)
     pset.execute(expr_kernel('Test%s' % name, pset, expr), endtime=1., dt=1.)
     if mode == 'jit':
-        assert(np.array([result == (particle.p == 1) for particle in pset]).all())
+        assert(np.all(result == (pset.p == 1)))
     else:
-        assert(np.array([result == particle.p for particle in pset]).all())
+        assert(np.all(result == pset.p))
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -112,7 +112,7 @@ def test_while_if_break(fieldset, mode):
         if particle.p > 5:
             particle.p *= 2.
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), 20., rtol=1e-12)
+    assert np.allclose(pset.p, 20., rtol=1e-12)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -130,7 +130,7 @@ def test_nested_if(fieldset, mode):
                 particle.p1 = -1
 
     pset.execute(kernel, endtime=10, dt=1.)
-    assert np.allclose([pset[0].p0, pset[0].p1], [0, 1])
+    assert np.allclose([pset.p0[0], pset.p1[0]], [0, 1])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -203,7 +203,7 @@ def test_if_withfield(fieldset, mode):
             particle.p += 1
 
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), 7., rtol=1e-12)
+    assert np.allclose(pset.p, 7., rtol=1e-12)
 
 
 @pytest.mark.parametrize(
@@ -228,7 +228,7 @@ def test_print(fieldset, mode, capfd):
     out, err = capfd.readouterr()
     lst = out.split(' ')
     tol = 1e-8
-    assert abs(float(lst[0]) - pset[0].id) < tol and abs(float(lst[1]) - pset[0].p) < tol and abs(float(lst[2]) - 5) < tol
+    assert abs(float(lst[0]) - pset.id[0]) < tol and abs(float(lst[1]) - pset.p[0]) < tol and abs(float(lst[2]) - 5) < tol
 
     def kernel2(particle, fieldset, time):
         tmp = 3
@@ -265,7 +265,7 @@ def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     kernel = expr_kernel('TestRandom_%s' % rngfunc, pset,
                          'random.%s(%s)' % (rngfunc, ', '.join([str(a) for a in rngargs])))
     pset.execute(kernel, endtime=1., dt=1.)
-    assert np.allclose(np.array([p.p for p in pset]), series, atol=1e-9)
+    assert np.allclose(pset.p, series, atol=1e-9)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -304,7 +304,7 @@ def test_c_kernel(fieldset, mode, c_inc):
     else:
         kernel = pset.Kernel(ckernel, c_include=c_include)
     pset.execute(kernel, endtime=3., dt=3.)
-    assert np.allclose(pset[0].lon, 0.81578948)
+    assert np.allclose(pset.lon[0], 0.81578948)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -319,7 +319,7 @@ def test_dt_modif_by_kernel(fieldset, mode):
 
     endtime = 4
     pset.execute(modif_dt, endtime=endtime, dt=1.)
-    assert np.isclose(pset[0].age, endtime)
+    assert np.isclose(pset.age[0], endtime)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

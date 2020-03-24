@@ -140,8 +140,8 @@ def test_globcurrent_netcdf_timestamps(dt):
     psetT = ParticleSet(fieldsetTimestamps, pclass=JITParticle, lon=lonstart, lat=latstart)
     psetT.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
-    assert np.allclose(psetN[0].lon, psetT[0].lon)
-    assert np.allclose(psetN[0].lat, psetT[0].lat)
+    assert np.allclose(psetN.lon[0], psetT.lon[0])
+    assert np.allclose(psetN.lat[0], psetT.lat[0])
 
 
 def test__particles_init_time():

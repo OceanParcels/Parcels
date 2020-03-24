@@ -61,7 +61,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
                          lon=np.zeros(npart) + 20.,
                          lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
-    assert (np.diff(np.array([p.lon for p in pset2D])) > 1.e-4).all()
+    assert (np.diff(pset2D.lon) > 1.e-4).all()
 
     dimensions['depth'] = depth
     fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical', transpose=True)
@@ -70,7 +70,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
                          lat=np.linspace(0, 80, npart),
                          depth=np.zeros(npart) + 10.)
     pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
-    assert (np.diff(np.array([p.lon for p in pset3D])) > 1.e-4).all()
+    assert (np.diff(pset3D.lon) > 1.e-4).all()
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -86,9 +86,9 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(-60, 60, npart),
                        lat=np.linspace(0, 30, npart))
-    delta_lat = np.diff(np.array([p.lat for p in pset]))
+    delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
-    assert np.allclose(np.diff(np.array([p.lat for p in pset])), delta_lat, rtol=1.e-4)
+    assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.e-4)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
@@ -110,7 +110,7 @@ def test_advection_3D(mode, npart=11):
                        depth=np.linspace(0, 1, npart))
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
-    assert np.allclose([p.depth*time for p in pset], [p.lon for p in pset], atol=1.e-1)
+    assert np.allclose(pset.depth*time, pset.lon, atol=1.e-1)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
@@ -134,7 +134,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         particle.depth = 0
         AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
-        particle.succeeded()
+        particle.set_state(ErrorCode.Success)
 
     recovery_dict = {ErrorCode.ErrorOutOfBounds: DeleteParticle}
     if wErrorThroughSurface:
@@ -144,8 +144,8 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
     pset.execute(AdvectionRK4_3D, runtime=10., dt=1, recovery=recovery_dict)
 
     if direction == 'up' and wErrorThroughSurface:
-        assert np.allclose(pset[0].lon, 0.6)
-        assert np.allclose(pset[0].depth, 0)
+        assert np.allclose(pset.lon[0], 0.6)
+        assert np.allclose(pset.depth[0], 0)
     else:
         assert len(pset) == 0
 
@@ -172,7 +172,7 @@ def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
-    assert abs(pset[0].lon - 0.15) < 0.1
+    assert abs(pset.lon[0] - 0.15) < 0.1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -183,7 +183,7 @@ def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
-    assert abs(pset[0].lat - 0.15) < 0.1
+    assert abs(pset.lat[0] - 0.15) < 0.1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -197,8 +197,8 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
-    assert abs(pset[0].lon - 0.05) < 0.1
-    assert abs(pset[0].lat - 0.15) < 0.1
+    assert abs(pset.lon[0] - 0.05) < 0.1
+    assert abs(pset.lat[0] - 0.15) < 0.1
 
 
 def truth_stationary(x_0, y_0, t):
@@ -237,8 +237,8 @@ def test_stationary_eddy(fieldset_stationary, mode, method, rtol, npart=1):
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, y, endtime)[0] for x, y, in zip(lon, lat)]
     exp_lat = [truth_stationary(x, y, endtime)[1] for x, y, in zip(lon, lat)]
-    assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
-    assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
+    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
+    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -265,9 +265,9 @@ def test_stationary_eddy_vertical(mode, npart=1):
     pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, z, endtime)[0] for x, z, in zip(lon, depth)]
     exp_depth = [truth_stationary(x, z, endtime)[1] for x, z, in zip(lon, depth)]
-    assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=1e-5)
-    assert np.allclose(np.array([p.lat for p in pset]), lat, rtol=1e-5)
-    assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
+    assert np.allclose(pset.lon, exp_lon, rtol=1e-5)
+    assert np.allclose(pset.lat, lat, rtol=1e-5)
+    assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
 
     data = {'U': fldzero, 'V': fld2, 'W': fld1}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
@@ -277,9 +277,9 @@ def test_stationary_eddy_vertical(mode, npart=1):
     pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
     exp_depth = [truth_stationary(z, y, endtime)[0] for z, y, in zip(depth, lat)]
     exp_lat = [truth_stationary(z, y, endtime)[1] for z, y, in zip(depth, lat)]
-    assert np.allclose(np.array([p.lon for p in pset]), lon, rtol=1e-5)
-    assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=1e-5)
-    assert np.allclose(np.array([p.depth for p in pset]), exp_depth, rtol=1e-5)
+    assert np.allclose(pset.lon, lon, rtol=1e-5)
+    assert np.allclose(pset.lat, exp_lat, rtol=1e-5)
+    assert np.allclose(pset.depth, exp_depth, rtol=1e-5)
 
 
 def truth_moving(x_0, y_0, t):
@@ -318,8 +318,8 @@ def test_moving_eddy(fieldset_moving, mode, method, rtol, npart=1):
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_moving(x, y, endtime)[0] for x, y, in zip(lon, lat)]
     exp_lat = [truth_moving(x, y, endtime)[1] for x, y, in zip(lon, lat)]
-    assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
-    assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
+    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
+    assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
 def truth_decaying(x_0, y_0, t):
@@ -362,5 +362,5 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, npart=1):
     pset.execute(kernel[method], dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_decaying(x, y, endtime)[0] for x, y, in zip(lon, lat)]
     exp_lat = [truth_decaying(x, y, endtime)[1] for x, y, in zip(lon, lat)]
-    assert np.allclose(np.array([p.lon for p in pset]), exp_lon, rtol=rtol)
-    assert np.allclose(np.array([p.lat for p in pset]), exp_lat, rtol=rtol)
+    assert np.allclose(pset.lon, exp_lon, rtol=rtol)
+    assert np.allclose(pset.lat, exp_lat, rtol=rtol)

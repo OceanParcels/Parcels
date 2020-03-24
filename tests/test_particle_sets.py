@@ -209,18 +209,14 @@ def test_pset_access(fieldset, mode, npart=100):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_custom_ptype(fieldset, mode, npart=100):
     class TestParticle(ptype[mode]):
-        user_vars = {'p': np.float32, 'n': np.int32}
-
-        def __init__(self, *args, **kwargs):
-            super(TestParticle, self).__init__(*args, **kwargs)
-            self.p = 0.33
-            self.n = 2
+        p = Variable('p', np.float32, initial=0.33)
+        n = Variable('n', np.int32, initial=2)
 
     pset = ParticleSet(fieldset, pclass=TestParticle,
                        lon=np.linspace(0, 1, npart),
                        lat=np.linspace(1, 0, npart))
-    assert(pset.size == 100)
-    assert np.allclose([p.p - 0.33 for p in pset], np.zeros(npart), rtol=1e-12)
+    assert(pset.size == npart)
+    assert np.allclose([p.p - 0.33 for p in pset], np.zeros(npart), atol=1e-5)
     assert np.allclose([p.n - 2 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
@@ -298,9 +294,9 @@ def test_pset_remove_index(fieldset, mode, npart=100):
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
-        p = pset.remove(-1)
-        assert(p.lon == ilon)
-        assert(p.lat == ilat)
+        assert(pset.lon[-1] == ilon)
+        assert(pset.lat[-1] == ilat)
+        pset.remove_indices(-1)
     assert(pset.size == 0)
 
 
@@ -311,9 +307,9 @@ def test_pset_remove_particle(fieldset, mode, npart=100):
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
-        p = pset.remove(pset[-1])
-        assert(p.lon == ilon)
-        assert(p.lat == ilat)
+        assert(pset.lon[-1] == ilon)
+        assert(pset.lat[-1] == ilat)
+        pset.remove_indices(pset[-1])
     assert(pset.size == 0)
 
 
@@ -355,7 +351,7 @@ def test_pset_multi_execute_delete(fieldset, mode, npart=10, n=5):
     k_add = pset.Kernel(AddLat)
     for _ in range(n):
         pset.execute(k_add, runtime=1., dt=1.0)
-        pset.remove(-1)
+        pset.remove_indices(-1)
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
 
 

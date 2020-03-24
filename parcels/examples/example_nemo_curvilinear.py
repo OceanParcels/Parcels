@@ -35,7 +35,7 @@ def run_nemo_curvilinear(mode, outfile):
     # Now run particles as normal
     npart = 20
     lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 88, npart)]
+    latp = np.linspace(-70, 88, npart)
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
@@ -46,7 +46,7 @@ def run_nemo_curvilinear(mode, outfile):
     kernels = pset.Kernel(AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
                  output_file=pfile)
-    assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
+    assert np.allclose(pset.lat - latp, 0, atol=2e-2)
 
 
 def make_plot(trajfile):

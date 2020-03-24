@@ -76,7 +76,7 @@ def test_rotation_example(mode, tmpdir):
     outfile = tmpdir.join("RadialParticle")
     pset = rotation_example(fieldset, outfile, mode=mode)
     assert(pset[0].lon == 30. and pset[0].lat == 30.)  # Particle at centre of Field remains stationary.
-    vals = true_values(pset[1].time)
+    vals = true_values(pset.time[1])
     assert(np.allclose(pset[1].lon, vals[0], 1e-5))    # Check advected values against calculated values.
     assert(np.allclose(pset[1].lat, vals[1], 1e-5))
 

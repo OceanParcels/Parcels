@@ -50,7 +50,7 @@ def test_variable_unsupported_dtypes(fieldset, mode, type):
     error_thrown = False
     try:
         ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
-    except RuntimeError:
+    except TypeError:
         error_thrown = True
     assert error_thrown
 
@@ -78,16 +78,11 @@ def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
         p_base = Variable('p_base', dtype=lonlat_type, initial=10.)
         p_relative = Variable('p_relative', dtype=lonlat_type,
                               initial=attrgetter('p_base'))
-        p_offset = Variable('p_offset', dtype=lonlat_type,
-                            initial=attrgetter('p_base'))
         p_lon = Variable('p_lon', dtype=lonlat_type,
                          initial=attrgetter('lon'))
         p_lat = Variable('p_lat', dtype=lonlat_type,
                          initial=attrgetter('lat'))
 
-        def __init__(self, *args, **kwargs):
-            super(TestParticle, self).__init__(*args, **kwargs)
-            self.p_offset += 2.
     lon = np.linspace(0, 1, npart, dtype=lonlat_type)
     lat = np.linspace(1, 0, npart, dtype=lonlat_type)
     pset = ParticleSet(fieldset, pclass=TestParticle, lon=lon, lat=lat, lonlatdepth_dtype=coord_type)
@@ -96,6 +91,5 @@ def test_variable_init_relative(fieldset, mode, coord_type, npart=10):
         p.p_base += 3.
     assert np.allclose([p.p_base for p in pset], 13., rtol=1e-12)
     assert np.allclose([p.p_relative for p in pset], 10., rtol=1e-12)
-    assert np.allclose([p.p_offset for p in pset], 12., rtol=1e-12)
     assert np.allclose([p.p_lon for p in pset], lon, rtol=1e-12)
     assert np.allclose([p.p_lat for p in pset], lat, rtol=1e-12)

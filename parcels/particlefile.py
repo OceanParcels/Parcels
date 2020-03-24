@@ -30,13 +30,14 @@ except:
 __all__ = ['ParticleFile']
 
 
-def _is_particle_started_yet(particle, time):
+def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
-    Particle will be written if:
-      * particle.time is equal to time argument of pfile.write()
-      * particle.time is before time (in case particle was deleted between previous export and current one)
+    Particle will be written if particle.time is between time-dt/2 and time+dt/2
     """
-    return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
+    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & (np.isfinite(pd['id']))
+            & (np.isfinite(pd['time'])))
 
 
 def _set_calendar(origin_calendar):
@@ -227,41 +228,41 @@ class ParticleFile(object):
 
         time = time.total_seconds() if isinstance(time, delta) else time
 
+        pd = pset.particle_data
+
         if self.lasttime_written != time and \
-           (self.write_ondelete is False or deleted_only is True):
-            if pset.size == 0:
+           (self.write_ondelete is False or deleted_only is not False):
+            if pd['id'].size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                if deleted_only:
-                    pset_towrite = pset
-                # == commented due to git rebase to master 27 02 2020 == #
-                # elif pset[0].dt > 0:
-                #     pset_towrite = [p for p in pset if time - p.dt/2 <= p.time < time + p.dt and np.isfinite(p.id)]
-                # else:
-                #     pset_towrite = [p for p in pset if time + p.dt < p.time <= time - p.dt/2 and np.isfinite(p.id)]
+                if deleted_only is not False:
+                    to_write = deleted_only
                 else:
-                    pset_towrite = [p for p in pset if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
-                if len(pset_towrite) > 0:
+                    to_write = _to_write_particles(pd, time)
+                if np.any(to_write) > 0:
                     for var in self.var_names:
-                        data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
-                    self.maxid_written = np.max([self.maxid_written, np.max(data_dict['id'])])
+                        data_dict[var] = pd[var][to_write]
+                    self.maxid_written = max(self.maxid_written, np.max(data_dict['id']))
 
-                pset_errs = [p for p in pset_towrite if p.state != ErrorCode.Delete and abs(time-p.time) > 1e-3]
-                for p in pset_errs:
+                pset_errs = (to_write & (pd['state'] != ErrorCode.Delete)
+                             & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
+                if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once(
-                        'time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
+                        'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
 
                 if time not in self.time_written:
                     self.time_written.append(time)
 
                 if len(self.var_names_once) > 0:
-                    first_write = [p for p in pset if (p.id not in self.written_once) and _is_particle_started_yet(p, time)]
-                    data_dict_once['id'] = np.array([p.id for p in first_write])
-                    for var in self.var_names_once:
-                        data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
-                    self.written_once += [p.id for p in first_write]
+                    first_write = (_to_write_particles(pd, time)
+                                   & np.isin(pd['id'], self.written_once, invert=True))
+                    if np.any(first_write):
+                        data_dict_once['id'] = pd['id'][first_write]
+                        for var in self.var_names_once:
+                            data_dict_once[var] = pd[var][first_write]
+                        self.written_once.extend(pd['id'][first_write])
 
-            if not deleted_only:
+            if deleted_only is False:
                 self.lasttime_written = time
 
         return data_dict, data_dict_once

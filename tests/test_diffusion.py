@@ -44,8 +44,8 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     expected_std_lon = np.sqrt(2*kh_zonal*mesh_conversion**2*runtime.total_seconds())
     expected_std_lat = np.sqrt(2*kh_meridional*mesh_conversion**2*runtime.total_seconds())
 
-    lats = np.array([p.lat for p in pset])
-    lons = np.array([p.lon for p in pset])
+    lats = pset.lat
+    lons = pset.lon
 
     tol = 200*mesh_conversion  # effectively 200 m errors
     assert np.allclose(np.std(lats), expected_std_lat, atol=tol)
@@ -79,8 +79,8 @@ def test_fieldKh_SpatiallyVaryingBrownianMotion(mesh, mode, xdim=200, ydim=100):
     pset.execute(pset.Kernel(SpatiallyVaryingBrownianMotion2D),
                  runtime=runtime, dt=delta(hours=1))
 
-    lats = np.array([p.lat for p in pset])
-    lons = np.array([p.lon for p in pset])
+    lats = pset.lat
+    lons = pset.lon
     tol = 2000*mesh_conversion  # effectively 2000 m errors (because of low numbers of particles)
     assert np.allclose(np.mean(lons), 0, atol=tol)
     assert np.allclose(np.mean(lats), 0, atol=tol)
@@ -106,7 +106,7 @@ def test_randomexponential(mode, lambd, npart=1000):
 
     pset.execute(vertical_randomexponential, runtime=1, dt=1)
 
-    depth = np.array([particle.depth for particle in pset.particles])
+    depth = pset.depth
     expected_mean = 1./fieldset.lambd
     assert np.allclose(np.mean(depth), expected_mean, rtol=.1)
 
