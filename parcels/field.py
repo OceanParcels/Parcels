@@ -1615,6 +1615,8 @@ class NetcdfFileBuffer(object):
             self.dataset = self.filename
             return self
 
+        # logger.info("field chunksize (before eval): {}".format(self.field_chunksize))
+
         if self.field_chunksize not in [False, None, 'auto'] and type(self.field_chunksize) not in [list, tuple, dict]:
             raise AttributeError("'field_chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
         if isinstance(self.field_chunksize, list):
@@ -1623,6 +1625,8 @@ class NetcdfFileBuffer(object):
         init_chunk_dict = None
         if self.field_chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
+        # logger.info("init chunk dict (after eval): {}".format(init_chunk_dict))
+        # logger.info("field chunksize (after eval): {}".format(self.field_chunksize))
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we would rather want to have it auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
@@ -1738,6 +1742,8 @@ class NetcdfFileBuffer(object):
                     max_overlay_dims = n_overlay_dims
             self.name = max_field
             for dname in max_dim_names:
+                # if dname in self._name_maps['time'] and self.dataset.dimensions[dname].size == 1:
+                #     continue
                 init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname].size)
         finally:
             self.dataset.close()
