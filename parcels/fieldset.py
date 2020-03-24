@@ -274,8 +274,11 @@ class FieldSet(object):
             dims = dimensions[var] if var in dimensions else dimensions
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
+            # this is okay iff the fieldtype needs to be the same for all sub-fields in a fieldset
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
-            field_chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize
+            # this is bad cause it replaces the original fieldtype with the first-instance field type
+            #field_chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize (see 'indices')
+            chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize
 
             grid = None
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
@@ -300,7 +303,7 @@ class FieldSet(object):
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, field_chunksize=field_chunksize, **kwargs)
+                                            fieldtype=fieldtype, field_chunksize=chunksize, **kwargs)
 
         u = fields.pop('U', None)
         v = fields.pop('V', None)
