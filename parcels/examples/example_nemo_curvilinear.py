@@ -6,6 +6,7 @@ from os import path
 
 import numpy as np
 import pytest
+import dask
 
 from parcels import AdvectionRK4
 from parcels import FieldSet
@@ -155,6 +156,7 @@ def compute_particle_advection(field_set, mode, lonp, latp):
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 def test_nemo_curvilinear_auto_chunking(mode):
+    dask.config.set({'array.chunk-size': '2MiB'})
     filenames, variables, dimensions = fieldset_nemo_setup()
     field_set = fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize='auto')
     assert field_set.U.dataFiles is not field_set.W.dataFiles
@@ -166,11 +168,12 @@ def test_nemo_curvilinear_auto_chunking(mode):
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    #assert (len(field_set.U.grid.load_chunk) != 0)
+    assert (len(field_set.U.grid.load_chunk) != 1)
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 def test_nemo_curvilinear_no_chunking(mode):
+    dask.config.set({'array.chunk-size': '128MiB'})
     filenames, variables, dimensions = fieldset_nemo_setup()
     field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
     assert field_set.U.dataFiles is not field_set.W.dataFiles
@@ -182,11 +185,12 @@ def test_nemo_curvilinear_no_chunking(mode):
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    #assert (len(field_set.U.grid.load_chunk) == 1)
+    assert (len(field_set.U.grid.load_chunk) == 1)
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 def test_nemo_curvilinear_specific_chunking(mode):
+    dask.config.set({'array.chunk-size': '128MiB'})
     filenames, variables, dimensions = fieldset_nemo_setup()
     chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
            'V': {'depthv': 75, 'y': 16, 'x': 16},
@@ -202,7 +206,7 @@ def test_nemo_curvilinear_specific_chunking(mode):
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    #assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
+    assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""Chose the mode using mode option""")

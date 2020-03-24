@@ -6,6 +6,7 @@ from os import path
 
 import numpy as np
 import pytest
+import  dask
 
 from parcels import AdvectionRK4
 from parcels import FieldSet
@@ -47,9 +48,9 @@ def fieldset_from_nemo_3D(chunk_mode):
 
 def fieldset_from_globcurrent(chunk_mode):
     filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                             '20020101000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+                             '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
-    dimensions = {'lat': 'lat', 'lon': 'lon'}
+    dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     chs = False
     if chunk_mode == 'auto':
         chs = 'auto'
@@ -94,6 +95,10 @@ def compute_globcurrent_particle_advection(field_set, mode, lonp, latp):
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
 def test_nemo_3D(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '2MiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_nemo_3D(chunk_mode)
     # Now run particles as normal
     npart = 20
@@ -103,28 +108,32 @@ def test_nemo_3D(mode, chunk_mode):
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    #if chunk_mode == False:
-    #    assert (len(field_set.U.grid.load_chunk) == 1)
-    #elif chunk_mode == 'auto':
-    #    assert (len(field_set.U.grid.load_chunk) != 1)
-    #elif chunk_mode == 'specific':
-    #    assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
+    if chunk_mode == False:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert (len(field_set.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
-def test_globcurrent(mode, chunk_mode):
+def test_globcurrent_2D(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '32KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_globcurrent(chunk_mode)
     lonp = [25]
     latp = [-35]
     pset = compute_globcurrent_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: time=UNLIMITED, lat=41, lon=81
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    #if chunk_mode == False:
-    #    assert (len(field_set.U.grid.load_chunk) == 1)
-    #elif chunk_mode == 'auto':
-    #    assert (len(field_set.U.grid.load_chunk) != 1)
-    #elif chunk_mode == 'specific':
-    #    assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(41.0/16.0)) * int(math.ceil(81.0/16.0))))
+    if chunk_mode == False:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert (len(field_set.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(41.0/16.0)) * int(math.ceil(81.0/16.0))))
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
