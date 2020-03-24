@@ -2016,6 +2016,9 @@ class NetcdfFileBuffer(object):
                             self.rechunk_callback_fields()
                             self.chunking_finalized = True
                     else:
+                        logger.info("Field: {}".format(self.name))
+                        logger.info("field_chunksize: {}".format(self.field_chunksize))
+                        logger.info("chunk mapping: {}".format(self.chunk_mapping))
                         # ==== I think this can be "pass" too ==== #
                         data = data.rechunk(self.chunk_mapping)
                         self.chunking_finalized = True
