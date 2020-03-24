@@ -171,8 +171,10 @@ class ScipyParticle(_Particle):
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
+    fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
+    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
 
@@ -183,9 +185,10 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
+        type(self).fileid.initial = -1
         type(self).dt.initial = None
+        type(self).next_dt.initial = np.nan
         super(ScipyParticle, self).__init__()
-        self._next_dt = None
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
@@ -198,14 +201,8 @@ class ScipyParticle(_Particle):
     def delete(self):
         self.state = ErrorCode.Delete
 
-    def succeeded(self):
-        self.state = ErrorCode.Success
-
-    def isComputed(self):
-        return self.state == ErrorCode.Success
-
-    def reset_state(self):
-        self.state = ErrorCode.Evaluate
+    def set_state(self, state):
+        self.state = state
 
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
@@ -237,10 +234,10 @@ class JITParticle(ScipyParticle):
 
     """
 
-    cxi = Variable('cxi', dtype=np.dtype(c_void_p), to_write=False)
-    cyi = Variable('cyi', dtype=np.dtype(c_void_p), to_write=False)
-    czi = Variable('czi', dtype=np.dtype(c_void_p), to_write=False)
-    cti = Variable('cti', dtype=np.dtype(c_void_p), to_write=False)
+    xi = Variable('xi', dtype=np.dtype(c_void_p), to_write=False)
+    yi = Variable('yi', dtype=np.dtype(c_void_p), to_write=False)
+    zi = Variable('zi', dtype=np.dtype(c_void_p), to_write=False)
+    ti = Variable('ti', dtype=np.dtype(c_void_p), to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)

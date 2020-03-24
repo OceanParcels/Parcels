@@ -106,7 +106,7 @@ def UNESCO_Density(particle, fieldset, time):
 
     S = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]  # salinity
     T = fieldset.cons_temperature[time, particle.depth, particle.lat, particle.lon]  # temperature
-    p = fieldset.cons_pressure[time, particle.depth, particle.lat, particle.lon]  # pressure
+    P = fieldset.cons_pressure[time, particle.depth, particle.lat, particle.lon]  # pressure
 
     rsmow = a0 + a1*T + a2*math.pow(T, 2) + a3*math.pow(T, 3) +     \
         a4*math.pow(T, 4) + a5*math.pow(T, 5)
@@ -173,6 +173,6 @@ def UNESCO_Density(particle, fieldset, time):
     Bw = k0 + k1*T + k2*math.pow(T, 2)
     B2 = Bw + (m0 + m1*T + m2*math.pow(T, 2))*S
 
-    K_STp = K_ST0 + A1*p + B2*math.pow(T, 2)
+    K_STp = K_ST0 + A1*P + B2*math.pow(T, 2)
 
-    particle.density = rho_st0/(1-(p/K_STp))
+    particle.density = rho_st0/(1-(P/K_STp))

@@ -125,7 +125,7 @@ def test_fieldset_polar_with_halo(fieldset_geometric_polar, mode):
     fieldset_geometric_polar.add_periodic_halo(zonal=5)
     pset = ParticleSet(fieldset_geometric_polar, pclass=pclass(mode), lon=0, lat=0)
     pset.execute(runtime=1)
-    assert(pset[0].lon == 0.)
+    assert(pset.lon[0] == 0.)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -145,7 +145,7 @@ def test_variable_init_from_field(mode, npart=9):
 
     pset = ParticleSet(fieldset, pclass=VarParticle,
                        lon=xv.flatten(), lat=yv.flatten(), time=0)
-    assert np.all([abs(p.a - fieldset.P[p.time, p.depth, p.lat, p.lon]) < 1e-6 for p in pset])
+    assert np.all([abs(pset.a[i] - fieldset.P[pset.time[i], pset.depth[i], pset.lat[i], pset.lon[i]]) < 1e-6 for i in range(pset.size)])
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -185,8 +185,8 @@ def test_nearest_neighbour_interpolation2D(mode, k_sample_p, npart=81):
     pset = ParticleSet(fieldset, pclass=pclass(mode),
                        lon=xv.flatten(), lat=yv.flatten())
     pset.execute(k_sample_p, endtime=1, dt=1)
-    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat > 0.5]), 1.0, rtol=1e-5)
-    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat < 0.5]), 0.0, rtol=1e-5)
+    assert np.allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5)], 1.0, rtol=1e-5)
+    assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5)], 0.0, rtol=1e-5)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -208,8 +208,8 @@ def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
     pset.add(pset2)
 
     pset.execute(k_sample_p, endtime=1, dt=1)
-    assert np.allclose(np.array([p.p for p in pset if p.lon < 0.5 and p.lat > 0.5 and p.depth > 0.5]), 1.0, rtol=1e-5)
-    assert np.allclose(np.array([p.p for p in pset if p.lon > 0.5 or p.lat < 0.5 and p.depth < 0.5]), 0.0, rtol=1e-5)
+    assert np.allclose(pset.p[(pset.lon < 0.5) & (pset.lat > 0.5) & (pset.depth > 0.5)], 1.0, rtol=1e-5)
+    assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -237,11 +237,11 @@ def test_fieldset_sample_particle(mode, k_sample_uv, lat_flip, npart=120):
     lat = np.linspace(-80, 80, npart)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
-    assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
+    assert np.allclose(pset.v, lon, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
-    assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
+    assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -253,11 +253,11 @@ def test_fieldset_sample_geographic(fieldset_geometric, mode, k_sample_uv, npart
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
-    assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
+    assert np.allclose(pset.v, lon, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
-    assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-6)
+    assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -269,13 +269,13 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, mode, k_samp
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
-    assert np.allclose(np.array([p.v for p in pset]), lon, rtol=1e-6)
+    assert np.allclose(pset.v, lon, rtol=1e-6)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     # Note: 1.e-2 is a very low rtol, so there seems to be a rather
     # large sampling error for the JIT correction.
-    assert np.allclose(np.array([p.u for p in pset]), lat, rtol=1e-2)
+    assert np.allclose(pset.u, lat, rtol=1e-2)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -299,10 +299,10 @@ def test_meridionalflow_spherical(mode, xdim=100, ydim=200):
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lonstart, lat=latstart)
     pset.execute(pset.Kernel(AdvectionRK4), runtime=runtime, dt=delta(hours=1))
 
-    assert(pset[0].lat - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
-    assert(pset[0].lon - lonstart[0] < 1e-4)
-    assert(pset[1].lat - (latstart[1] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
-    assert(pset[1].lon - lonstart[1] < 1e-4)
+    assert(pset.lat[0] - (latstart[0] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
+    assert(pset.lon[0] - lonstart[0] < 1e-4)
+    assert(pset.lat[1] - (latstart[1] + runtime.total_seconds() * maxvel / 1852 / 60) < 1e-4)
+    assert(pset.lon[1] - lonstart[1] < 1e-4)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -329,14 +329,14 @@ def test_zonalflow_spherical(mode, k_sample_p, xdim=100, ydim=200):
     pset.execute(pset.Kernel(AdvectionRK4) + k_sample_p,
                  runtime=runtime, dt=delta(hours=1))
 
-    assert(pset[0].lat - latstart[0] < 1e-4)
-    assert(pset[0].lon - (lonstart[0] + runtime.total_seconds() * maxvel / 1852 / 60
+    assert(pset.lat[0] - latstart[0] < 1e-4)
+    assert(pset.lon[0] - (lonstart[0] + runtime.total_seconds() * maxvel / 1852 / 60
                           / cos(latstart[0] * pi / 180)) < 1e-4)
-    assert(abs(pset[0].p - p_fld) < 1e-4)
-    assert(pset[1].lat - latstart[1] < 1e-4)
-    assert(pset[1].lon - (lonstart[1] + runtime.total_seconds() * maxvel / 1852 / 60
+    assert(abs(pset.p[0] - p_fld) < 1e-4)
+    assert(pset.lat[1] - latstart[1] < 1e-4)
+    assert(pset.lon[1] - (lonstart[1] + runtime.total_seconds() * maxvel / 1852 / 60
                           / cos(latstart[1] * pi / 180)) < 1e-4)
-    assert(abs(pset[1].p - p_fld) < 1e-4)
+    assert(abs(pset.p[1] - p_fld) < 1e-4)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -356,7 +356,7 @@ def test_random_field(mode, k_sample_p, xdim=20, ydim=20, npart=100):
     pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
                                   start_field=fieldset.start)
     pset.execute(k_sample_p, endtime=1., dt=1.0)
-    sampled = np.array([p.p for p in pset])
+    sampled = pset.p
     assert((sampled >= 0.).all())
 
 
@@ -376,27 +376,27 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=-1.0)
     if allow_time_extrapolation:
         pset.execute(k_sample_p, endtime=-0.9, dt=0.1)
-        assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
+        assert np.allclose(pset.p, 0.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, endtime=-0.9, dt=0.1)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)
-    assert np.allclose(np.array([p.p for p in pset]), 0.0, rtol=1e-5)
+    assert np.allclose(pset.p, 0.0, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=0.5)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)
-    assert np.allclose(np.array([p.p for p in pset]), 0.5, rtol=1e-5)
+    assert np.allclose(pset.p, 0.5, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=1.0)
     pset.execute(k_sample_p, runtime=0.1, dt=0.1)
-    assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+    assert np.allclose(pset.p, 1.0, rtol=1e-5)
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.5], lat=[0.5], time=2.0)
     if allow_time_extrapolation:
         pset.execute(k_sample_p, runtime=0.1, dt=0.1)
-        assert np.allclose(np.array([p.p for p in pset]), 1.0, rtol=1e-5)
+        assert np.allclose(pset.p, 1.0, rtol=1e-5)
     else:
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, runtime=0.1, dt=0.1)
@@ -423,7 +423,7 @@ def test_sampling_multiple_grid_sizes(mode):
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
 
     pset.execute(AdvectionRK4, runtime=10, dt=1)
-    assert np.isclose(pset[0].lon, 0.8)
+    assert np.isclose(pset.lon[0], 0.8)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
@@ -464,13 +464,13 @@ def test_summedfields(mode, with_W, k_sample_p, mesh):
         fieldsetS.add_field(W1+W2, name='W')
         pset = ParticleSet(fieldsetS, pclass=pclass(mode), lon=[0], lat=[0.9])
         pset.execute(AdvectionRK4_3D+pset.Kernel(k_sample_p), runtime=2, dt=1)
-        assert np.isclose(pset[0].depth, 6)
+        assert np.isclose(pset.depth[0], 6)
     else:
         pset = ParticleSet(fieldsetS, pclass=pclass(mode), lon=[0], lat=[0.9])
         pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=2, dt=1)
-    assert np.isclose(pset[0].p, 60)
-    assert np.isclose(pset[0].lon*conv, 0.6, atol=1e-3)
-    assert np.isclose(pset[0].lat, 0.9)
+    assert np.isclose(pset.p[0], 60)
+    assert np.isclose(pset.lon[0]*conv, 0.6, atol=1e-3)
+    assert np.isclose(pset.lat[0], 0.9)
     assert np.allclose(fieldsetS.UV[0][0, 0, 0, 0], [.2/conv, 0])
 
 
@@ -512,14 +512,14 @@ def test_nestedfields(mode, k_sample_p):
 
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
-    assert np.isclose(pset[0].lat, .5)
-    assert np.isclose(pset[0].p, .1)
+    assert np.isclose(pset.lat[0], .5)
+    assert np.isclose(pset.p[0], .1)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[1.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1)
-    assert np.isclose(pset[0].lat, 1.7)
-    assert np.isclose(pset[0].p, .2)
+    assert np.isclose(pset.lat[0], 1.7)
+    assert np.isclose(pset.p[0], .2)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0], lat=[2.3])
     pset.execute(AdvectionRK4+pset.Kernel(k_sample_p), runtime=1, dt=1, recovery={ErrorCode.ErrorOutOfBounds: Recover})
-    assert np.isclose(pset[0].lat, -1)
-    assert np.isclose(pset[0].p, 999)
+    assert np.isclose(pset.lat[0], -1)
+    assert np.isclose(pset.p[0], 999)
     assert np.allclose(fieldset.UV[0][0, 0, 0, 0], [.1, .2])

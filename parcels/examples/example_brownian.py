@@ -58,8 +58,8 @@ def test_brownian_example(mode, mesh, npart=3000):
     expected_std_x = np.sqrt(2*kh_zonal*runtime.total_seconds())
     expected_std_y = np.sqrt(2*kh_meridional*runtime.total_seconds())
 
-    ys = np.array([p.lat for p in pset]) * mesh_conversion(mesh)
-    xs = np.array([p.lon for p in pset]) * mesh_conversion(mesh)  # since near equator, we do not need to care about curvature effect
+    ys = pset.lat * mesh_conversion(mesh)
+    xs = pset.lon * mesh_conversion(mesh)  # since near equator, we do not need to care about curvature effect
 
     tol = 200  # 200m tolerance
     assert np.allclose(np.std(xs), expected_std_x, atol=tol)

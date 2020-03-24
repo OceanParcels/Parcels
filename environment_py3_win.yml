@@ -4,7 +4,7 @@ channels:
 dependencies:
   - python=3.6
   - cachetools>=1.0.0
-  - cgen
+  - cgen>=2020.1
   - coverage
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0

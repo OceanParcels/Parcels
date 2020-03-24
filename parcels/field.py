@@ -888,7 +888,7 @@ class Field(object):
 
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
+        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[p], &particles->yi[p], &particles->zi[p], &particles->ti[p], &%s, %s)" \
             % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
 
     def ccode_convert(self, _, z, y, x):
@@ -1447,12 +1447,12 @@ class VectorField(object):
         if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
+                   "&particles->xi[p], &particles->yi[p], &particles->zi[p], &particles->ti[p], &%s, &%s, &%s, %s)" \
                    % (varU, varV, varW, U.interp_method.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
+                   "&particles->xi[p], &particles->yi[p], &particles->zi[p], &particles->ti[p], &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
 
 
