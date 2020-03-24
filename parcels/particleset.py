@@ -51,6 +51,9 @@ class ParticleAccessor(object):
     def delete(self):
         self.state = ErrorCode.Delete
 
+    def set_state(self, state):
+        self.state = state
+
     def __getattr__(self, name):
         return self.pset.particle_data[name][self._index]
 

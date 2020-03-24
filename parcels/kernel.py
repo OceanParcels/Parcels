@@ -277,7 +277,7 @@ class Kernel(object):
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
                 if abs(particles.time) >= abs(endtime):
-                    particles.state = ErrorCode.Success
+                    particles.set_state(ErrorCode.Success)
                 continue
 
             while particles.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
@@ -325,11 +325,11 @@ class Kernel(object):
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
-                    particles.state = res
+                    particles.set_state(res)
                     if np.isclose(dt, 0):
                         break
                 else:
-                    particles.state = res
+                    particles.set_state(res)
                     # Try again without time update
                     for var in pset.ptype.variables:
                         if var.name not in ['dt', 'state']:
@@ -346,7 +346,7 @@ class Kernel(object):
         particles = pset.data_accessor()
         for p in range(pset.size):
             particles.set_index(p)
-            particles.state = ErrorCode.Evaluate
+            particles.set_state(ErrorCode.Evaluate)
 
         if abs(dt) < 1e-6:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -385,13 +385,13 @@ class Kernel(object):
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
                 if particles.state == ErrorCode.Repeat:
-                    particles.state = ErrorCode.Evaluate
+                    particles.set_state(ErrorCode.Evaluate)
                 elif particles.state in recovery_map:
                     recovery_kernel = recovery_map[particles.state]
-                    particles.state = ErrorCode.Success
+                    particles.set_state(ErrorCode.Success)
                     recovery_kernel(particles, self.fieldset, particles.time)
                     if particles.state == ErrorCode.Success:
-                        particles.state = ErrorCode.Evaluate
+                        particles.set_state(ErrorCode.Evaluate)
                 else:
                     logger.warning_once('Deleting particle because of bug in #749 and #737')
                     particles.delete()

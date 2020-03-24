@@ -201,6 +201,9 @@ class ScipyParticle(_Particle):
     def delete(self):
         self.state = ErrorCode.Delete
 
+    def set_state(self, state):
+        self.state = state
+
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
         cls.lon.dtype = dtype

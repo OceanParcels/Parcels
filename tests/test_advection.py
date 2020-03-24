@@ -134,7 +134,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         particle.depth = 0
         AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
-        particle.state = ErrorCode.Success
+        particle.set_state(ErrorCode.Success)
 
     recovery_dict = {ErrorCode.ErrorOutOfBounds: DeleteParticle}
     if wErrorThroughSurface:
