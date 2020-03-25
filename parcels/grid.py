@@ -1,10 +1,20 @@
-from parcels.loggers import logger
-import numpy as np
-from ctypes import Structure, c_int, c_float, c_double, POINTER, cast, c_void_p, pointer
+import functools
+from ctypes import c_double
+from ctypes import c_float
+from ctypes import c_int
+from ctypes import c_void_p
+from ctypes import cast
+from ctypes import POINTER
+from ctypes import pointer
+from ctypes import Structure
 from enum import IntEnum
-import datetime
 
-__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid']
+import numpy as np
+
+from parcels.tools.converters import TimeConverter
+from parcels.tools.loggers import logger
+
+__all__ = ['GridCode', 'RectilinearZGrid', 'RectilinearSGrid', 'CurvilinearZGrid', 'CurvilinearSGrid', 'CGrid', 'Grid']
 
 
 class GridCode(IntEnum):
@@ -35,13 +45,12 @@ class Grid(object):
             logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.time.dtype == np.float64:
+            assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
             logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
-        self.time_origin = time_origin
-        if self.time_origin:
-            if isinstance(self.time_origin, datetime.datetime):
-                self.time_origin = np.datetime64(self.time_origin)
-            assert isinstance(self.time_origin, np.datetime64), 'If defined, time_origin must be a datetime.datetime or a np.datetime64'
+        self.time_full = self.time  # needed for deferred_loaded Fields
+        self.time_origin = TimeConverter() if time_origin is None else time_origin
+        assert isinstance(self.time_origin, TimeConverter), 'time_origin needs to be a TimeConverter object'
         self.mesh = mesh
         self.cstruct = None
         self.cell_edge_sizes = {}
@@ -50,6 +59,24 @@ class Grid(object):
         self.meridional_halo = 0
         self.lat_flipped = False
         self.defer_load = False
+        self.lonlat_minmax = np.array([np.nanmin(lon), np.nanmax(lon), np.nanmin(lat), np.nanmax(lat)], dtype=np.float32)
+        self.periods = 0
+        self.load_chunk = []
+        self.chunk_info = None
+        self._add_last_periodic_data_timestep = False
+
+    @staticmethod
+    def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
+        if len(lon.shape) == 1:
+            if depth is None or len(depth.shape) == 1:
+                return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+            else:
+                return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+        else:
+            if depth is None or len(depth.shape) == 1:
+                return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
+            else:
+                return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
 
     @property
     def ctypes_struct(self):
@@ -68,15 +95,26 @@ class Grid(object):
             _fields_ = [('xdim', c_int), ('ydim', c_int), ('zdim', c_int),
                         ('tdim', c_int), ('z4d', c_int),
                         ('mesh_spherical', c_int), ('zonal_periodic', c_int),
+                        ('chunk_info', POINTER(c_int)),
+                        ('load_chunk', POINTER(c_int)),
+                        ('tfull_min', c_double), ('tfull_max', c_double), ('periods', POINTER(c_int)),
+                        ('lonlat_minmax', POINTER(c_float)),
                         ('lon', POINTER(c_float)), ('lat', POINTER(c_float)),
                         ('depth', POINTER(c_float)), ('time', POINTER(c_double))
                         ]
 
         # Create and populate the c-struct object
         if not self.cstruct:  # Not to point to the same grid various times if grid in various fields
+            if not isinstance(self.periods, c_int):
+                self.periods = c_int()
+                self.periods.value = 0
             self.cstruct = CStructuredGrid(self.xdim, self.ydim, self.zdim,
                                            self.tdim, self.z4d,
                                            self.mesh == 'spherical', self.zonal_periodic,
+                                           (c_int * len(self.chunk_info))(*self.chunk_info),
+                                           self.load_chunk.ctypes.data_as(POINTER(c_int)),
+                                           self.time_full[0], self.time_full[-1], pointer(self.periods),
+                                           self.lonlat_minmax.ctypes.data_as(POINTER(c_float)),
                                            self.lon.ctypes.data_as(POINTER(c_float)),
                                            self.lat.ctypes.data_as(POINTER(c_float)),
                                            self.depth.ctypes.data_as(POINTER(c_float)),
@@ -99,8 +137,8 @@ class Grid(object):
     def advancetime(self, grid_new):
         assert isinstance(grid_new.time_origin, type(self.time_origin)), 'time_origin of new and old grids must be either both None or both a date'
         if self.time_origin:
-            grid_new.time = grid_new.time + (grid_new.time_origin - self.time_origin) / np.timedelta64(1, 's')
-        if len(grid_new.time) is not 1:
+            grid_new.time = grid_new.time + self.time_origin.reltime(grid_new.time_origin)
+        if len(grid_new.time) != 1:
             raise RuntimeError('New FieldSet needs to have only one snapshot')
         if grid_new.time > self.time[-1]:  # forward in time, so appending at end
             self.time = np.concatenate((self.time[1:], grid_new.time))
@@ -119,35 +157,72 @@ class Grid(object):
         dx = np.where(dx > 180, dx-360, dx)
         self.zonal_periodic = sum(dx) > 359.9
 
+    def add_Sdepth_periodic_halo(self, zonal, meridional, halosize):
+        if zonal:
+            if len(self.depth.shape) == 3:
+                self.depth = np.concatenate((self.depth[:, :, -halosize:], self.depth,
+                                             self.depth[:, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                assert self.depth.shape[2] == self.xdim, "Third dim must be x."
+            else:
+                self.depth = np.concatenate((self.depth[:, :, :, -halosize:], self.depth,
+                                             self.depth[:, :, :, 0:halosize]), axis=len(self.depth.shape) - 1)
+                assert self.depth.shape[3] == self.xdim, "Fourth dim must be x."
+        if meridional:
+            if len(self.depth.shape) == 3:
+                self.depth = np.concatenate((self.depth[:, -halosize:, :], self.depth,
+                                             self.depth[:, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                assert self.depth.shape[1] == self.ydim, "Second dim must be y."
+            else:
+                self.depth = np.concatenate((self.depth[:, :, -halosize:, :], self.depth,
+                                             self.depth[:, :, 0:halosize, :]), axis=len(self.depth.shape) - 2)
+                assert self.depth.shape[2] == self.ydim, "Third dim must be y."
+
     def computeTimeChunk(self, f, time, signdt):
-        nextTime_loc = np.infty * signdt
+        nextTime_loc = np.infty if signdt >= 0 else -np.infty
+        periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+        prev_time_indices = self.time
         if self.update_status == 'not_updated':
             if self.ti >= 0:
-                if signdt >= 0 and ((time < self.time[0] and self.ti > 0)
-                   or (time > self.time[2] and self.ti < len(self.time_full)-3)):
+                if (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time[2]):
                     self.ti = -1  # reset
-                elif signdt >= 0 and time >= self.time[1] and self.ti < len(self.time_full)-3:
+                elif signdt >= 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) < self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time_full[-1]):
+                    self.ti = -1  # reset
+                elif signdt < 0 and (time - periods*(self.time_full[-1]-self.time_full[0]) <= self.time_full[0] or time - periods*(self.time_full[-1]-self.time_full[0]) > self.time_full[-1]):
+                    self.ti = -1  # reset
+                elif signdt >= 0 and time - periods*(self.time_full[-1]-self.time_full[0]) >= self.time[1] and self.ti < len(self.time_full)-3:
                     self.ti += 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
-                elif signdt == -1 and time <= self.time[1] and self.ti > 0:
+                elif signdt == -1 and time - periods*(self.time_full[-1]-self.time_full[0]) < self.time[1] and self.ti > 0:
                     self.ti -= 1
                     self.time = self.time_full[self.ti:self.ti+3]
                     self.update_status = 'updated'
             if self.ti == -1:
                 self.time = self.time_full
                 self.ti, _ = f.time_index(time)
-                if self.ti > 0 and signdt == -1:
+                periods = self.periods.value if isinstance(self.periods, c_int) else self.periods
+                if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0] and f.time_periodic:
+                    self.ti = len(self.time)-2
+                    periods -= 1
+                if signdt == -1 and self.ti > 0:
                     self.ti -= 1
                 if self.ti >= len(self.time_full) - 2:
                     self.ti = len(self.time_full) - 3
+
                 self.time = self.time_full[self.ti:self.ti+3]
                 self.tdim = 3
-                self.update_status = 'first_updated'
-            if signdt >= 0 and self.ti < len(self.time_full)-3:
-                nextTime_loc = self.time[2]
-            elif signdt == -1 and self.ti > 0:
-                nextTime_loc = self.time[0]
+                if prev_time_indices is None or len(prev_time_indices) != 3 or len(prev_time_indices) != len(self.time):
+                    self.update_status = 'first_updated'
+                elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time, prev_time_indices), True) and len(prev_time_indices) == len(self.time):
+                    self.update_status = 'not_updated'
+                elif functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, self.time[:2], prev_time_indices[:2]), True) and len(prev_time_indices) == len(self.time):
+                    self.update_status = 'updated'
+                else:
+                    self.update_status = 'first_updated'
+            if signdt >= 0 and (self.ti < len(self.time_full)-3 or not f.allow_time_extrapolation):
+                nextTime_loc = self.time[2] + periods*(self.time_full[-1]-self.time_full[0])
+            elif signdt == -1 and (self.ti > 0 or not f.allow_time_extrapolation):
+                nextTime_loc = self.time[0] + periods*(self.time_full[-1]-self.time_full[0])
         return nextTime_loc
 
 
@@ -164,7 +239,7 @@ class RectilinearGrid(Grid):
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
 
-        Grid.__init__(self, lon, lat, time, time_origin, mesh)
+        super(RectilinearGrid, self).__init__(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
@@ -198,6 +273,9 @@ class RectilinearGrid(Grid):
                                       self.lat, self.lat[0:halosize] + latshift))
             self.ydim = self.lat.size
             self.meridional_halo = halosize
+        self.lonlat_minmax = np.array([np.nanmin(self.lon), np.nanmax(self.lon), np.nanmin(self.lat), np.nanmax(self.lat)], dtype=np.float32)
+        if isinstance(self, RectilinearSGrid):
+            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class RectilinearZGrid(RectilinearGrid):
@@ -208,7 +286,7 @@ class RectilinearZGrid(RectilinearGrid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
            The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -218,7 +296,7 @@ class RectilinearZGrid(RectilinearGrid):
     """
 
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
-        RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        super(RectilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
 
@@ -245,7 +323,7 @@ class RectilinearSGrid(RectilinearGrid):
            the number of the layer and the time is depth is a 4D array.
            depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -255,7 +333,7 @@ class RectilinearSGrid(RectilinearGrid):
     """
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
-        RectilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        super(RectilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 3D or 4D numpy array'
 
         self.gtype = GridCode.RectilinearSGrid
@@ -287,7 +365,7 @@ class CurvilinearGrid(Grid):
 
         lon = lon.squeeze()
         lat = lat.squeeze()
-        Grid.__init__(self, lon, lat, time, time_origin, mesh)
+        super(CurvilinearGrid, self).__init__(lon, lat, time, time_origin, mesh)
         self.xdim = self.lon.shape[1]
         self.ydim = self.lon.shape[0]
         self.tdim = self.time.size
@@ -327,6 +405,8 @@ class CurvilinearGrid(Grid):
             self.xdim = self.lon.shape[1]
             self.ydim = self.lat.shape[0]
             self.meridional_halo = halosize
+        if isinstance(self, CurvilinearSGrid):
+            self.add_Sdepth_periodic_halo(zonal, meridional, halosize)
 
 
 class CurvilinearZGrid(CurvilinearGrid):
@@ -337,7 +417,7 @@ class CurvilinearZGrid(CurvilinearGrid):
     :param depth: Vector containing the vertical coordinates of the grid, which are z-coordinates.
            The depth of the different layers is thus constant.
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -347,7 +427,7 @@ class CurvilinearZGrid(CurvilinearGrid):
     """
 
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
-        CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        super(CurvilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
             assert(len(depth.shape) == 1), 'depth is not a vector'
 
@@ -373,7 +453,7 @@ class CurvilinearSGrid(CurvilinearGrid):
            the number of the layer and the time is depth is a 4D array.
            depth array is either a 4D array[xdim][ydim][zdim][tdim] or a 3D array[xdim][ydim[zdim].
     :param time: Vector containing the time coordinates of the grid
-    :param time_origin: Time origin (datetime or np.datetime64 object) of the time axis
+    :param time_origin: Time origin (TimeConverter object) of the time axis
     :param mesh: String indicating the type of mesh coordinates and
            units used during velocity interpolation:
 
@@ -383,7 +463,7 @@ class CurvilinearSGrid(CurvilinearGrid):
     """
 
     def __init__(self, lon, lat, depth, time=None, time_origin=None, mesh='flat'):
-        CurvilinearGrid.__init__(self, lon, lat, time, time_origin, mesh)
+        super(CurvilinearSGrid, self).__init__(lon, lat, time, time_origin, mesh)
         assert(isinstance(depth, np.ndarray) and len(depth.shape) in [3, 4]), 'depth is not a 4D numpy array'
 
         self.gtype = GridCode.CurvilinearSGrid

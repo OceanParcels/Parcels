@@ -1,38 +1,48 @@
 """Get example scripts, notebooks, and data files."""
-
 import argparse
-from datetime import datetime, timedelta
-from glob import glob
 import json
 import os
+from datetime import datetime
+from datetime import timedelta
+from glob import glob
+import shutil
+import sys
+
 import pkg_resources
 from progressbar import ProgressBar
+
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen
 except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
-import shutil
-import sys
+
 
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [
-        "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]] +
-    ["OFAM_example_data/" + fn for fn in [
-        "OFAM_simple_U.nc", "OFAM_simple_V.nc"]] +
-    ["Peninsula_data/" + fn for fn in [
-        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]] +
-    ["GlobCurrent_example_data/" + fn for fn in [
+        "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]]
+    + ["OFAM_example_data/" + fn for fn in [
+        "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
+    + ["Peninsula_data/" + fn for fn in [
+        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]]
+    + ["GlobCurrent_example_data/" + fn for fn in [
         "%s000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc" % (
             date.strftime("%Y%m%d"))
-        for date in [datetime(2002, 1, 1) + timedelta(days=x)
-                     for x in range(0, 365)]]] +
-    ["DecayingMovingEddy_data/" + fn for fn in [
-        "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]] +
-    ["NemoCurvilinear_data/" + fn for fn in [
+        for date in ([datetime(2002, 1, 1) + timedelta(days=x)
+                     for x in range(0, 365)] + [datetime(2003, 1, 1)])]]
+    + ["DecayingMovingEddy_data/" + fn for fn in [
+        "decaying_moving_eddyU.nc", "decaying_moving_eddyV.nc"]]
+    + ["NemoCurvilinear_data/" + fn for fn in [
         "U_purely_zonal-ORCA025_grid_U.nc4", "V_purely_zonal-ORCA025_grid_V.nc4",
-        "mesh_mask.nc4"]])
+        "mesh_mask.nc4"]]
+    + ["NemoNorthSeaORCA025-N006_data/" + fn for fn in [
+        "ORCA025-N06_20000104d05U.nc", "ORCA025-N06_20000109d05U.nc",
+        "ORCA025-N06_20000104d05V.nc", "ORCA025-N06_20000109d05V.nc",
+        "ORCA025-N06_20000104d05W.nc", "ORCA025-N06_20000109d05W.nc",
+        "coordinates.nc"]]
+    + ["WOA_data/" + fn for fn in ["woa18_decav_t%.2d_04.nc" % m
+                                   for m in range(1, 13)]])
 
 example_data_url = "http://oceanparcels.org/examples-data"
 
@@ -118,7 +128,7 @@ def main(target_path=None):
         args = parser.parse_args()
         target_path = args.target_path
 
-    if os.path.exists(target_path):
+    if os.path.exists(os.path.join(target_path, "MovingEddies_data")):
         print("Error: {} already exists.".format(target_path))
         return
 

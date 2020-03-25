@@ -1,9 +1,14 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle
-from parcels import AdvectionRK4
-import numpy as np
-from datetime import timedelta as delta
 import math
+from datetime import timedelta as delta
+
+import numpy as np
 import pytest
+
+from parcels import AdvectionRK4
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -48,7 +53,7 @@ def true_values(age):  # Calculate the expected values for particle 2 at the end
     return [x, y]
 
 
-def rotation_example(fieldset, mode='jit', method=AdvectionRK4):
+def rotation_example(fieldset, outfile, mode='jit', method=AdvectionRK4):
 
     npart = 2          # Test two particles on the rotating fieldset.
     pset = ParticleSet.from_line(fieldset, size=npart, pclass=ptype[mode],
@@ -60,17 +65,18 @@ def rotation_example(fieldset, mode='jit', method=AdvectionRK4):
     outputdt = delta(hours=1)
 
     pset.execute(method, runtime=runtime, dt=dt, moviedt=None,
-                 output_file=pset.ParticleFile(name="RadialParticle", outputdt=outputdt))
+                 output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     return pset
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_rotation_example(mode):
+def test_rotation_example(mode, tmpdir):
     fieldset = radial_rotation_fieldset()
-    pset = rotation_example(fieldset, mode=mode)
+    outfile = tmpdir.join("RadialParticle")
+    pset = rotation_example(fieldset, outfile, mode=mode)
     assert(pset[0].lon == 30. and pset[0].lat == 30.)  # Particle at centre of Field remains stationary.
-    vals = true_values(pset[1].time)
+    vals = true_values(pset.time[1])
     assert(np.allclose(pset[1].lon, vals[0], 1e-5))    # Check advected values against calculated values.
     assert(np.allclose(pset[1].lat, vals[1], 1e-5))
 
@@ -80,4 +86,5 @@ if __name__ == "__main__":
     fieldset = radial_rotation_fieldset()
     fieldset.write(filename)
 
-    rotation_example(fieldset)
+    outfile = "RadialParticle"
+    rotation_example(fieldset, outfile)

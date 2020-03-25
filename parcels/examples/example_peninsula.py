@@ -1,17 +1,27 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable
-from parcels import AdvectionRK4, AdvectionEE, AdvectionRK45, AdvectionAnalytical
-from argparse import ArgumentParser
-import numpy as np
+import gc
 import math  # NOQA
-import pytest
+from argparse import ArgumentParser
 from datetime import timedelta as delta
+
+import numpy as np
+import pytest
+
+from parcels import AdvectionEE
+from parcels import AdvectionRK4
+from parcels import AdvectionRK45
+from parcels import AdvectionAnalytical
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import ScipyParticle
+from parcels import Variable
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
+def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
@@ -20,9 +30,9 @@ def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
     :param mesh: String indicating the type of mesh coordinates and
                units used during velocity interpolation:
 
-               1. spherical (default): Lat and lon in degree, with a
+               1. spherical: Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
-               2. flat: No conversion, lat/lon are assumed to be in m.
+               2. flat  (default): No conversion, lat/lon are assumed to be in m.
     :param grid_type: Option whether grid is either Arakawa A (default) or C
 
     The original test description can be found in Fig. 2.2.3 in:
@@ -35,19 +45,19 @@ def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
     """
     # Set Parcels FieldSet variables
 
-    # Generate the original test setup for pressure field in km
-    dx = 100. / xdim
-    dy = 50. / ydim
-    La = np.linspace(dx, 100.-dx, xdim, dtype=np.float32)
-    Wa = np.linspace(dy, 50.-dy, ydim, dtype=np.float32)
+    # Generate the original test setup on A-grid in m
+    domainsizeX, domainsizeY = (1.e5, 5.e4)
+    dx, dy = domainsizeX / xdim, domainsizeY / ydim
+    La = np.linspace(dx, 1.e5-dx, xdim, dtype=np.float32)
+    Wa = np.linspace(dy, 5.e4-dy, ydim, dtype=np.float32)
 
     u0 = 1
-    x0 = 50.
-    R = 0.32 * 50.
+    x0 = domainsizeX / 2
+    R = 0.32 * domainsizeX / 2
 
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
-    P = u0*R**2*y/((x-x0)**2+y**2)-u0*y
+    P = (u0*R**2*y/((x-x0)**2+y**2)-u0*y) / 1e3
 
     if grid_type is 'A':
         U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
@@ -66,6 +76,7 @@ def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
 
     # Set land points to NaN
     landpoints = P >= 0.
+    P[landpoints] = np.nan
     U[landpoints] = np.nan
     V[landpoints] = np.nan
 
@@ -85,12 +96,12 @@ def peninsula_fieldset(xdim, ydim, mesh, grid_type='A'):
     return FieldSet.from_data(data, dimensions, mesh=mesh,grid_type = grid_type)
 
 
-def UpdateP(particle, fieldset, time, dt):
-    particle.p = fieldset.P[time, particle.lon, particle.lat, particle.depth]
+def UpdateP(particle, fieldset, time):
+    particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
-def pensinsula_example(fieldset, npart, mode='jit', degree=1,
-                       verbose=False, output=True, method=AdvectionRK4):
+def peninsula_example(fieldset, outfile, npart, mode='jit', degree=1,
+                      verbose=False, output=True, method=AdvectionRK4):
     """Example configuration of particle flow around an idealised Peninsula
 
     :arg filename: Basename of the input fieldset
@@ -104,11 +115,6 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
         # data structure, so we define additional variables here.
         p = Variable('p', dtype=np.float32, initial=0.)
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
-
-        def __repr__(self):
-            """Custom print function which overrides the built-in"""
-            return "P(%.4f, %.4f)[p=%.5f, p_start=%f]" % (self.lon, self.lat,
-                                                          self.p, self.p_start)
 
     # Initialise particles
     if fieldset.U.grid.mesh == 'flat':
@@ -127,7 +133,7 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
     dt = delta(minutes=5)
     k_adv = pset.Kernel(method)
     k_p = pset.Kernel(UpdateP)
-    out = pset.ParticleFile(name="MyParticle", outputdt=delta(hours=1)) if output else None
+    out = pset.ParticleFile(name=outfile, outputdt=delta(hours=1)) if output else None
     print("Peninsula: Advecting %d particles for %s" % (npart, str(time)))
     pset.execute(k_adv + k_p, runtime=time, dt=dt, output_file=out)
 
@@ -139,15 +145,16 @@ def pensinsula_example(fieldset, npart, mode='jit', degree=1,
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
-def test_peninsula_fieldset(mode, mesh):
+def test_peninsula_fieldset(mode, mesh, tmpdir):
     """Execute peninsula test from fieldset generated in memory"""
     fieldset = peninsula_fieldset(100, 50, mesh)
-    pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
+    outfile = tmpdir.join("Peninsula")
+    pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
-    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    err_adv = np.abs(pset.p_start - pset.p)
     assert(err_adv <= 1.e-3).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
-    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
+    err_smpl = np.array([abs(pset.p[i] - pset.fieldset.P[0., pset.depth[i], pset.lat[i], pset.lon[i]]) for i in range(pset.size)])
     assert(err_smpl <= 1.e-3).all()
 
 
@@ -162,25 +169,27 @@ def test_peninsula_fieldset_AnalyticalAdvection():
     assert(err_adv <= 1.e-3).all()
 
 
-@pytest.fixture(scope='module')
-def fieldsetfile():
+def fieldsetfile(mesh, tmpdir):
     """Generate fieldset files for peninsula test"""
-    filename = 'peninsula'
-    fieldset = peninsula_fieldset(100, 50, mesh='spherical')
+    filename = tmpdir.join('peninsula')
+    fieldset = peninsula_fieldset(100, 50, mesh=mesh)
     fieldset.write(filename)
     return filename
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_peninsula_file(fieldsetfile, mode):
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_file(mode, mesh, tmpdir):
     """Open fieldset files and execute"""
-    fieldset = FieldSet.from_parcels(fieldsetfile, extra_fields={'P': 'P'}, allow_time_extrapolation=True)
-    pset = pensinsula_example(fieldset, 5, mode=mode, degree=1)
+    gc.collect()
+    fieldset = FieldSet.from_parcels(fieldsetfile(mesh, tmpdir), extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    outfile = tmpdir.join("Peninsula")
+    pset = peninsula_example(fieldset, outfile, 5, mode=mode, degree=1)
     # Test advection accuracy by comparing streamline values
-    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    err_adv = np.abs(pset.p_start - pset.p)
     assert(err_adv <= 1.e-3).all()
     # Test Field sampling accuracy by comparing kernel against Field sampling
-    err_smpl = np.array([abs(p.p - pset.fieldset.P[0., p.lon, p.lat, p.depth]) for p in pset])
+    err_smpl = np.array([abs(pset.p[i] - pset.fieldset.P[0., pset.depth[i], pset.lat[i], pset.lon[i]]) for i in range(pset.size)])
     assert(err_smpl <= 1.e-3).all()
 
 
@@ -205,23 +214,26 @@ Example of particle advection around an idealised peninsula""")
                    help='Numerical method used for advection')
     args = p.parse_args()
 
+    filename = 'peninsula'
     if args.fieldset is not None:
-        filename = 'peninsula'
-        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='spherical')
-        fieldset.write(filename)
+        fieldset = peninsula_fieldset(args.fieldset[0], args.fieldset[1], mesh='flat')
+    else:
+        fieldset = peninsula_fieldset(100, 50, mesh='flat')
+    fieldset.write(filename)
 
     # Open fieldset file set
     fieldset = FieldSet.from_parcels('peninsula', extra_fields={'P': 'P'}, allow_time_extrapolation=True)
+    outfile = "Peninsula"
 
     if args.profiling:
         from cProfile import runctx
         from pstats import Stats
-        runctx("pensinsula_example(fieldset, args.particles, mode=args.mode,\
+        runctx("peninsula_example(fieldset, outfile, args.particles, mode=args.mode,\
                                    degree=args.degree, verbose=args.verbose,\
                                    output=not args.nooutput, method=method[args.method])",
                globals(), locals(), "Profile.prof")
         Stats("Profile.prof").strip_dirs().sort_stats("time").print_stats(10)
     else:
-        pensinsula_example(fieldset, args.particles, mode=args.mode,
-                           degree=args.degree, verbose=args.verbose,
-                           output=not args.nooutput, method=method[args.method])
+        peninsula_example(fieldset, outfile, args.particles, mode=args.mode,
+                          degree=args.degree, verbose=args.verbose,
+                          output=not args.nooutput, method=method[args.method])

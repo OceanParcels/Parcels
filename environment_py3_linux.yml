@@ -9,10 +9,12 @@ dependencies:
   - coverage
   - ffmpeg>=3.2.3,<3.2.6
   - flake8>=2.1.0
-  - gcc_linux-64
   - git
+  - gcc_linux-64
+  - mpi4py>=3.0.1
+  - mpich>=3.2.1
   - jupyter
-  - matplotlib=2.0.2
+  - matplotlib>=2.0.2
   - netcdf4>=1.1.9
   - numpy>=1.9.1
   - progressbar2
@@ -21,7 +23,9 @@ dependencies:
   - python-dateutil
   - scipy>=0.16.0
   - six >=1.10.0
-  - xarray>=0.5.1
-  - pip:
-      - pytest>=2.7.0
-      - nbval
+  - xarray>=0.10.8
+  - cftime
+  - dask>=2.0
+  - pytest<4.0
+  - nbval
+  - scikit-learn

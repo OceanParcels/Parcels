@@ -1,7 +1,12 @@
-from parcels import FieldSet, ParticleSet, JITParticle, ScipyParticle
-from parcels import random, ErrorCode
 import numpy as np
 import pytest
+
+from parcels import ErrorCode
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleSet
+from parcels import random
+from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -35,13 +40,13 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     pset = ParticleSet.from_line(fieldset=fieldset, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5), size=10)
 
-    def TestLon(particle, fieldset, time, dt):
+    def TestLon(particle, fieldset, time):
         """Kernel to check whether a longitude is larger than fieldset.minlon.
         If not, the Kernel throws an error"""
         if particle.lon <= fieldset.minlon:
             return ErrorCode.Error
 
-    def Error_RandomiseLon(particle, fieldset, time, dt):
+    def Error_RandomiseLon(particle, fieldset, time):
         """Error handling kernel that draws a new longitude.
         Note that this new longitude can be smaller than fieldset.minlon"""
         particle.lon = random.uniform(0., 1.)
@@ -54,4 +59,4 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     pset.execute(pset.Kernel(TestLon), runtime=1, dt=1,
                  recovery={ErrorCode.Error: Error_RandomiseLon})
 
-    assert (np.array([p.lon for p in pset]) > fieldset.minlon).all()
+    assert (pset.lon > fieldset.minlon).all()

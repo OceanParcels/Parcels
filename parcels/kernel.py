@@ -1,23 +1,42 @@
-from parcels.codegenerator import KernelGenerator, LoopGenerator
-from parcels.compiler import get_cache_dir
-from parcels.kernels.error import ErrorCode, recovery_map as recovery_base_map
-from parcels.field import FieldSamplingError
-from parcels.loggers import logger
-from parcels.kernels.advection import AdvectionRK4_3D
-from os import path, remove
-import numpy as np
-import numpy.ctypeslib as npct
-import time
-from ctypes import c_int, c_float, c_double, c_void_p, byref
 import _ctypes
-from sys import platform
-from ast import parse, FunctionDef, Module
 import inspect
-from copy import deepcopy
-import re
-from hashlib import md5
 import math  # noqa
 import random  # noqa
+import re
+import time
+from ast import FunctionDef
+from ast import parse
+from copy import deepcopy
+from ctypes import byref
+from ctypes import c_double
+from ctypes import c_int
+from hashlib import md5
+from os import path
+from os import remove
+from sys import platform
+from sys import version_info
+
+import numpy as np
+import numpy.ctypeslib as npct
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+
+from parcels.codegenerator import KernelGenerator
+from parcels.codegenerator import LoopGenerator
+from parcels.compiler import get_cache_dir
+from parcels.field import Field
+from parcels.field import FieldOutOfBoundError
+from parcels.field import FieldOutOfBoundSurfaceError
+from parcels.field import TimeExtrapolationError
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.field import VectorField
+from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.tools.error import ErrorCode
+from parcels.tools.error import recovery_map as recovery_base_map
+from parcels.tools.loggers import logger
 
 
 __all__ = ['Kernel']
@@ -40,6 +59,7 @@ class Kernel(object):
 
     :arg fieldset: FieldSet object providing the field information
     :arg ptype: PType object for the kernel particle
+    :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
 
     Note: A Kernel is either created from a compiled <function ...> object
     or the necessary information (funcname, funccode, funcvars) is provided.
@@ -48,14 +68,26 @@ class Kernel(object):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include=""):
+                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
         self.fieldset = fieldset
         self.ptype = ptype
+        self._lib = None
+        self.delete_cfiles = delete_cfiles
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
         if pyfunc is AdvectionRK4_3D:
-            logger.warning_once('Note that positive vertical velocity is assumed DOWNWARD by AdvectionRK4_3D')
+            warning = False
+            if isinstance(fieldset.W, Field) and fieldset.W.creation_log != 'from_nemo' and \
+               fieldset.W._scaling_factor is not None and fieldset.W._scaling_factor > 0:
+                warning = True
+            if type(fieldset.W) in [SummedField, NestedField]:
+                for f in fieldset.W:
+                    if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
+                        warning = True
+            if warning:
+                logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
+                                    '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -79,11 +111,21 @@ class Kernel(object):
             finally:
                 del stack  # Remove cyclic references
             # Compile and generate Python function from AST
-            py_mod = Module(body=[self.py_ast])
+            py_mod = parse("")
+            py_mod.body = [self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
             self.pyfunc = user_ctx[self.funcname]
         else:
             self.pyfunc = pyfunc
+
+        if version_info[0] < 3:
+            numkernelargs = len(inspect.getargspec(self.pyfunc).args)
+        else:
+            numkernelargs = len(inspect.getfullargspec(self.pyfunc).args)
+
+        assert numkernelargs == 3, \
+            'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
+
         self.name = "%s%s" % (ptype.name, self.funcname)
 
         # Generate the kernel function and add the outer loop
@@ -94,15 +136,12 @@ class Kernel(object):
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
-            for fname in self.vector_field_args:
-                f = getattr(fieldset, fname)
-                Wname = f.W.name if f.W else 'not_defined'
-                for sF in [f.U.name, f.V.name, Wname, 'cosU', 'sinU', 'cosV', 'sinV']:
-                    if sF not in self.field_args:
-                        try:
-                            self.field_args[sF] = getattr(fieldset, sF)
-                        except:
-                            continue
+            for f in self.vector_field_args.values():
+                Wname = f.W.ccode_name if f.W else 'not_defined'
+                for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
+                    if sF_name not in self.field_args:
+                        if sF_name != 'not_defined':
+                            self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
@@ -112,12 +151,18 @@ class Kernel(object):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
+            if MPI:
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
+                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+                basename = mpi_comm.bcast(basename, root=0)
+                basename = basename + "_%d" % mpi_rank
+            else:
+                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
 
-            basename = path.join(get_cache_dir(), self._cache_key)
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
-        self._lib = None
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -127,7 +172,7 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
-            if path.isfile(self.lib_file):
+            if path.isfile(self.lib_file) and self.delete_cfiles:
                 [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
 
     @property
@@ -147,7 +192,15 @@ class Kernel(object):
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
             [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-            basename = path.join(get_cache_dir(), self._cache_key)
+            if MPI:
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
+                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+                basename = mpi_comm.bcast(basename, root=0)
+                basename = basename + "_%d" % mpi_rank
+            else:
+                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
+
             self.src_file = "%s.c" % basename
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
@@ -165,91 +218,156 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
+
         for g in pset.fieldset.gridset.grids:
             g.cstruct = None  # This force to point newly the grids from Python to C
         # Make a copy of the transposed array to enforce
         # C-contiguous memory layout for JIT mode.
-        for f in self.field_args.values():
-            if not f.data.flags.c_contiguous:
-                f.data = f.data.copy()
+        for f in pset.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            if f in self.field_args.values():
+                f.chunk_data()
+            else:
+                for block_id in range(len(f.data_chunks)):
+                    f.data_chunks[block_id] = None
+                    f.c_data_chunks[block_id] = None
+
         for g in pset.fieldset.gridset.grids:
+            g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
+            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                if not g.load_chunk.flags.c_contiguous:
+                    g.load_chunk = g.load_chunk.copy()
             if not g.depth.flags.c_contiguous:
                 g.depth = g.depth.copy()
             if not g.lon.flags.c_contiguous:
                 g.lon = g.lon.copy()
             if not g.lat.flags.c_contiguous:
                 g.lat = g.lat.copy()
+
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        fargs += [c_float(f) for f in self.const_args.values()]
-        particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-        self._function(c_int(len(pset)), particle_data,
-                       c_double(endtime), c_float(dt), *fargs)
+        fargs += [c_double(f) for f in self.const_args.values()]
+        particle_data = byref(pset.ctypes_struct)
+        return self._function(c_int(len(pset)), particle_data,
+                              c_double(endtime), c_double(dt), *fargs)
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
 
+        particles = pset.data_accessor()
+
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
 
-        for p in pset.particles:
-            ptype = p.getPType()
+        for f in self.fieldset.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField]:
+                continue
+            f.data = np.array(f.data)
+
+        for p in range(pset.size):
+            particles.set_index(p)
+
             # Don't execute particles that aren't started yet
-            sign_end_part = np.sign(endtime - p.time)
-            if (sign_end_part != sign_dt) and (dt != 0):
+            sign_end_part = np.sign(endtime - particles.time)
+
+            dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+
+            # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
+            # as they fulfil the condition here on entering at the final calculation here. ==== #
+            if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
+                if abs(particles.time) >= abs(endtime):
+                    particles.set_state(ErrorCode.Success)
                 continue
 
-            # Compute min/max dt for first timestep
-            dt_pos = min(abs(p.dt), abs(endtime - p.time))
-            while dt_pos > 1e-6 or dt == 0:
-                for var in ptype.variables:
-                    p_var_back[var.name] = getattr(p, var.name)
+            while particles.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
+
+                for var in pset.ptype.variables:
+                    p_var_back[var.name] = getattr(particles, var.name)
                 try:
-                    res = self.pyfunc(p, pset.fieldset, p.time, sign_dt * dt_pos)
-                except FieldSamplingError as fse:
+                    pdt_prekernels = sign_dt * dt_pos
+                    particles.dt = pdt_prekernels
+                    state_prev = particles.state
+                    res = self.pyfunc(particles, pset.fieldset, particles.time)
+                    if res is None:
+                        res = ErrorCode.Success
+
+                    if res is ErrorCode.Success and particles.state != state_prev:
+                        res = particles.state
+
+                    if res == ErrorCode.Success and not np.isclose(particles.dt, pdt_prekernels):
+                        res = ErrorCode.Repeat
+
+                except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
-                    p.exception = fse
+                    particles.exception = fse_xy
+                except FieldOutOfBoundSurfaceError as fse_z:
+                    res = ErrorCode.ErrorThroughSurface
+                    particles.exception = fse_z
+                except TimeExtrapolationError as fse_t:
+                    res = ErrorCode.ErrorTimeExtrapolation
+                    particles.exception = fse_t
+
                 except Exception as e:
                     res = ErrorCode.Error
-                    p.exception = e
-
-                # Update particle state for explicit returns
-                if res is not None:
-                    p.state = res
+                    particles.exception = e
 
                 # Handle particle time and time loop
-                if res is None or res == ErrorCode.Success:
+                if res in [ErrorCode.Success, ErrorCode.Delete]:
                     # Update time and repeat
-                    p.time += sign_dt * dt_pos
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    if dt == 0:
+                    particles.time += particles.dt
+                    particles.update_next_dt()
+                    dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+
+                    sign_end_part = np.sign(endtime - particles.time)
+                    if res != ErrorCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                        res = ErrorCode.Evaluate
+                    if sign_end_part != sign_dt:
+                        dt_pos = 0
+
+                    particles.set_state(res)
+                    if np.isclose(dt, 0):
                         break
-                    continue
-                elif res == ErrorCode.Repeat:
-                    # Try again without time update
-                    for var in ptype.variables:
-                        if var.name not in ['dt', 'state']:
-                            setattr(p, var.name, p_var_back[var.name])
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
-                    break
                 else:
-                    break  # Failure - stop time loop
+                    particles.set_state(res)
+                    # Try again without time update
+                    for var in pset.ptype.variables:
+                        if var.name not in ['dt', 'state']:
+                            setattr(particles, var.name, p_var_back[var.name])
+                    dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+
+                    sign_end_part = np.sign(endtime - particles.time)
+                    if sign_end_part != sign_dt:
+                        dt_pos = 0
+                    break
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None):
         """Execute this Kernel over a ParticleSet for several timesteps"""
+        particles = pset.data_accessor()
+        for p in range(pset.size):
+            particles.set_index(p)
+            particles.set_state(ErrorCode.Evaluate)
+
+        if abs(dt) < 1e-6:
+            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
-            indices = [i for i, p in enumerate(pset.particles)
-                       if p.state in [ErrorCode.Delete]]
-            if len(indices) > 0 and output_file is not None:
-                output_file.write(pset[indices], endtime, deleted_only=True)
-            pset.remove(indices)
+            indices = pset.particle_data['state'] == ErrorCode.Delete
+            if np.count_nonzero(indices) > 0 and output_file is not None:
+                output_file.write(pset, endtime, deleted_only=indices)
+            pset.remove_booleanvector(indices)
 
         if recovery is None:
             recovery = {}
+        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
+            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
+
+        for g in pset.fieldset.gridset.grids:
+            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
@@ -261,17 +379,22 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        error_particles = [p for p in pset.particles
-                           if p.state != ErrorCode.Success]
-        while len(error_particles) > 0:
+        error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
+        while np.any(error_particles):
             # Apply recovery kernel
-            for p in error_particles:
-                if p.state == ErrorCode.Repeat:
-                    p.state = ErrorCode.Success
+            for p in np.where(error_particles)[0]:
+                particles.set_index(p)
+                if particles.state == ErrorCode.Repeat:
+                    particles.set_state(ErrorCode.Evaluate)
+                elif particles.state in recovery_map:
+                    recovery_kernel = recovery_map[particles.state]
+                    particles.set_state(ErrorCode.Success)
+                    recovery_kernel(particles, self.fieldset, particles.time)
+                    if particles.state == ErrorCode.Success:
+                        particles.set_state(ErrorCode.Evaluate)
                 else:
-                    recovery_kernel = recovery_map[p.state]
-                    p.state = ErrorCode.Success
-                    recovery_kernel(p, self.fieldset, p.time, dt)
+                    logger.warning_once('Deleting particle because of bug in #749 and #737')
+                    particles.delete()
 
             # Remove all particles that signalled deletion
             remove_deleted(pset)
@@ -282,17 +405,18 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = [p for p in pset.particles
-                               if p.state != ErrorCode.Success]
+            error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
         func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
                                body=self.py_ast.body + kernel.py_ast.body,
                                decorator_list=[], lineno=1, col_offset=0)
+        delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         return Kernel(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
-                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars)
+                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
+                      delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
         if not isinstance(kernel, Kernel):

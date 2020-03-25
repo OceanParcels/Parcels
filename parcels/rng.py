@@ -1,12 +1,16 @@
-from parcels.compiler import get_cache_dir, GNUCompiler
-from parcels.loggers import logger
-from os import path
-import numpy.ctypeslib as npct
-from ctypes import c_int, c_float
 import uuid
+from ctypes import c_float
+from ctypes import c_int
+from os import path
+
+import numpy.ctypeslib as npct
+
+from parcels.compiler import get_cache_dir
+from parcels.compiler import GNUCompiler
+from parcels.tools.loggers import logger
 
 
-__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate']
+__all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
 
 
 class Random(object):
@@ -41,8 +45,13 @@ extern float pcls_expovariate(float lamb){
   return parcels_expovariate(lamb);
 }
 """
+    fnct_vonmisesvariate = """
+extern float pcls_vonmisesvariate(float mu, float kappa){
+  return parcels_vonmisesvariate(mu, kappa);
+}
+"""
     ccode = stmt_import + fnct_seed
-    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate + fnct_expovariate
+    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate + fnct_expovariate + fnct_vonmisesvariate
     basename = path.join(get_cache_dir(), 'parcels_random_%s' % uuid.uuid4())
     src_file = "%s.c" % basename
     lib_file = "%s.so" % basename
@@ -108,3 +117,12 @@ def expovariate(lamb):
     rnd.argtype = c_float
     rnd.restype = c_float
     return rnd(c_float(lamb))
+
+
+def vonmisesvariate(mu, kappa):
+    """Returns a randome float of a Von Mises distribution
+    with mean angle mu and concentration parameter kappa"""
+    rnd = parcels_random.lib.pcls_vonmisesvariate
+    rnd.argtype = [c_float, c_float]
+    rnd.restype = c_float
+    return rnd(c_float(mu), c_float(kappa))

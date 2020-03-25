@@ -1,9 +1,17 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, AdvectionRK4, ParticleFile
 from argparse import ArgumentParser
+from datetime import timedelta as delta
+from glob import glob
+from os import path
+
 import numpy as np
 import pytest
-from datetime import timedelta as delta
-from os import path
+
+from parcels import AdvectionRK4
+from parcels import FieldSet
+from parcels import JITParticle
+from parcels import ParticleFile
+from parcels import ParticleSet
+from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -12,19 +20,24 @@ def run_nemo_curvilinear(mode, outfile):
     """Function that shows how to read in curvilinear grids, in this case from NEMO"""
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
-    filenames = {'U': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4',
-                 'V': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4',
-                 'mesh_mask': data_path + 'mesh_mask.nc4'}
+    filenames = {'U': {'lon': data_path + 'mesh_mask.nc4',
+                       'lat': data_path + 'mesh_mask.nc4',
+                       'data': data_path + 'U_purely_zonal-ORCA025_grid_U.nc4'},
+                 'V': {'lon': data_path + 'mesh_mask.nc4',
+                       'lat': data_path + 'mesh_mask.nc4',
+                       'data': data_path + 'V_purely_zonal-ORCA025_grid_V.nc4'}}
     variables = {'U': 'U', 'V': 'V'}
     dimensions = {'lon': 'glamf', 'lat': 'gphif'}
-    field_set = FieldSet.from_nemo(filenames, variables, dimensions)
+    field_chunksize = {'lon': 2, 'lat': 2}
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=field_chunksize)
+    assert field_set.U.field_chunksize == field_chunksize
 
     # Now run particles as normal
     npart = 20
     lonp = 30 * np.ones(npart)
-    latp = [i for i in np.linspace(-70, 88, npart)]
+    latp = np.linspace(-70, 88, npart)
 
-    def periodicBC(particle, pieldSet, time, dt):
+    def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
             particle.lon -= 360
 
@@ -33,13 +46,13 @@ def run_nemo_curvilinear(mode, outfile):
     kernels = pset.Kernel(AdvectionRK4) + periodicBC
     pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
                  output_file=pfile)
-    assert np.allclose([pset[i].lat - latp[i] for i in range(len(pset))], 0, atol=2e-2)
+    assert np.allclose(pset.lat - latp, 0, atol=2e-2)
 
 
 def make_plot(trajfile):
     from netCDF4 import Dataset
     import matplotlib.pyplot as plt
-    from mpl_toolkits.basemap import Basemap
+    import cartopy
 
     class ParticleData(object):
         def __init__(self):
@@ -54,21 +67,38 @@ def make_plot(trajfile):
         return T
 
     T = load_particles_file(trajfile, ['lon', 'lat', 'time'])
-    m = Basemap(projection='cyl')
-    m.drawparallels(np.arange(-90, 91, 30), labels=[True, False, False, False])
-    m.drawmeridians(np.arange(-180, 181, 60), labels=[False, False, False, True])
-
-    T.lon[T.lon > 180] -= 360
-
-    xs, ys = m(T.lon, T.lat)
-    m.scatter(xs, ys, c=T.time, s=5)
+    plt.axes(projection=cartopy.crs.PlateCarree())
+    plt.scatter(T.lon, T.lat, c=T.time, s=10)
     plt.show()
 
 
 @pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-def test_nemo_curvilinear(mode):
-    outfile = 'nemo_particles'
+def test_nemo_curvilinear(mode, tmpdir):
+    outfile = tmpdir.join('nemo_particles')
     run_nemo_curvilinear(mode, outfile)
+
+
+def test_nemo_3D_samegrid():
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
+                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+
+    variables = {'U': 'uo',
+                 'V': 'vo',
+                 'W': 'wo'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions)
+
+    assert fieldset.U.dataFiles is not fieldset.W.dataFiles
 
 
 if __name__ == "__main__":

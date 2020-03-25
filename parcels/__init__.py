@@ -1,3 +1,6 @@
+from ._version import version
+__version__ = version
+
 from parcels.fieldset import *  # noqa
 from parcels.particle import *  # noqa
 from parcels.particleset import *  # noqa

@@ -1,15 +1,14 @@
-from parcels.kernels.error import ErrorCode
-from parcels.field import Field
-from parcels.loggers import logger
-from operator import attrgetter
-import numpy as np
 from ctypes import c_void_p
+from operator import attrgetter
+
+import numpy as np
+
+from parcels.field import Field
+from parcels.tools.error import ErrorCode
+from parcels.tools.loggers import logger
 
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
-
-
-lastID = 0  # module-level variable keeping track of last Particle ID used
 
 
 class Variable(object):
@@ -22,6 +21,8 @@ class Variable(object):
     :param to_write: Boolean to control whether Variable is written to NetCDF file
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
+        if name == 'z':
+            raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -111,6 +112,7 @@ class ParticleType(object):
 
 class _Particle(object):
     """Private base class for all particle types"""
+    lastID = 0  # class-level variable keeping track of last Particle ID used
 
     def __init__(self):
         ptype = self.getPType()
@@ -123,12 +125,12 @@ class _Particle(object):
                 lat = self.getInitialValue(ptype, name='lat')
                 depth = self.getInitialValue(ptype, name='depth')
                 time = self.getInitialValue(ptype, name='time')
-                v.initial.fieldset.computeTimeChunk(time, 1)
                 if time is None:
-                    logger.error('Cannot initialise a Variable with a Field if no time provided. '
-                                 'Add a "time=" to ParticleSet construction')
-                    exit(-1)
-                initial = v.initial[time, lon, lat, depth]
+                    raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
+                                       'Add a "time=" to ParticleSet construction')
+                v.initial.fieldset.computeTimeChunk(time, 0)
+                initial = v.initial[time, depth, lat, lon]
+                logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
                 initial = v.initial
             # Enforce type of initial value
@@ -145,6 +147,10 @@ class _Particle(object):
     @classmethod
     def getInitialValue(cls, ptype, name):
         return next((v.initial for v in ptype.variables if v.name is name), None)
+
+    @classmethod
+    def setLastID(cls, offset):
+        _Particle.lastID = offset
 
 
 class ScipyParticle(_Particle):
@@ -165,31 +171,52 @@ class ScipyParticle(_Particle):
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int32)
-    fileid = Variable('fileid', dtype=np.int32, to_write=False)
-    dt = Variable('dt', dtype=np.float32, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Success, to_write=False)
+    fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
+    dt = Variable('dt', dtype=np.float64, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
+    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
-    def __init__(self, lon, lat, fieldset, depth=0., time=0., cptr=None):
-        global lastID
+    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
         type(self).depth.initial = depth
         type(self).time.initial = time
-        type(self).id.initial = lastID
-        lastID += 1
-        type(self).fileid.initial = -1  # -1 means particle is not written yet
+        type(self).id.initial = pid
+        _Particle.lastID = max(_Particle.lastID, pid)
+        type(self).fileid.initial = -1
         type(self).dt.initial = None
+        type(self).next_dt.initial = np.nan
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
-                                                             self.depth, time_string)
+        str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
+        for var in vars(type(self)):
+            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
+                str += "%s=%f, " % (var, getattr(self, var))
+        return str + "time=%s)" % time_string
 
     def delete(self):
         self.state = ErrorCode.Delete
+
+    def set_state(self, state):
+        self.state = state
+
+    @classmethod
+    def set_lonlatdepth_dtype(cls, dtype):
+        cls.lon.dtype = dtype
+        cls.lat.dtype = dtype
+        cls.depth.dtype = dtype
+
+    def update_next_dt(self, next_dt=None):
+        if next_dt is None:
+            if self._next_dt is not None:
+                self.dt = self._next_dt
+                self._next_dt = None
+        else:
+            self._next_dt = next_dt
 
 
 class JITParticle(ScipyParticle):
@@ -207,10 +234,10 @@ class JITParticle(ScipyParticle):
 
     """
 
-    cxi = Variable('cxi', dtype=np.dtype(c_void_p), to_write=False)
-    cyi = Variable('cyi', dtype=np.dtype(c_void_p), to_write=False)
-    czi = Variable('czi', dtype=np.dtype(c_void_p), to_write=False)
-    cti = Variable('cti', dtype=np.dtype(c_void_p), to_write=False)
+    xi = Variable('xi', dtype=np.dtype(c_void_p), to_write=False)
+    yi = Variable('yi', dtype=np.dtype(c_void_p), to_write=False)
+    zi = Variable('zi', dtype=np.dtype(c_void_p), to_write=False)
+    ti = Variable('ti', dtype=np.dtype(c_void_p), to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
@@ -222,14 +249,9 @@ class JITParticle(ScipyParticle):
 
         fieldset = kwargs.get('fieldset')
         for index in ['xi', 'yi', 'zi', 'ti']:
-            if index is not 'ti':
+            if index != 'ti':
                 setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
             else:
                 setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
             setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
             setattr(self, 'c'+index, getattr(self, index+'p').value)
-
-    def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
-        return "P[%d](lon=%f, lat=%f, depth=%f, time=%s)" % (self.id, self.lon, self.lat,
-                                                             self.depth, time_string)
