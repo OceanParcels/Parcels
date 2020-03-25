@@ -103,7 +103,7 @@ def AdvectionRK45(particle, fieldset, time):
         return ErrorCode.Repeat
 
 
-def AdvectionAnalytical(particle, fieldset, time, dt):
+def AdvectionAnalytical(particle, fieldset, time):
     """Advection of particles using 'analytical advection' integration
 
     Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017)
@@ -127,7 +127,7 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
         dy = lats_p[yi + 1] - lats_p[yi]
 
         # request velocity at particle position
-        up, vp = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+        up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
         # shift the grid cell corner indices 1 to the west and/or south if necessary
         # also move rx, ry to '1' if they move west/south and are on a grid face
@@ -148,16 +148,16 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
         rx_target = 1. if up >= 0. else 0.
 
         # get velocities at the surrounding grid boxes
-        u_w = fieldset.U[time, lons_u[xi+a1], lats_u[yi+b1], particle.depth]
-        u_e = fieldset.U[time, lons_u[xi+a2], lats_u[yi+b1], particle.depth]
-        v_s = fieldset.V[time, lons_v[xi+a1], lats_v[yi+b1], particle.depth]
-        v_n = fieldset.V[time, lons_v[xi+a1], lats_v[yi+b2], particle.depth]
+        u_w = fieldset.U[time, particle.depth, lats_u[yi+b1], lons_u[xi+a1]]
+        u_e = fieldset.U[time, particle.depth, lats_u[yi+b1], lons_u[xi+a2]]
+        v_s = fieldset.V[time, particle.depth, lats_v[yi+b1], lons_v[xi+a1]]
+        v_n = fieldset.V[time, particle.depth, lats_v[yi+b2], lons_v[xi+a1]]
     elif fieldset.grid_type == 'A':
         # request corner indices and xsi, eta (indices are to the bottom left of particle)
         rx, ry, _, xi, yi, _ = fieldset.U.search_indices_rectilinear(particle.lon, particle.lat, particle.depth, 0, 0)
 
         # request velocity at particle position
-        up, vp = fieldset.UV[time, particle.lon, particle.lat, particle.depth]
+        up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
         # get the lat/lon arrays (A-grid!)
         lats = fieldset.P.grid.lat
@@ -181,10 +181,10 @@ def AdvectionAnalytical(particle, fieldset, time, dt):
         rx_target = 1. if up >= 0. else 0.
 
         # get velocities at the surrounding grid boxes
-        u1, v1 = fieldset.UV[time, lons[xi + a1], lats[yi + b1], particle.depth]
-        u2, v2 = fieldset.UV[time, lons[xi + a2], lats[yi + b1], particle.depth]
-        u3, v3 = fieldset.UV[time, lons[xi + a1], lats[yi + b2], particle.depth]
-        u4, v4 = fieldset.UV[time, lons[xi + a2], lats[yi + b2], particle.depth]
+        u1, v1 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a1]]
+        u2, v2 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a2]]
+        u3, v3 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a1]]
+        u4, v4 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a2]]
 
         # define new variables for velocity for C-grid
         u_w = (u1 + u3) / 2.
