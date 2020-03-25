@@ -59,10 +59,10 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
     P = (u0*R**2*y/((x-x0)**2+y**2)-u0*y) / 1e3
 
-    if grid_type is 'A':
+    if grid_type == 'A':
         U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
         V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
-    elif grid_type is 'C':
+    elif grid_type == 'C':
         U = np.zeros(P.shape)
         V = np.zeros(P.shape)
         V[:, 1:-1] = (P[:, 2:] - P[:, :-2]) / (2 * dx)
@@ -80,20 +80,18 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     U[landpoints] = np.nan
     V[landpoints] = np.nan
 
-    if mesh == 'spherical':
-        # Convert from km to lat/lon
-        lon = La / 1.852 / 60.
-        lat = Wa / 1.852 / 60.
-    elif mesh == 'flat':
-        # Convert from km to m
-        lon = La * 1000.
-        lat = Wa * 1000.
-    else:
-        raise RuntimeError('Mesh %s is not a valid option' % mesh)
+    # Convert from m to lat/lon for spherical meshes
+    lon = La / 1852. / 60. if mesh == 'spherical' else La
+    lat = Wa / 1852. / 60. if mesh == 'spherical' else Wa
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
-    return FieldSet.from_data(data, dimensions, mesh=mesh,grid_type = grid_type)
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
+    if grid_type == 'C':
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
+    return fieldset
 
 
 def UpdateP(particle, fieldset, time):
@@ -158,12 +156,14 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
     assert(err_smpl <= 1.e-3).all()
 
 
-def test_peninsula_fieldset_AnalyticalAdvection():
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
     """Execute peninsula test using Analytical Advection on C grid"""
-    fieldset = peninsula_fieldset(100, 50, 'flat', grid_type='C')
-    fieldset.U.interp_method = 'cgrid_linear'
-    fieldset.V.interp_method = 'cgrid_linear'
-    pset = pensinsula_example(fieldset, npart=10, mode='scipy', method=AdvectionAnalytical)
+    fieldset = peninsula_fieldset(101, 51, 'flat', grid_type='C')
+    outfile = tmpdir.join("PeninsulaAA")
+    pset = peninsula_example(fieldset, outfile, npart=10, mode=mode,
+                             method=AdvectionAnalytical)
     # Test advection accuracy by comparing streamline values
     err_adv = np.array([abs(p.p_start - p.p) for p in pset])
     assert(err_adv <= 1.e-3).all()
