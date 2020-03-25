@@ -110,93 +110,51 @@ def AdvectionAnalytical(particle, fieldset, time):
 
     Only works in scipy mode for now on a 2d stationary flow (so no time evolution)
 
-    Requires an extra fieldset constant: fieldset.grid_type='C' or
-    fieldset.grid_type='A', for C and A grids respectively.
     """
-    if fieldset.grid_type == 'C':
-        # get the lat/lon arrays (C-grid)
-        lats_u, lons_u = fieldset.U.grid.lat, fieldset.U.grid.lon
-        lats_v, lons_v = fieldset.V.grid.lat, fieldset.V.grid.lon
-        lats_p, lons_p = fieldset.P.grid.lat, fieldset.P.grid.lon
+    if fieldset.U.interp_method != 'cgrid_velocity':
+        raise NotImplementedError('Analytical Advection only works with C-grids')
+    # request corner indices and xsi, eta (indices are to the bottom left of particle)
+    rx, ry, _, xi, yi, _ = fieldset.U.search_indices_rectilinear(particle.lon, particle.lat, particle.depth, 0, 0)
 
-        # request corner indices of grid cell (P-grid!) and rx, ry (indices are to the bottom left of particle)
-        rx, ry, _, xi, yi, _ = fieldset.P.search_indices_rectilinear(particle.lon, particle.lat, particle.depth, 0, 0)
+    # request velocity at particle position
+    up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
-        # calculate grid resolution
-        dx = lons_p[xi + 1] - lons_p[xi]
-        dy = lats_p[yi + 1] - lats_p[yi]
+    # get the lat/lon arrays (A-grid!)
+    lats = fieldset.P.grid.lat
+    lons = fieldset.P.grid.lon
 
-        # request velocity at particle position
-        up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-
-        # shift the grid cell corner indices 1 to the west and/or south if necessary
-        # also move rx, ry to '1' if they move west/south and are on a grid face
-        if up >= 0 or rx > 0:
-            a1, a2 = 0, 1
-        else:
-            a1, a2 = -1, 0
-            rx = 1.
-
-        if vp >= 0 or ry > 0:
-            b1, b2 = 0, 1
-        else:
-            b1, b2 = -1, 0
-            ry = 1.
-
-        # set the r_1 target value based on the particle flow direction
-        ry_target = 1. if vp >= 0. else 0.
-        rx_target = 1. if up >= 0. else 0.
-
-        # get velocities at the surrounding grid boxes
-        u_w = fieldset.U[time, particle.depth, lats_u[yi+b1], lons_u[xi+a1]]
-        u_e = fieldset.U[time, particle.depth, lats_u[yi+b1], lons_u[xi+a2]]
-        v_s = fieldset.V[time, particle.depth, lats_v[yi+b1], lons_v[xi+a1]]
-        v_n = fieldset.V[time, particle.depth, lats_v[yi+b2], lons_v[xi+a1]]
-    elif fieldset.grid_type == 'A':
-        # request corner indices and xsi, eta (indices are to the bottom left of particle)
-        rx, ry, _, xi, yi, _ = fieldset.U.search_indices_rectilinear(particle.lon, particle.lat, particle.depth, 0, 0)
-
-        # request velocity at particle position
-        up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-
-        # get the lat/lon arrays (A-grid!)
-        lats = fieldset.P.grid.lat
-        lons = fieldset.P.grid.lon
-
-        # set the grid box indices based on the velocity direction or position
-        # also move rx, ry to '1' if they move west/south and are on a grid face
-        if up >= 0 or rx > 0:
-            a1, a2 = 0, 1
-        else:
-            a1, a2 = -1, 0
-            rx = 1.
-
-        if vp >= 0 or ry > 0:
-            b1, b2 = 0, 1
-        else:
-            b1, b2 = -1, 0
-            ry = 1.
-
-        ry_target = 1. if vp >= 0. else 0.
-        rx_target = 1. if up >= 0. else 0.
-
-        # get velocities at the surrounding grid boxes
-        u1, v1 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a1]]
-        u2, v2 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a2]]
-        u3, v3 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a1]]
-        u4, v4 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a2]]
-
-        # define new variables for velocity for C-grid
-        u_w = (u1 + u3) / 2.
-        u_e = (u2 + u4) / 2.
-        v_s = (v1 + v2) / 2.
-        v_n = (v3 + v4) / 2.
-
-        # get the dx/dy
-        dx = lons[xi + 1] - lons[xi]
-        dy = lats[yi + 1] - lats[yi]
+    # set the grid box indices based on the velocity direction or position
+    # also move rx, ry to '1' if they move west/south and are on a grid face
+    if up >= 0 or rx > 0:
+        a1, a2 = 0, 1
     else:
-        raise NotImplementedError('Only A and C grids implemented')
+        a1, a2 = -1, 0
+        rx = 1.
+
+    if vp >= 0 or ry > 0:
+        b1, b2 = 0, 1
+    else:
+        b1, b2 = -1, 0
+        ry = 1.
+
+    ry_target = 1. if vp >= 0. else 0.
+    rx_target = 1. if up >= 0. else 0.
+
+    # get velocities at the surrounding grid boxes
+    u1, v1 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a1]]
+    u2, v2 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a2]]
+    u3, v3 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a1]]
+    u4, v4 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a2]]
+
+    # define new variables for velocity for C-grid
+    u_w = (u1 + u3) / 2.
+    u_e = (u2 + u4) / 2.
+    v_s = (v1 + v2) / 2.
+    v_n = (v3 + v4) / 2.
+
+    # get the dx/dy
+    dx = lons[xi + 1] - lons[xi]
+    dy = lats[yi + 1] - lats[yi]
 
     # calculate the zonal and meridional grid face fluxes
     F_w = u_w * dy
