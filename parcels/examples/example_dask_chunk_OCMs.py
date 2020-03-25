@@ -1,12 +1,11 @@
 import math
-from argparse import ArgumentParser
 from datetime import timedelta as delta
 from glob import glob
 from os import path
 
 import numpy as np
 import pytest
-import  dask
+import dask
 
 from parcels import AdvectionRK4
 from parcels import FieldSet
@@ -16,6 +15,7 @@ from parcels import ParticleSet
 from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+
 
 def fieldset_from_nemo_3D(chunk_mode):
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
@@ -48,7 +48,7 @@ def fieldset_from_nemo_3D(chunk_mode):
 
 def fieldset_from_globcurrent(chunk_mode):
     filename = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                             '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+                         '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     chs = False
@@ -60,6 +60,7 @@ def fieldset_from_globcurrent(chunk_mode):
 
     fieldset = FieldSet.from_netcdf(filename, variables, dimensions, field_chunksize=chs)
     return fieldset
+
 
 # ==== undefined as long as we have no POP example data ==== #
 def test_pop():
@@ -102,13 +103,13 @@ def test_nemo_3D(mode, chunk_mode):
     field_set = fieldset_from_nemo_3D(chunk_mode)
     # Now run particles as normal
     npart = 20
-    lonp = 1.9 * np.ones(npart)
+    lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    pset = compute_nemo_particle_advection(field_set, mode, lonp, latp)
+    compute_nemo_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
-    if chunk_mode == False:
+    if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
@@ -129,7 +130,7 @@ def test_globcurrent_2D(mode, chunk_mode):
     pset = compute_globcurrent_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: time=UNLIMITED, lat=41, lon=81
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    if chunk_mode == False:
+    if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
@@ -137,3 +138,28 @@ def test_globcurrent_2D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(41.0/16.0)) * int(math.ceil(81.0/16.0))))
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
+
+
+@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
+def test_diff_entry_dimensions_chunks(mode):
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'data': vfiles}}
+    variables = {'U': 'uo',
+                 'V': 'vo'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}}
+    chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
+           'V': {'depthv': 75, 'y': 16, 'x': 16}}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
+    # Now run particles as normal
+    npart = 20
+    lonp = 5.2 * np.ones(npart)
+    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    # Nemo sample file dimensions: depthu=75, y=201, x=151
+    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))

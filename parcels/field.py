@@ -1615,8 +1615,6 @@ class NetcdfFileBuffer(object):
             self.dataset = self.filename
             return self
 
-        # logger.info("field chunksize (before eval): {}".format(self.field_chunksize))
-
         if self.field_chunksize not in [False, None, 'auto'] and type(self.field_chunksize) not in [list, tuple, dict]:
             raise AttributeError("'field_chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
         if isinstance(self.field_chunksize, list):
@@ -1625,8 +1623,6 @@ class NetcdfFileBuffer(object):
         init_chunk_dict = None
         if self.field_chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
-        # logger.info("init chunk dict (after eval): {}".format(init_chunk_dict))
-        # logger.info("field chunksize (after eval): {}".format(self.field_chunksize))
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we would rather want to have it auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
@@ -1759,7 +1755,7 @@ class NetcdfFileBuffer(object):
     def _is_dimension_available(self, dimension_name):
         if self.dimensions is None or self.dataset is None:
             return False
-        return (dimension_name in self.dimensions and self.dimensions[dimension_name] in self.dataset.dims)
+        return dimension_name in self.dimensions
 
     def _is_dimension_in_dataset(self, dimension_name):
         k, dname, dvalue = (-1, '', 0)
@@ -2004,9 +2000,7 @@ class NetcdfFileBuffer(object):
                         has_time = timei >= 0 and timevalue > 1 and self._is_dimension_available('time')
                         has_depth = depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth')
                         startblock = 0
-                        # startblock += 1 if has_time and not self._is_dimension_available('time') else 0
                         startblock += 1 if has_time else 0
-                        # startblock += 1 if has_depth and not self._is_dimension_available('depth') else 0
                         startblock += 1 if has_depth else 0
                         for chunkDim in data.chunksize[startblock:]:
                             self.chunk_mapping[chunkIndex] = chunkDim
@@ -2016,9 +2010,6 @@ class NetcdfFileBuffer(object):
                             self.rechunk_callback_fields()
                             self.chunking_finalized = True
                     else:
-                        # logger.info("Field: {}".format(self.name))
-                        # logger.info("field_chunksize: {}".format(self.field_chunksize))
-                        # logger.info("chunk mapping: {}".format(self.chunk_mapping))
                         # ==== I think this can be "pass" too ==== #
                         data = data.rechunk(self.chunk_mapping)
                         self.chunking_finalized = True

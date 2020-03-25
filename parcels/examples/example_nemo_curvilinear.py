@@ -114,18 +114,12 @@ def fieldset_nemo_setup():
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
-    #filenames = {'U': ufiles,
-    #             'V': vfiles,
-    #             'W': wfiles}
     variables = {'U': 'uo',
                  'V': 'vo',
                  'W': 'wo'}
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    #dimensions = {'U': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthu', 'time': 'time_counter'},
-    #              'V': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthv', 'time': 'time_counter'},
-    #              'W': {'lon': 'nav_lon', 'lat': 'nav_lat', 'depth': 'depthw', 'time': 'time_counter'}}
 
     return filenames, variables, dimensions
 
@@ -143,7 +137,7 @@ def compute_particle_advection(field_set, mode, lonp, latp):
             particle.lat += 11.0
 
     def OutOfBounds_reinitialisation(particle, fieldset, time):
-        particle.lat = 1.9
+        particle.lat = 5.2
         particle.lon = 52.0 + (-1e-3 + np.random.rand() * 2.0 * 1e-3)
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
@@ -158,13 +152,13 @@ def compute_particle_advection(field_set, mode, lonp, latp):
 def test_nemo_curvilinear_auto_chunking(mode):
     dask.config.set({'array.chunk-size': '2MiB'})
     filenames, variables, dimensions = fieldset_nemo_setup()
-    field_set = fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize='auto')
+    field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize='auto')
     assert field_set.U.dataFiles is not field_set.W.dataFiles
     # Now run particles as normal
     npart = 20
-    lonp = 1.9 * np.ones(npart)
+    lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    pset = compute_particle_advection(field_set, mode, lonp, latp)
+    compute_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
@@ -179,9 +173,9 @@ def test_nemo_curvilinear_no_chunking(mode):
     assert field_set.U.dataFiles is not field_set.W.dataFiles
     # Now run particles as normal
     npart = 20
-    lonp = 1.9 * np.ones(npart)
+    lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    pset = compute_particle_advection(field_set, mode, lonp, latp)
+    compute_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
@@ -200,13 +194,14 @@ def test_nemo_curvilinear_specific_chunking(mode):
     assert field_set.U.dataFiles is not field_set.W.dataFiles
     # Now run particles as normal
     npart = 20
-    lonp = 1.9 * np.ones(npart)
+    lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    pset = compute_particle_advection(field_set, mode, lonp, latp)
+    compute_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
+
 
 if __name__ == "__main__":
     p = ArgumentParser(description="""Chose the mode using mode option""")

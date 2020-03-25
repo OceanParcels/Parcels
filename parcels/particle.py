@@ -7,10 +7,10 @@ from parcels.field import Field
 from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 
-
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
 indicators_64bit = [np.float64, np.int64, c_void_p]
+
 
 class Variable(object):
     """Descriptor class that delegates data access to particle data
