@@ -270,8 +270,8 @@ class Kernel(object):
 
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - particles.time)
-
-            dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+            # Compute min/max dt for first timestep
+            dt_pos = min(abs(particles.dt), abs(endtime - particles.time)
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #

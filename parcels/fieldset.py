@@ -206,7 +206,8 @@ class FieldSet(object):
 
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
-                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
+                    mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
+                    deferred_load=True, field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -274,6 +275,7 @@ class FieldSet(object):
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
+            chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize
 
             grid = None
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
@@ -298,7 +300,8 @@ class FieldSet(object):
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, **kwargs)
+                                            fieldtype=fieldtype, field_chunksize=chunksize, **kwargs)
+
         u = fields.pop('U', None)
         v = fields.pop('V', None)
         return cls(u, v, fields=fields)
@@ -306,7 +309,7 @@ class FieldSet(object):
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='cgrid_tracer', **kwargs):
+                  tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -360,7 +363,8 @@ class FieldSet(object):
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_nemo'
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, **kwargs)
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
+                                           field_chunksize=field_chunksize, **kwargs)
         if hasattr(fieldset, 'W'):
             fieldset.W.set_scaling_factor(-1.)
         return fieldset
@@ -368,7 +372,7 @@ class FieldSet(object):
     @classmethod
     def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='cgrid_tracer', **kwargs):
+                            tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -434,12 +438,13 @@ class FieldSet(object):
             kwargs['creation_log'] = 'from_c_grid_dataset'
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
+                               field_chunksize=field_chunksize, **kwargs)
 
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                  allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', **kwargs):
+                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of POP fields.
             It is assumed that the velocities in the POP fields is in cm/s.
 
@@ -495,7 +500,8 @@ class FieldSet(object):
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_pop'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, **kwargs)
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
+                                           field_chunksize=field_chunksize, **kwargs)
         if hasattr(fieldset, 'U'):
             fieldset.U.set_scaling_factor(0.01)  # cm/s to m/s
         if hasattr(fieldset, 'V'):
@@ -507,7 +513,7 @@ class FieldSet(object):
     @classmethod
     def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='bgrid_tracer', **kwargs):
+                            tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Bgrid fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -575,11 +581,13 @@ class FieldSet(object):
             kwargs['creation_log'] = 'from_b_grid_dataset'
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
-                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
+                               allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
+                               field_chunksize=field_chunksize, **kwargs)
 
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
-                     allow_time_extrapolation=None, time_periodic=False, deferred_load=True, **kwargs):
+                     allow_time_extrapolation=None, time_periodic=False, deferred_load=True,
+                     field_chunksize='auto', **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
@@ -618,7 +626,8 @@ class FieldSet(object):
                           for v in extra_fields.keys()])
         return cls.from_netcdf(filenames, indices=indices, variables=extra_fields,
                                dimensions=dimensions, allow_time_extrapolation=allow_time_extrapolation,
-                               time_periodic=time_periodic, deferred_load=deferred_load, **kwargs)
+                               time_periodic=time_periodic, deferred_load=deferred_load,
+                               field_chunksize=field_chunksize, **kwargs)
 
     @classmethod
     def from_xarray_dataset(cls, ds, variables, dimensions, mesh='spherical', allow_time_extrapolation=None,

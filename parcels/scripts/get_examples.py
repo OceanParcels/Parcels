@@ -37,9 +37,9 @@ example_data_files = (
         "U_purely_zonal-ORCA025_grid_U.nc4", "V_purely_zonal-ORCA025_grid_V.nc4",
         "mesh_mask.nc4"]]
     + ["NemoNorthSeaORCA025-N006_data/" + fn for fn in [
-        "ORCA025-N06_20000104d05U.nc", "ORCA025-N06_20000109d05U.nc",
-        "ORCA025-N06_20000104d05V.nc", "ORCA025-N06_20000109d05V.nc",
-        "ORCA025-N06_20000104d05W.nc", "ORCA025-N06_20000109d05W.nc",
+        "ORCA025-N06_20000104d05U.nc", "ORCA025-N06_20000109d05U.nc", "ORCA025-N06_20000114d05U.nc", "ORCA025-N06_20000119d05U.nc", "ORCA025-N06_20000124d05U.nc", "ORCA025-N06_20000129d05U.nc",
+        "ORCA025-N06_20000104d05V.nc", "ORCA025-N06_20000109d05V.nc", "ORCA025-N06_20000114d05V.nc", "ORCA025-N06_20000119d05V.nc", "ORCA025-N06_20000124d05V.nc", "ORCA025-N06_20000129d05V.nc",
+        "ORCA025-N06_20000104d05W.nc", "ORCA025-N06_20000109d05W.nc", "ORCA025-N06_20000114d05W.nc", "ORCA025-N06_20000119d05W.nc", "ORCA025-N06_20000124d05W.nc", "ORCA025-N06_20000129d05W.nc",
         "coordinates.nc"]]
     + ["WOA_data/" + fn for fn in ["woa18_decav_t%.2d_04.nc" % m
                                    for m in range(1, 13)]])
