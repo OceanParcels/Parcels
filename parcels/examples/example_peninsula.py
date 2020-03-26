@@ -47,9 +47,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
 
     # Generate the original test setup on A-grid in m
     domainsizeX, domainsizeY = (1.e5, 5.e4)
-    dx, dy = domainsizeX / xdim, domainsizeY / ydim
-    La = np.linspace(dx, 1.e5-dx, xdim, dtype=np.float32)
-    Wa = np.linspace(dy, 5.e4-dy, ydim, dtype=np.float32)
+    La = np.linspace(0, domainsizeX, xdim, dtype=np.float32)
+    Wa = np.linspace(0, domainsizeY, ydim, dtype=np.float32)
 
     u0 = 1
     x0 = domainsizeX / 2
@@ -65,12 +64,8 @@ def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     elif grid_type == 'C':
         U = np.zeros(P.shape)
         V = np.zeros(P.shape)
-        V[:, 1:-1] = (P[:, 2:] - P[:, :-2]) / (2 * dx)
-        V[:, 0] = (P[:, 1] - P[:, 0]) / dx
-        V[:, -1] = (P[:, -1] - P[:, -2]) / dx
-        U[1:-1, :] = -(P[2:, :] - P[:-2, :]) / (2 * dy)
-        U[0, :] = -(P[1, :] - P[0, :]) / dy
-        U[-1, :] = -(P[-1, :] - P[-2, :]) / dy
+        V[:, 1:] = (P[:, 1:] - P[:, :-1])
+        U[1:, :] = -(P[1:, :] - P[:-1, :])
     else:
         raise RuntimeError('Grid_type %s is not a valid option' % grid_type)
 
