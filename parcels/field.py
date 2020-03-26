@@ -1743,8 +1743,6 @@ class NetcdfFileBuffer(object):
                     max_overlay_dims = n_overlay_dims
             self.name = max_field
             for dname in max_dim_names:
-                # if dname in self._name_maps['time'] and self.dataset.dimensions[dname].size == 1:
-                #     continue
                 init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname].size)
         finally:
             self.dataset.close()
@@ -1826,11 +1824,9 @@ class NetcdfFileBuffer(object):
             self.field_chunksize[self.dimensions['lon']] = chunk_map[1]
         elif len(chunk_map) == 3:
             chunk_dim_index = 0
-            # if self._is_dimension_available('depth') or (depthi >= 0 and depthvalue > 1):
             if depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
                 self.field_chunksize[self.dimensions['depth']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1
-            # elif self._is_dimension_available('time') or (timei >= 0 and timevalue > 1):
             elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
                 self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1

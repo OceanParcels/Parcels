@@ -154,7 +154,6 @@ def test_nemo_curvilinear_auto_chunking(mode):
     filenames, variables, dimensions = fieldset_nemo_setup()
     field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize='auto')
     assert field_set.U.dataFiles is not field_set.W.dataFiles
-    # Now run particles as normal
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
@@ -171,7 +170,6 @@ def test_nemo_curvilinear_no_chunking(mode):
     filenames, variables, dimensions = fieldset_nemo_setup()
     field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
     assert field_set.U.dataFiles is not field_set.W.dataFiles
-    # Now run particles as normal
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
@@ -192,7 +190,6 @@ def test_nemo_curvilinear_specific_chunking(mode):
 
     field_set = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     assert field_set.U.dataFiles is not field_set.W.dataFiles
-    # Now run particles as normal
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]

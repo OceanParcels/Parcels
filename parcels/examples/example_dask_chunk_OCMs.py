@@ -48,7 +48,7 @@ def fieldset_from_nemo_3D(chunk_mode):
 
 def fieldset_from_globcurrent(chunk_mode):
     filenames = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
-                         '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+                          '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
     chs = False
@@ -61,9 +61,9 @@ def fieldset_from_globcurrent(chunk_mode):
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     return fieldset
 
+
 def fieldset_from_pop_1arcs(chunk_mode):
     filenames = path.join(path.join(path.dirname(__file__), 'POPSouthernOcean_data'), 't.x1_SAMOC_flux.1690*.nc')
-    # filenames = path.join(path.join(path.dirname(__file__), 'PopSouthernOcean_1arcs_data'), 't.x1_SAMOC_flux.1690*.nc')
     variables = {'U': 'UVEL', 'V': 'VVEL', 'W': 'WVEL'}
     timestamps = np.expand_dims(np.array([np.datetime64('2000-%.2d-01' % m) for m in range(1, 7)]), axis=1)
     dimensions = {'lon': 'ULON', 'lat': 'ULAT', 'depth': 'w_dep'}
@@ -71,13 +71,9 @@ def fieldset_from_pop_1arcs(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        #chs = {'U': {'i': 8, 'j': 8, 'w_dep': 3},
-        #       'V': {'i': 8, 'j': 8, 'w_dep': 3},
-        #       'W': {'i': 8, 'j': 8, 'w_dep': 3}}
-        #chs = {'i': 8, 'j': 8, 'k': 4}
         chs = {'i': 8, 'j': 8, 'w_dep': 3}
 
-    fieldset = FieldSet.from_pop(filenames, variables, dimensions, field_chunksize=chs, timestamps=timestamps) # , mesh='flat'
+    fieldset = FieldSet.from_pop(filenames, variables, dimensions, field_chunksize=chs, timestamps=timestamps)
     return fieldset
 
 
@@ -106,6 +102,7 @@ def compute_globcurrent_particle_advection(field_set, mode, lonp, latp):
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5), output_file=pfile)
     return pset
 
+
 def compute_pop_particle_advection(field_set, mode, lonp, latp):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile("globcurrent_particles_chunk", pset, outputdt=delta(days=15))
@@ -121,7 +118,6 @@ def test_nemo_3D(mode, chunk_mode):
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_nemo_3D(chunk_mode)
-    # Now run particles as normal
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
@@ -146,7 +142,6 @@ def test_pop(mode, chunk_mode):
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_pop_1arcs(chunk_mode)
-    # Now run particles as normal
     npart = 20
     lonp = 70.0 * np.ones(npart)
     latp = [i for i in -45.0+(-0.25+np.random.rand(npart)*2.0*0.25)]
@@ -201,7 +196,6 @@ def test_diff_entry_dimensions_chunks(mode):
     chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
            'V': {'depthv': 75, 'y': 16, 'x': 16}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
-    # Now run particles as normal
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
