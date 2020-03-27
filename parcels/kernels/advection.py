@@ -116,10 +116,10 @@ def AdvectionAnalytical(particle, fieldset, time):
 
     # request corner indices and xsi, eta (indices are to the bottom left of particle)
     rx, ry, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, 0, 0)
-    if (up > 0) & (rx == 1):
+    if (up > 0) & (abs(rx - 1) < tol):
         xi += 1
         rx = 0
-    if (vp > 0) & (ry == 1):
+    if (vp > 0) & (abs(ry - 1) < tol):
         yi += 1
         ry = 0
 
@@ -184,6 +184,11 @@ def AdvectionAnalytical(particle, fieldset, time):
         ds_y = float('inf')
     else:
         ds_y = - 1 / B_y * math.log(Fv_r1 / Fv_r0)
+
+    if ds_x < 0.:
+        ds_x = float('inf')
+    if ds_y < 0.:
+        ds_y = float('inf')
 
     # take the minimum travel time
     s_min = min(ds_x, ds_y, particle.dt / (dx*dy))

@@ -260,7 +260,7 @@ class Kernel(object):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
 
-        if self.pyfunc.__name__ == 'AdvectionAnalytical':
+        if 'AdvectionAnalytical' in self.pyfunc.__name__:
             analytical = True
             if not np.isinf(dt):
                 logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
