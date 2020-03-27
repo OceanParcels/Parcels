@@ -38,8 +38,8 @@ def fieldset_from_nemo_3D(chunk_mode):
         chs = 'auto'
     elif chunk_mode == 'specific':
         chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
-               'V': {'depthv': 20, 'y': 8, 'x': 16},
-               'W': {'depthw': 15, 'y': 16, 'x': 8}}
+               'V': {'depthv': 75, 'y': 16, 'x': 16},
+               'W': {'depthw': 75, 'y': 16, 'x': 16}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     return fieldset
