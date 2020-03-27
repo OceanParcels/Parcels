@@ -27,7 +27,6 @@ def fieldset_from_nemo_3D(chunk_mode):
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
                  'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
-
     variables = {'U': 'uo',
                  'V': 'vo',
                  'W': 'wo'}
@@ -39,8 +38,8 @@ def fieldset_from_nemo_3D(chunk_mode):
         chs = 'auto'
     elif chunk_mode == 'specific':
         chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
-               'V': {'depthv': 75, 'y': 16, 'x': 16},
-               'W': {'depthw': 75, 'y': 16, 'x': 16}}
+               'V': {'depthv': 20, 'y': 8, 'x': 16},
+               'W': {'depthw': 15, 'y': 16, 'x': 8}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     return fieldset
@@ -110,8 +109,8 @@ def compute_pop_particle_advection(field_set, mode, lonp, latp):
     return pset
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_nemo_3D(mode, chunk_mode):
     if chunk_mode == 'auto':
         dask.config.set({'array.chunk-size': '2MiB'})
@@ -133,9 +132,8 @@ def test_nemo_3D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(201.0/16.0)) * int(math.ceil(151.0/16.0))))
 
 
-# ==== undefined as long as we have no POP example data ==== #
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_pop(mode, chunk_mode):
     if chunk_mode == 'auto':
         dask.config.set({'array.chunk-size': '1MiB'})
@@ -157,8 +155,8 @@ def test_pop(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])  # Only testing jit as scipy is very slow
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_globcurrent_2D(mode, chunk_mode):
     if chunk_mode == 'auto':
         dask.config.set({'array.chunk-size': '32KiB'})
@@ -180,7 +178,7 @@ def test_globcurrent_2D(mode, chunk_mode):
     assert(abs(pset[0].lat - -35.3) < 1)
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # Only testing jit as scipy is very slow
+@pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_dimensions_chunks(mode):
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
