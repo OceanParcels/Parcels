@@ -34,6 +34,7 @@ from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.kernels.advection import AdvectionAnalytical
 from parcels.tools.error import ErrorCode
 from parcels.tools.error import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
@@ -88,6 +89,10 @@ class Kernel(object):
             if warning:
                 logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                     '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
+        elif pyfunc is AdvectionAnalytical:
+            if fieldset.U.interp_method != 'cgrid_velocity':
+                raise NotImplementedError('Analytical Advection only works with C-grids')
+
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -255,6 +260,14 @@ class Kernel(object):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
 
+        if self.pyfunc.__name__ == 'AdvectionAnalytical':
+            analytical = True
+            if not np.isinf(dt):
+                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
+            dt = np.inf
+        else:
+            analytical = False
+
         particles = pset.data_accessor()
 
         # back up variables in case of ErrorCode.Repeat
@@ -270,7 +283,6 @@ class Kernel(object):
 
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - particles.time)
-
             dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
@@ -314,6 +326,8 @@ class Kernel(object):
                     # Update time and repeat
                     particles.time += particles.dt
                     particles.update_next_dt()
+                    if analytical:
+                        particles.dt = np.inf
                     dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
 
                     sign_end_part = np.sign(endtime - particles.time)

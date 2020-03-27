@@ -106,55 +106,34 @@ def AdvectionRK45(particle, fieldset, time):
 def AdvectionAnalytical(particle, fieldset, time):
     """Advection of particles using 'analytical advection' integration
 
-    Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017)
+    Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017)"""
 
-    Only works in scipy mode for now on a 2d stationary flow (so no time evolution)
-
-    """
-    if fieldset.U.interp_method != 'cgrid_velocity':
-        raise NotImplementedError('Analytical Advection only works with C-grids')
-    # request corner indices and xsi, eta (indices are to the bottom left of particle)
-    rx, ry, _, xi, yi, _ = fieldset.U.search_indices_rectilinear(particle.lon, particle.lat, particle.depth, 0, 0)
+    # set tolerance of when something is considered 0
+    tol = 1e-8
 
     # request velocity at particle position
     up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
-    # get the lat/lon arrays (A-grid!)
-    lats = fieldset.P.grid.lat
-    lons = fieldset.P.grid.lon
+    # request corner indices and xsi, eta (indices are to the bottom left of particle)
+    rx, ry, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, 0, 0)
+    if (up > 0) & (rx == 1):
+        xi += 1
+        rx = 0
+    if (vp > 0) & (ry == 1):
+        yi += 1
+        ry = 0
 
-    # set the grid box indices based on the velocity direction or position
-    # also move rx, ry to '1' if they move west/south and are on a grid face
-    if up >= 0 or rx > 0:
-        a1, a2 = 0, 1
-    else:
-        a1, a2 = -1, 0
-        rx = 1.
-
-    if vp >= 0 or ry > 0:
-        b1, b2 = 0, 1
-    else:
-        b1, b2 = -1, 0
-        ry = 1.
+    u_w = fieldset.U.data[0, yi, xi]
+    u_e = fieldset.U.data[0, yi, xi+1]
+    v_s = fieldset.V.data[0, yi, xi]
+    v_n = fieldset.V.data[0, yi+1, xi]
 
     ry_target = 1. if vp >= 0. else 0.
     rx_target = 1. if up >= 0. else 0.
 
-    # get velocities at the surrounding grid boxes
-    u1, v1 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a1]]
-    u2, v2 = fieldset.UV[time, particle.depth, lats[yi + b1], lons[xi + a2]]
-    u3, v3 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a1]]
-    u4, v4 = fieldset.UV[time, particle.depth, lats[yi + b2], lons[xi + a2]]
-
-    # define new variables for velocity for C-grid
-    u_w = (u1 + u3) / 2.
-    u_e = (u2 + u4) / 2.
-    v_s = (v1 + v2) / 2.
-    v_n = (v3 + v4) / 2.
-
     # get the dx/dy
-    dx = lons[xi + 1] - lons[xi]
-    dy = lats[yi + 1] - lats[yi]
+    dx = fieldset.U.grid.lon[xi + 1] - fieldset.U.grid.lon[xi]
+    dy = fieldset.U.grid.lat[yi + 1] - fieldset.U.grid.lat[yi]
 
     # calculate the zonal and meridional grid face fluxes
     F_w = u_w * dy
@@ -166,9 +145,9 @@ def AdvectionAnalytical(particle, fieldset, time):
     B_x = F_w - F_e
     B_y = F_s - F_n
 
-    # delta
-    delta_x = - F_w - B_x * 0.  # where r_(i-1) = 0 by definition
-    delta_y = - F_s - B_y * 0.  # where r_(j-1) = 0 by definition
+    # calculate deltas
+    delta_x = - F_w - B_x * 0.
+    delta_y = - F_s - B_y * 0.
 
     # calculate F(r0) and F(r1) for both directions (unless beta == 0)
     if B_x != 0.:
@@ -182,9 +161,6 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         Fv_r0, Fv_r1 = None, None
 
-    # set tolerance of when something is considered 0
-    tol = 1e-8
-
     # set betas accordingly
     B_x = 0 if abs(B_x) < tol else B_x
     B_y = 0 if abs(B_y) < tol else B_y
@@ -193,7 +169,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     if B_x == 0 and delta_x == 0:
         ds_x = float('inf')
     elif B_x == 0:
-        ds_x = (rx_target - rx) / delta_x
+        ds_x = -(rx_target - rx) / delta_x
     elif Fu_r1 * Fu_r0 < 0:
         ds_x = float('inf')
     else:
@@ -203,41 +179,29 @@ def AdvectionAnalytical(particle, fieldset, time):
     if B_y == 0 and delta_y == 0:
         ds_y = float('inf')
     elif B_y == 0:
-        ds_y = (ry_target - ry) / delta_y
+        ds_y = -(ry_target - ry) / delta_y
     elif Fv_r1 * Fv_r0 < 0:
         ds_y = float('inf')
     else:
         ds_y = - 1 / B_y * math.log(Fv_r1 / Fv_r0)
 
     # take the minimum travel time
-    s_min = min(ds_x, ds_y)
+    s_min = min(ds_x, ds_y, particle.dt / (dx*dy))
 
     # calculate end position in time s_min
-    if ds_y == float('inf'):
-        rs_x = rx_target
-        rs_y = ry
-    elif ds_x == float('inf'):
-        rs_x = rx
-        rs_y = ry_target
+    if B_x == 0:
+        rs_x = -delta_x * s_min + rx
     else:
-        if B_x == 0:
-            rs_x = -delta_x * s_min + rx
-        else:
-            rs_x = (rx + delta_x/B_x) * math.exp(-B_x*s_min) - delta_x / B_x
+        rs_x = (rx + delta_x/B_x) * math.exp(-B_x*s_min) - delta_x / B_x
 
-        if B_y == 0:
-            rs_y = -delta_y * s_min + ry
-        else:
-            rs_y = (ry + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
+    if B_y == 0:
+        rs_y = -delta_y * s_min + ry
+    else:
+        rs_y = (ry + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
 
-    # calculate the change in position in cartesian coordinates
-    dlon = (rs_x - rx) * dx
-    dlat = (rs_y - ry) * dy
+    # set new position
+    particle.lat = particle.lat + (rs_y - ry) * dy
+    particle.lon = particle.lon + (rs_x - rx) * dx
 
-    # set new position (round to 8th decimal, due to floating point precision issues)
-    particle.lat = round(particle.lat + dlat, 8)
-    particle.lon = round(particle.lon + dlon, 8)
-
-    # feedback the passed time to main loop (does not work as intended)
-    s_min_real = s_min * (dx * dy)
-    particle.dt = s_min_real
+    # update the passed time for the main loop
+    particle.dt = s_min * (dx * dy)
