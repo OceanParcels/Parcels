@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import sys
 from argparse import ArgumentParser
 from os import environ
 
@@ -11,9 +10,6 @@ from parcels.plotting import cartopy_colorbar
 from parcels.plotting import create_parcelsfig_axis
 from parcels.plotting import plotfield
 try:
-    if sys.platform == 'darwin' and sys.version_info[0] == 3:
-        import matplotlib
-        matplotlib.use("TkAgg")
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
