@@ -63,6 +63,7 @@ class Grid(object):
         self.periods = 0
         self.load_chunk = []
         self.chunk_info = None
+        self.master_chunksize = None
         self._add_last_periodic_data_timestep = False
 
     @staticmethod

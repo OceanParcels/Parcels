@@ -331,6 +331,8 @@ class Field(object):
 
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
+            if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
+                grid.master_chunksize = kwargs['field_chunksize']
             kwargs['dataFiles'] = dataFiles
 
         if 'time' in indices:
@@ -902,8 +904,8 @@ class Field(object):
         return np.unravel_index(bid, self.nchunks[1:])
 
     def chunk_setup(self):
-        if self.chunk_set:
-            return
+        #if self.chunk_set:
+        #    return
         if isinstance(self.data, da.core.Array):
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks

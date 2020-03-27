@@ -14,6 +14,7 @@ from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.error import TimeExtrapolationError
 from parcels.tools.loggers import logger
+import functools
 try:
     from mpi4py import MPI
 except:
@@ -278,6 +279,7 @@ class FieldSet(object):
             chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize
 
             grid = None
+            grid_chunksize = chunksize
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
@@ -295,12 +297,24 @@ class FieldSet(object):
                                 sameGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if sameGrid:
                         grid = fields[procvar].grid
+                        # ==== check here that the dims of field_chunksize are the same ==== #
+                        if grid.master_chunksize is not None:
+                            grid_chunksize = grid.master_chunksize
+                            res = False
+                            if (isinstance(chunksize, tuple) and isinstance(grid_chunksize, tuple)) or (isinstance(chunksize, dict) and isinstance(grid_chunksize, dict)):
+                                res = functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid_chunksize), True)
+                            else:
+                                res = (chunksize == grid_chunksize)
+                            if grid_chunksize != chunksize and res:
+                                logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                            if not res:
+                                raise ValueError("Conflict between grid chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                         kwargs['dataFiles'] = fields[procvar].dataFiles
                         break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, field_chunksize=chunksize, **kwargs)
+                                            fieldtype=fieldtype, field_chunksize=grid_chunksize, **kwargs)
 
         u = fields.pop('U', None)
         v = fields.pop('V', None)

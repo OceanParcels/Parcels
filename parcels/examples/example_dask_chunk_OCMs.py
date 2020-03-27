@@ -200,3 +200,60 @@ def test_diff_entry_dimensions_chunks(mode):
     compute_nemo_particle_advection(fieldset, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+def test_diff_entry_chunksize_error_nemo(mode):
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
+                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    variables = {'U': 'uo',
+                 'V': 'vo',
+                 'W': 'wo'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
+           'V': {'depthv': 20, 'y': 4, 'x': 16},
+           'W': {'depthw': 15, 'y': 16, 'x': 4}}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
+    npart = 20
+    lonp = 5.2 * np.ones(npart)
+    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
+    try:
+        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    except:
+        return True
+    return False
+
+@pytest.mark.parametrize('mode', ['jit'])
+def test_diff_entry_chunksize_correction_globcurrent(mode):
+    filenames = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
+                          '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
+    variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
+    dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
+    chs = {'U': {'lat': 16, 'lon': 16},
+           'V': {'lat': 16, 'lon': 4}}
+    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
+    lonp = [25]
+    latp = [-35]
+    pset = compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
+    npart_U = 1
+    npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
+    npart_V = 1
+    npart_V = [npart_V * k for k in fieldset.V.nchunks[1:]]
+    npart_V_request = 1
+    chn = {'U': {'lat': int(math.ceil(41.0/chs['U']['lat'])),
+                 'lon': int(math.ceil(81.0/chs['U']['lon']))},
+           'V': {'lat': int(math.ceil(41.0/chs['V']['lat'])),
+                 'lon': int(math.ceil(81.0/chs['V']['lon']))}}
+    npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
+    assert (npart_U == npart_V)
+    assert (npart_V != npart_V_request)
+    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
