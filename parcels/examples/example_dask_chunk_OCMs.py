@@ -257,3 +257,4 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     assert (npart_U == npart_V)
     assert (npart_V != npart_V_request)
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    
