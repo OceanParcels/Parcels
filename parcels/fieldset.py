@@ -290,8 +290,8 @@ class FieldSet(object):
                     sameGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         sameGrid = True
-                        # logger.debug("Field '{}' shares a grid with '{}'\n".format(var, procvar))
-                        print("Field '{}' shares a grid with '{}'\n".format(var, procvar))
+                        logger.info("Field '{}' shares a grid with '{}'\n".format(var, procvar))
+                        # print("Field '{}' shares a grid with '{}'\n".format(var, procvar))
                     elif isinstance(filenames[procvar], dict):
                         sameGrid = True
                         for dim in ['lon', 'lat', 'depth']:
