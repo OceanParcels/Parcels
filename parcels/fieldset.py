@@ -254,6 +254,7 @@ class FieldSet(object):
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
         """
+        import sys
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
         if timestamps is not None and 'time' in dimensions:
             logger.warning_once("Time already provided, defaulting to dimensions['time'] over timestamps.")
@@ -290,6 +291,7 @@ class FieldSet(object):
                     sameGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         sameGrid = True
+                        sys.stdout.write("Field '{}' shares a grid with '{}'\n".format(var, procvar))
                     elif isinstance(filenames[procvar], dict):
                         sameGrid = True
                         for dim in ['lon', 'lat', 'depth']:

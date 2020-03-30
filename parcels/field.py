@@ -904,8 +904,6 @@ class Field(object):
         return np.unravel_index(bid, self.nchunks[1:])
 
     def chunk_setup(self):
-        #if self.chunk_set:
-        #    return
         if isinstance(self.data, da.core.Array):
             chunks = self.data.chunks
             self.nchunks = self.data.numblocks
@@ -924,11 +922,9 @@ class Field(object):
 
         self.data_chunks = [None] * npartitions
         self.c_data_chunks = [None] * npartitions
-
         self.grid.load_chunk = np.zeros(npartitions, dtype=c_int)
-
         # self.grid.chunk_info format: number of dimensions (without tdim); number of chunks per dimensions;
-        #                         chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
+        #      chunksizes (the 0th dim sizes for all chunk of dim[0], then so on for next dims
         self.grid.chunk_info = [[len(self.nchunks)-1], list(self.nchunks[1:]), sum(list(list(ci) for ci in chunks[1:]), [])]
         self.grid.chunk_info = sum(self.grid.chunk_info, [])
         self.chunk_set = True

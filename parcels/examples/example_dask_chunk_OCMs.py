@@ -228,7 +228,7 @@ def test_diff_entry_chunksize_error_nemo(mode):
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
     try:
         compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except:
+    except ValueError:
         return True
     return False
 
