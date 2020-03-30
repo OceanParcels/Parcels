@@ -232,6 +232,7 @@ def test_diff_entry_chunksize_error_nemo(mode):
         return True
     return False
 
+
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_correction_globcurrent(mode):
     filenames = path.join(path.dirname(__file__), 'GlobCurrent_example_data',
@@ -243,7 +244,7 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     lonp = [25]
     latp = [-35]
-    pset = compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
+    compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
     npart_V = 1
@@ -257,4 +258,3 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     assert (npart_U == npart_V)
     assert (npart_V != npart_V_request)
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-    
