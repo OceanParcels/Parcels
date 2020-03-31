@@ -1870,9 +1870,9 @@ class NetcdfFileBuffer(object):
             if depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
                 self.field_chunksize[self.dimensions['depth']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1
-            #elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
-            #    self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
-            #    chunk_dim_index += 1
+            # elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
+            #     self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
+            #     chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lat']] = chunk_map[chunk_dim_index]
             chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lon']] = chunk_map[chunk_dim_index]
