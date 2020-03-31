@@ -334,7 +334,7 @@ class Field(object):
             if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
                 grid.master_chunksize = kwargs['field_chunksize']
             kwargs['dataFiles'] = dataFiles
-        elif grid is not None and 'dataFiles' not in kwargs:
+        elif grid is not None and ('dataFiles' not in kwargs or kwargs['dataFiles'] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
             if timestamps is not None:
