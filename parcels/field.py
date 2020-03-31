@@ -1828,20 +1828,27 @@ class NetcdfFileBuffer(object):
                 self.chunk_mapping[i] = self.field_chunksize[i]
         else:
             # ====== 'time' is strictly excluded from the reading dimensions as it is implicitly organized with the data ====== #
+            # timei, timename, timevalue = self._is_dimension_in_chunksize_request('time')
+            dtimei, dtimename, dtimevalue = self._is_dimension_in_dataset('time')
             depthi, depthname, depthvalue = self._is_dimension_in_chunksize_request('depth')
+            ddepthi, ddepthname, ddepthvalue = self._is_dimension_in_dataset('depth')
             lati, latname, latvalue = self._is_dimension_in_chunksize_request('lat')
             loni, lonname, lonvalue = self._is_dimension_in_chunksize_request('lon')
             dim_index = 0
             if len(self.field_chunksize) == 2:
-
                 self.chunk_mapping[dim_index] = latvalue
                 dim_index += 1
                 self.chunk_mapping[dim_index] = lonvalue
                 dim_index += 1
             elif len(self.field_chunksize) >= 3:
-                if depthi >= 0 and self._is_dimension_available('depth'):
-                    # self.chunk_mapping[dim_index] = self.field_chunksize[self.dimensions['depth']]
-                    self.chunk_mapping[dim_index] = depthvalue
+                if dtimei >= 0 and dtimevalue > 1:
+                    self.chunk_mapping[dim_index] = dtimevalue
+                    dim_index += 1
+                if depthi >= 0 and ddepthi >= 0:
+                    if self._is_dimension_available('depth'):
+                        self.chunk_mapping[dim_index] = depthvalue
+                    else:
+                        self.chunk_mapping[dim_index] = ddepthvalue
                     dim_index += 1
                 self.chunk_mapping[dim_index] = latvalue
                 dim_index += 1
@@ -1863,9 +1870,9 @@ class NetcdfFileBuffer(object):
             if depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
                 self.field_chunksize[self.dimensions['depth']] = chunk_map[chunk_dim_index]
                 chunk_dim_index += 1
-            elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
-                self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
-                chunk_dim_index += 1
+            #elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
+            #    self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
+            #    chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lat']] = chunk_map[chunk_dim_index]
             chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lon']] = chunk_map[chunk_dim_index]
