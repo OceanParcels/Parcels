@@ -316,7 +316,7 @@ class FieldSet(object):
                                     raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                         if procpaths == nowpaths:
                             kwargs['dataFiles'] = fields[procvar].dataFiles
-                        break
+                            break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
