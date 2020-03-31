@@ -288,15 +288,15 @@ class FieldSet(object):
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
                 # if procdims == dims and procinds == inds and procpaths == nowpaths:
                 if procdims == dims and procinds == inds:
-                    sameGrid = False
+                    processedGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
-                        sameGrid = True
+                        processedGrid = True
                     elif isinstance(filenames[procvar], dict):
-                        sameGrid = True
+                        processedGrid = True
                         for dim in ['lon', 'lat', 'depth']:
                             if dim in dimensions:
-                                sameGrid *= filenames[procvar][dim] == filenames[var][dim]
-                    if sameGrid:
+                                processedGrid *= filenames[procvar][dim] == filenames[var][dim]
+                    if processedGrid:
                         # logger.info("Field '{}' shares a grid with '{}'\n".format(var, procvar))
                         # print("Field '{}' shares a grid with '{}'\n".format(var, procvar))
                         grid = fields[procvar].grid
