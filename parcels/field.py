@@ -2053,12 +2053,14 @@ class NetcdfFileBuffer(object):
                         data = data.rechunk(self.chunk_mapping)
                         self.chunking_finalized = True
             else:
-                self.chunking_finalized = True
                 da_data = da.from_array(data, chunks=self.field_chunksize)
                 if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
                     data = np.array(data)
                 else:
                     data = da_data
+                if not self.chunking_finalized and self.rechunk_callback_fields is not None:
+                    self.rechunk_callback_fields()
+                self.chunking_finalized = True
 
         return data
 
