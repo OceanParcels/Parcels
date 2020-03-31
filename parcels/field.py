@@ -2060,7 +2060,7 @@ class NetcdfFileBuffer(object):
                     data = da_data
                 if not self.chunking_finalized and self.rechunk_callback_fields is not None:
                     self.rechunk_callback_fields()
-                self.chunking_finalized = True
+                    self.chunking_finalized = True
 
         return data
 
