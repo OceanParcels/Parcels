@@ -16,6 +16,7 @@ class ErrorCode(object):
     ErrorOutOfBounds = 5
     ErrorThroughSurface = 51
     ErrorTimeExtrapolation = 6
+    StopExecution = 7
 
 
 class FieldSamplingError(RuntimeError):
