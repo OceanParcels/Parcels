@@ -1,4 +1,6 @@
 import numpy as np
+import functools
+from parcels.tools.loggers import logger
 
 __all__ = ['GridSet']
 
@@ -27,7 +29,22 @@ class GridSet(object):
             if not sameGrid:
                 continue
             existing_grid = True
+            tmp_grid = field.grid
             field.grid = g
+            if tmp_grid.master_chunksize != g.master_chunksize:
+                res = False
+                if (isinstance(tmp_grid.master_chunksize, tuple) and isinstance(g.master_chunksize, tuple)) or \
+                        (isinstance(tmp_grid.master_chunksize, dict) and isinstance(g.master_chunksize, dict)):
+                    res |= functools.reduce(lambda i, j: i and j,
+                                            map(lambda m, k: m == k, tmp_grid.master_chunksize, g.master_chunksize), True)
+                else:
+                    res |= (tmp_grid.master_chunksize == g.master_chunksize)
+                if tmp_grid.master_chunksize != g.master_chunksize:
+                    if res:
+                        logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                    else:
+                        raise ValueError(
+                            "Conflict between grids of the same gridset: major grid chunksize and requested sibling-grid chunksize as well as their chunk-dimension names are not equal - Please apply the same chunksize to all fields in a shared grid!")
             break
 
         if not existing_grid:

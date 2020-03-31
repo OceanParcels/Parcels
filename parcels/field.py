@@ -334,6 +334,38 @@ class Field(object):
             if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
                 grid.master_chunksize = kwargs['field_chunksize']
             kwargs['dataFiles'] = dataFiles
+        elif grid is not None and 'dataFiles' not in kwargs:
+            # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
+            # ==== correct file time series again.
+            if timestamps is not None:
+                dataFiles = []
+                for findex in range(len(data_filenames)):
+                    for f in [data_filenames[findex], ] * len(timestamps[findex]):
+                        dataFiles.append(f)
+                field_timeslices = np.array([stamp for file in timestamps for stamp in file])
+                field_time = field_timeslices
+            else:
+                field_timeslices = []
+                dataFiles = []
+                for fname in data_filenames:
+                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
+                        ftime = filebuffer.time
+                        field_timeslices.append(ftime)
+                        dataFiles.append([fname] * len(ftime))
+                field_timeslices = np.array(field_timeslices)
+                field_time = np.concatenate(field_timeslices)
+                dataFiles = np.concatenate(np.array(dataFiles))
+            if field_time.size == 1 and field_time[0] is None:
+                field_time[0] = 0
+            time_origin = TimeConverter(field_time[0])
+            field_time = time_origin.reltime(field_time)
+            if not np.all((field_time[1:]-field_time[:-1]) > 0):
+                id_not_ordered = np.where(field_time[1:] < field_time[:-1])[0][0]
+                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
+                                     % (dataFiles[id_not_ordered], dataFiles[id_not_ordered+1]))
+            if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
+                grid.master_chunksize = kwargs['field_chunksize']
+            kwargs['dataFiles'] = dataFiles
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
@@ -382,6 +414,9 @@ class Field(object):
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
+
+        # if 'field_chunksize' in kwargs.keys():
+        #     print("Field {} - chunksize: {} VS. grid chunksize: {}".format(variable, kwargs['field_chunksize'], grid.master_chunksize))
 
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
@@ -938,6 +973,8 @@ class Field(object):
         # 2: is loaded and was touched last C call
         # 3: is loaded
         if isinstance(self.data, da.core.Array):
+            # len_grid_loadchunk = self.grid.load_chunk.shape[0]
+            # len_field_datachunks = len(self.data_chunks) if isinstance(self.data_chunks, list) else self.data_chunks.shape[0]
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
@@ -1621,6 +1658,7 @@ class NetcdfFileBuffer(object):
         init_chunk_dict = None
         if self.field_chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
+            logger.debug("Field chunk init: {}".format(init_chunk_dict))
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object (we would rather want to have it auto-managed).
             # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.

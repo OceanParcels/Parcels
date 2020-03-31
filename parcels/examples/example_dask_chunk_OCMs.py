@@ -37,9 +37,9 @@ def fieldset_from_nemo_3D(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
-               'V': {'depthv': 75, 'y': 16, 'x': 16},
-               'W': {'depthw': 75, 'y': 16, 'x': 16}}
+        chs = {'U': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16},
+               'V': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16},
+               'W': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     return fieldset
@@ -191,8 +191,8 @@ def test_diff_entry_dimensions_chunks(mode):
                  'V': 'vo'}
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}}
-    chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
-           'V': {'depthv': 75, 'y': 16, 'x': 16}}
+    chs = {'U': {'depthu': 75, 'depthv': 75, 'y': 16, 'x': 16},
+           'V': {'depthu': 75, 'depthv': 75, 'y': 16, 'x': 16}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     npart = 20
     lonp = 5.2 * np.ones(npart)
@@ -203,7 +203,7 @@ def test_diff_entry_dimensions_chunks(mode):
 
 
 @pytest.mark.parametrize('mode', ['jit'])
-def test_diff_entry_chunksize_error_nemo(mode):
+def test_diff_entry_chunksize_error_nemo_simple(mode):
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
     vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
@@ -222,12 +222,100 @@ def test_diff_entry_chunksize_error_nemo(mode):
     chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
            'V': {'depthv': 20, 'y': 4, 'x': 16},
            'W': {'depthw': 15, 'y': 16, 'x': 4}}
-    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
+    try:
+        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
+    except ValueError:
+        return True
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    return False
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+def test_diff_entry_chunksize_error_nemo_complex(mode):
+    # ==== this test is expected to fall-back to a pre-defined minimal chunk as the requested chunks don't match, or throw a value error ==== #
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
+                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    variables = {'U': 'uo',
+                 'V': 'vo',
+                 'W': 'wo'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    chs = {'U': {'depthu': 75, 'depthv': 20, 'depthw': 15, 'y': 16, 'x': 16},
+           'V': {'depthu': 75, 'depthv': 20, 'depthw': 15, 'y': 4, 'x': 16},
+           'W': {'depthu': 75, 'depthv': 20, 'depthw': 15, 'y': 16, 'x': 4}}
     try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
+    except ValueError:
+        return True
+    npart = 20
+    lonp = 5.2 * np.ones(npart)
+    latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    # Nemo sample file dimensions: depthu=75, y=201, x=151
+    npart_U = 1
+    npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
+    npart_V = 1
+    npart_V = [npart_V * k for k in fieldset.V.nchunks[1:]]
+    npart_W = 1
+    npart_W = [npart_W * k for k in fieldset.V.nchunks[1:]]
+    chn = {'U': {'lat': int(math.ceil(201.0/chs['U']['y'])),
+                 'lon': int(math.ceil(151.0/chs['U']['x'])),
+                 'depth': int(math.ceil(75.0/chs['U']['depthu']))},
+           'V': {'lat': int(math.ceil(201.0/chs['V']['y'])),
+                 'lon': int(math.ceil(151.0/chs['V']['x'])),
+                 'depth': int(math.ceil(75.0/chs['V']['depthv']))},
+           'W': {'lat': int(math.ceil(201.0/chs['W']['y'])),
+                 'lon': int(math.ceil(151.0/chs['W']['x'])),
+                 'depth': int(math.ceil(75.0/chs['W']['depthw']))}}
+    npart_U_request = 1
+    npart_U_request = [npart_U_request * chn['U'][k] for k in chn['U']]
+    npart_V_request = 1
+    npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
+    npart_W_request = 1
+    npart_W_request = [npart_W_request * chn['W'][k] for k in chn['W']]
+    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
+    assert (npart_U == npart_V)
+    assert (npart_U == npart_W)
+    assert (npart_U != npart_U_request)
+    assert (npart_V != npart_V_request)
+    assert (npart_W != npart_W_request)
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+def test_erroneous_fieldset_init(mode):
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    wfiles = sorted(glob(data_path + 'ORCA*W.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': vfiles},
+                 'W': {'lon': mesh_mask, 'lat': mesh_mask, 'depth': wfiles[0], 'data': wfiles}}
+    variables = {'U': 'uo',
+                 'V': 'vo',
+                 'W': 'wo'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
+                  'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
+    chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
+           'V': {'depthv': 75, 'y': 16, 'x': 16},
+           'W': {'depthw': 75, 'y': 16, 'x': 16}}
+
+    try:
+        FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     except ValueError:
         return True
     return False
@@ -245,6 +333,7 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     lonp = [25]
     latp = [-35]
     compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
+    # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
     npart_V = 1
