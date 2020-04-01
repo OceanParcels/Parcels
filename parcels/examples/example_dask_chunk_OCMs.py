@@ -8,6 +8,7 @@ import pytest
 import dask
 
 from parcels import AdvectionRK4
+from parcels import Field
 from parcels import FieldSet
 from parcels import JITParticle
 from parcels import ParticleFile
@@ -220,18 +221,22 @@ def test_3d_2dfield_sampling(mode):
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'nav_lon': {'lon': 'glamf', 'lat': 'gphif'}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
-    fieldset.nav_lon.data = np.ones(fieldset.nav_lon.data.shape)
+    fieldset.add_field(Field('rectilinear_2D', np.ones((2, 2)),
+                             lon=np.array([-10, 20]), lat=np.array([40, 80])))
 
     class MyParticle(ptype[mode]):
-        sample_var = Variable('sample_var')
+        sample_var_curvilinear = Variable('sample_var_curvilinear')
+        sample_var_rectilinear = Variable('sample_var_rectilinear')
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
 
     def Sample2D(particle, fieldset, time):
-        particle.sample_var += fieldset.nav_lon[time, particle.depth, particle.lat, particle.lon]
+        particle.sample_var_curvilinear += fieldset.nav_lon[time, particle.depth, particle.lat, particle.lon]
+        particle.sample_var_rectilinear += fieldset.rectilinear_2D[time, particle.depth, particle.lat, particle.lon]
 
     runtime, dt = 86400*4, 6*3600
     pset.execute(pset.Kernel(AdvectionRK4) + Sample2D, runtime=runtime, dt=dt)
-    assert pset.sample_var == runtime/dt
+    assert pset.sample_var_rectilinear == runtime/dt
+    assert pset.sample_var_curvilinear == runtime/dt
 
 
 @pytest.mark.parametrize('mode', ['jit'])
