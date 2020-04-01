@@ -1841,7 +1841,7 @@ class NetcdfFileBuffer(object):
         if self.field_chunksize in [False, 'auto', None]:
             return
         self.chunk_mapping = {}
-        if (isinstance(self.field_chunksize, tuple)):
+        if isinstance(self.field_chunksize, tuple):
             for i in range(len(self.field_chunksize)):
                 self.chunk_mapping[i] = self.field_chunksize[i]
         else:
@@ -1860,7 +1860,7 @@ class NetcdfFileBuffer(object):
                 dim_index += 1
             elif len(self.field_chunksize) >= 3:
                 if timei >= 0 and timevalue > 1 and dtimei >= 0 and dtimevalue > 1 and self._is_dimension_available('time'):
-                    self.chunk_mapping[dim_index] = min(timevalue, 1)  # still need to make sure that we only load 1 time step at a time
+                    self.chunk_mapping[dim_index] = 1  # still need to make sure that we only load 1 time step at a time
                     dim_index += 1
                 if depthi >= 0 and depthvalue > 1 and ddepthi >= 0 and ddepthvalue > 1 and self._is_dimension_available('depth'):
                     self.chunk_mapping[dim_index] = depthvalue
@@ -1977,8 +1977,8 @@ class NetcdfFileBuffer(object):
             if(isinstance(self.field_chunksize, tuple)):
                 j = 0
                 for i in range(len(self.field_chunksize)):
-                    # if self.field_chunksize[i] <= 1:
-                    #     continue
+                    if self.field_chunksize[i] <= 1:
+                        continue
                     self.chunk_mapping[j] = self.field_chunksize[i]
                     j += 1
                 self.field_chunksize = tuple([self.chunk_mapping[i] for i in range(len(self.chunk_mapping))])
@@ -2048,16 +2048,16 @@ class NetcdfFileBuffer(object):
                     if self.field_chunksize == 'auto':
                         if data.shape[-2:] != data.chunksize[-2:]:
                             data = data.rechunk(self.field_chunksize)
-                            print(data.chunksize)
+                            # print(data.chunksize)
                         self.chunk_mapping = {}
                         chunkIndex = 0
                         timei, _, timevalue = self._is_dimension_in_dataset('time')
-                        depthi, _, depthvalue = self._is_dimension_in_dataset('depth')
+                        # depthi, _, depthvalue = self._is_dimension_in_dataset('depth')
                         has_time = timei >= 0 and timevalue > 1  # and self._is_dimension_available('time')
-                        has_depth = depthi >= 0 and depthvalue > 1  # and self._is_dimension_available('depth')
+                        # has_depth = depthi >= 0 and depthvalue > 1  # and self._is_dimension_available('depth')
                         startblock = 0
                         startblock += 1 if has_time else 0
-                        startblock += 1 if has_depth else 0
+                        # startblock += 1 if has_depth else 0
                         for chunkDim in data.chunksize[startblock:]:
                             self.chunk_mapping[chunkIndex] = chunkDim
                             chunkIndex += 1
