@@ -13,6 +13,7 @@ from parcels import JITParticle
 from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
+from parcels import Variable
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -118,7 +119,7 @@ def test_nemo_3D(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_nemo_3D(chunk_mode)
     npart = 20
-    lonp = 5.2 * np.ones(npart)
+    lonp = 2.5 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
     compute_nemo_particle_advection(field_set, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
@@ -200,6 +201,37 @@ def test_diff_entry_dimensions_chunks(mode):
     compute_nemo_particle_advection(fieldset, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_3d_2dfield_sampling(mode):
+    data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
+    ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
+    vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
+    mesh_mask = data_path + 'coordinates.nc'
+
+    filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles},
+                 'V': {'lon': mesh_mask, 'lat': mesh_mask, 'data': vfiles},
+                 'nav_lon': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles[0]}}
+    variables = {'U': 'uo',
+                 'V': 'vo',
+                 'nav_lon': 'nav_lon'}
+    dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'nav_lon': {'lon': 'glamf', 'lat': 'gphif'}}
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
+    fieldset.nav_lon.data = np.ones(fieldset.nav_lon.data.shape)
+
+    class MyParticle(ptype[mode]):
+        sample_var = Variable('sample_var')
+    pset = ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
+
+    def Sample2D(particle, fieldset, time):
+        particle.sample_var += fieldset.nav_lon[time, particle.depth, particle.lat, particle.lon]
+
+    runtime, dt = 86400*4, 6*3600
+    pset.execute(pset.Kernel(AdvectionRK4) + Sample2D, runtime=runtime, dt=dt)
+    assert pset.sample_var == runtime/dt
 
 
 @pytest.mark.parametrize('mode', ['jit'])
