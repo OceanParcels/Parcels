@@ -231,19 +231,6 @@ def test_3d_2dfield_sampling(mode):
     fieldset.add_field(Field('rectilinear_2D', np.ones((2, 2)),
                              lon=np.array([-10, 20]), lat=np.array([40, 80]), field_chunksize=False))
 
-    for f in fieldset.get_fields():
-        if type(f) in [VectorField, NestedField, SummedField]:  # or not f.grid.defer_load:
-            continue
-        g = f.grid
-        npart = 1
-        npart = [npart * k for k in f.nchunks[1:]]
-        print("Field '{}': grid type: {}; grid chunksize: {}; grid mesh: {}; field N partitions: {}; field nchunks: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(f.name, g.gtype, g.master_chunksize, g.mesh, npart, f.nchunks, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
-    for i in range(0, len(fieldset.gridset.grids)):
-        g = fieldset.gridset.grids[i]
-        print(
-            "Grid {}: grid type: {}; grid chunksize: {}; grid mesh: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(
-                i, g.gtype, g.master_chunksize, g.mesh, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
-
     class MyParticle(ptype[mode]):
         sample_var_curvilinear = Variable('sample_var_curvilinear')
         sample_var_rectilinear = Variable('sample_var_rectilinear')
@@ -267,6 +254,9 @@ def test_3d_2dfield_sampling(mode):
         npart = 1
         npart = [npart * k for k in f.nchunks[1:]]
         print("Field '{}': grid type: {}; grid chunksize: {}; grid mesh: {}; field N partitions: {}; field nchunks: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(f.name, g.gtype, g.master_chunksize, g.mesh, npart, f.nchunks, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
+    for i in range(0, len(fieldset.gridset.grids)):
+        g = fieldset.gridset.grids[i]
+        print("Grid {}: grid type: {}; grid chunksize: {}; grid mesh: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(i, g.gtype, g.master_chunksize, g.mesh, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
 
     assert pset.sample_var_rectilinear == runtime/dt
     assert pset.sample_var_curvilinear == runtime/dt
@@ -305,7 +295,8 @@ def test_diff_entry_chunksize_error_nemo_simple(mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
-    # ==== this test is expected to fall-back to a pre-defined minimal chunk as the requested chunks don't match, or throw a value error ==== #
+    # ==== this test is expected to fall-back to a pre-defined minimal chunk as ==== #
+    # ==== the requested chunks don't match, or throw a value error.            ==== #
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
     vfiles = sorted(glob(data_path + 'ORCA*V.nc'))

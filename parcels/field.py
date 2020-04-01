@@ -415,9 +415,6 @@ class Field(object):
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
 
-        # if 'field_chunksize' in kwargs.keys():
-        #     print("Field {} - chunksize: {} VS. grid chunksize: {}".format(variable, kwargs['field_chunksize'], grid.master_chunksize))
-
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
 
@@ -973,8 +970,6 @@ class Field(object):
         # 2: is loaded and was touched last C call
         # 3: is loaded
         if isinstance(self.data, da.core.Array):
-            # len_grid_loadchunk = self.grid.load_chunk.shape[0]
-            # len_field_datachunks = len(self.data_chunks) if isinstance(self.data_chunks, list) else self.data_chunks.shape[0]
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
@@ -1658,7 +1653,6 @@ class NetcdfFileBuffer(object):
         init_chunk_dict = None
         if self.field_chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
-            logger.debug("Field chunk init: {}".format(init_chunk_dict))
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
             # (which we would rather want to have being auto-managed).
@@ -1772,7 +1766,8 @@ class NetcdfFileBuffer(object):
                 init_chunk_dict[depthname] = max(1, depthvalue)
         # ==== closing check-opened requested dataset ==== #
         self.dataset.close()
-        # ==== check if the chunksize reading is successfull. if not, load the file ONCE really into memory and deduce the chunking from the array dims ==== #
+        # ==== check if the chunksize reading is successfull. if not, load the file ONCE really into memory and ==== #
+        # ==== deduce the chunking from the array dims.                                                         ==== #
         try:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
         except:
@@ -1851,7 +1846,6 @@ class NetcdfFileBuffer(object):
             for i in range(len(self.field_chunksize)):
                 self.chunk_mapping[i] = self.field_chunksize[i]
         else:
-            # ====== 'time' is strictly excluded from the reading dimensions as it is implicitly organized with the data ====== #
             timei, timename, timevalue = self._is_dimension_in_chunksize_request('time')
             dtimei, dtimename, dtimevalue = self._is_dimension_in_dataset('time')
             depthi, depthname, depthvalue = self._is_dimension_in_chunksize_request('depth')
@@ -1990,7 +1984,6 @@ class NetcdfFileBuffer(object):
                 self.field_chunksize = tuple([self.chunk_mapping[i] for i in range(len(self.chunk_mapping))])
             else:
                 self._chunksize_to_chunkmap()
-            print(self.chunk_mapping)
         data = self.dataset[self.name]
         libcheck = data.data if isinstance(data, xr.DataArray) else data
         lib = np if isinstance(libcheck, np.ndarray) else da
@@ -2054,16 +2047,9 @@ class NetcdfFileBuffer(object):
                     if self.field_chunksize == 'auto':
                         if data.shape[-2:] != data.chunksize[-2:]:
                             data = data.rechunk(self.field_chunksize)
-                            # print(data.chunksize)
                         self.chunk_mapping = {}
                         chunkIndex = 0
-                        # timei, _, timevalue = self._is_dimension_in_dataset('time')
-                        # depthi, _, depthvalue = self._is_dimension_in_dataset('depth')
-                        # has_time = timei >= 0 and timevalue > 1  # and self._is_dimension_available('time')
-                        # has_depth = depthi >= 0 and depthvalue > 1  # and self._is_dimension_available('depth')
                         startblock = 0
-                        # startblock += 1 if has_time else 0
-                        # startblock += 1 if has_depth else 0
                         for chunkDim in data.chunksize[startblock:]:
                             self.chunk_mapping[chunkIndex] = chunkDim
                             chunkIndex += 1

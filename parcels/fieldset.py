@@ -287,7 +287,6 @@ class FieldSet(object):
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                # if procdims == dims and procinds == inds and procpaths == nowpaths:
                 if procdims == dims and procinds == inds:
                     processedGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
@@ -298,18 +297,14 @@ class FieldSet(object):
                             if dim in dimensions:
                                 processedGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if processedGrid:
-                        # logger.info("Field '{}' shares a grid with '{}'\n".format(var, procvar))
-                        # print("Field '{}' shares a grid with '{}'\n".format(var, procvar))
                         grid = fields[procvar].grid
                         # ==== check here that the dims of field_chunksize are the same ==== #
                         if grid.master_chunksize is not None:
                             res = False
                             if (isinstance(chunksize, tuple) and isinstance(grid.master_chunksize, tuple)) or (isinstance(chunksize, dict) and isinstance(grid.master_chunksize, dict)):
-                                # print("chunksize {} vs. grid.master_chunksize {}".format(chunksize, grid_chunksize))
                                 res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid.master_chunksize), True)
                             else:
                                 res |= (chunksize == grid.master_chunksize)
-                            # if grid.master_chunksize != chunksize:
                             if res:
                                 grid_chunksize = grid.master_chunksize
                                 logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
