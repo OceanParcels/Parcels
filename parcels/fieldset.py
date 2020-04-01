@@ -309,7 +309,7 @@ class FieldSet(object):
                                 res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid.master_chunksize), True)
                             else:
                                 res |= (chunksize == grid.master_chunksize)
-                            #if grid.master_chunksize != chunksize:
+                            # if grid.master_chunksize != chunksize:
                             if res:
                                 grid_chunksize = grid.master_chunksize
                                 logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")

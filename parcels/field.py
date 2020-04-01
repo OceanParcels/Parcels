@@ -1845,12 +1845,12 @@ class NetcdfFileBuffer(object):
                 #     self.chunk_mapping[dim_index] = 1
                 #     dim_index += 1
 
-                #if depthi >= 0 and ddepthi >= 0:
-                #    if self._is_dimension_available('depth'):
-                #        self.chunk_mapping[dim_index] = depthvalue
-                #    else:
-                #        self.chunk_mapping[dim_index] = ddepthvalue
-                #    dim_index += 1
+                # if depthi >= 0 and ddepthi >= 0:
+                #     if self._is_dimension_available('depth'):
+                #         self.chunk_mapping[dim_index] = depthvalue
+                #     else:
+                #         self.chunk_mapping[dim_index] = ddepthvalue
+                #     dim_index += 1
 
                 if depthi >= 0 and ddepthi >= 0 and self._is_dimension_available('depth'):
                     self.chunk_mapping[dim_index] = depthvalue
