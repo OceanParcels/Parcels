@@ -2051,12 +2051,12 @@ class NetcdfFileBuffer(object):
                             # print(data.chunksize)
                         self.chunk_mapping = {}
                         chunkIndex = 0
-                        timei, _, timevalue = self._is_dimension_in_dataset('time')
+                        # timei, _, timevalue = self._is_dimension_in_dataset('time')
                         # depthi, _, depthvalue = self._is_dimension_in_dataset('depth')
-                        has_time = timei >= 0 and timevalue > 1  # and self._is_dimension_available('time')
+                        # has_time = timei >= 0 and timevalue > 1  # and self._is_dimension_available('time')
                         # has_depth = depthi >= 0 and depthvalue > 1  # and self._is_dimension_available('depth')
                         startblock = 0
-                        startblock += 1 if has_time else 0
+                        # startblock += 1 if has_time else 0
                         # startblock += 1 if has_depth else 0
                         for chunkDim in data.chunksize[startblock:]:
                             self.chunk_mapping[chunkIndex] = chunkDim
