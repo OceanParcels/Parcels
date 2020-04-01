@@ -303,18 +303,18 @@ class FieldSet(object):
                         grid = fields[procvar].grid
                         # ==== check here that the dims of field_chunksize are the same ==== #
                         if grid.master_chunksize is not None:
-                            grid_chunksize = grid.master_chunksize
                             res = False
-                            if (isinstance(chunksize, tuple) and isinstance(grid_chunksize, tuple)) or (isinstance(chunksize, dict) and isinstance(grid_chunksize, dict)):
+                            if (isinstance(chunksize, tuple) and isinstance(grid.master_chunksize, tuple)) or (isinstance(chunksize, dict) and isinstance(grid.master_chunksize, dict)):
                                 # print("chunksize {} vs. grid.master_chunksize {}".format(chunksize, grid_chunksize))
-                                res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid_chunksize), True)
+                                res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid.master_chunksize), True)
                             else:
-                                res |= (chunksize == grid_chunksize)
-                            if grid_chunksize != chunksize:
-                                if res:
-                                    logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
-                                else:
-                                    raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
+                                res |= (chunksize == grid.master_chunksize)
+                            #if grid.master_chunksize != chunksize:
+                            if res:
+                                grid_chunksize = grid.master_chunksize
+                                logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                            else:
+                                raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                         if procpaths == nowpaths:
                             dFiles = fields[procvar].dataFiles
                             break

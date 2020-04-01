@@ -1841,15 +1841,21 @@ class NetcdfFileBuffer(object):
                 self.chunk_mapping[dim_index] = lonvalue
                 dim_index += 1
             elif len(self.field_chunksize) >= 3:
-                if dtimei >= 0 and dtimevalue > 1:
-                    self.chunk_mapping[dim_index] = dtimevalue
+                # if dtimei >= 0 and dtimevalue > 1:
+                #     self.chunk_mapping[dim_index] = 1
+                #     dim_index += 1
+
+                #if depthi >= 0 and ddepthi >= 0:
+                #    if self._is_dimension_available('depth'):
+                #        self.chunk_mapping[dim_index] = depthvalue
+                #    else:
+                #        self.chunk_mapping[dim_index] = ddepthvalue
+                #    dim_index += 1
+
+                if depthi >= 0 and ddepthi >= 0 and self._is_dimension_available('depth'):
+                    self.chunk_mapping[dim_index] = depthvalue
                     dim_index += 1
-                if depthi >= 0 and ddepthi >= 0:
-                    if self._is_dimension_available('depth'):
-                        self.chunk_mapping[dim_index] = depthvalue
-                    else:
-                        self.chunk_mapping[dim_index] = ddepthvalue
-                    dim_index += 1
+
                 self.chunk_mapping[dim_index] = latvalue
                 dim_index += 1
                 self.chunk_mapping[dim_index] = lonvalue
