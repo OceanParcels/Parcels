@@ -403,27 +403,26 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_sampling_multiple_grid_sizes(mode):
-    """Sampling test that tests for FieldSet with different grid sizes
-
-    While this currently works fine in Scipy mode, it fails in JIT mode with
-    an out_of_bounds_error because there is only one (xi, yi, zi) for each particle
-    A solution would be to define xi, yi, zi for each field separately
-    """
+@pytest.mark.parametrize('Ugridfactor', [1, 10])
+def test_sampling_multiple_grid_sizes(mode, Ugridfactor):
     xdim = 10
     ydim = 20
-    gf = 10  # factor by which the resolution of U is higher than of V
-    U = Field('U', np.zeros((ydim*gf, xdim*gf), dtype=np.float32),
-              lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-              lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
+    U = Field('U', np.zeros((ydim*Ugridfactor, xdim*Ugridfactor), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*Ugridfactor, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*Ugridfactor, dtype=np.float32))
     V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
 
+    if Ugridfactor > 1:
+        assert fieldset.U.grid is not fieldset.V.grid
+    else:
+        assert fieldset.U.grid is fieldset.V.grid
     pset.execute(AdvectionRK4, runtime=10, dt=1)
     assert np.isclose(pset.lon[0], 0.8)
+    assert 0 <= pset.xi < xdim*Ugridfactor
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
