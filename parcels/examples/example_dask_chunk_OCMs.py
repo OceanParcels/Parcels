@@ -15,6 +15,7 @@ from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
+from parcels import VectorField, NestedField, SummedField
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -213,7 +214,8 @@ def test_3d_2dfield_sampling(mode):
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'data': vfiles},
-                 'nav_lon': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles[0]}}
+                 # 'nav_lon': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles[0]}}
+                 'nav_lon': {'lon': mesh_mask, 'lat': mesh_mask, 'data': [ufiles[0], ]}}
     variables = {'U': 'uo',
                  'V': 'vo',
                  'nav_lon': 'nav_lon'}
@@ -223,7 +225,20 @@ def test_3d_2dfield_sampling(mode):
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
     fieldset.nav_lon.data = np.ones(fieldset.nav_lon.data.shape)
     fieldset.add_field(Field('rectilinear_2D', np.ones((2, 2)),
-                             lon=np.array([-10, 20]), lat=np.array([40, 80])))
+                             lon=np.array([-10, 20]), lat=np.array([40, 80]), field_chunksize=False))
+
+    for f in fieldset.get_fields():
+        if type(f) in [VectorField, NestedField, SummedField]:  # or not f.grid.defer_load:
+            continue
+        g = f.grid
+        npart = 1
+        npart = [npart * k for k in f.nchunks[1:]]
+        print("Field '{}': grid type: {}; grid chunksize: {}; grid mesh: {}; field N partitions: {}; field nchunks: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(f.name, g.gtype, g.master_chunksize, g.mesh, npart, f.nchunks, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
+    for i in range(0, len(fieldset.gridset.grids)):
+        g = fieldset.gridset.grids[i]
+        print(
+            "Grid {}: grid type: {}; grid chunksize: {}; grid mesh: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(
+                i, g.gtype, g.master_chunksize, g.mesh, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
 
     class MyParticle(ptype[mode]):
         sample_var_curvilinear = Variable('sample_var_curvilinear')
@@ -231,11 +246,23 @@ def test_3d_2dfield_sampling(mode):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
 
     def Sample2D(particle, fieldset, time):
+        print("Interpolating curvilinear grid - sample=%.04f." % (particle.sample_var_curvilinear))
         particle.sample_var_curvilinear += fieldset.nav_lon[time, particle.depth, particle.lat, particle.lon]
+        print("Interpolating rectilinear grid - sample=%.04f." % (particle.sample_var_curvilinear))
         particle.sample_var_rectilinear += fieldset.rectilinear_2D[time, particle.depth, particle.lat, particle.lon]
+        print("Finished interpolation.")
 
     runtime, dt = 86400*4, 6*3600
     pset.execute(pset.Kernel(AdvectionRK4) + Sample2D, runtime=runtime, dt=dt)
+
+    for f in fieldset.get_fields():
+        if type(f) in [VectorField, NestedField, SummedField]:  # or not f.grid.defer_load:
+            continue
+        g = f.grid
+        npart = 1
+        npart = [npart * k for k in f.nchunks[1:]]
+        print("Field '{}': grid type: {}; grid chunksize: {}; grid mesh: {}; field N partitions: {}; field nchunks: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(f.name, g.gtype, g.master_chunksize, g.mesh, npart, f.nchunks, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
+
     assert pset.sample_var_rectilinear == runtime/dt
     assert pset.sample_var_curvilinear == runtime/dt
 
