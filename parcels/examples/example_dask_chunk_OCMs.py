@@ -223,7 +223,7 @@ def test_3d_2dfield_sampling(mode):
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'nav_lon': {'lon': 'glamf', 'lat': 'gphif'}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=False)
-    fieldset.nav_lon.data = np.ones(fieldset.nav_lon.data.shape)
+    fieldset.nav_lon.data = np.ones(fieldset.nav_lon.data.shape, dtype=np.float32)
     fieldset.add_field(Field('rectilinear_2D', np.ones((2, 2)),
                              lon=np.array([-10, 20]), lat=np.array([40, 80]), field_chunksize=False))
 
