@@ -41,7 +41,7 @@ class GridSet(object):
                     res |= (tmp_grid.master_chunksize == g.master_chunksize)
                 if tmp_grid.master_chunksize != g.master_chunksize:
                     if res:
-                        logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                        logger.warning_once("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
                     else:
                         raise ValueError(
                             "Conflict between grids of the same gridset: major grid chunksize and requested sibling-grid chunksize as well as their chunk-dimension names are not equal - Please apply the same chunksize to all fields in a shared grid!")

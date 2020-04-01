@@ -1705,38 +1705,44 @@ class NetcdfFileBuffer(object):
         if isinstance(self.field_chunksize, dict):
             init_chunk_dict = self.field_chunksize
         elif isinstance(self.field_chunksize, tuple):  # and (len(self.dimensions) == len(self.field_chunksize)):
-            tmp_chs = [0,] * len(self.field_chunksize)
+            tmp_chs = [0, ] * len(self.field_chunksize)
             chunk_index = len(self.field_chunksize)-1
+
             loni, lonname, _ = self._is_dimension_in_dataset('lon')
-            if loni >= 0:
+            if loni >= 0 and chunk_index >= 0:
                 init_chunk_dict[lonname] = self.field_chunksize[chunk_index]
                 tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-                chunk_index -= 1
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lon'))
+            chunk_index -= 1
+
             lati, latname, _ = self._is_dimension_in_dataset('lat')
-            if lati >= 0:
+            if lati >= 0 and chunk_index >= 0:
                 init_chunk_dict[latname] = self.field_chunksize[chunk_index]
                 tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-                chunk_index -= 1
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lat'))
+            chunk_index -= 1
+
             depthi, depthname, _ = self._is_dimension_in_dataset('depth')
-            if depthi >= 0 and chunk_index >= 0 and self._is_dimension_available('depth'):
-                init_chunk_dict[depthname] = self.field_chunksize[chunk_index]
-                tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-                chunk_index -= 1
+            if depthi >= 0 and chunk_index >= 0:
+                if self._is_dimension_available('depth'):
+                    init_chunk_dict[depthname] = self.field_chunksize[chunk_index]
+                    tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('depth'))
+            chunk_index -= 1
+
             timei, timename, _ = self._is_dimension_in_dataset('time')
-            if timei >= 0 and chunk_index >= 0 and self._is_dimension_available('time'):
-                init_chunk_dict[timename] = self.field_chunksize[chunk_index]
-                tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-                chunk_index -= 1
+            if timei >= 0 and chunk_index >= 0:
+                if self._is_dimension_available('time'):
+                    init_chunk_dict[timename] = self.field_chunksize[chunk_index]
+                    tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('time'))
-            # ==== re-arrange the tupe and correct for empty dimensions ==== #
+            chunk_index -= 1
 
+            # ==== re-arrange the tupe and correct for empty dimensions ==== #
             for chunk_index in range(len(self.field_chunksize)-1, -1, -1):
                 if tmp_chs[chunk_index] < 1:
                     tmp_chs.pop(chunk_index)
@@ -1891,7 +1897,7 @@ class NetcdfFileBuffer(object):
             self.field_chunksize[self.dimensions['lat']] = chunk_map[chunk_dim_index]
             chunk_dim_index += 1
             self.field_chunksize[self.dimensions['lon']] = chunk_map[chunk_dim_index]
-        elif len(chunk_map) >= 4:  #original indices [-1, 0, 1, 2]
+        elif len(chunk_map) >= 4:
             self.field_chunksize[self.dimensions['time']] = chunk_map[0]
             self.field_chunksize[self.dimensions['depth']] = chunk_map[1]
             self.field_chunksize[self.dimensions['lat']] = chunk_map[2]
