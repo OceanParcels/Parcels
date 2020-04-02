@@ -1478,12 +1478,12 @@ class VectorField(object):
         if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "&particles->xi[p], &particles->yi[p], &particles->zi[p], &particles->ti[p], &%s, &%s, &%s, %s)" \
+                   "&particles->xi[p*ngrid], &particles->yi[p*ngrid], &particles->zi[p*ngrid], &particles->ti[p*ngrid], &%s, &%s, &%s, %s)" \
                    % (varU, varV, varW, U.interp_method.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "&particles->xi[p], &particles->yi[p], &particles->zi[p], &particles->ti[p], &%s, &%s, %s)" \
+                   "&particles->xi[p*ngrid], &particles->yi[p*ngrid], &particles->zi[p*ngrid], &particles->ti[p*ngrid], &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
 
 

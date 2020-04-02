@@ -197,6 +197,18 @@ def test_pset_repeatdt_custominit(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_stop_simulation(fieldset, mode):
+    pset = ParticleSet(fieldset, lon=0, lat=0, pclass=ptype[mode])
+
+    def Delete(particle, fieldset, time):
+        if time == 4:
+            return ErrorCode.StopExecution
+
+    pset.execute(Delete, dt=1, runtime=21)
+    assert pset.time == 4
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
     lat = np.linspace(1, 0, npart, dtype=np.float32)
