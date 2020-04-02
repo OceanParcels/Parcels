@@ -138,7 +138,65 @@ class FieldSet(object):
             raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
+
+            if (isinstance(field.data, DeferredArray) or isinstance(field.data, da.core.Array)) and len(self.get_fields()) > 0:
+                # ==== check for inhabiting the same grid, and homogenise the grid chunking ==== #
+                g_set = field.grid
+                grid_chunksize = field.field_chunksize
+                dFiles = field.dataFiles
+                is_processed_grid = False
+                is_same_grid = False
+                for fld in self.get_fields():       # avoid re-processing/overwriting existing and working fields
+                    if fld.grid == g_set:
+                        is_processed_grid |= True
+                        break
+                if not is_processed_grid:
+                    for fld in self.get_fields():
+                        procdims = fld.dimensions
+                        procinds = fld.indices
+                        procpaths = fld.dataFiles
+                        nowpaths = field.dataFiles
+                        if procdims == field.dimensions and procinds == field.indices:
+                            is_same_grid = False
+                            if field.grid.mesh == fld.grid.mesh:
+                                is_same_grid = True
+                            else:
+                                is_same_grid = True
+                                for dim in ['lon', 'lat', 'depth', 'time']:
+                                    if dim in field.dimensions.keys() and dim in fld.dimensions.keys():
+                                        is_same_grid &= (field.dimensions[dim] == fld.dimensions[dim])
+                                fld_g_dims = [fld.grid.tdim, fld.grid.zdim, fld.ydim, fld.xdim]
+                                field_g_dims = [field.grid.tdim, field.grid.zdim, field.grid.ydim, field.grid.xdim]
+                                for i in range(0, len(fld_g_dims)):
+                                    is_same_grid &= (field_g_dims[i] == fld_g_dims[i])
+                            if is_same_grid:
+                                g_set = fld.grid
+                                # ==== check here that the dims of field_chunksize are the same ==== #
+                                if g_set.master_chunksize is not None:
+                                    res = False
+                                    if (isinstance(field.field_chunksize, tuple) and isinstance(g_set.master_chunksize, tuple)) or (isinstance(field.field_chunksize, dict) and isinstance(g_set.master_chunksize, dict)):
+                                        res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, field.field_chunksize, g_set.master_chunksize), True)
+                                    else:
+                                        res |= (field.field_chunksize == g_set.master_chunksize)
+                                    if res:
+                                        grid_chunksize = g_set.master_chunksize
+                                        if field.grid.master_chunksize is not None:
+                                            logger.warning_once("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                                    else:
+                                        raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
+                                if procpaths == nowpaths:
+                                    dFiles = fld.dataFiles
+                                    break
+                    if is_same_grid:
+                        if field.grid != g_set:
+                            field.grid = g_set
+                        if field.field_chunksize != grid_chunksize:
+                            field.field_chunksize = grid_chunksize
+                        if field.dataFiles != dFiles:
+                            field.dataFiles = dFiles
+
             self.gridset.add_grid(field)
+
             field.fieldset = self
 
     def add_vector_field(self, vfield):
@@ -307,7 +365,7 @@ class FieldSet(object):
                                 res |= (chunksize == grid.master_chunksize)
                             if res:
                                 grid_chunksize = grid.master_chunksize
-                                logger.warning("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                                logger.warning_once("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
                             else:
                                 raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                         if procpaths == nowpaths:

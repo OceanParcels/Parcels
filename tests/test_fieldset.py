@@ -240,6 +240,91 @@ def test_add_duplicate_field(dupobject):
     assert error_thrown
 
 
+def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
+    """ Test for subsetting fieldset from file using indices dict. """
+    data, dimensions = generate_fieldset(100, 100)
+    filepath1 = tmpdir.join(filename+'_1')
+    fieldset1 = FieldSet.from_data(data, dimensions)
+    fieldset1.write(filepath1)
+
+    ufiles = [filepath1+'U.nc', ] * 4
+    vfiles = [filepath1+'V.nc', ] * 4
+    timestamps = np.arange(0, 4, 1) * 86400.0
+    timestamps = np.expand_dims(timestamps, 1)
+    files = {'U': ufiles, 'V': vfiles}
+    variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
+    dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
+    chs = 'auto'
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+
+    assert fieldset.gridset.size == 1
+    assert fieldset.U.grid == fieldset.V.grid
+    assert fieldset.U.grid.master_chunksize == fieldset.V.grid.master_chunksize
+    assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
+
+
+def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
+    """ Test for subsetting fieldset from file using indices dict. """
+    data, dimensions = generate_fieldset(100, 100)
+    filepath1 = tmpdir.join(filename+'_1')
+    fieldset1 = FieldSet.from_data(data, dimensions)
+    fieldset1.write(filepath1)
+    data, dimensions = generate_fieldset(50, 50)
+    filepath2 = tmpdir.join(filename + '_2')
+    fieldset2 = FieldSet.from_data(data, dimensions)
+    fieldset2.write(filepath2)
+
+    ufiles = [filepath1+'U.nc', ] * 4
+    vfiles = [filepath2+'V.nc', ] * 4
+    timestamps = np.arange(0, 4, 1) * 86400.0
+    timestamps = np.expand_dims(timestamps, 1)
+    files = {'U': ufiles, 'V': vfiles}
+    variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
+    dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
+    chs = 'auto'
+
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+    assert fieldset.gridset.size == 2
+    assert fieldset.U.grid != fieldset.V.grid
+
+
+def test_fieldset_diffgrids_from_file_data(tmpdir, filename='test_subsets'):
+    """ Test for subsetting fieldset from file using indices dict. """
+    data, dimensions = generate_fieldset(100, 100)
+    filepath = tmpdir.join(filename)
+    fieldset_data = FieldSet.from_data(data, dimensions)
+    fieldset_data.write(filepath)
+    field_data = fieldset_data.U
+    field_data.name = "B"
+
+    ufiles = [filepath+'U.nc', ] * 4
+    vfiles = [filepath+'V.nc', ] * 4
+    timestamps = np.arange(0, 4, 1) * 86400.0
+    timestamps = np.expand_dims(timestamps, 1)
+    files = {'U': ufiles, 'V': vfiles}
+    variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
+    dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
+    chs = 'auto'
+    fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+
+    fieldset_file.add_field(field_data, "B")
+    assert len(fieldset_file.get_fields()) == 3
+    assert fieldset_file.gridset.size == 2
+    assert fieldset_file.U.grid != fieldset_file.B.grid
+
+
+def test_fieldset_samegrids_from_data(tmpdir, filename='test_subsets'):
+    """ Test for subsetting fieldset from file using indices dict. """
+    data, dimensions = generate_fieldset(100, 100)
+    filepath1 = tmpdir.join(filename+"_1")
+    fieldset1 = FieldSet.from_data(data, dimensions)
+    field_data = fieldset1.U
+    field_data.name = "B"
+    fieldset1.add_field(field_data, "B")
+    assert fieldset1.gridset.size == 1
+    assert fieldset1.U.grid == fieldset1.B.grid
+
+
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_fieldset_celledgesizes(mesh):
     data, dimensions = generate_fieldset(10, 7)
@@ -438,7 +523,7 @@ def test_from_netcdf_field_chunking(mode, time_periodic, field_chunksize, deferL
 
 
 @pytest.mark.parametrize('datetype', ['float', 'datetime64'])
-def test_timestaps(datetype, tmpdir):
+def test_timestamps(datetype, tmpdir):
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
     data2, dims2 = generate_fieldset(10, 10, 1, 4)
     if datetype == 'float':
