@@ -498,7 +498,7 @@ class ParticleSet(object):
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
         for d in self.particle_data:
-            self.particle_data[d] = self.particle_data[d][...,~indices]
+            self.particle_data[d] = self.particle_data[d][..., ~indices]
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
