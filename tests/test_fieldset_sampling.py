@@ -161,12 +161,14 @@ def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
             'start': startfield}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
-                                  start_field=fieldset.start)
     densfield = Field(name='densfield', data=np.zeros((xdim+1, ydim+1), dtype=np.float32),
                       lon=np.linspace(-1./(xdim*2), 1.+1./(xdim*2), xdim+1, dtype=np.float32),
                       lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32), transpose=True)
-    pdens = pset.density(field=densfield, relative=True)[:-1, :-1]
+
+    fieldset.add_field(densfield)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
+                                  start_field=fieldset.start)
+    pdens = pset.density(field_name='densfield', relative=True)[:-1, :-1]
     assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
 
 

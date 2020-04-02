@@ -693,7 +693,7 @@ class ParticleSet(object):
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
                       projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
-    def density(self, field=None, particle_val=None, relative=False, area_scale=False):
+    def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
 
@@ -708,7 +708,23 @@ class ParticleSet(object):
                            (in m^2) of each grid cell. Default is False
         """
 
-        field = field if field else self.fieldset.U
+        field_name = field_name if field_name else "U"
+        field = getattr(self.fieldset, field_name)
+
+        f_str = """
+def search_kernel(particle, fieldset, time):
+    x = fieldset.{}[time, particle.depth, particle.lat, particle.lon]
+        """.format(field_name)
+
+        k = Kernel(
+            self.fieldset,
+            self.ptype,
+            funcname="search_kernel",
+            funcvars=["particle", "fieldset", "time", "x"],
+            funccode=f_str,
+        )
+        self.execute(k, runtime=0)
+
         if isinstance(particle_val, str):
             particle_val = self.particle_data[particle_val]
         else:
