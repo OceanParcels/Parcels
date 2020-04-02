@@ -775,15 +775,11 @@ static inline ErrorCode temporal_interpolationUVW_c_grid(type_coord x, type_coor
 
 
 static inline ErrorCode temporal_interpolation(type_coord x, type_coord y, type_coord z, double time, CField *f,
-                                               void *vxi, void *vyi, void *vzi, void *vti,
+                                               int *xi, int *yi, int *zi, int *ti,
                                                float *value, int interp_method)
 {
   CGrid *_grid = f->grid;
   GridCode gcode = _grid->gtype;
-  int *xi = (int *) vxi;
-  int *yi = (int *) vyi;
-  int *zi = (int *) vzi;
-  int *ti = (int *) vti;
 
   if (gcode == RECTILINEAR_Z_GRID || gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_Z_GRID || gcode == CURVILINEAR_S_GRID)
     return temporal_interpolation_structured_grid(x, y, z, time, f, gcode, xi, yi, zi, ti, value, interp_method);
@@ -795,30 +791,26 @@ static inline ErrorCode temporal_interpolation(type_coord x, type_coord y, type_
 
 static inline ErrorCode temporal_interpolationUV(type_coord x, type_coord y, type_coord z, double time,
                                                  CField *U, CField *V,
-                                                 void *vxi, void *vyi, void *vzi, void *vti,
+                                                 int *xi, int *yi, int *zi, int *ti,
                                                  float *valueU, float *valueV, int interp_method)
 {
   ErrorCode err;
   if (interp_method == CGRID_VELOCITY){
     CGrid *_grid = U->grid;
     GridCode gcode = _grid->gtype;
-    int *xi = (int *) vxi;
-    int *yi = (int *) vyi;
-    int *zi = (int *) vzi;
-    int *ti = (int *) vti;
     err = temporal_interpolationUV_c_grid(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV); CHECKERROR(err);
     return SUCCESS;
   }
   else{
-    err = temporal_interpolation(x, y, z, time, U, vxi, vyi, vzi, vti, valueU, interp_method); CHECKERROR(err);
-    err = temporal_interpolation(x, y, z, time, V, vxi, vyi, vzi, vti, valueV, interp_method); CHECKERROR(err);
+    err = temporal_interpolation(x, y, z, time, U, xi, yi, zi, ti, valueU, interp_method); CHECKERROR(err);
+    err = temporal_interpolation(x, y, z, time, V, xi, yi, zi, ti, valueV, interp_method); CHECKERROR(err);
     return SUCCESS;
   }
 }
 
 static inline ErrorCode temporal_interpolationUVW(type_coord x, type_coord y, type_coord z, double time,
                                                   CField *U, CField *V, CField *W,
-                                                  void *vxi, void *vyi, void *vzi, void *vti,
+                                                  int *xi, int *yi, int *zi, int *ti,
                                                   float *valueU, float *valueV, float *valueW, int interp_method)
 {
   ErrorCode err;
@@ -826,18 +818,14 @@ static inline ErrorCode temporal_interpolationUVW(type_coord x, type_coord y, ty
     CGrid *_grid = U->grid;
     GridCode gcode = _grid->gtype;
     if (gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_S_GRID){
-      int *xi = (int *) vxi;
-      int *yi = (int *) vyi;
-      int *zi = (int *) vzi;
-      int *ti = (int *) vti;
       err = temporal_interpolationUVW_c_grid(x, y, z, time, U, V, W, gcode, xi, yi, zi, ti, valueU, valueV, valueW); CHECKERROR(err);
       return SUCCESS;
     }
   }
-  err = temporal_interpolationUV(x, y, z, time, U, V, vxi, vyi, vzi, vti, valueU, valueV, interp_method); CHECKERROR(err);
+  err = temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method); CHECKERROR(err);
   if (interp_method == BGRID_VELOCITY)
     interp_method = BGRID_W_VELOCITY;
-  err = temporal_interpolation(x, y, z, time, W, vxi, vyi, vzi, vti, valueW, interp_method); CHECKERROR(err);
+  err = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method); CHECKERROR(err);
   return SUCCESS;
 }
 

@@ -1,4 +1,4 @@
-from ctypes import Structure, POINTER
+from ctypes import cast, Structure, POINTER
 import time as time_module
 from datetime import date
 from datetime import datetime
@@ -220,7 +220,10 @@ class ParticleSet(object):
         self.particle_data = {}
         initialised = set()
         for v in self.ptype.variables:
-            self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
+            if v.name in ['xi', 'yi', 'zi', 'ti']:
+                self.particle_data[v.name] = np.empty((len(lon), fieldset.gridset.size), dtype=v.dtype)
+            else:
+                self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
@@ -295,7 +298,12 @@ class ParticleSet(object):
         class CParticles(Structure):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self.ptype.variables]
 
-        cdata = [np.ctypeslib.as_ctypes(self.particle_data[v.name]) for v in self.ptype.variables]
+        def cdata_for(v):
+            cdata_array = np.ctypeslib.as_ctypes(self.particle_data[v.name])
+            # cast to bare pointer
+            return cast(cdata_array, POINTER(np.ctypeslib.as_ctypes_type(v.dtype)))
+
+        cdata = [cdata_for(v) for v in self.ptype.variables]
         cstruct = CParticles(*cdata)
         return cstruct
 

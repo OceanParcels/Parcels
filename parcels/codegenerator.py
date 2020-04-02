@@ -888,6 +888,7 @@ class LoopGenerator(object):
         ccode += [str(c.Include("math.h", system=False))]
         ccode += [str(c.Assign('double _next_dt', '0'))]
         ccode += [str(c.Assign('size_t _next_dt_set', '0'))]
+        ccode += [str(c.Assign('const int ngrid', str(self.fieldset.gridset.size)))]
 
         # ==== Generate type definition for particle type ==== #
         vdeclp = [c.Pointer(c.POD(v.dtype, v.name)) for v in self.ptype.variables]

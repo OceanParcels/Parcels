@@ -422,7 +422,7 @@ def test_sampling_multiple_grid_sizes(mode, Ugridfactor):
         assert fieldset.U.grid is fieldset.V.grid
     pset.execute(AdvectionRK4, runtime=10, dt=1)
     assert np.isclose(pset.lon[0], 0.8)
-    assert 0 <= pset.xi < xdim*Ugridfactor
+    assert np.all((0 <= pset.xi) & (pset.xi < xdim*Ugridfactor))
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
