@@ -161,12 +161,14 @@ def test_pset_from_field(mode, xdim=10, ydim=20, npart=10000):
             'start': startfield}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
-                                  start_field=fieldset.start)
     densfield = Field(name='densfield', data=np.zeros((xdim+1, ydim+1), dtype=np.float32),
                       lon=np.linspace(-1./(xdim*2), 1.+1./(xdim*2), xdim+1, dtype=np.float32),
                       lat=np.linspace(-1./(ydim*2), 1.+1./(ydim*2), ydim+1, dtype=np.float32), transpose=True)
-    pdens = pset.density(field=densfield, relative=True)[:-1, :-1]
+
+    fieldset.add_field(densfield)
+    pset = ParticleSet.from_field(fieldset, size=npart, pclass=pclass(mode),
+                                  start_field=fieldset.start)
+    pdens = pset.density(field_name='densfield', relative=True)[:-1, :-1]
     assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
 
 
@@ -403,27 +405,50 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_sampling_multiple_grid_sizes(mode):
-    """Sampling test that tests for FieldSet with different grid sizes
-
-    While this currently works fine in Scipy mode, it fails in JIT mode with
-    an out_of_bounds_error because there is only one (xi, yi, zi) for each particle
-    A solution would be to define xi, yi, zi for each field separately
-    """
-    xdim = 10
-    ydim = 20
-    gf = 10  # factor by which the resolution of U is higher than of V
-    U = Field('U', np.zeros((ydim*gf, xdim*gf), dtype=np.float32),
-              lon=np.linspace(0., 1., xdim*gf, dtype=np.float32),
-              lat=np.linspace(0., 1., ydim*gf, dtype=np.float32))
+@pytest.mark.parametrize('ugridfactor', [1, 10])
+def test_sampling_multiple_grid_sizes(mode, ugridfactor):
+    xdim, ydim = 10, 20
+    U = Field('U', np.zeros((ydim*ugridfactor, xdim*ugridfactor), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*ugridfactor, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*ugridfactor, dtype=np.float32))
     V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
 
+    if ugridfactor > 1:
+        assert fieldset.U.grid is not fieldset.V.grid
+    else:
+        assert fieldset.U.grid is fieldset.V.grid
     pset.execute(AdvectionRK4, runtime=10, dt=1)
     assert np.isclose(pset.lon[0], 0.8)
+    assert np.all((0 <= pset.xi) & (pset.xi < xdim*ugridfactor))
+
+
+def test_multiple_grid_addlater_error():
+    xdim, ydim = 10, 20
+    U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+
+    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])
+
+    P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*10, dtype=np.float32))
+    fieldset.add_field(P)
+
+    fail = False
+    try:
+        pset.execute(AdvectionRK4, runtime=10, dt=1)
+    except:
+        fail = True
+    assert fail
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
