@@ -15,8 +15,6 @@ from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
-from parcels import VectorField, NestedField, SummedField
-from parcels.tools.loggers import logger
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -206,11 +204,8 @@ def test_diff_entry_dimensions_chunks(mode):
     assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
 
 
-# ==== TO BE EXTERNALIZED OR CHECKED WHEN #782 IS FIXED ==== #
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_3d_2dfield_sampling(mode):
-    logger.warning("Test is to be re-enabled after #782 is fixed to test tertiary effects.")
-    return True
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
     vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
@@ -237,26 +232,11 @@ def test_3d_2dfield_sampling(mode):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=2.5, lat=52)
 
     def Sample2D(particle, fieldset, time):
-        print("Interpolating curvilinear grid - sample=%.04f." % (particle.sample_var_curvilinear))
         particle.sample_var_curvilinear += fieldset.nav_lon[time, particle.depth, particle.lat, particle.lon]
-        # print("Interpolating rectilinear grid - sample=%.04f." % (particle.sample_var_curvilinear))
-        # particle.sample_var_rectilinear += fieldset.rectilinear_2D[time, particle.depth, particle.lat, particle.lon]
-        print("Finished interpolation.")
+        particle.sample_var_rectilinear += fieldset.rectilinear_2D[time, particle.depth, particle.lat, particle.lon]
 
     runtime, dt = 86400*4, 6*3600
     pset.execute(pset.Kernel(AdvectionRK4) + Sample2D, runtime=runtime, dt=dt)
-    print(pset.xi)
-
-    for f in fieldset.get_fields():
-        if type(f) in [VectorField, NestedField, SummedField]:  # or not f.grid.defer_load:
-            continue
-        g = f.grid
-        npart = 1
-        npart = [npart * k for k in f.nchunks[1:]]
-        print("Field '{}': grid type: {}; grid chunksize: {}; grid mesh: {}; field N partitions: {}; field nchunks: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(f.name, g.gtype, g.master_chunksize, g.mesh, npart, f.nchunks, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
-    for i in range(0, len(fieldset.gridset.grids)):
-        g = fieldset.gridset.grids[i]
-        print("Grid {}: grid type: {}; grid chunksize: {}; grid mesh: {}; grid chunk_info: {}; grid load_chunk: {}; grid layout: {}".format(i, g.gtype, g.master_chunksize, g.mesh, g.chunk_info, g.load_chunk, (g.tdim, g.zdim, g.ydim, g.xdim)))
 
     assert pset.sample_var_rectilinear == runtime/dt
     assert pset.sample_var_curvilinear == runtime/dt
