@@ -405,26 +405,50 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-@pytest.mark.parametrize('Ugridfactor', [1, 10])
-def test_sampling_multiple_grid_sizes(mode, Ugridfactor):
-    xdim = 10
-    ydim = 20
-    U = Field('U', np.zeros((ydim*Ugridfactor, xdim*Ugridfactor), dtype=np.float32),
-              lon=np.linspace(0., 1., xdim*Ugridfactor, dtype=np.float32),
-              lat=np.linspace(0., 1., ydim*Ugridfactor, dtype=np.float32))
+@pytest.mark.parametrize('ugridfactor', [1, 10])
+def test_sampling_multiple_grid_sizes(mode, ugridfactor):
+    xdim, ydim = 10, 20
+    U = Field('U', np.zeros((ydim*ugridfactor, xdim*ugridfactor), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*ugridfactor, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*ugridfactor, dtype=np.float32))
     V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
     pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
 
-    if Ugridfactor > 1:
+    if ugridfactor > 1:
         assert fieldset.U.grid is not fieldset.V.grid
     else:
         assert fieldset.U.grid is fieldset.V.grid
     pset.execute(AdvectionRK4, runtime=10, dt=1)
     assert np.isclose(pset.lon[0], 0.8)
-    assert np.all((0 <= pset.xi) & (pset.xi < xdim*Ugridfactor))
+    assert np.all((0 <= pset.xi) & (pset.xi < xdim*ugridfactor))
+
+
+def test_multiple_grid_addlater_error():
+    xdim, ydim = 10, 20
+    U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+
+    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])
+
+    P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*10, dtype=np.float32))
+    fieldset.add_field(P)
+
+    fail = False
+    try:
+        pset.execute(AdvectionRK4, runtime=10, dt=1)
+    except:
+        fail = True
+    assert fail
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
