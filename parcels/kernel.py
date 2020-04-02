@@ -384,6 +384,8 @@ class Kernel(object):
             # Apply recovery kernel
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
+                if particles.state == ErrorCode.StopExecution:
+                    return
                 if particles.state == ErrorCode.Repeat:
                     particles.set_state(ErrorCode.Evaluate)
                 elif particles.state in recovery_map:
