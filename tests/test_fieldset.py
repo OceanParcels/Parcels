@@ -316,7 +316,6 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, filename='test_subsets'):
 def test_fieldset_samegrids_from_data(tmpdir, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
-    filepath1 = tmpdir.join(filename+"_1")
     fieldset1 = FieldSet.from_data(data, dimensions)
     field_data = fieldset1.U
     field_data.name = "B"

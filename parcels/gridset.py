@@ -26,7 +26,7 @@ class GridSet(object):
             sameGrid = True
             sameDims = True
             if grid.time_origin != g.time_origin:
-                sameDims=False
+                sameDims = False
                 continue
             for attr in ['lon', 'lat', 'depth', 'time']:
                 gattr = getattr(g, attr)
