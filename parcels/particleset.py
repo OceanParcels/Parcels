@@ -579,12 +579,14 @@ class ParticleSet(object):
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
+        execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
             endtime = _starttime
             logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
                                 "The kernels will be executed once, without incrementing time")
+            execute_once = True
 
         self.particle_data['dt'][:] = dt
 
@@ -629,7 +631,8 @@ class ParticleSet(object):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
+                                execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
