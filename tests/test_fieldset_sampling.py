@@ -403,7 +403,6 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
         with pytest.raises(RuntimeError):
             pset.execute(k_sample_p, runtime=0.1, dt=0.1)
 
-
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('ugridfactor', [1, 10])
 def test_sampling_multiple_grid_sizes(mode, ugridfactor):
