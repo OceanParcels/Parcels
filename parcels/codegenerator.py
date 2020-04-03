@@ -1,11 +1,11 @@
 import ast
 import collections
 import math
+import numpy as np
 import random
 from copy import copy
 
 import cgen as c
-import numpy as np
 
 from parcels.field import Field
 from parcels.field import NestedField

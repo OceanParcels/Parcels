@@ -2,6 +2,7 @@ from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable,
 from parcels.field import Field, VectorField
 from parcels.tools.converters import TimeConverter, _get_cftime_calendars, _get_cftime_datetimes, UnitConverter, GeographicPolar
 import dask.array as da
+import dask
 from datetime import timedelta as delta
 import datetime
 import numpy as np
@@ -354,6 +355,11 @@ def test_vector_fields(mode, swapUV):
 @pytest.mark.parametrize('field_chunksize', [False, 'auto', (1, 32, 32)])
 @pytest.mark.parametrize('with_GC', [False, True])
 def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, with_GC):
+    if field_chunksize == 'auto':
+        dask.config.set({'array.chunk-size': '2MiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
+
     class PerformanceLog():
         samples = []
         memory_steps = []
@@ -432,7 +438,7 @@ def test_from_netcdf_field_chunking(mode, time_periodic, field_chunksize, deferL
 
 
 @pytest.mark.parametrize('datetype', ['float', 'datetime64'])
-def test_timestaps(datetype, tmpdir):
+def test_timestamps(datetype, tmpdir):
     data1, dims1 = generate_fieldset(10, 10, 1, 10)
     data2, dims2 = generate_fieldset(10, 10, 1, 4)
     if datetype == 'float':

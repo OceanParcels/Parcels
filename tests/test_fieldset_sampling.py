@@ -403,6 +403,28 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
+@pytest.mark.parametrize('ugridfactor', [1, 10])
+def test_sampling_multiple_grid_sizes(mode, ugridfactor):
+    xdim, ydim = 10, 20
+    U = Field('U', np.zeros((ydim*ugridfactor, xdim*ugridfactor), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*ugridfactor, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*ugridfactor, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=[0.8], lat=[0.9])
+
+    if ugridfactor > 1:
+        assert fieldset.U.grid is not fieldset.V.grid
+    else:
+        assert fieldset.U.grid is fieldset.V.grid
+    pset.execute(AdvectionRK4, runtime=10, dt=1)
+    assert np.isclose(pset[0].lon, 0.8)
+    assert np.all((pset[0].xi >= 0) & (pset[0].xi < xdim*ugridfactor))
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_sampling_multiple_grid_sizes(mode):
     """Sampling test that tests for FieldSet with different grid sizes
 
