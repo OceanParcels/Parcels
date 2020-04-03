@@ -431,19 +431,21 @@ def test_sampling_multigrids_non_vectorfield(mode):
         particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
+    kernels = pset.Kernel(AdvectionRK4)
     pset.execute(kernels, runtime=10, dt=1)
     assert np.allclose(pset.sample_var, 10.0)
-    print(pset.xi)
-    print(pset.yi)
-    assert len(pset.xi.shape) == 2
-    assert pset.xi.shape[0] == len(pset.lon)
-    assert pset.xi.shape[1] == len(fieldset.get_fields())
-    assert np.all((pset.xi >= 0) & (pset.xi[fieldset.B.grid.igrid] < xdim * 4))
-    assert np.all((pset.xi >= 0) & (pset.xi[0] < xdim))
-    assert pset.yi.shape[0] == len(pset.lon)
-    assert pset.yi.shape[1] == len(fieldset.get_fields())
-    assert np.all((pset.yi >= 0) & (pset.yi[fieldset.B.grid.igrid] < ydim * 3))
-    assert np.all((pset.yi >= 0) & (pset.yi[0] < ydim))
+    if mode == 'jit':
+        print(pset.xi)
+        print(pset.yi)
+        assert len(pset.xi.shape) == 2
+        assert pset.xi.shape[0] == len(pset.lon)
+        assert pset.xi.shape[1] == len(fieldset.get_fields())
+        assert np.all((pset.xi >= 0) & (pset.xi[fieldset.B.grid.igrid] < xdim * 4))
+        assert np.all((pset.xi >= 0) & (pset.xi[0] < xdim))
+        assert pset.yi.shape[0] == len(pset.lon)
+        assert pset.yi.shape[1] == len(fieldset.get_fields())
+        assert np.all((pset.yi >= 0) & (pset.yi[fieldset.B.grid.igrid] < ydim * 3))
+        assert np.all((pset.yi >= 0) & (pset.yi[0] < ydim))
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
