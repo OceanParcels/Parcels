@@ -30,6 +30,7 @@ jobs:
           ./.github/scripts/linux_test.sh
         shell: bash
       - name: Lint with flake8
+        if: success()
         run: |
           pip install wheel
           pip install flake8
