@@ -254,7 +254,6 @@ class Kernel(object):
         return self._function(c_int(len(pset)), particle_data,
                               c_double(endtime), c_double(dt), *fargs)
 
-
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
