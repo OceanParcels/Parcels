@@ -405,7 +405,8 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_sampling_multigrids_non_vectorfield(mode):
+@pytest.mark.parametrize('npart', [1, 10])
+def test_sampling_multigrids_non_vectorfield(mode, npart):
     xdim, ydim = 100, 200
     U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
               lon=np.linspace(0., 1., xdim, dtype=np.float32),
@@ -425,27 +426,26 @@ def test_sampling_multigrids_non_vectorfield(mode):
     class TestParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
 
-    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=10)
+    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
 
     def test_sample(particle, fieldset, time):
         particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
-    kernels = pset.Kernel(AdvectionRK4)
     pset.execute(kernels, runtime=10, dt=1)
     assert np.allclose(pset.sample_var, 10.0)
     if mode == 'jit':
-        print(pset.xi)
-        print(pset.yi)
         assert len(pset.xi.shape) == 2
-        assert pset.xi.shape[0] == len(pset.lon)
-        assert pset.xi.shape[1] == len(fieldset.get_fields())
-        assert np.all((pset.xi >= 0) & (pset.xi[fieldset.B.grid.igrid] < xdim * 4))
-        assert np.all((pset.xi >= 0) & (pset.xi[0] < xdim))
-        assert pset.yi.shape[0] == len(pset.lon)
-        assert pset.yi.shape[1] == len(fieldset.get_fields())
-        assert np.all((pset.yi >= 0) & (pset.yi[fieldset.B.grid.igrid] < ydim * 3))
-        assert np.all((pset.yi >= 0) & (pset.yi[0] < ydim))
+        assert pset.xi.shape[1] == len(pset.lon)
+        assert pset.xi.shape[0] == fieldset.gridset.size
+        assert np.all(pset.xi >= 0)
+        assert np.all(pset.xi[fieldset.B.igrid, :] < xdim * 4)
+        assert np.all(pset.xi[0, :] < xdim)
+        assert pset.yi.shape[1] == len(pset.lon)
+        assert pset.yi.shape[0] == fieldset.gridset.size
+        assert np.all(pset.yi >= 0)
+        assert np.all(pset.yi[fieldset.B.igrid, :] < ydim * 3)
+        assert np.all(pset.yi[0, :] < ydim)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
