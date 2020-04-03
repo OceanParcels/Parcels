@@ -405,6 +405,48 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
+def test_sampling_multigrids_non_vectorfield(mode):
+    xdim, ydim = 100, 200
+    U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    B = Field('B', np.ones((3*ydim, 4*xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., 4*xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., 3*ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+    fieldset.add_field(B, 'B')
+    fieldset.add_constant('sample_depth', 2.5)
+    assert fieldset.U.grid is fieldset.V.grid
+    assert fieldset.U.grid is not fieldset.B.grid
+
+    class TestParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=0.)
+
+    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=10)
+
+    def test_sample(particle, fieldset, time):
+        particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
+
+    kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
+    pset.execute(kernels, runtime=10, dt=1)
+    assert np.allclose(pset.sample_var, 10.0)
+    print(pset.xi)
+    print(pset.yi)
+    assert len(pset.xi.shape) == 2
+    assert pset.xi.shape[0] == len(pset.lon)
+    assert pset.xi.shape[1] == len(fieldset.get_fields())
+    assert np.all((pset.xi >= 0) & (pset.xi[fieldset.B.grid.igrid] < xdim * 4))
+    assert np.all((pset.xi >= 0) & (pset.xi[0] < xdim))
+    assert pset.yi.shape[0] == len(pset.lon)
+    assert pset.yi.shape[1] == len(fieldset.get_fields())
+    assert np.all((pset.yi >= 0) & (pset.yi[fieldset.B.grid.igrid] < ydim * 3))
+    assert np.all((pset.yi >= 0) & (pset.yi[0] < ydim))
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('ugridfactor', [1, 10])
 def test_sampling_multiple_grid_sizes(mode, ugridfactor):
     xdim, ydim = 10, 20
