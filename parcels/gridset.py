@@ -39,9 +39,6 @@ class GridSet(object):
                 continue
             sameGrid &= (grid.master_chunksize == g.master_chunksize) or (grid.master_chunksize in [False, None] and g.master_chunksize in [False, None])
             if not sameGrid and sameDims and grid.master_chunksize is not None:
-                # print(field.field_chunksize)
-                # print(grid.master_chunksize)
-                # print(g.master_chunksize)
                 res = False
                 if (isinstance(grid.master_chunksize, tuple) and isinstance(g.master_chunksize, tuple)) or \
                         (isinstance(grid.master_chunksize, dict) and isinstance(g.master_chunksize, dict)):

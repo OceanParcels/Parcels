@@ -355,7 +355,7 @@ class FieldSet(object):
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                if procdims == dims and procinds == inds:  # and procpaths == nowpaths
+                if procdims == dims and procinds == inds:
                     if 'depth' in dims and dims['depth'] == 'not_yet_set':
                         break
                     processedGrid = False
