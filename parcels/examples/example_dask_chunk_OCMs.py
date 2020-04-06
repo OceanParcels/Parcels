@@ -80,8 +80,8 @@ def fieldset_from_pop_1arcs(chunk_mode):
 
 
 def fieldset_from_swash(chunk_mode):
-    # filenames = path.join("/data", "SWASH", "field_*.nc")
-    filenames = []
+    filenames = path.join(path.join(path.dirname(__file__), 'SWASH_data'), 'field_*.nc')
+    # filenames = []
     variables = {'U': 'cross-shore velocity',
                  'V': 'along-shore velocity',
                  'W': 'vertical velocity',
@@ -97,7 +97,7 @@ def fieldset_from_swash(chunk_mode):
         chs = 'auto'
     elif chunk_mode == 'specific':
         # chs = {'x': 32, 'j': 32, 'z': 7, 'z_u': 6, 't': 1}
-        chs = (1, 7, 32, 32)
+        chs = (1, 7, 4, 4)
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
@@ -139,10 +139,9 @@ def compute_pop_particle_advection(field_set, mode, lonp, latp):
 
 
 def compute_swash_particle_advection(field_set, mode, lonp, latp):
-    # 'ptype[mode]' needs to be replaced by the special-grid advection kernel for proper testing #
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
-    pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.0003))
-    pset.execute(AdvectionRK4, runtime=delta(seconds=0.001), dt=delta(seconds=0.0001), output_file=pfile)
+    pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.05))
+    pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005), output_file=pfile)
     return pset
 
 
@@ -199,7 +198,21 @@ def test_swash(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '1MiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    logger.warning("SWASH test currently not implemented - test still to be done.")
+    field_set = fieldset_from_swash(chunk_mode)
+    npart = 20
+    lonp = [i for i in np.arange(start=9.1, stop=11.3, step=0.1)[0:20]]
+    latp = [i for i in 12.7+(-0.25+np.random.rand(npart)*2.0*0.25)]
+    compute_swash_particle_advection(field_set, mode, lonp, latp)
+    # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
+    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+    assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
+    if chunk_mode is False:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert (len(field_set.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(7.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
