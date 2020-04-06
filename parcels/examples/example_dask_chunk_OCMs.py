@@ -15,6 +15,7 @@ from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
+from parcels.tools import logger
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -78,6 +79,32 @@ def fieldset_from_pop_1arcs(chunk_mode):
     return fieldset
 
 
+def fieldset_from_swash(chunk_mode):
+    # filenames = path.join("/data", "SWASH", "field_*.nc")
+    filenames = []
+    variables = {'U': 'cross-shore velocity',
+                 'V': 'along-shore velocity',
+                 'W': 'vertical velocity',
+                 'depth': 'time varying depth',
+                 'depth_u': 'time varying depth_u'}
+    dimensions = {'U': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'V': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'W': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'depth': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'depth_u': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'}}
+    chs = False
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific':
+        # chs = {'x': 32, 'j': 32, 'z': 7, 'z_u': 6, 't': 1}
+        chs = (1, 7, 32, 32)
+    fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
+    fieldset.U.set_depth_from_field(fieldset.depth_u)
+    fieldset.V.set_depth_from_field(fieldset.depth_u)
+    fieldset.W.set_depth_from_field(fieldset.depth)
+    return fieldset
+
+
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
 
     def periodicBC(particle, fieldSet, time):
@@ -108,6 +135,14 @@ def compute_pop_particle_advection(field_set, mode, lonp, latp):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile("globcurrent_particles_chunk", pset, outputdt=delta(days=15))
     pset.execute(AdvectionRK4, runtime=delta(days=90), dt=delta(days=2), output_file=pfile)
+    return pset
+
+
+def compute_swash_particle_advection(field_set, mode, lonp, latp):
+    # 'ptype[mode]' needs to be replaced by the special-grid advection kernel for proper testing #
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
+    pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.0003))
+    pset.execute(AdvectionRK4, runtime=delta(seconds=0.001), dt=delta(seconds=0.0001), output_file=pfile)
     return pset
 
 
@@ -155,6 +190,16 @@ def test_pop(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
+def test_swash(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '1MiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
+    logger.warning("SWASH test currently not implemented - test still to be done.")
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -354,7 +399,9 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
     try:
         compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
+    except IndexError:  # incorrect data access, in case grids were created
+        return True
+    except AssertionError:  # U-V grids are not equal to one another, throwing assertion errors
         return True
     return False
 
