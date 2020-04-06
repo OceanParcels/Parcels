@@ -355,7 +355,7 @@ class FieldSet(object):
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                if procdims == dims and procinds == inds and procpaths == nowpaths:
+                if procdims == dims and procinds == inds:  # and procpaths == nowpaths
                     if 'depth' in dims and dims['depth'] == 'not_yet_set':
                         break
                     processedGrid = False
@@ -372,6 +372,7 @@ class FieldSet(object):
                         if grid.master_chunksize is not None:
                             res = False
                             if (isinstance(chunksize, tuple) and isinstance(grid.master_chunksize, tuple)) or (isinstance(chunksize, dict) and isinstance(grid.master_chunksize, dict)):
+                                print("FieldSet::from_netcdf - chunksize: {} vs grid.master_chunksize: {}".format(chunksize, grid.master_chunksize))
                                 res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid.master_chunksize), True)
                             else:
                                 res |= (chunksize == grid.master_chunksize)
