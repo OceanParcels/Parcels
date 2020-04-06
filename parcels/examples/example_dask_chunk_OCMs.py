@@ -138,8 +138,8 @@ def compute_pop_particle_advection(field_set, mode, lonp, latp):
     return pset
 
 
-def compute_swash_particle_advection(field_set, mode, lonp, latp):
-    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
+def compute_swash_particle_advection(field_set, mode, lonp, latp, depthp):
+    pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp, depth=depthp)
     pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.05))
     pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005), output_file=pfile)
     return pset
@@ -200,9 +200,12 @@ def test_swash(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_swash(chunk_mode)
     npart = 20
-    lonp = [i for i in np.arange(start=9.1, stop=11.3, step=0.1)[0:20]]
-    latp = [i for i in 12.7+(-0.25+np.random.rand(npart)*2.0*0.25)]
-    compute_swash_particle_advection(field_set, mode, lonp, latp)
+    # lonp = [i for i in np.arange(start=9.1, stop=11.3, step=0.1)[0:20]]
+    lonp = [i for i in 9.5 + (-0.2 + np.random.rand(npart) * 2.0 * 0.2)]
+    # latp = [i for i in 12.7+(-0.25+np.random.rand(npart)*2.0*0.25)]
+    latp = [i for i in np.arange(start=12.3, stop=13.1, step=0.04)[0:20]]
+    depthp = [-0.1, ] * npart
+    compute_swash_particle_advection(field_set, mode, lonp, latp, depthp)
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
