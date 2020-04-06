@@ -489,7 +489,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, wi
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
-        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=delta(hours=1), runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=delta(hours=1), runtime=delta(days=14), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
     except MemoryError:
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
