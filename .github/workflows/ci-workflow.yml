@@ -1,6 +1,18 @@
 name: test-suite
 on: pull_request
 jobs:
+  pep8-linter:
+    name: Testing PEP8 linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Lint with flake8
+        run: |
+          pip install wheel
+          pip install flake8
+          python -m flake8 parcels/
+          python -m flake8 tests/
+        shell: bash
   test_macOS:
     name: Testing on macOS
     runs-on: macOS-latest
@@ -15,6 +27,7 @@ jobs:
           ./.github/scripts/linux_install.sh
           ./.github/scripts/osx_test.sh
         shell: bash
+        timeout-minutes: 45
   test_linux:
     name: Testing on Linux
     runs-on: ubuntu-latest
@@ -28,14 +41,6 @@ jobs:
         run: |
           ./.github/scripts/linux_install.sh
           ./.github/scripts/linux_test.sh
-        shell: bash
-      - name: Lint with flake8
-        if: success()
-        run: |
-          pip install wheel
-          pip install flake8
-          python -m flake8 parcels/
-          python -m flake8 tests/
         shell: bash
   test_windows:
     name: Testing on Windows
@@ -53,4 +58,5 @@ jobs:
           ./.github/scripts/windows_install.bat
           ./.github/scripts/windows_test.bat
         shell: powershell
+        timeout-minutes: 45
       
