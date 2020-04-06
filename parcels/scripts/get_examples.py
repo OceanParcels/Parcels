@@ -44,6 +44,7 @@ example_data_files = (
     + ["POPSouthernOcean_data/" + fn for fn in ["t.x1_SAMOC_flux.169000.nc", "t.x1_SAMOC_flux.169001.nc",
                                                 "t.x1_SAMOC_flux.169002.nc", "t.x1_SAMOC_flux.169003.nc",
                                                 "t.x1_SAMOC_flux.169004.nc", "t.x1_SAMOC_flux.169005.nc"]]
+    + ["SWASH_data/" + fn for fn in ["field_0065532.nc", "field_0065537.nc", "field_0065542.nc", "field_0065548.nc", "field_0065552.nc", "field_0065557.nc"]]
     + ["WOA_data/" + fn for fn in ["woa18_decav_t%.2d_04.nc" % m
                                    for m in range(1, 13)]])
 
