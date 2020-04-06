@@ -5,6 +5,7 @@ from parcels import (
 )
 import numpy as np
 import pytest
+import sys
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -270,6 +271,7 @@ def test_errorcode_repeat(fieldset, mode):
 
 
 @pytest.mark.parametrize('delete_cfiles', [True, False])
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows compiler generates warning")
 def test_execution_keep_cfiles_and_nocompilation_warnings(fieldset, delete_cfiles):
     pset = ParticleSet(fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
     pset.execute(pset.Kernel(AdvectionRK4, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
