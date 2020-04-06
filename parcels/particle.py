@@ -7,8 +7,9 @@ from parcels.field import Field
 from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 
-
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
+
+indicators_64bit = [np.float64, np.int64, c_void_p]
 
 
 class Variable(object):
@@ -47,8 +48,7 @@ class Variable(object):
 
     def is64bit(self):
         """Check whether variable is 64-bit"""
-        return True if self.dtype == np.float64 or self.dtype == np.int64 \
-                       or self.dtype == c_void_p else False
+        return True if self.dtype in indicators_64bit else False
 
 
 class ParticleType(object):
@@ -234,10 +234,10 @@ class JITParticle(ScipyParticle):
 
     """
 
-    xi = Variable('xi', dtype=np.dtype(c_void_p), to_write=False)
-    yi = Variable('yi', dtype=np.dtype(c_void_p), to_write=False)
-    zi = Variable('zi', dtype=np.dtype(c_void_p), to_write=False)
-    ti = Variable('ti', dtype=np.dtype(c_void_p), to_write=False)
+    xi = Variable('xi', dtype=np.int32, to_write=False)
+    yi = Variable('yi', dtype=np.int32, to_write=False)
+    zi = Variable('zi', dtype=np.int32, to_write=False)
+    ti = Variable('ti', dtype=np.int32, to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
