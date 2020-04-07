@@ -15,7 +15,6 @@ from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
-from parcels.tools import logger
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
