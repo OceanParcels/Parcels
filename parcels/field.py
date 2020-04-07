@@ -923,7 +923,7 @@ class Field(object):
 
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[p], &particles->yi[p], &particles->zi[p], &particles->ti[p], &%s, %s)" \
+        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[p*ngrid], &particles->yi[p*ngrid], &particles->zi[p*ngrid], &particles->ti[p*ngrid], &%s, %s)" \
             % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
 
     def ccode_convert(self, _, z, y, x):
