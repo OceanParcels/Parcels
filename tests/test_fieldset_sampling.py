@@ -452,16 +452,16 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
     assert np.allclose(pset.sample_var, 10.0)
     if mode == 'jit':
         assert len(pset.xi.shape) == 2
-        assert pset.xi.shape[1] == len(pset.lon)
-        assert pset.xi.shape[0] == fieldset.gridset.size
+        assert pset.xi.shape[0] == len(pset.lon)
+        assert pset.xi.shape[1] == fieldset.gridset.size
         assert np.all(pset.xi >= 0)
-        assert np.all(pset.xi[fieldset.B.igrid, :] < xdim * 4)
-        assert np.all(pset.xi[0, :] < xdim)
-        assert pset.yi.shape[1] == len(pset.lon)
-        assert pset.yi.shape[0] == fieldset.gridset.size
+        assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
+        assert np.all(pset.xi[:, 0] < xdim)
+        assert pset.yi.shape[0] == len(pset.lon)
+        assert pset.yi.shape[1] == fieldset.gridset.size
         assert np.all(pset.yi >= 0)
-        assert np.all(pset.yi[fieldset.B.igrid, :] < ydim * 3)
-        assert np.all(pset.yi[0, :] < ydim)
+        assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
+        assert np.all(pset.yi[:, 0] < ydim)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
@@ -496,16 +496,16 @@ def test_sampling_multigrids_non_vectorfield(mode, npart):
     assert np.allclose(pset.sample_var, 10.0)
     if mode == 'jit':
         assert len(pset.xi.shape) == 2
-        assert pset.xi.shape[1] == len(pset.lon)
-        assert pset.xi.shape[0] == fieldset.gridset.size
+        assert pset.xi.shape[0] == len(pset.lon)
+        assert pset.xi.shape[1] == fieldset.gridset.size
         assert np.all(pset.xi >= 0)
-        assert np.all(pset.xi[fieldset.B.igrid, :] < xdim * 4)
-        assert np.all(pset.xi[0, :] < xdim)
-        assert pset.yi.shape[1] == len(pset.lon)
-        assert pset.yi.shape[0] == fieldset.gridset.size
+        assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
+        assert np.all(pset.xi[:, 0] < xdim)
+        assert pset.yi.shape[0] == len(pset.lon)
+        assert pset.yi.shape[1] == fieldset.gridset.size
         assert np.all(pset.yi >= 0)
-        assert np.all(pset.yi[fieldset.B.igrid, :] < ydim * 3)
-        assert np.all(pset.yi[0, :] < ydim)
+        assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
+        assert np.all(pset.yi[:, 0] < ydim)
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
