@@ -220,7 +220,10 @@ class ParticleSet(object):
         self.particle_data = {}
         initialised = set()
         for v in self.ptype.variables:
-            self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
+            if v.name in ['xi', 'yi', 'zi', 'ti']:
+                self.particle_data[v.name] = np.empty((len(lon), fieldset.gridset.size), dtype=v.dtype)
+            else:
+                self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
@@ -295,7 +298,12 @@ class ParticleSet(object):
         class CParticles(Structure):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self.ptype.variables]
 
-        cdata = [np.ctypeslib.as_ctypes(self.particle_data[v.name]) for v in self.ptype.variables]
+        def cdata_for(v):
+            data_flat = self.particle_data[v.name].view()
+            data_flat.shape = -1
+            return np.ctypeslib.as_ctypes(data_flat)
+
+        cdata = [cdata_for(v) for v in self.ptype.variables]
         cstruct = CParticles(*cdata)
         return cstruct
 
@@ -490,7 +498,7 @@ class ParticleSet(object):
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
         for d in self.particle_data:
-            self.particle_data[d] = self.particle_data[d][~indices]
+            self.particle_data[d] = self.particle_data[d][~indices, ...]
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
@@ -579,12 +587,14 @@ class ParticleSet(object):
             mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
             endtime = maxtime if dt >= 0 else mintime
 
+        execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
             endtime = _starttime
             logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
                                 "The kernels will be executed once, without incrementing time")
+            execute_once = True
 
         self.particle_data['dt'][:] = dt
 
@@ -629,7 +639,8 @@ class ParticleSet(object):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
+                                execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
@@ -685,7 +696,7 @@ class ParticleSet(object):
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
                       projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
-    def density(self, field=None, particle_val=None, relative=False, area_scale=False):
+    def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
 
@@ -700,7 +711,23 @@ class ParticleSet(object):
                            (in m^2) of each grid cell. Default is False
         """
 
-        field = field if field else self.fieldset.U
+        field_name = field_name if field_name else "U"
+        field = getattr(self.fieldset, field_name)
+
+        f_str = """
+def search_kernel(particle, fieldset, time):
+    x = fieldset.{}[time, particle.depth, particle.lat, particle.lon]
+        """.format(field_name)
+
+        k = Kernel(
+            self.fieldset,
+            self.ptype,
+            funcname="search_kernel",
+            funcvars=["particle", "fieldset", "time", "x"],
+            funccode=f_str,
+        )
+        self.execute(k, runtime=0)
+
         if isinstance(particle_val, str):
             particle_val = self.particle_data[particle_val]
         else:

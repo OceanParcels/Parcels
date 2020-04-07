@@ -223,6 +223,9 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
+        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2:
+            assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
+                'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
         for g in pset.fieldset.gridset.grids:
             g.cstruct = None  # This force to point newly the grids from Python to C
@@ -283,6 +286,7 @@ class Kernel(object):
 
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - particles.time)
+            # Compute min/max dt for first timestep
             dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
@@ -352,14 +356,14 @@ class Kernel(object):
                         dt_pos = 0
                     break
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
         particles = pset.data_accessor()
         for p in range(pset.size):
             particles.set_index(p)
             particles.set_state(ErrorCode.Evaluate)
 
-        if abs(dt) < 1e-6:
+        if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         def remove_deleted(pset):
@@ -395,6 +399,8 @@ class Kernel(object):
             # Apply recovery kernel
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
+                if particles.state == ErrorCode.StopExecution:
+                    return
                 if particles.state == ErrorCode.Repeat:
                     particles.set_state(ErrorCode.Evaluate)
                 elif particles.state in recovery_map:
