@@ -219,7 +219,7 @@ class Kernel(object):
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
         if len(pset) > 0 and pset.particle_data['xi'].ndim == 2:
-            assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[0], \
+            assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
                 'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
         for g in pset.fieldset.gridset.grids:
