@@ -1,4 +1,4 @@
-from ctypes import cast, Structure, POINTER
+from ctypes import Structure, POINTER
 import time as time_module
 from datetime import date
 from datetime import datetime
