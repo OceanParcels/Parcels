@@ -96,7 +96,7 @@ def fieldset_from_swash(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        # chs = {'x': 32, 'j': 32, 'z': 7, 'z_u': 6, 't': 1}
+        # chs = {'x': 4, 'j': 4, 'z': 7, 'z_u': 6, 't': 1}
         chs = (1, 7, 4, 4)
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
@@ -195,7 +195,7 @@ def test_pop(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_swash(mode, chunk_mode):
     if chunk_mode == 'auto':
-        dask.config.set({'array.chunk-size': '1MiB'})
+        dask.config.set({'array.chunk-size': '32KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_swash(chunk_mode)
@@ -208,7 +208,8 @@ def test_swash(mode, chunk_mode):
     compute_swash_particle_advection(field_set, mode, lonp, latp, depthp)
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
+    if chunk_mode != 'auto':
+        assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
