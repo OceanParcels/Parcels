@@ -7,9 +7,5 @@ export DISPLAY=:99.0;
 sh -e /etc/init.d/xvfb start;
 sleep 3;
 
-# only get examples on linux
 parcels_get_examples examples/;
-
-# evaluate example scripts and notebooks on linux only
-py.test -v -s examples/*.py;
-py.test -v -s --nbval-lax examples/*tutorial*;
+py.test -v -s --nbval-lax -k "not documentation" tests/ examples/;
