@@ -299,9 +299,9 @@ class ParticleSet(object):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self.ptype.variables]
 
         def cdata_for(v):
-            cdata_array = np.ctypeslib.as_ctypes(self.particle_data[v.name])
-            # cast to bare pointer
-            return cast(cdata_array, POINTER(np.ctypeslib.as_ctypes_type(v.dtype)))
+            data_flat = self.particle_data[v.name].view()
+            data_flat.shape = -1
+            return np.ctypeslib.as_ctypes(data_flat)
 
         cdata = [cdata_for(v) for v in self.ptype.variables]
         cstruct = CParticles(*cdata)
