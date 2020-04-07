@@ -13,7 +13,7 @@ from parcels.plotting import plotfield
 try:
     if sys.platform == 'darwin' and sys.version_info[0] == 3:
         import matplotlib
-        matplotlib.use("TkAgg")
+        matplotlib.use("Agg")
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
