@@ -80,7 +80,6 @@ def fieldset_from_pop_1arcs(chunk_mode):
 
 def fieldset_from_swash(chunk_mode):
     filenames = path.join(path.join(path.dirname(__file__), 'SWASH_data'), 'field_*.nc')
-    # filenames = []
     variables = {'U': 'cross-shore velocity',
                  'V': 'along-shore velocity',
                  'W': 'vertical velocity',
@@ -95,7 +94,6 @@ def fieldset_from_swash(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        # chs = {'x': 4, 'j': 4, 'z': 7, 'z_u': 6, 't': 1}
         chs = (1, 7, 4, 4)
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
@@ -199,9 +197,7 @@ def test_swash(mode, chunk_mode):
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_swash(chunk_mode)
     npart = 20
-    # lonp = [i for i in np.arange(start=9.1, stop=11.3, step=0.1)[0:20]]
     lonp = [i for i in 9.5 + (-0.2 + np.random.rand(npart) * 2.0 * 0.2)]
-    # latp = [i for i in 12.7+(-0.25+np.random.rand(npart)*2.0*0.25)]
     latp = [i for i in np.arange(start=12.3, stop=13.1, step=0.04)[0:20]]
     depthp = [-0.1, ] * npart
     compute_swash_particle_advection(field_set, mode, lonp, latp, depthp)
@@ -274,7 +270,6 @@ def test_3d_2dfield_sampling(mode):
 
     filenames = {'U': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles},
                  'V': {'lon': mesh_mask, 'lat': mesh_mask, 'data': vfiles},
-                 # 'nav_lon': {'lon': mesh_mask, 'lat': mesh_mask, 'data': ufiles[0]}}
                  'nav_lon': {'lon': mesh_mask, 'lat': mesh_mask, 'data': [ufiles[0], ]}}
     variables = {'U': 'uo',
                  'V': 'vo',
@@ -394,7 +389,8 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
-    # ==== this test is expected to fall-back to a pre-defined minimal chunk as the requested chunks don't match, or throw a value error ==== #
+    # ==== this test is expected to fall-back to a pre-defined minimal chunk as the ==== #
+    # ==== requested chunks don't match, or throw a value error                     ==== #
     data_path = path.join(path.dirname(__file__), 'NemoNorthSeaORCA025-N006_data/')
     ufiles = sorted(glob(data_path + 'ORCA*U.nc'))
     vfiles = sorted(glob(data_path + 'ORCA*V.nc'))
