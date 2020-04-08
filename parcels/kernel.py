@@ -1,4 +1,4 @@
-import _ctypes
+import _ctypes as ctp
 import inspect
 import math  # noqa
 import random  # noqa
@@ -169,7 +169,7 @@ class Kernel(object):
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
         if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            ctp.FreeLibrary(self._lib._handle) if platform == 'win32' else ctp.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
             if path.isfile(self.lib_file) and self.delete_cfiles:
@@ -185,7 +185,7 @@ class Kernel(object):
     def remove_lib(self):
         # Unload the currently loaded dynamic linked library to be secure
         if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            ctp.FreeLibrary(self._lib._handle) if platform == 'win32' else ctp.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
         # If file already exists, pull new names. This is necessary on a Windows machine, because
