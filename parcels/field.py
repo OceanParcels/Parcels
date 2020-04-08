@@ -168,6 +168,10 @@ class Field(object):
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
         self.field_chunksize = kwargs.pop('field_chunksize', None)
+        self.grid.depth_field = kwargs.pop('depth_field', None)
+
+        if self.grid.depth_field == 'not_yet_set':
+            assert self.grid.z4d, 'Providing the depth dimensions from another field data is only available for 4d S grids'
 
         # data_full_zdim is the vertical dimension of the complete field data, ignoring the indices.
         # (data_full_zdim = grid.zdim if no indices are used, for A- and C-grids and for some B-grids). It is used for the B-grid,
@@ -286,7 +290,11 @@ class Field(object):
         if 'depth' in dimensions:
             with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method, field_chunksize=False, lock_file=False) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
-                depth = filebuffer.read_depth
+                if dimensions['depth'] == 'not_yet_set':
+                    depth = filebuffer.read_depth_dimensions
+                    kwargs['depth_field'] = 'not_yet_set'
+                else:
+                    depth = filebuffer.read_depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
@@ -494,6 +502,9 @@ class Field(object):
         if not self.grid.defer_load:
             self.data *= factor
 
+    def set_depth_from_field(self, field):
+        self.grid.depth_field = field
+
     def __getitem__(self, key):
         return self.eval(*key)
 
@@ -528,15 +539,26 @@ class Field(object):
     def search_indices_vertical_z(self, z):
         grid = self.grid
         z = np.float32(z)
-        if z < grid.depth[0]:
-            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
-        elif z > grid.depth[-1]:
-            raise FieldOutOfBoundError(0, 0, z, field=self)
-        depth_index = grid.depth <= z
-        if z >= grid.depth[-1]:
-            zi = len(grid.depth) - 2
+        if grid.depth[-1] > grid.depth[0]:
+            if z < grid.depth[0]:
+                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+            elif z > grid.depth[-1]:
+                raise FieldOutOfBoundError(0, 0, z, field=self)
+            depth_indices = grid.depth <= z
+            if z >= grid.depth[-1]:
+                zi = len(grid.depth) - 2
+            else:
+                zi = depth_indices.argmin() - 1 if z >= grid.depth[0] else 0
         else:
-            zi = depth_index.argmin() - 1 if z >= grid.depth[0] else 0
+            if z > grid.depth[0]:
+                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+            elif z < grid.depth[-1]:
+                raise FieldOutOfBoundError(0, 0, z, field=self)
+            depth_indices = grid.depth >= z
+            if z <= grid.depth[-1]:
+                zi = len(grid.depth) - 2
+            else:
+                zi = depth_indices.argmin() - 1 if z <= grid.depth[0] else 0
         zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
         return (zi, zeta)
 
@@ -567,15 +589,27 @@ class Field(object):
                 xsi*eta * grid.depth[:, yi+1, xi+1] + \
                 (1-xsi)*eta * grid.depth[:, yi+1, xi]
         z = np.float32(z)
-        depth_index = depth_vector <= z
-        if z >= depth_vector[-1]:
-            zi = len(depth_vector) - 2
+
+        if depth_vector[-1] > depth_vector[0]:
+            depth_indices = depth_vector <= z
+            if z >= depth_vector[-1]:
+                zi = len(depth_vector) - 2
+            else:
+                zi = depth_indices.argmin() - 1 if z >= depth_vector[0] else 0
+            if z < depth_vector[zi]:
+                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+            elif z > depth_vector[zi+1]:
+                raise FieldOutOfBoundError(x, y, z, field=self)
         else:
-            zi = depth_index.argmin() - 1 if z >= depth_vector[0] else 0
-        if z < depth_vector[zi]:
-            raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
-        elif z > depth_vector[zi+1]:
-            raise FieldOutOfBoundError(x, y, z, field=self)
+            depth_indices = depth_vector >= z
+            if z <= depth_vector[-1]:
+                zi = len(depth_vector) - 2
+            else:
+                zi = depth_indices.argmin() - 1 if z <= depth_vector[0] else 0
+            if z > depth_vector[zi]:
+                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+            elif z < depth_vector[zi+1]:
+                raise FieldOutOfBoundError(x, y, z, field=self)
         zeta = (z - depth_vector[zi]) / (depth_vector[zi+1]-depth_vector[zi])
         return (zi, zeta)
 
@@ -1618,7 +1652,8 @@ class NestedField(list):
 class NetcdfFileBuffer(object):
     _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i'],
                   'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j'],
-                  'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz', 'z', 'd', 'k', 'w_dep', 'w_deps'],
+                  'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz',
+                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps'],
                   'time': ['time', 'time_count', 'time_counter', 'timer_count', 't']}
     _min_dim_chunksize = 16
 
@@ -1961,11 +1996,19 @@ class NetcdfFileBuffer(object):
             elif len(depth.shape) == 3:
                 return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
             elif len(depth.shape) == 4:
-                raise NotImplementedError('Time varying depth data cannot be read in netcdf files yet')
                 return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
         else:
             self.indices['depth'] = [0]
             return np.zeros(1)
+
+    @property
+    def read_depth_dimensions(self):
+        if 'depth' in self.dimensions:
+            data = self.dataset[self.name]
+            depthsize = data.shape[-3]
+            self.data_full_zdim = depthsize
+            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
+            return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
 
     @property
     def data(self):
