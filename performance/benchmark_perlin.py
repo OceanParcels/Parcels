@@ -274,7 +274,12 @@ if __name__=='__main__':
     agingParticles = args.aging
     with_GC = args.useGC
     Nparticle = int(float(eval(args.nparticles)))
-    sys.stdout.write("N: {}\n".format(Nparticle))
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        if mpi_comm.Get_rank() == 0:
+            sys.stdout.write("N: {}\n".format(Nparticle))
+    else:
+        sys.stdout.write("N: {}\n".format(Nparticle))
 
     dt_minutes = 60
     #dt_minutes = 20
@@ -371,27 +376,45 @@ if __name__=='__main__':
         else:
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
     endtime = ostime.time()
-    dt_time = []
-    for i in range(len(perflog.times_steps)):
-        if i==0:
-            dt_time.append( (perflog.times_steps[i]-global_t_0) )
-        else:
-            dt_time.append( (perflog.times_steps[i]-perflog.times_steps[i-1]) )
-    sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
-    avg_time = np.mean(np.array(dt_time, dtype=np.float64))
-    sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
+
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        if mpi_comm.Get_rank() == 0:
+            dt_time = []
+            for i in range(len(perflog.times_steps)):
+                if i==0:
+                    dt_time.append( (perflog.times_steps[i]-global_t_0) )
+                else:
+                    dt_time.append( (perflog.times_steps[i]-perflog.times_steps[i-1]) )
+            sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
+            avg_time = np.mean(np.array(dt_time, dtype=np.float64))
+            sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
+    else:
+        dt_time = []
+        for i in range(len(perflog.times_steps)):
+            if i == 0:
+                dt_time.append((perflog.times_steps[i] - global_t_0))
+            else:
+                dt_time.append((perflog.times_steps[i] - perflog.times_steps[i - 1]))
+        sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
+        avg_time = np.mean(np.array(dt_time, dtype=np.float64))
+        sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
 
     if args.write_out:
         output_file.close()
         if args.visualize:
-            plotTrajectoriesFile_loadedField(os.path.join(odir,"test_mem_behaviour.nc"),tracerfield=fieldset.U)
+            if MPI:
+                mpi_comm = MPI.COMM_WORLD
+                if mpi_comm.Get_rank() == 0:
+                    plotTrajectoriesFile_loadedField(os.path.join(odir, "test_mem_behaviour.nc"),
+                                                     tracerfield=fieldset.U)
+            else:
+                plotTrajectoriesFile_loadedField(os.path.join(odir,"test_mem_behaviour.nc"),tracerfield=fieldset.U)
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_comm.Barrier()
-        if mpi_comm.Get_rank() > 0:
-            pass
-        else:
+        if mpi_comm.Get_rank() == 0:
             plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.fds_steps, os.path.join(odir, imageFileName))
     else:
         plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.fds_steps, os.path.join(odir, imageFileName))
