@@ -86,6 +86,8 @@ class Field(object):
         self.data = data
         time_origin = TimeConverter(0) if time_origin is None else time_origin
         if grid:
+            if grid.defer_load and isinstance(data, np.ndarray):
+                raise ValueError('Cannot combine Grid from defer_loaded Field with np.ndarray data. please specify lon, lat, depth and time dimensions separately')
             self.grid = grid
         else:
             self.grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
