@@ -342,12 +342,12 @@ class Kernel(object):
                         dt_pos = 0
                     break
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
         for p in pset.particles:
             p.reset_state()
 
-        if abs(dt) < 1e-6:
+        if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         def remove_deleted(pset):
@@ -384,6 +384,8 @@ class Kernel(object):
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
+                if p.state == ErrorCode.StopExecution:
+                    return
                 if p.state == ErrorCode.Repeat:
                     p.reset_state()
                 elif p.state in recovery_map:

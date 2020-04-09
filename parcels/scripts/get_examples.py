@@ -37,10 +37,14 @@ example_data_files = (
         "U_purely_zonal-ORCA025_grid_U.nc4", "V_purely_zonal-ORCA025_grid_V.nc4",
         "mesh_mask.nc4"]]
     + ["NemoNorthSeaORCA025-N006_data/" + fn for fn in [
-        "ORCA025-N06_20000104d05U.nc", "ORCA025-N06_20000109d05U.nc",
-        "ORCA025-N06_20000104d05V.nc", "ORCA025-N06_20000109d05V.nc",
-        "ORCA025-N06_20000104d05W.nc", "ORCA025-N06_20000109d05W.nc",
+        "ORCA025-N06_20000104d05U.nc", "ORCA025-N06_20000109d05U.nc", "ORCA025-N06_20000114d05U.nc", "ORCA025-N06_20000119d05U.nc", "ORCA025-N06_20000124d05U.nc", "ORCA025-N06_20000129d05U.nc",
+        "ORCA025-N06_20000104d05V.nc", "ORCA025-N06_20000109d05V.nc", "ORCA025-N06_20000114d05V.nc", "ORCA025-N06_20000119d05V.nc", "ORCA025-N06_20000124d05V.nc", "ORCA025-N06_20000129d05V.nc",
+        "ORCA025-N06_20000104d05W.nc", "ORCA025-N06_20000109d05W.nc", "ORCA025-N06_20000114d05W.nc", "ORCA025-N06_20000119d05W.nc", "ORCA025-N06_20000124d05W.nc", "ORCA025-N06_20000129d05W.nc",
         "coordinates.nc"]]
+    + ["POPSouthernOcean_data/" + fn for fn in ["t.x1_SAMOC_flux.169000.nc", "t.x1_SAMOC_flux.169001.nc",
+                                                "t.x1_SAMOC_flux.169002.nc", "t.x1_SAMOC_flux.169003.nc",
+                                                "t.x1_SAMOC_flux.169004.nc", "t.x1_SAMOC_flux.169005.nc"]]
+    + ["SWASH_data/" + fn for fn in ["field_0065532.nc", "field_0065537.nc", "field_0065542.nc", "field_0065548.nc", "field_0065552.nc", "field_0065557.nc"]]
     + ["WOA_data/" + fn for fn in ["woa18_decav_t%.2d_04.nc" % m
                                    for m in range(1, 13)]])
 

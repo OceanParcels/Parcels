@@ -403,6 +403,106 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
+@pytest.mark.parametrize('npart', [1, 10])
+@pytest.mark.parametrize('chs', [False, 'auto', (10, 10)])
+def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs, filename='test_subsets'):
+    xdim, ydim = 100, 200
+    filepath = tmpdir.join(filename)
+    U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    B = Field('B', np.ones((3*ydim, 4*xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., 4*xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., 3*ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+    fieldset.add_field(B, 'B')
+    fieldset.write(filepath)
+    fieldset = None
+
+    ufiles = [filepath+'U.nc', ] * 4
+    vfiles = [filepath+'V.nc', ] * 4
+    bfiles = [filepath+'B.nc', ] * 4
+    timestamps = np.arange(0, 4, 1) * 86400.0
+    timestamps = np.expand_dims(timestamps, 1)
+    files = {'U': ufiles, 'V': vfiles, 'B': bfiles}
+    variables = {'U': 'vozocrtx', 'V': 'vomecrty', 'B': 'B'}
+    dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True,
+                                    field_chunksize=chs)
+
+    fieldset.add_constant('sample_depth', 2.5)
+    assert fieldset.U.grid is fieldset.V.grid
+    assert fieldset.U.grid is not fieldset.B.grid
+
+    class TestParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=0.)
+
+    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
+
+    def test_sample(particle, fieldset, time):
+        particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
+
+    kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
+    pset.execute(kernels, runtime=10, dt=1)
+    assert np.allclose(pset.sample_var, 10.0)
+    if mode == 'jit':
+        assert np.all(np.array([len(p.xi) == fieldset.gridset.size for p in pset]))
+        assert np.all(np.array([[p.xi[i] >= 0 for i in range(o, len(p.xi)] for p in pset]))
+        #assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
+        #assert np.all(pset.xi[:, 0] < xdim)
+        #assert pset.yi.shape[0] == len(pset.lon)
+        #assert pset.yi.shape[1] == fieldset.gridset.size
+        #assert np.all(pset.yi >= 0)
+        #assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
+        #assert np.all(pset.yi[:, 0] < ydim)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
+@pytest.mark.parametrize('npart', [1, 10])
+def test_sampling_multigrids_non_vectorfield(mode, npart):
+    xdim, ydim = 100, 200
+    U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    B = Field('B', np.ones((3*ydim, 4*xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., 4*xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., 3*ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+    fieldset.add_field(B, 'B')
+    fieldset.add_constant('sample_depth', 2.5)
+    assert fieldset.U.grid is fieldset.V.grid
+    assert fieldset.U.grid is not fieldset.B.grid
+
+    class TestParticle(ptype[mode]):
+        sample_var = Variable('sample_var', initial=0.)
+
+    pset = ParticleSet.from_line(fieldset, pclass=TestParticle, start=[0.3, 0.3], finish=[0.7, 0.7], size=npart)
+
+    def test_sample(particle, fieldset, time):
+        particle.sample_var += fieldset.B[time, fieldset.sample_depth, particle.lat, particle.lon]
+
+    kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
+    pset.execute(kernels, runtime=10, dt=1)
+    assert np.allclose(pset.sample_var, 10.0)
+    if mode == 'jit':
+        assert np.all(np.array([len(p.xi) == fieldset.gridset.size for p in pset]))
+        assert np.all(np.array([[p.xi[i] >= 0 for i in range(o, len(p.xi)] for p in pset]))
+        #assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
+        #assert np.all(pset.xi[:, 0] < xdim)
+        #assert pset.yi.shape[0] == len(pset.lon)
+        #assert pset.yi.shape[1] == fieldset.gridset.size
+        #assert np.all(pset.yi >= 0)
+        #assert np.all(pset.yi[:, fieldset.B.igrid] < ydim * 3)
+        #assert np.all(pset.yi[:, 0] < ydim)
+
+
+@pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('ugridfactor', [1, 10])
 def test_sampling_multiple_grid_sizes(mode, ugridfactor):
     xdim, ydim = 10, 20
@@ -422,6 +522,31 @@ def test_sampling_multiple_grid_sizes(mode, ugridfactor):
     pset.execute(AdvectionRK4, runtime=10, dt=1)
     assert np.isclose(pset[0].lon, 0.8)
     assert np.all((pset[0].xi >= 0) & (pset[0].xi < xdim*ugridfactor))
+
+
+def test_multiple_grid_addlater_error():
+    xdim, ydim = 10, 20
+    U = Field('U', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    V = Field('V', np.zeros((ydim, xdim), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim, dtype=np.float32))
+    fieldset = FieldSet(U, V)
+
+    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])
+
+    P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
+              lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
+              lat=np.linspace(0., 1., ydim*10, dtype=np.float32))
+    fieldset.add_field(P)
+
+    fail = False
+    try:
+        pset.execute(AdvectionRK4, runtime=10, dt=1)
+    except:
+        fail = True
+    assert fail
 
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
