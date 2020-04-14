@@ -1,4 +1,3 @@
-import sys
 from argparse import ArgumentParser
 from os import environ
 
@@ -10,9 +9,6 @@ from parcels.plotting import cartopy_colorbar
 from parcels.plotting import create_parcelsfig_axis
 from parcels.plotting import plotfield
 try:
-    if sys.platform == 'darwin' and sys.version_info[0] == 3:
-        import matplotlib
-        matplotlib.use("Agg")
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
@@ -51,7 +47,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     mesh = pfile.attrs['parcels_mesh'] if 'parcels_mesh' in pfile.attrs else 'spherical'
 
     if(recordedvar is not None):
-        record = pfile.variables[recordedvar]
+        record = np.ma.filled(pfile.variables[recordedvar], np.nan)
     pfile.close()
 
     if tracerfile is not None and mode != 'hist2d':
