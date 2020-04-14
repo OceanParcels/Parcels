@@ -251,6 +251,16 @@ class FieldSet(object):
                 counter += 1
             ccode_fieldnames.append(fld.ccode_name)
 
+        for f in self.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField] or f.dataFiles is None:
+                continue
+            if f.grid.depth_field is not None:
+                if f.grid.depth_field == 'not_yet_set':
+                    raise ValueError("If depth dimension is set at 'not_yet_set', it must be added later using Field.set_depth_from_field(field)")
+                if not f.grid.defer_load:
+                    depth_data = f.grid.depth_field.data
+                    f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
         if not isinstance(paths, list):
@@ -346,6 +356,8 @@ class FieldSet(object):
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
                 if procdims == dims and procinds == inds:
+                    if 'depth' in dims and dims['depth'] == 'not_yet_set':
+                        break
                     processedGrid = False
                     if ((not isinstance(filenames, dict)) or filenames[procvar] == filenames[var]):
                         processedGrid = True
@@ -962,6 +974,14 @@ class FieldSet(object):
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
+
+        # update time varying grid depth
+        for f in self.get_fields():
+            if type(f) in [VectorField, NestedField, SummedField] or not f.grid.defer_load or f.dataFiles is None:
+                continue
+            if f.grid.depth_field is not None:
+                depth_data = f.grid.depth_field.data
+                f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
 
         if abs(nextTime) == np.infty or np.isnan(nextTime):  # Second happens when dt=0
             return nextTime

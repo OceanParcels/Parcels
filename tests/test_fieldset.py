@@ -653,7 +653,8 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
 
     # testing for combination of deferred-loaded and numpy Fields
-    fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
+    with pytest.raises(ValueError):
+        fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
 
     # testing for scaling factors
     fieldset.U.set_scaling_factor(scale_fac)
