@@ -132,35 +132,22 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
         py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
+    if grid.mesh == 'spherical':
+        px[0] = px[0]+360 if px[0] < particle.lon-225 else px[0]
+        px[0] = px[0]-360 if px[0] > particle.lat+225 else px[0]
+        px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+        px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
 
-    if fieldset.U.grid.gtype < 2:
-        u_w, v_s = fieldset.UV[time, particle.depth, fieldset.U.lat[yi], fieldset.U.lon[xi]]
-        u_e, _ = fieldset.UV[time, particle.depth, fieldset.U.lat[yi], fieldset.U.lon[xi+1]]
-        _, v_n = fieldset.UV[time, particle.depth, fieldset.U.lat[yi+1], fieldset.U.lon[xi]]
-        dx = fieldset.U.grid.lon[xi + 1] - fieldset.U.grid.lon[xi]
-        dy = fieldset.U.grid.lat[yi + 1] - fieldset.U.grid.lat[yi]
-        # calculate the zonal and meridional grid face fluxes
-        F_w = u_w * dy
-        F_e = u_e * dy
-        F_s = v_s * dx
-        F_n = v_n * dx
-    else:
-        if grid.mesh == 'spherical':
-            px[0] = px[0]+360 if px[0] < particle.lon-225 else px[0]
-            px[0] = px[0]-360 if px[0] > particle.lat+225 else px[0]
-            px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
-            px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
-        c1 = fieldset.UV.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(rx, 0.), py))
-        c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., ry), py))
-        c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(rx, 1.), py))
-        c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., ry), py))
-        F_w = fieldset.U.data[0, yi+1, xi] * c4  # TODO time-varying
-        F_e = fieldset.U.data[0, yi+1, xi+1] * c2
-        F_s = fieldset.V.data[0, yi, xi+1] * c1
-        F_n = fieldset.V.data[0, yi+1, xi+1] * c3
-
-        dx = (c4 + c2)/2.
-        dy = (c1 + c3)/2.
+    c1 = fieldset.UV.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(rx, 0.), py))
+    c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., ry), py))
+    c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(rx, 1.), py))
+    c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., ry), py))
+    F_w = fieldset.U.data[0, yi+1, xi] * c4  # TODO time-varying
+    F_e = fieldset.U.data[0, yi+1, xi+1] * c2
+    F_s = fieldset.V.data[0, yi, xi+1] * c1
+    F_n = fieldset.V.data[0, yi+1, xi+1] * c3
+    dx = (c4 + c2)/2.
+    dy = (c1 + c3)/2.
 
     ry_target = 1. if vp >= 0. else 0.
     rx_target = 1. if up >= 0. else 0.
@@ -197,7 +184,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     elif Fu_r1 * Fu_r0 < 0:
         ds_x = float('inf')
     else:
-        ds_x = - 1 / B_x * math.log(Fu_r1 / Fu_r0)
+        ds_x = - 1. / B_x * math.log(Fu_r1 / Fu_r0)
 
     # calculate delta s for y direction
     if B_y == 0 and delta_y == 0:
@@ -207,7 +194,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     elif Fv_r1 * Fv_r0 < 0:
         ds_y = float('inf')
     else:
-        ds_y = - 1 / B_y * math.log(Fv_r1 / Fv_r0)
+        ds_y = - 1. / B_y * math.log(Fv_r1 / Fv_r0)
 
     if ds_x < tol:
         ds_x = float('inf')
@@ -228,13 +215,8 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         rs_y = (ry + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
 
-    # set new position
-    if fieldset.U.grid.gtype < 2:
-        particle.lat = particle.lat + (rs_y - ry) * dy
-        particle.lon = particle.lon + (rs_x - rx) * dx
-    else:
-        particle.lon = (1-rs_x)*(1-rs_y) * px[0] + rs_x * (1-rs_y) * px[1] + rs_x * rs_y * px[2] + (1-rs_x)*rs_y * px[3]
-        particle.lat = (1-rs_x)*(1-rs_y) * py[0] + rs_x * (1-rs_y) * py[1] + rs_x * rs_y * py[2] + (1-rs_x)*rs_y * py[3]
+    particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]
+    particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
     # print(particle.lon, particle.lat)
 
     # update the passed time for the main loop
