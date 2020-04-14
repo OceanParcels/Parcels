@@ -52,7 +52,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     mesh = pfile.attrs['parcels_mesh'] if 'parcels_mesh' in pfile.attrs else 'spherical'
 
     if(recordedvar is not None):
-        record = pfile.variables[recordedvar]
+        record = np.ma.filled(pfile.variables[recordedvar], np.nan)
     pfile.close()
 
     if tracerfile is not None and mode != 'hist2d':
