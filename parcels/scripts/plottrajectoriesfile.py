@@ -11,9 +11,6 @@ from parcels.plotting import cartopy_colorbar
 from parcels.plotting import create_parcelsfig_axis
 from parcels.plotting import plotfield
 try:
-    if sys.platform == 'darwin' and sys.version_info[0] == 3:
-        import matplotlib
-        matplotlib.use("Agg")
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
