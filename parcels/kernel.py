@@ -93,6 +93,8 @@ class Kernel(object):
                 logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                     '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
         elif pyfunc is AdvectionAnalytical:
+            if ptype.uses_jit:
+                raise NotImplementedError('Analytical Advection only works in Scipy mode')
             if fieldset.U.interp_method != 'cgrid_velocity':
                 raise NotImplementedError('Analytical Advection only works with C-grids')
 

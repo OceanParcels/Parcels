@@ -383,7 +383,7 @@ def test_analyticalAgrid(mode):
     assert failed
 
 
-@pytest.mark.parametrize('mode', ['scipy'])  # JIT not yet implemented
+@pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
 @pytest.mark.parametrize('u', [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize('v', [1, -0.3, 0, -1])
 def test_uniformanalytical(mode, u, v, tmpdir):
