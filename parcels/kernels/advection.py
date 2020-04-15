@@ -114,15 +114,15 @@ def AdvectionAnalytical(particle, fieldset, time):
     tol = 1e-8
 
     # request corner indices and xsi, eta (indices are to the bottom left of particle)
-    rx, ry, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle.xi[0], particle.yi[0])
-    if abs(rx - 1) < tol:
+    xsi, eta, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle.xi[0], particle.yi[0])
+    if abs(xsi - 1) < tol:
         if fieldset.U.data[0, yi+1, xi+1] > 0:
             xi += 1
-            rx = 0
-    if abs(ry - 1) < tol:
+            xsi = 0
+    if abs(eta - 1) < tol:
         if fieldset.V.data[0, yi+1, xi+1] > 0:
             yi += 1
-            ry = 0
+            eta = 0
     particle.xi, particle.yi = xi, yi
 
     grid = fieldset.U.grid
@@ -138,10 +138,10 @@ def AdvectionAnalytical(particle, fieldset, time):
         px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
         px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
 
-    c1 = fieldset.UV.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(rx, 0.), py))
-    c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., ry), py))
-    c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(rx, 1.), py))
-    c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., ry), py))
+    c1 = fieldset.UV.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 0.), py))
+    c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
+    c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
+    c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
     F_w = fieldset.U.data[0, yi+1, xi] * c4  # TODO time-varying
     F_e = fieldset.U.data[0, yi+1, xi+1] * c2
     F_s = fieldset.V.data[0, yi, xi+1] * c1
@@ -149,8 +149,8 @@ def AdvectionAnalytical(particle, fieldset, time):
     dx = (c4 + c2)/2.
     dy = (c1 + c3)/2.
 
-    up = F_w * (1-rx) + F_e * rx
-    vp = F_s * (1-ry) + F_n * ry
+    up = F_w * (1-xsi) + F_e * xsi
+    vp = F_s * (1-eta) + F_n * eta
     ry_target = 1. if vp >= 0. else 0.
     rx_target = 1. if up >= 0. else 0.
 
@@ -165,12 +165,12 @@ def AdvectionAnalytical(particle, fieldset, time):
     # calculate F(r0) and F(r1) for both directions (unless beta == 0)
     if B_x != 0.:
         Fu_r1 = rx_target + delta_x / B_x
-        Fu_r0 = rx + delta_x / B_x
+        Fu_r0 = xsi + delta_x / B_x
     else:
         Fu_r0, Fu_r1 = None, None
     if B_y != 0.:
         Fv_r1 = ry_target + delta_y / B_y
-        Fv_r0 = ry + delta_y / B_y
+        Fv_r0 = eta + delta_y / B_y
     else:
         Fv_r0, Fv_r1 = None, None
 
@@ -182,7 +182,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     if B_x == 0 and delta_x == 0:
         ds_x = float('inf')
     elif B_x == 0:
-        ds_x = -(rx_target - rx) / delta_x
+        ds_x = -(rx_target - xsi) / delta_x
     elif Fu_r1 * Fu_r0 < 0:
         ds_x = float('inf')
     else:
@@ -192,7 +192,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     if B_y == 0 and delta_y == 0:
         ds_y = float('inf')
     elif B_y == 0:
-        ds_y = -(ry_target - ry) / delta_y
+        ds_y = -(ry_target - eta) / delta_y
     elif Fv_r1 * Fv_r0 < 0:
         ds_y = float('inf')
     else:
@@ -208,14 +208,14 @@ def AdvectionAnalytical(particle, fieldset, time):
 
     # calculate end position in time s_min
     if B_x == 0:
-        rs_x = -delta_x * s_min + rx
+        rs_x = -delta_x * s_min + xsi
     else:
-        rs_x = (rx + delta_x/B_x) * math.exp(-B_x*s_min) - delta_x / B_x
+        rs_x = (xsi + delta_x/B_x) * math.exp(-B_x*s_min) - delta_x / B_x
 
     if B_y == 0:
-        rs_y = -delta_y * s_min + ry
+        rs_y = -delta_y * s_min + eta
     else:
-        rs_y = (ry + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
+        rs_y = (eta + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
 
     particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]
     particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
