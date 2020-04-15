@@ -113,17 +113,16 @@ def AdvectionAnalytical(particle, fieldset, time):
     # set tolerance of when something is considered 0
     tol = 1e-8
 
-    # request velocity at particle position
-    up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
-
     # request corner indices and xsi, eta (indices are to the bottom left of particle)
     rx, ry, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle.xi[0], particle.yi[0])
-    if (up > 0) & (abs(rx - 1) < tol):
-        xi += 1
-        rx = 0
-    if (vp > 0) & (abs(ry - 1) < tol):
-        yi += 1
-        ry = 0
+    if abs(rx - 1) < tol:
+        if fieldset.U.data[0, yi+1, xi+1] > 0:
+            xi += 1
+            rx = 0
+    if abs(ry - 1) < tol:
+        if fieldset.V.data[0, yi+1, xi+1] > 0:
+            yi += 1
+            ry = 0
     particle.xi, particle.yi = xi, yi
 
     grid = fieldset.U.grid
@@ -150,6 +149,8 @@ def AdvectionAnalytical(particle, fieldset, time):
     dx = (c4 + c2)/2.
     dy = (c1 + c3)/2.
 
+    up = F_w * (1-rx) + F_e * rx
+    vp = F_s * (1-ry) + F_n * ry
     ry_target = 1. if vp >= 0. else 0.
     rx_target = 1. if up >= 0. else 0.
 
