@@ -386,7 +386,8 @@ def test_analyticalAgrid(mode):
 @pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
 @pytest.mark.parametrize('u', [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize('v', [1, -0.3, 0, -1])
-def test_uniformanalytical(mode, u, v, tmpdir):
+@pytest.mark.parametrize('direction', [1, -1])
+def test_uniformanalytical(mode, u, v, direction, tmpdir):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     U = u * np.ones((lat.size, lon.size), dtype=np.float32)
@@ -399,12 +400,12 @@ def test_uniformanalytical(mode, u, v, tmpdir):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0)
 
     outfile = tmpdir.join("uniformanalytical.nc")
-    pset.execute(AdvectionAnalytical, runtime=4, dt=1,
+    pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=pset.ParticleFile(name=outfile, outputdt=1))
-    assert np.abs(pset.lon - x0 - 4 * u) < 1e-6
-    assert np.abs(pset.lat - y0 - 4 * v) < 1e-6
+    assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
+    assert np.abs(pset.lat - y0 - 4 * v * direction) < 1e-6
 
     time = Dataset(outfile, 'r', 'NETCDF4').variables['time'][:]
-    assert np.allclose(time, np.arange(0, 5))
+    assert np.allclose(time, direction*np.arange(0, 5))
     lons = Dataset(outfile, 'r', 'NETCDF4').variables['lon'][:]
-    assert np.allclose(lons, x0+u*np.arange(0, 5))
+    assert np.allclose(lons, x0+direction*u*np.arange(0, 5))
