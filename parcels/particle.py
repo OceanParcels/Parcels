@@ -173,7 +173,7 @@ class ScipyParticle(_Particle):
     xi = Variable('xi', dtype=np.int32, to_write=False)
     yi = Variable('yi', dtype=np.int32, to_write=False)
     zi = Variable('zi', dtype=np.int32, to_write=False)
-    ti = Variable('ti', dtype=np.int32, to_write=False)
+    ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)
     id = Variable('id', dtype=np.int32)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -192,6 +192,13 @@ class ScipyParticle(_Particle):
         type(self).fileid.initial = -1
         type(self).dt.initial = None
         type(self).next_dt.initial = np.nan
+
+        for index in ['xi', 'yi', 'zi', 'ti']:
+            if index != 'ti':
+                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+            else:
+                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
@@ -246,11 +253,6 @@ class JITParticle(ScipyParticle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-        fieldset = kwargs.get('fieldset')
         for index in ['xi', 'yi', 'zi', 'ti']:
-            if index != 'ti':
-                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
-            else:
-                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
             setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
             setattr(self, 'c'+index, getattr(self, index+'p').value)
