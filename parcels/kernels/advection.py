@@ -117,13 +117,14 @@ def AdvectionAnalytical(particle, fieldset, time):
     up, vp = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
 
     # request corner indices and xsi, eta (indices are to the bottom left of particle)
-    rx, ry, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, 0, 0)
+    rx, ry, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle.xi[0], particle.yi[0])
     if (up > 0) & (abs(rx - 1) < tol):
         xi += 1
         rx = 0
     if (vp > 0) & (abs(ry - 1) < tol):
         yi += 1
         ry = 0
+    particle.xi, particle.yi = xi, yi
 
     grid = fieldset.U.grid
     if grid.gtype < 2:

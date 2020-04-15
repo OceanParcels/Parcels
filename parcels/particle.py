@@ -170,6 +170,10 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
+    xi = Variable('xi', dtype=np.int32, to_write=False)
+    yi = Variable('yi', dtype=np.int32, to_write=False)
+    zi = Variable('zi', dtype=np.int32, to_write=False)
+    ti = Variable('ti', dtype=np.int32, to_write=False)
     id = Variable('id', dtype=np.int32)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -233,11 +237,6 @@ class JITParticle(ScipyParticle):
     Users should use JITParticles for faster advection computation.
 
     """
-
-    xi = Variable('xi', dtype=np.int32, to_write=False)
-    yi = Variable('yi', dtype=np.int32, to_write=False)
-    zi = Variable('zi', dtype=np.int32, to_write=False)
-    ti = Variable('ti', dtype=np.int32, to_write=False)
 
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
