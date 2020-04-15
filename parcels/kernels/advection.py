@@ -110,23 +110,38 @@ def AdvectionAnalytical(particle, fieldset, time):
     import numpy as np
     import parcels.tools.interpolation_utils as i_u
 
-    # set tolerance of when something is considered 0
     tol = 1e-8
+    direction = 1. if particle.dt > 0 else -1.
+    withW = True if 'W' in [f.name for f in fieldset.get_fields()] else False
 
-    # request corner indices and xsi, eta (indices are to the bottom left of particle)
-    xsi, eta, _, xi, yi, _ = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle.xi[0], particle.yi[0])
-    if abs(xsi - 1) < tol:
-        if fieldset.U.data[0, yi+1, xi+1] > 0:
-            xi += 1
-            xsi = 0
-    if abs(eta - 1) < tol:
-        if fieldset.V.data[0, yi+1, xi+1] > 0:
-            yi += 1
-            eta = 0
-    particle.xi, particle.yi = xi, yi
+    xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth,
+                                                           particle.xi[0], particle.yi[0])
+    if withW:
+        if abs(xsi - 1) < tol:
+            if fieldset.U.data[0, zi+1, yi+1, xi+1] > 0:
+                xi += 1
+                xsi = 0
+        if abs(eta - 1) < tol:
+            if fieldset.V.data[0, zi+1, yi+1, xi+1] > 0:
+                yi += 1
+                eta = 0
+        if abs(zeta - 1) < tol:
+            if fieldset.W.data[0, zi+1, yi+1, xi+1] > 0:
+                zi += 1
+                zeta = 0
+    else:
+        if abs(xsi - 1) < tol:
+            if fieldset.U.data[0, yi+1, xi+1] > 0:
+                xi += 1
+                xsi = 0
+        if abs(eta - 1) < tol:
+            if fieldset.V.data[0, yi+1, xi+1] > 0:
+                yi += 1
+                eta = 0
+
+    particle.xi, particle.yi, particle.zi = xi, yi, zi
 
     grid = fieldset.U.grid
-    direction = 1. if particle.dt > 0 else -1.
     if grid.gtype < 2:
         px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
         py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
@@ -138,18 +153,29 @@ def AdvectionAnalytical(particle, fieldset, time):
         px[0] = px[0]-360 if px[0] > particle.lat+225 else px[0]
         px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
         px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
+    if withW:
+        pz = np.array([grid.depth[zi], grid.depth[zi+1]])
+        dz = pz[1] - pz[0]
+    else:
+        dz = 1.
 
     c1 = fieldset.UV.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 0.), py))
     c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
     c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
     c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
-    F_w = direction * fieldset.U.data[0, yi+1, xi] * c4  # TODO time-varying
-    F_e = direction * fieldset.U.data[0, yi+1, xi+1] * c2
-    F_s = direction * fieldset.V.data[0, yi, xi+1] * c1
-    F_n = direction * fieldset.V.data[0, yi+1, xi+1] * c3
     dx = (c4 + c2)/2.
     dy = (c1 + c3)/2.
 
+    if withW:
+        F_w = direction * fieldset.U.data[0, zi+1, yi+1, xi] * c4 * dz  # TODO time-varying
+        F_e = direction * fieldset.U.data[0, zi+1, yi+1, xi+1] * c2 * dz
+        F_s = direction * fieldset.V.data[0, zi+1, yi, xi+1] * c1 * dz
+        F_n = direction * fieldset.V.data[0, zi+1, yi+1, xi+1] * c3 * dz
+    else:
+        F_w = direction * fieldset.U.data[0, yi+1, xi] * c4 * dz  # TODO time-varying
+        F_e = direction * fieldset.U.data[0, yi+1, xi+1] * c2 * dz
+        F_s = direction * fieldset.V.data[0, yi, xi+1] * c1 * dz
+        F_n = direction * fieldset.V.data[0, yi+1, xi+1] * c3 * dz
     up = F_w * (1-xsi) + F_e * xsi
     vp = F_s * (1-eta) + F_n * eta
     ry_target = 1. if direction * vp >= 0. else 0.
@@ -204,8 +230,39 @@ def AdvectionAnalytical(particle, fieldset, time):
     if abs(ds_y) < tol:
         ds_y = float('inf')
 
+    if withW:
+        F_u = direction * fieldset.W.data[0, zi+1, yi+1, xi+1] * dx * dy
+        F_l = direction * fieldset.W.data[0, zi, yi+1, xi+1] * dx * dy
+        wp = F_l * (1-zeta) + F_u * zeta
+        rz_target = 1. if direction * wp >= 0. else 0.
+
+        B_z = F_l - F_u
+        delta_z = - F_l - B_z * 0.
+
+        if B_z != 0.:
+            Fw_r1 = rz_target + delta_z / B_z
+            Fw_r0 = zeta + delta_z / B_z
+        else:
+            Fw_r0, Fw_r1 = None, None
+
+        B_z = 0 if abs(B_z) < tol else B_z
+
+        if B_z == 0 and delta_z == 0:
+            ds_z = float('inf')
+        elif B_z == 0:
+            ds_z = -(rz_target - zeta) / delta_z
+        elif Fw_r1 * Fw_r0 < 0:
+            ds_z = float('inf')
+        else:
+            ds_z = - 1. / B_z * math.log(Fw_r1 / Fw_r0)
+
+        if abs(ds_z) < tol:
+            ds_z = float('inf')
+    else:
+        ds_z = float('inf')
+
     # take the minimum travel time
-    s_min = min(abs(ds_x), abs(ds_y), abs(particle.dt / (dx * dy)))
+    s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(particle.dt / (dx * dy * dz)))
 
     # calculate end position in time s_min
     if B_x == 0:
@@ -218,9 +275,16 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         rs_y = (eta + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
 
+    if withW:
+        if B_z == 0:
+            rs_z = -delta_z * s_min + zeta
+        else:
+            rs_z = (zeta + delta_z/B_z) * math.exp(-B_z*s_min) - delta_z / B_z
+        particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
+
     particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]
     particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
     # print(particle.lon, particle.lat)
 
     # update the passed time for the main loop
-    particle.dt = direction * s_min * (dx * dy)
+    particle.dt = direction * s_min * (dx * dy * dz)

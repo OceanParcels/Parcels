@@ -386,24 +386,35 @@ def test_analyticalAgrid(mode):
 @pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
 @pytest.mark.parametrize('u', [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize('v', [1, -0.3, 0, -1])
+@pytest.mark.parametrize('w', [None, 1, -0.3, 0, -1])
 @pytest.mark.parametrize('direction', [1, -1])
-def test_uniformanalytical(mode, u, v, direction, tmpdir):
+def test_uniformanalytical(mode, u, v, w, direction, tmpdir):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
-    U = u * np.ones((lat.size, lon.size), dtype=np.float32)
-    V = v * np.ones((lat.size, lon.size), dtype=np.float32)
-    fieldset = FieldSet.from_data({'U': U, 'V': V}, {'lon': lon, 'lat': lat}, mesh='flat')
+    if w is not None:
+        depth = np.arange(0, 40, 2, dtype=np.float32)
+        U = u * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
+        V = v * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
+        W = w * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
+        fieldset = FieldSet.from_data({'U': U, 'V': V, 'W': W}, {'lon': lon, 'lat': lat, 'depth': depth}, mesh='flat')
+        fieldset.W.interp_method = 'cgrid_velocity'
+    else:
+        U = u * np.ones((lat.size, lon.size), dtype=np.float32)
+        V = v * np.ones((lat.size, lon.size), dtype=np.float32)
+        fieldset = FieldSet.from_data({'U': U, 'V': V}, {'lon': lon, 'lat': lat}, mesh='flat')
     fieldset.U.interp_method = 'cgrid_velocity'
     fieldset.V.interp_method = 'cgrid_velocity'
 
-    x0, y0 = 6.1, 6.2
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0)
+    x0, y0, z0 = 6.1, 6.2, 20
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
 
     outfile = tmpdir.join("uniformanalytical.nc")
     pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
                  output_file=pset.ParticleFile(name=outfile, outputdt=1))
     assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
     assert np.abs(pset.lat - y0 - 4 * v * direction) < 1e-6
+    if w:
+        assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
 
     time = Dataset(outfile, 'r', 'NETCDF4').variables['time'][:]
     assert np.allclose(time, direction*np.arange(0, 5))

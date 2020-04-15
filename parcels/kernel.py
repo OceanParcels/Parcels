@@ -34,6 +34,7 @@ from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
+from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.kernels.advection import AdvectionAnalytical
 from parcels.tools.error import ErrorCode
@@ -97,6 +98,8 @@ class Kernel(object):
                 raise NotImplementedError('Analytical Advection only works in Scipy mode')
             if fieldset.U.interp_method != 'cgrid_velocity':
                 raise NotImplementedError('Analytical Advection only works with C-grids')
+            if fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
+                raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
 
         if funcvars is not None:
             self.funcvars = funcvars
