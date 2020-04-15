@@ -126,6 +126,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     particle.xi, particle.yi = xi, yi
 
     grid = fieldset.U.grid
+    direction = 1. if particle.dt > 0 else -1.
     if grid.gtype < 2:
         px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
         py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
@@ -142,17 +143,17 @@ def AdvectionAnalytical(particle, fieldset, time):
     c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
     c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
     c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
-    F_w = fieldset.U.data[0, yi+1, xi] * c4  # TODO time-varying
-    F_e = fieldset.U.data[0, yi+1, xi+1] * c2
-    F_s = fieldset.V.data[0, yi, xi+1] * c1
-    F_n = fieldset.V.data[0, yi+1, xi+1] * c3
+    F_w = direction * fieldset.U.data[0, yi+1, xi] * c4  # TODO time-varying
+    F_e = direction * fieldset.U.data[0, yi+1, xi+1] * c2
+    F_s = direction * fieldset.V.data[0, yi, xi+1] * c1
+    F_n = direction * fieldset.V.data[0, yi+1, xi+1] * c3
     dx = (c4 + c2)/2.
     dy = (c1 + c3)/2.
 
     up = F_w * (1-xsi) + F_e * xsi
     vp = F_s * (1-eta) + F_n * eta
-    ry_target = 1. if vp >= 0. else 0.
-    rx_target = 1. if up >= 0. else 0.
+    ry_target = 1. if direction * vp >= 0. else 0.
+    rx_target = 1. if direction * up >= 0. else 0.
 
     # calculate betas
     B_x = F_w - F_e
@@ -198,16 +199,13 @@ def AdvectionAnalytical(particle, fieldset, time):
     else:
         ds_y = - 1. / B_y * math.log(Fv_r1 / Fv_r0)
 
-    if ds_x < tol:
+    if abs(ds_x) < tol:
         ds_x = float('inf')
-    if ds_y < tol:
+    if abs(ds_y) < tol:
         ds_y = float('inf')
 
     # take the minimum travel time
-    if particle.dt > 0:
-        s_min = min(ds_x, ds_y, particle.dt / (dx * dy))
-    else:
-        s_min = -min(ds_x, ds_y, -particle.dt / (dx * dy))
+    s_min = min(abs(ds_x), abs(ds_y), abs(particle.dt / (dx * dy)))
 
     # calculate end position in time s_min
     if B_x == 0:
@@ -225,4 +223,4 @@ def AdvectionAnalytical(particle, fieldset, time):
     # print(particle.lon, particle.lat)
 
     # update the passed time for the main loop
-    particle.dt = s_min * (dx * dy)
+    particle.dt = direction * s_min * (dx * dy)
