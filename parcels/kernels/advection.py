@@ -204,7 +204,10 @@ def AdvectionAnalytical(particle, fieldset, time):
         ds_y = float('inf')
 
     # take the minimum travel time
-    s_min = min(ds_x, ds_y, particle.dt / (dx*dy))
+    if particle.dt > 0:
+        s_min = min(ds_x, ds_y, particle.dt / (dx * dy))
+    else:
+        s_min = -min(ds_x, ds_y, -particle.dt / (dx * dy))
 
     # calculate end position in time s_min
     if B_x == 0:
