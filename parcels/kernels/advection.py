@@ -194,7 +194,7 @@ def AdvectionAnalytical(particle, fieldset, time):
             ds = float('inf')
         elif B == 0:
             ds = -(r_target - r) / delta
-        elif F_r1 * F_r0 < 0:
+        elif F_r1 * F_r0 <= 0:
             ds = float('inf')
         else:
             ds = - 1. / B * math.log(F_r1 / F_r0)
