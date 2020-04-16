@@ -488,7 +488,7 @@ class ParticleSet(object):
             raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
 
         for d in self.particle_data:
-            self.particle_data[d] = np.append(self.particle_data[d], particles.particle_data[d])
+            self.particle_data[d] = np.concatenate((self.particle_data[d], particles.particle_data[d]))
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
