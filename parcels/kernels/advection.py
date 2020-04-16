@@ -106,13 +106,23 @@ def AdvectionRK45(particle, fieldset, time):
 def AdvectionAnalytical(particle, fieldset, time):
     """Advection of particles using 'analytical advection' integration
 
-    Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017)"""
+    Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
+    Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'
+    (default 10 per model timestep) and not yet with the full analytical time integration"""
     import numpy as np
     import parcels.tools.interpolation_utils as i_u
 
     tol = 1e-8
+    I_s = 10  # number of intermediate time steps
     direction = 1. if particle.dt > 0 else -1.
     withW = True if 'W' in [f.name for f in fieldset.get_fields()] else False
+    withTime = True if len(fieldset.U.grid.time_full) > 1 else False
+    ti = fieldset.U.time_index(time)[0]
+    ds_t = particle.dt
+    if withTime:
+        tau = (time - fieldset.U.grid.time[ti]) / (fieldset.U.grid.time[ti+1] - fieldset.U.grid.time[ti])
+        time_i = np.linspace(0, fieldset.U.grid.time[ti+1] - fieldset.U.grid.time[ti], I_s)
+        ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
 
     xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth,
                                                            particle.xi[0], particle.yi[0])
@@ -167,15 +177,25 @@ def AdvectionAnalytical(particle, fieldset, time):
     dy = (c1 + c3)/2.
 
     if withW:
-        U0 = direction * fieldset.U.data[0, zi+1, yi+1, xi] * c4 * dz  # TODO time-varying
-        U1 = direction * fieldset.U.data[0, zi+1, yi+1, xi+1] * c2 * dz
-        V0 = direction * fieldset.V.data[0, zi+1, yi, xi+1] * c1 * dz
-        V1 = direction * fieldset.V.data[0, zi+1, yi+1, xi+1] * c3 * dz
+        U0 = direction * fieldset.U.data[ti, zi+1, yi+1, xi] * c4 * dz
+        U1 = direction * fieldset.U.data[ti, zi+1, yi+1, xi+1] * c2 * dz
+        V0 = direction * fieldset.V.data[ti, zi+1, yi, xi+1] * c1 * dz
+        V1 = direction * fieldset.V.data[ti, zi+1, yi+1, xi+1] * c3 * dz
+        if withTime:
+            U0 = U0 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, zi+1, yi+1, xi] * c4 * dz
+            U1 = U1 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, zi+1, yi+1, xi+1] * c2 * dz
+            V0 = V0 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, zi+1, yi, xi+1] * c1 * dz
+            V1 = V1 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, zi+1, yi+1, xi+1] * c3 * dz
     else:
-        U0 = direction * fieldset.U.data[0, yi+1, xi] * c4 * dz  # TODO time-varying
-        U1 = direction * fieldset.U.data[0, yi+1, xi+1] * c2 * dz
-        V0 = direction * fieldset.V.data[0, yi, xi+1] * c1 * dz
-        V1 = direction * fieldset.V.data[0, yi+1, xi+1] * c3 * dz
+        U0 = direction * fieldset.U.data[ti, yi+1, xi] * c4 * dz
+        U1 = direction * fieldset.U.data[ti, yi+1, xi+1] * c2 * dz
+        V0 = direction * fieldset.V.data[ti, yi, xi+1] * c1 * dz
+        V1 = direction * fieldset.V.data[ti, yi+1, xi+1] * c3 * dz
+        if withTime:
+            U0 = U0 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, yi+1, xi] * c4 * dz
+            U1 = U1 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, yi+1, xi+1] * c2 * dz
+            V0 = V0 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, yi, xi+1] * c1 * dz
+            V1 = V1 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, yi+1, xi+1] * c3 * dz
 
     def compute_ds(F0, F1, r, direction, tol):
         up = F0 * (1-r) + F1 * r
@@ -206,14 +226,17 @@ def AdvectionAnalytical(particle, fieldset, time):
     ds_x, B_x, delta_x = compute_ds(U0, U1, xsi, direction, tol)
     ds_y, B_y, delta_y = compute_ds(V0, V1, eta, direction, tol)
     if withW:
-        W0 = direction * fieldset.W.data[0, zi, yi+1, xi+1] * dx * dy
-        W1 = direction * fieldset.W.data[0, zi+1, yi+1, xi+1] * dx * dy
+        W0 = direction * fieldset.W.data[ti, zi, yi+1, xi+1] * dx * dy
+        W1 = direction * fieldset.W.data[ti, zi+1, yi+1, xi+1] * dx * dy
+        if withTime:
+            W0 = W0 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi, yi + 1, xi + 1] * dx * dy
+            W1 = W1 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi + 1, yi + 1, xi + 1] * dx * dy
         ds_z, B_z, delta_z = compute_ds(W0, W1, zeta, direction, tol)
     else:
         ds_z = float('inf')
 
     # take the minimum travel time
-    s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(particle.dt / (dx * dy * dz)))
+    s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(ds_t / (dx * dy * dz)))
 
     # calculate end position in time s_min
     def compute_rs(ds, r, B, delta, s_min):
