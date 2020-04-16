@@ -167,15 +167,15 @@ def AdvectionAnalytical(particle, fieldset, time):
     dy = (c1 + c3)/2.
 
     if withW:
-        F_w = direction * fieldset.U.data[0, zi+1, yi+1, xi] * c4 * dz  # TODO time-varying
-        F_e = direction * fieldset.U.data[0, zi+1, yi+1, xi+1] * c2 * dz
-        F_s = direction * fieldset.V.data[0, zi+1, yi, xi+1] * c1 * dz
-        F_n = direction * fieldset.V.data[0, zi+1, yi+1, xi+1] * c3 * dz
+        U0 = direction * fieldset.U.data[0, zi+1, yi+1, xi] * c4 * dz  # TODO time-varying
+        U1 = direction * fieldset.U.data[0, zi+1, yi+1, xi+1] * c2 * dz
+        V0 = direction * fieldset.V.data[0, zi+1, yi, xi+1] * c1 * dz
+        V1 = direction * fieldset.V.data[0, zi+1, yi+1, xi+1] * c3 * dz
     else:
-        F_w = direction * fieldset.U.data[0, yi+1, xi] * c4 * dz  # TODO time-varying
-        F_e = direction * fieldset.U.data[0, yi+1, xi+1] * c2 * dz
-        F_s = direction * fieldset.V.data[0, yi, xi+1] * c1 * dz
-        F_n = direction * fieldset.V.data[0, yi+1, xi+1] * c3 * dz
+        U0 = direction * fieldset.U.data[0, yi+1, xi] * c4 * dz  # TODO time-varying
+        U1 = direction * fieldset.U.data[0, yi+1, xi+1] * c2 * dz
+        V0 = direction * fieldset.V.data[0, yi, xi+1] * c1 * dz
+        V1 = direction * fieldset.V.data[0, yi+1, xi+1] * c3 * dz
 
     def compute_ds(F0, F1, r, direction, tol):
         up = F0 * (1-r) + F1 * r
@@ -203,12 +203,12 @@ def AdvectionAnalytical(particle, fieldset, time):
             ds = float('inf')
         return ds, B, delta
 
-    ds_x, B_x, delta_x = compute_ds(F_w, F_e, xsi, direction, tol)
-    ds_y, B_y, delta_y = compute_ds(F_s, F_n, eta, direction, tol)
+    ds_x, B_x, delta_x = compute_ds(U0, U1, xsi, direction, tol)
+    ds_y, B_y, delta_y = compute_ds(V0, V1, eta, direction, tol)
     if withW:
-        F_u = direction * fieldset.W.data[0, zi+1, yi+1, xi+1] * dx * dy
-        F_l = direction * fieldset.W.data[0, zi, yi+1, xi+1] * dx * dy
-        ds_z, B_z, delta_z = compute_ds(F_l, F_u, zeta, direction, tol)
+        W0 = direction * fieldset.W.data[0, zi, yi+1, xi+1] * dx * dy
+        W1 = direction * fieldset.W.data[0, zi+1, yi+1, xi+1] * dx * dy
+        ds_z, B_z, delta_z = compute_ds(W0, W1, zeta, direction, tol)
     else:
         ds_z = float('inf')
 
