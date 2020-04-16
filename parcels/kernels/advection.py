@@ -177,85 +177,38 @@ def AdvectionAnalytical(particle, fieldset, time):
         F_s = direction * fieldset.V.data[0, yi, xi+1] * c1 * dz
         F_n = direction * fieldset.V.data[0, yi+1, xi+1] * c3 * dz
 
-    # compute x direction
-    up = F_w * (1-xsi) + F_e * xsi
-    rx_target = 1. if direction * up >= 0. else 0.
-    B_x = F_w - F_e
-    delta_x = - F_w - B_x * 0.
-    B_x = 0 if abs(B_x) < tol else B_x
+    def compute_ds(F0, F1, r, direction, tol):
+        up = F0 * (1-r) + F1 * r
+        r_target = 1. if direction * up >= 0. else 0.
+        B = F0 - F1
+        delta = - F0 - B * 0.
+        B = 0 if abs(B) < tol else B
 
-    if B_x != 0.:
-        Fu_r1 = rx_target + delta_x / B_x
-        Fu_r0 = xsi + delta_x / B_x
-    else:
-        Fu_r0, Fu_r1 = None, None
+        if B != 0.:
+            F_r1 = r_target + delta / B
+            F_r0 = r + delta / B
+        else:
+            F_r0, F_r1 = None, None
 
-    if B_x == 0 and delta_x == 0:
-        ds_x = float('inf')
-    elif B_x == 0:
-        ds_x = -(rx_target - xsi) / delta_x
-    elif Fu_r1 * Fu_r0 < 0:
-        ds_x = float('inf')
-    else:
-        ds_x = - 1. / B_x * math.log(Fu_r1 / Fu_r0)
+        if B == 0 and delta == 0:
+            ds = float('inf')
+        elif B == 0:
+            ds = -(r_target - r) / delta
+        elif F_r1 * F_r0 < 0:
+            ds = float('inf')
+        else:
+            ds = - 1. / B * math.log(F_r1 / F_r0)
 
-    if abs(ds_x) < tol:
-        ds_x = float('inf')
+        if abs(ds) < tol:
+            ds = float('inf')
+        return ds, B, delta
 
-    # compute y direction
-    vp = F_s * (1-eta) + F_n * eta
-    ry_target = 1. if direction * vp >= 0. else 0.
-    B_y = F_s - F_n
-    delta_y = - F_s - B_y * 0.
-    B_y = 0 if abs(B_y) < tol else B_y
-
-    if B_y != 0.:
-        Fv_r1 = ry_target + delta_y / B_y
-        Fv_r0 = eta + delta_y / B_y
-    else:
-        Fv_r0, Fv_r1 = None, None
-
-    if B_y == 0 and delta_y == 0:
-        ds_y = float('inf')
-    elif B_y == 0:
-        ds_y = -(ry_target - eta) / delta_y
-    elif Fv_r1 * Fv_r0 < 0:
-        ds_y = float('inf')
-    else:
-        ds_y = - 1. / B_y * math.log(Fv_r1 / Fv_r0)
-
-    if abs(ds_y) < tol:
-        ds_y = float('inf')
-
-    # compute z direction
+    ds_x, B_x, delta_x = compute_ds(F_w, F_e, xsi, direction, tol)
+    ds_y, B_y, delta_y = compute_ds(F_s, F_n, eta, direction, tol)
     if withW:
         F_u = direction * fieldset.W.data[0, zi+1, yi+1, xi+1] * dx * dy
         F_l = direction * fieldset.W.data[0, zi, yi+1, xi+1] * dx * dy
-        wp = F_l * (1-zeta) + F_u * zeta
-        rz_target = 1. if direction * wp >= 0. else 0.
-
-        B_z = F_l - F_u
-        delta_z = - F_l - B_z * 0.
-
-        if B_z != 0.:
-            Fw_r1 = rz_target + delta_z / B_z
-            Fw_r0 = zeta + delta_z / B_z
-        else:
-            Fw_r0, Fw_r1 = None, None
-
-        B_z = 0 if abs(B_z) < tol else B_z
-
-        if B_z == 0 and delta_z == 0:
-            ds_z = float('inf')
-        elif B_z == 0:
-            ds_z = -(rz_target - zeta) / delta_z
-        elif Fw_r1 * Fw_r0 < 0:
-            ds_z = float('inf')
-        else:
-            ds_z = - 1. / B_z * math.log(Fw_r1 / Fw_r0)
-
-        if abs(ds_z) < tol:
-            ds_z = float('inf')
+        ds_z, B_z, delta_z = compute_ds(F_l, F_u, zeta, direction, tol)
     else:
         ds_z = float('inf')
 
@@ -263,24 +216,20 @@ def AdvectionAnalytical(particle, fieldset, time):
     s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(particle.dt / (dx * dy * dz)))
 
     # calculate end position in time s_min
-    if B_x == 0:
-        rs_x = -delta_x * s_min + xsi
-    else:
-        rs_x = (xsi + delta_x/B_x) * math.exp(-B_x*s_min) - delta_x / B_x
+    def compute_rs(ds, r, B, delta, s_min):
+        if B == 0:
+            return -delta * s_min + r
+        else:
+            return (r + delta / B) * math.exp(-B * s_min) - delta / B
 
-    if B_y == 0:
-        rs_y = -delta_y * s_min + eta
-    else:
-        rs_y = (eta + delta_y/B_y) * math.exp(-B_y*s_min) - delta_y / B_y
+    rs_x = compute_rs(ds_x, xsi, B_x, delta_x, s_min)
+    rs_y = compute_rs(ds_y, eta, B_y, delta_y, s_min)
 
     particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]
     particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
 
     if withW:
-        if B_z == 0:
-            rs_z = -delta_z * s_min + zeta
-        else:
-            rs_z = (zeta + delta_z/B_z) * math.exp(-B_z*s_min) - delta_z / B_z
+        rs_z = compute_rs(ds_z, zeta, B_z, delta_z, s_min)
         particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
 
     # update the passed time for the main loop
