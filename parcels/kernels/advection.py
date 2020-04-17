@@ -201,7 +201,7 @@ def AdvectionAnalytical(particle, fieldset, time):
         up = F0 * (1-r) + F1 * r
         r_target = 1. if direction * up >= 0. else 0.
         B = F0 - F1
-        delta = - F0 - B * 0.
+        delta = - F0
         B = 0 if abs(B) < tol else B
 
         if B != 0.:

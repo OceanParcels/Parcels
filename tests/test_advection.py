@@ -388,7 +388,7 @@ def test_analyticalAgrid(mode):
 @pytest.mark.parametrize('v', [1, -0.3, 0, -1])
 @pytest.mark.parametrize('w', [None, 1, -0.3, 0, -1])
 @pytest.mark.parametrize('direction', [1, -1])
-def test_uniformanalytical(mode, u, v, w, direction, tmpdir):
+def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
     lon = np.arange(0, 15, dtype=np.float32)
     lat = np.arange(0, 15, dtype=np.float32)
     if w is not None:
