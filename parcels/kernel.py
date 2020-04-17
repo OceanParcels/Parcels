@@ -318,6 +318,9 @@ class Kernel(object):
                     if res is ErrorCode.Success and particles.state != state_prev:
                         res = particles.state
 
+                    if not analytical and res == ErrorCode.Success and not np.isclose(particles.dt, pdt_prekernels):
+                        res = ErrorCode.Repeat
+
                 except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
                     particles.exception = fse_xy
