@@ -73,9 +73,13 @@ def test_multi_structured_grids(mode):
         temp0 = Variable('temp0', dtype=np.float32, initial=20.)
         temp1 = Variable('temp1', dtype=np.float32, initial=20.)
 
-    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001])
+    pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
 
-    pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=1, dt=1)
+    pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
+
+    # advect without updating temperature to test particle deletion
+    pset.remove_indices(np.array([1]))
+    pset.execute(AdvectionRK4, runtime=1, dt=1)
 
     assert np.allclose(pset.temp0[0], pset.temp1[0], atol=1e-3)
 

@@ -488,12 +488,12 @@ class ParticleSet(object):
             raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
 
         for d in self.particle_data:
-            self.particle_data[d] = np.append(self.particle_data[d], particles.particle_data[d])
+            self.particle_data[d] = np.concatenate((self.particle_data[d], particles.particle_data[d]))
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
         for d in self.particle_data:
-            self.particle_data[d] = np.delete(self.particle_data[d], indices)
+            self.particle_data[d] = np.delete(self.particle_data[d], indices, axis=0)
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
