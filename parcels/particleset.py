@@ -493,7 +493,7 @@ class ParticleSet(object):
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
         for d in self.particle_data:
-            self.particle_data[d] = np.delete(self.particle_data[d], indices)
+            self.particle_data[d] = np.delete(self.particle_data[d], indices, axis=0)
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
