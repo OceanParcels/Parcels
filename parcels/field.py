@@ -467,10 +467,14 @@ class Field(object):
     def reshape(self, data, transpose=False):
 
         # Ensure that field data is the right data type
+        if not isinstance(data, np.ndarray):
+            data = np.array(data)
         if not data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
         lib = np if isinstance(data, np.ndarray) else da
+        if data.size == 1:
+            data = lib.tile(data, [self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim])
         if transpose:
             data = lib.transpose(data)
         if self.grid.lat_flipped:

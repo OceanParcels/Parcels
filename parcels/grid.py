@@ -69,7 +69,11 @@ class Grid(object):
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
-        if len(lon.shape) == 1:
+        if not isinstance(lon, np.ndarray):
+            lon = np.array(lon)
+        if not isinstance(lat, np.ndarray):
+            lat = np.array(lat)
+        if len(lon.shape) <= 1:
             if depth is None or len(depth.shape) == 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
@@ -152,7 +156,7 @@ class Grid(object):
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
     def check_zonal_periodic(self):
-        if self.zonal_periodic or self.mesh == 'flat':
+        if self.zonal_periodic or self.mesh == 'flat' or self.lon.size == 1:
             return
         dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
         dx = np.where(dx < -180, dx+360, dx)
@@ -235,8 +239,8 @@ class RectilinearGrid(Grid):
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
+        assert(isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
+        assert(isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
@@ -245,7 +249,7 @@ class RectilinearGrid(Grid):
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
-        if self.lat[-1] < self.lat[0]:
+        if self.ydim > 1 and self.lat[-1] < self.lat[0]:
             self.lat = np.flip(self.lat, axis=0)
             self.lat_flipped = True
             logger.warning_once("Flipping lat data from North-South to South-North")
