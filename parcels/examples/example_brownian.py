@@ -18,15 +18,12 @@ def mesh_conversion(mesh):
     return (1852. * 60) if mesh == 'spherical' else 1.
 
 
-def zeros_fieldset(xdim=2, ydim=2, mesh='flat'):
+def zeros_fieldset(mesh='flat'):
     """Generates a zero velocity field"""
 
-    lon = np.linspace(-2e5/mesh_conversion(mesh), 2e5/mesh_conversion(mesh), xdim, dtype=np.float32)
-    lat = np.linspace(-2e5/mesh_conversion(mesh), 2e5/mesh_conversion(mesh), ydim, dtype=np.float32)
-
-    dimensions = {'lon': lon, 'lat': lat}
-    data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
-            'V': np.zeros((ydim, xdim), dtype=np.float32)}
+    dimensions = {'lon': 0, 'lat': 0}
+    data = {'U': 0,
+            'V': 0}
     return FieldSet.from_data(data, dimensions, mesh=mesh)
 
 
@@ -41,8 +38,8 @@ def test_brownian_example(mode, mesh, npart=3000):
 
     # Create field of Kh_zonal and Kh_meridional, using same grid as U
     grid = fieldset.U.grid
-    fieldset.add_field(Field('Kh_zonal', kh_zonal*np.ones((2, 2)), grid=grid))
-    fieldset.add_field(Field('Kh_meridional', kh_meridional*np.ones((2, 2)), grid=grid))
+    fieldset.add_field(Field('Kh_zonal', kh_zonal, grid=grid))
+    fieldset.add_field(Field('Kh_meridional', kh_meridional, grid=grid))
 
     # Set random seed
     random.seed(123456)
