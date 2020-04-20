@@ -173,8 +173,10 @@ def AdvectionAnalytical(particle, fieldset, time):
     c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
     c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
     c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
-    dx = (c4 + c2)/2.  # TODO is this the best way to compute dx and dy?
-    dy = (c1 + c3)/2.
+    rad = np.pi / 180.
+    deg2m = 1852 * 60.
+    meshJac = (deg2m * deg2m * math.cos(rad * particle.lat)) if grid.mesh == 'spherical' else 1
+    dxdy = fieldset.UV.jacobian(xsi, eta, px, py) * meshJac
 
     if withW:
         U0 = direction * fieldset.U.data[ti, zi+1, yi+1, xi] * c4 * dz
@@ -226,17 +228,17 @@ def AdvectionAnalytical(particle, fieldset, time):
     ds_x, B_x, delta_x = compute_ds(U0, U1, xsi, direction, tol)
     ds_y, B_y, delta_y = compute_ds(V0, V1, eta, direction, tol)
     if withW:
-        W0 = direction * fieldset.W.data[ti, zi, yi+1, xi+1] * dx * dy
-        W1 = direction * fieldset.W.data[ti, zi+1, yi+1, xi+1] * dx * dy
+        W0 = direction * fieldset.W.data[ti, zi, yi+1, xi+1] * dxdy
+        W1 = direction * fieldset.W.data[ti, zi+1, yi+1, xi+1] * dxdy
         if withTime:
-            W0 = W0 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi, yi + 1, xi + 1] * dx * dy
-            W1 = W1 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi + 1, yi + 1, xi + 1] * dx * dy
+            W0 = W0 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi, yi + 1, xi + 1] * dxdy
+            W1 = W1 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi + 1, yi + 1, xi + 1] * dxdy
         ds_z, B_z, delta_z = compute_ds(W0, W1, zeta, direction, tol)
     else:
         ds_z = float('inf')
 
     # take the minimum travel time
-    s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(ds_t / (dx * dy * dz)))
+    s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(ds_t / (dxdy * dz)))
 
     # calculate end position in time s_min
     def compute_rs(ds, r, B, delta, s_min):
@@ -256,4 +258,4 @@ def AdvectionAnalytical(particle, fieldset, time):
         particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
 
     # update the passed time for the main loop
-    particle.dt = direction * s_min * (dx * dy * dz)
+    particle.dt = direction * s_min * (dxdy * dz)
