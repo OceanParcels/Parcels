@@ -112,7 +112,7 @@ def AdvectionAnalytical(particle, fieldset, time):
     import numpy as np
     import parcels.tools.interpolation_utils as i_u
 
-    tol = 1e-8
+    tol = 1e-10
     I_s = 10  # number of intermediate time steps
     direction = 1. if particle.dt > 0 else -1.
     withW = True if 'W' in [f.name for f in fieldset.get_fields()] else False
@@ -206,17 +206,17 @@ def AdvectionAnalytical(particle, fieldset, time):
         delta = - F0
         B = 0 if abs(B) < tol else B
 
-        if B != 0.:
+        if abs(B) > tol:
             F_r1 = r_target + delta / B
             F_r0 = r + delta / B
         else:
             F_r0, F_r1 = None, None
 
-        if B == 0 and delta == 0:
+        if abs(B) < tol and abs(delta) < tol:
             ds = float('inf')
         elif B == 0:
             ds = -(r_target - r) / delta
-        elif F_r1 * F_r0 <= 0:
+        elif F_r1 * F_r0 < tol:
             ds = float('inf')
         else:
             ds = - 1. / B * math.log(F_r1 / F_r0)
@@ -242,7 +242,7 @@ def AdvectionAnalytical(particle, fieldset, time):
 
     # calculate end position in time s_min
     def compute_rs(ds, r, B, delta, s_min):
-        if B == 0:
+        if abs(B) < tol:
             return -delta * s_min + r
         else:
             return (r + delta / B) * math.exp(-B * s_min) - delta / B
