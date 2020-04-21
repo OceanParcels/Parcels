@@ -319,7 +319,7 @@ def test_dt_modif_by_kernel(fieldset, mode):
 
     endtime = 4
     pset.execute(modif_dt, endtime=endtime, dt=1.)
-    assert np.isclose(pset.age[0], endtime)
+    assert np.isclose(pset.time[0], endtime)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

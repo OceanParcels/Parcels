@@ -20,7 +20,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def stommel_fieldset(xdim=200, ydim=200):
+def stommel_fieldset(xdim=200, ydim=200, grid_type='A'):
     """Simulate a periodic current along a western boundary, with significantly
     larger velocities along the western edge than the rest of the region
 
@@ -29,45 +29,52 @@ def stommel_fieldset(xdim=200, ydim=200):
     Ph.D. dissertation, University of Bologna
     http://amsdottorato.unibo.it/1733/1/Fabbroni_Nicoletta_Tesi.pdf
     """
-    a = 10000 * 1e3
-    b = 10000 * 1e3
+    a = b = 10000 * 1e3
     scalefac = 0.05  # to scale for physically meaningful velocities
+    dx, dy = a / xdim, b / ydim
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(0, a, xdim, dtype=np.float32)
     lat = np.linspace(0, b, ydim, dtype=np.float32)
 
-    # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
-    # surface height) all on A-grid
-    U = np.zeros((lon.size, lat.size), dtype=np.float32)
-    V = np.zeros((lon.size, lat.size), dtype=np.float32)
-    P = np.zeros((lon.size, lat.size), dtype=np.float32)
+    # Define arrays U (zonal), V (meridional) and P (sea surface height)
+    U = np.zeros((lat.size, lon.size), dtype=np.float32)
+    V = np.zeros((lat.size, lon.size), dtype=np.float32)
+    P = np.zeros((lat.size, lon.size), dtype=np.float32)
 
     beta = 2e-11
     r = 1/(11.6*86400)
     es = r/(beta*a)
 
-    for i in range(lon.size):
-        for j in range(lat.size):
+    for j in range(lat.size):
+        for i in range(lon.size):
             xi = lon[i] / a
             yi = lat[j] / b
-            P[i, j] = (1 - math.exp(-xi/es) - xi) * math.pi * np.sin(math.pi*yi)*scalefac
-            U[i, j] = -(1 - math.exp(-xi/es) - xi) * math.pi**2 * np.cos(math.pi*yi)*scalefac
-            V[i, j] = (math.exp(-xi/es)/es - 1) * math.pi * np.sin(math.pi*yi)*scalefac
+            P[j, i] = (1 - math.exp(-xi / es) - xi) * math.pi * np.sin(math.pi * yi) * scalefac
+            if grid_type == 'A':
+                U[j, i] = -(1 - math.exp(-xi / es) - xi) * math.pi ** 2 * np.cos(math.pi * yi) * scalefac
+                V[j, i] = (math.exp(-xi / es) / es - 1) * math.pi * np.sin(math.pi * yi) * scalefac
+    if grid_type == 'C':
+        V[:, 1:] = (P[:, 1:] - P[:, 0:-1]) / dx * a
+        U[1:, :] = -(P[1:, :] - P[0:-1, :]) / dy * b
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
-    return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    if grid_type == 'C':
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
+    return fieldset
 
 
 def UpdateP(particle, fieldset, time):
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
-def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4,
+def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
                     outfile="StommelParticle.nc", repeatdt=None, write_fields=True):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
-    fieldset = stommel_fieldset()
+    fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
         filename = 'stommel'
         fieldset.write(filename)
@@ -106,15 +113,16 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4,
     return pset
 
 
+@pytest.mark.parametrize('grid_type', ['A', 'C'])
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_stommel_fieldset(mode, tmpdir):
+def test_stommel_fieldset(mode, grid_type, tmpdir):
     timer.root = timer.Timer('Main')
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     outfile = tmpdir.join("StommelParticle")
-    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], outfile=outfile, write_fields=False)
-    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], outfile=outfile, write_fields=False)
+    psetRK4 = stommel_example(1, mode=mode, method=method['RK4'], grid_type=grid_type, outfile=outfile, write_fields=False)
+    psetRK45 = stommel_example(1, mode=mode, method=method['RK45'], grid_type=grid_type, outfile=outfile, write_fields=False)
     assert np.allclose(psetRK4.lon, psetRK45.lon, rtol=1e-3)
-    assert np.allclose(psetRK4.lat, psetRK45.lat, rtol=1e-3)
+    assert np.allclose(psetRK4.lat, psetRK45.lat, rtol=1.1e-3)
     err_adv = np.abs(psetRK4.p_start - psetRK4.p)
     assert(err_adv <= 1.e-1).all()
     err_smpl = np.array([abs(psetRK4.p[i] - psetRK4.fieldset.P[0., psetRK4.lon[i], psetRK4.lat[i], psetRK4.depth[i]]) for i in range(psetRK4.size)])
