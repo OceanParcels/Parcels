@@ -4,7 +4,7 @@ import math
 __all__ = ['pressure', 'adtg', 'ptemp_from_temp', 'temp_from_ptemp']
 
 
-def pressure(particle, fieldset, time):
+def pressure_from_latdepth(particle, fieldset, time):
     """
     Calculates pressure in dbars from depth in meters and latitude.
 
@@ -27,7 +27,7 @@ def pressure(particle, fieldset, time):
 
     X = math.sin(max(lat * deg2rad, -1*lat * deg2rad))
     C1 = 5.92e-3 + X ** 2 * 5.25e-3
-    particle.P = ((1 - C1) - (((1 - C1) ** 2) - (8.84e-6 * depth)) ** 0.5) / 4.42e-6
+    particle.pressure = ((1 - C1) - (((1 - C1) ** 2) - (8.84e-6 * depth)) ** 0.5) / 4.42e-6
 
 
 def adtg(particle, fieldset, time):
@@ -60,7 +60,7 @@ def adtg(particle, fieldset, time):
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
     """
-    s, t, p = particle.S, particle.T, particle.P
+    s, t, pres = particle.S, particle.T, particle.pressure
 
     T68 = t * 1.00024
 
@@ -72,8 +72,8 @@ def adtg(particle, fieldset, time):
     particle.adtg = (a[0] + (a[1] + (a[2] + a[3] * T68) * T68) * T68
                      + (b[0] + b[1] * T68) * (s - 35)
                      + ((c[0] + (c[1] + (c[2] + c[3] * T68) * T68) * T68)
-                     + (d[0] + d[1] * T68) * (s - 35)) * p
-                     + (e[0] + (e[1] + e[2] * T68) * T68) * p * p)
+                     + (d[0] + d[1] * T68) * (s - 35)) * pres
+                     + (e[0] + (e[1] + e[2] * T68) * T68) * pres * pres)
 
 
 def ptemp_from_temp(particle, fieldset, time):
@@ -111,7 +111,7 @@ def ptemp_from_temp(particle, fieldset, time):
 
     s = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]
     t = fieldset.temperature[time, particle.depth, particle.lat, particle.lon]
-    p, pr = particle.P, fieldset.refpressure
+    pres, pr = particle.pressure, fieldset.refpressure
 
     # First calculate the adiabatic temperature gradient adtg
     # Convert ITS-90 temperature to IPTS-68
@@ -125,16 +125,16 @@ def ptemp_from_temp(particle, fieldset, time):
     adtg = (a[0] + (a[1] + (a[2] + a[3] * T68) * T68) * T68
             + (b[0] + b[1] * T68) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * T68) * T68) * T68)
-            + (d[0] + d[1] * T68) * (s - 35)) * p
-            + (e[0] + (e[1] + e[2] * T68) * T68) * p * p)
+            + (d[0] + d[1] * T68) * (s - 35)) * pres
+            + (e[0] + (e[1] + e[2] * T68) * T68) * pres * pres)
 
     # Theta1.
-    del_P = pr - p
+    del_P = pr - pres
     del_th = del_P * adtg
     th = T68 + 0.5 * del_th
     q = del_th
 
-    pprime = p + 0.5 * del_P
+    pprime = pres + 0.5 * del_P
     adtg = (a[0] + (a[1] + (a[2] + a[3] * th) * th) * th
             + (b[0] + b[1] * th) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * th) * th) * th)
@@ -158,7 +158,7 @@ def ptemp_from_temp(particle, fieldset, time):
     q = (2 + 2 ** 0.5) * del_th + (-2 - 3 / 2 ** 0.5) * q
 
     # Theta4.
-    pprime = p + del_P
+    pprime = pres + del_P
     adtg = (a[0] + (a[1] + (a[2] + a[3] * th) * th) * th
             + (b[0] + b[1] * th) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * th) * th) * th)
@@ -204,7 +204,7 @@ def temp_from_ptemp(particle, fieldset, time):
     """
     s = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]
     t = fieldset.potemperature[time, particle.depth, particle.lat, particle.lon]
-    p, pr = fieldset.refpressure, particle.P  # The order should be switched here
+    pres, pr = fieldset.refpressure, particle.pressure  # The order should be switched here
 
     # Convert ITS-90 temperature to IPTS-68
     T68 = t * 1.00024
@@ -217,16 +217,16 @@ def temp_from_ptemp(particle, fieldset, time):
     adtg = (a[0] + (a[1] + (a[2] + a[3] * T68) * T68) * T68
             + (b[0] + b[1] * T68) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * T68) * T68) * T68)
-            + (d[0] + d[1] * T68) * (s - 35)) * p
-            + (e[0] + (e[1] + e[2] * T68) * T68) * p * p)
+            + (d[0] + d[1] * T68) * (s - 35)) * pres
+            + (e[0] + (e[1] + e[2] * T68) * T68) * pres * pres)
 
     # Theta1.
-    del_P = pr - p
+    del_P = pr - pres
     del_th = del_P * adtg
     th = T68 + 0.5 * del_th
     q = del_th
 
-    pprime = p + 0.5 * del_P
+    pprime = pres + 0.5 * del_P
     adtg = (a[0] + (a[1] + (a[2] + a[3] * th) * th) * th
             + (b[0] + b[1] * th) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * th) * th) * th)
@@ -250,7 +250,7 @@ def temp_from_ptemp(particle, fieldset, time):
     q = (2 + 2 ** 0.5) * del_th + (-2 - 3 / 2 ** 0.5) * q
 
     # Theta4.
-    pprime = p + del_P
+    pprime = pres + del_P
     adtg = (a[0] + (a[1] + (a[2] + a[3] * th) * th) * th
             + (b[0] + b[1] * th) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * th) * th) * th)
