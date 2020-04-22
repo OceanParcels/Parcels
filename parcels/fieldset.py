@@ -216,9 +216,17 @@ class FieldSet(object):
         for attr, value in vars(self).items():
             if type(value) is Field:
                 assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
-        if self.U.interp_method == 'cgrid_velocity':
-            if self.U.grid.xdim == 1 or self.U.grid.ydim == 1:
-                raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
+
+        def check_len1dims_cgrid(fld):
+            if fld.interp_method == 'cgrid_velocity':
+                if fld.grid.xdim == 1 or fld.grid.ydim == 1:
+                    raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
+
+        if isinstance(self.U, (SummedField, NestedField)):
+            for U in self.U:
+                check_len1dims_cgrid(U)
+        else:
+            check_len1dims_cgrid(self.U)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
