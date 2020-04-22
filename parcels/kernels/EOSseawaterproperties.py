@@ -158,6 +158,7 @@ def ptemp_from_temp(particle, fieldset, time):
     q = (2 + 2 ** 0.5) * del_th + (-2 - 3 / 2 ** 0.5) * q
 
     # Theta4.
+    pprime = p + del_P
     adtg = (a[0] + (a[1] + (a[2] + a[3] * th) * th) * th
             + (b[0] + b[1] * th) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * th) * th) * th)
@@ -203,7 +204,7 @@ def temp_from_ptemp(particle, fieldset, time):
     """
     s = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]
     t = fieldset.potemperature[time, particle.depth, particle.lat, particle.lon]
-    p, pr = particle.P, fieldset.refpressure
+    p, pr = fieldset.refpressure, particle.P  # The order should be switched here
 
     # Convert ITS-90 temperature to IPTS-68
     T68 = t * 1.00024
@@ -249,6 +250,7 @@ def temp_from_ptemp(particle, fieldset, time):
     q = (2 + 2 ** 0.5) * del_th + (-2 - 3 / 2 ** 0.5) * q
 
     # Theta4.
+    pprime = p + del_P
     adtg = (a[0] + (a[1] + (a[2] + a[3] * th) * th) * th
             + (b[0] + b[1] * th) * (s - 35)
             + ((c[0] + (c[1] + (c[2] + c[3] * th) * th) * th)
