@@ -1,7 +1,7 @@
 """Collection of pre-built eos sea water property kernels"""
 import math
 
-__all__ = ['pressure', 'adtg', 'ptemp_from_temp', 'temp_from_ptemp']
+__all__ = ['pressure_from_latdepth', 'adtg', 'ptemp_from_temp', 'temp_from_ptemp']
 
 
 def pressure_from_latdepth(particle, fieldset, time):
