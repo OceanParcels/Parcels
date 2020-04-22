@@ -73,13 +73,15 @@ class Grid(object):
             lon = np.array(lon)
         if not isinstance(lat, np.ndarray):
             lat = np.array(lat)
+        if not (depth is None or isinstance(depth, np.ndarray)):
+            depth = np.array(depth)
         if len(lon.shape) <= 1:
-            if depth is None or len(depth.shape) == 1:
+            if depth is None or len(depth.shape) <= 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
         else:
-            if depth is None or len(depth.shape) == 1:
+            if depth is None or len(depth.shape) <= 1:
                 return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
@@ -304,7 +306,7 @@ class RectilinearZGrid(RectilinearGrid):
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         super(RectilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) == 1), 'depth is not a vector'
+            assert(len(depth.shape) <= 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth

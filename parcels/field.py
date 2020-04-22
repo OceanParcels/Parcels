@@ -641,13 +641,13 @@ class Field(object):
     def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, search2D=False):
         grid = self.grid
 
-        if grid.xdim > 1:
-            if not grid.zonal_periodic:
-                if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
-                    raise FieldOutOfBoundError(x, y, z, field=self)
-            if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
+        if grid.xdim > 1 and (not grid.zonal_periodic):
+            if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 raise FieldOutOfBoundError(x, y, z, field=self)
+        if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
+            raise FieldOutOfBoundError(x, y, z, field=self)
 
+        if grid.xdim > 1:
             if grid.mesh != 'spherical':
                 lon_index = grid.lon < x
                 if lon_index.all():
