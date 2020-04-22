@@ -5,7 +5,6 @@ __all__ = ['pressure', 'adtg', 'ptemp_from_temp', 'temp_from_ptemp']
 
 
 def pressure(particle, fieldset, time):
-
     """
     Calculates pressure in dbars from depth in meters and latitude.
 
@@ -13,7 +12,6 @@ def pressure(particle, fieldset, time):
     -------
     p : array_like
            pressure [db]
-
 
     References
     ----------
