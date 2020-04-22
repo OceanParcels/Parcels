@@ -467,7 +467,7 @@ class Field(object):
     def reshape(self, data, transpose=False):
 
         # Ensure that field data is the right data type
-        if not isinstance(data, np.ndarray):
+        if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
         if not data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
