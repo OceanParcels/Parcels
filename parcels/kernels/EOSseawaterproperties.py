@@ -27,7 +27,7 @@ def pressure(particle, fieldset, time):
 
     X = math.sin(max(lat * deg2rad, -1*lat * deg2rad))
     C1 = 5.92e-3 + X ** 2 * 5.25e-3
-    particle.pressure = ((1 - C1) - (((1 - C1) ** 2) - (8.84e-6 * depth)) ** 0.5) / 4.42e-6
+    particle.P = ((1 - C1) - (((1 - C1) ** 2) - (8.84e-6 * depth)) ** 0.5) / 4.42e-6
 
 
 def adtg(particle, fieldset, time):
@@ -60,7 +60,7 @@ def adtg(particle, fieldset, time):
        Res. Vol20,401-408. doi:10.1016/0011-7471(73)90063-6
 
     """
-    s, t, p = particle.S, particle.T, particle.pressure
+    s, t, p = particle.S, particle.T, particle.P
 
     T68 = t * 1.00024
 
@@ -111,7 +111,7 @@ def ptemp_from_temp(particle, fieldset, time):
 
     s = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]
     t = fieldset.temperature[time, particle.depth, particle.lat, particle.lon]
-    p, pr = particle.pressure, fieldset.refpressure
+    p, pr = particle.P, fieldset.refpressure
 
     # First calculate the adiabatic temperature gradient adtg
     # Convert ITS-90 temperature to IPTS-68
@@ -203,7 +203,7 @@ def temp_from_ptemp(particle, fieldset, time):
     """
     s = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]
     t = fieldset.potemperature[time, particle.depth, particle.lat, particle.lon]
-    p, pr = particle.pressure, fieldset.refpressure
+    p, pr = particle.P, fieldset.refpressure
 
     # Convert ITS-90 temperature to IPTS-68
     T68 = t * 1.00024
