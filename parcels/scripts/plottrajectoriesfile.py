@@ -101,17 +101,27 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             except:
                 pass
         b = time == plottimes[0]
+
+        def timestr(plottimes, index):
+            if isinstance(plottimes[index], np.timedelta64):
+                if plottimes[-1] > np.timedelta64(1, 'h'):
+                    return str(plottimes[index].astype('timedelta64[h]'))
+                elif plottimes[-1] > np.timedelta64(1, 's'):
+                    return str(plottimes[index].astype('timedelta64[s]'))
+            else:
+                return str(plottimes[index])
+
         if cartopy:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
         else:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k')
-        ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
+        ttl = ax.set_title('Particles' + titlestr + ' at time ' + timestr(plottimes, 0))
         frames = np.arange(0, len(plottimes))
 
         def animate(t):
             b = time == plottimes[t]
             scat.set_offsets(np.vstack((lon[b], lat[b])).transpose())
-            ttl.set_text('Particle' + titlestr + ' at time ' + str(plottimes[t]))
+            ttl.set_text('Particle' + titlestr + ' at time ' + timestr(plottimes, t))
             if recordedvar is not None:
                 scat.set_array(record[b])
             return scat,
