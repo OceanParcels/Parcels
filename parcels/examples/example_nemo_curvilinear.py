@@ -6,7 +6,7 @@ from os import path
 import numpy as np
 import pytest
 
-from parcels import AdvectionRK4
+from parcels import AdvectionRK4, AdvectionAnalytical
 from parcels import FieldSet
 from parcels import JITParticle
 from parcels import ParticleFile
@@ -14,9 +14,10 @@ from parcels import ParticleSet
 from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+advection = {'RK4': AdvectionRK4, 'AA': AdvectionAnalytical}
 
 
-def run_nemo_curvilinear(mode, outfile):
+def run_nemo_curvilinear(mode, outfile, advtype='RK4'):
     """Function that shows how to read in curvilinear grids, in this case from NEMO"""
     data_path = path.join(path.dirname(__file__), 'NemoCurvilinear_data/')
 
@@ -35,7 +36,12 @@ def run_nemo_curvilinear(mode, outfile):
     # Now run particles as normal
     npart = 20
     lonp = 30 * np.ones(npart)
-    latp = np.linspace(-70, 88, npart)
+    if advtype == 'RK4':
+        latp = np.linspace(-70, 88, npart)
+        runtime = delta(days=160)
+    else:
+        latp = np.linspace(-70, 70, npart)
+        runtime = delta(days=15)
 
     def periodicBC(particle, fieldSet, time):
         if particle.lon > 180:
@@ -43,8 +49,8 @@ def run_nemo_curvilinear(mode, outfile):
 
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp)
     pfile = ParticleFile(outfile, pset, outputdt=delta(days=1))
-    kernels = pset.Kernel(AdvectionRK4) + periodicBC
-    pset.execute(kernels, runtime=delta(days=1)*160, dt=delta(hours=6),
+    kernels = pset.Kernel(advection[advtype]) + periodicBC
+    pset.execute(kernels, runtime=runtime, dt=delta(hours=6),
                  output_file=pfile)
     assert np.allclose(pset.lat - latp, 0, atol=2e-2)
 
@@ -76,6 +82,11 @@ def make_plot(trajfile):
 def test_nemo_curvilinear(mode, tmpdir):
     outfile = tmpdir.join('nemo_particles')
     run_nemo_curvilinear(mode, outfile)
+
+
+def test_nemo_curvilinear_AA(tmpdir):
+    outfile = tmpdir.join('nemo_particlesAA')
+    run_nemo_curvilinear('scipy', outfile, 'AA')
 
 
 def test_nemo_3D_samegrid():

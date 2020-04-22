@@ -4,7 +4,8 @@ import math
 from parcels.tools.error import ErrorCode
 
 
-__all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D']
+__all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
+           'AdvectionAnalytical']
 
 
 def AdvectionRK4(particle, fieldset, time):
@@ -100,3 +101,161 @@ def AdvectionRK45(particle, fieldset, time):
     else:
         particle.dt /= 2
         return ErrorCode.Repeat
+
+
+def AdvectionAnalytical(particle, fieldset, time):
+    """Advection of particles using 'analytical advection' integration
+
+    Based on Ariane/TRACMASS algorithm, as detailed in e.g. Doos et al (https://doi.org/10.5194/gmd-10-1733-2017).
+    Note that the time-dependent scheme is currently implemented with 'intermediate timesteps'
+    (default 10 per model timestep) and not yet with the full analytical time integration"""
+    import numpy as np
+    import parcels.tools.interpolation_utils as i_u
+
+    tol = 1e-10
+    I_s = 10  # number of intermediate time steps
+    direction = 1. if particle.dt > 0 else -1.
+    withW = True if 'W' in [f.name for f in fieldset.get_fields()] else False
+    withTime = True if len(fieldset.U.grid.time_full) > 1 else False
+    ti = fieldset.U.time_index(time)[0]
+    ds_t = particle.dt
+    if withTime:
+        tau = (time - fieldset.U.grid.time[ti]) / (fieldset.U.grid.time[ti+1] - fieldset.U.grid.time[ti])
+        time_i = np.linspace(0, fieldset.U.grid.time[ti+1] - fieldset.U.grid.time[ti], I_s)
+        ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
+
+    xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth,
+                                                           particle.xi[0], particle.yi[0])
+    if withW:
+        if abs(xsi - 1) < tol:
+            if fieldset.U.data[0, zi+1, yi+1, xi+1] > 0:
+                xi += 1
+                xsi = 0
+        if abs(eta - 1) < tol:
+            if fieldset.V.data[0, zi+1, yi+1, xi+1] > 0:
+                yi += 1
+                eta = 0
+        if abs(zeta - 1) < tol:
+            if fieldset.W.data[0, zi+1, yi+1, xi+1] > 0:
+                zi += 1
+                zeta = 0
+    else:
+        if abs(xsi - 1) < tol:
+            if fieldset.U.data[0, yi+1, xi+1] > 0:
+                xi += 1
+                xsi = 0
+        if abs(eta - 1) < tol:
+            if fieldset.V.data[0, yi+1, xi+1] > 0:
+                yi += 1
+                eta = 0
+
+    particle.xi, particle.yi, particle.zi = xi, yi, zi
+
+    grid = fieldset.U.grid
+    if grid.gtype < 2:
+        px = np.array([grid.lon[xi], grid.lon[xi + 1], grid.lon[xi + 1], grid.lon[xi]])
+        py = np.array([grid.lat[yi], grid.lat[yi], grid.lat[yi + 1], grid.lat[yi + 1]])
+    else:
+        px = np.array([grid.lon[yi, xi], grid.lon[yi, xi + 1], grid.lon[yi + 1, xi + 1], grid.lon[yi + 1, xi]])
+        py = np.array([grid.lat[yi, xi], grid.lat[yi, xi + 1], grid.lat[yi + 1, xi + 1], grid.lat[yi + 1, xi]])
+    if grid.mesh == 'spherical':
+        px[0] = px[0]+360 if px[0] < particle.lon-225 else px[0]
+        px[0] = px[0]-360 if px[0] > particle.lat+225 else px[0]
+        px[1:] = np.where(px[1:] - px[0] > 180, px[1:]-360, px[1:])
+        px[1:] = np.where(-px[1:] + px[0] > 180, px[1:]+360, px[1:])
+    if withW:
+        pz = np.array([grid.depth[zi], grid.depth[zi+1]])
+        dz = pz[1] - pz[0]
+    else:
+        dz = 1.
+
+    c1 = fieldset.UV.dist(px[0], px[1], py[0], py[1], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 0.), py))
+    c2 = fieldset.UV.dist(px[1], px[2], py[1], py[2], grid.mesh, np.dot(i_u.phi2D_lin(1., eta), py))
+    c3 = fieldset.UV.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
+    c4 = fieldset.UV.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
+    rad = np.pi / 180.
+    deg2m = 1852 * 60.
+    meshJac = (deg2m * deg2m * math.cos(rad * particle.lat)) if grid.mesh == 'spherical' else 1
+    dxdy = fieldset.UV.jacobian(xsi, eta, px, py) * meshJac
+
+    if withW:
+        U0 = direction * fieldset.U.data[ti, zi+1, yi+1, xi] * c4 * dz
+        U1 = direction * fieldset.U.data[ti, zi+1, yi+1, xi+1] * c2 * dz
+        V0 = direction * fieldset.V.data[ti, zi+1, yi, xi+1] * c1 * dz
+        V1 = direction * fieldset.V.data[ti, zi+1, yi+1, xi+1] * c3 * dz
+        if withTime:
+            U0 = U0 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, zi+1, yi+1, xi] * c4 * dz
+            U1 = U1 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, zi+1, yi+1, xi+1] * c2 * dz
+            V0 = V0 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, zi+1, yi, xi+1] * c1 * dz
+            V1 = V1 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, zi+1, yi+1, xi+1] * c3 * dz
+    else:
+        U0 = direction * fieldset.U.data[ti, yi+1, xi] * c4 * dz
+        U1 = direction * fieldset.U.data[ti, yi+1, xi+1] * c2 * dz
+        V0 = direction * fieldset.V.data[ti, yi, xi+1] * c1 * dz
+        V1 = direction * fieldset.V.data[ti, yi+1, xi+1] * c3 * dz
+        if withTime:
+            U0 = U0 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, yi+1, xi] * c4 * dz
+            U1 = U1 * (1 - tau) + tau * direction * fieldset.U.data[ti+1, yi+1, xi+1] * c2 * dz
+            V0 = V0 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, yi, xi+1] * c1 * dz
+            V1 = V1 * (1 - tau) + tau * direction * fieldset.V.data[ti+1, yi+1, xi+1] * c3 * dz
+
+    def compute_ds(F0, F1, r, direction, tol):
+        up = F0 * (1-r) + F1 * r
+        r_target = 1. if direction * up >= 0. else 0.
+        B = F0 - F1
+        delta = - F0
+        B = 0 if abs(B) < tol else B
+
+        if abs(B) > tol:
+            F_r1 = r_target + delta / B
+            F_r0 = r + delta / B
+        else:
+            F_r0, F_r1 = None, None
+
+        if abs(B) < tol and abs(delta) < tol:
+            ds = float('inf')
+        elif B == 0:
+            ds = -(r_target - r) / delta
+        elif F_r1 * F_r0 < tol:
+            ds = float('inf')
+        else:
+            ds = - 1. / B * math.log(F_r1 / F_r0)
+
+        if abs(ds) < tol:
+            ds = float('inf')
+        return ds, B, delta
+
+    ds_x, B_x, delta_x = compute_ds(U0, U1, xsi, direction, tol)
+    ds_y, B_y, delta_y = compute_ds(V0, V1, eta, direction, tol)
+    if withW:
+        W0 = direction * fieldset.W.data[ti, zi, yi+1, xi+1] * dxdy
+        W1 = direction * fieldset.W.data[ti, zi+1, yi+1, xi+1] * dxdy
+        if withTime:
+            W0 = W0 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi, yi + 1, xi + 1] * dxdy
+            W1 = W1 * (1 - tau) + tau * direction * fieldset.W.data[ti+1, zi + 1, yi + 1, xi + 1] * dxdy
+        ds_z, B_z, delta_z = compute_ds(W0, W1, zeta, direction, tol)
+    else:
+        ds_z = float('inf')
+
+    # take the minimum travel time
+    s_min = min(abs(ds_x), abs(ds_y), abs(ds_z), abs(ds_t / (dxdy * dz)))
+
+    # calculate end position in time s_min
+    def compute_rs(ds, r, B, delta, s_min):
+        if abs(B) < tol:
+            return -delta * s_min + r
+        else:
+            return (r + delta / B) * math.exp(-B * s_min) - delta / B
+
+    rs_x = compute_rs(ds_x, xsi, B_x, delta_x, s_min)
+    rs_y = compute_rs(ds_y, eta, B_y, delta_y, s_min)
+
+    particle.lon = (1.-rs_x)*(1.-rs_y) * px[0] + rs_x * (1.-rs_y) * px[1] + rs_x * rs_y * px[2] + (1.-rs_x)*rs_y * px[3]
+    particle.lat = (1.-rs_x)*(1.-rs_y) * py[0] + rs_x * (1.-rs_y) * py[1] + rs_x * rs_y * py[2] + (1.-rs_x)*rs_y * py[3]
+
+    if withW:
+        rs_z = compute_rs(ds_z, zeta, B_z, delta_z, s_min)
+        particle.depth = (1.-rs_z) * pz[0] + rs_z * pz[1]
+
+    # update the passed time for the main loop
+    particle.dt = direction * s_min * (dxdy * dz)

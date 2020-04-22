@@ -9,6 +9,7 @@ import pytest
 from parcels import AdvectionEE
 from parcels import AdvectionRK4
 from parcels import AdvectionRK45
+from parcels import AdvectionAnalytical
 from parcels import FieldSet
 from parcels import JITParticle
 from parcels import ParticleSet
@@ -20,7 +21,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 
 
-def peninsula_fieldset(xdim, ydim, mesh='flat'):
+def peninsula_fieldset(xdim, ydim, mesh='flat', grid_type='A'):
     """Construct a fieldset encapsulating the flow field around an
     idealised peninsula.
 
@@ -32,6 +33,7 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
                1. spherical: Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
                2. flat  (default): No conversion, lat/lon are assumed to be in m.
+    :param grid_type: Option whether grid is either Arakawa A (default) or C
 
     The original test description can be found in Fig. 2.2.3 in:
     North, E. W., Gallego, A., Petitgas, P. (Eds). 2009. Manual of
@@ -40,16 +42,13 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
     ICES Cooperative Research Report No. 295. 111 pp.
     http://archimer.ifremer.fr/doc/00157/26792/24888.pdf
 
-    To avoid accuracy problems with interpolation from A-grid
-    to C-grid, we return NetCDF files that are on an A-grid.
     """
     # Set Parcels FieldSet variables
 
     # Generate the original test setup on A-grid in m
     domainsizeX, domainsizeY = (1.e5, 5.e4)
-    dx, dy = domainsizeX / xdim, domainsizeY / ydim
-    La = np.linspace(dx, 1.e5-dx, xdim, dtype=np.float32)
-    Wa = np.linspace(dy, 5.e4-dy, ydim, dtype=np.float32)
+    La = np.linspace(0, domainsizeX, xdim, dtype=np.float32)
+    Wa = np.linspace(0, domainsizeY, ydim, dtype=np.float32)
 
     u0 = 1
     x0 = domainsizeX / 2
@@ -58,8 +57,17 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
     # Create the fields
     x, y = np.meshgrid(La, Wa, sparse=True, indexing='xy')
     P = (u0*R**2*y/((x-x0)**2+y**2)-u0*y) / 1e3
-    U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
-    V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+
+    if grid_type == 'A':
+        U = u0-u0*R**2*((x-x0)**2-y**2)/(((x-x0)**2+y**2)**2)
+        V = -2*u0*R**2*((x-x0)*y)/(((x-x0)**2+y**2)**2)
+    elif grid_type == 'C':
+        U = np.zeros(P.shape)
+        V = np.zeros(P.shape)
+        V[:, 1:] = (P[:, 1:] - P[:, :-1])
+        U[1:, :] = -(P[1:, :] - P[:-1, :])
+    else:
+        raise RuntimeError('Grid_type %s is not a valid option' % grid_type)
 
     # Set land points to NaN
     landpoints = P >= 0.
@@ -73,7 +81,12 @@ def peninsula_fieldset(xdim, ydim, mesh='flat'):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'lon': lon, 'lat': lat}
-    return FieldSet.from_data(data, dimensions, mesh=mesh)
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh=mesh)
+    if grid_type == 'C':
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
+    return fieldset
 
 
 def UpdateP(particle, fieldset, time):
@@ -136,6 +149,19 @@ def test_peninsula_fieldset(mode, mesh, tmpdir):
     # Test Field sampling accuracy by comparing kernel against Field sampling
     err_smpl = np.array([abs(pset.p[i] - pset.fieldset.P[0., pset.depth[i], pset.lat[i], pset.lon[i]]) for i in range(pset.size)])
     assert(err_smpl <= 1.e-3).all()
+
+
+@pytest.mark.parametrize('mode', ['scipy'])  # Analytical Advection only implemented in Scipy mode
+@pytest.mark.parametrize('mesh', ['flat', 'spherical'])
+def test_peninsula_fieldset_AnalyticalAdvection(mode, mesh, tmpdir):
+    """Execute peninsula test using Analytical Advection on C grid"""
+    fieldset = peninsula_fieldset(101, 51, 'flat', grid_type='C')
+    outfile = tmpdir.join("PeninsulaAA")
+    pset = peninsula_example(fieldset, outfile, npart=10, mode=mode,
+                             method=AdvectionAnalytical)
+    # Test advection accuracy by comparing streamline values
+    err_adv = np.array([abs(p.p_start - p.p) for p in pset])
+    assert(err_adv <= 1.e-1).all()
 
 
 def fieldsetfile(mesh, tmpdir):

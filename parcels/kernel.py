@@ -34,7 +34,9 @@ from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
+from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
+from parcels.kernels.advection import AdvectionAnalytical
 from parcels.tools.error import ErrorCode
 from parcels.tools.error import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
@@ -91,6 +93,14 @@ class Kernel(object):
             if warning:
                 logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                     '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
+        elif pyfunc is AdvectionAnalytical:
+            if ptype.uses_jit:
+                raise NotImplementedError('Analytical Advection only works in Scipy mode')
+            if fieldset.U.interp_method != 'cgrid_velocity':
+                raise NotImplementedError('Analytical Advection only works with C-grids')
+            if fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
+                raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
+
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -260,6 +270,14 @@ class Kernel(object):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
 
+        if 'AdvectionAnalytical' in self.pyfunc.__name__:
+            analytical = True
+            if not np.isinf(dt):
+                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
+            dt = np.inf
+        else:
+            analytical = False
+
         particles = pset.data_accessor()
 
         # back up variables in case of ErrorCode.Repeat
@@ -300,7 +318,7 @@ class Kernel(object):
                     if res is ErrorCode.Success and particles.state != state_prev:
                         res = particles.state
 
-                    if res == ErrorCode.Success and not np.isclose(particles.dt, pdt_prekernels):
+                    if not analytical and res == ErrorCode.Success and not np.isclose(particles.dt, pdt_prekernels):
                         res = ErrorCode.Repeat
 
                 except FieldOutOfBoundError as fse_xy:
@@ -322,6 +340,8 @@ class Kernel(object):
                     # Update time and repeat
                     particles.time += particles.dt
                     particles.update_next_dt()
+                    if analytical:
+                        particles.dt = np.inf
                     dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
 
                     sign_end_part = np.sign(endtime - particles.time)

@@ -729,6 +729,7 @@ class Field(object):
                          [1, -1, 1, -1]])
         maxIterSearch = 1e6
         it = 0
+        tol = 1.e-10
         if not grid.zonal_periodic:
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 if grid.lon[0, 0] < grid.lon[0, -1]:
@@ -738,7 +739,7 @@ class Field(object):
         if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
             raise FieldOutOfBoundError(x, y, z, field=self)
 
-        while xsi < 0 or xsi > 1 or eta < 0 or eta > 1:
+        while xsi < -tol or xsi > 1+tol or eta < -tol or eta > 1+tol:
             px = np.array([grid.lon[yi, xi], grid.lon[yi, xi+1], grid.lon[yi+1, xi+1], grid.lon[yi+1, xi]])
             if grid.mesh == 'spherical':
                 px[0] = px[0]+360 if px[0] < x-225 else px[0]
@@ -767,19 +768,23 @@ class Field(object):
                 raise FieldOutOfBoundError(x, y, 0, field=self)
             if xsi > 1 and eta > 1 and xi == grid.xdim-1 and yi == grid.ydim-1:
                 raise FieldOutOfBoundError(x, y, 0, field=self)
-            if xsi < 0:
+            if xsi < -tol:
                 xi -= 1
-            elif xsi > 1:
+            elif xsi > 1+tol:
                 xi += 1
-            if eta < 0:
+            if eta < -tol:
                 yi -= 1
-            elif eta > 1:
+            elif eta > 1+tol:
                 yi += 1
             (xi, yi) = self.reconnect_bnd_indices(xi, yi, grid.xdim, grid.ydim, grid.mesh)
             it += 1
             if it > maxIterSearch:
                 print('Correct cell not found after %d iterations' % maxIterSearch)
                 raise FieldOutOfBoundError(x, y, 0, field=self)
+        xsi = max(0., xsi)
+        eta = max(0., eta)
+        xsi = min(1., xsi)
+        eta = min(1., eta)
 
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.CurvilinearZGrid:
