@@ -165,7 +165,7 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
   int block[ndim];
   int ilocal[ndim];
 
-  int tii, yii, xii;
+  int tii, yii, xii, yiid, xiid;
 
   int blockid = getBlock2D(chunk_info, yi, xi, block, ilocal);
   if (grid->load_chunk[blockid] < 2){
@@ -178,7 +178,7 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
   int yshift = chunk_info[1];
   int xdim = chunk_info[1+ndim+yshift+block[1]];
 
-  if ((ilocal[0] == ydim-1) || (ilocal[1] == xdim-1))
+  if (((ilocal[0] == ydim-1) && (ydim > 1)) || ((ilocal[1] == xdim-1) && (xdim > 1)))
   {
     // Cell is on multiple chunks
     for (tii=0; tii<2; ++tii){
@@ -208,9 +208,19 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
     float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
     for (tii=0; tii<2; ++tii){
       float (*data)[xdim] = (float (*)[xdim]) (data_block[ti+tii]);
-      for (yii=0; yii<2; ++yii)
-        for (xii=0; xii<2; ++xii)
-          cell_data[tii][yii][xii] = data[ilocal[0]+yii][ilocal[1]+xii];
+      for (yii=0; yii<2; ++yii){
+        for (xii=0; xii<2; ++xii){
+          if (xdim == 1)
+            xiid = 0;
+          else
+            xiid = xii;
+          if (ydim == 1)
+            yiid = 0;
+          else
+            yiid = yii;
+          cell_data[tii][yii][xii] = data[ilocal[0]+yiid][ilocal[1]+xiid];
+        }
+      }
       if (first_tstep_only == 1)
          break;
     }
