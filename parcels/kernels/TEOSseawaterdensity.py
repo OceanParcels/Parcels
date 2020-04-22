@@ -2,7 +2,7 @@
 import math
 
 
-__all__ = ['polyTEOS10_bsq', 'UNESCO_Density']
+__all__ = ['polyTEOS10_bsq']
 
 
 def polyTEOS10_bsq(particle, fieldset, time):
@@ -88,91 +88,3 @@ def polyTEOS10_bsq(particle, fieldset, time):
     rz1 = (((R041 * tt + R131 * ss + R031) * tt + (R221 * ss + R121) * ss + R021) * tt + ((R311 * ss + R211) * ss + R111) * ss + R011) * tt + (((R401 * ss + R301) * ss + R201) * ss + R101) * ss + R001
     rz0 = (((((R060 * tt + R150 * ss + R050) * tt + (R240 * ss + R140) * ss + R040) * tt + ((R330 * ss + R230) * ss + R130) * ss + R030) * tt + (((R420 * ss + R320) * ss + R220) * ss + R120) * ss + R020) * tt + ((((R510 * ss + R410) * ss + R310) * ss + R210) * ss + R110) * ss + R010) * tt + (((((R600 * ss + R500) * ss + R400) * ss + R300) * ss + R200) * ss + R100) * ss + R000
     particle.density = ((rz3 * zz + rz2) * zz + rz1) * zz + rz0
-
-
-def UNESCO_Density(particle, fieldset, time):
-    # This is a kernel which calculates the UNESCO density
-    # (https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf),
-    # from pressure, temperature and salinity.
-    # density in [kg/m3] if temperature in degrees C, salinity in PSU,
-    # pressure in bar.
-
-    a0 = 999.842594
-    a1 = 0.06793953
-    a2 = -0.009095290
-    a3 = 0.0001001685
-    a4 = -0.000001120083
-    a5 = 0.000000006536332
-
-    S = fieldset.psu_salinity[time, particle.depth, particle.lat, particle.lon]  # salinity
-    T = fieldset.cons_temperature[time, particle.depth, particle.lat, particle.lon]  # temperature
-    P = fieldset.cons_pressure[time, particle.depth, particle.lat, particle.lon]  # pressure
-
-    rsmow = a0 + a1*T + a2*math.pow(T, 2) + a3*math.pow(T, 3) +     \
-        a4*math.pow(T, 4) + a5*math.pow(T, 5)
-
-    b0 = 0.82449
-    b1 = -0.0040899
-    b2 = 0.000076438
-    b3 = -0.00000082467
-    b_four = 0.0000000053875
-
-    c0 = -0.0057246
-    c1 = 0.00010227
-    c2 = -0.0000016546
-
-    d0 = 0.00048314
-
-    B1 = b0 + b1*T + b2*math.pow(T, 2) + b3*math.pow(T, 3) + b_four*math.pow(T, 4)
-    C1 = c0 + c1*T + c2*math.pow(T, 2)
-
-    rho_st0 = rsmow + B1*S + C1*math.pow(S, 1.5) + d0*math.pow(S, 2)
-
-    e0 = 19652.21
-    e1 = 148.4206
-    e2 = -2.327105
-    e3 = 0.01360477
-    e4 = -0.00005155288
-
-    f0 = 54.6746
-    f1 = -0.603459
-    f2 = 0.01099870
-    f3 = -0.00006167
-
-    g0 = 0.07944
-    g1 = 0.016483
-    g2 = -0.00053009
-
-    Kw = e0 + e1*T + e2*math.pow(T, 2) + e3*math.pow(T, 3) + e4*math.pow(T, 4)
-    F1 = f0 + f1*T + f2*math.pow(T, 2) + f3*math.pow(T, 3)
-    G1 = g0 + g1*T + g2*math.pow(T, 2)
-
-    K_ST0 = Kw + F1*S + G1*math.pow(S, 1.5)
-
-    h0 = 3.2399
-    h1 = 0.00143713
-    h2 = 0.000116092
-    h3 = -0.000000577905
-
-    i0 = 0.0022838
-    i1 = -0.000010981
-    i2 = -0.0000016078
-
-    j0 = 0.000191075
-
-    k0 = 0.0000850935
-    k1 = -0.00000612293
-    k2 = 0.000000052787
-
-    m0 = -0.00000099348
-    m1 = 0.000000020816
-    m2 = 0.00000000091697
-
-    Aw = h0 + h1*T + h2*math.pow(T, 2) + h3*math.pow(T, 3)
-    A1 = Aw + (i0 + i1*T + i2*math.pow(T, 2))*S + j0*math.pow(S, 1.5)
-    Bw = k0 + k1*T + k2*math.pow(T, 2)
-    B2 = Bw + (m0 + m1*T + m2*math.pow(T, 2))*S
-
-    K_STp = K_ST0 + A1*P + B2*math.pow(T, 2)
-
-    particle.density = rho_st0/(1-(P/K_STp))
