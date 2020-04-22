@@ -107,7 +107,7 @@ static inline spatial_interpolation_bilinear_land(double xsi, double eta, float 
     else {
         for (i = 0; i < 2; i++) {
             for (j = 0; j < 2; j++) {
-                distance = pow((xsi - j), 2) + pow((eta - i), 2);
+                distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
                 if (fabs(distance) < 1e-14) {
                     if (land[i][j] == 1) {
                         /*return ErrorCode*/
