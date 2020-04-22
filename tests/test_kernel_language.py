@@ -381,7 +381,7 @@ def test_EOSseawaterproperties_kernels(mode):
         potemperature = 36.89073 * np.ones((tdim, zdim, ydim, xdim))
         dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
         data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32),
-                'salinity': np.array(abs_salinity, dtype=np.float32),
+                'psu_salinity': np.array(abs_salinity, dtype=np.float32),
                 'temperature': np.array(temperature, dtype=np.float32),
                 'potemperature': np.array(potemperature, dtype=np.float32)}
         return (data, dimensions)
