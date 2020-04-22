@@ -72,64 +72,76 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
          + (1-xsi)*   eta  * data[1][0];
   return SUCCESS;
 }
-  
-  
-  /* Bilinear interpolation routine for 2D grid with proper land managment */
-static inline spatial_interpolation_bilinear_land(double xsi, double eta, float data[2][2], float *value)
+
+
+/* Bilinear interpolation routine for 2D grid with proper land managment */
+static inline ErrorCode spatial_interpolation_bilinear_land(double xsi, double eta, float data[2][2], float *value)
 {
-    int i, j, k, l, nb_land = 0, land[2][2] = {0};
-    float weight[2][2] = {0.}, w_sum = 0.;
-    float spatial_interpolation_bilinear(double xsi, double eta, float data[2][2]);
-    float distance;
-    for (i = 0; i < 2; i++) {
-        for (j = 0; j < 2; j++) {
-            if (fabs(data[i][j]) < 1e-14) {
-                land[i][j] = 1;
-                nb_land = nb_land + 1;
-            }
-            else {
-                k = i;
-                l = j;
-            }
-        }
+  int k, l, nb_land = 0, land[2][2] = {0};
+  float weight[2][2] = {0.}, w_sum = 0.;
+
+  // count the number of surrounding land points
+  // (assume land is where the value is close to zero)
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      if (fabs(data[i][j]) < 1e-14) {
+	land[i][j] = 1;
+	nb_land++;
+      } else {
+	// record the coordinates of the last non-land
+	// point (for the case where this is the only
+	// location with valid data)
+	k = i;
+	l = j;
+      }
     }
-    /*most common case, has to be first*/
-    if (nb_land == 0) { 
-        /*return spatial_interpolation_bilinear(xsi, eta, data); I don't know how to call a function in C, help!*/
-    }
-    else if (nb_land == 3) {
-        return data[k][l];
-    }
-    else if (nb_land == 4) {
-        /*return ErrorCode.*/
-    }
-       
-    else {
-        for (i = 0; i < 2; i++) {
-            for (j = 0; j < 2; j++) {
-                distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
-                if (fabs(distance) < 1e-14) {
-                    if (land[i][j] == 1) {
-                        /*return ErrorCode*/
-                    }
-                    else {
-                        return data[i][j];
-                    }
-                }
-                else if (land[i][j] == 0) {
-                    weight[i][j] = 1.0 / distance;
-                    w_sum = w_sum +  weight[i][j];
-                }
-            }
-        }
-        *value = 0.;
-        for (i = 0; i < 2; i++) {
-            for (j = 0; j < 2; j++) {
-                *value = *value + weight[i][j] * data[i][j] / w_sum;
-            }
-        }
-    } 
+  }
+
+  switch (nb_land) {
+  case 0:
+    // no land, use usual routine
+    return spatial_interpolation_bilinear(xsi, eta, data, value);
+
+  case 3:
+    // single non-land point
+    *value = data[k][l];
     return SUCCESS;
+
+  case 4:
+    // only land
+    return ERROR_INTERPOLATION;
+
+  default:
+    break;
+  }
+
+  // interpolate with 1 or 2 land points
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
+      if (fabs(distance) < 1e-14) {
+	if (land[i][j] == 1) {
+	  // index search led us directly onto land
+	  return ERROR_INTERPOLATION;
+	} else {
+	  *value = data[i][j];
+	  return SUCCESS;
+	}
+      } else if (land[i][j] == 0) {
+	weight[i][j] = 1.0 / distance;
+	w_sum += weight[i][j];
+      }
+    }
+  }
+
+  *value = 0.;
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      *value += weight[i][j] * data[i][j] / w_sum;
+    }
+  }
+
+  return SUCCESS;
 }
 
 
