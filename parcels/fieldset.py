@@ -226,7 +226,7 @@ class FieldSet(object):
                 raise NotImplementedError("interp_method='linear_invdist_land_tracer' is not implemented for U and V Fields")
 
             if U.interp_method == 'cgrid_velocity':
-                if fld.grid.xdim == 1 or fld.grid.ydim == 1:
+                if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
         if isinstance(self.U, (SummedField, NestedField)):
