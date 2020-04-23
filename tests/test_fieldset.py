@@ -264,6 +264,20 @@ def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
     assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
 
 
+@pytest.mark.parametrize('gridtype', ['A', 'C'])
+def test_fieldset_dimlength1_cgrid(gridtype):
+    fieldset = FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0})
+    if gridtype == 'C':
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
+    try:
+        fieldset.check_complete()
+        success = True if gridtype == 'A' else False
+    except NotImplementedError:
+        success = True if gridtype == 'C' else False
+    assert success
+
+
 def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
