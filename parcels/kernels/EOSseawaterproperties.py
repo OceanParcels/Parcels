@@ -1,10 +1,10 @@
 """Collection of pre-built eos sea water property kernels"""
 import math
 
-__all__ = ['Pressure_from_LatDepth', 'AdiabticTemperatureGradient', 'Ptemp_from_Temp', 'Temp_from_Ptemp']
+__all__ = ['PressureFromLatDepth', 'AdiabticTemperatureGradient', 'PtempFromTemp', 'TempFromPtemp', 'UNESCODensity']
 
 
-def Pressure_from_LatDepth(particle, fieldset, time):
+def PressureFromLatDepth(particle, fieldset, time):
     """
     Calculates pressure in dbars from depth in meters and latitude.
 
@@ -74,7 +74,7 @@ def AdiabticTemperatureGradient(particle, fieldset, time):
                      + (e[0] + (e[1] + e[2] * T68) * T68) * pres * pres)
 
 
-def Ptemp_from_Temp(particle, fieldset, time):
+def PtempFromTemp(particle, fieldset, time):
     """
     Calculates potential temperature as per UNESCO 1983 report.
 
@@ -167,7 +167,7 @@ def Ptemp_from_Temp(particle, fieldset, time):
     particle.potemp = (th + (del_th - 2 * q) / 6) / 1.00024
 
 
-def Temp_from_Ptemp(particle, fieldset, time):
+def TempFromPtemp(particle, fieldset, time):
     """
     Calculates temperature from potential temperature at the reference
     pressure PR and in situ pressure P.
@@ -260,7 +260,7 @@ def Temp_from_Ptemp(particle, fieldset, time):
     particle.temp = (th + (del_th - 2 * q) / 6) / 1.00024
 
 
-def UNESCO_Density(particle, fieldset, time):
+def UNESCODensity(particle, fieldset, time):
     # This is a kernel which calculates the UNESCO density
     # (https://link.springer.com/content/pdf/bbm%3A978-3-319-18908-6%2F1.pdf),
     # from pressure, temperature and salinity.
