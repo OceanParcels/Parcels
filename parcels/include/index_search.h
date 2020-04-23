@@ -173,13 +173,17 @@ static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, t
   int z4d = grid->z4d;
 
   if (zonal_periodic == 0){
-    if ((x < xy_minmax[0]) || (x > xy_minmax[1]))
+    if ((xdim > 1) && ((x < xy_minmax[0]) || (x > xy_minmax[1])))
       return ERROR_OUT_OF_BOUNDS;
   }
-  if ((y < xy_minmax[2]) || (y > xy_minmax[3]))
+  if ((ydim > 1) && ((y < xy_minmax[2]) || (y > xy_minmax[3])))
     return ERROR_OUT_OF_BOUNDS;
 
-  if (sphere_mesh == 0){
+  if (xdim == 1){
+    *xi = 0;
+    *xsi = 0;
+  }
+  else if (sphere_mesh == 0){
     while (*xi < xdim-1 && x > xvals[*xi+1]) ++(*xi);
     while (*xi > 0 && x < xvals[*xi]) --(*xi);
     *xsi = (x - xvals[*xi]) / (xvals[*xi+1] - xvals[*xi]);
@@ -217,10 +221,15 @@ static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, t
     *xsi = (x - xvalsi) / (xvalsi1 - xvalsi);
   }
 
-  while (*yi < ydim-1 && y > yvals[*yi+1]) ++(*yi);
-  while (*yi > 0 && y < yvals[*yi]) --(*yi);
-
-  *eta = (y - yvals[*yi]) / (yvals[*yi+1] - yvals[*yi]);
+  if (ydim == 1){
+    *yi = 0;
+    *eta = 0;
+  }
+  else {
+    while (*yi < ydim-1 && y > yvals[*yi+1]) ++(*yi);
+    while (*yi > 0 && y < yvals[*yi]) --(*yi);
+    *eta = (y - yvals[*yi]) / (yvals[*yi+1] - yvals[*yi]);
+  }
 
   ErrorCode err;
   if (zdim > 1){

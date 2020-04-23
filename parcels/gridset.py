@@ -67,7 +67,7 @@ class GridSet(object):
 
         maxleft, minright = (-np.inf, np.inf)
         for g in self.grids:
-            if len(getattr(g, dim)) == 1:
+            if getattr(g, dim).size == 1:
                 continue  # not including grids where only one entry
             else:
                 if dim == 'depth':
