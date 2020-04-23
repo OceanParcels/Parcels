@@ -1,7 +1,7 @@
 """Collection of pre-built eos sea water property kernels"""
 import math
 
-__all__ = ['Pressure_from_LatDepth', 'Adtg', 'Ptemp_from_Temp', 'Temp_from_Ptemp']
+__all__ = ['Pressure_from_LatDepth', 'Adiabtic_temperature_gradient', 'Ptemp_from_Temp', 'Temp_from_Ptemp']
 
 
 def Pressure_from_LatDepth(particle, fieldset, time):
@@ -28,7 +28,7 @@ def Pressure_from_LatDepth(particle, fieldset, time):
     particle.pressure = ((1 - C1) - math.pow(((math.pow((1 - C1), 2)) - (8.84e-6 * particle.depth)), 0.5)) / 4.42e-6
 
 
-def Adtg(particle, fieldset, time):
+def Adiabtic_temperature_gradient(particle, fieldset, time):
     """
     Calculates adiabatic temperature gradient as per UNESCO 1983 routines.
 
