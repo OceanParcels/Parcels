@@ -505,6 +505,15 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
         err = spatial_interpolation_tracer_c_grid_3D(data3D[1], &f1); CHECKERROR(err);
       }
     }
+    else if (interp_method == LINEAR_INVDIST_LAND_TRACER){
+      if (grid->zdim==1){
+        err = sspatial_interpolation_bilinear_invdist_land(xsi, eta, data2D[0], &f0); CHECKERROR(err);
+        err = spatial_interpolation_bilinear_invdist_land(xsi, eta, data2D[1], &f1); CHECKERROR(err);
+      } else {
+        err = spatial_interpolation_trilinear_invdist_land(xsi, eta, zeta, data3D[0], &f0); CHECKERROR(err);
+        err = spatial_interpolation_trilinear_invdist_land(xsi, eta, zeta, data3D[1], &f1); CHECKERROR(err);
+      }
+
     else {
         return ERROR;
     }
@@ -551,6 +560,16 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
         err = spatial_interpolation_tracer_c_grid_3D(data3D[0], value); CHECKERROR(err);
       }
     }
+    else if (interp_method == LINEAR_INVDIST_LAND_TRACER){
+      if (grid->zdim==1){
+        err = spatial_interpolation_bilinear_invdist_land(xsi, eta, data2D[0], value); CHECKERROR(err);
+      }
+      else {
+        err = spatial_interpolation_trilinear_invdist_land(xsi, eta, zeta, data3D[0], value); CHECKERROR(err);
+      }
+
+    }
+
     else {
         return ERROR;    
     }
