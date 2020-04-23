@@ -368,26 +368,11 @@ def test_TEOSdensity_kernels(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_EOSseawaterproperties_kernels(mode):
-
-    def generate_fieldset(xdim=2, ydim=2, zdim=2, tdim=1):
-        lon = np.linspace(0., 10., xdim, dtype=np.float32)
-        lat = np.linspace(0., 10., ydim, dtype=np.float32)
-        depth = np.linspace(0, 2000, zdim, dtype=np.float32)
-        time = np.zeros(tdim, dtype=np.float64)
-        U = np.ones((tdim, zdim, ydim, xdim))
-        V = np.ones((tdim, zdim, ydim, xdim))
-        abs_salinity = 40 * np.ones((tdim, zdim, ydim, xdim))
-        temperature = 40 * np.ones((tdim, zdim, ydim, xdim))
-        potemperature = 36.89073 * np.ones((tdim, zdim, ydim, xdim))
-        dimensions = {'lat': lat, 'lon': lon, 'depth': depth, 'time': time}
-        data = {'U': np.array(U, dtype=np.float32), 'V': np.array(V, dtype=np.float32),
-                'psu_salinity': np.array(abs_salinity, dtype=np.float32),
-                'temperature': np.array(temperature, dtype=np.float32),
-                'potemperature': np.array(potemperature, dtype=np.float32)}
-        return (data, dimensions)
-
-    data, dimensions = generate_fieldset()
-    fieldset = FieldSet.from_data(data, dimensions)
+    fieldset = FieldSet.from_data(data={'U': 0, 'V': 0,
+                                        'psu_salinity': 40,
+                                        'temperature': 40,
+                                        'potemperature': 36.89073},
+                                  dimensions={'lat': 0, 'lon': 0, 'depth': 0})
     fieldset.add_constant('refpressure', np.float(0))
 
     class PoTempParticle(ptype[mode]):
