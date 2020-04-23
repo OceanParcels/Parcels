@@ -162,6 +162,87 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
   return SUCCESS;
 }
 
+	
+	
+/* Trilinear interpolation routine for 2D grid with proper land managment for tracers*/
+static inline ErrorCode spatial_interpolation_trilinear_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
+{
+  int l, m, n, nb_land = 0, land[2][2][2] = {0};
+  float weight[2][2][2] = {{0.}}, w_sum = 0.;
+
+  // count the number of surrounding land points
+  // (assume land is where the value is close to zero)
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      for (int k = 0; k < 2; k++) {  
+        if (fabs(data[i][j][k]) < 1e-14) {
+	        land[i][j][k] = 1;
+	        nb_land++;
+      } else {
+	// record the coordinates of the last non-land
+	// point (for the case where this is the only
+	// location with valid data)
+	      l = i;
+      	m = j;
+        n = k;
+      }}
+    }
+  }
+
+  switch (nb_land) {
+  case 0:
+    // no land, use usual routine
+    return spatial_interpolation_trilinear(xsi, eta, zeta, data, value);
+
+  case 7:
+    // single non-land point
+    *value = data[l][m][n];
+    return SUCCESS;
+
+  case 8:
+    // only land
+    return ERROR_INTERPOLATION;
+
+  default:
+    break;
+  }
+
+  // interpolate with 1 to 6 land points
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+        for (int k = 0; k < 2; k++) {  
+          float distance = sqrt(pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2));
+          if (fabs(distance) < 1e-14) {
+	          if (land[i][j][k] == 1) {
+	            // index search led us directly onto land
+	            return ERROR_INTERPOLATION;
+	        } else {
+	            *value = data[i][j][k];
+	            return SUCCESS;
+	            }
+        } else if (land[i][j][k] == 0) {
+	          weight[i][j][k] = 1.0 / distance;
+	          w_sum += weight[i][j][k];
+        }
+      }
+    }
+  }
+
+  *value = 0.;
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 2; j++) {
+      for (int k = 0; k < 2; k++) { 
+        *value += weight[i][j][k] * data[i][j][k] / w_sum;
+      }
+    }
+  }
+
+  return SUCCESS;
+}
+	
+	
+	
+	
 /* Nearest neighbour interpolation routine for 2D grid */
 static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta,
                                                         float data[2][2], float *value)
