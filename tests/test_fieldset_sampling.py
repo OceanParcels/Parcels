@@ -235,6 +235,14 @@ def test_inversedistance_nearland(mode, k_sample_p, npart=81):
     pset.execute(k_sample_p, endtime=1, dt=1)
     assert np.allclose(pset.p, 1.0, rtol=1e-5)
 
+    success = False
+    try:
+        fieldset.U.interp_method = 'linear_invdist_land_tracer'
+        fieldset.check_complete()
+    except NotImplementedError:
+        success = True
+    assert success
+
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])

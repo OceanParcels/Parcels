@@ -217,16 +217,23 @@ class FieldSet(object):
             if type(value) is Field:
                 assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
 
-        def check_len1dims_cgrid(fld):
-            if fld.interp_method == 'cgrid_velocity':
+        def check_velocityfields(U, V):
+            if (U.interp_method == 'cgrid_velocity' and V.interp_method != 'cgrid_velocity') or \
+                    (U.interp_method != 'cgrid_velocity' and V.interp_method == 'cgrid_velocity'):
+                raise ValueError("If one of U,V.interp_method='cgrid_velocity', the other should be too")
+
+            if 'linear_invdist_land_tracer' in [U.interp_method, V.interp_method]:
+                raise NotImplementedError("interp_method='linear_invdist_land_tracer' is not implemented for U and V Fields")
+
+            if U.interp_method == 'cgrid_velocity':
                 if fld.grid.xdim == 1 or fld.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
         if isinstance(self.U, (SummedField, NestedField)):
-            for U in self.U:
-                check_len1dims_cgrid(U)
+            for U, V in zip(self.U, self.V):
+                check_velocityfields(U, V)
         else:
-            check_len1dims_cgrid(self.U)
+            check_velocityfields(self.U, self.V)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
