@@ -17,7 +17,6 @@ from parcels.grid import GridCode
 from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
-from parcels.particle import Variable
 from parcels.particlefile import ParticleFile
 from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
@@ -68,9 +67,9 @@ class ParticleAccessor(object):
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
-        for var in vars(type(self)):
-            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
-                str += "%s=%f, " % (var, getattr(self, var))
+        for var in self.pset.ptype.variables:
+            if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
+                str += "%s=%f, " % (var.name, getattr(self, var.name))
         return str + "time=%s)" % time_string
 
 
