@@ -1,6 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, ErrorCode
-from parcels.kernels.TEOSseawaterdensity import polyTEOS10_bsq
-from parcels.kernels.EOSseawaterproperties import pressure_from_latdepth, ptemp_from_temp, temp_from_ptemp, UNESCO_Density
+from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
+from parcels.kernels.EOSseawaterproperties import Pressure_from_LatDepth, Ptemp_from_Temp, Temp_from_Ptemp, UNESCO_Density
 from parcels import random as parcels_random
 import numpy as np
 import pytest
@@ -362,7 +362,7 @@ def test_TEOSdensity_kernels(mode):
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
-    pset.execute(polyTEOS10_bsq, runtime=0, dt=0)
+    pset.execute(PolyTEOS10_bsq, runtime=0, dt=0)
     assert np.allclose(pset[0].density, 1022.85377)
 
 
@@ -394,20 +394,20 @@ def test_EOSseawaterproperties_kernels(mode):
         potemp = Variable('potemp', dtype=np.float32)
         pressure = Variable('pressure', dtype=np.float32, initial=10000)
     pset = ParticleSet(fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
-    pset.execute(ptemp_from_temp, runtime=0, dt=0)
+    pset.execute(Ptemp_from_Temp, runtime=0, dt=0)
     assert np.allclose(pset[0].potemp, 36.89073)
 
     class TempParticle(ptype[mode]):
         temp = Variable('temp', dtype=np.float32)
         pressure = Variable('pressure', dtype=np.float32, initial=10000)
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
-    pset.execute(temp_from_ptemp, runtime=0, dt=0)
+    pset.execute(Temp_from_Ptemp, runtime=0, dt=0)
     assert np.allclose(pset[0].temp, 40)
 
     class TPressureParticle(ptype[mode]):
         pressure = Variable('pressure', dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
-    pset.execute(pressure_from_latdepth, runtime=0, dt=0)
+    pset.execute(Pressure_from_LatDepth, runtime=0, dt=0)
     assert np.allclose(pset[0].pressure, 7500.0065130118019)
 
 

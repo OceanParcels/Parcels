@@ -1,10 +1,10 @@
 """Collection of pre-built eos sea water property kernels"""
 import math
 
-__all__ = ['pressure_from_latdepth', 'adtg', 'ptemp_from_temp', 'temp_from_ptemp']
+__all__ = ['Pressure_from_LatDepth', 'Adtg', 'Ptemp_from_Temp', 'Temp_from_Ptemp']
 
 
-def pressure_from_latdepth(particle, fieldset, time):
+def Pressure_from_LatDepth(particle, fieldset, time):
     """
     Calculates pressure in dbars from depth in meters and latitude.
 
@@ -28,7 +28,7 @@ def pressure_from_latdepth(particle, fieldset, time):
     particle.pressure = ((1 - C1) - math.pow(((math.pow((1 - C1), 2)) - (8.84e-6 * particle.depth)), 0.5)) / 4.42e-6
 
 
-def adtg(particle, fieldset, time):
+def Adtg(particle, fieldset, time):
     """
     Calculates adiabatic temperature gradient as per UNESCO 1983 routines.
 
@@ -74,7 +74,7 @@ def adtg(particle, fieldset, time):
                      + (e[0] + (e[1] + e[2] * T68) * T68) * pres * pres)
 
 
-def ptemp_from_temp(particle, fieldset, time):
+def Ptemp_from_Temp(particle, fieldset, time):
     """
     Calculates potential temperature as per UNESCO 1983 report.
 
@@ -167,7 +167,7 @@ def ptemp_from_temp(particle, fieldset, time):
     particle.potemp = (th + (del_th - 2 * q) / 6) / 1.00024
 
 
-def temp_from_ptemp(particle, fieldset, time):
+def Temp_from_Ptemp(particle, fieldset, time):
     """
     Calculates temperature from potential temperature at the reference
     pressure PR and in situ pressure P.
