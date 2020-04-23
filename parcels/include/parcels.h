@@ -78,7 +78,7 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
 static inline ErrorCode spatial_interpolation_bilinear_land(double xsi, double eta, float data[2][2], float *value)
 {
   int k, l, nb_land = 0, land[2][2] = {0};
-  float weight[2][2] = {0.}, w_sum = 0.;
+  float weight[2][2] = {{0.}}, w_sum = 0.;
 
   // count the number of surrounding land points
   // (assume land is where the value is close to zero)
