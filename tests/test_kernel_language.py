@@ -408,7 +408,7 @@ def test_EOSseawaterproperties_kernels(mode):
         pressure = Variable('pressure', dtype=np.float32)
     pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
     pset.execute(Pressure_from_LatDepth, runtime=0, dt=0)
-    assert np.allclose(pset[0].pressure, 7500.0065130118019)
+    assert np.allclose(pset[0].pressure, 7500, atol=1e-2)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
