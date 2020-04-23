@@ -27,7 +27,7 @@ def pressure_from_latdepth(particle, fieldset, time):
 
     X = math.sin(max(lat * deg2rad, -1*lat * deg2rad))
     C1 = 5.92e-3 + math.pow(X, 2) * 5.25e-3
-    particle.pressure = ((1 - C1) - math.pow(((math.pow((1 - C1) , 2)) - (8.84e-6 * depth)) , 0.5)) / 4.42e-6
+    particle.pressure = ((1 - C1) - math.pow(((math.pow((1 - C1), 2)) - (8.84e-6 * depth)), 0.5)) / 4.42e-6
 
 
 def adtg(particle, fieldset, time):
