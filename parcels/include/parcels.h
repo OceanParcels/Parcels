@@ -73,77 +73,64 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
   return SUCCESS;
 }
 
-
-/* Bilinear interpolation routine for 2D grid with proper land managment */
-static inline ErrorCode spatial_interpolation_bilinear_land(double xsi, double eta, float data[2][2], float *value)
+/* Bilinear interpolation routine for 2D grid for tracers with inverse distance weighting near land*/
+static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, double eta, float data[2][2], float *value)
 {
   int k, l, nb_land = 0, land[2][2] = {0};
   float weight[2][2] = {{0.}}, w_sum = 0.;
-
-  // count the number of surrounding land points
-  // (assume land is where the value is close to zero)
+  // count the number of surrounding land points (assume land is where the value is close to zero)
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       if (fabs(data[i][j]) < 1e-14) {
-	land[i][j] = 1;
-	nb_land++;
-      } else {
-	// record the coordinates of the last non-land
-	// point (for the case where this is the only
-	// location with valid data)
-	k = i;
-	l = j;
+	    land[i][j] = 1;
+	    nb_land++;
+      }
+      else {
+	    // record the coordinates of the last non-land point
+	    // (for the case where this is the only location with valid data)
+	    k = i;
+	    l = j;
       }
     }
   }
-
   switch (nb_land) {
-  case 0:
-    // no land, use usual routine
+  case 0:  // no land, use usual routine
     return spatial_interpolation_bilinear(xsi, eta, data, value);
-
-  case 3:
-    // single non-land point
+  case 3:  // single non-land point
     *value = data[k][l];
     return SUCCESS;
-
-  case 4:
-    // only land
+  case 4:  // only land
     return ERROR_INTERPOLATION;
-
   default:
     break;
   }
-
   // interpolate with 1 or 2 land points
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
       if (fabs(distance) < 1e-14) {
-	if (land[i][j] == 1) {
-	  // index search led us directly onto land
-	  return ERROR_INTERPOLATION;
-	} else {
-	  *value = data[i][j];
-	  return SUCCESS;
-	}
-      } else if (land[i][j] == 0) {
-	weight[i][j] = 1.0 / distance;
-	w_sum += weight[i][j];
+	    if (land[i][j] == 1) { // index search led us directly onto land
+	      return ERROR_INTERPOLATION;
+	    }
+	    else {
+	      *value = data[i][j];
+	      return SUCCESS;
+	    }
+      }
+      else if (land[i][j] == 0) {
+	    weight[i][j] = 1.0 / distance;
+	    w_sum += weight[i][j];
       }
     }
   }
-
   *value = 0.;
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       *value += weight[i][j] * data[i][j] / w_sum;
     }
   }
-
   return SUCCESS;
 }
-
 
 /* Trilinear interpolation routine for 3D grid */
 static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, double zeta,
@@ -162,72 +149,61 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
   return SUCCESS;
 }
 
-	
-	
-/* Trilinear interpolation routine for 3D grid with proper land managment for tracers*/
-static inline ErrorCode spatial_interpolation_trilinear_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
+/* Trilinear interpolation routine for 3D grid for tracers with inverse distance weighting near land*/
+static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
 {
   int l, m, n, nb_land = 0, land[2][2][2] = {0};
-  float weight[2][2][2] = {{0.}}, w_sum = 0.;
-
-  // count the number of surrounding land points
-  // (assume land is where the value is close to zero)
+  float weight[2][2][2] = {{{0.}}}, w_sum = 0.;
+  // count the number of surrounding land points (assume land is where the value is close to zero)
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       for (int k = 0; k < 2; k++) {  
         if (fabs(data[i][j][k]) < 1e-14) {
-	        land[i][j][k] = 1;
-	        nb_land++;
-      } else {
-	// record the coordinates of the last non-land
-	// point (for the case where this is the only
-	// location with valid data)
+	      land[i][j][k] = 1;
+	      nb_land++;
+        }
+        else {
+	    // record the coordinates of the last non-land point
+	    // (for the case where this is the only location with valid data)
 	      l = i;
-      	m = j;
-        n = k;
-      }}
+      	  m = j;
+          n = k;
+        }
+      }
     }
   }
-
   switch (nb_land) {
-  case 0:
-    // no land, use usual routine
+  case 0:  // no land, use usual routine
     return spatial_interpolation_trilinear(xsi, eta, zeta, data, value);
-
-  case 7:
-    // single non-land point
+  case 7:  // single non-land point
     *value = data[l][m][n];
     return SUCCESS;
-
-  case 8:
-    // only land
+  case 8:  // only land
     return ERROR_INTERPOLATION;
-
   default:
     break;
   }
-
   // interpolate with 1 to 6 land points
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
         for (int k = 0; k < 2; k++) {  
           float distance = sqrt(pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2));
           if (fabs(distance) < 1e-14) {
-	          if (land[i][j][k] == 1) {
-	            // index search led us directly onto land
-	            return ERROR_INTERPOLATION;
+	        if (land[i][j][k] == 1) {
+	          // index search led us directly onto land
+	          return ERROR_INTERPOLATION;
 	        } else {
-	            *value = data[i][j][k];
-	            return SUCCESS;
-	            }
-        } else if (land[i][j][k] == 0) {
-	          weight[i][j][k] = 1.0 / distance;
-	          w_sum += weight[i][j][k];
+	          *value = data[i][j][k];
+	          return SUCCESS;
+	        }
+        }
+        else if (land[i][j][k] == 0) {
+	      weight[i][j][k] = 1.0 / distance;
+	      w_sum += weight[i][j][k];
         }
       }
     }
   }
-
   *value = 0.;
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
@@ -236,13 +212,9 @@ static inline ErrorCode spatial_interpolation_trilinear_land(double xsi, double 
       }
     }
   }
-
   return SUCCESS;
 }
-	
-	
-	
-	
+
 /* Nearest neighbour interpolation routine for 2D grid */
 static inline ErrorCode spatial_interpolation_nearest2D(double xsi, double eta,
                                                         float data[2][2], float *value)
