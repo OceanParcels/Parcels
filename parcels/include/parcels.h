@@ -76,7 +76,7 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
 /* Bilinear interpolation routine for 2D grid for tracers with inverse distance weighting near land*/
 static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, double eta, float data[2][2], float *value)
 {
-  int k, l, nb_land = 0, land[2][2] = {0};
+  int k, l, nb_land = 0, land[2][2] = {{0}};
   float weight[2][2] = {{0.}}, w_sum = 0.;
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (int i = 0; i < 2; i++) {
@@ -152,7 +152,7 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
 /* Trilinear interpolation routine for 3D grid for tracers with inverse distance weighting near land*/
 static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
 {
-  int l, m, n, nb_land = 0, land[2][2][2] = {0};
+  int l, m, n, nb_land = 0, land[2][2][2] = {{{0}}};
   float weight[2][2][2] = {{{0.}}}, w_sum = 0.;
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (int i = 0; i < 2; i++) {
