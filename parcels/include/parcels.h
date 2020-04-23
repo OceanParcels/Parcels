@@ -164,7 +164,7 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
 
 	
 	
-/* Trilinear interpolation routine for 2D grid with proper land managment for tracers*/
+/* Trilinear interpolation routine for 3D grid with proper land managment for tracers*/
 static inline ErrorCode spatial_interpolation_trilinear_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
 {
   int l, m, n, nb_land = 0, land[2][2][2] = {0};
