@@ -403,11 +403,6 @@ class FieldSet(object):
 
         """
 
-        if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
-        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a c-grid discretisation like NEMO, U, V and W should have the same dimensions")
-
         interp_method = {}
         for v in variables:
             if v in ['U', 'V', 'W']:
@@ -540,8 +535,6 @@ class FieldSet(object):
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
             raise RuntimeError("On a B-grid discretisation, U and V should have the same dimensions")
-        if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a B-grid discretisation, U, V and W should have the same dimensions")
 
         interp_method = {}
         for v in variables:
