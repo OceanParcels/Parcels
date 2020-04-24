@@ -81,7 +81,7 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
-      if (fabs(data[i][j]) < 1e-14) {
+      if (is_zero_flt(data[i][j])) {
 	    land[i][j] = 1;
 	    nb_land++;
       }
@@ -107,8 +107,8 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
   // interpolate with 1 or 2 land points
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
-      float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
-      if (fabs(distance) < 1e-14) {
+      float distance = pow((xsi - j), 2) + pow((eta - i), 2);
+      if (is_zero_flt(distance)) {
 	    if (land[i][j] == 1) { // index search led us directly onto land
 	      return ERROR_INTERPOLATION;
 	    }
@@ -158,7 +158,7 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
       for (int k = 0; k < 2; k++) {  
-        if (fabs(data[i][j][k]) < 1e-14) {
+        if(is_zero_flt(data[i][j][k])) {
 	      land[i][j][k] = 1;
 	      nb_land++;
         }
@@ -187,8 +187,8 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
         for (int k = 0; k < 2; k++) {  
-          float distance = sqrt(pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2));
-          if (fabs(distance) < 1e-14) {
+          float distance = pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2);
+          if (is_zero_flt(distance)) {
 	        if (land[i][j][k] == 1) {
 	          // index search led us directly onto land
 	          return ERROR_INTERPOLATION;
