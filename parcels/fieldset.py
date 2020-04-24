@@ -523,9 +523,11 @@ class FieldSet(object):
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
+            raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a c-grid discretisation like NEMO, U, V and W should have the same dimensions")
+            raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
 
         interp_method = {}
         for v in variables:
@@ -666,9 +668,11 @@ class FieldSet(object):
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise RuntimeError("On a B-grid discretisation, U and V should have the same dimensions")
+            raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a B-grid discretisation, U, V and W should have the same dimensions")
+            raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
 
         interp_method = {}
         for v in variables:
