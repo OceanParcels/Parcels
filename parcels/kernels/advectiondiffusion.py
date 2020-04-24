@@ -33,7 +33,7 @@ def DiffusionUniformKh(particle, fieldset, time):
     by = math.sqrt(2*fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     particle.lon += bx*dWx
-    particle.lat += by+dWy
+    particle.lat += by*dWy
 
 def AdvectionDiffusionEuler(particle, fieldset, time):
     """Kernel for simple advection-diffusion, solved using the Euler-Maruyama 
