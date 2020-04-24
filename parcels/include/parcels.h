@@ -107,7 +107,7 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
   // interpolate with 1 or 2 land points
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
-      float distance = pow((xsi - j), 2) + pow((eta - i), 2);
+      float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
       if (is_zero_flt(distance)) {
 	    if (land[i][j] == 1) { // index search led us directly onto land
 	      return ERROR_INTERPOLATION;
@@ -187,7 +187,7 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
   for (int i = 0; i < 2; i++) {
     for (int j = 0; j < 2; j++) {
         for (int k = 0; k < 2; k++) {  
-          float distance = pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2);
+          float distance = sqrt(pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2));
           if (is_zero_flt(distance)) {
 	        if (land[i][j][k] == 1) {
 	          // index search led us directly onto land
