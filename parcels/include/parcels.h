@@ -76,11 +76,11 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
 /* Bilinear interpolation routine for 2D grid for tracers with inverse distance weighting near land*/
 static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, double eta, float data[2][2], float *value)
 {
-  int k, l, nb_land = 0, land[2][2] = {{0}};
+  int i, j, k, l, nb_land = 0, land[2][2] = {{0}};
   float weight[2][2] = {{0.}}, w_sum = 0.;
   // count the number of surrounding land points (assume land is where the value is close to zero)
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
       if (is_zero_flt(data[i][j])) {
 	    land[i][j] = 1;
 	    nb_land++;
@@ -105,8 +105,8 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
     break;
   }
   // interpolate with 1 or 2 land points
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
       float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
       if (is_zero_flt(distance)) {
 	    if (land[i][j] == 1) { // index search led us directly onto land
@@ -124,8 +124,8 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
     }
   }
   *value = 0.;
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
       *value += weight[i][j] * data[i][j] / w_sum;
     }
   }
@@ -152,12 +152,12 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
 /* Trilinear interpolation routine for 3D grid for tracers with inverse distance weighting near land*/
 static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
 {
-  int l, m, n, nb_land = 0, land[2][2][2] = {{{0}}};
+  int i, j, k, l, m, n, nb_land = 0, land[2][2][2] = {{{0}}};
   float weight[2][2][2] = {{{0.}}}, w_sum = 0.;
   // count the number of surrounding land points (assume land is where the value is close to zero)
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
-      for (int k = 0; k < 2; k++) {  
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+      for (k = 0; k < 2; k++) {  
         if(is_zero_flt(data[i][j][k])) {
 	      land[i][j][k] = 1;
 	      nb_land++;
@@ -184,9 +184,9 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
     break;
   }
   // interpolate with 1 to 6 land points
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
-        for (int k = 0; k < 2; k++) {  
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+        for (k = 0; k < 2; k++) {  
           float distance = sqrt(pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2));
           if (is_zero_flt(distance)) {
 	        if (land[i][j][k] == 1) {
@@ -205,9 +205,9 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
     }
   }
   *value = 0.;
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
-      for (int k = 0; k < 2; k++) { 
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+      for (k = 0; k < 2; k++) { 
         *value += weight[i][j][k] * data[i][j][k] / w_sum;
       }
     }
