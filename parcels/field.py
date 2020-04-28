@@ -67,7 +67,8 @@ class Field(object):
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
     :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
-    :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
+    :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
+           'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
     :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
