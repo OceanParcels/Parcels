@@ -60,7 +60,7 @@ def AdvectionRK45(particle, fieldset, time):
     Times-step dt is halved if error is larger than tolerance, and doubled
     if error is smaller than 1/10th of tolerance, with tolerance set to
     1e-5 * dt by default."""
-    tol = [1e-5]
+    tol = 1e-5
     c = [1./4., 3./8., 12./13., 1., 1./2.]
     A = [[1./4., 0., 0., 0., 0.],
          [3./32., 9./32., 0., 0., 0.],
@@ -92,11 +92,11 @@ def AdvectionRK45(particle, fieldset, time):
     lon_5th = particle.lon + (u1 * b5[0] + u2 * b5[1] + u3 * b5[2] + u4 * b5[3] + u5 * b5[4] + u6 * b5[5]) * particle.dt
     lat_5th = particle.lat + (v1 * b5[0] + v2 * b5[1] + v3 * b5[2] + v4 * b5[3] + v5 * b5[4] + v6 * b5[5]) * particle.dt
 
-    kappa = math.sqrt(math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2))
-    if kappa <= math.fabs(particle.dt * tol[0]):
+    kappa2 = math.pow(lon_5th - lon_4th, 2) + math.pow(lat_5th - lat_4th, 2)
+    if kappa2 <= math.pow(math.fabs(particle.dt * tol, 2)):
         particle.lon = lon_4th
         particle.lat = lat_4th
-        if kappa <= math.fabs(particle.dt * tol[0] / 10):
+        if kappa2 <= math.pow(math.fabs(particle.dt * tol / 10), 2):
             particle.update_next_dt(particle.dt * 2)
     else:
         particle.dt /= 2
