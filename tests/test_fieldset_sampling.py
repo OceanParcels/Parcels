@@ -214,9 +214,9 @@ def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
 
 
-@pytest.mark.parametrize('mode', ['jit'])  # only works in JIT for now
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_inversedistance_nearland(mode, k_sample_p, npart=81):
-    dims = (2, 2, 2)
+    dims = (4, 4, 6)
     dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
                   'depth': np.linspace(0., 1., dims[2], dtype=np.float32)}
