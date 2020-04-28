@@ -1,5 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, ErrorCode
-from parcels.kernels.seawaterdensity import polyTEOS10_bsq, UNESCO_Density
+from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
+from parcels.kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
 from parcels import random as parcels_random
 import numpy as np
 import pytest
@@ -336,7 +337,7 @@ def test_small_dt(fieldset, mode, dt, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_seawaterdensity_kernels(mode):
+def test_TEOSdensity_kernels(mode):
 
     def generate_fieldset(xdim=2, ydim=2, zdim=2, tdim=1):
         lon = np.linspace(0., 10., xdim, dtype=np.float32)
@@ -361,8 +362,38 @@ def test_seawaterdensity_kernels(mode):
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
-    pset.execute(polyTEOS10_bsq, runtime=0, dt=0)
+    pset.execute(PolyTEOS10_bsq, runtime=0, dt=0)
     assert np.allclose(pset[0].density, 1022.85377)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_EOSseawaterproperties_kernels(mode):
+    fieldset = FieldSet.from_data(data={'U': 0, 'V': 0,
+                                        'psu_salinity': 40,
+                                        'temperature': 40,
+                                        'potemperature': 36.89073},
+                                  dimensions={'lat': 0, 'lon': 0, 'depth': 0})
+    fieldset.add_constant('refpressure', np.float(0))
+
+    class PoTempParticle(ptype[mode]):
+        potemp = Variable('potemp', dtype=np.float32)
+        pressure = Variable('pressure', dtype=np.float32, initial=10000)
+    pset = ParticleSet(fieldset, pclass=PoTempParticle, lon=5, lat=5, depth=1000)
+    pset.execute(PtempFromTemp, runtime=0, dt=0)
+    assert np.allclose(pset[0].potemp, 36.89073)
+
+    class TempParticle(ptype[mode]):
+        temp = Variable('temp', dtype=np.float32)
+        pressure = Variable('pressure', dtype=np.float32, initial=10000)
+    pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=5, depth=1000)
+    pset.execute(TempFromPtemp, runtime=0, dt=0)
+    assert np.allclose(pset[0].temp, 40)
+
+    class TPressureParticle(ptype[mode]):
+        pressure = Variable('pressure', dtype=np.float32)
+    pset = ParticleSet(fieldset, pclass=TempParticle, lon=5, lat=30, depth=7321.45)
+    pset.execute(PressureFromLatDepth, runtime=0, dt=0)
+    assert np.allclose(pset[0].pressure, 7500, atol=1e-2)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -394,7 +425,7 @@ def test_UNESCOdensity_kernel(mode, pressure):
 
     pset = ParticleSet(fieldset, pclass=DensParticle, lon=5, lat=5, depth=1000)
 
-    pset.execute(UNESCO_Density, runtime=0, dt=0)
+    pset.execute(UNESCODensity, runtime=0, dt=0)
 
     if(pressure == 0):
         assert np.allclose(pset[0].density, 1005.9465)
