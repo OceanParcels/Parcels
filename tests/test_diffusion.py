@@ -80,7 +80,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
     npart = 100
     runtime = delta(days=1)
 
-    random.seed(1234)
+    random.seed(1636)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(kernel),
