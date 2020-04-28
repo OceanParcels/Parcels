@@ -1,6 +1,6 @@
 from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, JITParticle,
-                     DiffusionUniformKh, AdvectionDiffusionEuler, 
-                     AdvectionDiffusionMilstein1, AdvectionRK4DiffusionEuler, 
+                     DiffusionUniformKh, AdvectionDiffusionEuler,
+                     AdvectionDiffusionMilstein1, AdvectionRK4DiffusionEuler,
                      AdvectionRK4DiffusionMilstein1, ScipyParticle, Variable)
 from parcels import rng as random
 from datetime import timedelta as delta
@@ -58,10 +58,10 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('kernel', [AdvectionDiffusionEuler, 
-                                   AdvectionDiffusionMilstein1,
-                                   AdvectionRK4DiffusionEuler, 
-                                   AdvectionRK4DiffusionMilstein1])
+@pytest.mark.parametrize('kernel', [AdvectionDiffusionEuler,
+                                    AdvectionDiffusionMilstein1,
+                                    AdvectionRK4DiffusionEuler,
+                                    AdvectionRK4DiffusionMilstein1])
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=100):
     """Test advection-diffusion kernels on a non-uniform diffusivity field
     with a linear gradient in one direction"""
