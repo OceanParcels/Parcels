@@ -172,10 +172,8 @@ def AdvectionRK4DiffusionEuler(particle, fieldset, time):
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.lon += ((u1 + 2 * u2 + 2 * u3 + u4) /
-                     6. + dKdx) * particle.dt + bx * dWx
-    particle.lat += ((v1 + 2 * v2 + 2 * v3 + v4) /
-                     6. + dKdy) * particle.dt + by * dWy
+    particle.lon += ((u1 + 2 * u2 + 2 * u3 + u4) / 6. + dKdx) * particle.dt + bx * dWx
+    particle.lat += ((v1 + 2 * v2 + 2 * v3 + v4) / 6. + dKdy) * particle.dt + by * dWy
 
 
 def AdvectionRK4DiffusionMilstein1(particle, fieldset, time):
@@ -228,7 +226,5 @@ def AdvectionRK4DiffusionMilstein1(particle, fieldset, time):
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.lon += ((u1 + 2 * u2 + 2 * u3 + u4) / 6. + dKdx) * \
-        particle.dt + bx * dWx + 0.5 * bx * dbdx * (dWx**2 - particle.dt)
-    particle.lat += ((v1 + 2 * v2 + 2 * v3 + v4) / 6. + dKdy) * \
-        particle.dt + by * dWy + 0.5 * by * dbdy * (dWy**2 - particle.dt)
+    particle.lon += ((u1 + 2 * u2 + 2 * u3 + u4) / 6. + dKdx) * particle.dt + bx * dWx + 0.5 * bx * dbdx * (dWx**2 - particle.dt)
+    particle.lat += ((v1 + 2 * v2 + 2 * v3 + v4) / 6. + dKdy) * particle.dt + by * dWy + 0.5 * by * dbdy * (dWy**2 - particle.dt)
