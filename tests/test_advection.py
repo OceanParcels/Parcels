@@ -1,5 +1,8 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode
-from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D, AdvectionAnalytical
+from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode
+from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D
+from parcels import AdvectionAnalytical, AdvectionDiffusionEuler
+from parcels import AdvectionDiffusionMilstein1, AdvectionRK4DiffusionEuler
+from parcels import AdvectionRK4DiffusionMilstein1
 import numpy as np
 import pytest
 import math
@@ -8,7 +11,11 @@ from datetime import timedelta as delta
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45}
+kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
+          'AdvDiffEM': AdvectionDiffusionEuler,
+          'AdvDiffM1': AdvectionDiffusionMilstein1,
+          'AdvRK4DiffEM': AdvectionRK4DiffusionEuler,
+          'AdvRK4DiffM1': AdvectionRK4DiffusionMilstein1}
 
 # Some constants
 f = 1.e-4
@@ -259,12 +266,20 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [
-    ('EE', 1e-2),
-    ('RK4', 1e-5),
-    ('RK45', 1e-5)])
-def test_stationary_eddy(fieldset_stationary, mode, method, rtol, npart=1):
+@pytest.mark.parametrize('method, rtol, diffField', [
+    ('EE', 1e-2, False),
+    ('AdvDiffEM', 1e-2, True),
+    ('AdvDiffM1', 1e-2, True),
+    ('AdvRK4DiffEM', 1e-5, True),
+    ('AdvRK4DiffM1', 1e-5, True),
+    ('RK4', 1e-5, False),
+    ('RK45', 1e-5, False)])
+def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_stationary
+    if diffField:
+        fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
+        fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
+        fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
@@ -340,12 +355,20 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [
-    ('EE', 1e-2),
-    ('RK4', 1e-5),
-    ('RK45', 1e-5)])
-def test_moving_eddy(fieldset_moving, mode, method, rtol, npart=1):
+@pytest.mark.parametrize('method, rtol, diffField', [
+    ('EE', 1e-2, False),
+    ('AdvDiffEM', 1e-2, True),
+    ('AdvDiffM1', 1e-2, True),
+    ('AdvRK4DiffEM', 1e-5, True),
+    ('AdvRK4DiffM1', 1e-5, True),
+    ('RK4', 1e-5, False),
+    ('RK45', 1e-5, False)])
+def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_moving
+    if diffField:
+        fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
+        fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
+        fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
@@ -384,12 +407,20 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [
-    ('EE', 1e-2),
-    ('RK4', 1e-5),
-    ('RK45', 1e-5)])
-def test_decaying_eddy(fieldset_decaying, mode, method, rtol, npart=1):
+@pytest.mark.parametrize('method, rtol, diffField', [
+    ('EE', 1e-2, False),
+    ('AdvDiffEM', 1e-2, True),
+    ('AdvDiffM1', 1e-2, True),
+    ('AdvRK4DiffEM', 1e-5, True),
+    ('AdvRK4DiffM1', 1e-5, True),
+    ('RK4', 1e-5, False),
+    ('RK45', 1e-5, False)])
+def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
+    if diffField:
+        fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
+        fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
+        fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
