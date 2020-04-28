@@ -77,7 +77,7 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
 static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, double eta, float data[2][2], float *value)
 {
   int i, j, k, l, nb_land = 0, land[2][2] = {{0}};
-  float weight[2][2] = {{0.}}, w_sum = 0.;
+  float w_sum = 0.;
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
@@ -106,6 +106,7 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
     break;
   }
   // interpolate with 1 or 2 land points
+  *value = 0.;
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
       float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
@@ -120,17 +121,12 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
 	    }
       }
       else if (land[i][j] == 0) {
-	    weight[i][j] = 1.0 / distance;
-	    w_sum += weight[i][j];
+	    *value += data[i][j] / distance;
+	    w_sum += 1 / distance;
       }
     }
   }
-  *value = 0.;
-  for (i = 0; i < 2; i++) {
-    for (j = 0; j < 2; j++) {
-      *value += weight[i][j] * data[i][j] / w_sum;
-    }
-  }
+  *value /= w_sum;
   return SUCCESS;
 }
 
@@ -155,7 +151,7 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
 static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
 {
   int i, j, k, l, m, n, nb_land = 0, land[2][2][2] = {{{0}}};
-  float weight[2][2][2] = {{{0.}}}, w_sum = 0.;
+  float w_sum = 0.;
   // count the number of surrounding land points (assume land is where the value is close to zero)
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
@@ -187,6 +183,7 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
     break;
   }
   // interpolate with 1 to 6 land points
+  *value = 0.;
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 2; j++) {
         for (k = 0; k < 2; k++) {  
@@ -202,20 +199,13 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
 	        }
         }
         else if (land[i][j][k] == 0) {
-	      weight[i][j][k] = 1.0 / distance;
-	      w_sum += weight[i][j][k];
+	      *value += data[i][j][k] / distance;
+	      w_sum += 1 / distance;
         }
       }
     }
   }
-  *value = 0.;
-  for (i = 0; i < 2; i++) {
-    for (j = 0; j < 2; j++) {
-      for (k = 0; k < 2; k++) { 
-        *value += weight[i][j][k] * data[i][j][k] / w_sum;
-      }
-    }
-  }
+  *value /= w_sum;
   return SUCCESS;
 }
 
