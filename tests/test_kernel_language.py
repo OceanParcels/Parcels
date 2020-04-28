@@ -240,6 +240,19 @@ def test_print(fieldset, mode, capfd):
     assert abs(float(lst[0]) - 3) < tol
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_access(fieldset, mode):
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0)
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def kernel(particle, fieldset, time):
+        particle.p = fieldset.U.lon[1]
+
+    pset.execute(kernel, endtime=1, dt=1.)
+    assert np.allclose(pset.p, fieldset.U.grid.lon[1])
+
+
 def random_series(npart, rngfunc, rngargs, mode):
     random = parcels_random if mode == 'jit' else py_random
     random.seed(1234)
