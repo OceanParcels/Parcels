@@ -63,7 +63,7 @@ def AdvectionDiffusionEuler(particle, fieldset, time):
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
-    ax = fieldset.V[time, particle.depth, particle.lat, particle.lon] + dKdx
+    ax = fieldset.U[time, particle.depth, particle.lat, particle.lon] + dKdx
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
@@ -109,7 +109,7 @@ def AdvectionDiffusionMilstein1(particle, fieldset, time):
     bxm1 = math.sqrt(2 * Kxm1)
     dbdx = (bxp1 - bxm1) / (2 * fieldset.dres)
 
-    ax = fieldset.V[time, particle.depth, particle.lat, particle.lon] + dKdx
+    ax = fieldset.U[time, particle.depth, particle.lat, particle.lon] + dKdx
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
