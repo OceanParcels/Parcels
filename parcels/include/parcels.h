@@ -100,7 +100,7 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
     *value = data[k][l];
     return SUCCESS;
   case 4:  // only land
-    return ERROR_INTERPOLATION;
+    return 0.;
   default:
     break;
   }
@@ -110,7 +110,7 @@ static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, 
       float distance = sqrt(pow((xsi - j), 2) + pow((eta - i), 2));
       if (is_zero_flt(distance)) {
 	    if (land[i][j] == 1) { // index search led us directly onto land
-	      return ERROR_INTERPOLATION;
+	      return 0.;
 	    }
 	    else {
 	      *value = data[i][j];
@@ -179,7 +179,7 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
     *value = data[l][m][n];
     return SUCCESS;
   case 8:  // only land
-    return ERROR_INTERPOLATION;
+    return 0.;
   default:
     break;
   }
@@ -191,7 +191,7 @@ static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi,
           if (is_zero_flt(distance)) {
 	        if (land[i][j][k] == 1) {
 	          // index search led us directly onto land
-	          return ERROR_INTERPOLATION;
+	          return 0.;
 	        } else {
 	          *value = data[i][j][k];
 	          return SUCCESS;
