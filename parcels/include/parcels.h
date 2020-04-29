@@ -178,7 +178,7 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
   int yshift = chunk_info[1];
   int xdim = chunk_info[1+ndim+yshift+block[1]];
 
-  if ((ilocal[0] == ydim-1) || (ilocal[1] == xdim-1))
+  if (((ilocal[0] == ydim-1) && (ydim > 1)) || ((ilocal[1] == xdim-1) && (xdim > 1)))
   {
     // Cell is on multiple chunks
     for (tii=0; tii<2; ++tii){
@@ -208,9 +208,11 @@ static inline ErrorCode getCell2D(CField *f, int xi, int yi, int ti, float cell_
     float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
     for (tii=0; tii<2; ++tii){
       float (*data)[xdim] = (float (*)[xdim]) (data_block[ti+tii]);
-      for (yii=0; yii<2; ++yii)
-        for (xii=0; xii<2; ++xii)
-          cell_data[tii][yii][xii] = data[ilocal[0]+yii][ilocal[1]+xii];
+      int xiid = ((xdim==1) ? 0 : 1);
+      int yiid = ((ydim==1) ? 0 : 1);
+      for (yii=0; yii<2; yii++)
+        for (xii=0; xii<2; xii++)
+          cell_data[tii][yii][xii] = data[ilocal[0]+(yii*yiid)][ilocal[1]+(xii*xiid)];
       if (first_tstep_only == 1)
          break;
     }
@@ -270,7 +272,7 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, flo
   int yshift = chunk_info[1+1];
   int xdim = chunk_info[1+ndim+zshift+yshift+block[2]];
 
-  if ((ilocal[0] == zdim-1) || (ilocal[1] == ydim-1) || (ilocal[2] == xdim-1))
+  if (((ilocal[0] == zdim-1) && zdim > 1) || ((ilocal[1] == ydim-1) && ydim > 1) || ((ilocal[2] == xdim-1) && xdim >1))
   {
     // Cell is on multiple chunks\n
     for (tii=0; tii<2; ++tii){
@@ -303,10 +305,13 @@ static inline ErrorCode getCell3D(CField *f, int xi, int yi, int zi, int ti, flo
     float (*data_block)[zdim][ydim][xdim] = (float (*)[zdim][ydim][xdim]) f->data_chunks[blockid];
     for (tii=0; tii<2; ++tii){
       float (*data)[ydim][xdim] = (float (*)[ydim][xdim]) (data_block[ti+tii]);
-      for (zii=0; zii<2; ++zii)
-        for (yii=0; yii<2; ++yii)
-          for (xii=0; xii<2; ++xii)
-            cell_data[tii][zii][yii][xii] = data[ilocal[0]+zii][ilocal[1]+yii][ilocal[2]+xii];
+      int xiid = ((xdim==1) ? 0 : 1);
+      int yiid = ((ydim==1) ? 0 : 1);
+      int ziid = ((zdim==1) ? 0 : 1);
+      for (zii=0; zii<2; zii++)
+        for (yii=0; yii<2; yii++)
+          for (xii=0; xii<2; xii++)
+            cell_data[tii][zii][yii][xii] = data[ilocal[0]+(zii*ziid)][ilocal[1]+(yii*yiid)][ilocal[2]+(xii*xiid)];
       if (first_tstep_only == 1)
          break;
     }

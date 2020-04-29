@@ -467,10 +467,14 @@ class Field(object):
     def reshape(self, data, transpose=False):
 
         # Ensure that field data is the right data type
+        if not isinstance(data, (np.ndarray, da.core.Array)):
+            data = np.array(data)
         if not data.dtype == np.float32:
             logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
         lib = np if isinstance(data, np.ndarray) else da
+        if data.size == 1:
+            data = lib.tile(data, [self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim])
         if transpose:
             data = lib.transpose(data)
         if self.grid.lat_flipped:
@@ -636,61 +640,66 @@ class Field(object):
 
     def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, search2D=False):
         grid = self.grid
-        xi = yi = -1
 
-        if not grid.zonal_periodic:
+        if grid.xdim > 1 and (not grid.zonal_periodic):
             if x < grid.lonlat_minmax[0] or x > grid.lonlat_minmax[1]:
                 raise FieldOutOfBoundError(x, y, z, field=self)
-        if y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]:
+        if grid.ydim > 1 and (y < grid.lonlat_minmax[2] or y > grid.lonlat_minmax[3]):
             raise FieldOutOfBoundError(x, y, z, field=self)
 
-        if grid.mesh != 'spherical':
-            lon_index = grid.lon < x
-            if lon_index.all():
-                xi = len(grid.lon) - 2
-            else:
-                xi = lon_index.argmin() - 1 if lon_index.any() else 0
-            xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
-            if xsi < 0:
-                xi -= 1
+        if grid.xdim > 1:
+            if grid.mesh != 'spherical':
+                lon_index = grid.lon < x
+                if lon_index.all():
+                    xi = len(grid.lon) - 2
+                else:
+                    xi = lon_index.argmin() - 1 if lon_index.any() else 0
                 xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
-            elif xsi > 1:
-                xi += 1
-                xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
-        else:
-            lon_fixed = grid.lon.copy()
-            indices = lon_fixed >= lon_fixed[0]
-            if not indices.all():
-                lon_fixed[indices.argmin():] += 360
-            if x < lon_fixed[0]:
-                lon_fixed -= 360
-
-            lon_index = lon_fixed < x
-            if lon_index.all():
-                xi = len(lon_fixed) - 2
+                if xsi < 0:
+                    xi -= 1
+                    xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+                elif xsi > 1:
+                    xi += 1
+                    xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
             else:
-                xi = lon_index.argmin() - 1 if lon_index.any() else 0
-            xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
-            if xsi < 0:
-                xi -= 1
-                xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
-            elif xsi > 1:
-                xi += 1
-                xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+                lon_fixed = grid.lon.copy()
+                indices = lon_fixed >= lon_fixed[0]
+                if not indices.all():
+                    lon_fixed[indices.argmin():] += 360
+                if x < lon_fixed[0]:
+                    lon_fixed -= 360
 
-        lat_index = grid.lat < y
-        if lat_index.all():
-            yi = len(grid.lat) - 2
+                lon_index = lon_fixed < x
+                if lon_index.all():
+                    xi = len(lon_fixed) - 2
+                else:
+                    xi = lon_index.argmin() - 1 if lon_index.any() else 0
+                xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+                if xsi < 0:
+                    xi -= 1
+                    xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
+                elif xsi > 1:
+                    xi += 1
+                    xsi = (x-lon_fixed[xi]) / (lon_fixed[xi+1]-lon_fixed[xi])
         else:
-            yi = lat_index.argmin() - 1 if lat_index.any() else 0
+            xi, xsi = -1, 0
 
-        eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
-        if eta < 0:
-            yi -= 1
+        if grid.ydim > 1:
+            lat_index = grid.lat < y
+            if lat_index.all():
+                yi = len(grid.lat) - 2
+            else:
+                yi = lat_index.argmin() - 1 if lat_index.any() else 0
+
             eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
-        elif eta > 1:
-            yi += 1
-            eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+            if eta < 0:
+                yi -= 1
+                eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+            elif eta > 1:
+                yi += 1
+                eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+        else:
+            yi, eta = -1, 0
 
         if grid.zdim > 1 and not search2D:
             if grid.gtype == GridCode.RectilinearZGrid:
@@ -704,8 +713,7 @@ class Field(object):
             elif grid.gtype == GridCode.RectilinearSGrid:
                 (zi, zeta) = self.search_indices_vertical_s(x, y, z, xi, yi, xsi, eta, ti, time)
         else:
-            zi = -1
-            zeta = 0
+            zi, zeta = -1, 0
 
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             raise FieldSamplingError(x, y, z, field=self)

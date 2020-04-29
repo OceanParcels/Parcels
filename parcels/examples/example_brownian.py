@@ -18,31 +18,18 @@ def mesh_conversion(mesh):
     return (1852. * 60) if mesh == 'spherical' else 1.
 
 
-def zeros_fieldset(xdim=2, ydim=2, mesh='flat'):
-    """Generates a zero velocity field"""
-
-    lon = np.linspace(-2e5/mesh_conversion(mesh), 2e5/mesh_conversion(mesh), xdim, dtype=np.float32)
-    lat = np.linspace(-2e5/mesh_conversion(mesh), 2e5/mesh_conversion(mesh), ydim, dtype=np.float32)
-
-    dimensions = {'lon': lon, 'lat': lat}
-    data = {'U': np.zeros((ydim, xdim), dtype=np.float32),
-            'V': np.zeros((ydim, xdim), dtype=np.float32)}
-    return FieldSet.from_data(data, dimensions, mesh=mesh)
-
-
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
 def test_brownian_example(mode, mesh, npart=3000):
-    fieldset = zeros_fieldset(mesh=mesh)
+    fieldset = FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0}, mesh=mesh)
 
     # Set diffusion constants.
     kh_zonal = 100  # in m^2/s
     kh_meridional = 100  # in m^2/s
 
-    # Create field of Kh_zonal and Kh_meridional, using same grid as U
-    grid = fieldset.U.grid
-    fieldset.add_field(Field('Kh_zonal', kh_zonal*np.ones((2, 2)), grid=grid))
-    fieldset.add_field(Field('Kh_meridional', kh_meridional*np.ones((2, 2)), grid=grid))
+    # Create field of constant Kh_zonal and Kh_meridional
+    fieldset.add_field(Field('Kh_zonal', kh_zonal, lon=0, lat=0, mesh=mesh))
+    fieldset.add_field(Field('Kh_meridional', kh_meridional, lon=0, lat=0, mesh=mesh))
 
     # Set random seed
     random.seed(123456)
