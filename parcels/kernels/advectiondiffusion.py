@@ -13,7 +13,7 @@ def DiffusionUniformKh(particle, fieldset, time):
     Assumes that fieldset has fields Kh_zonal and Kh_meridional
 
     This kernel neglects gradients in the diffusivity field and is
-    therefore more efficient in cases with constant diffusivity.
+    therefore more efficient in cases with uniform diffusivity.
     Since the perturbation due to diffusion is in this case spatially
     independent, this kernel contains no advection and can be used in
     combination with a seperate advection kernel.
