@@ -215,16 +215,18 @@ def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_inversedistance_nearland(mode, k_sample_p, npart=81):
+@pytest.mark.parametrize('arrtype', ['ones', 'rand'])
+def test_inversedistance_nearland(mode, arrtype, k_sample_p, npart=81):
     dims = (4, 4, 6)
-    dimensions = {'lon': np.linspace(0., 1., dims[0], dtype=np.float32),
+    P = np.random.rand(dims[0], dims[1], dims[2])+2 if arrtype == 'rand' else np.ones(dims, dtype=np.float32)
+    P[1, 1:2, 1:6] = np.nan  # setting some values to land (NaN)
+    dimensions = {'lon': np.linspace(0., 1., dims[2], dtype=np.float32),
                   'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
-                  'depth': np.linspace(0., 1., dims[2], dtype=np.float32)}
+                  'depth': np.linspace(0., 1., dims[0], dtype=np.float32)}
     data = {'U': np.zeros(dims, dtype=np.float32),
             'V': np.zeros(dims, dtype=np.float32),
-            'P': np.ones(dims, dtype=np.float32)}
-    data['P'][1, 1, 1] = np.nan
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
+            'P': P}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     fieldset.P.interp_method = 'linear_invdist_land_tracer'
 
     xv, yv = np.meshgrid(np.linspace(0.1, 0.9, int(np.sqrt(npart))), np.linspace(0.1, 0.9, int(np.sqrt(npart))))
@@ -233,7 +235,10 @@ def test_inversedistance_nearland(mode, k_sample_p, npart=81):
     pset2 = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.ones(npart))
     pset.add(pset2)
     pset.execute(k_sample_p, endtime=1, dt=1)
-    assert np.allclose(pset.p, 1.0, rtol=1e-5)
+    if arrtype == 'rand':
+        assert np.all((pset.p > 2) & (pset.p < 3))
+    else:
+        assert np.allclose(pset.p, 1.0, rtol=1e-5)
 
     success = False
     try:
