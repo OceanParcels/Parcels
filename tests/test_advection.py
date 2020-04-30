@@ -1,8 +1,7 @@
-from parcels import FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode
-from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D
-from parcels import AdvectionAnalytical, AdvectionDiffusionEuler
-from parcels import AdvectionDiffusionMilstein1, AdvectionRK4DiffusionEuler
-from parcels import AdvectionRK4DiffusionMilstein1
+from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode,
+                     AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
+                     AdvectionAnalytical, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
+                     AdvectionDiffusionEM, AdvectionRK4DiffusionEM)
 import numpy as np
 import pytest
 import math
@@ -12,10 +11,10 @@ from datetime import timedelta as delta
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
-          'AdvDiffEM': AdvectionDiffusionEuler,
-          'AdvDiffM1': AdvectionDiffusionMilstein1,
-          'AdvRK4DiffEM': AdvectionRK4DiffusionEuler,
-          'AdvRK4DiffM1': AdvectionRK4DiffusionMilstein1}
+          'AdvDiffEM': AdvectionDiffusionEM,
+          'AdvDiffM1': AdvectionDiffusionM1,
+          'AdvRK4DiffEM': AdvectionRK4DiffusionEM,
+          'AdvRK4DiffM1': AdvectionRK4DiffusionM1}
 
 # Some constants
 f = 1.e-4
