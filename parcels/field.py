@@ -67,7 +67,8 @@ class Field(object):
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
     :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
-    :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
+    :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
+           'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
     :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
@@ -823,6 +824,32 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
+        elif self.interp_method == 'linear_invdist_land_tracer':
+            land = np.isclose(self.data[ti, yi:yi+2, xi:xi+2], 0.)
+            nb_land = np.sum(land)
+            if nb_land == 4:
+                return 0
+            elif nb_land > 0:
+                val = 0
+                w_sum = 0
+                for j in range(2):
+                    for i in range(2):
+                        distance = pow((eta - j), 2) + pow((xsi - i), 2)
+                        if np.isclose(distance, 0):
+                            if land[j][i] == 1:  # index search led us directly onto land
+                                return 0
+                            else:
+                                return self.data[ti, yi+j, xi+i]
+                        elif land[i][j] == 0:
+                            val += self.data[ti, yi+j, xi+i] / distance
+                            w_sum += 1 / distance
+                return val / w_sum
+            else:
+                val = (1 - xsi) * (1 - eta) * self.data[ti, yi, xi] + \
+                    xsi * (1 - eta) * self.data[ti, yi, xi + 1] + \
+                    xsi * eta * self.data[ti, yi + 1, xi + 1] + \
+                    (1 - xsi) * eta * self.data[ti, yi + 1, xi]
+                return val
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
         elif self.interp_method == 'cgrid_velocity':
@@ -844,6 +871,39 @@ class Field(object):
             f0 = self.data[ti, zi, yi+1, xi+1]
             f1 = self.data[ti, zi+1, yi+1, xi+1]
             return (1-zeta) * f0 + zeta * f1
+        elif self.interp_method == 'linear_invdist_land_tracer':
+            land = np.isclose(self.data[ti, zi:zi+2, yi:yi+2, xi:xi+2], 0.)
+            nb_land = np.sum(land)
+            if nb_land == 8:
+                return 0
+            elif nb_land > 0:
+                val = 0
+                w_sum = 0
+                for k in range(2):
+                    for j in range(2):
+                        for i in range(2):
+                            distance = pow((zeta - k), 2) + pow((eta - j), 2) + pow((xsi - i), 2)
+                            if np.isclose(distance, 0):
+                                if land[k][j][i] == 1:  # index search led us directly onto land
+                                    return 0
+                                else:
+                                    return self.data[ti, zi+i, yi+j, xi+k]
+                            elif land[k][j][i] == 0:
+                                val += self.data[ti, zi+k, yi+j, xi+i] / distance
+                                w_sum += 1 / distance
+                return val / w_sum
+            else:
+                data = self.data[ti, zi, :, :]
+                f0 = (1 - xsi) * (1 - eta) * data[yi, xi] + \
+                    xsi * (1 - eta) * data[yi, xi + 1] + \
+                    xsi * eta * data[yi + 1, xi + 1] + \
+                    (1 - xsi) * eta * data[yi + 1, xi]
+                data = self.data[ti, zi + 1, :, :]
+                f1 = (1 - xsi) * (1 - eta) * data[yi, xi] + \
+                    xsi * (1 - eta) * data[yi, xi + 1] + \
+                    xsi * eta * data[yi + 1, xi + 1] + \
+                    (1 - xsi) * eta * data[yi + 1, xi]
+                return (1 - zeta) * f0 + zeta * f1
         elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
             if self.interp_method == 'bgrid_velocity':
                 zeta = 0.

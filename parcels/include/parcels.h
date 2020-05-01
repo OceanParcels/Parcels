@@ -73,6 +73,63 @@ static inline ErrorCode spatial_interpolation_bilinear(double xsi, double eta, f
   return SUCCESS;
 }
 
+/* Bilinear interpolation routine for 2D grid for tracers with squared inverse distance weighting near land*/
+static inline ErrorCode spatial_interpolation_bilinear_invdist_land(double xsi, double eta, float data[2][2], float *value)
+{
+  int i, j, k, l, nb_land = 0, land[2][2] = {{0}};
+  float w_sum = 0.;
+  // count the number of surrounding land points (assume land is where the value is close to zero)
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+      if (is_zero_flt(data[i][j])) {
+	    land[i][j] = 1;
+	    nb_land++;
+      }
+      else {
+	    // record the coordinates of the last non-land point
+	    // (for the case where this is the only location with valid data)
+	    k = i;
+	    l = j;
+      }
+    }
+  }
+  switch (nb_land) {
+  case 0:  // no land, use usual routine
+    return spatial_interpolation_bilinear(xsi, eta, data, value);
+  case 3:  // single non-land point
+    *value = data[k][l];
+    return SUCCESS;
+  case 4:  // only land
+    *value = 0.;
+    return SUCCESS;
+  default:
+    break;
+  }
+  // interpolate with 1 or 2 land points
+  *value = 0.;
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+      float distance = pow((xsi - j), 2) + pow((eta - i), 2);
+      if (is_zero_flt(distance)) {
+	    if (land[i][j] == 1) { // index search led us directly onto land
+          *value = 0.;
+          return SUCCESS;
+	    }
+	    else {
+	      *value = data[i][j];
+	      return SUCCESS;
+	    }
+      }
+      else if (land[i][j] == 0) {
+	    *value += data[i][j] / distance;
+	    w_sum += 1 / distance;
+      }
+    }
+  }
+  *value /= w_sum;
+  return SUCCESS;
+}
+
 /* Trilinear interpolation routine for 3D grid */
 static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, double zeta,
                                                         float data[2][2][2], float *value)
@@ -87,6 +144,68 @@ static inline ErrorCode spatial_interpolation_trilinear(double xsi, double eta, 
      +    xsi *   eta  * data[1][1][1]
      + (1-xsi)*   eta  * data[1][1][0];
   *value = (1-zeta) * f0 + zeta * f1;
+  return SUCCESS;
+}
+
+/* Trilinear interpolation routine for 3D grid for tracers with squared inverse distance weighting near land*/
+static inline ErrorCode spatial_interpolation_trilinear_invdist_land(double xsi, double eta, double zeta, float data[2][2][2], float *value)
+{
+  int i, j, k, l, m, n, nb_land = 0, land[2][2][2] = {{{0}}};
+  float w_sum = 0.;
+  // count the number of surrounding land points (assume land is where the value is close to zero)
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+      for (k = 0; k < 2; k++) {  
+        if(is_zero_flt(data[i][j][k])) {
+	      land[i][j][k] = 1;
+	      nb_land++;
+        }
+        else {
+	    // record the coordinates of the last non-land point
+	    // (for the case where this is the only location with valid data)
+          l = i;
+          m = j;
+          n = k;
+        }
+      }
+    }
+  }
+  switch (nb_land) {
+  case 0:  // no land, use usual routine
+    return spatial_interpolation_trilinear(xsi, eta, zeta, data, value);
+  case 7:  // single non-land point
+    *value = data[l][m][n];
+    return SUCCESS;
+  case 8:  // only land
+    *value = 0.;
+    return SUCCESS;
+  default:
+    break;
+  }
+  // interpolate with 1 to 6 land points
+  *value = 0.;
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < 2; j++) {
+        for (k = 0; k < 2; k++) {  
+          float distance = pow((zeta - i), 2) + pow((eta - j), 2) + pow((xsi - k), 2);
+          if (is_zero_flt(distance)) {
+	        if (land[i][j][k] == 1) {
+	          // index search led us directly onto land
+              *value = 0.;
+              return SUCCESS;
+	        } else {
+	          *value = data[i][j][k];
+	          return SUCCESS;
+	        }
+        }
+        else if (land[i][j][k] == 0) {
+	      *value += data[i][j][k] / distance;
+	      w_sum += 1 / distance;
+        }
+      }
+    }
+  }
+  *value /= w_sum;
   return SUCCESS;
 }
 
@@ -385,6 +504,15 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
         err = spatial_interpolation_tracer_c_grid_3D(data3D[1], &f1); CHECKERROR(err);
       }
     }
+    else if (interp_method == LINEAR_INVDIST_LAND_TRACER){
+      if (grid->zdim==1){
+        err = spatial_interpolation_bilinear_invdist_land(xsi, eta, data2D[0], &f0); CHECKERROR(err);
+        err = spatial_interpolation_bilinear_invdist_land(xsi, eta, data2D[1], &f1); CHECKERROR(err);
+      } else {
+        err = spatial_interpolation_trilinear_invdist_land(xsi, eta, zeta, data3D[0], &f0); CHECKERROR(err);
+        err = spatial_interpolation_trilinear_invdist_land(xsi, eta, zeta, data3D[1], &f1); CHECKERROR(err);
+      }
+    }
     else {
         return ERROR;
     }
@@ -429,6 +557,14 @@ static inline ErrorCode temporal_interpolation_structured_grid(type_coord x, typ
       }
       else {
         err = spatial_interpolation_tracer_c_grid_3D(data3D[0], value); CHECKERROR(err);
+      }
+    }
+    else if (interp_method == LINEAR_INVDIST_LAND_TRACER){
+      if (grid->zdim==1){
+        err = spatial_interpolation_bilinear_invdist_land(xsi, eta, data2D[0], value); CHECKERROR(err);
+      }
+      else {
+        err = spatial_interpolation_trilinear_invdist_land(xsi, eta, zeta, data3D[0], value); CHECKERROR(err);
       }
     }
     else {
