@@ -474,16 +474,15 @@ class Field(object):
             logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
         lib = np if isinstance(data, np.ndarray) else da
-        if data.size == 1:
-            data = lib.tile(data, [self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim])
         if transpose:
             data = lib.transpose(data)
         if self.grid.lat_flipped:
             data = lib.flip(data, axis=-2)
 
-        if len(data.shape) == 1:
-            if self.grid.zdim > 1 and self.grid.xdim == 1 and self.grid.ydim == 1:
-                data = data[:, None, None]  # if vertical section
+        if self.grid.xdim == 1:
+            data = lib.expand_dims(data, axis=-1)
+        if self.grid.ydim == 1:
+            data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
                 data = data.reshape(sum(((1,), data.shape), ()))
