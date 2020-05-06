@@ -481,6 +481,9 @@ class Field(object):
         if self.grid.lat_flipped:
             data = lib.flip(data, axis=-2)
 
+        if len(data.shape) == 1:
+            if self.grid.zdim > 1 and self.grid.xdim == 1 and self.grid.ydim == 1:
+                data = data[:, None, None]  # if vertical section
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
                 data = data.reshape(sum(((1,), data.shape), ()))

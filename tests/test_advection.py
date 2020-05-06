@@ -209,7 +209,7 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
 def test_length1dimensions(mode, u, v, w):
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
-    (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(v, np.ndarray) and w is not None) else (3, 1)
+    (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
     dimensions = {'lon': lon, 'lat': lat, 'depth': depth}
 
     if xdim > 1 or ydim > 1 or zdim > 1:
