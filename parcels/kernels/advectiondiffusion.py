@@ -37,6 +37,7 @@ def DiffusionUniformKh(particle, fieldset, time):
     particle.lon += bx * dWx
     particle.lat += by * dWy
 
+
 def AdvectionDiffusionM1(particle, fieldset, time):
     """Kernel for 2D advection-diffusion, solved using the Milstein scheme
     at first order (M1).
@@ -45,7 +46,7 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     and variable `fieldset.dres`, setting the resolution for the central difference
     gradient approximation. This should be at least an order of magnitude
     less than the typical grid resolution.
-    
+
     The Milstein scheme is superior to the Euler-Maruyama scheme, experiencing
     less spurious background diffusivity by including extra correction
     terms that are computationally cheap.
@@ -67,31 +68,23 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
 
-    bxp1 = math.sqrt(2 * Kxp1)
-    bxm1 = math.sqrt(2 * Kxm1)
-    dbdx = (bxp1 - bxm1) / (2 * fieldset.dres)
-
-    ax = fieldset.U[time, particle.depth, particle.lat, particle.lon] + dKdx
+    u = fieldset.U[time, particle.depth, particle.lat, particle.lon]
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
     Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
 
-    byp1 = math.sqrt(2 * Kyp1)
-    bym1 = math.sqrt(2 * Kym1)
-    dbdy = (byp1 - bym1) / (2 * fieldset.dres)
-
-    ay = fieldset.V[time, particle.depth, particle.lat, particle.lon] + dKdy
+    v = fieldset.V[time, particle.depth, particle.lat, particle.lon]
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.lon += ax * particle.dt + bx * dWx + 0.5 * bx * dbdx * (dWx**2 - particle.dt)
-    particle.lat += ay * particle.dt + by * dWy + 0.5 * by * dbdy * (dWy**2 - particle.dt)
+    particle.lon += u * particle.dt + 0.5 * dKdx * (dWx**2 + particle.dt) + bx * dWx
+    particle.lat += v * particle.dt + 0.5 * dKdy * (dWy**2 + particle.dt) + by * dWy
 
 
 def AdvectionRK4DiffusionM1(particle, fieldset, time):
-    """Kernel for 2D advection-diffusion, with advection solved 
+    """Kernel for 2D advection-diffusion, with advection solved
     using fourth order Runge-Kutta (RK4) and diffusion using the Milstein
     scheme at first order (M1). Using the RK4 scheme for diffusion is only
     advantageous in areas where the contribution from diffusion is
@@ -105,7 +98,7 @@ def AdvectionRK4DiffusionM1(particle, fieldset, time):
     The Milstein scheme is superior to the Euler-Maruyama scheme, experiencing
     less spurious background diffusivity by including extra correction
     terms that are computationally cheap.
-    
+
     The Wiener increment `dW` should be normally distributed with zero
     mean and a standard deviation of sqrt(dt). Instead, here a uniform
     distribution with the same mean and std is used for efficiency and
@@ -131,23 +124,17 @@ def AdvectionRK4DiffusionM1(particle, fieldset, time):
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
     dKdx = (Kxp1 - Kxm1) / (2 * fieldset.dres)
-    bxp1 = math.sqrt(2 * Kxp1)
-    bxm1 = math.sqrt(2 * Kxm1)
-    dbdx = (bxp1 - bxm1) / (2 * fieldset.dres)
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
 
     Kyp1 = fieldset.Kh_meridional[time, particle.depth, particle.lat + fieldset.dres, particle.lon]
     Kym1 = fieldset.Kh_meridional[time, particle.depth, particle.lat - fieldset.dres, particle.lon]
     dKdy = (Kyp1 - Kym1) / (2 * fieldset.dres)
-    byp1 = math.sqrt(2 * Kyp1)
-    bym1 = math.sqrt(2 * Kym1)
-    dbdy = (byp1 - bym1) / (2 * fieldset.dres)
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
 
     # Particle positions are updated only after evaluating all terms.
-    particle.lon += ((u1 + 2 * u2 + 2 * u3 + u4) / 6. + dKdx) * particle.dt + bx * dWx + 0.5 * bx * dbdx * (dWx**2 - particle.dt)
-    particle.lat += ((v1 + 2 * v2 + 2 * v3 + v4) / 6. + dKdy) * particle.dt + by * dWy + 0.5 * by * dbdy * (dWy**2 - particle.dt)
-    
+    particle.lon += ((u1 + 2 * u2 + 2 * u3 + u4) / 6.) * particle.dt + 0.5 * dKdx * (dWx**2 + particle.dt) + bx * dWx
+    particle.lat += ((v1 + 2 * v2 + 2 * v3 + v4) / 6.) * particle.dt + 0.5 * dKdy * (dWy**2 + particle.dt) + by * dWy
+
 
 def AdvectionDiffusionEM(particle, fieldset, time):
     """Kernel for 2D advection-diffusion, solved using the Euler-Maruyama
@@ -189,7 +176,7 @@ def AdvectionDiffusionEM(particle, fieldset, time):
 
 
 def AdvectionRK4DiffusionEM(particle, fieldset, time):
-    """Kernel for 2D advection-diffusion,  with advection solved 
+    """Kernel for 2D advection-diffusion,  with advection solved
     using fourth order Runge-Kutta (RK4) and diffusion using the
     Euler-Maruyama scheme (EM). Using the RK4 scheme for diffusion is
     only advantageous in areas where the contribution from diffusion
