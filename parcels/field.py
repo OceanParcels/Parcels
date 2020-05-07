@@ -1665,10 +1665,10 @@ class NestedField(list):
 
 
 class NetcdfFileBuffer(object):
-    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i'],
-                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j'],
+    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG'],
+                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
                   'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz',
-                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps'],
+                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1', 'Zl', 'Zu', 'level'],
                   'time': ['time', 'time_count', 'time_counter', 'timer_count', 't']}
     _min_dim_chunksize = 16
 
