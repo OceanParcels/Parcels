@@ -479,9 +479,9 @@ class Field(object):
         if self.grid.lat_flipped:
             data = lib.flip(data, axis=-2)
 
-        if self.grid.xdim == 1:
+        if self.grid.xdim == 1 and len(data.shape) < 4:
             data = lib.expand_dims(data, axis=-1)
-        if self.grid.ydim == 1:
+        if self.grid.ydim == 1 and len(data.shape) < 4:
             data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
