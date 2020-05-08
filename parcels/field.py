@@ -479,6 +479,7 @@ class Field(object):
         if self.grid.lat_flipped:
             data = lib.flip(data, axis=-2)
 
+        data = np.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
         if self.grid.xdim == 1 and len(data.shape) < 4:
             data = lib.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
