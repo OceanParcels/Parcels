@@ -1,12 +1,9 @@
 """Get example scripts, notebooks, and data files."""
 import argparse
-import json
 import os
 from datetime import datetime
 from datetime import timedelta
-from glob import glob
 import shutil
-import sys
 
 import pkg_resources
 from progressbar import ProgressBar
@@ -75,25 +72,6 @@ def copy_data_and_examples_from_package_to(target_path):
         pass
 
 
-def set_jupyter_kernel_to_python_version(path, python_version=2):
-    """Set notebook kernelspec to desired python version.
-
-    This also drops all other meta data from the notebook.
-    """
-    for file_name in glob(os.path.join(path, "*.ipynb")):
-
-        with open(file_name, 'r') as f:
-            notebook_data = json.load(f)
-
-        notebook_data['metadata'] = {"kernelspec": {
-            "display_name": "Python {}".format(python_version),
-            "language": "python",
-            "name": "python{}".format(python_version)}}
-
-        with open(file_name, 'w') as f:
-            json.dump(notebook_data, f, indent=2)
-
-
 def _still_to_download(file_names, target_path):
     """Only return the files that are not yet present on disk."""
     for fn in list(file_names):
@@ -138,11 +116,6 @@ def main(target_path=None):
 
     # copy data and examples
     copy_data_and_examples_from_package_to(target_path)
-
-    # make sure the notebooks use the correct python version
-    set_jupyter_kernel_to_python_version(
-        target_path,
-        python_version=sys.version_info[0])
 
     # try downloading remaining files
     remaining_example_data_files = _still_to_download(
