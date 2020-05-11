@@ -7,28 +7,29 @@ from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
 from parcels.field import Field, VectorField, NestedField, SummedField
 from parcels import plotTrajectoriesFile_loadedField
+from parcels import rng as random
 from datetime import timedelta as delta
 import math
 from argparse import ArgumentParser
-#import datetime
+import datetime
 import numpy as np
 import xarray as xr
-import pytest
+import fnmatch
 import psutil
+import sys
 import gc
 import os
 import time as ostime
 import matplotlib.pyplot as plt
 from parcels.tools import perlin3d
 
-import sys
 try:
     from mpi4py import MPI
 except:
     MPI = None
 with_GC = False
 
-
+pset = None
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 global_t_0 = 0
@@ -49,8 +50,8 @@ perlinres=(1,32,8)
 shapescale=(4,8,8)
 #shapescale=(8,6,6) # formerly
 perlin_persistence=0.3
-a = 10000 * 1e3
-b = 10000 * 1e3
+a = 1000 * 1e3
+b = 1000 * 1e3
 scalefac = 2.0
 
 # Idea for 4D: perlin3D creates a time-consistent 3D field
@@ -65,7 +66,8 @@ class PerformanceLog():
     samples = []
     times_steps = []
     memory_steps = []
-    fds_steps = []
+    #self.fds_steps = []
+    Nparticles_step = []
     _iter = 0
 
     def advance(self):
@@ -77,30 +79,39 @@ class PerformanceLog():
             fds_open = len(process.open_files())
             mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
             fds_open_total = mpi_comm.reduce(fds_open, op=MPI.SUM, root=0)
+            if pset is not None:
+                Nparticles_local = len(pset)
+                Nparticles_global = mpi_comm.reduce(Nparticles_local, op=MPI.SUM, root=0)
             if mpi_rank == 0:
-                self.times_steps.append(ostime.time())
+                self.times_steps.append(ostime.process_time())
                 self.memory_steps.append(mem_B_used_total)
                 self.fds_steps.append(fds_open_total)
+                if pset is not None:
+                    self.Nparticles_step.append(Nparticles_global)
                 self.samples.append(self._iter)
                 self._iter+=1
         else:
             process = psutil.Process(os.getpid())
-            self.times_steps.append(ostime.time())
+            self.times_steps.append(ostime.process_time())
             self.memory_steps.append(process.memory_info().rss)
             self.fds_steps.append(len(process.open_files()))
+            if pset is not None:
+                self.Nparticles_step.append(len(pset))
             self.samples.append(self._iter)
             self._iter+=1
 
-def plot(x, times, memory_used, nfiledescriptors, imageFilePath):
+#def plot(x, times, memory_used, nfiledescriptors, imageFilePath):
+def plot(x, times, memory_used, nparts, imageFilePath):
     plot_t = []
-    t_scaler = 1. * 10./1.0
+    #t_scaler = 1. * 10./1.0
+    t_scaler = 1. * 5. / 1.0
     for i in range(len(times)):
         if i==0:
             plot_t.append( (times[i]-global_t_0)*t_scaler )
         else:
             plot_t.append( (times[i]-times[i-1])*t_scaler )
-    #mem_scaler = (1*10)/(1024*1024*1024)
-    mem_scaler = 1 / (1024 * 1024 * 1024)
+    mem_scaler = (1*10)/(1024*1024*1024)
+    #mem_scaler = 1 / (1024 * 1024 * 1024)
     plot_mem = []
     for i in range(len(memory_used)):
         #if i==0:
@@ -108,13 +119,24 @@ def plot(x, times, memory_used, nfiledescriptors, imageFilePath):
         #else:
         #    plot_mem.append((memory_used[i] - memory_used[i-1]) * mem_scaler)
         plot_mem.append(memory_used[i] * mem_scaler)
+    npart_scaler = 1.0 / 1000.0
+    plot_npart = []
+    for i in range(len(nparts)):
+        #if i==0:
+        #    plot_mem.append((memory_used[i]-global_m_0)*mem_scaler)
+        #else:
+        #    plot_mem.append((memory_used[i] - memory_used[i-1]) * mem_scaler)
+        plot_npart.append(nparts[i] * npart_scaler)
+
 
     fig, ax = plt.subplots(1, 1, figsize=(21, 12))
-    ax.plot(x, plot_t, 'o-', label="time_spent [100ms]")
-    ax.plot(x, plot_mem, 'x-', label="memory_used [100 MB]")
-    #ax.plot(x, nfiledescriptors, '.-', label="open_files [#]")
+    #ax.plot(x, plot_t, 'o-', label="time_spent [100ms]")
+    ax.plot(x, plot_t, 'o-', label="time_spent [500ms]")
+    ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [100 MB]")
+    ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
     plt.xlim([0, 730])
-    plt.ylim([0, 100])
+    #plt.ylim([0, 120])
+    plt.ylim([0, 250])
     plt.legend()
     ax.set_xlabel('iteration')
     # ax.set_ylabel('Time spent in pset.execute() [s]')
@@ -212,38 +234,21 @@ def perIterGC():
 
 class AgeParticle_JIT(JITParticle):
     age = Variable('age', dtype=np.float64, initial=0.0)
-    agetime = Variable('agetime', dtype=np.float64, initial=-1.0)
-    #def __init__(self, *args, **kwargs):
-    #    type(self).age.initial=0.
-    #    type(self).agetime.initial=-1.0
-    #    super(AgeParticle_JIT, self).__init__(*args, **kwargs)
+    life_expectancy = Variable('life_expectancy', dtype=np.float64, initial=np.finfo(np.float64).max)
+    initialized_dynamic = Variable('initialized_dynamic', dtype=np.int32, initial=0)
 
 class AgeParticle_SciPy(ScipyParticle):
     age = Variable('age', dtype=np.float64, initial=0.0)
-    agetime = Variable('agetime', dtype=np.float64, initial=-1.0)
-    #def __init__(self, *args, **kwargs):
-    #    type(self).age.initial=0.
-    #    type(self).agetime.initial=-1.0
-    #    super(AgeParticle_SciPy, self).__init__(*args, **kwargs)
+    life_expectancy = Variable('life_expectancy', dtype=np.float64, initial=np.finfo(np.float64).max)
+    initialized_dynamic = Variable('initialized_dynamic', dtype=np.int32, initial=0)
 
 age_ptype = {'scipy': AgeParticle_SciPy, 'jit': AgeParticle_JIT}
 
 def Age(particle, fieldset, time):
-    if math.fabs(time-particle.agetime) > math.fabs(1.e10 * particle.dt):
+    if particle.state == ErrorCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
-        particle.agetime = time
-
-        if particle.age > (60.0*60.0*24.0*14):
-            particle.delete()
-
-#def OldAge(particle, fieldset, time):
-#    if particle.age > (60.0*60.0*24.0*62.0):
-#        particle.delete()
-#    else:
-#        particle.age = particle.age + math.fabs(particle.dt)
-#    #particle.age = particle.age + math.fabs(particle.dt)
-#    #if particle.age > (60.0 * 60.0 * 24.0 * 62.0):
-#    #    particle.delete()
+    if particle.age > particle.life_expectancy:
+        particle.delete()
 
 if __name__=='__main__':
     parser = ArgumentParser(description="Example of particle advection using in-memory stommel test case")
@@ -259,7 +264,8 @@ if __name__=='__main__':
     parser.add_argument("-d", "--delParticle", dest="delete_particle", action='store_true', default=False, help="switch to delete a particle (True) or reset a particle (default: False).")
     parser.add_argument("-A", "--animate", dest="animate", action='store_true', default=False, help="animate the particle trajectories during the run or not (default: False).")
     parser.add_argument("-V", "--visualize", dest="visualize", action='store_true', default=False, help="Visualize particle trajectories at the end (default: False). Requires -w in addition to take effect.")
-    parser.add_argument("-N", "--n_particles", dest="nparticles", type=str, default="2e6", help="number of particles to generate and advect (default: 2e6)")
+    parser.add_argument("-N", "--n_particles", dest="nparticles", type=str, default="2**6", help="number of particles to generate and advect (default: 2e6)")
+    parser.add_argument("-sN", "--start_n_particles", dest="start_nparticles", type=str, default="96", help="(optional) number of particles generated per release cycle (if --rt is set) (default: 96)")
     parser.add_argument("-m", "--mode", dest="compute_mode", choices=['jit','scipy'], default="jit", help="computation mode = [JIT, SciPp]")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
     args = parser.parse_args()
@@ -274,19 +280,33 @@ if __name__=='__main__':
     agingParticles = args.aging
     with_GC = args.useGC
     Nparticle = int(float(eval(args.nparticles)))
+    start_N_particles = int(float(eval(args.start_nparticles)))
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
-            sys.stdout.write("N: {}\n".format(Nparticle))
+            if agingParticles and not repeatdtFlag:
+                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * math.sqrt(3.0/2.0))))
+            else:
+                sys.stdout.write("N: {}\n".format(Nparticle))
     else:
-        sys.stdout.write("N: {}\n".format(Nparticle))
+        if agingParticles and not repeatdtFlag:
+            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * math.sqrt(3.0/2.0))))
+        else:
+            sys.stdout.write("N: {}\n".format(Nparticle))
 
     dt_minutes = 60
     #dt_minutes = 20
+    #random.seed(123456)
+    nowtime = datetime.datetime.now()
+    random.seed(nowtime.microsecond)
 
     odir = ""
-    if os.uname()[1] in ['science-bs35', 'science-bs36']:
-        odir = "/scratch/{}/experiments".format(os.environ['USER'])
+    if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
+        # odir = "/scratch/{}/experiments".format(os.environ['USER'])
+        odir = "/scratch/{}/experiments".format("ckehl")
+    elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+        CARTESIUS_SCRATCH_USERNAME = 'ckehl'
+        odir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
     else:
         odir = "/var/scratch/experiments"
 
@@ -301,15 +321,15 @@ if __name__=='__main__':
         fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag)
 
     if args.compute_mode is 'scipy':
-        Nparticle = 2**6
+        Nparticle = 2**10
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         if mpi_rank==0:
-            global_t_0 = ostime.time()
+            global_t_0 = ostime.process_time()
     else:
-        global_t_0 = ostime.time()
+        global_t_0 = ostime.process_time()
 
     simStart = None
     for f in fieldset.get_fields():
@@ -322,34 +342,65 @@ if __name__=='__main__':
                 simStart = f.grid.time_full[0]
             break
 
+    if agingParticles:
+        if not repeatdtFlag:
+            Nparticle = int(Nparticle * math.sqrt(3.0/2.0))
+        fieldset.add_constant('life_expectancy', delta(days=time_in_days).total_seconds())
+    if repeatdtFlag:
+        addParticleN = Nparticle/2.0
+        refresh_cycle = (delta(days=time_in_days).total_seconds() / (addParticleN/start_N_particles)) / math.sqrt(3/2)
+        repeatRateMinutes = int(refresh_cycle/60.0) if repeatRateMinutes == 720 else repeatRateMinutes
+
     if backwardSimulation:
         # ==== backward simulation ==== #
         if agingParticles:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(96, 1) * a, lat=np.random.rand(96, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
+                pset.add(psetA)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart)
         else:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(96, 1) * a, lat=np.random.rand(96, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
+                pset.add(psetA)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart)
     else:
         # ==== forward simulation ==== #
         if agingParticles:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(96, 1) * a, lat=np.random.rand(96, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
+                pset.add(psetA)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart)
         else:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(96, 1) * a, lat=np.random.rand(96, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * b, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
+                pset.add(psetA)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * b, time=simStart)
 
     output_file = None
+    out_fname = "benchmark_perlin"
     if args.write_out:
-        output_file = pset.ParticleFile(name=os.path.join(odir,"test_mem_behaviour.nc"), outputdt=delta(hours=12))
+        if MPI and (MPI.COMM_WORLD.Get_size()>1):
+            out_fname += "_MPI"
+        else:
+            out_fname += "_noMPI"
+        out_fname += "_n"+str(Nparticle)
+        if backwardSimulation:
+            out_fname += "_bwd"
+        else:
+            out_fname += "_fwd"
+        if repeatdtFlag:
+            out_fname += "_add"
+        if agingParticles:
+            out_fname += "_age"
+        output_file = pset.ParticleFile(name=os.path.join(odir,out_fname+".nc"), outputdt=delta(hours=24))
     delete_func = RenewParticle
     if args.delete_particle:
         delete_func=DeleteParticle
@@ -357,10 +408,17 @@ if __name__=='__main__':
     perflog = PerformanceLog()
     postProcessFuncs = [perflog.advance,]
 
-    starttime = ostime.time()
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        if mpi_rank==0:
+            starttime = ostime.process_time()
+    else:
+        starttime = ostime.process_time()
     kernels = pset.Kernel(AdvectionRK4,delete_cfiles=True)
     if agingParticles:
-        kernels +=  pset.Kernel(Age,delete_cfiles=True)
+        kernels += pset.Kernel(initialize, delete_cfiles=True)
+        kernels += pset.Kernel(Age, delete_cfiles=True)
     if with_GC:
         postProcessFuncs.append(perIterGC)
     if backwardSimulation:
@@ -375,7 +433,13 @@ if __name__=='__main__':
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12), moviedt=delta(hours=6), movie_background_field=fieldset.U)
         else:
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
-    endtime = ostime.time()
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        if mpi_rank==0:
+            endtime = ostime.process_time()
+    else:
+        endtime = ostime.process_time()
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -386,6 +450,7 @@ if __name__=='__main__':
                     dt_time.append( (perflog.times_steps[i]-global_t_0) )
                 else:
                     dt_time.append( (perflog.times_steps[i]-perflog.times_steps[i-1]) )
+            sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
             sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
             avg_time = np.mean(np.array(dt_time, dtype=np.float64))
             sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
@@ -396,6 +461,7 @@ if __name__=='__main__':
                 dt_time.append((perflog.times_steps[i] - global_t_0))
             else:
                 dt_time.append((perflog.times_steps[i] - perflog.times_steps[i - 1]))
+        sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
         avg_time = np.mean(np.array(dt_time, dtype=np.float64))
         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
@@ -406,17 +472,17 @@ if __name__=='__main__':
             if MPI:
                 mpi_comm = MPI.COMM_WORLD
                 if mpi_comm.Get_rank() == 0:
-                    plotTrajectoriesFile_loadedField(os.path.join(odir, "test_mem_behaviour.nc"),
+                    plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"),
                                                      tracerfield=fieldset.U)
             else:
-                plotTrajectoriesFile_loadedField(os.path.join(odir,"test_mem_behaviour.nc"),tracerfield=fieldset.U)
+                plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"),tracerfield=fieldset.U)
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_comm.Barrier()
         if mpi_comm.Get_rank() == 0:
-            plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.fds_steps, os.path.join(odir, imageFileName))
+            plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
     else:
-        plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.fds_steps, os.path.join(odir, imageFileName))
+        plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
 
 
