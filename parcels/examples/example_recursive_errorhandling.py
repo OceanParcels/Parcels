@@ -13,7 +13,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_recursive_errorhandling(mode, xdim=2, ydim=2):
-    """Example script to show how recursaive error handling can work.
+    """Example script to show how recursive error handling can work.
 
     In this example, a set of Particles is started at Longitude 0.5.
     These are run through a Kernel that throws an error if the
