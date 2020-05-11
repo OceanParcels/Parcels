@@ -4,6 +4,7 @@ __version__ = version
 from parcels.fieldset import *  # noqa
 from parcels.particle import *  # noqa
 from parcels.particleset import *  # noqa
+from parcels.particleset_benchmark import *  # noqa
 from parcels.field import *  # noqa
 from parcels.kernel import *  # noqa
 import parcels.rng as random  # noqa
