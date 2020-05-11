@@ -447,10 +447,10 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
     pset.execute(kernels, runtime=10, dt=1)
-    assert np.allclose(pset.sample_var, 10.0)
+    assert np.allclose(np.array([p.sample_var for p in pset]), 10.0)
     if mode == 'jit':
         assert np.all(np.array([len(p.xi) == fieldset.gridset.size for p in pset]))
-        assert np.all(np.array([[p.xi[i] >= 0 for i in range(o, len(p.xi)] for p in pset]))
+        assert np.all(np.array([[p.xi[i] >= 0 for i in range(0, len(p.xi))] for p in pset]))
         #assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
         #assert np.all(pset.xi[:, 0] < xdim)
         #assert pset.yi.shape[0] == len(pset.lon)
@@ -489,10 +489,10 @@ def test_sampling_multigrids_non_vectorfield(mode, npart):
 
     kernels = pset.Kernel(AdvectionRK4) + pset.Kernel(test_sample)
     pset.execute(kernels, runtime=10, dt=1)
-    assert np.allclose(pset.sample_var, 10.0)
+    assert np.allclose(np.array([p.sample_var for p in pset]), 10.0)
     if mode == 'jit':
         assert np.all(np.array([len(p.xi) == fieldset.gridset.size for p in pset]))
-        assert np.all(np.array([[p.xi[i] >= 0 for i in range(o, len(p.xi)] for p in pset]))
+        assert np.all(np.array([[p.xi[i] >= 0 for i in range(0, len(p.xi))] for p in pset]))
         #assert np.all(pset.xi[:, fieldset.B.igrid] < xdim * 4)
         #assert np.all(pset.xi[:, 0] < xdim)
         #assert pset.yi.shape[0] == len(pset.lon)
