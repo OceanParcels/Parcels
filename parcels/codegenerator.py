@@ -185,7 +185,7 @@ class ParticleAttributeNode(IntrinsicNode):
     def __init__(self, obj, attr):
         self.obj = obj
         self.attr = attr
-        self.ccode = "%s->%s[p]" % (obj.ccode, attr)
+        self.ccode = "%s->%s[pnum]" % (obj.ccode, attr)
 
 
 class ParticleNode(IntrinsicNode):
@@ -236,8 +236,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = RandomNode(math, ccode='')
         elif node.id == 'print':
             node = PrintNode()
-        elif 'parcels_tmpvar' in node.id:
-            raise NotImplementedError("Custom Kernels cannot contain string 'parcels_tmpvar'; please change your kernel")
+        elif (node.id == 'pnum') or ('parcels_tmpvar' in node.id):
+            raise NotImplementedError("Custom Kernels cannot contain string %s; please change your kernel" % node.id)
         return node
 
     def visit_Attribute(self, node):
@@ -424,7 +424,7 @@ class KernelGenerator(ast.NodeVisitor):
         # Create function declaration and argument list
         decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
-                c.Value("int", "p"),
+                c.Value("int", "pnum"),
                 c.Value("double", "time")]
         for field in self.field_args.values():
             args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
@@ -899,26 +899,26 @@ class LoopGenerator(object):
 
         args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
                 c.Pointer(c.Value(pname, "particles")),
-                c.Value("int", "p")]
+                c.Value("int", "pnum")]
         p_back_set_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "set_particle_backup"),
                                                          spec='inline')), args)
         body = []
         for v in self.ptype.variables:
             if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
-                body += [c.Assign(("particle_backup->%s" % v.name), ("particles->%s[p]" % v.name))]
+                body += [c.Assign(("particle_backup->%s" % v.name), ("particles->%s[pnum]" % v.name))]
         p_back_set_body = c.Block(body)
         p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
         ccode += [p_back_set]
 
         args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
                 c.Pointer(c.Value(pname, "particles")),
-                c.Value("int", "p")]
+                c.Value("int", "pnum")]
         p_back_get_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "get_particle_backup"),
                                                          spec='inline')), args)
         body = []
         for v in self.ptype.variables:
             if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
-                body += [c.Assign(("particles->%s[p]" % v.name), ("particle_backup->%s" % v.name))]
+                body += [c.Assign(("particles->%s[pnum]" % v.name), ("particle_backup->%s" % v.name))]
         p_back_get_body = c.Block(body)
         p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
         ccode += [p_back_get]
@@ -947,41 +947,41 @@ class LoopGenerator(object):
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
             args += [c.Value("double", const)]
-        fargs_str = ", ".join(['particles->time[p]'] + list(field_args.keys())
+        fargs_str = ", ".join(['particles->time[pnum]'] + list(field_args.keys())
                               + list(const_args.keys()))
         # ==== statement clusters use to compose 'body' variable and variables 'time_loop' and 'part_loop' ==== ##
         sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
         particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
-        sign_end_part = c.Assign("sign_end_part", "(endtime - particles->time[p]) > 0 ? 1 : -1")
-        reset_res_state = c.Assign("res", "particles->state[p]")
-        update_state = c.Assign("particles->state[p]", "res")
+        sign_end_part = c.Assign("sign_end_part", "(endtime - particles->time[pnum]) > 0 ? 1 : -1")
+        reset_res_state = c.Assign("res", "particles->state[pnum]")
+        update_state = c.Assign("particles->state[pnum]", "res")
         update_pdt = c.If("_next_dt_set == 1",
-                          c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[p]", "_next_dt")]))
+                          c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[pnum]", "_next_dt")]))
 
-        dt_pos = c.Assign("__dt", "fmin(fabs(particles->dt[p]), fabs(endtime - particles->time[p]))")                   # original
+        dt_pos = c.Assign("__dt", "fmin(fabs(particles->dt[pnum]), fabs(endtime - particles->time[pnum]))")                   # original
 
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
-        partdt = c.Assign("particles->dt[p]", "__pdt_prekernels")
-        check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles->dt[p])", c.Assign("res", "REPEAT"))
+        partdt = c.Assign("particles->dt[pnum]", "__pdt_prekernels")
+        check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles->dt[pnum])", c.Assign("res", "REPEAT"))
 
-        dt_0_break = c.If("is_zero_dbl(particles->dt[p])", c.Statement("break"))
+        dt_0_break = c.If("is_zero_dbl(particles->dt[pnum])", c.Statement("break"))
 
-        notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles->dt[p])",
+        notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles->dt[pnum])",
                                    c.Block([
-                                       c.If("fabs(particles->time[p]) >= fabs(endtime)",
-                                            c.Assign("particles->state[p]", "SUCCESS")),
+                                       c.If("fabs(particles->time[pnum]) >= fabs(endtime)",
+                                            c.Assign("particles->state[pnum]", "SUCCESS")),
                                        c.Statement("continue")
                                    ]))
 
         # ==== main computation body ==== #
-        body = [c.Statement("set_particle_backup(&particle_backup, particles, p)")]
+        body = [c.Statement("set_particle_backup(&particle_backup, particles, pnum)")]
         body += [pdt_eq_dt_pos]
         body += [partdt]
-        body += [c.Value("ErrorCode", "state_prev"), c.Assign("state_prev", "particles->state[p]")]
-        body += [c.Assign("res", "%s(particles, p, %s)" % (funcname, fargs_str))]
-        body += [c.If("(res==SUCCESS) && (particles->state[p] != state_prev)", c.Assign("res", "particles->state[p]"))]
+        body += [c.Value("ErrorCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]
+        body += [c.Assign("res", "%s(particles, pnum, %s)" % (funcname, fargs_str))]
+        body += [c.If("(res==SUCCESS) && (particles->state[pnum] != state_prev)", c.Assign("res", "particles->state[pnum]"))]
         body += [check_pdt]
-        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles->time[p] += particles->dt[p]"),
+        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles->time[pnum] += particles->dt[pnum]"),
                                                                   update_pdt,
                                                                   dt_pos,
                                                                   sign_end_part,
@@ -991,7 +991,7 @@ class LoopGenerator(object):
                                                                   update_state,
                                                                   dt_0_break
                                                                   ]),
-                      c.Block([c.Statement("get_particle_backup(&particle_backup, particles, p)"),
+                      c.Block([c.Statement("get_particle_backup(&particle_backup, particles, pnum)"),
                                dt_pos,
                                sign_end_part,
                                c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
@@ -999,10 +999,10 @@ class LoopGenerator(object):
                                c.Statement("break")])
                       )]
 
-        time_loop = c.While("(particles->state[p] == EVALUATE || particles->state[p] == REPEAT) || is_zero_dbl(particles->dt[p])", c.Block(body))
-        part_loop = c.For("p = 0", "p < num_particles", "++p",
+        time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT) || is_zero_dbl(particles->dt[pnum])", c.Block(body))
+        part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
-        fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
+        fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("ErrorCode", "res"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
