@@ -147,11 +147,15 @@ class FieldSet(object):
                 is_processed_grid = False
                 is_same_grid = False
                 for fld in self.get_fields():       # avoid re-processing/overwriting existing and working fields
+                    if type(fld) in [VectorField, NestedField, SummedField] or fld.dataFiles is None:
+                        continue
                     if fld.grid == g_set:
                         is_processed_grid |= True
                         break
                 if not is_processed_grid:
                     for fld in self.get_fields():
+                        if type(fld) in [VectorField, NestedField, SummedField] or fld.dataFiles is None:
+                            continue
                         procdims = fld.dimensions
                         procinds = fld.indices
                         procpaths = fld.dataFiles
