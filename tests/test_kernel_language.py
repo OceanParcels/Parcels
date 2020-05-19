@@ -167,11 +167,15 @@ def test_parcels_tmpvar_in_kernel(fieldset):
     def kernel_tmpvar(particle, fieldset, time):
         parcels_tmpvar0 = 0  # noqa
 
-    try:
-        pset.execute(kernel_tmpvar, endtime=1, dt=1.)
-    except NotImplementedError:
-        error_thrown = True
-    assert error_thrown
+    def kernel_pnum(particle, fieldset, time):
+        pnum = 0  # noqa
+
+    for kernel in [kernel_tmpvar, kernel_pnum]:
+        try:
+            pset.execute(kernel, endtime=1, dt=1.)
+        except NotImplementedError:
+            error_thrown = True
+        assert error_thrown
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
