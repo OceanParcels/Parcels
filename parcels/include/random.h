@@ -23,7 +23,7 @@ static inline float parcels_random()
 
 static inline float parcels_uniform(float low, float high)
 {
-  return (float)rand()/(float)(RAND_MAX / (high-low)) + low;
+  return (float)rand()/(float)(RAND_MAX) / (high-low) + low;
 }
 
 static inline int parcels_randint(int low, int high)
