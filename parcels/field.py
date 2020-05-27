@@ -450,7 +450,7 @@ class Field(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        data = da.values
+        data = da.data
         interp_method = kwargs.pop('interp_method', 'linear')
 
         time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
