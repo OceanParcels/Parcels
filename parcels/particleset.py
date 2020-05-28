@@ -410,8 +410,8 @@ class ParticleSet(object):
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet from a netcdf ParticleFile.
-        This creates a new ParticleSet based on the last locations and time of all particles
-        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
+        This creates a new ParticleSet based on locations of all particles at the last time written
+        in a netcdf ParticleFile. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -427,20 +427,25 @@ class ParticleSet(object):
 
         pfile = xr.open_dataset(str(filename), decode_cf=True)
 
-        lon = np.ma.filled(pfile.variables['lon'][:, -1], np.nan)
-        lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
-        depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
-        time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
-        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan)
-        if isinstance(time[0], np.timedelta64):
+        lon = np.ma.filled(pfile.variables['lon'], np.nan)
+        lat = np.ma.filled(pfile.variables['lat'], np.nan)
+        depth = np.ma.filled(pfile.variables['z'], np.nan)
+        pid = np.ma.filled(pfile.variables['trajectory'], np.nan)
+        time = np.ma.filled(pfile.variables['time'], np.nan)
+        if isinstance(time[0, 0], np.timedelta64):
             time = np.array([t/np.timedelta64(1, 's') for t in time])
 
-        inds = np.where(np.isfinite(lon))[0]
+        inds = np.where(time == np.nanmax(time))
         lon = lon[inds]
         lat = lat[inds]
         depth = depth[inds]
         time = time[inds]
-        pid = pid[inds] if restart else None
+
+        if restart:
+            pid = pid[inds]
+            pclass.setLastID(0)  # reset to zero offset
+        else:
+            pid = None
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
