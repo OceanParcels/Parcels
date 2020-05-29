@@ -428,6 +428,11 @@ class ParticleSet(object):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
+        if repeatdt is not None:
+            logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
+                           'setting a new repeatdt will start particles from the _new_ particle '
+                           'locations.' % filename)
+
         pfile = xr.open_dataset(str(filename), decode_cf=True)
         pfile_vars = [v for v in pfile.data_vars]
 
