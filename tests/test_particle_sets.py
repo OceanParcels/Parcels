@@ -74,8 +74,6 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
     pset.execute(DeleteLast, runtime=2, dt=1, output_file=pfile)
     pfile.close()
 
-    if restart:
-        ptype[mode].setLastID(0)  # need to reset to zero
     pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restart=restart)
 
     for var in ['lon', 'lat', 'depth', 'time']:

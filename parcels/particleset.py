@@ -408,10 +408,10 @@ class ParticleSet(object):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @classmethod
-    def from_particlefile(cls, fieldset, pclass, filename, restart=True, repeatdt=None, lonlatdepth_dtype=None):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet from a netcdf ParticleFile.
-        This creates a new ParticleSet based on the last locations and time of all particles
-        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
+        This creates a new ParticleSet based on locations of all particles written
+        in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -419,6 +419,9 @@ class ParticleSet(object):
         :param filename: Name of the particlefile from which to read initial conditions
         :param restart: Boolean to signal if pset is used for a restart (default is True).
                In that case, Particle IDs are preserved.
+        :param restarttime: time at which the Particles will be restarted. Default is the last time written.
+               Alternatively, restarttime could be a time value (including np.datetime64) or
+               a callable function such as np.nanmin. The last is useful when running with dt < 0.
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
@@ -427,20 +430,31 @@ class ParticleSet(object):
 
         pfile = xr.open_dataset(str(filename), decode_cf=True)
 
-        lon = np.ma.filled(pfile.variables['lon'][:, -1], np.nan)
-        lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
-        depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
-        time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
-        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan)
-        if isinstance(time[0], np.timedelta64):
+        lon = np.ma.filled(pfile.variables['lon'], np.nan)
+        lat = np.ma.filled(pfile.variables['lat'], np.nan)
+        depth = np.ma.filled(pfile.variables['z'], np.nan)
+        pid = np.ma.filled(pfile.variables['trajectory'], np.nan)
+        time = np.ma.filled(pfile.variables['time'], np.nan)
+        if isinstance(time[0, 0], np.timedelta64):
             time = np.array([t/np.timedelta64(1, 's') for t in time])
 
-        inds = np.where(np.isfinite(lon))[0]
+        if restarttime is None:
+            restarttime = np.nanmax(time)
+        elif callable(restarttime):
+            restarttime = restarttime(time)
+        else:
+            restarttime = restarttime
+        inds = np.where(time == restarttime)
         lon = lon[inds]
         lat = lat[inds]
         depth = depth[inds]
         time = time[inds]
-        pid = pid[inds] if restart else None
+
+        if restart:
+            pid = pid[inds]
+            pclass.setLastID(0)  # reset to zero offset
+        else:
+            pid = None
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
