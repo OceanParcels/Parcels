@@ -79,13 +79,16 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
     pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
     pfile.close()
 
-    pset_new = ParticleSet.from_particlefile(fieldset, pclass=TestParticle, filename=filename, restart=restart)
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=TestParticle, filename=filename,
+                                             restart=restart, repeatdt=1)
 
     for var in ['lon', 'lat', 'depth', 'time', 'p']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
+    pset_new.execute(Kernel, runtime=2, dt=1)
+    assert len(pset_new) == 3*len(pset)
 
 
 @pytest.mark.parametrize('mode', ['scipy'])
