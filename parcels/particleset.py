@@ -144,7 +144,7 @@ class ParticleSet(object):
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         def _convert_to_reltime(time):
-            if isinstance(time, np.datetime64)or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
+            if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
                 return True
             return False
 
