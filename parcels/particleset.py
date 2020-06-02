@@ -156,7 +156,7 @@ class ParticleSet(object):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
+                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 
         offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
@@ -437,13 +437,16 @@ class ParticleSet(object):
         pfile_vars = [v for v in pfile.data_vars]
 
         vars = {}
+        to_write = {}
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'pid', 'id', 'fileid', 'state']:
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+                    and v.to_write:
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
+            to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
-        vars['pid'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
+        vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
 
         if isinstance(vars['time'][0, 0], np.timedelta64):
             vars['time'] = np.array([t/np.timedelta64(1, 's') for t in vars['time']])
@@ -457,17 +460,20 @@ class ParticleSet(object):
 
         inds = np.where(vars['time'] == restarttime)
         for v in vars:
-            vars[v] = vars[v][inds]
-            if v not in ['lon', 'lat', 'depth', 'time', 'pid']:
+            if to_write[v] is True:
+                vars[v] = vars[v][inds]
+            elif to_write[v] == 'once':
+                vars[v] = vars[v][inds[0]]
+            if v not in ['lon', 'lat', 'depth', 'time', 'id']:
                 kwargs[v] = vars[v]
 
         if restart:
             pclass.setLastID(0)  # reset to zero offset
         else:
-            vars['pid'] = None
+            vars['id'] = None
 
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
-                   depth=vars['depth'], time=vars['time'], pid_orig=vars['pid'],
+                   depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
     @staticmethod

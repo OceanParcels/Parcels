@@ -67,8 +67,10 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
 
     class TestParticle(ptype[mode]):
         p = Variable('p', np.float32, initial=0.33)
+        p2 = Variable('p2', np.float32, initial=1, to_write=False)
+        p3 = Variable('p3', np.float32, to_write='once')
 
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle)
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
     pfile = pset.ParticleFile(filename, outputdt=1)
 
     def Kernel(particle, fieldset, time):
