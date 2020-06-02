@@ -18,6 +18,7 @@ from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
+from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 try:
@@ -141,12 +142,18 @@ class ParticleSet(object):
 
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
+
+        def _convert_to_reltime(time):
+            if isinstance(time, np.datetime64)or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
+                return True
+            return False
+
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
         self.time_origin = fieldset.time_origin
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        time = np.array([self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time])
+        time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
