@@ -72,7 +72,7 @@ def fieldset_from_pop_1arcs(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'i': 8, 'j': 8, 'w_dep': 3}
+        chs = {'i': 8, 'j': 8, 'k': 3, 'w_dep': 3}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, field_chunksize=chs, timestamps=timestamps)
     return fieldset
@@ -177,7 +177,7 @@ def test_pop(mode, chunk_mode):
     lonp = 70.0 * np.ones(npart)
     latp = [i for i in -45.0+(-0.25+np.random.rand(npart)*2.0*0.25)]
     compute_pop_particle_advection(field_set, mode, lonp, latp)
-    # POP sample file dimensions: k=20, j=60, i=60
+    # POP sample file dimensions: k=21, j=60, i=60
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     if chunk_mode is False:
@@ -185,6 +185,7 @@ def test_pop(mode, chunk_mode):
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
+        print(field_set.U.grid.chunk_info)
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 
