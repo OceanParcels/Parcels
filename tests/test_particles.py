@@ -60,13 +60,13 @@ def test_variable_special_names(fieldset, mode):
     """Test that checks errors thrown for special names"""
     for vars in ['z', 'lon']:
         class TestParticle(ptype[mode]):
-            error_thrown = False
-            try:
-                tmp = Variable(vars, dtype=np.float32, initial=10.)
-            except RuntimeError:
-                error_thrown = True
-            assert error_thrown
-        ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
+            tmp = Variable(vars, dtype=np.float32, initial=10.)
+        error_thrown = False
+        try:
+            ParticleSet(fieldset, pclass=TestParticle, lon=[0], lat=[0])
+        except AttributeError:
+            error_thrown = True
+        assert error_thrown
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

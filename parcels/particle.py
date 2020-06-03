@@ -24,9 +24,6 @@ class Variable(object):
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True, _custom=True):
         if name == 'z':
             raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
-        if _custom and name in ['lon', 'lat', 'depth', 'time', 'xi', 'yi', 'zi', 'ti', 'id',
-                                'fileid', 'dt', 'state', '_next_dt']:
-            raise RuntimeError("Custom Variable name '%s' is not allowed, as it is also a built-in variable" % name)
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -73,6 +70,13 @@ class ParticleType(object):
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
+                for v in self.variables:
+                    if v.name in [v.name for v in ptype.variables]:
+                        raise AttributeError(
+                            "Custom Variable name '%s' is not allowed, as it is also a built-in variable" % v.name)
+                    if v.name == 'z':
+                        raise AttributeError(
+                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
                 self.variables = ptype.variables + self.variables
         # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
         self.variables = [v for v in self.variables if v.is64bit()] + \
