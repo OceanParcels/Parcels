@@ -184,7 +184,7 @@ class ParticleSet(object):
                         else:
                             partitions = None
                         partitions = mpi_comm.bcast(partitions, root=0)
-                    elif np.max(partitions >= mpi_rank):
+                    elif np.max(partitions) >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[partitions == mpi_rank]
                     lat = lat[partitions == mpi_rank]
