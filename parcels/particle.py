@@ -21,9 +21,7 @@ class Variable(object):
              which will then be sampled at the location of the particle
     :param to_write: Boolean to control whether Variable is written to NetCDF file
     """
-    def __init__(self, name, dtype=np.float32, initial=0, to_write=True, _custom=True):
-        if name == 'z':
-            raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
+    def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -172,19 +170,19 @@ class ScipyParticle(_Particle):
     Additional Variables can be added via the :Class Variable: objects
     """
 
-    lon = Variable('lon', dtype=np.float32, _custom=False)
-    lat = Variable('lat', dtype=np.float32, _custom=False)
-    depth = Variable('depth', dtype=np.float32, _custom=False)
-    time = Variable('time', dtype=np.float64, _custom=False)
-    xi = Variable('xi', dtype=np.int32, to_write=False, _custom=False)
-    yi = Variable('yi', dtype=np.int32, to_write=False, _custom=False)
-    zi = Variable('zi', dtype=np.int32, to_write=False, _custom=False)
-    ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1, _custom=False)
-    id = Variable('id', dtype=np.int32, _custom=False)
-    fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False, _custom=False)
-    dt = Variable('dt', dtype=np.float64, to_write=False, _custom=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False, _custom=False)
-    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False, _custom=False)
+    lon = Variable('lon', dtype=np.float32)
+    lat = Variable('lat', dtype=np.float32)
+    depth = Variable('depth', dtype=np.float32)
+    time = Variable('time', dtype=np.float64)
+    xi = Variable('xi', dtype=np.int32, to_write=False)
+    yi = Variable('yi', dtype=np.int32, to_write=False)
+    zi = Variable('zi', dtype=np.int32, to_write=False)
+    ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)
+    id = Variable('id', dtype=np.int32)
+    fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
+    dt = Variable('dt', dtype=np.float64, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
+    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
 
