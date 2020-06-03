@@ -1765,7 +1765,6 @@ class NetcdfFileBuffer(object):
             #         if value not in self._name_maps[key]:
             #             self._name_maps[key].append(value)
 
-
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
             self.dataset = self.filename
@@ -1902,7 +1901,7 @@ class NetcdfFileBuffer(object):
         # ==== check if the chunksize reading is successful. if not, load the file ONCE really into memory and ==== #
         # ==== deduce the chunking from the array dims.                                                         ==== #
         try:
-            if len(init_chunk_dict)<3:
+            if len(init_chunk_dict) < 3:
                 raise AttributeError("Too few known chunk dimension arguments.")
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
         except:
