@@ -64,23 +64,33 @@ def test_pset_create_fromparticlefile(fieldset, mode, restart, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.nc")
     lon = np.linspace(0, 1, 10, dtype=np.float32)
     lat = np.linspace(1, 0, 10, dtype=np.float32)
-    pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode])
+
+    class TestParticle(ptype[mode]):
+        p = Variable('p', np.float32, initial=0.33)
+        p2 = Variable('p2', np.float32, initial=1, to_write=False)
+        p3 = Variable('p3', np.float32, to_write='once')
+
+    pset = ParticleSet(fieldset, lon=lon, lat=lat, depth=[4]*len(lon), pclass=TestParticle, p3=np.arange(len(lon)))
     pfile = pset.ParticleFile(filename, outputdt=1)
 
-    def DeleteLast(particle, fieldset, time):
+    def Kernel(particle, fieldset, time):
+        particle.p = 2.
         if particle.lon == 1.:
             particle.delete()
 
-    pset.execute(DeleteLast, runtime=2, dt=1, output_file=pfile)
+    pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
     pfile.close()
 
-    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restart=restart)
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=TestParticle, filename=filename,
+                                             restart=restart, repeatdt=1)
 
-    for var in ['lon', 'lat', 'depth', 'time']:
+    for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
 
     if restart:
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
+    pset_new.execute(Kernel, runtime=2, dt=1)
+    assert len(pset_new) == 3*len(pset)
 
 
 @pytest.mark.parametrize('mode', ['scipy'])

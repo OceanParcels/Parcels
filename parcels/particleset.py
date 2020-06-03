@@ -163,7 +163,7 @@ class ParticleSet(object):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
+                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 
         offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
@@ -415,7 +415,7 @@ class ParticleSet(object):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @classmethod
-    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
         in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
@@ -435,36 +435,53 @@ class ParticleSet(object):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
-        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        if repeatdt is not None:
+            logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
+                           'setting a new repeatdt will start particles from the _new_ particle '
+                           'locations.' % filename)
 
-        lon = np.ma.filled(pfile.variables['lon'], np.nan)
-        lat = np.ma.filled(pfile.variables['lat'], np.nan)
-        depth = np.ma.filled(pfile.variables['z'], np.nan)
-        pid = np.ma.filled(pfile.variables['trajectory'], np.nan)
-        time = np.ma.filled(pfile.variables['time'], np.nan)
-        if isinstance(time[0, 0], np.timedelta64):
-            time = np.array([t/np.timedelta64(1, 's') for t in time])
+        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile_vars = [v for v in pfile.data_vars]
+
+        vars = {}
+        to_write = {}
+        for v in pclass.getPType().variables:
+            if v.name in pfile_vars:
+                vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+                    and v.to_write:
+                raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
+            to_write[v.name] = v.to_write
+        vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
+        vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
+
+        if isinstance(vars['time'][0, 0], np.timedelta64):
+            vars['time'] = np.array([t/np.timedelta64(1, 's') for t in vars['time']])
 
         if restarttime is None:
-            restarttime = np.nanmax(time)
+            restarttime = np.nanmax(vars['time'])
         elif callable(restarttime):
-            restarttime = restarttime(time)
+            restarttime = restarttime(vars['time'])
         else:
             restarttime = restarttime
-        inds = np.where(time == restarttime)
-        lon = lon[inds]
-        lat = lat[inds]
-        depth = depth[inds]
-        time = time[inds]
+
+        inds = np.where(vars['time'] == restarttime)
+        for v in vars:
+            if to_write[v] is True:
+                vars[v] = vars[v][inds]
+            elif to_write[v] == 'once':
+                vars[v] = vars[v][inds[0]]
+            if v not in ['lon', 'lat', 'depth', 'time', 'id']:
+                kwargs[v] = vars[v]
 
         if restart:
-            pid = pid[inds]
             pclass.setLastID(0)  # reset to zero offset
         else:
-            pid = None
+            vars['id'] = None
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
-                   pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+        return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
+                   depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
+                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
