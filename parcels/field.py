@@ -1758,8 +1758,6 @@ class NetcdfFileBuffer(object):
         self.chunking_finalized = False
         self.lock_file = lock_file
         if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
-            # self._name_maps = kwargs["chunkdims_name_map"]
-            # ==== code for merging instead of replacing the map - choose which may be most applicable ==== #
             for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
                 for value in dim_name_arr:
                     if value not in self._name_maps[key]:
