@@ -102,6 +102,25 @@ def fieldset_from_swash(chunk_mode):
     return fieldset
 
 
+def fieldset_from_ofam(chunk_mode):
+    filenames = {'U': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_U.nc'),
+                 'V': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_V.nc')}
+    variables = {'U': 'u', 'V': 'v'}
+    dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
+                  'time': 'Time'}
+
+    chs = False
+    name_map = {'lon': ['xu_ocean'],
+                'lat': ['yu_ocean'],
+                'depth': ['st_edges_ocean', 'st_ocean'],
+                'time': 'Time'}
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific':
+        chs = (1, 60, 50, 100)
+    return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs, chunkdims_name_map=name_map)
+
+
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
 
     def periodicBC(particle, fieldSet, time):
@@ -139,6 +158,13 @@ def compute_swash_particle_advection(field_set, mode, lonp, latp, depthp):
     pset = ParticleSet.from_list(field_set, ptype[mode], lon=lonp, lat=latp, depth=depthp)
     pfile = ParticleFile("swash_particles_chunk", pset, outputdt=delta(seconds=0.05))
     pset.execute(AdvectionRK4, runtime=delta(seconds=0.2), dt=delta(seconds=0.005), output_file=pfile)
+    return pset
+
+
+def compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp):
+    pset = ParticleSet(field_set, pclass=ptype[mode], lon=lonp, lat=latp, depth=depthp)
+    pfile = ParticleFile("ofam_particles_chunk", pset, outputdt=delta(minutes=10))
+    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5), output_file=pfile)
     return pset
 
 
@@ -236,6 +262,44 @@ def test_globcurrent_2D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(41.0/16.0)) * int(math.ceil(81.0/16.0))))
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
+def test_ofam_3D(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '1024KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
+    field_set = fieldset_from_ofam(chunk_mode)
+    lonp = [180]
+    latp = [10]
+    depthp = [2.5]  # the depth of the first layer in OFAM
+    pset = compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp)
+    # OFAM sample file dimensions: time=UNLIMITED, st_ocean=1, st_edges_ocean=52, lat=601, lon=2001
+    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+    if chunk_mode is False:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert (len(field_set.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        print(field_set.U.grid.chunk_info)
+        numblocks = [i for i in field_set.U.grid.chunk_info[1:3]]
+        dblocks = 1
+        vblocks = 0
+        for bsize in field_set.U.grid.chunk_info[3:3+numblocks[0]]:
+            vblocks += bsize
+        ublocks = 0
+        for bsize in field_set.U.grid.chunk_info[3+numblocks[0]:3+numblocks[0]+numblocks[1]]:
+            ublocks += bsize
+        matching_numblocks = (ublocks == 2001 and vblocks == 601 and dblocks == 1)
+        matching_fields = (field_set.U.grid.chunk_info == field_set.V.grid.chunk_info)
+        matching_uniformblocks = (len(field_set.U.grid.load_chunk) ==
+                                  (1 * int(math.ceil(1.0/60.0)) * int(math.ceil(601.0/50.0)) *
+                                   int(math.ceil(2001.0/100.0))))
+        assert (matching_uniformblocks or (matching_fields and matching_numblocks))
+    assert(abs(pset[0].lon - 173) < 1)
+    assert(abs(pset[0].lat - 11) < 1)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
