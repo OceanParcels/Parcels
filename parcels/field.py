@@ -74,8 +74,8 @@ class Field(object):
     :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
            The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
-    :param name_maps (opt.): gives a name map to the NetCDFFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
-           required only if unknown OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
+    :param chunkdims_name_map (opt.): gives a name map to the NetCDFFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
+           required only if currently incompatible OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -173,7 +173,7 @@ class Field(object):
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
         self.field_chunksize = kwargs.pop('field_chunksize', None)
-        self.netcdf_name_maps = kwargs.pop('name_maps', None)
+        self.netcdf_chunkdims_name_map = kwargs.pop('chunkdims_name_map', None)
         self.grid.depth_field = kwargs.pop('depth_field', None)
 
         if self.grid.depth_field == 'not_yet_set':
@@ -1294,7 +1294,7 @@ class Field(object):
                                       data_full_zdim=self.data_full_zdim,
                                       field_chunksize=self.field_chunksize,
                                       rechunk_callback_fields=self.chunk_setup,
-                                      name_maps=self.netcdf_name_maps)
+                                      chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
         time_data = g.time_origin.reltime(time_data)
@@ -1757,13 +1757,13 @@ class NetcdfFileBuffer(object):
         self.rechunk_callback_fields = rechunk_callback_fields
         self.chunking_finalized = False
         self.lock_file = lock_file
-        if "name_maps" in kwargs.keys() and kwargs["name_maps"] is not None and isinstance(kwargs["name_maps"], dict):
-            self._name_maps = kwargs["name_maps"]
+        if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
+            # self._name_maps = kwargs["chunkdims_name_map"]
             # ==== code for merging instead of replacing the map - choose which may be most applicable ==== #
-            # for key, dim_name_arr in kwargs["name_maps"].items():
-            #     for value in dim_name_arr:
-            #         if value not in self._name_maps[key]:
-            #             self._name_maps[key].append(value)
+            for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
+                for value in dim_name_arr:
+                    if value not in self._name_maps[key]:
+                        self._name_maps[key].append(value)
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
