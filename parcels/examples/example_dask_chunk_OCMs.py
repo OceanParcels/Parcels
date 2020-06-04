@@ -294,9 +294,7 @@ def test_ofam_3D(mode, chunk_mode):
             ublocks += bsize
         matching_numblocks = (ublocks == 2001 and vblocks == 601 and dblocks == 1)
         matching_fields = (field_set.U.grid.chunk_info == field_set.V.grid.chunk_info)
-        matching_uniformblocks = (len(field_set.U.grid.load_chunk) ==
-                                  (1 * int(math.ceil(1.0/60.0)) * int(math.ceil(601.0/50.0)) *
-                                   int(math.ceil(2001.0/100.0))))
+        matching_uniformblocks = (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(1.0/60.0)) * int(math.ceil(601.0/50.0)) * int(math.ceil(2001.0/100.0))))
         assert (matching_uniformblocks or (matching_fields and matching_numblocks))
     assert(abs(pset[0].lon - 173) < 1)
     assert(abs(pset[0].lat - 11) < 1)
