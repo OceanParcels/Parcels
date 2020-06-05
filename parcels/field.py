@@ -271,8 +271,10 @@ class Field(object):
         netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
 
         indices = {} if indices is None else indices.copy()
-        for ind in indices.values():
-            assert np.min(ind) >= 0, \
+        for ind in indices:
+            if len(indices[ind]) == 0:
+                raise RuntimeError('Indices for %s can not be empty' % ind)
+            assert np.min(indices[ind]) >= 0, \
                 ('Negative indices are currently not allowed in Parcels. '
                  + 'This is related to the non-increasing dimension it could generate '
                  + 'if the domain goes from lon[-4] to lon[6] for example. '
