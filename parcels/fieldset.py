@@ -558,7 +558,7 @@ class FieldSet(object):
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                  allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', depth_units='m', **kwargs):
         """Initialises FieldSet object from NetCDF files of POP fields.
             It is assumed that the velocities in the POP fields is in cm/s.
 
@@ -609,6 +609,8 @@ class FieldSet(object):
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         :param field_chunksize: size of the chunks in dask loading
+        :param depth_units: The units of the vertical dimension. Default in Parcels is 'm',
+               but many POP outputs are in 'cm'
 
         """
 
@@ -622,7 +624,13 @@ class FieldSet(object):
         if hasattr(fieldset, 'V'):
             fieldset.V.set_scaling_factor(0.01)  # cm/s to m/s
         if hasattr(fieldset, 'W'):
-            fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
+            if depth_units == 'm':
+                fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
+                logger.warning_once("Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'.")
+            elif depth_units == 'cm':
+                fieldset.W.set_scaling_factor(-1.)  # change the W direction but keep W in cm/s because depth is in cm
+            else:
+                raise SyntaxError("'depth_units' has to be 'm' or 'cm'")
         return fieldset
 
     @classmethod
