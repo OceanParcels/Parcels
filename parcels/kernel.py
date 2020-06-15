@@ -24,9 +24,12 @@ try:
 except:
     MPI = None
 
-from parcels.codegenerator import KernelGenerator
-from parcels.codegenerator import LoopGenerator
-from parcels.compiler import get_cache_dir
+# from parcels.codegenerator import KernelGenerator
+# from parcels.codegenerator import LoopGenerator
+# from parcels.compiler import get_cache_dir
+from parcels.wrapping.code_generator import KernelGenerator
+from parcels.wrapping.code_generator import LoopGenerator
+from parcels.tools import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
