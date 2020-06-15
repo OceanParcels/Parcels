@@ -1,0 +1,137 @@
+import os
+import sys
+import _ctypes
+from time import sleep
+import numpy.ctypeslib as npct
+
+__all__ = ['LibraryRegisterC', 'InterfaceC']
+
+class LibraryRegisterC:
+    _data = {}
+    def __init__(self):
+        self._data = {}
+
+    def __del__(self):
+        for entry in self._data:
+            while entry.register_count > 0:
+                sleep(0.1)
+            entry.unload_library()
+            del entry
+
+    def load(self, libname):
+        if libname not in self._data.keys():
+            self._data[libname] = InterfaceC("node")
+        if not self._data[libname].is_compiled():
+            self._data[libname].compile_library()
+        if not self._data[libname].is_loaded():
+            self._data[libname].load_library()
+
+    def unload(self, libname):
+        if libname in self._data.keys():
+            self._data[libname].unload_library()
+        #    del self._data[libname]
+
+    def __getitem__(self, item):
+        return self.get(item)
+
+    def get(self, libname):
+        #if libname not in self._data.keys():
+        #    self.load(libname)
+        if libname in self._data.keys():
+            return self._data[libname]
+        return None
+
+    def register(self, libname):
+        #if libname not in self._data.keys():
+        #    self.load(libname)
+        if libname in self._data.keys():
+            self._data[libname].register()
+
+    def deregister(self, libname):
+        if libname in self._data.keys():
+            self._data[libname].unregister()
+        #    if self._data[libname].register_count <= 0:
+        #        self.unload(libname)
+
+class InterfaceC:
+
+    def __init__(self, c_file_name, compiler):
+        basename = c_file_name
+        lib_path = basename
+        lib_pathfile = os.path.basename(basename)
+        lib_pathdir = os.path.dirname(basename)
+        if lib_pathfile[0:3] != "lib":
+            lib_pathfile = "lib"+lib_pathfile
+            lib_path = os.path.join(lib_pathdir, lib_pathfile)
+        self.src_file = "%s.c" % basename
+        self.lib_file = "%s.%s" % (lib_path, 'dll' if sys.platform == 'win32' else 'so')
+        self.log_file = "%s.log" % basename
+
+        # self.compiler = GNUCompiler()
+        self.compiler = compiler
+        self.compiled = False
+        self.loaded = False
+        self.libc = None
+        self.register_count = 0
+
+    def __del__(self):
+        self.unload_library()
+        self.cleanup_files()
+
+    def is_compiled(self):
+        return self.compiled
+
+    def is_loaded(self):
+        return self.loaded
+
+    def compile_library(self):
+        """ Writes kernel code to file and compiles it."""
+        if not self.compiled:
+            self.compiler.compile(self.src_file, self.lib_file, self.log_file)
+            #logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+            #self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
+            self.compiled = True
+
+    def cleanup_files(self):
+        if os.path.isfile(self.lib_file):
+            [os.remove(s) for s in [self.lib_file, self.log_file]]
+
+    def unload_library(self):
+        if self.libc is not None and self.compiled and self.loaded:
+            _ctypes.FreeLibrary(self.libc._handle) if sys.platform == 'win32' else _ctypes.dlclose(self.libc._handle)
+            del self.libc
+            self.libc = None
+            self.loaded = False
+
+    def load_library(self):
+        if self.libc is None and self.compiled and not self.loaded:
+            self.libc = npct.load_library(self.lib_file, '.')
+            # self._cleanup_lib = finalize(self, package_globals.cleanup_unload_lib, self.libc)
+            self.loaded = True
+
+    def register(self):
+        self.register_count += 1
+        # print("lib '{}' register (count: {})".format(self.lib_file, self.register_count))
+
+    def unregister(self):
+        self.register_count -= 1
+        # print("lib '{}' de-register (count: {})".format(self.lib_file, self.register_count))
+
+    def load_functions(self, function_param_array=[]):
+        """
+
+        :param function_name_array: array of dictionary {"name": str, "return": type, "arguments": [type, ...]}
+        :return: dict (function_name -> function_handler)
+        """
+        result = dict()
+        if self.libc is None or not self.compiled or not self.loaded:
+            return result
+        for function_param in function_param_array:
+            if isinstance(function_param, dict) and \
+                    isinstance(function_param["name"], str) and \
+                    isinstance(function_param["return"], type) or function_param["return"] is None and \
+                    isinstance(function_param["arguments"], list):
+                result[function_param["name"]] = self.libc[function_param["name"]]
+                result[function_param["name"]].restype = function_param["return"]
+                result[function_param["name"]].argtypes = function_param["arguments"]
+        return result
