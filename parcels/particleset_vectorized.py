@@ -15,7 +15,7 @@ from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.grid import GridCode
-from parcels.kernel import Kernel
+from parcels.kernel_vectorized import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
