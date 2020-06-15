@@ -18,6 +18,7 @@ try:
 except:
     MPI = None
 
+# from parcels.wrapping.code_generator import LoopGenerator
 from parcels.wrapping.code_generator import KernelGenerator
 from parcels.wrapping.code_generator import VectorizedLoopGenerator
 from parcels.field import Field
