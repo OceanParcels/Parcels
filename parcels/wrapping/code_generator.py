@@ -1,17 +1,19 @@
 import ast
 import collections
 import math
-import numpy as np
 import random
 from copy import copy
 
 import cgen as c
+import numpy as np
 
 from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.tools.loggers import logger
+
+# from Node import Node, NodeJIT
 
 
 class IntrinsicNode(ast.AST):
@@ -172,7 +174,7 @@ class ErrorCodeNode(IntrinsicNode):
             attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown error code encountered: %s"""
+            raise AttributeError("""Unknown math function encountered: %s"""
                                  % attr)
 
 
@@ -205,7 +207,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
     names, such as 'particle' or 'fieldset', inserts placeholder objects
     and propagates attribute access."""
 
-    def __init__(self, fieldset, ptype):
+    def __init__(self, ptype, fieldset=None):
         self.fieldset = fieldset
         self.ptype = ptype
 
@@ -224,7 +226,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         """Inject IntrinsicNode objects into the tree according to keyword"""
-        if node.id == 'fieldset':
+        if node.id == 'fieldset' and self.fieldset is not None:
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype, ccode='particle')
@@ -369,7 +371,7 @@ class KernelGenerator(ast.NodeVisitor):
     kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
     array_vars = []
 
-    def __init__(self, fieldset, ptype):
+    def __init__(self, ptype, fieldset=None):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = collections.OrderedDict()
@@ -378,7 +380,7 @@ class KernelGenerator(ast.NodeVisitor):
 
     def generate(self, py_ast, funcvars):
         # Replace occurences of intrinsic objects in Python AST
-        transformer = IntrinsicTransformer(self.fieldset, self.ptype)
+        transformer = IntrinsicTransformer(self.ptype, self.fieldset)
         py_ast = transformer.visit(py_ast)
 
         # Untangle Pythonic tuple-assignment statements
@@ -869,11 +871,145 @@ class KernelGenerator(ast.NodeVisitor):
             node.ccode = node.s
 
 
+class NodeLoopGenerator(object):
+    """Code generator class that adds type definitions and the outer
+    loop around kernel functions to generate compilable C code."""
+
+    def __init__(self, ptype=None, fieldset=None):
+        self.fieldset = fieldset
+        self.ptype = ptype
+
+    def generate(self, funcname, field_args, const_args, kernel_ast, c_include):
+        ccode = []
+
+        # Add include for Parcels and math header
+        ccode += [str(c.Include("parcels.h", system=False))]
+        ccode += [str(c.Include("math.h", system=False))]
+        ccode += [str(c.Include('node.h', system=False))]
+        ccode += [str(c.Assign('double _next_dt', '0'))]
+        ccode += [str(c.Assign('size_t _next_dt_set', '0'))]
+
+        # Generate type definition for particle type
+        vdecl = []
+        for v in self.ptype.variables:
+            if v.dtype == np.uint64:
+                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
+            else:
+                vdecl.append(c.POD(v.dtype, v.name))
+
+        ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
+
+        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
+                c.Pointer(c.Value(self.ptype.name, "particle"))]
+        p_back_set_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "set_particle_backup"),
+                                                         spec='inline')), args)
+        body = []
+        for v in self.ptype.variables:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+                body += [c.Assign(("particle_backup->%s" % v.name), ("particle->%s" % v.name))]
+        p_back_set_body = c.Block(body)
+        p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
+        ccode += [p_back_set]
+
+        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
+                c.Pointer(c.Value(self.ptype.name, "particle"))]
+        p_back_get_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "get_particle_backup"),
+                                                         spec='inline')), args)
+        body = []
+        for v in self.ptype.variables:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+                body += [c.Assign(("particle->%s" % v.name), ("particle_backup->%s" % v.name))]
+        p_back_get_body = c.Block(body)
+        p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
+        ccode += [p_back_get]
+
+        update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
+                                                             spec='inline')), [c.Value('double', 'dt')])
+        if 'update_next_dt' in str(kernel_ast):
+            body = []
+            body += [c.Assign("_next_dt", "dt")]
+            body += [c.Assign("_next_dt_set", "1")]
+            update_next_dt_body = c.Block(body)
+            update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+            ccode += [update_next_dt]
+
+        if c_include:
+            ccode += [c_include]
+
+        # Insert kernel code
+        ccode += [str(kernel_ast)]
+
+        # ctypes.POINTER(NodeJIT)
+        # Generate outer loop for repeated kernel invocation
+        args = [c.Value("int", "num_particles"),
+                c.Pointer(c.Value("NodeJIT", "node_begin")),
+                # c.Pointer(c.Value(self.ptype.name, "particles")),
+                c.Value("double", "endtime"), c.Value("double", "dt")]
+        if field_args is not None:
+            for field, _ in field_args.items():
+                args += [c.Pointer(c.Value("CField", "%s" % field))]
+        else:
+            pass
+        if const_args is not None:
+            for const, _ in const_args.items():
+                args += [c.Value("double", const)]
+        else:
+            pass
+        # fargs_str = ", ".join(['particles[p].time'] + list(field_args.keys()) + list(const_args.keys()))
+        # fargs_str = ", ".join(['particles[p].time'])
+        fargs_lst = ['particle->time']
+        if field_args is not None:
+            # fargs_str += ", ".join( list(field_args.keys()) )
+            fargs_lst += list(field_args.keys())
+        if const_args is not None:
+            # fargs_str += ", ".join( list(const_args.keys()) )
+            fargs_lst += list(const_args.keys())
+        fargs_str = ", ".join(fargs_lst)
+
+        # Inner loop nest for forward runs
+        progress_loop = c.Assign("node", "(%s*)(node->_c_next_p)" % ("NodeJIT"))
+        sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
+        particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
+        sign_end_part = c.Assign("sign_end_part", "endtime - particle->time > 0 ? 1 : -1")
+        dt_pos = c.Assign("__dt", "fmin(fabs(particle->dt), fabs(endtime - particle->time))")
+        pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
+        partdt = c.Assign("particle->dt", "__pdt_prekernels")
+        dt_0_break = c.If("particle->dt == 0", c.Statement("break"))
+        notstarted_continue = c.If("(sign_end_part != sign_dt) && (particle->dt != 0)",
+                                   c.Block([progress_loop, c.Statement("continue")]))
+        body = [c.Statement("set_particle_backup(&particle_backup, particle)")]
+        body += [pdt_eq_dt_pos]
+        body += [partdt]
+        body += [c.Assign("res", "%s(particle, %s)" % (funcname, fargs_str))]
+        check_pdt = c.If("(res == SUCCESS) & (__pdt_prekernels != particle->dt)", c.Assign("res", "REPEAT"))
+        body += [check_pdt]
+        body += [c.Assign("particle->state", "res")]  # Store return code on particle
+        update_pdt = c.If("_next_dt_set == 1", c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particle->dt", "_next_dt")]))
+        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particle->time += particle->dt"), update_pdt,
+                                                                  dt_pos, dt_0_break, c.Statement("continue")]),
+                 c.Block([c.Statement("get_particle_backup(&particle_backup, particle)"),
+                          dt_pos, c.Statement("break")]))]
+
+        time_loop = c.While("__dt > __tol || particle->dt == 0", c.Block(body))
+        node_loop = c.While("node != NULL", c.Block([c.Assign("particle", "(%s*)(node->_c_data_p)" % (self.ptype.name)),
+                                                     sign_end_part, notstarted_continue, dt_pos, time_loop, progress_loop]))
+
+        fbody = c.Block([c.Value("int", "sign_dt, sign_end_part"), c.Value("ErrorCode", "res"), # p,
+                         c.Value("float", "__pdt_prekernels"),
+                         c.Value("double", "__dt, __tol"), c.Assign("__tol", "1.e-6"),
+                         c.Pointer(c.Value("NodeJIT", "node")), c.Assign("node", "node_begin"),
+                         c.Pointer(c.Value(self.ptype.name, "particle")), c.Assign("particle", "(%s*)(node->_c_data_p)" % (self.ptype.name)),
+                         sign_dt, particle_backup, node_loop])  # part_loop
+        fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
+        ccode += [str(c.FunctionBody(fdecl, fbody))]
+        return "\n\n".join(ccode)
+
+
 class LoopGenerator(object):
     """Code generator class that adds type definitions and the outer
     loop around kernel functions to generate compilable C code."""
 
-    def __init__(self, fieldset, ptype=None):
+    def __init__(self, ptype=None, fieldset=None):
         self.fieldset = fieldset
         self.ptype = ptype
 
