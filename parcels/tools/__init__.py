@@ -7,7 +7,7 @@ from .global_statics import *  # noga
 from .id_generators import *  # noga
 from .performance_logger import *  # noga
 
-# idgen = SpatioTemporalIdGenerator()
+global idgen
 idgen = GenerateID_Service(SpatioTemporalIdGenerator)
 # idgen = GenerateID_Service(SequentialIdGenerator)
 idgen.setDepthLimits(0, 100.0)
