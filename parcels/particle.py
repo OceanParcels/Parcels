@@ -2,6 +2,7 @@ from ctypes import c_void_p
 from operator import attrgetter
 
 import numpy as np
+
 # from numpy.random import random
 # from parcels.rng import random
 from parcels.field import Field
@@ -204,7 +205,8 @@ class ScipyParticle(_Particle):
         type(self).depth.initial = depth
         type(self).time.initial = time
         type(self).id.initial = pid
-        if isinstance(pid, int):
+        # if isinstance(pid, int):
+        if type(pid) in [int, np.uint64, np.int64]:
             _Particle.lastID = max(_Particle.lastID, pid)
         else:
             _Particle.lastID = max(_Particle.lastID, index)
