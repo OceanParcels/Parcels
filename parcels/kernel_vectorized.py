@@ -1,32 +1,23 @@
-import _ctypes
 import inspect
 import math  # noqa
 import random  # noqa
 import re
-import time
-from ast import FunctionDef
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
 from ctypes import c_int
 from ctypes import c_void_p
-from hashlib import md5
 from os import path
-from os import remove
 from sys import platform
 from sys import version_info
 
 import numpy as np
-import numpy.ctypeslib as npct
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-# from parcels.codegenerator import KernelGenerator
-# from parcels.codegenerator import VectorizedLoopGenerator
-# from parcels.compiler import get_cache_dir
 from parcels.wrapping.code_generator import KernelGenerator
 from parcels.wrapping.code_generator import VectorizedLoopGenerator
 from parcels.tools import get_cache_dir
@@ -41,6 +32,7 @@ from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.tools.error import ErrorCode
 from parcels.tools.error import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
+from parcels.kernelbase import BaseKernel
 
 
 __all__ = ['Kernel']
@@ -58,7 +50,7 @@ def fix_indentation(string):
     return "\n".join(lines)
 
 
-class Kernel(object):
+class Kernel(BaseKernel):
     """Kernel object that encapsulates auto-generated code.
 
     :arg fieldset: FieldSet object providing the field information
@@ -69,29 +61,27 @@ class Kernel(object):
     or the necessary information (funcname, funccode, funcvars) is provided.
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
+
+    # == CHANGES THAT REFLECT THE 'None'-Type FieldSet still need to be done == #
     """
 
-    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
-        self.fieldset = fieldset
-        self.ptype = ptype
-        self._lib = None
-        self.delete_cfiles = delete_cfiles
+    #def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
+        super(Kernel, self).__init__(fieldset, ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
         # Derive meta information from pyfunc, if not given
-        self.funcname = funcname or pyfunc.__name__
-        if pyfunc is AdvectionRK4_3D:
+        if pyfunc is AdvectionRK4_3D:   # would be better if the idea of a Kernel being '2D', '3D, '4D' or 'uncertain' is captured as Attribute or as class stucture
             warning = False
-            if isinstance(fieldset.W, Field) and fieldset.W.creation_log != 'from_nemo' and \
-               fieldset.W._scaling_factor is not None and fieldset.W._scaling_factor > 0:
+            if isinstance(self.fieldset.W, Field) and self.fieldset.W.creation_log != 'from_nemo' and \
+               self.fieldset.W.scaling_factor is not None and self.fieldset.W.scaling_factor > 0:
                 warning = True
-            if type(fieldset.W) in [SummedField, NestedField]:
-                for f in fieldset.W:
-                    if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
+            if type(self.fieldset.W) in [SummedField, NestedField]:
+                for f in self.fieldset.W:
+                    if f.creation_log != 'from_nemo' and f.scaling_factor is not None and f.scaling_factor > 0:
                         warning = True
             if warning:
                 logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
-                                    '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
+                                    '\tIf z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -132,11 +122,11 @@ class Kernel(object):
 
         self.name = "%s%s" % (ptype.name, self.funcname)
 
+        # ======== THIS NEEDS TO BE REFACTORED BASED ON THE TYPE OF PARTICLE BEING USED ======== #
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            kernelgen = KernelGenerator(fieldset, ptype)
-            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
-                                              self.funcvars)
+            kernelgen = KernelGenerator(ptype, self.fieldset)
+            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
@@ -172,53 +162,17 @@ class Kernel(object):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            del self._lib
-            self._lib = None
-            if path.isfile(self.lib_file) and self.delete_cfiles:
-                [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+        super(Kernel, self).__del__()
 
-    @property
-    def _cache_key(self):
-        field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
-                               for name, field in self.field_args.items()])
-        key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % time.time())
-        return md5(key.encode('utf-8')).hexdigest()
+    def __add__(self, kernel):
+        if not isinstance(kernel, Kernel):
+            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
+        return self.merge(kernel, Kernel)
 
-    def remove_lib(self):
-        # Unload the currently loaded dynamic linked library to be secure
-        if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            del self._lib
-            self._lib = None
-        # If file already exists, pull new names. This is necessary on a Windows machine, because
-        # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
-        if path.isfile(self.lib_file):
-            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-                basename = mpi_comm.bcast(basename, root=0)
-                basename = basename + "_%d" % mpi_rank
-            else:
-                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
-
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-            self.log_file = "%s.log" % basename
-
-    def compile(self, compiler):
-        """ Writes kernel code to file and compiles it."""
-        with open(self.src_file, 'w') as f:
-            f.write(self.ccode)
-        compiler.compile(self.src_file, self.lib_file, self.log_file)
-        logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
-
-    def load_lib(self):
-        self._lib = npct.load_library(self.lib_file, '.')
-        self._function = self._lib.particle_loop
+    def __radd__(self, kernel):
+        if not isinstance(kernel, Kernel):
+            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
+        return kernel.merge(self, Kernel)
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
@@ -227,6 +181,7 @@ class Kernel(object):
                 'FieldSet has different amount of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
         for g in pset.fieldset.gridset.grids:
             g.cstruct = None  # This force to point newly the grids from Python to C
+
         # Make a copy of the transposed array to enforce
         # C-contiguous memory layout for JIT mode.
         for f in pset.fieldset.get_fields():
@@ -251,13 +206,18 @@ class Kernel(object):
             if not g.lat.flags.c_contiguous:
                 g.lat = g.lat.copy()
 
-        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        fargs += [c_double(f) for f in self.const_args.values()]
+        fargs = []
+        if self.field_args is not None:
+            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
+        if self.const_args is not None:
+            fargs += [c_double(f) for f in self.const_args.values()]
+
         particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-        self._function(c_int(len(pset)), particle_data,
-                       c_double(endtime),
-                       c_double(dt),
-                       *fargs)
+        if len(fargs) > 0:
+            self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt), *fargs)
+        else:
+
+            self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -424,23 +384,4 @@ class Kernel(object):
 
             error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
-    def merge(self, kernel):
-        funcname = self.funcname + kernel.funcname
-        func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
-                               body=self.py_ast.body + kernel.py_ast.body,
-                               decorator_list=[], lineno=1, col_offset=0)
-        delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
-        return Kernel(self.fieldset, self.ptype, pyfunc=None,
-                      funcname=funcname, funccode=self.funccode + kernel.funccode,
-                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
-                      delete_cfiles=delete_cfiles)
 
-    def __add__(self, kernel):
-        if not isinstance(kernel, Kernel):
-            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel)
-
-    def __radd__(self, kernel):
-        if not isinstance(kernel, Kernel):
-            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self)
