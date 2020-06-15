@@ -25,10 +25,10 @@ except:
     MPI = None
 
 # from parcels.codegenerator import KernelGenerator
-# from parcels.codegenerator import LoopGenerator
+# from parcels.codegenerator import VectorizedLoopGenerator
 # from parcels.compiler import get_cache_dir
 from parcels.wrapping.code_generator import KernelGenerator
-from parcels.wrapping.code_generator import LoopGenerator
+from parcels.wrapping.code_generator import VectorizedLoopGenerator
 from parcels.tools import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
@@ -147,7 +147,7 @@ class Kernel(object):
                         if sF_name != 'not_defined':
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
-            loopgen = LoopGenerator(fieldset, ptype)
+            loopgen = VectorizedLoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
                 with open(c_include, 'r') as f:
                     c_include_str = f.read()
