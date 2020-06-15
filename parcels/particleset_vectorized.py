@@ -10,6 +10,7 @@ import xarray as xr
 import progressbar
 
 from parcels.tools import get_package_dir
+# from parcels.compiler import GNUCompiler
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
