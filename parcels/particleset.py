@@ -4,11 +4,14 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
 
+import os
 import numpy as np
 import xarray as xr
 import progressbar
 
-from parcels.compiler import GNUCompiler
+from parcels.tools import cleanup_remove_files, cleanup_unload_lib, get_cache_dir, get_package_dir
+# from parcels.compiler import GNUCompiler
+from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.grid import GridCode
@@ -436,7 +439,7 @@ class ParticleSet(object):
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
