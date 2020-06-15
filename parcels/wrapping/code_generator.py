@@ -1028,7 +1028,7 @@ class NodeLoopGenerator(object):
         return "\n\n".join(ccode)
 
 
-class LoopGenerator(object):
+class VectorizedLoopGenerator(object):
     """Code generator class that adds type definitions and the outer
     loop around kernel functions to generate compilable C code."""
 
