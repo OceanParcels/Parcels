@@ -3,6 +3,7 @@ from operator import attrgetter
 
 import numpy as np
 
+from parcels.rng import random
 from parcels.field import Field
 from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
@@ -42,6 +43,12 @@ class Variable(object):
             instance._cptr.__setitem__(self.name, value)
         else:
             setattr(instance, "_%s" % self.name, value)
+
+    def random(self, pinstance):
+        if isinstance(pinstance, JITParticle):
+            pinstance._cptr.__setitem__(self.name, random().astype(dtype=self.dtype))
+        else:
+            setattr(pinstance, "_%s" % self.name, random().astype(dtype=self.dtype))
 
     def __repr__(self):
         return "PVar<%s|%s>" % (self.name, self.dtype)
@@ -101,6 +108,11 @@ class ParticleType(object):
         return sum([8 if v.is64bit() else 4 for v in self.variables])
 
     @property
+    def bsize(self):
+        """Size of the underlying particle struct in bytes"""
+        return sum([v.dtype.itemsize for v in self.variables])
+
+    @property
     def supported_dtypes(self):
         """List of all supported numpy dtypes. All others are not supported"""
 
@@ -140,6 +152,9 @@ class _Particle(object):
         # Placeholder for explicit error handling
         self.exception = None
 
+    def __del__(self):
+        pass
+
     @classmethod
     def getPType(cls):
         return ParticleType(cls)
@@ -169,12 +184,12 @@ class ScipyParticle(_Particle):
     lon = Variable('lon', dtype=np.float32)
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
-    time = Variable('time', dtype=np.float64)
+    time = Variable('time', dtype=np.float64, initial=np.nan)
     id = Variable('id', dtype=np.int32)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
 
-    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
+    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., dt=None, cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
@@ -183,9 +198,12 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
-        type(self).dt.initial = None
+        type(self).dt.initial = dt
         super(ScipyParticle, self).__init__()
         self._next_dt = None
+
+    def __del__(self):
+        super(ScipyParticle, self).__del__()
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
@@ -194,6 +212,13 @@ class ScipyParticle(_Particle):
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
                 str += "%s=%f, " % (var, getattr(self, var))
         return str + "time=%s)" % time_string
+
+    def random(self):
+        ptype = self.getPType()
+        for var in ptype.variables:
+            var_value = getattr(self, var.name)
+            var_value.random()
+            setattr(self, var.name, var_value)
 
     def delete(self):
         self.state = ErrorCode.Delete
@@ -220,6 +245,49 @@ class ScipyParticle(_Particle):
                 self._next_dt = None
         else:
             self._next_dt = next_dt
+
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return False
+        ids_eq = (self.id == other.id)
+        attr_eq = True
+        attr_eq&= (self.lon == other.lon)
+        attr_eq&= (self.lat == other.lat)
+        attr_eq&= (self.depth == other.depth)
+        attr_eq&= (self.time == other.time)
+        attr_eq&= (self.dt == other.dt)
+        return ids_eq and attr_eq
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id < other.id
+
+    def __le__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id <= other.id
+
+    def __gt__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id > other.id
+
+    def __ge__(self, other):
+        if type(self) is not type(other):
+            err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
+            raise AttributeError(err_msg)
+        return self.id >= other.id
+
+    def __sizeof__(self):
+        ptype = self.getPType()
+        return sum([v.size for v in ptype.variables])
 
 
 class JITParticle(ScipyParticle):
@@ -258,3 +326,48 @@ class JITParticle(ScipyParticle):
                 setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
             setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
             setattr(self, 'c'+index, getattr(self, index+'p').value)
+
+    def __del__(self):
+        super(JITParticle, self).__del__()
+
+    def cdata(self):
+        if self._cptr is None:
+            return None
+        return self._cptr.ctypes.data_as(c_void_p)
+
+    def set_cptr(self, value):
+        if isinstance(value, np.ndarray):
+            self._cptr = value
+        else:
+            self._cptr = None
+
+    def get_cptr(self):
+        return self._cptr
+
+    def reset_cptr(self):
+        self._cptr=None
+
+    def __eq__(self, other):
+        return super(JITParticle, self).__eq__(other)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __lt__(self, other):
+        return super(JITParticle, self).__lt__(other)
+
+    def __le__(self, other):
+        return super(JITParticle, self).__le__(other)
+
+    def __gt__(self, other):
+        return super(JITParticle, self).__gt__(other)
+
+    def __ge__(self, other):
+        return super(JITParticle, self).__ge__(other)
+
+    def __sizeof__(self):
+        ptype = self.getPType()
+        return sum([v.size for v in ptype.variables])
+
+
+
