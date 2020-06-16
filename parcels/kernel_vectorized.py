@@ -2,7 +2,7 @@ import inspect
 import math  # noga
 import random  # noga
 import re
-import time
+import time  # noga
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
