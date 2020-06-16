@@ -1,8 +1,6 @@
 from os import path
-from parcels import (
-    FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode, KernelError,
-    OutOfBoundsError, AdvectionRK4
-)
+from parcels import (FieldSet, ScipyParticle, JITParticle, ErrorCode, KernelError,OutOfBoundsError, AdvectionRK4)
+from parcels.particleset_vectorized import ParticleSet
 import numpy as np
 import pytest
 from parcels.tools import logger

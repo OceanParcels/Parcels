@@ -14,11 +14,13 @@ try:
 except:
     MPI = None
 
-from parcels.compiler import GNUCompiler
+# from parcels.compiler import GNUCompiler
+from parcels.wrapping.code_compiler import GNUCompiler
+from parcels.particleset_vectorized import ParticleSet
+from parcels.kernel_vectorized import Kernel
+from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
-from parcels.particleset import ParticleSet
 from parcels.particle import JITParticle
-from parcels.kernel_benchmark import Kernel_Benchmark, Kernel
 from parcels.tools.loggers import logger
 from parcels.tools.performance_logger import TimingLog, ParamLogging
 
