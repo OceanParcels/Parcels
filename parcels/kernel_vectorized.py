@@ -135,7 +135,6 @@ class Kernel(BaseKernel):
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = VectorizedLoopGenerator(ptype, fieldset)
-            # loopgen = VectorizedLoopGenerator(fieldset, ptype)
             if path.isfile(c_include):
                 with open(c_include, 'r') as f:
                     c_include_str = f.read()
