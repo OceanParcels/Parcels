@@ -7,7 +7,6 @@ from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
 from ctypes import c_int
-# from ctypes import c_void_p
 from ctypes import pointer
 from os import path
 from sys import version_info
