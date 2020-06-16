@@ -29,7 +29,7 @@ def cleanup_unload_lib(lib):
 def get_package_dir():
     # return os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     fpath = Path(__file__)
-    return fpath.parent
+    return fpath.parent.parent
 
 
 def get_cache_dir():

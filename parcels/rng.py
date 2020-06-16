@@ -5,10 +5,11 @@ from os import path
 
 import numpy.ctypeslib as npct
 
-from parcels.compiler import get_cache_dir
-from parcels.compiler import GNUCompiler
+#from parcels.compiler import get_cache_dir
+#from parcels.compiler import GNUCompiler
+from parcels.tools import get_cache_dir, get_package_dir
+from parcels.wrapping import GNUCompiler
 from parcels.tools.loggers import logger
-
 
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
 
@@ -50,22 +51,45 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
   return parcels_vonmisesvariate(mu, kappa);
 }
 """
-    ccode = stmt_import + fnct_seed
-    ccode += fnct_random + fnct_uniform + fnct_randint + fnct_normalvariate + fnct_expovariate + fnct_vonmisesvariate
-    basename = path.join(get_cache_dir(), 'parcels_random_%s' % uuid.uuid4())
-    src_file = "%s.c" % basename
-    lib_file = "%s.so" % basename
-    log_file = "%s.log" % basename
+    _lib = None
+    ccode = None
+    src_file = None
+    lib_file = None
+    log_file = None
 
     def __init__(self):
         self._lib = None
+        self.ccode = ""
+        self.ccode += self.stmt_import
+        self.ccode += self.fnct_seed
+        self.ccode += self.fnct_random
+        self.ccode += self.fnct_uniform
+        self.ccode += self.fnct_randint
+        self.ccode += self.fnct_normalvariate
+        self.ccode += self.fnct_expovariate
+        self.ccode += self.fnct_vonmisesvariate
+
 
     @property
-    def lib(self, compiler=GNUCompiler()):
+    def lib(self, compiler=None):
+        if self.src_file is None or self.lib_file is None or self.log_file is None:
+            basename = 'parcels_random_%s' % uuid.uuid4()
+            lib_filename = "lib" + basename
+            basepath = path.join(get_cache_dir(), "%s" % basename)
+            libpath = path.join(get_cache_dir(), "%s" % lib_filename)
+            # basename = path.join(get_cache_dir(), 'parcels_random_%s' % uuid.uuid4())
+            self.src_file = "%s.c" % basepath
+            self.lib_file = "%s.so" % libpath
+            self.log_file = "%s.log" % basepath
+        ccompiler = compiler
+        if ccompiler is None:
+            cppargs = []
+            incdirs = [path.join(get_package_dir(), 'include'), ]
+            ccompiler = GNUCompiler(cppargs=cppargs, incdirs=incdirs)
         if self._lib is None:
-            with open(self.src_file, 'w') as f:
+            with open(self.src_file, 'w+') as f:
                 f.write(self.ccode)
-            compiler.compile(self.src_file, self.lib_file, self.log_file)
+            ccompiler.compile(self.src_file, self.lib_file, self.log_file)
             logger.info("Compiled %s ==> %s" % ("random", self.lib_file))
             self._lib = npct.load_library(self.lib_file, '.')
         return self._lib
