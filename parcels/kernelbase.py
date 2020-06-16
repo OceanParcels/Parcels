@@ -106,14 +106,17 @@ class BaseKernel(object):
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
-            cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            # cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            cache_name = self._cache_key  # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir() if mpi_rank == 0 else None
             dyn_dir = mpi_comm.bcast(dyn_dir, root=0)
             # basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+            # basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None
             basename = cache_name if mpi_rank == 0 else None
             basename = mpi_comm.bcast(basename, root=0)
             basename = basename + "_%d" % mpi_rank
         else:
+            # cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
             cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir()
             # basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
