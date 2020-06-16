@@ -2,8 +2,8 @@ from ctypes import c_void_p
 from operator import attrgetter
 
 import numpy as np
-
-from parcels.rng import random
+# from numpy.random import random
+# from parcels.rng import random
 from parcels.field import Field
 from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
@@ -44,11 +44,11 @@ class Variable(object):
         else:
             setattr(instance, "_%s" % self.name, value)
 
-    def random(self, pinstance):
-        if isinstance(pinstance, JITParticle):
-            pinstance._cptr.__setitem__(self.name, random().astype(dtype=self.dtype))
-        else:
-            setattr(pinstance, "_%s" % self.name, random().astype(dtype=self.dtype))
+#    def random(self, pinstance):
+#        if isinstance(pinstance, JITParticle):
+#            pinstance._cptr.__setitem__(self.name, random().astype(dtype=self.dtype))
+#        else:
+#            setattr(pinstance, "_%s" % self.name, random().astype(dtype=self.dtype))
 
     def __repr__(self):
         return "PVar<%s|%s>" % (self.name, self.dtype)
@@ -213,12 +213,12 @@ class ScipyParticle(_Particle):
                 str += "%s=%f, " % (var, getattr(self, var))
         return str + "time=%s)" % time_string
 
-    def random(self):
-        ptype = self.getPType()
-        for var in ptype.variables:
-            var_value = getattr(self, var.name)
-            var_value.random()
-            setattr(self, var.name, var_value)
+#    def random(self):
+#        ptype = self.getPType()
+#        for var in ptype.variables:
+#            var_value = getattr(self, var.name)
+#            var_value.random()
+#            setattr(self, var.name, var_value)
 
     def delete(self):
         self.state = ErrorCode.Delete

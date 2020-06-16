@@ -55,18 +55,7 @@ class BaseKernel(object):
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-                basename = mpi_comm.bcast(basename, root=0)
-                basename = basename + "_%d" % mpi_rank
-            else:
-                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
-
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-            self.log_file = "%s.log" % basename
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -103,18 +92,27 @@ class BaseKernel(object):
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
             [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-                basename = mpi_comm.bcast(basename, root=0)
-                basename = basename + "_%d" % mpi_rank
-            else:
-                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
 
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-            self.log_file = "%s.log" % basename
+    def get_kernel_compile_files(self):
+        """
+        Returns the correct src_file, lib_file, log_file for this kernel
+        """
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            # basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+            basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None
+            basename = mpi_comm.bcast(basename, root=0)
+            basename = basename + "_%d" % mpi_rank
+        else:
+            cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            # basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
+            basename = path.join(get_cache_dir(), "%s_0" % cache_name)
+        src_file = "%s.c" % basename
+        lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
+        log_file = "%s.log" % basename
+        return src_file, lib_file, log_file
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""

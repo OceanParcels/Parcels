@@ -1,5 +1,5 @@
-#import random
-from numpy import random
+import random   # could be python's random if parcels not active; can be parcel's random; can be numpy's random
+# from numpy import random as nprandom
 import numpy as np
 
 class IdGenerator:
