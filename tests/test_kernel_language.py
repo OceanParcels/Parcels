@@ -1,6 +1,9 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, ErrorCode
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode
+from parcels.particleset_vectorized import ParticleSet
+from parcels.kernel_vectorized import Kernel
 from parcels.kernels.seawaterdensity import polyTEOS10_bsq, UNESCO_Density
 from parcels import random as parcels_random
+from parcels.rng import parcels_random as pa_random
 import numpy as np
 import pytest
 import random as py_random
@@ -257,7 +260,7 @@ def random_series(npart, rngfunc, rngargs, mode):
 def test_random_float(fieldset, mode, rngfunc, rngargs, npart=10):
     """ Test basic random number generation """
     class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32 if rngfunc == 'randint' else np.float32)
+        p = Variable('p', dtype=np.int32 if rngfunc == 'randint' else np.float32)
     pset = ParticleSet(fieldset, pclass=TestParticle,
                        lon=np.linspace(0., 1., npart),
                        lat=np.zeros(npart) + 0.5)

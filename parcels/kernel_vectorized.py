@@ -1,7 +1,7 @@
 import inspect
-import math  # noqa
-import random  # noqa
 import re
+import math  # noga
+import random  # noga
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
@@ -9,7 +9,6 @@ from ctypes import c_double
 from ctypes import c_int
 from ctypes import c_void_p
 from os import path
-from sys import platform
 from sys import version_info
 
 import numpy as np
@@ -129,7 +128,7 @@ class Kernel(BaseKernel):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
-            fieldset = self.fieldset
+            #fieldset = self.fieldset
             for f in self.vector_field_args.values():
                 Wname = f.W.ccode_name if f.W else 'not_defined'
                 for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
@@ -137,7 +136,7 @@ class Kernel(BaseKernel):
                         if sF_name != 'not_defined':
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
-            loopgen = VectorizedLoopGenerator(fieldset, ptype)
+            loopgen = VectorizedLoopGenerator(ptype, fieldset)
             if path.isfile(c_include):
                 with open(c_include, 'r') as f:
                     c_include_str = f.read()
@@ -145,18 +144,7 @@ class Kernel(BaseKernel):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-                basename = mpi_comm.bcast(basename, root=0)
-                basename = basename + "_%d" % mpi_rank
-            else:
-                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
-
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-            self.log_file = "%s.log" % basename
+            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
