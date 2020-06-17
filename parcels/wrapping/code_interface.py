@@ -3,6 +3,7 @@ import sys
 import _ctypes
 from time import sleep
 import numpy.ctypeslib as npct
+from parcels.tools import get_cache_dir, get_package_dir
 
 __all__ = ['LibraryRegisterC', 'InterfaceC']
 
@@ -63,9 +64,9 @@ class InterfaceC:
         if lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
             lib_path = os.path.join(lib_pathdir, lib_pathfile)
-        self.src_file = "%s.c" % basename
-        self.lib_file = "%s.%s" % (lib_path, 'dll' if sys.platform == 'win32' else 'so')
-        self.log_file = "%s.log" % basename
+        self.src_file = "%s.c" % os.path.join(get_cache_dir(), basename)
+        self.lib_file = "%s.%s" % (os.path.join(get_cache_dir(), lib_path), 'dll' if sys.platform == 'win32' else 'so')
+        self.log_file = "%s.log" % os.path.join(get_cache_dir(), basename)
 
         # self.compiler = GNUCompiler()
         self.compiler = compiler
