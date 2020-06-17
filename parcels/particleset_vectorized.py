@@ -1,7 +1,7 @@
 import collections
 import time as time_module
 from datetime import date
-from datetime import datetime
+from datetime import datetime as dtime
 from datetime import timedelta as delta
 
 import os
@@ -55,20 +55,20 @@ class ParticleSet(object):
            are distributed automatically on the processors
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
+    @staticmethod
+    def _convert_to_array_(var):
+        # Convert lists and single integers/floats to one-dimensional numpy arrays
+        if isinstance(var, np.ndarray):
+            return var.flatten()
+        elif isinstance(var, (int, float, np.float32, np.int32)):
+            return np.array([var])
+        else:
+            return np.array(var)
 
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self.fieldset = fieldset
         self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
-
-        def convert_to_array(var):
-            # Convert lists and single integers/floats to one-dimensional numpy arrays
-            if isinstance(var, np.ndarray):
-                return var.flatten()
-            elif isinstance(var, (int, float, np.float32, np.int32)):
-                return np.array([var])
-            else:
-                return np.array(var)
 
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
@@ -86,7 +86,7 @@ class ParticleSet(object):
 
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
-        if time.size > 0 and type(time[0]) in [datetime, date]:
+        if time.size > 0 and type(time[0]) in [dtime, date]:
             time = np.array([np.datetime64(t) for t in time])
         self.time_origin = fieldset.time_origin
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
@@ -186,6 +186,10 @@ class ParticleSet(object):
                     setattr(self.particles[i], kwvar, kwargs[kwvar][i])
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
+
+    @property
+    def particle_data(self):
+        return self._particle_data
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -445,7 +449,7 @@ class ParticleSet(object):
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
             raise RuntimeError('endtime must be either a datetime or a double')
-        if isinstance(endtime, datetime):
+        if isinstance(endtime, dtime):
             endtime = np.datetime64(endtime)
         if isinstance(endtime, np.datetime64):
             if self.time_origin.calendar is None:

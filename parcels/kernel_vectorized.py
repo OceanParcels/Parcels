@@ -200,7 +200,8 @@ class Kernel(BaseKernel):
         if self.const_args is not None:
             fargs += [c_double(f) for f in self.const_args.values()]
 
-        particle_data = pset._particle_data.ctypes.data_as(c_void_p)
+        # particle_data = pset._particle_data.ctypes.data_as(c_void_p)
+        particle_data = pset.particle_data.ctypes.data_as(c_void_p)
         if len(fargs) > 0:
             self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt), *fargs)
         else:
