@@ -15,7 +15,7 @@ from parcels.nodes.Node import Node, NodeJIT
 from parcels.tools import idgen
 
 from parcels.tools import get_cache_dir, get_package_dir
-# from parcels.wrapping.code_compiler import GNUCompiler
+# from parcels.wrapping.code_compiler import GNUCompiler, GNUCompiler_MS
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
 from parcels.grid import GridCode

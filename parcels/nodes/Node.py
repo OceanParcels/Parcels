@@ -79,7 +79,6 @@ class Node(object):
         return not (self == other)
 
     def __lt__(self, other):
-        # print("less-than({} vs. {})".format(str(self),str(other)))
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
@@ -179,16 +178,13 @@ class NodeJIT(Node, ctypes.Structure):
             self.set_prev_ptr_c(self, self.prev)
         else:
             self.reset_prev_ptr_c(self)
-        # self._c_self_p = ctypes.cast(self, ctypes.c_void_p)
         if self.next is not None and isinstance(self.next, NodeJIT):
             self.set_next_ptr_c(self, self.next)
         else:
             self.reset_next_ptr_c(self)
 
-        if self.data is not None:   # and isinstance(ctypes.c_void_p):
-            # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
+        if self.data is not None:
             try:
-                # self.set_data_ptr_c(self, ctypes.cast(ctypes.byref(self.data.cdata()), ctypes.c_void_p))
                 self.set_data_ptr_c(self, self.data.cdata())
             except AttributeError:
                 self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
@@ -297,25 +293,19 @@ class NodeJIT(Node, ctypes.Structure):
 
     def update_prev(self):
         if self.prev is not None and isinstance(self.prev, NodeJIT):
-            # self._c_prev_p = ctypes.cast(self.prev, ctypes.c_void_p)
-            # self._c_prev_p = self.prev._c_self_p
             self.set_prev_ptr_c(self, self.prev)
         else:
             self.reset_prev_ptr_c(self)
 
     def update_next(self):
         if self.next is not None and isinstance(self.next, NodeJIT):
-            # self._c_next_p = ctypes.cast(self.next, ctypes.c_void_p)
-            # self._c_next_p = self.next._c_self_p
             self.set_next_ptr_c(self, self.next)
         else:
             self.reset_next_ptr_c(self)
 
     def update_data(self):
-        if self.data is not None:   # and isinstance(ctypes.c_void_p):
-            # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
+        if self.data is not None:
             try:
-                # self.set_data_ptr_c(self, ctypes.cast(ctypes.byref(self.data.cdata()), ctypes.c_void_p))
                 self.set_data_ptr_c(self, self.data.cdata())
             except AttributeError:
                 self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
