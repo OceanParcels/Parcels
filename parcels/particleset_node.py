@@ -9,6 +9,8 @@ from scipy.spatial import distance
 import itertools
 import xarray as xr
 import progressbar
+# import math  # noga
+# import random  # noga
 
 from parcels.nodes.LinkedList import *
 from parcels.nodes.Node import Node, NodeJIT
@@ -16,8 +18,10 @@ from parcels.tools import idgen
 
 from parcels.tools import get_cache_dir, get_package_dir
 # from parcels.wrapping.code_compiler import GNUCompiler, GNUCompiler_MS
+from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
+# from parcels import Grid, Field, GridSet, FieldSet
 from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -555,6 +559,9 @@ class ParticleSet(object):
     def get_particle(self, index):
         return self.get(index).data
 
+    # def retrieve_item(self, key):
+    #    return self.get(key)
+
     def __getitem__(self, key):
         if key >= 0 and key < len(self._nodes):
             return self._nodes[key]
@@ -895,6 +902,9 @@ class ParticleSet(object):
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
+
+        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
+        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:

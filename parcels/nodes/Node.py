@@ -1,10 +1,12 @@
 import ctypes
 import sys
+import os
 from parcels.tools import idgen
 from parcels.wrapping import *
 from numpy import int32, int64, uint32, uint64
 import random
 
+# from parcels import JITParticle, ScipyParticle
 
 class Node(object):
     prev = None
@@ -255,13 +257,11 @@ class NodeJIT(Node, ctypes.Structure):
                 if self.next is not None:
                     self.prev.set_next(self.next)
                 else:
-                    # self.reset_next_ptr_c(self.prev)
                     self.prev.reset_next()
             if self.next is not None:
                 if self.prev is not None:
                     self.next.set_prev(self.prev)
                 else:
-                    # self.reset_prev_ptr_c(self.next)
                     self.next.reset_prev()
             self.reset_prev_ptr_c(self)
             self.reset_next_ptr_c(self)

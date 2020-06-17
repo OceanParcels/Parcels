@@ -1,7 +1,9 @@
 from parcels.nodes.Node import *
+from parcels.tools import idgen
 from sortedcontainers import SortedList
 from numpy import int32, int64, uint32, uint64
-from copy import deepcopy
+from copy import copy, deepcopy
+import gc
 
 
 # ========================== #
