@@ -4,6 +4,8 @@ import _ctypes
 from time import sleep
 import numpy.ctypeslib as npct
 from parcels.tools import get_cache_dir, get_package_dir
+from .code_compiler import *
+from parcels.tools.loggers import logger
 
 __all__ = ['LibraryRegisterC', 'InterfaceC']
 
@@ -19,9 +21,13 @@ class LibraryRegisterC:
             entry.unload_library()
             del entry
 
-    def load(self, libname):
+    def load(self, libname, src_dir = get_package_dir()):
         if libname not in self._data.keys():
-            self._data[libname] = InterfaceC("node")
+            # cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+            cppargs = []
+            # , libs=["node"]
+            ccompiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
+            self._data[libname] = InterfaceC("node", ccompiler, src_dir)
         if not self._data[libname].is_compiled():
             self._data[libname].compile_library()
         if not self._data[libname].is_loaded():
@@ -56,15 +62,27 @@ class LibraryRegisterC:
 
 class InterfaceC:
 
-    def __init__(self, c_file_name, compiler):
+    def __init__(self, c_file_name, compiler, src_dir = get_package_dir()):
         basename = c_file_name
+        src_pathfile = c_file_name
+        if isinstance(basename, list) and len(basename) > 0:
+            basename = basename[0]
         lib_path = basename
         lib_pathfile = os.path.basename(basename)
         lib_pathdir = os.path.dirname(basename)
         if lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
             lib_path = os.path.join(lib_pathdir, lib_pathfile)
-        self.src_file = "%s.c" % os.path.join(get_cache_dir(), basename)
+        if isinstance(src_pathfile, list):
+            self.src_file = []
+            if isinstance(src_dir, list):
+                for fdir, fname in zip(src_dir, src_pathfile):
+                    self.src_file.append("%s.c" % os.path.join(fdir, fname))
+            else:
+                for fname in src_pathfile:
+                    self.src_file = "%s.c" % os.path.join(src_dir, fname)
+        else:
+            self.src_file = "%s.c" % os.path.join(src_dir, src_pathfile)
         self.lib_file = "%s.%s" % (os.path.join(get_cache_dir(), lib_path), 'dll' if sys.platform == 'win32' else 'so')
         self.log_file = "%s.log" % os.path.join(get_cache_dir(), basename)
 
