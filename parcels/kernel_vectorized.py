@@ -144,7 +144,9 @@ class Kernel(BaseKernel):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
-            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            # self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            self.dyn_srcs, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            self.src_file = self.dyn_srcs
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -201,12 +203,12 @@ class Kernel(BaseKernel):
             fargs += [c_double(f) for f in self.const_args.values()]
 
         # particle_data = pset._particle_data.ctypes.data_as(c_void_p)
-        particle_data = pset.particle_data.ctypes.data_as(c_void_p)
+        pdata = pset.particle_data.ctypes.data_as(c_void_p)
         if len(fargs) > 0:
-            self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt), *fargs)
+            self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt), *fargs)
         else:
 
-            self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt))
+            self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
