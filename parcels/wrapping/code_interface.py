@@ -32,6 +32,7 @@ class LibraryRegisterC:
         if libname is None or (libname in self._data.keys() and self._data[libname].is_loaded()):
             return
         if libname not in self._data.keys():
+            # cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
             cppargs = []
             ccompiler = GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
             self._data[libname] = InterfaceC("node", ccompiler, src_dir)
