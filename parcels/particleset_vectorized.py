@@ -70,8 +70,8 @@ class ParticleSet(object):
         self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
-        lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
-        lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
+        lon = np.empty(shape=0) if lon is None else self._convert_to_array_(lon)
+        lat = np.empty(shape=0) if lat is None else self._convert_to_array_(lat)
         if pid_orig is None:
             pid_orig = np.arange(lon.size)
         pid = pid_orig + pclass.lastID
@@ -80,11 +80,11 @@ class ParticleSet(object):
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
             depth = np.ones(lon.size) * mindepth
         else:
-            depth = convert_to_array(depth)
+            depth = self._convert_to_array_(depth)
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        time = convert_to_array(time)
+        time = self._convert_to_array_(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
         if time.size > 0 and type(time[0]) in [dtime, date]:
             time = np.array([np.datetime64(t) for t in time])
@@ -96,10 +96,10 @@ class ParticleSet(object):
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
         if partitions is not None and partitions is not False:
-            partitions = convert_to_array(partitions)
+            partitions = self._convert_to_array_(partitions)
 
         for kwvar in kwargs:
-            kwargs[kwvar] = convert_to_array(kwargs[kwvar])
+            kwargs[kwvar] = self._convert_to_array_(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
@@ -380,10 +380,12 @@ class ParticleSet(object):
             raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
         self.particles = np.append(self.particles, particles)
         if self.ptype.uses_jit:
+            # particles_data = [p.get_cptr() for p in particles]
             particles_data = [p._cptr for p in particles]
             self._particle_data = np.append(self._particle_data, particles_data)
             # Update C-pointer on particles
             for p, pdata in zip(self.particles, self._particle_data):
+                # p.set_cptr(pdata)
                 p._cptr = pdata
 
     def remove(self, indices):
@@ -397,6 +399,7 @@ class ParticleSet(object):
             self._particle_data = np.delete(self._particle_data, indices)
             # Update C-pointer on particles
             for p, pdata in zip(self.particles, self._particle_data):
+                # p.set_cptr(pdata)
                 p._cptr = pdata
         return particles
 
