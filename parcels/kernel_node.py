@@ -134,7 +134,11 @@ class Kernel(BaseKernel):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
-            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            # self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            self.dyn_srcs, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            static_srcs = [path.join(get_package_dir(), 'nodes', 'node.c'), ]
+            self.static_srcs = static_srcs
+            self.src_file = [self.dyn_srcs, ] + self.static_srcs
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -299,6 +303,7 @@ class Kernel(BaseKernel):
         node = pset.begin()
         while node is not None:
             node.data.reset_state()
+            node = node.next
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")

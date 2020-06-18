@@ -199,7 +199,6 @@ class ParticleSet(object):
         if _partitions is not None and _partitions is not False:
             _partitions = self._convert_to_array_(_partitions)
 
-        offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -236,8 +235,8 @@ class ParticleSet(object):
                 if pid is not None and (isinstance(pid, list) or isinstance(pid, np.ndarray)):
                     index = pid[index]
                 else:
-                    index = idgen.nextID()
-                pdata = self._pclass(lon[i], lat[i], depth=depth[i], time=time[i], fieldset=self._fieldset, pid=index)
+                    index = idgen.nextID(lon[i], lat[i], depth[i], time[i])
+                pdata = self._pclass(lon[i], lat[i], pid=index, fieldset=self._fieldset, depth=depth[i], time=time[i])
                 # Set other Variables if provided
                 for kwvar in kwargs:
                     if not hasattr(pdata, kwvar):
@@ -549,9 +548,9 @@ class ParticleSet(object):
             self._nodes.add(pdata)
             index = self._nodes.bisect_right(pdata)
         else:
-            index = idgen.nextID()
-            pdata.id = int(index)
-            node = NodeJIT(id=int(index), data=pdata)
+            index = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
+            pdata.id = index
+            node = NodeJIT(id=index, data=pdata)
             self._nodes.add(node)
             index = self._nodes.bisect_right(node)
         if index > 0:
@@ -681,7 +680,8 @@ class ParticleSet(object):
                 self._kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
                 # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
-                self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), "."], libdirs=[".", ], libs=["node"]))
+                #self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
+                self._kernel.compile(compiler=GNUCompiler_MS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], tmp_dir=get_cache_dir()))
                 self._kernel.load_lib()
 
         # Convert all time variables to seconds
@@ -819,8 +819,12 @@ class ParticleSet(object):
                 add_iter = 0
                 while add_iter < self.rparam.get_num_pts():
                     gen_id = self.rparam.get_particle_id(add_iter)
-                    pindex = idgen.nextID() if gen_id is None else gen_id
-                    pdata = JITParticle(lon=self.rparam.get_longitude(add_iter), lat=self.rparam.get_latitude(add_iter), pid=pindex, fieldset=self._fieldset, depth=self.rparam.get_depth_value(add_iter), time=time[add_iter])
+                    lon = self.rparam.get_longitude(add_iter)
+                    lat = self.rparam.get_latitude(add_iter)
+                    pdepth = self.rparam.get_depth_value(add_iter)
+                    ptime = time[add_iter]
+                    pindex = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                    pdata = JITParticle(lon=lon, lat=lat, pid=pindex, fieldset=self._fieldset, depth=pdepth, time=ptime)
                     pdata.dt = dt
                     self.add(self._nclass(id=pindex, data=pdata))
                 next_prelease += self.repeatdt * np.sign(dt)
