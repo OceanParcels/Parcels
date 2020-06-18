@@ -1,6 +1,7 @@
 import random   # could be python's random if parcels not active; can be parcel's random; can be numpy's random
 # from numpy import random as nprandom
 import numpy as np
+import math
 
 class IdGenerator:
     released_ids = []
@@ -66,6 +67,16 @@ class SpatioTemporalIdGenerator:
         self.depthbounds = np.array([min_dept, max_depth], dtype=np.float32)
 
     def getID(self, lon, lat, depth, time):
+        if lon < -180.0 or lon > 180.0:
+            vsgn = np.sign(lon)
+            lon = np.fmod(np.fabs(lon), 180.0) * vsgn
+        if lat < -90.0 or lat > 90.0:
+            vsgn = np.sign(lat)
+            lat = np.fmod(np.fabs(lat), 180.0) * vsgn
+        if depth is None:
+            depth = self.depthbounds[0]
+        if time is None:
+            time = self.timebounds[0]
         # lon_discrete = np.float32(np.int32(lon))
         lon_discrete = np.int32(lon)
         # lat_discrete = np.float32(np.int32(lat))
