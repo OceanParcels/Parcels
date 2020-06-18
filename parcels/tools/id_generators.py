@@ -6,6 +6,7 @@ from threading import Thread
 from .message_service import mpi_execute_requested_messages as executor
 # from os import getpid
 import numpy as np
+import math
 
 try:
     from mpi4py import MPI
@@ -165,7 +166,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
             lon = np.fmod(np.fabs(lon), 180.0) * vsgn
         if lat < -90.0 or lat > 90.0:
             vsgn = np.sign(lat)
-            lat = np.fmod(np.fabs(lat), 90.0) * vsgn
+            lat = np.fmod(np.fabs(lat), 180.0) * vsgn
         if depth is None:
             depth = self.depthbounds[0]
         if time is None:
