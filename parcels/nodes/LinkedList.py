@@ -1,5 +1,4 @@
 from parcels.nodes.Node import *
-from parcels.tools import idgen
 from sortedcontainers import SortedList
 from copy import copy, deepcopy
 import gc
@@ -61,7 +60,7 @@ class RealList(SortedList):
                 prev_node.set_next(val)
                 val.set_prev(prev_node)
             super().add(val)
-        elif isinstance(val, int):
+        elif isinstance(val, int) or type(val) in [int32, uint32, int64, uint64]:
             n = self.__len__()
             index = self.bisect_right(val)
             if index < n:

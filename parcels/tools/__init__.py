@@ -9,3 +9,5 @@ from .performance_logger import *  # noga
 
 global idgen
 idgen = SpatioTemporalIdGenerator()
+idgen.setDepthLimits(0, 100)
+idgen.setTimeLine(0, 240.0)
