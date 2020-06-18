@@ -2,6 +2,8 @@ import ctypes
 import sys
 from parcels.tools import idgen
 from parcels.wrapping import *
+from numpy import int32, int64, uint32, uint64
+import random
 
 # from parcels import JITParticle, ScipyParticle
 
@@ -24,10 +26,10 @@ class Node(object):
             self.next = next
         else:
             self.next = None
-        if id is not None and isinstance(id, int) and (id>=0):
+        if id is not None and (isinstance(id, int) or type(id) in [int32, uint32, int64, uint64]) and (id>=0):
             self.id = id
         elif id is None:
-            self.id = idgen.nextID()
+            self.id = idgen.nextID(random.uniform(-180.0, 180.0), random.uniform(-90.0, 90.0), random.uniform(0., 75.0), 0.)
         else:
             self.id = None
         self.data = data
@@ -151,7 +153,7 @@ class NodeJIT(Node, ctypes.Structure):
 
     def __init__(self, prev=None, next=None, id=None, data=None):
         super().__init__(prev=prev, next=next, id=id, data=data)
-        c_lib_register.load("node")
+        c_lib_register.load("node", src_dir=os.path.dirname(os.path.abspath(__file__)))
         c_lib_register.register("node")
         self.registered = True
         node_c_interface = c_lib_register.get("node")  # ["node"]
