@@ -6,6 +6,7 @@ from threading import Thread
 from .message_service import mpi_execute_requested_messages as executor
 # from os import getpid
 import numpy as np
+import math
 
 try:
     from mpi4py import MPI
