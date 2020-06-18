@@ -116,14 +116,20 @@ def test_pset_node_execute(fieldset, mode, tmpdir, npart=100):
     outfilepath = tmpdir.join("pfile_node_execute_test.nc")
     pset = ParticleSet(fieldset=fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
+    index_mapping = {}
     for i in range(npart):
         index = idgen.getID(lon[i], lat[i], 0., 0.)
+        index_mapping[i] = index
         pdata = ptype[mode](lon[i], lat[i], pid=index, fieldset=fieldset)
         ndata = nclass(id=index, data=pdata)
         pset.add(ndata)
     pset.execute(AdvectionRK4, runtime=0., dt=10., output_file=pfile)
     pfile.close()
     assert(pset.size == 100)
+    # ==== of course this is not working as the order in pset.data and lon is not the same ==== #
+    # assert np.allclose([n.data.lon for n in pset.data], lon, rtol=1e-12)
+    assert np.allclose([pset.get_by_id(index_mapping[i]).data.lon for i in index_mapping.keys()], lon, rtol=1e-12)
+    assert np.allclose([pset.get_by_id(index_mapping[i]).data.lat for i in index_mapping.keys()], lat, rtol=1e-12)
 
 
 def run_test_pset_add_explicit(fset, mode, npart=100):
@@ -149,7 +155,6 @@ def run_test_pset_add_explicit(fset, mode, npart=100):
     for tstep in range(3):
         pfile.write(pset, tstep)
     pfile.close()
-    logger.info("# particles: {}".format(pset.size))
     assert (pset.size > 0)
     assert (pset.size <= 2* npart)
     # ==== of course this is not working as the order in pset.data and lon is not the same ==== #
