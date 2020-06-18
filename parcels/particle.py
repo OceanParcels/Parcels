@@ -10,7 +10,7 @@ from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
-indicators_64bit = [np.float64, np.int64, c_void_p]
+indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
 
 class Variable(object):
@@ -34,7 +34,12 @@ class Variable(object):
         if instance is None:
             return self
         if issubclass(cls, JITParticle):
-            return instance._cptr.__getitem__(self.name)
+            # val = instance._cptr.__getitem__(self.name)
+            # if isinstance(val, np.ndarray):
+            #     val = val[0]
+            # return val
+            # return instance._cptr.__getitem__(self.name)[0]
+            return instance.get_cptr().__getitem__(self.name)
         else:
             return getattr(instance, "_%s" % self.name, self.initial)
 
@@ -119,7 +124,7 @@ class ParticleType(object):
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
         # major headache. Perhaps in a later stage
-        return [np.int32, np.int64, np.float32, np.double, np.float64, c_void_p]
+        return [np.int32, np.uint32, np.int64, np.uint64, np.float32, np.double, np.float64, c_void_p]
 
 
 class _Particle(object):
@@ -185,7 +190,8 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64, initial=np.nan)
-    id = Variable('id', dtype=np.int32)
+    # id = Variable('id', dtype=np.int32)
+    id = Variable('id', dtype=np.uint64)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
 
@@ -315,17 +321,18 @@ class JITParticle(ScipyParticle):
         if self._cptr is None:
             # Allocate data for a single particle
             ptype = self.getPType()
-            self._cptr = np.empty(1, dtype=ptype.dtype)[0]
+            self._cptr = np.empty(1, dtype=ptype.dtype) # [0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
-        for index in ['xi', 'yi', 'zi', 'ti']:
-            if index != 'ti':
-                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
-            else:
-                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
-            setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
-            setattr(self, 'c'+index, getattr(self, index+'p').value)
+        if fieldset is not None:
+            for index in ['xi', 'yi', 'zi', 'ti']:
+                if index != 'ti':
+                    setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+                else:
+                    setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+                setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
+                setattr(self, 'c'+index, getattr(self, index+'p').value)
 
     def __del__(self):
         super(JITParticle, self).__del__()
@@ -337,11 +344,14 @@ class JITParticle(ScipyParticle):
 
     def set_cptr(self, value):
         if isinstance(value, np.ndarray):
-            self._cptr = value
+            ptype = self.getPType()
+            self._cptr = np.array(value, dtype=ptype.dtype)
         else:
             self._cptr = None
 
     def get_cptr(self):
+        if isinstance(self._cptr, np.ndarray):
+            return self._cptr[0]
         return self._cptr
 
     def reset_cptr(self):
