@@ -316,7 +316,7 @@ class ParticleSet(object):
         lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
         depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
         time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
-        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan)
+        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan).astype(dtype=np.uint64)
         if isinstance(time[0], np.timedelta64):
             time = np.array([t/np.timedelta64(1, 's') for t in time])
 
