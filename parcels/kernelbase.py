@@ -3,6 +3,7 @@ import numpy.ctypeslib as npct
 from time import time as ostime
 from os import path
 from os import remove
+from os import environ
 from sys import platform
 from ast import FunctionDef
 from hashlib import md5
@@ -110,7 +111,7 @@ class BaseKernel(object):
             cache_name = self._cache_key  # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir() if mpi_rank == 0 else None
             dyn_dir = mpi_comm.bcast(dyn_dir, root=0)
-            # basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
+            ## basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
             # basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None
             basename = cache_name if mpi_rank == 0 else None
             basename = mpi_comm.bcast(basename, root=0)
