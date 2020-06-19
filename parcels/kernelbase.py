@@ -3,6 +3,7 @@ import numpy.ctypeslib as npct
 from time import time as ostime
 from os import path
 from os import remove
+from os import environ
 from sys import platform
 from ast import FunctionDef
 from hashlib import md5
@@ -65,6 +66,12 @@ class BaseKernel(object):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
+        # if self._lib is not None:
+        #     _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+        #     del self._lib
+        #     self._lib = None
+        #     if path.isfile(self.lib_file) and self.delete_cfiles:
+        #         [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
         self.remove_lib()
         self.fieldset = None
         self.field_args = None
