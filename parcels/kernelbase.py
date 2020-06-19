@@ -3,9 +3,11 @@ import numpy.ctypeslib as npct
 from time import time as ostime
 from os import path
 from os import remove
+from os import environ
 from sys import platform
 from ast import FunctionDef
 from hashlib import md5
+from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
@@ -49,24 +51,28 @@ class BaseKernel(object):
         self.funcvars = funcvars
         self.funccode = funccode
         self.py_ast = py_ast
+        self.dyn_srcs = []
+        self.static_srcs = []
         self.src_file = None
         self.lib_file = None
         self.log_file = None
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            self.src_file, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            self.dyn_srcs, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            self.src_file = self.dyn_srcs
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            del self._lib
-            self._lib = None
-            if path.isfile(self.lib_file) and self.delete_cfiles:
-                [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+        # if self._lib is not None:
+        #     _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+        #     del self._lib
+        #     self._lib = None
+        #     if path.isfile(self.lib_file) and self.delete_cfiles:
+        #         [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+        self.remove_lib()
         self.fieldset = None
         self.field_args = None
         self.const_args = None
@@ -91,7 +97,7 @@ class BaseKernel(object):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
-            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+            [remove(s) for s in [self.dyn_srcs, self.lib_file, self.log_file]]
 
     def get_kernel_compile_files(self):
         """
@@ -100,29 +106,35 @@ class BaseKernel(object):
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
-            cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            dyn_dir = get_cache_dir() if mpi_rank == 0 else None
+            dyn_dir = mpi_comm.bcast(dyn_dir, root=0)
             # basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-            basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None
+            basename = cache_name if mpi_rank == 0 else None
             basename = mpi_comm.bcast(basename, root=0)
             basename = basename + "_%d" % mpi_rank
         else:
-            cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            dyn_dir = get_cache_dir()
             # basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
             basename = path.join(get_cache_dir(), "%s_0" % cache_name)
-        src_file = "%s.c" % basename
-        lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-        log_file = "%s.log" % basename
+        lib_path = "lib" + basename
+        src_file = "%s.c" % path.join(dyn_dir, basename)
+        lib_file = "%s.%s" % (path.join(dyn_dir, lib_path), 'dll' if platform == 'win32' else 'so')
+        log_file = "%s.log" % path.join(dyn_dir, basename)
         return src_file, lib_file, log_file
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
-        with open(self.src_file, 'w') as f:
+        # with open(self.src_file, 'w') as f:
+        with open(self.dyn_srcs, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
         # logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
+        # self._lib = npct.load_library(self.lib_file, get_cache_dir())
         self._function = self._lib.particle_loop
 
     def merge(self, kernel, kclass):
