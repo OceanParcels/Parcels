@@ -345,7 +345,7 @@ class ParticleFile(object):
 
         # data = np.nan * np.zeros((self.max_index_written+1, time_steps))
         # time_index = np.zeros(self.max_index_written+1, dtype=int)
-        t_ind_used = np.zeros(time_steps, dtype=np.int32)
+        t_ind_used = np.zeros(time_steps, dtype=np.int32
 
         # loop over all files
         for npyfile in file_list:
