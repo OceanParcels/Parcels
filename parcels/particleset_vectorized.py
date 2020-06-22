@@ -103,6 +103,9 @@ class ParticleSet(object):
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
+        # this is not all to clever because all particles of a particle set are only initialized ONCE,
+        # thus once determined on setup their MPI distribution stays fixed. That means that after several iterations
+        # particles within one cluster are not necessarily co-located as they moved ...
         offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD

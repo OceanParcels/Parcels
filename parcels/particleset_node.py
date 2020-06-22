@@ -33,6 +33,12 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
+if MPI:
+    try:
+        from sklearn.cluster import KMeans
+    except:
+        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
+                               'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSet', 'RepeatParameters']
 
@@ -119,6 +125,7 @@ class ParticleSet(object):
     _ptype = None
     _fieldset = None
     _kernel = None
+    _pu_centers = None
     _lonlatdepth_dtype = None
 
     @staticmethod
@@ -161,6 +168,7 @@ class ParticleSet(object):
         self._kclass = Kernel
         self._kernel = None
         self._ptype = self._pclass.getPType()
+        self._pu_centers = None # can be given by parameter
         if self._ptype.uses_jit:
             self._nclass = NodeJIT
         else:
@@ -208,8 +216,27 @@ class ParticleSet(object):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                pass
-            pass
+                if _partitions is not False:
+                    if _partitions is None and self._pu_centers is None:
+                        if mpi_rank == 0:
+                            coords = np.vstack((lon, lat)).transpose()
+                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+                            _partitions = kmeans.labels_
+                            _pu_centers = kmeans.cluster_centers_
+                        else:
+                            _partitions = None
+                        _partitions = mpi_comm.bcast(_partitions, root=0)
+                        self._pu_centers = mpi_comm.bcast(_pu_centers, root=0)
+                    elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
+                        raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
+                    lon = lon[_partitions == mpi_rank]
+                    lat = lat[_partitions == mpi_rank]
+                    time = time[_partitions == mpi_rank]
+                    depth = depth[_partitions == mpi_rank]
+                    if pid is not None and (isinstance(pid, list) or isinstance(pid, np.ndarray)):
+                        pid = pid[_partitions == mpi_rank]
+                    for kwvar in kwargs:
+                        kwargs[kwvar] = kwargs[kwvar][_partitions == mpi_rank]
 
         # ---- particle data parameter length assertions ---- #
         for kwvar in kwargs:
@@ -483,13 +510,17 @@ class ParticleSet(object):
         can only be scanned for (a) its list index (non-coherent) or (b) a node itself, but not for a specific
         Node property alone. That is why using the 'bisect' module alone won't work.
         :param id: search Node ID
-        :return: Node attached to ID
+        :return: Node attached to ID - if node not in list: return None
         """
         lower = 0
         upper = len(self._nodes) - 1
         pos = lower + int((upper - lower) / 2.0)
         current_node = self._nodes[pos]
-        while current_node.id != id:
+        _found = False
+        _search_done = False
+        while current_node.id != id and not _search_done:
+            prev_upper = upper
+            prev_lower = lower
             if id < current_node.id:
                 lower = lower
                 upper = pos - 1
@@ -498,8 +529,15 @@ class ParticleSet(object):
                 lower = pos
                 upper = upper
                 pos = lower + int((upper - lower) / 2.0) + 1
+            if (prev_upper == upper and prev_lower == lower):
+                _search_done = True
             current_node = self._nodes[pos]
-        return current_node
+            if current_node.id == id:
+                _found = True
+        if _found:
+            return current_node
+        else:
+            return None
 
     def get_particle(self, index):
         return self.get(index).data
@@ -543,19 +581,48 @@ class ParticleSet(object):
         :param pdata: new Node or pdata
         :return: index of inserted node
         """
-        index = -1
-        if isinstance(pdata, self._nclass):
-            self._nodes.add(pdata)
-            index = self._nodes.bisect_right(pdata)
-        else:
-            index = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
-            pdata.id = index
-            node = NodeJIT(id=index, data=pdata)
-            self._nodes.add(node)
-            index = self._nodes.bisect_right(node)
-        if index > 0:
-            # return self._nodes[index]
-            return index
+        # Comment: by current workflow, pset modification is only done on the front node, thus
+        # the distance determination and assigment is also done on the front node
+        _add_to_pu = True
+        if MPI:
+            if self._pu_centers is not None and isinstance(self._pu_centers, np.ndarray):
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
+                mpi_size = mpi_comm.Get_size()
+                min_dist = np.finfo(self._lonlatdepth_dtype).max
+                min_pu = 0
+                if mpi_size > 1 and mpi_rank == 0:
+                    ppos = pdata
+                    if isinstance(pdata, self._nclass):
+                        ppos = pdata.data
+                    spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
+                    n_clusters = self._pu_centers.shape[0]
+                    for i in range(n_clusters):
+                        diff = self._pu_centers[i,:] - spdata
+                        dist = np.dot(diff, diff)
+                        if dist < min_dist:
+                            min_dist = dist
+                            min_pu = i
+                    # NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
+                min_pu = mpi_comm.bcast(min_pu, root=0)
+                if mpi_rank == min_pu:
+                    _add_to_pu = True
+                else:
+                    _add_to_pu = False
+        if _add_to_pu:
+            index = -1
+            if isinstance(pdata, self._nclass):
+                self._nodes.add(pdata)
+                index = self._nodes.bisect_right(pdata)
+            else:
+                index = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
+                pdata.id = index
+                node = NodeJIT(id=index, data=pdata)
+                self._nodes.add(node)
+                index = self._nodes.bisect_right(node)
+            if index >= 0:
+                # return self._nodes[index]
+                return index
         return None
 
     def __isub__(self, ndata):
@@ -585,10 +652,16 @@ class ParticleSet(object):
             # search_node = self._nodes[ndata]
             # self._nodes.remove(search_node)
         elif isinstance(ndata, self._nclass):
-            self._nodes.remove(ndata)
+            try:
+                self._nodes.remove(ndata)
+            except ValueError:
+                pass
         elif isinstance(ndata, self._pclass):
             node = self.get_by_id(ndata.id)
-            self._nodes.remove(node)
+            try:
+                self._nodes.remove(node)
+            except ValueError:
+                pass
 
     def remove_entities(self, ndata_array):
         rm_list = ndata_array
@@ -602,6 +675,7 @@ class ParticleSet(object):
             self.remove_entity(ndata)
 
     def merge(self, key1, key2):
+        # TODO
         pass
 
     def split(self, key):
@@ -610,10 +684,13 @@ class ParticleSet(object):
         :param key: index (int; np.int32), Node
         :return: 'node1, node2' or 'index1, index2'
         """
-        pass
+        # TODO
 
     def pop(self, idx=-1, deepcopy_elem=False):
-        return self._nodes.pop(idx, deepcopy_elem)
+        try:
+            return self._nodes.pop(idx, deepcopy_elem)
+        except IndexError:
+            return None
 
     def insert(self, node_or_pdata):
         """
