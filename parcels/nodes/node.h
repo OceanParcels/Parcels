@@ -15,15 +15,19 @@ typedef struct _NodeJIT {
     //void* _c_self_p;
     void* _c_next_p;
     void* _c_data_p;
+    int _c_pu_num;
 } NodeJIT;
 
 void init_node(NodeJIT* self_node);
 void set_prev_ptr(NodeJIT* self_node, NodeJIT* prev_node);
 void set_next_ptr(NodeJIT* self_node, NodeJIT* next_node);
 void set_data_ptr(NodeJIT* self_node, void* data_ptr);
+void set_pu_num(NodeJIT* self_node, int pu_number);
+int get_pu_num(NodeJIT* self_node);
 void reset_prev_ptr(NodeJIT* self_node);
 void reset_next_ptr(NodeJIT* self_node);
 void reset_data_ptr(NodeJIT* self_node);
+void reset_pu_number(NodeJIT* self_node);
 
 
 

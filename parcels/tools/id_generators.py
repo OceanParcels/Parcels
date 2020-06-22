@@ -3,6 +3,11 @@ import random   # could be python's random if parcels not active; can be parcel'
 import numpy as np
 import math
 
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+
 class IdGenerator:
     released_ids = []
     next_id = 0
@@ -57,7 +62,14 @@ class SpatioTemporalIdGenerator:
     def __init__(self):
         self.timebounds  = np.zeros(2, dtype=np.float64)
         self.depthbounds = np.zeros(2, dtype=np.float32)
-        self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+        self.local_ids = None
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            if mpi_rank == 0:
+                self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+        else:
+            self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
 
     def setTimeLine(self, min_time=0.0, max_time=1.0):
@@ -91,9 +103,74 @@ class SpatioTemporalIdGenerator:
         lat_index   = np.uint32(np.int32(lat_discrete)+90)
         depth_index = np.uint32(np.int32(depth_discrete))
         time_index  = np.uint32(np.int32(time_discrete))
+        if MPI:
+            id = self._distribute_next_id(lon_index, lat_index, depth_index, time_index)
+        else:
+            id = self._get_next_id(lon_index, lat_index, depth_index, time_index)
+        return id
+
+    def nextID(self, lon, lat, depth, time):
+        return self.getID(lon, lat, depth, time)
+
+    def releaseID(self, id):
+        full_bits = np.uint32(4294967295)
+        nil_bits  = np.int32(0)
+        spatiotemporal_id = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(full_bits), 32), np.int64(nil_bits)), np.int64(id))
+        spatiotemporal_id = np.uint32(np.right_shift(spatiotemporal_id, 32))
+        local_id          = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(nil_bits), 32), np.int64(full_bits)), np.int64(id))
+        local_id          = np.uint32(local_id)
+        if MPI:
+            self._gather_released_ids(spatiotemporal_id, local_id)
+        else:
+            self._release_id(spatiotemporal_id, local_id)
+
+    def __len__(self):
+        if MPI:
+            return self._length_()
+        else:
+            return np.sum(self.local_ids)+sum([len(entity) for entity in self.released_ids])
+
+    def _distribute_next_id(self, lat_index, lon_index, depth_index, time_index):
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        mpi_size = mpi_comm.Get_size()
+        snd_requested_id = np.zeros(mpi_size, dtype=np.bool)
+        rcv_requested_id = np.zeros(mpi_size, dtype=np.bool)
+        snd_requested_add = np.zeros((mpi_size, 4), dtype=np.uint32)
+        rcv_requested_add = np.zeros((mpi_size, 4), dtype=np.uint32)
+        return_id = np.array([np.iinfo(np.uint64).max, ] * mpi_size, dtype=np.uint64)
+        snd_requested_id[mpi_rank] = True
+        snd_requested_add[mpi_rank, :] = np.array([lon_index, lat_index, depth_index, time_index], dtype=np.uint32)
+        mpi_comm.Reduce(snd_requested_id, rcv_requested_id, op=MPI.MAX, root=0)
+        mpi_comm.Reduce(snd_requested_add, rcv_requested_add, op=MPI.MAX, root=0)
+        if mpi_rank == 0:
+            for i in range(mpi_size):
+                if rcv_requested_id[i] == True:
+                    return_id[i] = self._get_next_id(rcv_requested_add[i, 0], rcv_requested_add[i, 1], rcv_requested_add[i, 2], rcv_requested_add[i, 3])
+        mpi_comm.Bcast(return_id, root=0)
+        return return_id[mpi_rank]
+
+    def _gather_released_ids(self, spatiotemporal_id, local_id):
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        mpi_size = mpi_comm.Get_size()
+        snd_release_id = np.zeros(mpi_size, dtype=np.bool)
+        rcv_release_id = np.zeros(mpi_size, dtype=np.bool)
+        snd_release_add = np.zeros((mpi_size, 2), dtype=np.uint32)
+        rcv_release_add = np.zeros((mpi_size, 2), dtype=np.uint32)
+        snd_release_id[mpi_rank] = True
+        snd_release_add[mpi_rank, :] = np.array([spatiotemporal_id, local_id], dtype=np.uint32)
+        mpi_comm.Reduce(snd_release_id, rcv_release_id, op=MPI.MAX, root=0)
+        mpi_comm.Reduce(snd_release_add, rcv_release_add, op=MPI.MAX, root=0)
+        if mpi_rank == 0:
+            for i in range(mpi_size):
+                if rcv_release_id[i] == True:
+                    self._release_id(rcv_release_add[i, 0], rcv_release_add[i, 1])
+
+    def _get_next_id(self, lon_index, lat_index, depth_index, time_index):
         local_index = -1
         # id = np.bitwise_or(np.bitwise_or(np.bitwise_or(np.left_shift(lon_index, 23), np.left_shift(lat_index, 15)), np.left_shift(depth_index, 8)), time)
-        id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time
+        id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time_index
         if len(self.released_ids)>0 and (id in self.released_ids.keys()) and len(self.released_ids[id])>0:
             # mlist = self.released_ids[id]
             local_index = np.uint32(self.released_ids[id].pop())
@@ -108,20 +185,15 @@ class SpatioTemporalIdGenerator:
         id = np.uint64(id)
         return id
 
-    def nextID(self, lon, lat, depth, time):
-        return self.getID(lon, lat, depth, time)
-
-    def releaseID(self, id):
-        full_bits = np.uint32(4294967295)
-        nil_bits  = np.int32(0)
-        spatiotemporal_id = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(full_bits), 32), np.int64(nil_bits)), np.int64(id))
-        spatiotemporal_id = np.uint32(np.right_shift(spatiotemporal_id, 32))
-        local_id          = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(nil_bits), 32), np.int64(full_bits)), np.int64(id))
-        local_id          = np.uint32(local_id)
+    def _release_id(self, spatiotemporal_id, local_id):
         if spatiotemporal_id not in self.released_ids.keys():
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
 
-    def __len__(self):
-        return np.sum(self.local_ids)+sum([len(entity) for entity in self.released_ids])
-
+    def _length_(self):
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        alength = 0
+        if mpi_rank == 0:
+            alength = np.sum(self.local_ids)+sum([len(entity) for entity in self.released_ids])
+        return mpi_comm.bcast(alength, root=0)
