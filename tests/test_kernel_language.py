@@ -1,12 +1,12 @@
+import random as py_random
+#from parcels import random as parcels_random => this doesn't work, and we should not 'ghost' up which random module is used; the module shoudl really get a different name
+from parcels import rng as parcels_random
+import numpy as np
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode
 from parcels.particleset_vectorized import ParticleSet
 from parcels.kernel_vectorized import Kernel
 from parcels.kernels.seawaterdensity import polyTEOS10_bsq, UNESCO_Density
-from parcels import random as parcels_random
-from parcels.rng import parcels_random as pa_random
-import numpy as np
 import pytest
-import random as py_random
 from os import path
 import sys
 
@@ -244,11 +244,12 @@ def test_print(fieldset, mode, capfd):
 
 
 def random_series(npart, rngfunc, rngargs, mode):
-    random = parcels_random if mode == 'jit' else py_random
-    random.seed(1234)
-    func = getattr(random, rngfunc)
+    random_mod = parcels_random if mode == 'jit' else py_random
+    print(repr(random_mod))
+    random_mod.seed(1234)
+    func = getattr(random_mod, rngfunc)
     series = [func(*rngargs) for _ in range(npart)]
-    random.seed(1234)  # Reset the RNG seed
+    random_mod.seed(1234)  # Reset the RNG seed
     return series
 
 

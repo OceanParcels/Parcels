@@ -3,7 +3,6 @@ import numpy.ctypeslib as npct
 from time import time as ostime
 from os import path
 from os import remove
-from os import environ
 from sys import platform
 from ast import FunctionDef
 from hashlib import md5
@@ -96,7 +95,7 @@ class BaseKernel(object):
             self._lib = None
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
-        if path.isfile(self.lib_file):
+        if self.lib_file is not None and path.isfile(self.lib_file):
             [remove(s) for s in [self.dyn_srcs, self.lib_file, self.log_file]]
 
     def get_kernel_compile_files(self):
