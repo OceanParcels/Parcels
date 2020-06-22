@@ -1,7 +1,8 @@
 import inspect
-import re
 import math  # noga
 import random  # noga
+import re
+import time
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
@@ -19,7 +20,6 @@ except:
 
 from parcels.wrapping.code_generator import KernelGenerator
 from parcels.wrapping.code_generator import VectorizedLoopGenerator
-from parcels.tools import get_cache_dir
 from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError

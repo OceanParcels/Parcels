@@ -1,12 +1,13 @@
 import uuid
+import _ctypes
 from ctypes import c_float
 from ctypes import c_int
 from os import path
+from os import remove
+from sys import platform
 
 import numpy.ctypeslib as npct
 
-#from parcels.compiler import get_cache_dir
-#from parcels.compiler import GNUCompiler
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.wrapping import GNUCompiler
 from parcels.tools.loggers import logger
@@ -68,10 +69,33 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         self.ccode += self.fnct_normalvariate
         self.ccode += self.fnct_expovariate
         self.ccode += self.fnct_vonmisesvariate
+        self._loaded = False
+        self.compile()
+        self.load_lib()
 
+    def __del__(self):
+        self.unload_lib()
+        self.remove_lib()
 
-    @property
-    def lib(self, compiler=None):
+    def unload_lib(self):
+        # Unload the currently loaded dynamic linked library to be secure
+        if self._lib is not None and self._loaded:
+            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            del self._lib
+            self._lib = None
+            self._loaded = False
+
+    def load_lib(self):
+        self._lib = npct.load_library(self.lib_file, '.')
+        self._loaded = True
+
+    def remove_lib(self):
+        # If file already exists, pull new names. This is necessary on a Windows machine, because
+        # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
+        if path.isfile(self.lib_file):
+            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+
+    def compile(self, compiler=None):
         if self.src_file is None or self.lib_file is None or self.log_file is None:
             basename = 'parcels_random_%s' % uuid.uuid4()
             lib_filename = "lib" + basename
@@ -91,7 +115,14 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
                 f.write(self.ccode)
             ccompiler.compile(self.src_file, self.lib_file, self.log_file)
             logger.info("Compiled %s ==> %s" % ("random", self.lib_file))
-            self._lib = npct.load_library(self.lib_file, '.')
+
+    @property
+    def lib(self):
+        if self.src_file is None or self.lib_file is None or self.log_file is None:
+            self.compile()
+        if self._lib is None or not self._loaded:
+            self.load_lib()
+            # self._lib = npct.load_library(self.lib_file, '.')
         return self._lib
 
 
