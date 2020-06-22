@@ -3,7 +3,6 @@ import numpy.ctypeslib as npct
 from time import time as ostime
 from os import path
 from os import remove
-from os import environ
 from sys import platform
 from ast import FunctionDef
 from hashlib import md5
