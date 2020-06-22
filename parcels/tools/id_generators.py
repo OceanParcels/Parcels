@@ -143,7 +143,14 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         super(SpatioTemporalIdGenerator, self).__init__()
         self.timebounds = np.zeros(2, dtype=np.float64)
         self.depthbounds = np.zeros(2, dtype=np.float32)
-        self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+        self.local_ids = None
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            if mpi_rank == 0:
+                self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+        else:
+            self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._total_ids = 0
         self._recover_ids = False
@@ -227,6 +234,14 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         if spatiotemporal_id not in self.released_ids.keys():
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
+
+    def _length_(self):
+        mpi_comm = MPI.COMM_WORLD
+        mpi_rank = mpi_comm.Get_rank()
+        alength = 0
+        if mpi_rank == 0:
+            alength = np.sum(self.local_ids)+sum([len(entity) for entity in self.released_ids])
+        return mpi_comm.bcast(alength, root=0)
 
 
 class GenerateID_Service(BaseIdGenerator):
