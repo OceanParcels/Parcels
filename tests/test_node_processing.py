@@ -63,8 +63,8 @@ def test_pset_custom_ptype(fieldset, mode, npart=100):
             self.n = 2
 
     pset = ParticleSet(fieldset, pclass=TestParticle,
-                       lon=np.linspace(0, 1, npart),
-                       lat=np.linspace(1, 0, npart))
+                       lon=np.linspace(0, 1, npart, dtype=np.float32),
+                       lat=np.linspace(1, 0, npart, dtype=np.float32))
     assert(pset.size == 100)
     assert np.allclose([n.data.p - 0.33 for n in pset.data], np.zeros(npart), rtol=1e-12)
     assert np.allclose([n.data.n - 2 for n in pset.data], np.zeros(npart), rtol=1e-12)
@@ -75,17 +75,40 @@ def test_pset_add_explicit(fieldset, mode, npart=100):
     nclass = Node
     if mode == 'jit':
         nclass = NodeJIT
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float64)
+    lat = np.linspace(1, 0, npart, dtype=np.float64)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=[], lat=[], lonlatdepth_dtype=np.float64)
     index_mapping = {}
     for i in range(0, npart):
-        index = idgen.getID(lon[i], lat[i], 0, 0)
-        index_mapping[i] = index
-        pdata = ptype[mode](lon[i], lat[i], pid=index, fieldset=fieldset)
-        ndata = nclass(id=index, data=pdata)
+        index = idgen.total_length
+        id = idgen.getID(lon[i], lat[i], 0., 0.)
+        index_mapping[i] = id
+        pdata = ptype[mode](lon[i], lat[i], pid=id, fieldset=fieldset, index=index)
+        ndata = nclass(id=id, data=pdata)
         pset.add(ndata)
     assert(pset.size == 100)
+    # ==== of course this is not working as the order in pset.data and lon is not the same ==== #
+    # assert np.allclose([n.data.lon for n in pset.data], lon, rtol=1e-12)
+    assert np.allclose([pset.get_by_id(index_mapping[i]).data.lon for i in index_mapping.keys()], lon, rtol=1e-12)
+    assert np.allclose([pset.get_by_id(index_mapping[i]).data.lat for i in index_mapping.keys()], lat, rtol=1e-12)
+
+
+def run_test_pset_add_explicit(fset, mode, npart=100):
+    nclass = Node
+    if mode == 'jit':
+        nclass = NodeJIT
+    lon = np.linspace(0, 1, npart, dtype=np.float64)
+    lat = np.linspace(1, 0, npart, dtype=np.float64)
+    pset = ParticleSet(fieldset=fset, pclass=ptype[mode], lon=lon, lat=lat, lonlatdepth_dtype=np.float64)
+    index_mapping = {}
+    for i in range(0, npart):
+        index = idgen.total_length
+        id = idgen.getID(lon[i], lat[i], None, None)
+        index_mapping[i] = id
+        pdata = ptype[mode](lon[i], lat[i], pid=id, fieldset=fset, index=index)
+        ndata = nclass(id=id, data=pdata)
+        pset.add(ndata)
+    assert(pset.size == 2 * npart)
     # ==== of course this is not working as the order in pset.data and lon is not the same ==== #
     # assert np.allclose([n.data.lon for n in pset.data], lon, rtol=1e-12)
     assert np.allclose([pset.get_by_id(index_mapping[i]).data.lon for i in index_mapping.keys()], lon, rtol=1e-12)
@@ -97,13 +120,19 @@ def test_pset_node_execute(fieldset, mode, npart=100):
     nclass = Node
     if mode == 'jit':
         nclass = NodeJIT
-    lon = np.linspace(0, 1, npart)
-    lat = np.linspace(1, 0, npart)
+    lon = np.linspace(0, 1, npart, dtype=np.float64)
+    lat = np.linspace(1, 0, npart, dtype=np.float64)
     pset = ParticleSet(fieldset=fieldset, lon=[], lat=[], pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for i in range(npart):
-        index = idgen.getID(lon[i], lat[i], 0, 0)
+        index = idgen.getID(lon[i], lat[i], 0., 0.)
         pdata = ptype[mode](lon[i], lat[i], pid=index, fieldset=fieldset)
         ndata = nclass(id=index, data=pdata)
         pset.add(ndata)
     pset.execute(AdvectionRK4, runtime=0., dt=10.)
     assert(pset.size == 100)
+
+
+if __name__ == '__main__':
+    fset = fieldset()
+    run_test_pset_add_explicit(fset, 'jit')
+    run_test_pset_add_explicit(fset, 'scipy')

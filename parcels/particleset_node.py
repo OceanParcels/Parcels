@@ -162,7 +162,8 @@ class ParticleSet(object):
         assert self._lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
         JITParticle.set_lonlatdepth_dtype(self._lonlatdepth_dtype)
-        pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + pclass.lastID
+        # pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + pclass.lastID
+        pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + idgen.total_length
 
         self._pclass = pclass
         self._kclass = Kernel
@@ -185,7 +186,7 @@ class ParticleSet(object):
 
         if depth is None:
             mindepth, _ = self.fieldset.gridset.dimrange('depth')
-            depth = np.ones(lon.size) * mindepth
+            depth = np.ones(lon.size, dtype=self._lonlatdepth_dtype) * mindepth
         else:
             depth = self._convert_to_array_(depth)
         assert lon.size == lat.size and lon.size == depth.size, (
@@ -225,6 +226,7 @@ class ParticleSet(object):
                             _pu_centers = kmeans.cluster_centers_
                         else:
                             _partitions = None
+                            _pu_centers = None
                         _partitions = mpi_comm.bcast(_partitions, root=0)
                         self._pu_centers = mpi_comm.bcast(_pu_centers, root=0)
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
@@ -258,18 +260,21 @@ class ParticleSet(object):
         # fill / initialize / populate the list
         if lon is not None and lat is not None:
             for i in range(lon.size):
-                index = None
+                pdata_id = None
+                index = -1
                 if pid is not None and (isinstance(pid, list) or isinstance(pid, np.ndarray)):
-                    index = pid[index]
+                    index = pid[i]
+                    pdata_id = pid[i]
                 else:
-                    index = idgen.nextID(lon[i], lat[i], depth[i], time[i])
-                pdata = self._pclass(lon[i], lat[i], pid=index, fieldset=self._fieldset, depth=depth[i], time=time[i])
+                    index = idgen.total_length
+                    pdata_id = idgen.nextID(lon[i], lat[i], depth[i], time[i])
+                pdata = self._pclass(lon[i], lat[i], pid=pdata_id, fieldset=self._fieldset, depth=depth[i], time=time[i], index=index)
                 # Set other Variables if provided
                 for kwvar in kwargs:
                     if not hasattr(pdata, kwvar):
                         raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(pdata, kwvar, kwargs[kwvar][i])
-                ndata = self._nclass(id=index, data=pdata)
+                ndata = self._nclass(id=pdata_id, data=pdata)
                 self._nodes.add(ndata)
 
 
@@ -532,8 +537,8 @@ class ParticleSet(object):
             if (prev_upper == upper and prev_lower == lower):
                 _search_done = True
             current_node = self._nodes[pos]
-            if current_node.id == id:
-                _found = True
+        if current_node.id == id:
+            _found = True
         if _found:
             return current_node
         else:
@@ -615,9 +620,11 @@ class ParticleSet(object):
                 self._nodes.add(pdata)
                 index = self._nodes.bisect_right(pdata)
             else:
-                index = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
-                pdata.id = index
-                node = NodeJIT(id=index, data=pdata)
+                index = idgen.total_length
+                pid = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
+                pdata.id = pid
+                pdata.index = index
+                node = NodeJIT(id=pid, data=pdata)
                 self._nodes.add(node)
                 index = self._nodes.bisect_right(node)
             if index >= 0:
@@ -900,10 +907,11 @@ class ParticleSet(object):
                     lat = self.rparam.get_latitude(add_iter)
                     pdepth = self.rparam.get_depth_value(add_iter)
                     ptime = time[add_iter]
-                    pindex = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                    pdata = JITParticle(lon=lon, lat=lat, pid=pindex, fieldset=self._fieldset, depth=pdepth, time=ptime)
+                    pindex = idgen.total_length
+                    pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                    pdata = JITParticle(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                     pdata.dt = dt
-                    self.add(self._nclass(id=pindex, data=pdata))
+                    self.add(self._nclass(id=pid, data=pdata))
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_output) < tol:
                 if output_file is not None:
