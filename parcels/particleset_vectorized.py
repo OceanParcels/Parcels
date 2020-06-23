@@ -19,6 +19,7 @@ from parcels.kernel_vectorized import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile_vectorized import ParticleFile
+# from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
