@@ -192,10 +192,11 @@ class ScipyParticle(_Particle):
     time = Variable('time', dtype=np.float64, initial=np.nan)
     # id = Variable('id', dtype=np.int32)
     id = Variable('id', dtype=np.uint64)
+    index = Variable('index', dtype=np.int32)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
 
-    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., dt=None, cptr=None):
+    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., dt=None, cptr=None, index=-1):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
@@ -205,6 +206,7 @@ class ScipyParticle(_Particle):
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
         type(self).dt.initial = dt
+        type(self).index.initial = index
         super(ScipyParticle, self).__init__()
         self._next_dt = None
 
