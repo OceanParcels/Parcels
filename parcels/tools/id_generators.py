@@ -6,7 +6,12 @@ from threading import Thread
 from .message_service import mpi_execute_requested_messages as executor
 # from os import getpid
 import numpy as np
+from os import path
+from os import remove
+from time import sleep
 import math
+from parcels.tools import get_cache_dir
+import pickle
 
 try:
     from mpi4py import MPI
@@ -143,14 +148,29 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         super(SpatioTemporalIdGenerator, self).__init__()
         self.timebounds = np.zeros(2, dtype=np.float64)
         self.depthbounds = np.zeros(2, dtype=np.float32)
-        self.local_ids = None
+        self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+        # self.local_ids = None
+        # if MPI:
+        #     mpi_comm = MPI.COMM_WORLD
+        #     mpi_rank = mpi_comm.Get_rank()
+        #     if mpi_rank == 0:
+        #         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+        # else:
+        #     self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
-        else:
-            self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
+                access_flag_file = path.join( get_cache_dir(), 'id_access' )
+                occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
+                idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
+                with open(access_flag_file, 'wb') as f_access:
+                    f_access.write(bytearray([True,]))
+                    with open(idreleases_file, 'wb') as f_idrel:
+                        pickle.dump(self.released_ids, f_idrel)
+                    # self.local_ids.tofile(occupancy_file)
+                    np.save(occupancy_file, self.local_ids)
+                remove(access_flag_file)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._total_ids = 0
         self._recover_ids = False
@@ -211,6 +231,29 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def get_total_length(self):
         return self._total_ids
+
+    def _gather_released_ids_by_file(self, spatiotemporal_id, local_id):
+
+        return_id = None
+        access_flag_file = path.join( get_cache_dir(), 'id_access' )
+        occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
+        idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
+        while path.exists(access_flag_file):
+            sleep(0.1)
+        with open(access_flag_file, 'wb') as f_access:
+            f_access.write(bytearray([True,]))
+            # self.local_ids = np.fromfile(occupancy_file, dtype=np.uint32)
+            self.local_ids = np.load(occupancy_file)
+            with open(idreleases_file, 'rb') as f_idrel:
+                self.released_ids = pickle.load( f_idrel )
+            self._release_id(spatiotemporal_id, local_id)
+            with open(idreleases_file, 'wb') as f_idrel:
+                pickle.dump(self.released_ids, f_idrel)
+            # self.local_ids.tofile(occupancy_file)
+            np.save(occupancy_file, self.local_ids)
+        remove(access_flag_file)
+
+        return return_id
 
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index):
         local_index = -1
