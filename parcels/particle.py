@@ -204,7 +204,10 @@ class ScipyParticle(_Particle):
         type(self).depth.initial = depth
         type(self).time.initial = time
         type(self).id.initial = pid
-        _Particle.lastID = max(_Particle.lastID, pid)
+        if isinstance(pid, int):
+            _Particle.lastID = max(_Particle.lastID, pid)
+        else:
+            _Particle.lastID = max(_Particle.lastID, index)
         type(self).dt.initial = dt
         type(self).index.initial = index
         super(ScipyParticle, self).__init__()

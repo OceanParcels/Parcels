@@ -140,7 +140,8 @@ node_c_interface = None
 class NodeJIT(Node, ctypes.Structure):
     _fields_ = [('_c_prev_p', ctypes.c_void_p),
                 ('_c_next_p', ctypes.c_void_p),
-                ('_c_data_p', ctypes.c_void_p)]
+                ('_c_data_p', ctypes.c_void_p),
+                ('_c_pu_affinity', ctypes.c_int)]
 
     init_node_c = None
     set_prev_ptr_c = None
@@ -163,9 +164,12 @@ class NodeJIT(Node, ctypes.Structure):
         func_params.append({"name": 'set_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]})
         func_params.append({"name": 'set_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]})
         func_params.append({"name": 'set_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_void_p]})
+        func_params.append({"name": 'set_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_int]})
+        func_params.append({"name": 'get_pu_affinity', "return": ctypes.c_int, "arguments": [ctypes.POINTER(NodeJIT)]})
         func_params.append({"name": 'reset_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
         func_params.append({"name": 'reset_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
         func_params.append({"name": 'reset_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
+        func_params.append({"name": 'reset_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
         c_funcs = node_c_interface.load_functions(func_params)
         self.init_node_c = c_funcs['init_node']
         self.set_prev_ptr_c = c_funcs['set_prev_ptr']
