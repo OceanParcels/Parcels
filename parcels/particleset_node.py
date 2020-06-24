@@ -164,6 +164,8 @@ class ParticleSet(object):
         JITParticle.set_lonlatdepth_dtype(self._lonlatdepth_dtype)
         # pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + pclass.lastID
         pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + idgen.total_length
+        if pid is not None:
+            logger.warn("PID is {}".format(pid))
 
         self._pclass = pclass
         self._kclass = Kernel
