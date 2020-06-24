@@ -30,7 +30,9 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
             test_result = msg.test(status=msg_status)
 
         request_package = test_result[1]
+            # logger.info("package received: {}".format(request_package))
         assert isinstance(request_package, dict)
+            # dst = int(request_package["src_rank"])
 
         # logger.info("Package: {}".format(request_package))
         func_name = request_package["func_name"]
@@ -59,4 +61,7 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
                     res = call_func()
             if res is not None:
                 response_package = {"result": res, "src_rank": mpi_rank}
+                # logger.info("sending message: {}".format(response_package))
+                # msg = mpi_comm.isend(response_package, dest=dst, tag=response_tag)
+                # msg.wait()
                 mpi_comm.send(response_package, dest=msg_status.Get_source(), tag=response_tag)

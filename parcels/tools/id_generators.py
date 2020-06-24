@@ -157,20 +157,21 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         #         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         # else:
         #     self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                access_flag_file = path.join( get_cache_dir(), 'id_access' )
-                occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
-                idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
-                with open(access_flag_file, 'wb') as f_access:
-                    f_access.write(bytearray([True,]))
-                    with open(idreleases_file, 'wb') as f_idrel:
-                        pickle.dump(self.released_ids, f_idrel)
-                    # self.local_ids.tofile(occupancy_file)
-                    np.save(occupancy_file, self.local_ids)
-                remove(access_flag_file)
+
+        # if MPI:
+        #     mpi_comm = MPI.COMM_WORLD
+        #     mpi_rank = mpi_comm.Get_rank()
+        #     if mpi_rank == 0:
+        #         access_flag_file = path.join( get_cache_dir(), 'id_access' )
+        #         occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
+        #         idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
+        #         with open(access_flag_file, 'wb') as f_access:
+        #             f_access.write(bytearray([True,]))
+        #             with open(idreleases_file, 'wb') as f_idrel:
+        #                 pickle.dump(self.released_ids, f_idrel)
+        #             # self.local_ids.tofile(occupancy_file)
+        #             np.save(occupancy_file, self.local_ids)
+        #         remove(access_flag_file)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._total_ids = 0
         self._recover_ids = False
@@ -228,6 +229,10 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def get_length(self):
         return self.__len__()
+
+    @property
+    def total_length(self):
+        return self._total_ids
 
     def get_total_length(self):
         return self._total_ids
