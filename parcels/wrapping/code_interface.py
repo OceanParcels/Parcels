@@ -7,6 +7,11 @@ from parcels.tools import get_cache_dir, get_package_dir
 from .code_compiler import *
 from parcels.tools.loggers import logger
 
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+
 __all__ = ['LibraryRegisterC', 'InterfaceC']
 
 class LibraryRegisterC:
@@ -73,6 +78,9 @@ class InterfaceC:
         if lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
             lib_path = os.path.join(lib_pathdir, lib_pathfile)
+        if MPI and MPI.COMM_WORLD.Get_size() > 1:
+            lib_pathfile = "%s_%d" % (lib_pathfile, MPI.COMM_WORLD.Get_rank())
+            lib_path = os.path.join(lib_pathdir, lib_pathfile)
         if isinstance(src_pathfile, list):
             self.src_file = []
             if isinstance(src_dir, list):
@@ -115,7 +123,7 @@ class InterfaceC:
 
     def cleanup_files(self):
         if os.path.isfile(self.lib_file):
-            [os.remove(s) for s in [self.lib_file, self.log_file]]
+            [os.remove(s) for s in [self.lib_file, self.log_file] if os._exists(s)]
 
     def unload_library(self):
         if self.libc is not None and self.compiled and self.loaded:
