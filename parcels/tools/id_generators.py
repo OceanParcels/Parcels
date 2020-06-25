@@ -241,6 +241,9 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         local_index = -1
         # id = np.bitwise_or(np.bitwise_or(np.bitwise_or(np.left_shift(lon_index, 23), np.left_shift(lat_index, 15)), np.left_shift(depth_index, 8)), time)
         id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time_index
+        # id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time
+        # == print("requtested indices: ({}, {}, {}, {})".format(lon_index, lat_index, depth_index, time_index)) == #
+        # == print("spatial id: {}".format(id)) == #
         if len(self.released_ids) > 0 and (id in self.released_ids.keys()) and len(self.released_ids[id]) > 0:
             # mlist = self.released_ids[id]
             local_index = np.uint32(self.released_ids[id].pop())
@@ -284,9 +287,19 @@ class GenerateID_Service(BaseIdGenerator):
                 self._use_subprocess = False
             else:
                 self._serverrank = mpi_size-1
+                # self._worker_node, self._service_node = Pipe()
+                # service_bundle = mpi_comm.gather(self._service_node, root=0)
                 if mpi_rank == self._serverrank:
+                    # self._service_process = Process(target=executor, name="IdService", args=(service_bundle, base_generator_obj), daemon=True)
+                    # self._service_process.start()
+                    # print("Starting ID service process")
+                    # logger.info("Starting ID service process")
                     self._service_process = Thread(target=executor, name="IdService", args=(base_generator_obj, self._request_tag, self._response_tag), daemon=True)
+                    # self._service_process.daemon = True
                     self._service_process.start()
+                    # executor(base_generator_obj, self._request_tag, self._response_tag)
+                # mpi_comm.Barrier()
+                # logger.info("worker - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
                 self._subscribe_()
         else:
             self._use_subprocess = False
@@ -295,7 +308,13 @@ class GenerateID_Service(BaseIdGenerator):
             self._service_process = base_generator_obj()
 
     def __del__(self):
+        # if self._worker_node is not None:
+        #     self._worker_node.close()
+        # if self._service_node is not None:
+        #     self._service_node.close()
         self._abort_()
+        # if self._service_process is not None:
+        #     self._service_process.join()
 
     def _subscribe_(self):
         if MPI and self._use_subprocess:
@@ -358,6 +377,10 @@ class GenerateID_Service(BaseIdGenerator):
             data_package["args"] = 4
             data_package["argv"] = [lon, lat, depth, time]
             data_package["src_rank"] = mpi_rank
+            # msg = mpi_comm.isend(data_package, dest=self._serverrank, tag=5)
+            # msg.wait()
+            # logger.info("package sending: {}".format(data_package))
+            # logger.info("Worker - snd.: {} - (srv. rank: {}; snd. rank: {}; pkg. rank: {}".format(data_package["func_name"], self._serverrank, mpi_rank, data_package["src_rank"]))
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
             data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
             return int(data["result"])
