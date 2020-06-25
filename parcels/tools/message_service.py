@@ -20,16 +20,20 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
     requester_obj = exec_class()
     mpi_comm = MPI.COMM_WORLD
     mpi_rank = mpi_comm.Get_rank()
+    # logger.info("service - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
     _subscribed = {}
     _running = True
     while _running:
         msg_status = MPI.Status()
         msg = mpi_comm.irecv(source=MPI.ANY_SOURCE, tag=request_tag)
         test_result = msg.test(status=msg_status)
+        # while not (isinstance(test_result, tuple) or isinstance(test_result, list)) or ((test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict))):
+        # while (test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict)):
         while (not test_result[0]) or (test_result[0] and not isinstance(test_result[1], dict)):
             test_result = msg.test(status=msg_status)
 
         request_package = test_result[1]
+        # logger.info("ID serv. - recv.: {} - (srv. rank: {}; snd. rank: {}; pkg. rank: {}".format(request_package["func_name"], mpi_rank, msg_status.Get_source(), request_package["src_rank"]))
         assert isinstance(request_package, dict)
 
         # logger.info("Package: {}".format(request_package))
@@ -40,13 +44,15 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
             argv = request_package["argv"]
 
         if func_name == "thread_subscribe":
+            # logger.info("'subscribe' message received.")
             _subscribed[msg_status.Get_source()] = True
         elif func_name == "thread_abort":
+            # logger.info("'abort' message received (src: {}).".format(msg_status.Get_source()))
             _subscribed[msg_status.Get_source()] = False
+            # logger.info("Subscribers: {}".format( _subscribed ))
             _running = False
             for flag in _subscribed:
                 _running |= flag
-            # logger.warn("Subscribed: {}".format(_subscribed))
             if not _running:
                 break
         else:
@@ -63,3 +69,4 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
                 # msg = mpi_comm.isend(response_package, dest=dst, tag=response_tag)
                 # msg.wait()
                 mpi_comm.send(response_package, dest=msg_status.Get_source(), tag=response_tag)
+    # logger.info("ABORTED ID Service")
