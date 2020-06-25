@@ -164,8 +164,6 @@ class ParticleSet(object):
         JITParticle.set_lonlatdepth_dtype(self._lonlatdepth_dtype)
         # pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + pclass.lastID
         pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + idgen.total_length
-        if pid is not None:
-            logger.warn("PID is {}".format(pid))
 
         self._pclass = pclass
         self._kclass = Kernel
@@ -229,11 +227,14 @@ class ParticleSet(object):
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
                             _partitions = kmeans.labels_
                             _pu_centers = kmeans.cluster_centers_
+                        #mpi_comm.Barrier()
                         _partitions = mpi_comm.bcast(_partitions, root=0)
                         _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
                         self._pu_centers = _pu_centers
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
+                    # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
+                    logger.info("MPI proc.: {} - # pu_centers: {}; # part. on PU: {}".format(mpi_rank, len(self._pu_centers), np.sum(_partitions == mpi_rank)))
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]
                     time = time[_partitions == mpi_rank]
@@ -280,6 +281,8 @@ class ParticleSet(object):
                         raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(pdata, kwvar, kwargs[kwvar][i])
                 ndata = self._nclass(id=pdata_id, data=pdata)
+                # if MPI:
+                #     logger.info("Adding {} ... ({} of {}; rank: {})".format(ndata, i+1, lon.size, mpi_rank))
                 self._nodes.add(ndata)
 
     @classmethod
