@@ -96,7 +96,8 @@ class BaseKernel(object):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if self.lib_file is not None and path.isfile(self.lib_file):
-            [remove(s) for s in [self.dyn_srcs, self.lib_file, self.log_file]]
+            [remove(s) for s in [self.lib_file, ]]
+            [remove(s) for s in [self.dyn_srcs, self.log_file,] if self.delete_cfiles]
 
     def get_kernel_compile_files(self):
         """
@@ -129,7 +130,7 @@ class BaseKernel(object):
         with open(self.dyn_srcs, 'w') as f:
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
-        # logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+        logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
