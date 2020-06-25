@@ -1,31 +1,84 @@
 import random   # could be python's random if parcels not active; can be parcel's random; can be numpy's random
+from abc import ABC, abstractmethod
 # from numpy import random as nprandom
+# from multiprocessing import Process
+from threading import Thread
+from .message_service import mpi_execute_requested_messages as executor
+# from os import getpid
 import numpy as np
-from os import path
-from os import remove
-from time import sleep
-import math
-from parcels.tools import get_cache_dir
-import pickle
 
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-class IdGenerator:
+class BaseIdGenerator(ABC):
+    _total_ids = 0
+    def __init__(self):
+        self._total_ids = 0
+
+    def setTimeLine(self, min_time, max_time):
+        pass
+
+    def setDepthLimits(self, min_depth, max_depth):
+        pass
+
+    def preGenerateIDs(self, high_value):
+        pass
+
+    def permuteIDs(self):
+        pass
+
+    def close(self):
+        pass
+
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @property
+    def total_length(self):
+        return self._total_ids
+
+    @abstractmethod
+    def getID(self, lon, lat, depth, time):
+        pass
+
+    def nextID(self, lon, lat, depth, time):
+        return self.getID(lon, lat, depth, time)
+
+    @abstractmethod
+    def releaseID(self, id):
+        pass
+
+    @abstractmethod
+    def get_length(self):
+        return self.__len__()
+
+    @abstractmethod
+    def get_total_length(self):
+        return self._total_ids
+
+
+class SequentialIdGenerator(BaseIdGenerator):
     released_ids = []
     next_id = 0
 
     def __init__(self):
+        super(SequentialIdGenerator, self).__init__()
         self.released_ids = []
         self.next_id = np.uint64(0)
 
-    def nextID(self):
+    def __del__(self):
+        if len(self.released_ids) > 0:
+            del self.released_ids
+
+    def getID(self, lon, lat, depth, time):
         n = len(self.released_ids)
         if n == 0:
             result = self.next_id
             self.next_id += 1
+            self._total_ids += 1
             return np.uint64(result)
         else:
             result = self.released_ids.pop(n-1)
@@ -37,8 +90,6 @@ class IdGenerator:
     def preGenerateIDs(self, high_value):
         if len(self.released_ids) > 0:
             self.released_ids.clear()
-        #for i in range(0, high_value):
-        #    self.released_ids.append(i)
         self.released_ids = [i for i in range(0, high_value)]
         self.next_id = high_value
 
@@ -49,15 +100,16 @@ class IdGenerator:
             id = self.released_ids.pop(index)
             self.released_ids.append(id)
 
-        #for iter in range(0, 2*n):
-        #    index = random.randint(0, n)
-        #    id = self.released_ids.pop(index)
-        #    self.released_ids.append(id)
-
     def __len__(self):
         return self.next_id
 
-class SpatioTemporalIdGenerator:
+    def get_length(self):
+        return self.__len__()
+
+    def get_total_length(self):
+        return self._total_ids
+
+class SpatioTemporalIdGenerator(BaseIdGenerator):
     """Generates 64-bit IDs"""
     timebounds  = np.zeros(2, dtype=np.float64)
     depthbounds = np.zeros(2, dtype=np.float32)
@@ -66,43 +118,18 @@ class SpatioTemporalIdGenerator:
     _total_ids = 0
 
     def __init__(self):
+        super(SpatioTemporalIdGenerator, self).__init__()
         self.timebounds  = np.zeros(2, dtype=np.float64)
         self.depthbounds = np.zeros(2, dtype=np.float32)
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
-        # self.local_ids = None
-        # if MPI:
-        #     mpi_comm = MPI.COMM_WORLD
-        #     mpi_rank = mpi_comm.Get_rank()
-        #     if mpi_rank == 0:
-        #         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
-        # else:
-        #     self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
-
-        # if MPI:
-        #     mpi_comm = MPI.COMM_WORLD
-        #     mpi_rank = mpi_comm.Get_rank()
-        #     if mpi_rank == 0:
-        #         access_flag_file = path.join( get_cache_dir(), 'id_access' )
-        #         occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
-        #         idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
-        #         with open(access_flag_file, 'wb') as f_access:
-        #             f_access.write(bytearray([True,]))
-        #             with open(idreleases_file, 'wb') as f_idrel:
-        #                 pickle.dump(self.released_ids, f_idrel)
-        #             # self.local_ids.tofile(occupancy_file)
-        #             np.save(occupancy_file, self.local_ids)
-        #         remove(access_flag_file)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._total_ids = 0
 
     def __del__(self):
-        # occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
-        # idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
-        # if path.exists(occupancy_file):
-        #     remove(occupancy_file)
-        # if path.exists(idreleases_file):
-        #     remove(idreleases_file)
-        pass
+        if self.local_ids is not None:
+            del self.local_ids
+        if len(self.released_ids) > 0:
+            del self.released_ids
 
     def setTimeLine(self, min_time=0.0, max_time=1.0):
         self.timebounds = np.array([min_time, max_time], dtype=np.float64)
@@ -121,15 +148,11 @@ class SpatioTemporalIdGenerator:
             depth = self.depthbounds[0]
         if time is None:
             time = self.timebounds[0]
-        # lon_discrete = np.float32(np.int32(lon))
         lon_discrete = np.int32(lon)
-        # lat_discrete = np.float32(np.int32(lat))
         lat_discrete = np.int32(lat)
         depth_discrete = (depth-self.depthbounds[0])/(self.depthbounds[1]-self.depthbounds[0])
-        # depth_discrete = np.float32(np.int32(128.0*depth_discrete))
         depth_discrete = np.int32(127.0 * depth_discrete)
         time_discrete = (time-self.timebounds[0])/(self.timebounds[1]-self.timebounds[0])
-        # time_discrete = np.float32(np.int32(256.0*time_discrete))
         time_discrete = np.int32(255.0 * time_discrete)
         lon_index   = np.uint32(np.int32(lon_discrete)+180)
         lat_index   = np.uint32(np.int32(lat_discrete)+90)
@@ -146,8 +169,8 @@ class SpatioTemporalIdGenerator:
         nil_bits  = np.int32(0)
         spatiotemporal_id = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(full_bits), 32), np.int64(nil_bits)), np.int64(id))
         spatiotemporal_id = np.uint32(np.right_shift(spatiotemporal_id, 32))
-        local_id          = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(nil_bits), 32), np.int64(full_bits)), np.int64(id))
-        local_id          = np.uint32(local_id)
+        local_id = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(nil_bits), 32), np.int64(full_bits)), np.int64(id))
+        local_id = np.uint32(local_id)
         self._release_id(spatiotemporal_id, local_id)
 
     def __len__(self):
@@ -156,22 +179,13 @@ class SpatioTemporalIdGenerator:
     def get_length(self):
         return self.__len__()
 
-    @property
-    def total_length(self):
-        return self._total_ids
-
     def get_total_length(self):
         return self._total_ids
 
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index):
         local_index = -1
-        # id = np.bitwise_or(np.bitwise_or(np.bitwise_or(np.left_shift(lon_index, 23), np.left_shift(lat_index, 15)), np.left_shift(depth_index, 8)), time)
         id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time_index
-        # id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time
-        # == print("requtested indices: ({}, {}, {}, {})".format(lon_index, lat_index, depth_index, time_index)) == #
-        # == print("spatial id: {}".format(id)) == #
         if len(self.released_ids)>0 and (id in self.released_ids.keys()) and len(self.released_ids[id])>0:
-            # mlist = self.released_ids[id]
             local_index = np.uint32(self.released_ids[id].pop())
             if len(self.released_ids[id])<= 0:
                 del self.released_ids[id]
@@ -180,7 +194,6 @@ class SpatioTemporalIdGenerator:
             self.local_ids[lon_index, lat_index, depth_index, time_index] += 1
         id = np.int64(id)
         id = np.bitwise_or(np.left_shift(id, 32), np.int64(local_index))
-        #id = np.left_shift(id, 32) + np.uint64(local_index)
         id = np.uint64(id)
         self._total_ids += 1
         return id
@@ -190,23 +203,16 @@ class SpatioTemporalIdGenerator:
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
 
-
-#from multiprocessing import Process, Pipe
-from threading import Thread
-from multiprocessing import Process
-# from multiprocessing.connection import Connection
-from .message_service import mpi_execute_requested_messages as executor
-from sys import stdout
-from os import getpid
-from parcels.tools import logger
-
-class GenerateID_Service(object):
+class GenerateID_Service(BaseIdGenerator):
     _request_tag = 5
     _response_tag = 6
 
     def __init__(self, base_generator_obj):
+        super(GenerateID_Service, self).__init__()
         self._service_process = None
         self._serverrank = 0
+        self._request_tag = 5
+        self._response_tag = 6
         self._use_subprocess = True
 
         if MPI:
@@ -217,19 +223,9 @@ class GenerateID_Service(object):
                 self._use_subprocess = False
             else:
                 self._serverrank = mpi_size-1
-                # self._worker_node, self._service_node = Pipe()
-                # service_bundle = mpi_comm.gather(self._service_node, root=0)
                 if mpi_rank == self._serverrank:
-                    # self._service_process = Process(target=executor, name="IdService", args=(service_bundle, base_generator_obj), daemon=True)
-                    # self._service_process.start()
-                    # print("Starting ID service process")
-                    logger.info("Starting ID service process")
-                    self._service_process = Thread(target=executor, name="IdService", args=(base_generator_obj, self._request_tag, self._response_tag), daemon=True) #
-                    # self._service_process.daemon = True
+                    self._service_process = Thread(target=executor, name="IdService", args=(base_generator_obj, self._request_tag, self._response_tag), daemon=True)
                     self._service_process.start()
-                    # executor(base_generator_obj, self._request_tag, self._response_tag)
-                # mpi_comm.Barrier()
-                logger.info("worker - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
                 self._subscribe_()
         else:
             self._use_subprocess = False
@@ -239,20 +235,14 @@ class GenerateID_Service(object):
 
 
     def __del__(self):
-        # if self._worker_node is not None:
-        #     self._worker_node.close()
-        # if self._service_node is not None:
-        #     self._service_node.close()
         self._abort_()
-        # if self._service_process is not None:
-        #     self._service_process.join()
 
     def _subscribe_(self):
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             data_package = {}
-            data_package["func_name"] = "subscribe"
+            data_package["func_name"] = "thread_subscribe"
             data_package["args"] = 0
             data_package["src_rank"] = mpi_rank
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
@@ -262,7 +252,7 @@ class GenerateID_Service(object):
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             data_package = {}
-            data_package["func_name"] = "abort"
+            data_package["func_name"] = "thread_abort"
             data_package["args"] = 0
             data_package["src_rank"] = mpi_rank
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
@@ -280,23 +270,7 @@ class GenerateID_Service(object):
                 data_package["args"] = 2
                 data_package["argv"] = [min_time, max_time]
                 data_package["src_rank"] = mpi_rank
-                # msg = mpi_comm.isend(data_package, dest=self._serverrank, tag=5)
-                # msg.wait()
                 mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
-                # msg = mpi_comm.irecv(source=self._serverrank, tag=6)
-                # data = msg.wait()
-                # print(data)
-                # stdout.write("{}\n".format(data))
-
-            # if mpi_rank == 0:
-            #     data_package = {}
-            #     data_package["func_name"] = "setTimeLine"
-            #     data_package["args"] = 2
-            #     data_package["argv"] = [min_time, max_time]
-            #     self._worker_node.send(data_package["func_name"])
-            #     self._worker_node.send(data_package["args"])
-            #     self._worker_node.send(data_package["argv"])
-            #     self._worker_node.send(self._cr_sequence)
         else:
             self._service_process.setTimeLine(min_time, max_time)
 
@@ -310,23 +284,7 @@ class GenerateID_Service(object):
                 data_package["args"] = 2
                 data_package["argv"] = [min_depth, max_depth]
                 data_package["src_rank"] = mpi_rank
-                # msg = mpi_comm.isend(data_package, dest=self._serverrank, tag=5)
-                # msg.wait()
                 mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
-                # msg = mpi_comm.irecv(source=self._serverrank, tag=6)
-                # data = msg.wait()
-                # print(data)
-                # stdout.write("{}\n".format(data))
-
-            # if mpi_rank == 0:
-            #     data_package = {}
-            #     data_package["func_name"] = "setDepthLimits"
-            #     data_package["args"] = 2
-            #     data_package["argv"] = [min_depth, max_depth]
-            #     self._worker_node.send(data_package["func_name"])
-            #     self._worker_node.send(data_package["args"])
-            #     self._worker_node.send(data_package["argv"])
-            #     self._worker_node.send(self._cr_sequence)
         else:
             self._service_process.setDepthLimits(min_depth, max_depth)
 
@@ -340,33 +298,9 @@ class GenerateID_Service(object):
             data_package["args"] = 4
             data_package["argv"] = [lon, lat, depth, time]
             data_package["src_rank"] = mpi_rank
-            # msg = mpi_comm.isend(data_package, dest=self._serverrank, tag=5)
-            # msg.wait()
-            # logger.info("package sending: {}".format(data_package))
-            # logger.info("Worker - snd.: {} - (srv. rank: {}; snd. rank: {}; pkg. rank: {}".format(data_package["func_name"], self._serverrank, mpi_rank, data_package["src_rank"]))
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
-            # msg = mpi_comm.irecv(source=self._serverrank, tag=6)
-            # data = msg.wait()
             data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
-            # print(data)
-            # stdout.write("{}\n".format(data))
-            # logger.info("recv: {}".format(data))
             return int(data["result"])
-
-            # data_package = {}
-            # data_package["func_name"] = "getID"
-            # data_package["args"] = 4
-            # data_package["argv"] = [lon, lat, depth, time]
-            # self._worker_node.send(data_package["func_name"])
-            # self._worker_node.send(data_package["args"])
-            # self._worker_node.send(data_package["argv"])
-            # self._worker_node.send(self._cr_sequence)
-
-            # self._worker_node.poll(None)
-            # result = self._worker_node.recv()
-            # assert isinstance(result, np.uint64)
-            # assert self._worker_node.recv() == self._cr_sequence
-            # return result
         else:
             return self._service_process.getID(lon, lat, depth, time)
 
@@ -384,24 +318,13 @@ class GenerateID_Service(object):
             data_package["argv"] = [id, ]
             data_package["src_rank"] = mpi_rank
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
-            # self._worker_node.send(data_package["func_name"])
-            # self._worker_node.send(data_package["args"])
-            # self._worker_node.send(data_package["argv"])
-            # self._worker_node.send(self._cr_sequence)
         else:
             self._service_process.releaseID(id)
 
-    def __len__(self):
+    def get_length(self):
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
-
-            # data_package = {}
-            # data_package["func_name"] = "__len__"
-            # data_package["args"] = 0
-            # self._worker_node.send(data_package["func_name"])
-            # self._worker_node.send(data_package["args"])
-            # self._worker_node.send(self._cr_sequence)
 
             data_package = {}
             data_package["func_name"] = "get_length"
@@ -410,27 +333,14 @@ class GenerateID_Service(object):
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
             data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
 
-            # self._worker_node.poll(None)
-            # result = self._worker_node.recv()
-            # # assert isinstance(result, np.uint32)
-            # assert self._worker_node.recv() == self._cr_sequence
-            # logger.info("recv: {}".format(data))
             return int(data["result"])
         else:
             return self._service_process.__len__()
 
-    @property
-    def total_length(self):
+    def get_total_length(self):
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
-
-            # data_package = {}
-            # data_package["func_name"] = "get_total_length"
-            # data_package["args"] = 0
-            # self._worker_node.send(data_package["func_name"])
-            # self._worker_node.send(data_package["args"])
-            # self._worker_node.send(self._cr_sequence)
 
             data_package = {}
             data_package["func_name"] = "get_total_length"
@@ -439,13 +349,15 @@ class GenerateID_Service(object):
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
             data = mpi_comm.recv(source=self._serverrank, tag=self._response_tag)
 
-            # self._worker_node.poll(None)
-            # result = self._worker_node.recv()
-            # # assert isinstance(result, np.uint64)
-            # assert self._worker_node.recv() == self._cr_sequence
-            # logger.info("recv: {}".format(data))
             return int(data["result"])
         else:
             return self._service_process.total_length
+
+    def __len__(self):
+        return self.get_length()
+
+    @property
+    def total_length(self):
+        return self.get_total_length()
 
 
