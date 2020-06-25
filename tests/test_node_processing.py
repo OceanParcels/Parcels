@@ -127,12 +127,6 @@ def test_pset_node_execute(fieldset, mode, tmpdir, npart=100):
 
 
 def run_test_pset_add_explicit(fset, mode, npart=100):
-    mpi_size = 0
-    mpi_rank = -1
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        mpi_size = mpi_comm.Get_size()
-        mpi_rank = mpi_comm.Get_rank()
     nclass = Node
     if mode == 'jit':
         nclass = NodeJIT
@@ -183,6 +177,7 @@ def run_test_pset_node_execute(fset, mode, npart=10000):
         pset.add(ndata)
     pset.execute(AdvectionRK4, runtime=0., dt=(360.0 * 24.0 * 10.0), output_file=pfile)
     pfile.close()
+    # logger.info("# particles: {}".format(pset.size))
     assert (pset.size > 0)
     assert (pset.size <= 2* npart)
 

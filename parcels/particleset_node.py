@@ -18,6 +18,7 @@ from parcels.tools import get_cache_dir, get_package_dir
 # from parcels.wrapping.code_compiler import GNUCompiler
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
+# from parcels import Grid, Field, GridSet, FieldSet
 from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -234,7 +235,6 @@ class ParticleSet(object):
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
                     # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
-                    logger.info("MPI proc.: {} - # pu_centers: {}; # part. on PU: {}".format(mpi_rank, len(self._pu_centers), np.sum(_partitions == mpi_rank)))
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]
                     time = time[_partitions == mpi_rank]
@@ -281,8 +281,6 @@ class ParticleSet(object):
                         raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(pdata, kwvar, kwargs[kwvar][i])
                 ndata = self._nclass(id=pdata_id, data=pdata)
-                # if MPI:
-                #     logger.info("Adding {} ... ({} of {}; rank: {})".format(ndata, i+1, lon.size, mpi_rank))
                 self._nodes.add(ndata)
 
     @classmethod
