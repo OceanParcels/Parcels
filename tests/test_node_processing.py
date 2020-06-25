@@ -133,12 +133,6 @@ def test_pset_node_execute(fieldset, mode, tmpdir, npart=100):
 
 
 def run_test_pset_add_explicit(fset, mode, npart=100):
-    mpi_size = 0
-    mpi_rank = -1
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        mpi_size = mpi_comm.Get_size()
-        mpi_rank = mpi_comm.Get_rank()
     nclass = Node
     if mode == 'jit':
         nclass = NodeJIT
