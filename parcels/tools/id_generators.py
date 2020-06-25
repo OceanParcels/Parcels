@@ -374,7 +374,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
 
 #from multiprocessing import Process, Pipe
-#from threading import Thread
+from threading import Thread
 from multiprocessing import Process
 # from multiprocessing.connection import Connection
 from .message_service import mpi_execute_requested_messages as executor
@@ -388,9 +388,6 @@ class GenerateID_Service(object):
 
     def __init__(self, base_generator_obj):
         self._service_process = None
-        self._worker_node = None
-        self._service_node = None
-        self._cr_sequence = '#e#'
         self._serverrank = 0
         self._use_subprocess = True
 
@@ -400,18 +397,22 @@ class GenerateID_Service(object):
             mpi_size = mpi_comm.Get_size()
             if mpi_size <= 1:
                 self._use_subprocess = False
-            self._serverrank = mpi_size-1
-            # self._worker_node, self._service_node = Pipe()
-            # service_bundle = mpi_comm.gather(self._service_node, root=0)
-            if mpi_rank == self._serverrank:
-                # self._service_process = Process(target=executor, name="IdService", args=(service_bundle, base_generator_obj), daemon=True)
-                # self._service_process.start()
-                print("Starting ID service process")
-                self._service_process = Process(target=executor, name="IdService", args=(base_generator_obj, self._request_tag, self._response_tag), daemon=True)
-                self._service_process.start()
-                # executor(base_generator_obj, self._request_tag, self._response_tag)
-            # mpi_comm.Barrier()
-            logger.info("worker - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
+            else:
+                self._serverrank = mpi_size-1
+                # self._worker_node, self._service_node = Pipe()
+                # service_bundle = mpi_comm.gather(self._service_node, root=0)
+                if mpi_rank == self._serverrank:
+                    # self._service_process = Process(target=executor, name="IdService", args=(service_bundle, base_generator_obj), daemon=True)
+                    # self._service_process.start()
+                    # print("Starting ID service process")
+                    logger.info("Starting ID service process")
+                    self._service_process = Thread(target=executor, name="IdService", args=(base_generator_obj, self._request_tag, self._response_tag), daemon=True) #
+                    # self._service_process.daemon = True
+                    self._service_process.start()
+                    # executor(base_generator_obj, self._request_tag, self._response_tag)
+                # mpi_comm.Barrier()
+                logger.info("worker - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
+                self._subscribe_()
         else:
             self._use_subprocess = False
 
@@ -420,15 +421,36 @@ class GenerateID_Service(object):
 
 
     def __del__(self):
-        if self._worker_node is not None:
-            self._worker_node.close()
-        if self._service_node is not None:
-            self._service_node.close()
-        if MPI:
+        # if self._worker_node is not None:
+        #     self._worker_node.close()
+        # if self._service_node is not None:
+        #     self._service_node.close()
+        self._abort_()
+        # if self._service_process is not None:
+        #     self._service_process.join()
+
+    def _subscribe_(self):
+        if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
-            if self._service_process is not None:
-                self._service_process.join()
+            data_package = {}
+            data_package["func_name"] = "subscribe"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+
+    def _abort_(self):
+        if MPI and self._use_subprocess:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            data_package = {}
+            data_package["func_name"] = "abort"
+            data_package["args"] = 0
+            data_package["src_rank"] = mpi_rank
+            mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
+
+    def close(self):
+        self._abort_()
 
     def setTimeLine(self, min_time=0.0, max_time=1.0):
         if MPI and self._use_subprocess:
@@ -503,6 +525,7 @@ class GenerateID_Service(object):
             # msg = mpi_comm.isend(data_package, dest=self._serverrank, tag=5)
             # msg.wait()
             # logger.info("package sending: {}".format(data_package))
+            # logger.info("Worker - snd.: {} - (srv. rank: {}; snd. rank: {}; pkg. rank: {}".format(data_package["func_name"], self._serverrank, mpi_rank, data_package["src_rank"]))
             mpi_comm.send(data_package, dest=self._serverrank, tag=self._request_tag)
             # msg = mpi_comm.irecv(source=self._serverrank, tag=6)
             # data = msg.wait()
