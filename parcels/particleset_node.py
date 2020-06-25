@@ -17,7 +17,7 @@ from parcels.tools import idgen
 from parcels.tools import cleanup_remove_files, cleanup_unload_lib, get_cache_dir, get_package_dir
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels import ScipyParticle, JITParticle
-from parcels.particlefile import ParticleFile
+from parcels.particlefile_node import ParticleFile
 # from parcels import Grid, Field, GridSet, FieldSet
 from parcels.grid import GridCode
 from parcels.field import NestedField
@@ -151,11 +151,6 @@ class ParticleSet(object):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
                  repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
-        mpi_rank = -1
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            logger.info("Creating ParticleSet on proc. {} (process-id: {}) ...".format(mpi_rank, os.getpid()))
 
         self._fieldset = fieldset
         if self._fieldset is not None:
@@ -240,7 +235,6 @@ class ParticleSet(object):
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
                     # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
-                    logger.info("MPI proc.: {} - # pu_centers: {}; # part. on PU: {}".format(mpi_rank, len(self._pu_centers), np.sum(_partitions == mpi_rank)))
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]
                     time = time[_partitions == mpi_rank]
@@ -249,6 +243,7 @@ class ParticleSet(object):
                         pid = pid[_partitions == mpi_rank]
                     for kwvar in kwargs:
                         kwargs[kwvar] = kwargs[kwvar][_partitions == mpi_rank]
+                offset = mpi_comm.allreduce(offset, op=MPI.MAX)
         pclass.setLastID(offset+1)
 
         # ---- particle data parameter length assertions ---- #
@@ -286,8 +281,6 @@ class ParticleSet(object):
                         raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(pdata, kwvar, kwargs[kwvar][i])
                 ndata = self._nclass(id=pdata_id, data=pdata)
-                # if MPI:
-                #     logger.info("Adding {} ... ({} of {}; rank: {})".format(ndata, i+1, lon.size, mpi_rank))
                 self._nodes.add(ndata)
 
 
@@ -472,6 +465,10 @@ class ParticleSet(object):
     @property
     def lonlatdepth_dtype(self):
         return self._lonlatdepth_dtype
+
+    @property
+    def ptype(self):
+        return self._ptype
 
     @property
     def kernel_class(self):

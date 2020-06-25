@@ -25,8 +25,8 @@ except:
     # Windows does not have getuid(), so define to simply return 'tmp'
     def getuid():
         return 'tmp'
-from parcels.particleset_node import ParticleSet
-from parcels.particleset_vectorized import ParticleSet as BadParticleSet
+# from parcels.particleset_node import ParticleSet
+# from parcels.particleset_vectorized import ParticleSet as BadParticleSet
 
 
 __all__ = ['ParticleFile']
@@ -71,12 +71,12 @@ class ParticleFile(object):
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
-        if particleset is not None and isinstance(particleset, ParticleSet):
-            err_msg_addendum = "Classes do not match."
-            if isinstance(particleset, BadParticleSet):
-                err_msg_addendum = "You tried to initialize a node-based particle file with a vectorized particle set - action forbidden."
-            logger.error("'particleset' is not a node-based Particle Set. %s. Exiting" % (err_msg_addendum))
-            exit()
+        # if particleset is not None and isinstance(particleset, ParticleSet):
+        #     err_msg_addendum = "Classes do not match."
+        #     if isinstance(particleset, BadParticleSet):
+        #         err_msg_addendum = "You tried to initialize a node-based particle file with a vectorized particle set - action forbidden."
+        #     logger.error("'particleset' is not a node-based Particle Set. %s. Exiting" % (err_msg_addendum))
+        #     exit()
 
         self.write_ondelete = write_ondelete
         self.convert_at_end = convert_at_end
