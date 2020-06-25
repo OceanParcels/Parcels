@@ -151,6 +151,12 @@ class ParticleSet(object):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
                  repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+        mpi_rank = -1
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            mpi_rank = mpi_comm.Get_rank()
+            logger.info("Creating ParticleSet on proc. {} (process-id: {}) ...".format(mpi_rank, os.getpid()))
+
         self._fieldset = fieldset
         if self._fieldset is not None:
             self._fieldset.check_complete()
@@ -164,8 +170,6 @@ class ParticleSet(object):
         JITParticle.set_lonlatdepth_dtype(self._lonlatdepth_dtype)
         # pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + pclass.lastID
         pid = None if pid_orig is None else pid_orig if isinstance(pid_orig, list) or isinstance(pid_orig, np.ndarray) else pid_orig + idgen.total_length
-        if pid is not None:
-            logger.warn("PID is {}".format(pid))
 
         self._pclass = pclass
         self._kclass = Kernel
@@ -205,11 +209,12 @@ class ParticleSet(object):
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
-        # ---- init MPI functionality (TODO)          ---- #
+        # ---- init MPI functionality          ---- #
         _partitions = kwargs.pop('partitions', None)
         if _partitions is not None and _partitions is not False:
             _partitions = self._convert_to_array_(_partitions)
 
+        offset = np.max(pid) if (pid is not None) and (len(pid) > 0) else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -220,19 +225,22 @@ class ParticleSet(object):
 
             if mpi_size > 1:
                 if _partitions is not False:
-                    if _partitions is None and self._pu_centers is None:
+                    if _partitions is None or self._pu_centers is None:
+                        _partitions = None
+                        _pu_centers = None
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
                             _partitions = kmeans.labels_
                             _pu_centers = kmeans.cluster_centers_
-                        else:
-                            _partitions = None
-                            _pu_centers = None
+                        #mpi_comm.Barrier()
                         _partitions = mpi_comm.bcast(_partitions, root=0)
-                        self._pu_centers = mpi_comm.bcast(_pu_centers, root=0)
+                        _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
+                        self._pu_centers = _pu_centers
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
+                    # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
+                    logger.info("MPI proc.: {} - # pu_centers: {}; # part. on PU: {}".format(mpi_rank, len(self._pu_centers), np.sum(_partitions == mpi_rank)))
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]
                     time = time[_partitions == mpi_rank]
@@ -241,6 +249,7 @@ class ParticleSet(object):
                         pid = pid[_partitions == mpi_rank]
                     for kwvar in kwargs:
                         kwargs[kwvar] = kwargs[kwvar][_partitions == mpi_rank]
+        pclass.setLastID(offset+1)
 
         # ---- particle data parameter length assertions ---- #
         for kwvar in kwargs:
@@ -277,6 +286,8 @@ class ParticleSet(object):
                         raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(pdata, kwvar, kwargs[kwvar][i])
                 ndata = self._nclass(id=pdata_id, data=pdata)
+                # if MPI:
+                #     logger.info("Adding {} ... ({} of {}; rank: {})".format(ndata, i+1, lon.size, mpi_rank))
                 self._nodes.add(ndata)
 
 

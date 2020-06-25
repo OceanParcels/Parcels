@@ -76,25 +76,39 @@ def mpi_execute_requested_messages(exec_class, request_tag = 0, response_tag = 1
     mpi_comm = MPI.COMM_WORLD
     mpi_rank = mpi_comm.Get_rank()
     logger.info("service - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
-    while True:
+    _subscribed = {}
+    _running = True
+    while _running:
         msg_status = MPI.Status()
         msg = mpi_comm.irecv(source=MPI.ANY_SOURCE, tag=request_tag)
         test_result = msg.test(status=msg_status)
-        while test_result[0] == False:
-            sleep(0.1)
+        #while not (isinstance(test_result, tuple) or isinstance(test_result, list)) or ((test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict))):
+        while (test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict)):
             test_result = msg.test(status=msg_status)
+
+        request_package = test_result[1]
+        # logger.info("ID serv. - recv.: {} - (srv. rank: {}; snd. rank: {}; pkg. rank: {}".format(request_package["func_name"], mpi_rank, msg_status.Get_source(), request_package["src_rank"]))
+        assert isinstance(request_package, dict)
+
+        func_name = request_package["func_name"]
+        args = int(request_package["args"])
+        argv = []
+        if args > 0:
+            argv = request_package["argv"]
+
+        if func_name == "subscribe":
+            logger.info("'subscribe' message received.")
+            _subscribed[msg_status.Get_source()] = True
+        elif func_name == "abort":
+            # logger.info("'abort' message received (src: {}).".format(msg_status.Get_source()))
+            _subscribed[msg_status.Get_source()] = False
+            logger.info("Subscribers: {}".format( _subscribed ))
+            _running = False
+            for flag in _subscribed:
+                _running |= flag
+            if not _running:
+                break
         else:
-            request_package = test_result[1]
-            # logger.info("package received: {}".format(request_package))
-            assert isinstance(request_package, dict)
-            # dst = int(request_package["src_rank"])
-
-            func_name = request_package["func_name"]
-            args = int(request_package["args"])
-            argv = []
-            if args > 0:
-                argv = request_package["argv"]
-
             call_func = getattr(requester_obj, func_name)
             res = None
             if call_func is not None:
@@ -105,7 +119,6 @@ def mpi_execute_requested_messages(exec_class, request_tag = 0, response_tag = 1
             if res is not None:
                 response_package = {"result": res, "src_rank": mpi_rank}
                 # logger.info("sending message: {}".format(response_package))
-                # msg = mpi_comm.isend(response_package, dest=dst, tag=response_tag)
-                # msg.wait()
                 mpi_comm.send(response_package, dest=msg_status.Get_source(), tag=response_tag)
-        sleep(0.1)
+
+    logger.info("ABORTED ID Service")

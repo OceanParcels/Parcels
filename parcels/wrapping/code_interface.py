@@ -85,6 +85,8 @@ class InterfaceC:
             self.src_file = "%s.c" % os.path.join(src_dir, src_pathfile)
         self.lib_file = "%s.%s" % (os.path.join(get_cache_dir(), lib_path), 'dll' if sys.platform == 'win32' else 'so')
         self.log_file = "%s.log" % os.path.join(get_cache_dir(), basename)
+        if os.path.exists(self.lib_file):
+            self.compiled = True
 
         # self.compiler = GNUCompiler()
         self.compiler = compiler
