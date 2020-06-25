@@ -4,6 +4,7 @@ from parcels.particleset_node import ParticleSet
 from parcels.kernel_node import Kernel
 from parcels.nodes.Node import Node, NodeJIT
 from parcels.tools import idgen
+from parcels.tools import logger
 import numpy as np
 import pytest
 
@@ -97,17 +98,22 @@ def test_pset_add_explicit(fieldset, mode, npart=100):
     # assert np.allclose([n.data.lon for n in pset.data], lon, rtol=1e-12)
     assert np.allclose([pset.get_by_id(index_mapping[i]).data.lon for i in index_mapping.keys()], lon, rtol=1e-12)
     assert np.allclose([pset.get_by_id(index_mapping[i]).data.lat for i in index_mapping.keys()], lat, rtol=1e-12)
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        mpi_comm.Barrier()
 
 
 def run_test_pset_add_explicit(fset, mode, npart=100):
-    nproc = 1
+    mpi_size = 0
+    mpi_rank = -1
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_size = mpi_comm.Get_size()
-        nproc = mpi_size
+        mpi_rank = mpi_comm.Get_rank()
     nclass = Node
     if mode == 'jit':
         nclass = NodeJIT
+
     lon = np.linspace(0, 1, npart, dtype=np.float64)
     lat = np.linspace(1, 0, npart, dtype=np.float64)
     pset = ParticleSet(fieldset=fset, pclass=ptype[mode], lon=lon, lat=lat, lonlatdepth_dtype=np.float64)
@@ -120,7 +126,8 @@ def run_test_pset_add_explicit(fset, mode, npart=100):
         ndata = nclass(id=id, data=pdata)
         pset.add(ndata)
     # assert(pset.size >= npart)
-    print("# particles: {}".format(pset.size))
+    # print("# particles: {}".format(pset.size))
+    logger.info("# particles: {}".format(pset.size))
     # ==== of course this is not working as the order in pset.data and lon is not the same ==== #
     # assert np.allclose([n.data.lon for n in pset.data], lon, rtol=1e-12)
     # ==== makes no sence in MPI ==== #
@@ -149,7 +156,6 @@ def test_pset_node_execute(fieldset, mode, npart=100):
 if __name__ == '__main__':
     fset = fieldset()
     run_test_pset_add_explicit(fset, 'jit')
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        mpi_comm.Barrier()
     run_test_pset_add_explicit(fset, 'scipy')
+    idgen.close()
+    # del idgen
