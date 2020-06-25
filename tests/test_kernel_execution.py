@@ -3,6 +3,7 @@ from parcels import (FieldSet, ScipyParticle, JITParticle, ErrorCode, KernelErro
 from parcels.particleset_vectorized import ParticleSet
 import numpy as np
 import pytest
+from parcels.tools import idgen
 from parcels.tools import logger
 from os import getpid
 
@@ -322,3 +323,4 @@ if __name__ == '__main__':
     run_test_execution_runtime(fset, 'scipy', 2., 16., 5, 3.)
     run_test_execution_runtime(fset, 'scipy', 20., 10., 4, -1.)
     run_test_execution_runtime(fset, 'scipy', 20., -10., 7, -2.)
+    # idgen.close()
