@@ -217,7 +217,7 @@ class CCompiler(object):
         pass
 
     def _create_compile_process_(self, cmd, src, log):
-        with open(log, 'w+') as logfile:
+        with open(log, 'w') as logfile:
             try:
                 subprocess.check_call(cmd, stdout=logfile, stderr=logfile)
             except OSError:
@@ -245,7 +245,7 @@ class CCompiler_SS(CCompiler):
 
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
-        with open(log, 'w+') as logfile:
+        with open(log, 'w') as logfile:
             logfile.write("Compiling: %s\n" % " ".join(cc))
         self._create_compile_process_(cc, src, log)
 
@@ -258,6 +258,11 @@ class CCompiler_MS(CCompiler):
         super(CCompiler_MS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
     def compile(self, src, obj, log):
+        # print(self._cc)
+        # print(self._cppargs)
+        # print(obj)
+        # print(src)
+        # print(self._ldargs)
         objs = []
         for src_file in src:
             src_file_wo_ext = os.path.splitext(src_file)[0]
