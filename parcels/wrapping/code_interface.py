@@ -12,6 +12,11 @@ try:
 except:
     MPI = None
 
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
+
 __all__ = ['LibraryRegisterC', 'InterfaceC']
 
 

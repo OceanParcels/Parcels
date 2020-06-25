@@ -217,7 +217,7 @@ class CCompiler(object):
         pass
 
     def _create_compile_process_(self, cmd, src, log):
-        with open(log, 'w+') as logfile:
+        with open(log, 'w') as logfile:
             try:
                 subprocess.check_call(cmd, stdout=logfile, stderr=logfile)
             except OSError:
@@ -245,7 +245,7 @@ class CCompiler_SS(CCompiler):
 
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
-        with open(log, 'w+') as logfile:
+        with open(log, 'w') as logfile:
             logfile.write("Compiling: %s\n" % " ".join(cc))
         self._create_compile_process_(cc, src, log)
 
@@ -258,27 +258,29 @@ class CCompiler_MS(CCompiler):
         super(CCompiler_MS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
     def compile(self, src, obj, log):
-        print(self._cc)
-        print(self._cppargs)
-        print(obj)
-        print(src)
-        print(self._ldargs)
+        # print(self._cc)
+        # print(self._cppargs)
+        # print(obj)
+        # print(src)
+        # print(self._ldargs)
         objs = []
         for src_file in src:
             src_file_wo_ext = os.path.splitext(src_file)[0]
             src_file_wo_ppath = os.path.basename(src_file_wo_ext)
+            if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                src_file_wo_ppath = "%s_%d" % (src_file_wo_ppath, MPI.COMM_WORLD.Get_rank())
             obj_file = os.path.join(self._tmp_dir, src_file_wo_ppath) + "." + self._obj_ext
             objs.append(obj_file)
             slog_file = os.path.join(self._tmp_dir, src_file_wo_ppath) + "_o" + "." + "log"
             #cc = [self._cc] + self._cppargs + ["-c", src_file]
             cc = [self._cc] + self._cppargs + ['-c', src_file] + ['-o', obj_file]
-            with open(log, 'w+') as logfile:
+            with open(log, 'w') as logfile:
                 logfile.write("Compiling: %s\n" % " ".join(cc))
             success = self._create_compile_process_(cc, src_file, slog_file)
-            if success:
+            if success and os._exists(slog_file):
                 os.remove(slog_file)
         cc = [self._cc] + objs + ['-o', obj] + self._ldargs
-        with open(log, 'w+') as logfile:
+        with open(log, 'a') as logfile:
             logfile.write("Linking: %s\n" % " ".join(cc))
         self._create_compile_process_(cc, obj, log)
         for fpath in objs:
