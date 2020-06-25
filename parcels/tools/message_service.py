@@ -27,8 +27,8 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
         msg_status = MPI.Status()
         msg = mpi_comm.irecv(source=MPI.ANY_SOURCE, tag=request_tag)
         test_result = msg.test(status=msg_status)
-        #while not (isinstance(test_result, tuple) or isinstance(test_result, list)) or ((test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict))):
-        #while (test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict)):
+        # while not (isinstance(test_result, tuple) or isinstance(test_result, list)) or ((test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict))):
+        # while (test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict)):
         while (not test_result[0]) or (test_result[0] and not isinstance(test_result[1], dict)):
             test_result = msg.test(status=msg_status)
 
@@ -55,7 +55,6 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
             _running = False
             for flag in _subscribed:
                 _running |= flag
-            # logger.warn("Subscribed: {}".format(_subscribed))
             if not _running:
                 break
         else:
@@ -72,3 +71,4 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
                 # msg = mpi_comm.isend(response_package, dest=dst, tag=response_tag)
                 # msg.wait()
                 mpi_comm.send(response_package, dest=msg_status.Get_source(), tag=response_tag)
+    # logger.info("ABORTED ID Service")
