@@ -106,7 +106,7 @@ class ParticleSet(object):
         # this is not all to clever because all particles of a particle set are only initialized ONCE,
         # thus once determined on setup their MPI distribution stays fixed. That means that after several iterations
         # particles within one cluster are not necessarily co-located as they moved ...
-        offset = np.max(pid) if len(pid) > 0 else -1
+        offset = np.max(pid) if (pid is not None) and (len(pid) > 0) else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()

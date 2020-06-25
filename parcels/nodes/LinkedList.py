@@ -24,7 +24,7 @@ class RealList(SortedList):
         n = self.__len__()
         # print("# remaining items: {}".format(n))
         if n > 0:
-            print("Deleting {} elements ...".format(n))
+            # print("Deleting {} elements ...".format(n))
             while (n > 0):
                 # val = self.pop(); del val
                 # super().__delitem__(n-1)
