@@ -133,11 +133,12 @@ def test_pset_node_execute(fieldset, mode, tmpdir, npart=100):
 
 
 def run_test_pset_add_explicit(fset, mode, npart=100):
-    nproc = 1
+    mpi_size = 0
+    mpi_rank = -1
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_size = mpi_comm.Get_size()
-        nproc = mpi_size
+        mpi_rank = mpi_comm.Get_rank()
     nclass = Node
     if mode == 'jit':
         nclass = NodeJIT
@@ -194,10 +195,8 @@ def run_test_pset_node_execute(fset, mode, npart=10000):
 if __name__ == '__main__':
     fset = fieldset()
     run_test_pset_add_explicit(fset, 'jit')
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        mpi_comm.Barrier()
     run_test_pset_add_explicit(fset, 'scipy')
     run_test_pset_node_execute(fset, 'jit')
     run_test_pset_node_execute(fset, 'scipy')
     # idgen.close()
+    # del idgen
