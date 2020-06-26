@@ -35,7 +35,9 @@ class LibraryRegisterC:
 
     def load(self, libname, src_dir=get_package_dir()):
         if libname not in self._data.keys():
+            # cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
             cppargs = []
+            # , libs=["node"]
             ccompiler = GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
             self._data[libname] = InterfaceC("node", ccompiler, src_dir)
         if not self._data[libname].is_compiled():
@@ -52,18 +54,23 @@ class LibraryRegisterC:
         return self.get(item)
 
     def get(self, libname):
+        #if libname not in self._data.keys():
+        #    self.load(libname)
         if libname in self._data.keys():
             return self._data[libname]
         return None
 
     def register(self, libname):
+        #if libname not in self._data.keys():
+        #    self.load(libname)
         if libname in self._data.keys():
             self._data[libname].register()
 
     def deregister(self, libname):
         if libname in self._data.keys():
             self._data[libname].unregister()
-
+        #    if self._data[libname].register_count <= 0:
+        #        self.unload(libname)
 
 class InterfaceC:
 

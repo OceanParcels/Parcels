@@ -1,5 +1,5 @@
-#  from os import getpid
-#  from parcels.tools import logger
+# from os import getpid
+# from parcels.tools import logger
 
 
 try:
@@ -53,6 +53,7 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
             _running = False
             for flag in _subscribed:
                 _running |= flag
+            # logger.warn("Subscribed: {}".format(_subscribed))
             if not _running:
                 break
         else:
