@@ -258,11 +258,6 @@ class CCompiler_MS(CCompiler):
         super(CCompiler_MS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
     def compile(self, src, obj, log):
-        # print(self._cc)
-        # print(self._cppargs)
-        # print(obj)
-        # print(src)
-        # print(self._ldargs)
         objs = []
         for src_file in src:
             src_file_wo_ext = os.path.splitext(src_file)[0]

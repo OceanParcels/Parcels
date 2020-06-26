@@ -9,19 +9,16 @@ from scipy.spatial import distance
 import itertools
 import xarray as xr
 import progressbar
-# import math  # noga
-# import random  # noga
 
 from parcels.nodes.LinkedList import *
 from parcels.nodes.Node import Node, NodeJIT
 from parcels.tools import idgen
 
 from parcels.tools import get_cache_dir, get_package_dir
-# from parcels.wrapping.code_compiler import GNUCompiler, GNUCompiler_MS
-from parcels.wrapping.code_compiler import GNUCompiler_MS
+# from parcels.wrapping.code_compiler import GNUCompiler
+# from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
-# from parcels import Grid, Field, GridSet, FieldSet
 from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -235,7 +232,6 @@ class ParticleSet(object):
                         _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
                         self._pu_centers = _pu_centers
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
-                    # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]
@@ -559,9 +555,6 @@ class ParticleSet(object):
 
     def get_particle(self, index):
         return self.get(index).data
-
-    # def retrieve_item(self, key):
-    #    return self.get(key)
 
     def __getitem__(self, key):
         if key >= 0 and key < len(self._nodes):
@@ -903,9 +896,6 @@ class ParticleSet(object):
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
-
-        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
-        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:

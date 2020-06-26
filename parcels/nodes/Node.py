@@ -6,7 +6,6 @@ from parcels.wrapping import *
 from numpy import int32, int64, uint32, uint64
 import random
 
-# from parcels import JITParticle, ScipyParticle
 
 class Node(object):
     prev = None
@@ -81,6 +80,7 @@ class Node(object):
         return not (self == other)
 
     def __lt__(self, other):
+        # print("less-than({} vs. {})".format(str(self),str(other)))
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
@@ -144,6 +144,7 @@ node_c_interface = None
 c_funcs = None
 
 
+
 class NodeJIT(Node, ctypes.Structure):
     _fields_ = [('_c_prev_p', ctypes.c_void_p),
                 ('_c_next_p', ctypes.c_void_p),
@@ -200,12 +201,14 @@ class NodeJIT(Node, ctypes.Structure):
             self.set_prev_ptr_c(self, self.prev)
         else:
             self.reset_prev_ptr_c(self)
+        # self._c_self_p = ctypes.cast(self, ctypes.c_void_p)
         if self.next is not None and isinstance(self.next, NodeJIT):
             self.set_next_ptr_c(self, self.next)
         else:
             self.reset_next_ptr_c(self)
 
-        if self.data is not None:
+        if self.data is not None:   # and isinstance(ctypes.c_void_p):
+            # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
             try:
                 self.set_data_ptr_c(self, self.data.cdata())
             except AttributeError:
@@ -295,17 +298,17 @@ class NodeJIT(Node, ctypes.Structure):
     def __gt__(self, other):
         return super().__gt__(other)
 
-    def __ge__(self, other):
-        return super().__ge__(other)
+    # def __ge__(self, other):
+    #     return super().__ge__(other)
 
-    def link_c_functions(self, c_func_dict):
-        self.init_node_c = c_func_dict['init_node']
-        self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
-        self.set_next_ptr_c = c_func_dict['set_next_ptr']
-        self.set_data_ptr_c = c_func_dict['set_data_ptr']
-        self.reset_prev_ptr_c = c_func_dict['reset_prev_ptr']
-        self.reset_next_ptr_c = c_func_dict['reset_next_ptr']
-        self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
+    # def link_c_functions(self, c_func_dict):
+    #     self.init_node_c = c_func_dict['init_node']
+    #     self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
+    #     self.set_next_ptr_c = c_func_dict['set_next_ptr']
+    #     self.set_data_ptr_c = c_func_dict['set_data_ptr']
+    #     self.reset_prev_ptr_c = c_func_dict['reset_prev_ptr']
+    #     self.reset_next_ptr_c = c_func_dict['reset_next_ptr']
+    #     self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
 
     def set_data(self, data):
         super().set_data(data)
@@ -339,18 +342,23 @@ class NodeJIT(Node, ctypes.Structure):
 
     def update_prev(self):
         if self.prev is not None and isinstance(self.prev, NodeJIT):
+            # self._c_prev_p = ctypes.cast(self.prev, ctypes.c_void_p)
+            # self._c_prev_p = self.prev._c_self_p
             self.set_prev_ptr_c(self, self.prev)
         else:
             self.reset_prev_ptr_c(self)
 
     def update_next(self):
         if self.next is not None and isinstance(self.next, NodeJIT):
+            # self._c_next_p = ctypes.cast(self.next, ctypes.c_void_p)
+            # self._c_next_p = self.next._c_self_p
             self.set_next_ptr_c(self, self.next)
         else:
             self.reset_next_ptr_c(self)
 
     def update_data(self):
-        if self.data is not None:
+        if self.data is not None:   # and isinstance(ctypes.c_void_p):
+            # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
             try:
                 self.set_data_ptr_c(self, self.data.cdata())
             except AttributeError:
