@@ -4,10 +4,10 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
-# from parcels.kernel_benchmark import Kernel_Benchmark as Kernel
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
+from parcels.particleset_node_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.field import VectorField, NestedField, SummedField
+from parcels.tools import idgen
 # from parcels import plotTrajectoriesFile_loadedField
 from datetime import timedelta as delta
 import math
@@ -234,6 +234,9 @@ if __name__=='__main__':
     np_scaler = 3.0 / 2.0
     cycle_scaler = 7.0 / 4.0
     start_N_particles = int(float(eval(args.start_nparticles)))
+
+    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
