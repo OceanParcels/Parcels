@@ -5,9 +5,10 @@ Date: 11-02-2020
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4_3D
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
+from parcels.particleset_node_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels import rng as random
 from parcels.field import VectorField, NestedField, SummedField
+from parcels.tools import idgen
 # from parcels import plotTrajectoriesFile_loadedField
 from datetime import timedelta as delta
 from datetime import datetime
@@ -324,10 +325,8 @@ if __name__=='__main__':
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         if mpi_rank==0:
-            #endtime = MPI.Wtime()
             endtime = ostime.process_time()
     else:
-        #endtime = ostime.time()
         endtime = ostime.process_time()
 
     if args.write_out:
@@ -373,3 +372,6 @@ if __name__=='__main__':
             pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
     else:
         pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
+    # idgen.close()
+    # del idgen
+    exit(0)
