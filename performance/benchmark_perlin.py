@@ -4,11 +4,12 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
+from parcels.particleset_node_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.field import Field, VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
 from parcels import rng as random
+from parcels.tools import idgen
 from datetime import timedelta as delta
 import math
 from argparse import ArgumentParser
@@ -88,30 +89,15 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(-a*0.5, a*0.5, img_shape[0], dtype=np.float32)
-    # sys.stdout.write("lon field: {}\n".format(lon.size))
     lat = np.linspace(-b*0.5, b*0.5, img_shape[1], dtype=np.float32)
-    # sys.stdout.write("lat field: {}\n".format(lat.size))
     totime = tsteps*tscale*24.0*60.0*60.0
     time = np.linspace(0., totime, tsteps, dtype=np.float64)
-    # sys.stdout.write("time field: {}\n".format(time.size))
 
     # Define arrays U (zonal), V (meridional)
     U = perlin2d.generate_fractal_noise_temporal2d(img_shape, tsteps, (perlinres[1], perlinres[2]), noctaves, perlin_persistence, max_shift=((-1, 2), (-1, 2)))
     U = np.transpose(U, (0,2,1))
-    # U = np.swapaxes(U, 1, 2)
-    # print("U-statistics - min: {:10.7f}; max: {:10.7f}; avg. {:10.7f}; std_dev: {:10.7f}".format(U.min(initial=0), U.max(initial=0), U.mean(), U.std()))
     V = perlin2d.generate_fractal_noise_temporal2d(img_shape, tsteps, (perlinres[1], perlinres[2]), noctaves, perlin_persistence, max_shift=((-1, 2), (-1, 2)))
     V = np.transpose(V, (0,2,1))
-    # V = np.swapaxes(V, 1, 2)
-    # print("V-statistics - min: {:10.7f}; max: {:10.7f}; avg. {:10.7f}; std_dev: {:10.7f}".format(V.min(initial=0), V.max(initial=0), V.mean(), V.std()))
-
-    # U = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
-    # U = np.transpose(U, (0,2,1))
-    # sys.stdout.write("U field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(U.shape, time.shape[0], lat.shape[0], lon.shape[0]))
-    # V = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
-    # V = np.transpose(V, (0,2,1))
-    # sys.stdout.write("V field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(V.shape, time.shape[0], lat.shape[0], lon.shape[0]))
-
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     if periodic_wrap:
@@ -225,6 +211,9 @@ if __name__=='__main__':
     # cycle_scaler = 3.0 / 2.0
     cycle_scaler = 7.0 / 4.0
     start_N_particles = int(float(eval(args.start_nparticles)))
+
+    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
@@ -432,4 +421,6 @@ if __name__=='__main__':
     else:
         pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
 
-
+    # idgen.close()
+    # del idgen
+    exit(0)
