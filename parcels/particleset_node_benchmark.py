@@ -338,13 +338,18 @@ class ParticleSet_Benchmark(ParticleSet):
                 mem_B_used_total = measure_mem_usage()
             else:
                 mem_B_used_total = measure_mem_rss()
-            self.mem_log.advance_iteration(mem_B_used_total)
+            if USE_ASYNC_MEMLOG:
+                self.async_mem_log.stop_partial_measurement()
+                self.mem_log.advance_iteration(self.async_mem_log.async_run_measurement())
+            else:
+                self.mem_log.advance_iteration(mem_B_used_total)
 
             self.compute_log.advance_iteration()
             self.io_log.advance_iteration()
             self.mem_io_log.advance_iteration()
             self.plot_log.advance_iteration()
             self.total_log.advance_iteration()
+
 
         if output_file is not None:
             self.io_log.start_timing()
