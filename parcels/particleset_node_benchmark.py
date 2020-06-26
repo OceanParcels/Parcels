@@ -150,6 +150,20 @@ class ParticleSet_Benchmark(ParticleSet):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
+        # ==== Set particle.time defaults based on sign of dt, if not set at ParticleSet construction => moved below (l. xyz)
+        # piter = 0
+        # while piter < len(self._nodes):
+        #     pdata = self._nodes[piter].data
+        # #node = self.begin()
+        # #while node is not None:
+        # #    pdata = node.data
+        #     if np.isnan(pdata.time):
+        #         mintime, maxtime = self._fieldset.gridset.dimrange('time_full')
+        #         pdata.time = mintime if dt >= 0 else maxtime
+        # #    node.set_data(pdata)
+        #     self._nodes[piter].set_data(pdata)
+        #     piter += 1
+
         # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
@@ -163,6 +177,9 @@ class ParticleSet_Benchmark(ParticleSet):
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
 
+        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
+        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
+
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
@@ -174,6 +191,8 @@ class ParticleSet_Benchmark(ParticleSet):
             execute_once = True
 
         # ==== Initialise particle timestepping
+        #for p in self:
+        #    p.dt = dt
         piter = 0
         while piter < len(self._nodes):
             pdata = self._nodes[piter].data
@@ -270,8 +289,10 @@ class ParticleSet_Benchmark(ParticleSet):
                         lat = self.rparam.get_latitude(add_iter)
                         pdepth = self.rparam.get_depth_value(add_iter)
                         ptime = time
-                        pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
-                        pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
+                        pindex = idgen.total_length
+                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                        # pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
+                        pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                         pdata.dt = dt
                         self.add(self._nclass(id=pid, data=pdata))
                         add_iter += 1

@@ -997,8 +997,10 @@ class ParticleSet(object):
                         lat = self.rparam.get_latitude(add_iter)
                         pdepth = self.rparam.get_depth_value(add_iter)
                         ptime = time
-                        pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
-                        pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
+                        pindex = idgen.total_length
+                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                        # pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
+                        pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                         pdata.dt = dt
                         self.add(self._nclass(id=pid, data=pdata))
                         add_iter += 1
