@@ -612,6 +612,7 @@ class ParticleSet(object):
                 self.add_entity(item)
         elif isinstance(data_array, ParticleSet):
             for i in range(len(data_array)):
+                # self.add_entity(data_array[i])
                 self.add_entity(data_array.pop(i))
         elif isinstance(data_array, np.ndarray):
             if data_array.dtype == self._ptype:

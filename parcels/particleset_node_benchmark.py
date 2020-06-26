@@ -19,13 +19,15 @@ except:
 from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels.particleset_node import ParticleSet
 # from parcels.kernel_vectorized import Kernel
+# from parcels.kernel_node_benchmark import Kernel_Benchmark
+# from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools import idgen
 from parcels.kernel_node_benchmark import Kernel_Benchmark
-from parcels.kernel_node_benchmark import Kernel
+# from parcels.kernel_node_benchmark import Kernel
 from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
 
 from resource import getrusage, RUSAGE_SELF
