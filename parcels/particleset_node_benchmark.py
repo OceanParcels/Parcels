@@ -297,19 +297,29 @@ class ParticleSet_Benchmark(ParticleSet):
             self.compute_log.start_timing()
             self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
-                add_iter = 0
-                while add_iter < self.rparam.num_pts:
-                    gen_id = self.rparam.get_particle_id(add_iter)
-                    lon = self.rparam.get_longitude(add_iter)
-                    lat = self.rparam.get_latitude(add_iter)
-                    pdepth = self.rparam.get_depth_value(add_iter)
-                    ptime = time
-                    pindex = idgen.total_length
-                    pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                    pdata = JITParticle(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
-                    pdata.dt = dt
-                    self.add(self._nclass(id=pid, data=pdata))
-                    add_iter += 1
+                if self.rparam.get_particle_id(0) is None:
+                    pdata = np.array(self.rparam.lon, dtype=self._lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))
+                    pdata = np.concatenate((pdata, np.array(self.rparam.lat, dtype=self.lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
+                    if len(self.rparam.depth) > 0:
+                        pdata = np.concatenate((pdata, np.array(self.rparam.depth, dtype=self.lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
+                    else:
+                        pdata = np.concatenate((pdata, np.zeros(pdata.shape[0], dtype=self._lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
+                    pdata = np.concatenate((pdata, (np.ones(pdata.shape[0], dtype=np.float64) * time).reshape((self.rparam.num_pts, 1))), axis=1)
+                    pdata = np.concatenate((pdata, (np.ones(pdata.shape[0], dtype=np.float64) * dt).reshape((self.rparam.num_pts, 1))), axis=1)
+                    self.add(pdata)
+                else:
+                    add_iter = 0
+                    while add_iter < self.rparam.num_pts:
+                        gen_id = self.rparam.get_particle_id(add_iter)
+                        lon = self.rparam.get_longitude(add_iter)
+                        lat = self.rparam.get_latitude(add_iter)
+                        pdepth = self.rparam.get_depth_value(add_iter)
+                        ptime = time
+                        pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
+                        pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
+                        pdata.dt = dt
+                        self.add(self._nclass(id=pid, data=pdata))
+                        add_iter += 1
                 next_prelease += self.repeatdt * np.sign(dt)
             self.compute_log.stop_timing()
             self.compute_log.accumulate_timing()
@@ -349,19 +359,15 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.plot_log.accumulate_timing()
             self.total_log.stop_timing()
             self.total_log.accumulate_timing()
-            mem_B_used_total = 0
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mem_B_used = self.process.memory_info().rss
-                mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
-            else:
-                mem_B_used_total = self.process.memory_info().rss
+            mem_B_used_total = self.process.memory_info().rss
+            # mem_B_used_total = psutil.Process(os.getpid()).rss
             self.mem_log.advance_iteration(mem_B_used_total)
 
             self.compute_log.advance_iteration()
             self.io_log.advance_iteration()
             self.plot_log.advance_iteration()
             self.total_log.advance_iteration()
+
 
         if output_file is not None:
             self.io_log.start_timing()
