@@ -5,6 +5,7 @@ from datetime import timedelta as delta
 
 import os
 import numpy as np
+import itertools
 import xarray as xr
 import progressbar
 # import math  # noga
@@ -499,7 +500,7 @@ class ParticleSet(object):
         return self._fieldset
 
     def __len__(self):
-        return self.size
+        return len(self._nodes)
 
     def __repr__(self):
         result = "\n"
@@ -512,6 +513,9 @@ class ParticleSet(object):
         result += str(node) + "\n"
         return result
         # return "\n".join([str(p) for p in self])
+
+    def get_index(self, ndata):
+        return self._nodes.index(ndata)
 
     def get(self, index):
         return self.get_by_index(index)
@@ -591,6 +595,29 @@ class ParticleSet(object):
         return self
 
     def add(self, pdata):
+        if pdata is None:
+            return
+        if isinstance(pdata, (list, np.ndarray, ParticleSet)):
+            self.add_entities(pdata)
+        else:
+            self.add_entity(pdata)
+
+    def add_entities(self, data_array):
+        if len(data_array) <= 0:
+            return
+        if isinstance(data_array, list) or isinstance(data_array, tuple):
+            for item in data_array:
+                self.add_entity(item)
+        elif isinstance(data_array, ParticleSet):
+            for i in range( len(data_array) ):
+                self.add_entity( data_array[i] )
+        elif isinstance(data_array, np.ndarray):
+            for i in itertools.islice(itertools.count(), 0, data_array.shape[0]):
+                self.add_entity( data_array[i] )
+        else:
+            return
+
+    def add_entity(self, pdata):
         """
         Adds the new data in the list - position is auto-determined (because of sorted-list nature)
         :param pdata: new Node or pdata
@@ -670,15 +697,19 @@ class ParticleSet(object):
             # self._nodes.remove(search_node)
         elif isinstance(ndata, self._nclass):
             try:
-                self._nodes.remove(ndata)
+                # self._nodes.remove(ndata)
+                nindex = self.get_index(ndata)
+                del self._nodes[nindex]
             except ValueError:
-                pass
+                logger("Node {} not found.".format(ndata))
         elif isinstance(ndata, self._pclass):
-            node = self.get_by_id(ndata.id)
             try:
-                self._nodes.remove(node)
+                node = self.get_by_id(ndata.id)
+                nindex = self.get_index(node)
+                # self._nodes.remove(node)
+                del self._nodes[nindex]
             except ValueError:
-                pass
+                logger("Particle data {} not found.".format(ndata))
 
     def remove_entities(self, ndata_array):
         rm_list = ndata_array
@@ -760,6 +791,8 @@ class ParticleSet(object):
                          kernel errors.
         :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -911,17 +944,18 @@ class ParticleSet(object):
             self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 add_iter = 0
-                while add_iter < self.rparam.get_num_pts():
+                while add_iter < self.rparam.num_pts:
                     gen_id = self.rparam.get_particle_id(add_iter)
                     lon = self.rparam.get_longitude(add_iter)
                     lat = self.rparam.get_latitude(add_iter)
                     pdepth = self.rparam.get_depth_value(add_iter)
-                    ptime = time[add_iter]
+                    ptime = time
                     pindex = idgen.total_length
                     pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
                     pdata = JITParticle(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                     pdata.dt = dt
                     self.add(self._nclass(id=pid, data=pdata))
+                    add_iter += 1
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_output) < tol:
                 if output_file is not None:
