@@ -97,7 +97,7 @@ class BaseKernel(object):
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if self.lib_file is not None and path.isfile(self.lib_file):
             [remove(s) for s in [self.lib_file, ]]
-            [remove(s) for s in [self.dyn_srcs, self.log_file,] if self.delete_cfiles]
+            [remove(s) for s in [self.dyn_srcs, self.log_file, ] if self.delete_cfiles]
 
     def get_kernel_compile_files(self):
         """

@@ -24,6 +24,7 @@ from parcels.tools import idgen
 
 __all__ = ['ParticleSet_Benchmark']
 
+
 class ParticleSet_TimingLog():
     _stime = 0
     _etime = 0
@@ -31,6 +32,7 @@ class ParticleSet_TimingLog():
     _samples = None
     _timings = None
     _iter = 0
+
     def __init__(self):
         self._stime = 0
         self._etime = 0
@@ -44,8 +46,8 @@ class ParticleSet_TimingLog():
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                #self._stime = MPI.Wtime()
-                #self._stime = time_module.perf_counter()
+                # self._stime = MPI.Wtime()
+                # self._stime = time_module.perf_counter()
                 self._stime = time_module.process_time()
         else:
             self._stime = time_module.perf_counter()
@@ -55,8 +57,8 @@ class ParticleSet_TimingLog():
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                #self._etime = MPI.Wtime()
-                #self._etime = time_module.perf_counter()
+                # self._etime = MPI.Wtime()
+                # self._etime = time_module.perf_counter()
                 self._etime = time_module.process_time()
         else:
             self._etime = time_module.perf_counter()
@@ -79,12 +81,12 @@ class ParticleSet_TimingLog():
             if mpi_rank == 0:
                 self._timings.append(self._mtime)
                 self._samples.append(self._iter)
-                self._iter+=1
+                self._iter += 1
             self._mtime = 0
         else:
             self._timings.append(self._mtime)
             self._samples.append(self._iter)
-            self._iter+=1
+            self._iter += 1
             self._mtime = 0
 
     def __len__(self):
@@ -96,20 +98,21 @@ class ParticleSet_TimingLog():
     def get_value(self, index):
         return self._timings[index]
 
+
 class ParticleSet_ParamLogging():
     _samples = None
     _params = None
     _iter = 0
+
     def __init__(self):
         self._samples = []
         self._params = []
         self._iter = 0
 
     def advance_iteration(self, param):
-        # logger.info("Pset length at i={}: {}".format(self._iter, param))
         self._params.append(param)
         self._samples.append(self._iter)
-        self._iter+=1
+        self._iter += 1
 
     def __len__(self):
         return len(self._params)
@@ -134,7 +137,6 @@ class ParticleSet_Benchmark(ParticleSet):
         self.process = psutil.Process(os.getpid())
         self.mem_log = ParticleSet_ParamLogging()
 
-    #@profile
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -209,24 +211,9 @@ class ParticleSet_Benchmark(ParticleSet):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
-        # ==== Set particle.time defaults based on sign of dt, if not set at ParticleSet construction => moved below (l. xyz)
-        # piter = 0
-        # while piter < len(self._nodes):
-        #     pdata = self._nodes[piter].data
-        # #node = self.begin()
-        # #while node is not None:
-        # #    pdata = node.data
-        #     if np.isnan(pdata.time):
-        #         mintime, maxtime = self._fieldset.gridset.dimrange('time_full')
-        #         pdata.time = mintime if dt >= 0 else maxtime
-        # #    node.set_data(pdata)
-        #     self._nodes[piter].set_data(pdata)
-        #     piter += 1
-
         # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
-
 
         mintime, maxtime = self._fieldset.gridset.dimrange('time_full')
         _starttime = min([n.data.time for n in self._nodes if not np.isnan(n.data.time)] + [mintime, ]) if dt >= 0 else max([n.data.time for n in self._nodes if not np.isnan(n.data.time)] + [maxtime, ])
@@ -236,9 +223,6 @@ class ParticleSet_Benchmark(ParticleSet):
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
-
-        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
-        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
@@ -250,10 +234,7 @@ class ParticleSet_Benchmark(ParticleSet):
                                 "The kernels will be executed once, without incrementing time")
             execute_once = True
 
-
         # ==== Initialise particle timestepping
-        #for p in self:
-        #    p.dt = dt
         piter = 0
         while piter < len(self._nodes):
             pdata = self._nodes[piter].data
