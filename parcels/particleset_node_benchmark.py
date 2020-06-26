@@ -102,11 +102,8 @@ class ParticleSet_Benchmark(ParticleSet):
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each
-                                        iteration (post-process, non-Kernel)
-        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval
-                            to (latestly) interrupt the running kernel and invoke post-iteration
-                            callbacks from 'postIterationCallbacks'.
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -315,6 +312,7 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.mem_io_log.add_aux_measure(self._kernel.mem_io_timings.sum())
                 self._kernel.mem_io_timings.reset()
             self.compute_log.accumulate_timing()
+            # logger.info("Pset length: {}".format(len(self)))
             self.nparticle_log.advance_iteration(len(self))
             # ==== end compute ==== #
             if abs(time-next_output) < tol:  # ==== IO ==== #

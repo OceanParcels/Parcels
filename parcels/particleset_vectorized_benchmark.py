@@ -15,6 +15,7 @@ try:
 except:
     MPI = None
 
+# from parcels.compiler import GNUCompiler
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.particleset_vectorized import ParticleSet
 # from parcels.kernel_vectorized import Kernel
