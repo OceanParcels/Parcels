@@ -14,11 +14,10 @@ try:
 except:
     MPI = None
 
-# from parcels.compiler import GNUCompiler
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.particleset_vectorized import ParticleSet
 from parcels.kernel_vectorized import Kernel
-from parcels.kernel_benchmark import Kernel_Benchmark
+# from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
@@ -41,7 +40,6 @@ class ParticleSet_Benchmark(ParticleSet):
         self.mem_log = ParamLogging()
         self.process = psutil.Process(os.getpid())
 
-    #@profile
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -295,7 +293,7 @@ class ParticleSet_Benchmark(ParticleSet):
         based on `fieldset` and `ptype` of the ParticleSet
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
     def plot_and_log(self, total_times = None, compute_times = None, io_times = None, plot_times = None, memory_used = None, nparticles = None, target_N = 1, imageFilePath = "", odir = os.getcwd(), xlim_range=None, ylim_range=None):

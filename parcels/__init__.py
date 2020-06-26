@@ -8,8 +8,6 @@ from parcels.particleset_benchmark import *  # noqa
 from parcels.kernel_vectorized import *  # noqa
 from parcels.field import *  # noqa
 import parcels.rng as random  # noqa
-# from parcels import rng as random
-#from parcels.particlefile import *  # noqa
 from parcels.particlefile_vectorized import *  # noqa
 from parcels.kernels import *  # noqa
 from parcels.scripts import *  # noqa

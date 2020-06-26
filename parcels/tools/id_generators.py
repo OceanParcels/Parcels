@@ -12,8 +12,10 @@ try:
 except:
     MPI = None
 
+
 class BaseIdGenerator(ABC):
     _total_ids = 0
+
     def __init__(self):
         self._total_ids = 0
 
@@ -109,9 +111,10 @@ class SequentialIdGenerator(BaseIdGenerator):
     def get_total_length(self):
         return self._total_ids
 
+
 class SpatioTemporalIdGenerator(BaseIdGenerator):
     """Generates 64-bit IDs"""
-    timebounds  = np.zeros(2, dtype=np.float64)
+    timebounds = np.zeros(2, dtype=np.float64)
     depthbounds = np.zeros(2, dtype=np.float32)
     local_ids = None
     released_ids = {}
@@ -119,7 +122,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def __init__(self):
         super(SpatioTemporalIdGenerator, self).__init__()
-        self.timebounds  = np.zeros(2, dtype=np.float64)
+        self.timebounds = np.zeros(2, dtype=np.float64)
         self.depthbounds = np.zeros(2, dtype=np.float32)
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
@@ -154,10 +157,10 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         depth_discrete = np.int32(127.0 * depth_discrete)
         time_discrete = (time-self.timebounds[0])/(self.timebounds[1]-self.timebounds[0])
         time_discrete = np.int32(255.0 * time_discrete)
-        lon_index   = np.uint32(np.int32(lon_discrete)+180)
-        lat_index   = np.uint32(np.int32(lat_discrete)+90)
+        lon_index = np.uint32(np.int32(lon_discrete)+180)
+        lat_index = np.uint32(np.int32(lat_discrete)+90)
         depth_index = np.uint32(np.int32(depth_discrete))
-        time_index  = np.uint32(np.int32(time_discrete))
+        time_index = np.uint32(np.int32(time_discrete))
         id = self._get_next_id(lon_index, lat_index, depth_index, time_index)
         return id
 
@@ -166,7 +169,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def releaseID(self, id):
         full_bits = np.uint32(4294967295)
-        nil_bits  = np.int32(0)
+        nil_bits = np.int32(0)
         spatiotemporal_id = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(full_bits), 32), np.int64(nil_bits)), np.int64(id))
         spatiotemporal_id = np.uint32(np.right_shift(spatiotemporal_id, 32))
         local_id = np.bitwise_and(np.bitwise_or(np.left_shift(np.int64(nil_bits), 32), np.int64(full_bits)), np.int64(id))
@@ -185,9 +188,9 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index):
         local_index = -1
         id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time_index
-        if len(self.released_ids)>0 and (id in self.released_ids.keys()) and len(self.released_ids[id])>0:
+        if len(self.released_ids) > 0 and (id in self.released_ids.keys()) and len(self.released_ids[id]) > 0:
             local_index = np.uint32(self.released_ids[id].pop())
-            if len(self.released_ids[id])<= 0:
+            if len(self.released_ids[id]) <= 0:
                 del self.released_ids[id]
         else:
             local_index = self.local_ids[lon_index, lat_index, depth_index, time_index]
@@ -202,6 +205,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         if spatiotemporal_id not in self.released_ids.keys():
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
+
 
 class GenerateID_Service(BaseIdGenerator):
     _request_tag = 5
@@ -232,7 +236,6 @@ class GenerateID_Service(BaseIdGenerator):
 
         if not self._use_subprocess:
             self._service_process = base_generator_obj()
-
 
     def __del__(self):
         self._abort_()
@@ -359,5 +362,3 @@ class GenerateID_Service(BaseIdGenerator):
     @property
     def total_length(self):
         return self.get_total_length()
-
-
