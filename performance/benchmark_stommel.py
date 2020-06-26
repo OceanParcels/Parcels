@@ -540,6 +540,6 @@ if __name__=='__main__':
         pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
     # idgen.close()
     # del idgen
-    print('Execution finished')
+    # print('Execution finished')
     exit(0)
 
