@@ -204,29 +204,6 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
     def get_total_length(self):
         return self._total_ids
 
-    def _gather_released_ids_by_file(self, spatiotemporal_id, local_id):
-
-        return_id = None
-        access_flag_file = path.join( get_cache_dir(), 'id_access' )
-        occupancy_file = path.join( get_cache_dir(), 'id_occupancy.npy')
-        idreleases_file = path.join( get_cache_dir(), 'id_releases.pkl' )
-        while path.exists(access_flag_file):
-            sleep(0.1)
-        with open(access_flag_file, 'wb') as f_access:
-            f_access.write(bytearray([True,]))
-            # self.local_ids = np.fromfile(occupancy_file, dtype=np.uint32)
-            self.local_ids = np.load(occupancy_file)
-            with open(idreleases_file, 'rb') as f_idrel:
-                self.released_ids = pickle.load( f_idrel )
-            self._release_id(spatiotemporal_id, local_id)
-            with open(idreleases_file, 'wb') as f_idrel:
-                pickle.dump(self.released_ids, f_idrel)
-            # self.local_ids.tofile(occupancy_file)
-            np.save(occupancy_file, self.local_ids)
-        remove(access_flag_file)
-
-        return return_id
-
     def _get_next_id(self, lon_index, lat_index, depth_index, time_index):
         local_index = -1
         id = np.left_shift(lon_index, 23) + np.left_shift(lat_index, 15) + np.left_shift(depth_index, 8) + time_index

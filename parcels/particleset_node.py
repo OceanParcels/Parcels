@@ -231,7 +231,6 @@ class ParticleSet(object):
                         _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
                         self._pu_centers = _pu_centers
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
-                    # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]

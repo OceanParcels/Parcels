@@ -1015,7 +1015,7 @@ class NodeLoopGenerator(object):
         node_loop = c.While("node != NULL", c.Block([c.Assign("particle", "(%s*)(node->_c_data_p)" % (self.ptype.name)),
                                                      sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop, progress_loop]))
 
-        fbody = c.Block([c.Value("int", "sign_dt, sign_end_part"), # p,
+        fbody = c.Block([c.Value("int", "sign_dt, sign_end_part"),  # p,
                          c.Value("ErrorCode", "res"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),
