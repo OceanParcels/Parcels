@@ -191,6 +191,8 @@ if __name__=='__main__':
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
     print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
 
+    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+
     if os.path.sep in imageFileName:
         head_dir = os.path.dirname(imageFileName)
         if head_dir[0] == os.path.sep:
