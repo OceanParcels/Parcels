@@ -18,13 +18,14 @@ except:
 from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels.particleset_node import ParticleSet
 # from parcels.kernel_vectorized import Kernel
+from parcels.kernel_node_benchmark import Kernel_Benchmark
+# from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
-from parcels.tools import idgen
-from parcels.kernel_node_benchmark import Kernel_Benchmark
 from parcels.tools.performance_logger import TimingLog, ParamLogging
+from parcels.tools import idgen
 
 __all__ = ['ParticleSet_Benchmark']
 
@@ -304,6 +305,7 @@ class ParticleSet_Benchmark(ParticleSet):
             self.total_log.stop_timing()
             self.total_log.accumulate_timing()
             mem_B_used_total = 0
+            # mem_B_used_total = psutil.Process(os.getpid()).rss
             # if MPI:
             #     mpi_comm = MPI.COMM_WORLD
             #     mem_B_used = self.process.memory_info().rss
