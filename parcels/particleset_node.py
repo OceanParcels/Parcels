@@ -5,6 +5,7 @@ from datetime import timedelta as delta
 
 import os
 import numpy as np
+from scipy.spatial import distance
 import itertools
 import xarray as xr
 import progressbar
@@ -93,6 +94,8 @@ class RepeatParameters(object):
         return self._depth
 
     def get_depth_value(self, index):
+        if len(self._depth) == 0:
+            return 0
         return self._depth[index]
 
     @property
@@ -598,14 +601,37 @@ class ParticleSet(object):
                 self.add_entity(item)
         elif isinstance(data_array, ParticleSet):
             for i in range(len(data_array)):
-                self.add_entity(data_array[i])
+                self.add_entity(data_array.pop(i))
         elif isinstance(data_array, np.ndarray):
-            for i in itertools.islice(itertools.count(), 0, data_array.shape[0]):
-                self.add_entity(data_array[i])
+            if data_array.dtype == self._ptype:
+                for i in itertools.islice(itertools.count(), 0, data_array.shape[0]):
+                    ndata = self._nclass(id=data_array[i].id, data=data_array[i])
+                    self._nodes.add(ndata)
+            else:
+                # expect this to be a nD (2 <= n <= 5) array with [lon, lat, [depth, [time, [dt]]]]
+                pu_data = None
+                if MPI and MPI.COMM_WORLD.Get_size() > 1:
+                    mpi_comm = MPI.COMM_WORLD
+                    mpi_rank = mpi_comm.Get_rank()
+                    spdata = data_array[:, 0:2]
+                    dists = distance.cdist(spdata, self._pu_centers)
+                    min_pu = np.argmax(dists, axis=1)
+                    pu_data = data_array[ min_pu == mpi_rank ]
+                else:
+                    pu_data = data_array
+                for i in itertools.islice(itertools.count(), 0, pu_data.shape[0]):
+                    pdata = self._pclass(lon=pu_data[i, 0], lat=pu_data[i, 1], pid=np.iinfo(np.uint64).max, fieldset=self._fieldset)
+                    if pu_data.shape[1]>2:
+                        pdata.depth = pu_data[i, 2]
+                    if pu_data.shape[1]>3:
+                        pdata.time = pu_data[i, 3]
+                    if pu_data.shape[1]>4:
+                        pdata.dt = pu_data[i, 4]
+                    self.add_entity(pdata, pu_checked=True)
         else:
             return
 
-    def add_entity(self, pdata):
+    def add_entity(self, pdata, pu_checked=False):
         """
         Adds the new data in the list - position is auto-determined (because of sorted-list nature)
         :param pdata: new Node or pdata
@@ -614,41 +640,57 @@ class ParticleSet(object):
         # Comment: by current workflow, pset modification is only done on the front node, thus
         # the distance determination and assigment is also done on the front node
         _add_to_pu = True
-        if MPI:
+        if MPI and MPI.COMM_WORLD.Get_size() > 1 and not pu_checked:
             if self._pu_centers is not None and isinstance(self._pu_centers, np.ndarray):
                 mpi_comm = MPI.COMM_WORLD
                 mpi_rank = mpi_comm.Get_rank()
-                mpi_size = mpi_comm.Get_size()
+                # mpi_size = mpi_comm.Get_size()
                 min_dist = np.finfo(self._lonlatdepth_dtype).max
                 min_pu = 0
-                if mpi_size > 1 and mpi_rank == 0:
-                    ppos = pdata
-                    if isinstance(pdata, self._nclass):
-                        ppos = pdata.data
-                    spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
-                    n_clusters = self._pu_centers.shape[0]
-                    for i in range(n_clusters):
-                        diff = self._pu_centers[i, :] - spdata
-                        dist = np.dot(diff, diff)
-                        if dist < min_dist:
-                            min_dist = dist
-                            min_pu = i
-                    # NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
-                min_pu = mpi_comm.bcast(min_pu, root=0)
+                # if mpi_size > 1 and mpi_rank == 0:
+                #     ppos = pdata
+                #     if isinstance(pdata, self._nclass):
+                #         ppos = pdata.data
+                #     spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
+                #     n_clusters = self._pu_centers.shape[0]
+                #     for i in range(n_clusters):
+                #         diff = self._pu_centers[i, :] - spdata
+                #         dist = np.dot(diff, diff)
+                #         if dist < min_dist:
+                #             min_dist = dist
+                #             min_pu = i
+                #     # TODO NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
+                # min_pu = mpi_comm.bcast(min_pu, root=0)
+                ppos = pdata
+                if isinstance(pdata, self._nclass):
+                    ppos = pdata.data
+                spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
+                n_clusters = self._pu_centers.shape[0]
+                for i in range(n_clusters):
+                    diff = self._pu_centers[i, :] - spdata
+                    dist = np.dot(diff, diff)
+                    if dist < min_dist:
+                        min_dist = dist
+                        min_pu = i
                 if mpi_rank == min_pu:
                     _add_to_pu = True
                 else:
                     _add_to_pu = False
         if _add_to_pu:
             index = -1
+            pid = np.iinfo(np.uint64).max
             if isinstance(pdata, self._nclass):
                 self._nodes.add(pdata)
                 index = self._nodes.bisect_right(pdata)
             else:
-                index = idgen.total_length
-                pid = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
-                pdata.id = pid
-                pdata.index = index
+                if pdata.id == pid:
+                    index = idgen.total_length
+                    pid = idgen.nextID(pdata.lon, pdata.lat, pdata.depth, pdata.time)
+                    pdata.id = pid
+                    pdata.index = index
+                else:
+                    pid = pdata.id
+                    index = pdata.index
                 node = NodeJIT(id=pid, data=pdata)
                 self._nodes.add(node)
                 index = self._nodes.bisect_right(node)
@@ -925,19 +967,29 @@ class ParticleSet(object):
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
-                add_iter = 0
-                while add_iter < self.rparam.num_pts:
-                    gen_id = self.rparam.get_particle_id(add_iter)
-                    lon = self.rparam.get_longitude(add_iter)
-                    lat = self.rparam.get_latitude(add_iter)
-                    pdepth = self.rparam.get_depth_value(add_iter)
-                    ptime = time
-                    pindex = idgen.total_length
-                    pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                    pdata = JITParticle(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
-                    pdata.dt = dt
-                    self.add(self._nclass(id=pid, data=pdata))
-                    add_iter += 1
+                if self.rparam.get_particle_id(0) is None:
+                    pdata = np.array(self.rparam.lon, dtype=self._lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))
+                    pdata = np.concatenate((pdata, np.array(self.rparam.lat, dtype=self.lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
+                    if len(self.rparam.depth) > 0:
+                        pdata = np.concatenate((pdata, np.array(self.rparam.depth, dtype=self.lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
+                    else:
+                        pdata = np.concatenate((pdata, np.zeros(pdata.shape[0], dtype=self._lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
+                    pdata = np.concatenate((pdata, (np.ones(pdata.shape[0], dtype=np.float64) * time).reshape((self.rparam.num_pts, 1))), axis=1)
+                    pdata = np.concatenate((pdata, (np.ones(pdata.shape[0], dtype=np.float64) * dt).reshape((self.rparam.num_pts, 1))), axis=1)
+                    self.add(pdata)
+                else:
+                    add_iter = 0
+                    while add_iter < self.rparam.num_pts:
+                        gen_id = self.rparam.get_particle_id(add_iter)
+                        lon = self.rparam.get_longitude(add_iter)
+                        lat = self.rparam.get_latitude(add_iter)
+                        pdepth = self.rparam.get_depth_value(add_iter)
+                        ptime = time
+                        pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
+                        pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
+                        pdata.dt = dt
+                        self.add(self._nclass(id=pid, data=pdata))
+                        add_iter += 1
                 next_prelease += self.repeatdt * np.sign(dt)
             if abs(time-next_output) < tol:
                 if output_file is not None:
