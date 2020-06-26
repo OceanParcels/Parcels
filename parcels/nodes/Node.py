@@ -5,12 +5,11 @@ from parcels.wrapping import *
 from numpy import int32, int64, uint32, uint64
 import random
 
-# from parcels import JITParticle, ScipyParticle
 
 class Node(object):
     prev = None
     next = None
-    id   = None
+    id = None
     data = None
     registered = False
 
@@ -26,7 +25,7 @@ class Node(object):
             self.next = next
         else:
             self.next = None
-        if id is not None and (isinstance(id, int) or type(id) in [int32, uint32, int64, uint64]) and (id>=0):
+        if id is not None and (isinstance(id, int) or type(id) in [int32, uint32, int64, uint64]) and (id >= 0):
             self.id = id
         elif id is None:
             self.id = idgen.nextID(random.uniform(-180.0, 180.0), random.uniform(-90.0, 90.0), random.uniform(0., 75.0), 0.)
@@ -74,18 +73,13 @@ class Node(object):
         if (self.data is not None) and (other.data is not None):
             return self.data == other.data
         else:
-            #if (self.prev is not None) and (self.next is not None) and (other.prev is not None) and (other.next is not None):
-            #    # return (self.prev == other.prev) and (self.next == other.next)
-            #    return (id(self.prev) == id(other.prev)) and (id(self.next) == id(other.next))
-            #else:
             return self.id == other.id
-            #return id(self) == id(other)
 
     def __ne__(self, other):
         return not (self == other)
 
     def __lt__(self, other):
-        #print("less-than({} vs. {})".format(str(self),str(other)))
+        # print("less-than({} vs. {})".format(str(self),str(other)))
         if type(self) is not type(other):
             err_msg = "This object and the other object (type={}) do note have the same type.".format(str(type(other)))
             raise AttributeError(err_msg)
@@ -137,6 +131,7 @@ class Node(object):
 
 node_c_interface = None
 
+
 class NodeJIT(Node, ctypes.Structure):
     _fields_ = [('_c_prev_p', ctypes.c_void_p),
                 ('_c_next_p', ctypes.c_void_p),
@@ -150,7 +145,6 @@ class NodeJIT(Node, ctypes.Structure):
     reset_prev_ptr_c = None
     reset_next_ptr_c = None
     reset_data_ptr_c = None
-
 
     def __init__(self, prev=None, next=None, id=None, data=None):
         super().__init__(prev=prev, next=next, id=id, data=data)
@@ -185,15 +179,14 @@ class NodeJIT(Node, ctypes.Structure):
             self.set_prev_ptr_c(self, self.prev)
         else:
             self.reset_prev_ptr_c(self)
-        #self._c_self_p = ctypes.cast(self, ctypes.c_void_p)
+        # self._c_self_p = ctypes.cast(self, ctypes.c_void_p)
         if self.next is not None and isinstance(self.next, NodeJIT):
             self.set_next_ptr_c(self, self.next)
         else:
             self.reset_next_ptr_c(self)
 
-
         if self.data is not None:   # and isinstance(ctypes.c_void_p):
-            #self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
+            # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
             try:
                 # self.set_data_ptr_c(self, ctypes.cast(ctypes.byref(self.data.cdata()), ctypes.c_void_p))
                 self.set_data_ptr_c(self, self.data.cdata())
@@ -269,23 +262,23 @@ class NodeJIT(Node, ctypes.Structure):
     def __sizeof__(self):
         return super().__sizeof__()+sys.getsizeof(self._fields_)
 
-    #def __eq__(self, other):
-    #    return super().__eq__(other)
+    def __eq__(self, other):
+        return super().__eq__(other)
 
-    #def __ne__(self, other):
-    #    return super().__ne__(other)
+    def __ne__(self, other):
+        return super().__ne__(other)
 
-    #def __lt__(self, other):
-    #    return super().__lt__(other)
+    def __lt__(self, other):
+        return super().__lt__(other)
 
-    #def __le__(self, other):
-    #    return super().__le__(other)
+    def __le__(self, other):
+        return super().__le__(other)
 
-    #def __gt__(self, other):
-    #    return super().__gt__(other)
+    def __gt__(self, other):
+        return super().__gt__(other)
 
-    #def __ge__(self, other):
-    #    return super().__ge__(other)
+    def __ge__(self, other):
+        return super().__ge__(other)
 
     def set_data(self, data):
         super().set_data(data)
@@ -304,23 +297,23 @@ class NodeJIT(Node, ctypes.Structure):
 
     def update_prev(self):
         if self.prev is not None and isinstance(self.prev, NodeJIT):
-            #self._c_prev_p = ctypes.cast(self.prev, ctypes.c_void_p)
-            #self._c_prev_p = self.prev._c_self_p
+            # self._c_prev_p = ctypes.cast(self.prev, ctypes.c_void_p)
+            # self._c_prev_p = self.prev._c_self_p
             self.set_prev_ptr_c(self, self.prev)
         else:
             self.reset_prev_ptr_c(self)
 
     def update_next(self):
         if self.next is not None and isinstance(self.next, NodeJIT):
-            #self._c_next_p = ctypes.cast(self.next, ctypes.c_void_p)
-            #self._c_next_p = self.next._c_self_p
+            # self._c_next_p = ctypes.cast(self.next, ctypes.c_void_p)
+            # self._c_next_p = self.next._c_self_p
             self.set_next_ptr_c(self, self.next)
         else:
             self.reset_next_ptr_c(self)
 
     def update_data(self):
         if self.data is not None:   # and isinstance(ctypes.c_void_p):
-            #self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
+            # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
             try:
                 # self.set_data_ptr_c(self, ctypes.cast(ctypes.byref(self.data.cdata()), ctypes.c_void_p))
                 self.set_data_ptr_c(self, self.data.cdata())
