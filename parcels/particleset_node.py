@@ -8,18 +8,15 @@ import numpy as np
 import itertools
 import xarray as xr
 import progressbar
-# import math  # noga
-# import random  # noga
 
-from parcels.nodes.LinkedList import  *
+from parcels.nodes.LinkedList import *
 from parcels.nodes.Node import Node, NodeJIT
 from parcels.tools import idgen
 
-from parcels.tools import cleanup_remove_files, cleanup_unload_lib, get_cache_dir, get_package_dir
-from parcels.wrapping.code_compiler import GNUCompiler
+from parcels.tools import get_cache_dir, get_package_dir
+# from parcels.wrapping.code_compiler import GNUCompiler
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
-# from parcels import Grid, Field, GridSet, FieldSet
 from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -64,8 +61,7 @@ class RepeatParameters(object):
         if depth is None:
             depth = []
         self._depth = depth
-        self._maxID = pid_orig # pid - pclass.lastID
-        assert type(self._lon)==type(self._lat)==type(self._depth)
+        self._maxID = pid_orig
         if isinstance(self._lon, list):
             self._n_pts = len(self._lon)
         elif isinstance(self._lon, np.ndarray):
@@ -115,7 +111,6 @@ class RepeatParameters(object):
     @property
     def partitions(self):
         return self._partitions
-
 
 
 class ParticleSet(object):
@@ -171,7 +166,7 @@ class ParticleSet(object):
         self._kclass = Kernel
         self._kernel = None
         self._ptype = self._pclass.getPType()
-        self._pu_centers = None # can be given by parameter
+        self._pu_centers = None  # can be given by parameter
         if self._ptype.uses_jit:
             self._nclass = NodeJIT
         else:
@@ -229,12 +224,10 @@ class ParticleSet(object):
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
                             _partitions = kmeans.labels_
                             _pu_centers = kmeans.cluster_centers_
-                        #mpi_comm.Barrier()
                         _partitions = mpi_comm.bcast(_partitions, root=0)
                         _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
                         self._pu_centers = _pu_centers
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
-                    # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[_partitions == mpi_rank]
                     lat = lat[_partitions == mpi_rank]
@@ -283,7 +276,6 @@ class ParticleSet(object):
                     setattr(pdata, kwvar, kwargs[kwvar][i])
                 ndata = self._nclass(id=pdata_id, data=pdata)
                 self._nodes.add(ndata)
-
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -424,7 +416,6 @@ class ParticleSet(object):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
-
     def cptr(self, index):
         if self._ptype.uses_jit:
             node = self._nodes[index]
@@ -561,9 +552,6 @@ class ParticleSet(object):
     def get_particle(self, index):
         return self.get(index).data
 
-    # def retrieve_item(self, key):
-    #    return self.get(key)
-
     def __getitem__(self, key):
         if key >= 0 and key < len(self._nodes):
             return self._nodes[key]
@@ -609,11 +597,11 @@ class ParticleSet(object):
             for item in data_array:
                 self.add_entity(item)
         elif isinstance(data_array, ParticleSet):
-            for i in range( len(data_array) ):
-                self.add_entity( data_array[i] )
+            for i in range(len(data_array)):
+                self.add_entity(data_array[i])
         elif isinstance(data_array, np.ndarray):
             for i in itertools.islice(itertools.count(), 0, data_array.shape[0]):
-                self.add_entity( data_array[i] )
+                self.add_entity(data_array[i])
         else:
             return
 
@@ -640,7 +628,7 @@ class ParticleSet(object):
                     spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
                     n_clusters = self._pu_centers.shape[0]
                     for i in range(n_clusters):
-                        diff = self._pu_centers[i,:] - spdata
+                        diff = self._pu_centers[i, :] - spdata
                         dist = np.dot(diff, diff)
                         if dist < min_dist:
                             min_dist = dist
@@ -806,8 +794,7 @@ class ParticleSet(object):
             if self._ptype.uses_jit:
                 self._kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
-                # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
-                #self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
+                # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
                 self._kernel.compile(compiler=GNUCompiler_MS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], tmp_dir=get_cache_dir()))
                 self._kernel.load_lib()
 
@@ -857,7 +844,6 @@ class ParticleSet(object):
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
 
-
         mintime, maxtime = self._fieldset.gridset.dimrange('time_full')
         _starttime = min([n.data.time for n in self._nodes if not np.isnan(n.data.time)] + [mintime, ]) if dt >= 0 else max([n.data.time for n in self._nodes if not np.isnan(n.data.time)] + [maxtime, ])
         if self.repeatdt is not None and self.repeat_starttime is None:
@@ -866,9 +852,6 @@ class ParticleSet(object):
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
-
-        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
-        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
@@ -880,10 +863,9 @@ class ParticleSet(object):
                                 "The kernels will be executed once, without incrementing time")
             execute_once = True
 
-
         # ==== Initialise particle timestepping
-        #for p in self:
-        #    p.dt = dt
+        # for p in self:
+        #     p.dt = dt
         piter = 0
         while piter < len(self._nodes):
             pdata = self._nodes[piter].data
@@ -986,8 +968,6 @@ class ParticleSet(object):
         if verbose_progress:
             pbar.finish()
 
-
-
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet
@@ -999,7 +979,6 @@ class ParticleSet(object):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
-
 
     def _create_progressbar_(self, starttime, endtime):
         pbar = None
@@ -1070,11 +1049,3 @@ class ParticleSet(object):
             density /= field.cell_areas()
 
         return density
-
-
-
-
-
-
-
-

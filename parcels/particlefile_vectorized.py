@@ -51,6 +51,7 @@ def _set_calendar(origin_calendar):
 # ==== and the NetCDF.Dataset, but instead mapped their attributes manually by lazy binding into this class.
 # ==== This obviously circumvents any variable checks and is also prone to leave garbage memory open during the computation.
 
+
 class ParticleFile(object):
     """Initialise trajectory output.
     :param name: Basename of the output file

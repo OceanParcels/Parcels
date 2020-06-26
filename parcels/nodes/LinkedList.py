@@ -1,7 +1,7 @@
 from parcels.nodes.Node import *
 from sortedcontainers import SortedList
-from copy import copy, deepcopy
-import gc
+from numpy import int32, int64, uint32, uint64
+from copy import deepcopy
 
 
 # ========================== #
@@ -14,7 +14,7 @@ class RealList(SortedList):
 
     def __init__(self, iterable=None, dtype=Node):
         super(RealList, self).__init__(iterable)
-        self.dtype=dtype
+        self.dtype = dtype
 
     def __del__(self):
         self.clear()
@@ -41,7 +41,7 @@ class RealList(SortedList):
         return object.__new__(cls)
 
     def add(self, val):
-        assert type(val)==self.dtype
+        assert type(val) == self.dtype
         if isinstance(val, Node):
             n = self.__len__()
             index = self.bisect_right(val)
@@ -108,14 +108,9 @@ class RealList(SortedList):
         :return:
         """
         if deepcopy_elem:
-            result = deepcopy(self.__getitem__(idx))
             val = super().pop(idx)
+            result = deepcopy(val)
+            # result = deepcopy(self.__getitem__(idx))
             del val
             return result
         return super().pop(idx)
-
-
-
-
-
-

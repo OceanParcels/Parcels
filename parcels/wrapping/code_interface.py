@@ -5,7 +5,7 @@ from time import sleep
 import numpy.ctypeslib as npct
 from parcels.tools import get_cache_dir, get_package_dir
 from .code_compiler import *
-from parcels.tools.loggers import logger
+# from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
@@ -14,8 +14,10 @@ except:
 
 __all__ = ['LibraryRegisterC', 'InterfaceC']
 
+
 class LibraryRegisterC:
     _data = {}
+
     def __init__(self):
         self._data = {}
 
@@ -26,12 +28,10 @@ class LibraryRegisterC:
             entry.unload_library()
             del entry
 
-    def load(self, libname, src_dir = get_package_dir()):
+    def load(self, libname, src_dir=get_package_dir()):
         if libname not in self._data.keys():
-            # cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
             cppargs = []
-            # , libs=["node"]
-            ccompiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
+            ccompiler = GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
             self._data[libname] = InterfaceC("node", ccompiler, src_dir)
         if not self._data[libname].is_compiled():
             self._data[libname].compile_library()
@@ -47,27 +47,22 @@ class LibraryRegisterC:
         return self.get(item)
 
     def get(self, libname):
-        #if libname not in self._data.keys():
-        #    self.load(libname)
         if libname in self._data.keys():
             return self._data[libname]
         return None
 
     def register(self, libname):
-        #if libname not in self._data.keys():
-        #    self.load(libname)
         if libname in self._data.keys():
             self._data[libname].register()
 
     def deregister(self, libname):
         if libname in self._data.keys():
             self._data[libname].unregister()
-        #    if self._data[libname].register_count <= 0:
-        #        self.unload(libname)
+
 
 class InterfaceC:
 
-    def __init__(self, c_file_name, compiler, src_dir = get_package_dir()):
+    def __init__(self, c_file_name, compiler, src_dir=get_package_dir()):
         basename = c_file_name
         src_pathfile = c_file_name
         if isinstance(basename, list) and len(basename) > 0:
@@ -117,8 +112,8 @@ class InterfaceC:
         """ Writes kernel code to file and compiles it."""
         if not self.compiled:
             self.compiler.compile(self.src_file, self.lib_file, self.log_file)
-            #logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
-            #self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
+            # logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+            # self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
             self.compiled = True
 
     def cleanup_files(self):

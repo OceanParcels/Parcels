@@ -1,5 +1,5 @@
-# from os import getpid
-from parcels.tools import logger
+#  from os import getpid
+#  from parcels.tools import logger
 
 
 try:
@@ -8,7 +8,7 @@ except:
     MPI = None
 
 
-def mpi_execute_requested_messages(exec_class, request_tag = 0, response_tag = 1):
+def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
     """
     A sub-thread/sub-process main function that manages a central (i.e. global) object.
     The process is that MPI processes can subscribe (via 'thread_subscribe' as function name) to the message queue. Then,
@@ -26,7 +26,7 @@ def mpi_execute_requested_messages(exec_class, request_tag = 0, response_tag = 1
         msg_status = MPI.Status()
         msg = mpi_comm.irecv(source=MPI.ANY_SOURCE, tag=request_tag)
         test_result = msg.test(status=msg_status)
-        while (test_result[0] == False) or (test_result[0] == True and not isinstance(test_result[1], dict)):
+        while (not test_result[0]) or (test_result[0] and not isinstance(test_result[1], dict)):
             test_result = msg.test(status=msg_status)
 
         request_package = test_result[1]
@@ -60,4 +60,3 @@ def mpi_execute_requested_messages(exec_class, request_tag = 0, response_tag = 1
             if res is not None:
                 response_package = {"result": res, "src_rank": mpi_rank}
                 mpi_comm.send(response_package, dest=msg_status.Get_source(), tag=response_tag)
-

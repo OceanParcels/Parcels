@@ -262,11 +262,11 @@ class ScipyParticle(_Particle):
             return False
         ids_eq = (self.id == other.id)
         attr_eq = True
-        attr_eq&= (self.lon == other.lon)
-        attr_eq&= (self.lat == other.lat)
-        attr_eq&= (self.depth == other.depth)
-        attr_eq&= (self.time == other.time)
-        attr_eq&= (self.dt == other.dt)
+        attr_eq &= (self.lon == other.lon)
+        attr_eq &= (self.lat == other.lat)
+        attr_eq &= (self.depth == other.depth)
+        attr_eq &= (self.time == other.time)
+        attr_eq &= (self.dt == other.dt)
         return ids_eq and attr_eq
 
     def __ne__(self, other):
@@ -326,7 +326,7 @@ class JITParticle(ScipyParticle):
         if self._cptr is None:
             # Allocate data for a single particle
             ptype = self.getPType()
-            self._cptr = np.empty(1, dtype=ptype.dtype) # [0]
+            self._cptr = np.empty(1, dtype=ptype.dtype)  # [0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
         fieldset = kwargs.get('fieldset')
@@ -360,7 +360,7 @@ class JITParticle(ScipyParticle):
         return self._cptr
 
     def reset_cptr(self):
-        self._cptr=None
+        self._cptr = None
 
     def __eq__(self, other):
         return super(JITParticle, self).__eq__(other)
@@ -383,6 +383,3 @@ class JITParticle(ScipyParticle):
     def __sizeof__(self):
         ptype = self.getPType()
         return sum([v.size for v in ptype.variables])
-
-
-

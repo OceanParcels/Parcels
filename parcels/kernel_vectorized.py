@@ -64,7 +64,6 @@ class Kernel(BaseKernel):
     # == CHANGES THAT REFLECT THE 'None'-Type FieldSet still need to be done == #
     """
 
-    #def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
         super(Kernel, self).__init__(fieldset, ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
@@ -128,7 +127,6 @@ class Kernel(BaseKernel):
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
-            #fieldset = self.fieldset
             for f in self.vector_field_args.values():
                 Wname = f.W.ccode_name if f.W else 'not_defined'
                 for sF_name, sF_component in zip([f.U.ccode_name, f.V.ccode_name, Wname], ['U', 'V', 'W']):
@@ -374,5 +372,3 @@ class Kernel(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
-
-

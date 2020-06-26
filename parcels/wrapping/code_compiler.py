@@ -1,12 +1,13 @@
 import os
 import subprocess
 from struct import calcsize
-from pathlib import Path
+#  from pathlib import Path
 
 try:
     from mpi4py import MPI
 except:
     MPI = None
+
 
 class Compiler_parameters(object):
     def __init__(self):
@@ -62,7 +63,6 @@ class Compiler_parameters(object):
         return self._exe_ext
 
 
-
 class GNU_parameters(Compiler_parameters):
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None):
         super(GNU_parameters, self).__init__()
@@ -88,7 +88,7 @@ class GNU_parameters(Compiler_parameters):
         lflags = []
         if libs is not None and isinstance(libs, list):
             for i, lib in enumerate(libs):
-                lflags.append("-l" +lib)
+                lflags.append("-l" + lib)
 
         cc_env = os.getenv('CC')
         self._compiler = "mpicc" if MPI else "gcc" if cc_env is None else cc_env
@@ -258,11 +258,6 @@ class CCompiler_MS(CCompiler):
         super(CCompiler_MS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
     def compile(self, src, obj, log):
-        # print(self._cc)
-        # print(self._cppargs)
-        # print(obj)
-        # print(src)
-        # print(self._ldargs)
         objs = []
         for src_file in src:
             src_file_wo_ext = os.path.splitext(src_file)[0]
@@ -272,7 +267,7 @@ class CCompiler_MS(CCompiler):
             obj_file = os.path.join(self._tmp_dir, src_file_wo_ppath) + "." + self._obj_ext
             objs.append(obj_file)
             slog_file = os.path.join(self._tmp_dir, src_file_wo_ppath) + "_o" + "." + "log"
-            #cc = [self._cc] + self._cppargs + ["-c", src_file]
+            #  cc = [self._cc] + self._cppargs + ["-c", src_file]
             cc = [self._cc] + self._cppargs + ['-c', src_file] + ['-o', obj_file]
             with open(log, 'w') as logfile:
                 logfile.write("Compiling: %s\n" % " ".join(cc))
@@ -295,7 +290,7 @@ class GNUCompiler_SS(CCompiler_SS):
          (optional).
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
-        c_params = GNU_parameters(cppargs,ldargs, incdirs, libdirs, libs)
+        c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
         super(GNUCompiler_SS, self).__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)
         self._dynlib_ext = c_params.dynlib_ext
         self._stclib_ext = c_params.stclib_ext
@@ -319,7 +314,7 @@ class GNUCompiler_MS(CCompiler_MS):
          (optional).
     :arg ldargs: A list of arguments to pass to the linker (optional)."""
     def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
-        c_params = GNU_parameters(cppargs,ldargs, incdirs, libdirs, libs)
+        c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
         super(GNUCompiler_MS, self).__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)
         self._dynlib_ext = c_params.dynlib_ext
         self._stclib_ext = c_params.stclib_ext
@@ -337,4 +332,3 @@ class GNUCompiler_MS(CCompiler_MS):
 
 
 GNUCompiler = GNUCompiler_SS
-

@@ -6,17 +6,12 @@ from ast import parse
 from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
-from ctypes import c_float
 from ctypes import c_int
-from ctypes import c_void_p
+# from ctypes import c_void_p
 from ctypes import pointer
 from os import path
 from sys import version_info
-
 import numpy as np
-# import _ctypes
-# import numpy.ctypeslib as npct
-# from copy import deepcopy
 
 from parcels import Field, NestedField, SummedField, VectorField
 from parcels import ErrorCode
@@ -26,14 +21,6 @@ from parcels.kernelbase import BaseKernel
 from parcels.tools.global_statics import get_cache_dir, get_package_dir
 from parcels.wrapping import KernelGenerator, NodeLoopGenerator
 from parcels.tools.error import recovery_map as recovery_base_map
-
-# from codegenerator import KernelGenerator, LoopGenerator
-# from compiler import get_cache_dir
-# from parcels_mocks import Field
-# from parcels_mocks import NestedField
-# from parcels_mocks import SummedField
-# from parcels_mocks import VectorField
-# from parcels_mocks import StatusCode as ErrorCode
 
 __all__ = ['Kernel']
 DEBUG_MODE = False
@@ -175,7 +162,6 @@ class Kernel(BaseKernel):
                 f.chunk_data()
             else:
                 for block_id in range(len(f.data_chunks)):
-                    #del f.data_chunks[block_id]
                     f.data_chunks[block_id] = None
                     f.c_data_chunks[block_id] = None
 
@@ -340,7 +326,7 @@ class Kernel(BaseKernel):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        #error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
+        # error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
         error_particles = [n.data for n in pset.data if n.data.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
         while len(error_particles) > 0:
@@ -369,18 +355,5 @@ class Kernel(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            #error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
+            # error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
             error_particles = [n.data for n in pset.data if n.data.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
-
-
-
-
-
-
-
-
-
-
-
-
-

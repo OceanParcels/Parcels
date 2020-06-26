@@ -9,8 +9,7 @@ import numpy as np
 import xarray as xr
 import progressbar
 
-from parcels.tools import cleanup_remove_files, cleanup_unload_lib, get_cache_dir, get_package_dir
-# from parcels.compiler import GNUCompiler
+from parcels.tools import get_package_dir
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -19,7 +18,6 @@ from parcels.kernel_vectorized import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile_vectorized import ParticleFile
-from parcels.tools.error import ErrorCode
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
