@@ -249,14 +249,17 @@ def test_fieldset_access(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
-        tmp = fieldset.U.grid.lon  # noqa
+        particle.lon = fieldset.U.grid.lon[2]
 
     error_thrown = False
     try:
         pset.execute(kernel, endtime=1, dt=1.)
     except NotImplementedError:
         error_thrown = True
-    assert error_thrown
+    if mode == 'jit':
+        assert error_thrown
+    else:
+        assert pset.lon[0] == fieldset.U.grid.lon[2]
 
 
 def random_series(npart, rngfunc, rngargs, mode):
