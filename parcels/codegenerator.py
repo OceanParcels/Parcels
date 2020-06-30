@@ -11,6 +11,7 @@ from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
+from parcels.grid import Grid
 from parcels.tools.loggers import logger
 
 
@@ -48,6 +49,13 @@ class FieldSetNode(IntrinsicNode):
 
 
 class FieldNode(IntrinsicNode):
+    def __getattr__(self, attr):
+        if isinstance(getattr(self.obj, attr), Grid):
+            return GridNode(getattr(self.obj, attr),
+                            ccode="%s->%s" % (self.ccode, attr))
+        else:
+            raise NotImplementedError('Access to Field attributes are not (yet) implemented in JIT mode')
+
     def __getitem__(self, attr):
         return FieldEvalNode(self.obj, attr)
 
@@ -123,6 +131,11 @@ class NestedVectorFieldEvalNode(IntrinsicNode):
         self.var = var  # the variable in which the interpolated field is written
         self.var2 = var2  # second variable for UV interpolation
         self.var3 = var3  # third variable for UVW interpolation
+
+
+class GridNode(IntrinsicNode):
+    def __getattr__(self, attr):
+        raise NotImplementedError('Access to Grids is not (yet) implemented in JIT mode')
 
 
 class ConstNode(IntrinsicNode):

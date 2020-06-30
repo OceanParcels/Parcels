@@ -242,15 +242,17 @@ def test_print(fieldset, mode, capfd):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_access(fieldset, mode):
-    class TestParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32, initial=0)
-    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0, lat=0)
 
     def kernel(particle, fieldset, time):
-        particle.p = fieldset.U.lon[1]
+        tmp = fieldset.U.grid.lon  # noqa
 
-    pset.execute(kernel, endtime=1, dt=1.)
-    assert np.allclose(pset.p, fieldset.U.grid.lon[1])
+    error_thrown = False
+    try:
+        pset.execute(kernel, endtime=1, dt=1.)
+    except NotImplementedError:
+        error_thrown = True
+    assert error_thrown
 
 
 def random_series(npart, rngfunc, rngargs, mode):
