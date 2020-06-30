@@ -3,7 +3,7 @@ from datetime import timedelta as delta
 import numpy as np
 import pytest
 
-from parcels import BrownianMotion2D
+from parcels import DiffusionUniformKh
 from parcels import Field
 from parcels import FieldSet
 from parcels import JITParticle
@@ -39,7 +39,7 @@ def test_brownian_example(mode, mesh, npart=3000):
     random.seed(1234)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(BrownianMotion2D),
+    pset.execute(pset.Kernel(DiffusionUniformKh),
                  runtime=runtime, dt=delta(hours=1))
 
     expected_std_x = np.sqrt(2*kh_zonal*runtime.total_seconds())

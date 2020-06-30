@@ -147,11 +147,15 @@ class FieldSet(object):
                 is_processed_grid = False
                 is_same_grid = False
                 for fld in self.get_fields():       # avoid re-processing/overwriting existing and working fields
+                    if type(fld) in [VectorField, NestedField, SummedField] or fld.dataFiles is None:
+                        continue
                     if fld.grid == g_set:
                         is_processed_grid |= True
                         break
                 if not is_processed_grid:
                     for fld in self.get_fields():
+                        if type(fld) in [VectorField, NestedField, SummedField] or fld.dataFiles is None:
+                            continue
                         procdims = fld.dimensions
                         procinds = fld.indices
                         procpaths = fld.dataFiles
@@ -217,16 +221,23 @@ class FieldSet(object):
             if type(value) is Field:
                 assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
 
-        def check_len1dims_cgrid(fld):
-            if fld.interp_method == 'cgrid_velocity':
-                if fld.grid.xdim == 1 or fld.grid.ydim == 1:
+        def check_velocityfields(U, V):
+            if (U.interp_method == 'cgrid_velocity' and V.interp_method != 'cgrid_velocity') or \
+                    (U.interp_method != 'cgrid_velocity' and V.interp_method == 'cgrid_velocity'):
+                raise ValueError("If one of U,V.interp_method='cgrid_velocity', the other should be too")
+
+            if 'linear_invdist_land_tracer' in [U.interp_method, V.interp_method]:
+                raise NotImplementedError("interp_method='linear_invdist_land_tracer' is not implemented for U and V Fields")
+
+            if U.interp_method == 'cgrid_velocity':
+                if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
         if isinstance(self.U, (SummedField, NestedField)):
-            for U in self.U:
-                check_len1dims_cgrid(U)
+            for U, V in zip(self.U, self.V):
+                check_velocityfields(U, V)
         else:
-            check_len1dims_cgrid(self.U)
+            check_velocityfields(self.U, self.V)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
@@ -329,6 +340,8 @@ class FieldSet(object):
                fully load them (default: True). It is advised to deferred load the data, since in
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
+        :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
+               'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
         :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
@@ -523,9 +536,11 @@ class FieldSet(object):
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise RuntimeError("On a c-grid discretisation like NEMO, U and V should have the same dimensions")
+            raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U and V. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a c-grid discretisation like NEMO, U, V and W should have the same dimensions")
+            raise ValueError("On a C-grid, the dimensions of velocities should be the corners (f-points) of the cells, so the same for U, V and W. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
 
         interp_method = {}
         for v in variables:
@@ -543,7 +558,7 @@ class FieldSet(object):
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                  allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', depth_units='m', **kwargs):
         """Initialises FieldSet object from NetCDF files of POP fields.
             It is assumed that the velocities in the POP fields is in cm/s.
 
@@ -594,6 +609,8 @@ class FieldSet(object):
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
                Note that in the case of from_pop() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
         :param field_chunksize: size of the chunks in dask loading
+        :param depth_units: The units of the vertical dimension. Default in Parcels is 'm',
+               but many POP outputs are in 'cm'
 
         """
 
@@ -607,7 +624,13 @@ class FieldSet(object):
         if hasattr(fieldset, 'V'):
             fieldset.V.set_scaling_factor(0.01)  # cm/s to m/s
         if hasattr(fieldset, 'W'):
-            fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
+            if depth_units == 'm':
+                fieldset.W.set_scaling_factor(-0.01)  # cm/s to m/s and change the W direction
+                logger.warning_once("Parcels assumes depth in POP output to be in 'm'. Use depth_units='cm' if the output depth is in 'cm'.")
+            elif depth_units == 'cm':
+                fieldset.W.set_scaling_factor(-1.)  # change the W direction but keep W in cm/s because depth is in cm
+            else:
+                raise SyntaxError("'depth_units' has to be 'm' or 'cm'")
         return fieldset
 
     @classmethod
@@ -666,9 +689,11 @@ class FieldSet(object):
         """
 
         if 'U' in dimensions and 'V' in dimensions and dimensions['U'] != dimensions['V']:
-            raise RuntimeError("On a B-grid discretisation, U and V should have the same dimensions")
+            raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U and V. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
         if 'U' in dimensions and 'W' in dimensions and dimensions['U'] != dimensions['W']:
-            raise RuntimeError("On a B-grid discretisation, U, V and W should have the same dimensions")
+            raise ValueError("On a B-grid, the dimensions of velocities should be the (top) corners of the grid cells, so the same for U, V and W. "
+                             "See also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb")
 
         interp_method = {}
         for v in variables:

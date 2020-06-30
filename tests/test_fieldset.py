@@ -190,6 +190,18 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
 
 
+def test_empty_indices(tmpdir, filename='test_subsets'):
+    data, dimensions = generate_fieldset(100, 100)
+    filepath = tmpdir.join(filename)
+    FieldSet.from_data(data, dimensions).write(filepath)
+    error_thrown = False
+    try:
+        FieldSet.from_parcels(filepath, indices={'lon': []})
+    except RuntimeError:
+        error_thrown = True
+    assert error_thrown
+
+
 @pytest.mark.parametrize('calltype', ['from_data', 'from_nemo'])
 def test_illegal_dimensionsdict(calltype):
     error_thrown = False

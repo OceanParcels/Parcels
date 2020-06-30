@@ -22,8 +22,6 @@ class Variable(object):
     :param to_write: Boolean to control whether Variable is written to NetCDF file
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
-        if name == 'z':
-            raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -62,7 +60,6 @@ class ParticleType(object):
             raise TypeError("Class object required to derive ParticleType")
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
-
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
         # Pick Variable objects out of __dict__.
@@ -71,6 +68,13 @@ class ParticleType(object):
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
+                for v in self.variables:
+                    if v.name in [v.name for v in ptype.variables]:
+                        raise AttributeError(
+                            "Custom Variable name '%s' is not allowed, as it is also a built-in variable" % v.name)
+                    if v.name == 'z':
+                        raise AttributeError(
+                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
                 self.variables = ptype.variables + self.variables
         # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
         self.variables = [v for v in self.variables if v.is64bit()] + \

@@ -67,12 +67,15 @@ class Field(object):
     :param vmin: Minimum allowed value on the field. Data below this value are set to zero
     :param vmax: Maximum allowed value on the field. Data above this value are set to zero
     :param time_origin: Time origin (TimeConverter object) of the time axis (only if grid is None)
-    :param interp_method: Method for interpolation. Either 'linear' or 'nearest'
+    :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
+           'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
     :param allow_time_extrapolation: boolean whether to allow for extrapolation in time
            (i.e. beyond the last available time snapshot)
     :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
            The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
+    :param chunkdims_name_map (opt.): gives a name map to the NetCDFFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
+           required only if currently incompatible OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -170,6 +173,7 @@ class Field(object):
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
         self.field_chunksize = kwargs.pop('field_chunksize', None)
+        self.netcdf_chunkdims_name_map = kwargs.pop('chunkdims_name_map', None)
         self.grid.depth_field = kwargs.pop('depth_field', None)
 
         if self.grid.depth_field == 'not_yet_set':
@@ -267,8 +271,10 @@ class Field(object):
         netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
 
         indices = {} if indices is None else indices.copy()
-        for ind in indices.values():
-            assert np.min(ind) >= 0, \
+        for ind in indices:
+            if len(indices[ind]) == 0:
+                raise RuntimeError('Indices for %s can not be empty' % ind)
+            assert np.min(indices[ind]) >= 0, \
                 ('Negative indices are currently not allowed in Parcels. '
                  + 'This is related to the non-increasing dimension it could generate '
                  + 'if the domain goes from lon[-4] to lon[6] for example. '
@@ -449,7 +455,7 @@ class Field(object):
                This flag overrides the allow_time_interpolation and sets it to False
         """
 
-        data = da.values
+        data = da.data
         interp_method = kwargs.pop('interp_method', 'linear')
 
         time = da[dimensions['time']].values if 'time' in dimensions else np.array([0])
@@ -473,13 +479,17 @@ class Field(object):
             logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
         lib = np if isinstance(data, np.ndarray) else da
-        if data.size == 1:
-            data = lib.tile(data, [self.grid.tdim, self.grid.zdim, self.grid.ydim, self.grid.xdim])
         if transpose:
             data = lib.transpose(data)
         if self.grid.lat_flipped:
             data = lib.flip(data, axis=-2)
 
+        if self.grid.xdim == 1 or self.grid.ydim == 1:
+            data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
+        if self.grid.xdim == 1 and len(data.shape) < 4:
+            data = lib.expand_dims(data, axis=-1)
+        if self.grid.ydim == 1 and len(data.shape) < 4:
+            data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
                 data = data.reshape(sum(((1,), data.shape), ()))
@@ -823,6 +833,32 @@ class Field(object):
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
                 (1-xsi)*eta * self.data[ti, yi+1, xi]
             return val
+        elif self.interp_method == 'linear_invdist_land_tracer':
+            land = np.isclose(self.data[ti, yi:yi+2, xi:xi+2], 0.)
+            nb_land = np.sum(land)
+            if nb_land == 4:
+                return 0
+            elif nb_land > 0:
+                val = 0
+                w_sum = 0
+                for j in range(2):
+                    for i in range(2):
+                        distance = pow((eta - j), 2) + pow((xsi - i), 2)
+                        if np.isclose(distance, 0):
+                            if land[j][i] == 1:  # index search led us directly onto land
+                                return 0
+                            else:
+                                return self.data[ti, yi+j, xi+i]
+                        elif land[i][j] == 0:
+                            val += self.data[ti, yi+j, xi+i] / distance
+                            w_sum += 1 / distance
+                return val / w_sum
+            else:
+                val = (1 - xsi) * (1 - eta) * self.data[ti, yi, xi] + \
+                    xsi * (1 - eta) * self.data[ti, yi, xi + 1] + \
+                    xsi * eta * self.data[ti, yi + 1, xi + 1] + \
+                    (1 - xsi) * eta * self.data[ti, yi + 1, xi]
+                return val
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, yi+1, xi+1]
         elif self.interp_method == 'cgrid_velocity':
@@ -844,6 +880,39 @@ class Field(object):
             f0 = self.data[ti, zi, yi+1, xi+1]
             f1 = self.data[ti, zi+1, yi+1, xi+1]
             return (1-zeta) * f0 + zeta * f1
+        elif self.interp_method == 'linear_invdist_land_tracer':
+            land = np.isclose(self.data[ti, zi:zi+2, yi:yi+2, xi:xi+2], 0.)
+            nb_land = np.sum(land)
+            if nb_land == 8:
+                return 0
+            elif nb_land > 0:
+                val = 0
+                w_sum = 0
+                for k in range(2):
+                    for j in range(2):
+                        for i in range(2):
+                            distance = pow((zeta - k), 2) + pow((eta - j), 2) + pow((xsi - i), 2)
+                            if np.isclose(distance, 0):
+                                if land[k][j][i] == 1:  # index search led us directly onto land
+                                    return 0
+                                else:
+                                    return self.data[ti, zi+i, yi+j, xi+k]
+                            elif land[k][j][i] == 0:
+                                val += self.data[ti, zi+k, yi+j, xi+i] / distance
+                                w_sum += 1 / distance
+                return val / w_sum
+            else:
+                data = self.data[ti, zi, :, :]
+                f0 = (1 - xsi) * (1 - eta) * data[yi, xi] + \
+                    xsi * (1 - eta) * data[yi, xi + 1] + \
+                    xsi * eta * data[yi + 1, xi + 1] + \
+                    (1 - xsi) * eta * data[yi + 1, xi]
+                data = self.data[ti, zi + 1, :, :]
+                f1 = (1 - xsi) * (1 - eta) * data[yi, xi] + \
+                    xsi * (1 - eta) * data[yi, xi + 1] + \
+                    xsi * eta * data[yi + 1, xi + 1] + \
+                    (1 - xsi) * eta * data[yi + 1, xi]
+                return (1 - zeta) * f0 + zeta * f1
         elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
             if self.interp_method == 'bgrid_velocity':
                 zeta = 0.
@@ -972,7 +1041,7 @@ class Field(object):
 
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[p*ngrid], &particles->yi[p*ngrid], &particles->zi[p*ngrid], &particles->ti[p*ngrid], &%s, %s)" \
+        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s)" \
             % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
 
     def ccode_convert(self, _, z, y, x):
@@ -1226,7 +1295,8 @@ class Field(object):
                                       interp_method=self.interp_method,
                                       data_full_zdim=self.data_full_zdim,
                                       field_chunksize=self.field_chunksize,
-                                      rechunk_callback_fields=self.chunk_setup)
+                                      rechunk_callback_fields=self.chunk_setup,
+                                      chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
         time_data = g.time_origin.reltime(time_data)
@@ -1527,12 +1597,12 @@ class VectorField(object):
         if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "&particles->xi[p*ngrid], &particles->yi[p*ngrid], &particles->zi[p*ngrid], &particles->ti[p*ngrid], &%s, &%s, &%s, %s)" \
+                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, &%s, &%s, %s)" \
                    % (varU, varV, varW, U.interp_method.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "&particles->xi[p*ngrid], &particles->yi[p*ngrid], &particles->zi[p*ngrid], &particles->ti[p*ngrid], &%s, &%s, %s)" \
+                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, &%s, %s)" \
                    % (varU, varV, U.interp_method.upper())
 
 
@@ -1665,16 +1735,16 @@ class NestedField(list):
 
 
 class NetcdfFileBuffer(object):
-    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i'],
-                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j'],
+    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG'],
+                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
                   'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz',
-                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps'],
+                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1', 'Zl', 'Zu', 'level'],
                   'time': ['time', 'time_count', 'time_counter', 'timer_count', 't']}
     _min_dim_chunksize = 16
 
     """ Class that encapsulates and manages deferred access to file data. """
     def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', data_full_zdim=None, field_chunksize='auto', rechunk_callback_fields=None, lock_file=True):
+                 interp_method='linear', data_full_zdim=None, field_chunksize='auto', rechunk_callback_fields=None, lock_file=True, **kwargs):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -1689,6 +1759,11 @@ class NetcdfFileBuffer(object):
         self.rechunk_callback_fields = rechunk_callback_fields
         self.chunking_finalized = False
         self.lock_file = lock_file
+        if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
+            for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
+                for value in dim_name_arr:
+                    if value not in self._name_maps[key]:
+                        self._name_maps[key].append(value)
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
@@ -1747,7 +1822,14 @@ class NetcdfFileBuffer(object):
         # ==== self.dataset temporarily available ==== #
         init_chunk_dict = {}
         if isinstance(self.field_chunksize, dict):
-            init_chunk_dict = self.field_chunksize
+            # init_chunk_dict = self.field_chunksize
+            loni, lonname, _ = self._is_dimension_in_dataset('lon')
+            lati, latname, _ = self._is_dimension_in_dataset('lat')
+            depthi, depthname, _ = self._is_dimension_in_dataset('depth')
+            timei, timename, _ = self._is_dimension_in_dataset('time')
+            for name in self.field_chunksize.keys():
+                if name in [lonname, latname, depthname, timename]:
+                    init_chunk_dict[name] = self.field_chunksize[name]
         elif isinstance(self.field_chunksize, tuple):  # and (len(self.dimensions) == len(self.field_chunksize)):
             tmp_chs = [0, ] * len(self.field_chunksize)
             chunk_index = len(self.field_chunksize)-1
@@ -1816,9 +1898,11 @@ class NetcdfFileBuffer(object):
                 init_chunk_dict[depthname] = max(1, depthvalue)
         # ==== closing check-opened requested dataset ==== #
         self.dataset.close()
-        # ==== check if the chunksize reading is successfull. if not, load the file ONCE really into memory and ==== #
+        # ==== check if the chunksize reading is successful. if not, load the file ONCE really into memory and ==== #
         # ==== deduce the chunking from the array dims.                                                         ==== #
         try:
+            if len(init_chunk_dict) < 3:
+                raise AttributeError("Too few known chunk dimension arguments.")
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
         except:
             # ==== fail - open it as a normal array and deduce the dimensions from the read field ==== #

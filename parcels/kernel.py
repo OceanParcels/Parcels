@@ -53,7 +53,7 @@ def fix_indentation(string):
     lines = string.split('\n')
     indent = re_indent.match(lines[0])
     if indent:
-        lines = [l.replace(indent.groups()[0], '', 1) for l in lines]
+        lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
     return "\n".join(lines)
 
 
