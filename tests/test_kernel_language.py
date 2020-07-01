@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, ErrorCode
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, StateCode
 from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
 from parcels.kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
 from parcels import random as parcels_random
@@ -334,7 +334,7 @@ def test_small_dt(fieldset, mode, dt, npart=10):
                        lat=np.zeros(npart), time=np.arange(0, npart)*dt*10)
 
     def DoNothing(particle, fieldset, time):
-        return ErrorCode.Success
+        return StateCode.Success
 
     pset.execute(DoNothing, dt=dt, runtime=dt*100)
     assert np.allclose([p.time for p in pset], dt*100)

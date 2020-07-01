@@ -1,5 +1,5 @@
 from parcels import (FieldSet, ParticleSet, Field, ScipyParticle, JITParticle,
-                     Variable, ErrorCode, CurvilinearZGrid)
+                     Variable, StateCode, OperationCode, CurvilinearZGrid)
 import numpy as np
 import pytest
 
@@ -198,7 +198,7 @@ def test_pset_repeatdt_custominit(fieldset, mode):
     pset = ParticleSet(fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5)
 
     def DoNothing(particle, fieldset, time):
-        return ErrorCode.Success
+        return StateCode.Success
 
     pset.execute(DoNothing, dt=1, runtime=21)
     assert np.allclose([p.sample_var for p in pset], 5.)
@@ -210,7 +210,7 @@ def test_pset_stop_simulation(fieldset, mode):
 
     def Delete(particle, fieldset, time):
         if time == 4:
-            return ErrorCode.StopExecution
+            return OperationCode.StopExecution
 
     pset.execute(Delete, dt=1, runtime=21)
     assert pset.time == 4

@@ -162,7 +162,7 @@ class RandomNode(IntrinsicNode):
                                  % attr)
 
 
-class ErrorCodeNode(IntrinsicNode):
+class StatusCodeNode(IntrinsicNode):
     symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE', 'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',
                   'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
                   'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE'}
@@ -228,8 +228,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype, ccode='particles')
-        elif node.id in ['ErrorCode', 'Error']:
-            node = ErrorCodeNode(math, ccode='')
+        elif node.id in ['StateCode', 'OperationCode', 'ErrorCode', 'Error']:
+            node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
             node = MathNode(math, ccode='')
         elif node.id == 'random':

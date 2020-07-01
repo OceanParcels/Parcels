@@ -4,7 +4,7 @@ from operator import attrgetter
 import numpy as np
 
 from parcels.field import Field
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
@@ -181,7 +181,7 @@ class ScipyParticle(_Particle):
     id = Variable('id', dtype=np.int32)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
@@ -214,7 +214,7 @@ class ScipyParticle(_Particle):
         return str + "time=%s)" % time_string
 
     def delete(self):
-        self.state = ErrorCode.Delete
+        self.state = OperationCode.Delete
 
     def set_state(self, state):
         self.state = state

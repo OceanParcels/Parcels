@@ -19,7 +19,7 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import _get_cftime_calendars
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
@@ -50,7 +50,7 @@ class ParticleAccessor(object):
             self._next_dt = next_dt
 
     def delete(self):
-        self.state = ErrorCode.Delete
+        self.state = OperationCode.Delete
 
     def set_state(self, state):
         self.state = state
