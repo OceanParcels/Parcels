@@ -12,7 +12,7 @@ from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
-from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
 import functools
 try:

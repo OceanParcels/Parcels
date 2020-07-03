@@ -1,7 +1,7 @@
 """Collection of pre-built advection kernels"""
 import math
 
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import OperationCode
 
 
 __all__ = ['AdvectionRK4', 'AdvectionEE', 'AdvectionRK45', 'AdvectionRK4_3D',
@@ -100,7 +100,7 @@ def AdvectionRK45(particle, fieldset, time):
             particle.update_next_dt(particle.dt * 2)
     else:
         particle.dt /= 2
-        return ErrorCode.Repeat
+        return OperationCode.Repeat
 
 
 def AdvectionAnalytical(particle, fieldset, time):

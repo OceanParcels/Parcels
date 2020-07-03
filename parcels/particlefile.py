@@ -9,7 +9,7 @@ from glob import glob
 import netCDF4
 import numpy as np
 
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
@@ -244,7 +244,7 @@ class ParticleFile(object):
                         data_dict[var] = pd[var][to_write]
                     self.maxid_written = max(self.maxid_written, np.max(data_dict['id']))
 
-                pset_errs = (to_write & (pd['state'] != ErrorCode.Delete)
+                pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
                              & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
                 if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once(

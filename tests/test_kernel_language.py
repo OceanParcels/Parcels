@@ -1,4 +1,4 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, ErrorCode
+from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, StateCode
 from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
 from parcels.kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
 from parcels import random as parcels_random
@@ -304,10 +304,10 @@ def test_c_kernel(fieldset, mode, c_inc):
 
     if c_inc == 'str':
         c_include = """
-                 static inline ErrorCode func(CField *f, float *lon, double *dt)
+                 static inline StatusCode func(CField *f, float *lon, double *dt)
                  {
                    float data2D[2][2][2];
-                   ErrorCode err = getCell2D(f, 1, 2, 0, data2D, 1); CHECKERROR(err);
+                   StatusCode status = getCell2D(f, 1, 2, 0, data2D, 1); CHECKSTATUS(status);
                    float u = data2D[0][0][0];
                    *lon += u * *dt;
                    return SUCCESS;
@@ -352,7 +352,7 @@ def test_small_dt(mode, dt, npart=10):
                        lat=np.zeros(npart), time=np.arange(0, npart)*dt*10)
 
     def DoNothing(particle, fieldset, time):
-        return ErrorCode.Success
+        return StateCode.Success
 
     pset.execute(DoNothing, dt=dt, runtime=dt*100)
     assert np.allclose([p.time for p in pset], dt*100)

@@ -176,17 +176,19 @@ class RandomNode(IntrinsicNode):
                                  % attr)
 
 
-class ErrorCodeNode(IntrinsicNode):
-    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE', 'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',
-                  'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
-                  'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE'}
+class StatusCodeNode(IntrinsicNode):
+    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE',  # StateCodes
+                  'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',  # OperationCodes
+                  'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',  # ErrorCodes
+                  'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE',
+                  'ErrorTimeExtrapolation': 'ERROR_TIME_EXTRAPOLATION'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
             attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown error code encountered: %s"""
+            raise AttributeError("""Unknown status code encountered: %s"""
                                  % attr)
 
 
@@ -242,8 +244,8 @@ class IntrinsicTransformer(ast.NodeTransformer):
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype, ccode='particles')
-        elif node.id in ['ErrorCode', 'Error']:
-            node = ErrorCodeNode(math, ccode='')
+        elif node.id in ['StateCode', 'OperationCode', 'ErrorCode', 'Error']:
+            node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
             node = MathNode(math, ccode='')
         elif node.id == 'random':
@@ -421,7 +423,7 @@ class KernelGenerator(ast.NodeVisitor):
         for kvar in self.kernel_vars + self.array_vars:
             if kvar in funcvars:
                 funcvars.remove(kvar)
-        self.ccode.body.insert(0, c.Value('ErrorCode', 'err'))
+        self.ccode.body.insert(0, c.Value('StatusCode', 'err'))
         if len(funcvars) > 0:
             self.ccode.body.insert(0, c.Value("type_coord", ", ".join(funcvars)))
         if len(transformer.tmp_vars) > 0:
@@ -436,7 +438,7 @@ class KernelGenerator(ast.NodeVisitor):
                 self.visit(stmt)
 
         # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("ErrorCode", node.name), spec='inline'))
+        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
         args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
                 c.Value("int", "pnum"),
                 c.Value("double", "time")]
@@ -518,7 +520,7 @@ class KernelGenerator(ast.NodeVisitor):
                     rhs = "%s(%s)" % (node.func.ccode, ccode_args)
                     if parcels_customed_Cfunc:
                         node.ccode = str(c.Block([c.Assign("err", rhs),
-                                                  c.Statement("CHECKERROR(err)")]))
+                                                  c.Statement("CHECKSTATUS(err)")]))
                     else:
                         node.ccode = rhs
             except:
@@ -753,7 +755,7 @@ class KernelGenerator(ast.NodeVisitor):
         ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
         conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
         node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat, c.Statement("CHECKERROR(err)")])
+                              conv_stat, c.Statement("CHECKSTATUS(err)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
@@ -773,7 +775,7 @@ class KernelGenerator(ast.NodeVisitor):
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
         node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat, c.Statement("CHECKERROR(err)")])
+                              conv_stat, c.Statement("CHECKSTATUS(err)")])
 
     def visit_SummedFieldEvalNode(self, node):
         self.visit(node.fields)
@@ -783,7 +785,7 @@ class KernelGenerator(ast.NodeVisitor):
             ccode_eval = fld.ccode_eval(var, *node.args.ccode)
             ccode_conv = fld.ccode_convert(*node.args.ccode)
             conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
-            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKERROR(err)")]
+            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
         node.ccode = c.Block(cstat)
 
     def visit_SummedVectorFieldEvalNode(self, node):
@@ -805,7 +807,7 @@ class KernelGenerator(ast.NodeVisitor):
                 ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
-        cstat += [c.Statement("CHECKERROR(err)")]
+        cstat += [c.Statement("CHECKSTATUS(err)")]
         node.ccode = c.Block(cstat)
 
     def visit_NestedFieldEvalNode(self, node):
@@ -818,8 +820,8 @@ class KernelGenerator(ast.NodeVisitor):
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
             cstat += [c.Assign("err", ccode_eval),
                       conv_stat,
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKERROR(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKERROR(err)"), c.Statement("break")]
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_NestedVectorFieldEvalNode(self, node):
@@ -842,8 +844,8 @@ class KernelGenerator(ast.NodeVisitor):
                 statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval),
                       c.Block(statements),
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKERROR(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKERROR(err)"), c.Statement("break")]
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
         node.ccode = c.While("1==1", c.Block(cstat))
 
     def visit_Return(self, node):
@@ -991,7 +993,7 @@ class LoopGenerator(object):
         body = [c.Statement("set_particle_backup(&particle_backup, particles, pnum)")]
         body += [pdt_eq_dt_pos]
         body += [partdt]
-        body += [c.Value("ErrorCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]
+        body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles->state[pnum]")]
         body += [c.Assign("res", "%s(particles, pnum, %s)" % (funcname, fargs_str))]
         body += [c.If("(res==SUCCESS) && (particles->state[pnum] != state_prev)", c.Assign("res", "particles->state[pnum]"))]
         body += [check_pdt]
@@ -1017,7 +1019,7 @@ class LoopGenerator(object):
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
-                         c.Value("ErrorCode", "res"),
+                         c.Value("StatusCode", "res"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])
