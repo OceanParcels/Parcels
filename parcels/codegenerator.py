@@ -176,9 +176,9 @@ class RandomNode(IntrinsicNode):
 
 
 class StatusCodeNode(IntrinsicNode):
-    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE',
-                  'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',
-                  'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
+    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE',  # StateCodes
+                  'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',  # OperationCodes
+                  'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',  # ErrorCodes
                   'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE',
                   'ErrorTimeExtrapolation': 'ERROR_TIME_EXTRAPOLATION'}
 
