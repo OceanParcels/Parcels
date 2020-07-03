@@ -96,7 +96,8 @@ class ParticleSet(object):
 
     Please note that this currently only supports fixed size particle sets.
 
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+    :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
+           While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
     :param pclass: Optional :mod:`parcels.particle.JITParticle` or
                  :mod:`parcels.particle.ScipyParticle` object that defines custom particle
     :param lon: List of initial longitude values for particles
@@ -114,7 +115,10 @@ class ParticleSet(object):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self.fieldset = fieldset
-        if self.fieldset is not None:
+        if self.fieldset is None:
+            logger.warning_once("No FieldSet provided in ParticleSet generation. "
+                                "This breaks most Parcels functionality")
+        else:
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
