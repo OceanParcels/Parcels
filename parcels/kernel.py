@@ -232,35 +232,36 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2:
+        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2 and pset.fieldset is not None:
             assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
                 'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
-        for g in pset.fieldset.gridset.grids:
-            g.cstruct = None  # This force to point newly the grids from Python to C
-        # Make a copy of the transposed array to enforce
-        # C-contiguous memory layout for JIT mode.
-        for f in pset.fieldset.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField]:
-                continue
-            if f in self.field_args.values():
-                f.chunk_data()
-            else:
-                for block_id in range(len(f.data_chunks)):
-                    f.data_chunks[block_id] = None
-                    f.c_data_chunks[block_id] = None
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                g.cstruct = None  # This force to point newly the grids from Python to C
+            # Make a copy of the transposed array to enforce
+            # C-contiguous memory layout for JIT mode.
+            for f in pset.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                if f in self.field_args.values():
+                    f.chunk_data()
+                else:
+                    for block_id in range(len(f.data_chunks)):
+                        f.data_chunks[block_id] = None
+                        f.c_data_chunks[block_id] = None
 
-        for g in pset.fieldset.gridset.grids:
-            g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
-            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                if not g.load_chunk.flags.c_contiguous:
-                    g.load_chunk = g.load_chunk.copy()
-            if not g.depth.flags.c_contiguous:
-                g.depth = g.depth.copy()
-            if not g.lon.flags.c_contiguous:
-                g.lon = g.lon.copy()
-            if not g.lat.flags.c_contiguous:
-                g.lat = g.lat.copy()
+            for g in pset.fieldset.gridset.grids:
+                g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
+                if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                    if not g.load_chunk.flags.c_contiguous:
+                        g.load_chunk = g.load_chunk.copy()
+                if not g.depth.flags.c_contiguous:
+                    g.depth = g.depth.copy()
+                if not g.lon.flags.c_contiguous:
+                    g.lon = g.lon.copy()
+                if not g.lat.flags.c_contiguous:
+                    g.lat = g.lat.copy()
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_double(f) for f in self.const_args.values()]
@@ -285,10 +286,11 @@ class Kernel(object):
         # back up variables in case of OperationCode.Repeat
         p_var_back = {}
 
-        for f in self.fieldset.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField]:
-                continue
-            f.data = np.array(f.data)
+        if self.fieldset is not None:
+            for f in self.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                f.data = np.array(f.data)
 
         for p in range(pset.size):
             particles.set_index(p)
@@ -392,9 +394,10 @@ class Kernel(object):
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
 
-        for g in pset.fieldset.gridset.grids:
-            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                    g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:

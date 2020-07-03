@@ -12,6 +12,7 @@ from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
+from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 
 
@@ -220,7 +221,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
     names, such as 'particle' or 'fieldset', inserts placeholder objects
     and propagates attribute access."""
 
-    def __init__(self, fieldset, ptype):
+    def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset
         self.ptype = ptype
 
@@ -239,7 +240,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
     def visit_Name(self, node):
         """Inject IntrinsicNode objects into the tree according to keyword"""
-        if node.id == 'fieldset':
+        if node.id == 'fieldset' and self.fieldset is not None:
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
             node = ParticleNode(self.ptype, ccode='particles')
@@ -384,7 +385,7 @@ class KernelGenerator(ast.NodeVisitor):
     kernel_vars = ['particle', 'fieldset', 'time', 'output_time', 'tol']
     array_vars = []
 
-    def __init__(self, fieldset, ptype):
+    def __init__(self, fieldset=None, ptype=JITParticle):
         self.fieldset = fieldset
         self.ptype = ptype
         self.field_args = collections.OrderedDict()
@@ -903,7 +904,7 @@ class LoopGenerator(object):
         ccode += [str(c.Include("math.h", system=False))]
         ccode += [str(c.Assign('double _next_dt', '0'))]
         ccode += [str(c.Assign('size_t _next_dt_set', '0'))]
-        ccode += [str(c.Assign('const int ngrid', str(self.fieldset.gridset.size)))]
+        ccode += [str(c.Assign('const int ngrid', str(self.fieldset.gridset.size if self.fieldset is not None else 1)))]
 
         # ==== Generate type definition for particle type ==== #
         vdeclp = [c.Pointer(c.POD(v.dtype, v.name)) for v in self.ptype.variables]
