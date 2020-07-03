@@ -112,9 +112,10 @@ class ParticleSet(object):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self.fieldset = fieldset
-        self.fieldset.check_complete()
+        if self.fieldset is not None:
+            self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
         def convert_to_array(var):
@@ -133,7 +134,7 @@ class ParticleSet(object):
         pid = pid_orig + pclass.lastID
 
         if depth is None:
-            mindepth, _ = self.fieldset.gridset.dimrange('depth')
+            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_array(depth)
@@ -150,7 +151,7 @@ class ParticleSet(object):
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin
+        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
         time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
@@ -212,7 +213,10 @@ class ParticleSet(object):
         pclass.setLastID(offset+1)
 
         if lonlatdepth_dtype is None:
-            self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+            if fieldset is not None:
+                self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+            else:
+                self.lonlatdepth_dtype = np.float32
         else:
             self.lonlatdepth_dtype = lonlatdepth_dtype
         assert self.lonlatdepth_dtype in [np.float32, np.float64], \
@@ -227,7 +231,8 @@ class ParticleSet(object):
         initialised = set()
         for v in self.ptype.variables:
             if v.name in ['xi', 'yi', 'zi', 'ti']:
-                self.particle_data[v.name] = np.empty((len(lon), fieldset.gridset.size), dtype=v.dtype)
+                ngrid = fieldset.gridset.size if fieldset is not None else 1
+                self.particle_data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
             else:
                 self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
@@ -608,7 +613,7 @@ class ParticleSet(object):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
-        mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
         if np.any(np.isnan(self.particle_data['time'])):
             self.particle_data['time'][np.isnan(self.particle_data['time'])] = mintime if dt >= 0 else maxtime
 
@@ -656,7 +661,7 @@ class ParticleSet(object):
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
+        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         tol = 1e-12
         if verbose_progress is None:
