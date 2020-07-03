@@ -163,16 +163,18 @@ class RandomNode(IntrinsicNode):
 
 
 class StatusCodeNode(IntrinsicNode):
-    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE', 'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',
+    symbol_map = {'Success': 'SUCCESS', 'Evaluate': 'EVALUATE',
+                  'Repeat': 'REPEAT', 'Delete': 'DELETE', 'StopExecution': 'STOP_EXECUTION',
                   'Error': 'ERROR', 'ErrorInterpolation': 'ERROR_INTERPOLATION',
-                  'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE'}
+                  'ErrorOutOfBounds': 'ERROR_OUT_OF_BOUNDS', 'ErrorThroughSurface': 'ERROR_THROUGH_SURFACE',
+                  'ErrorTimeExtrapolation': 'ERROR_TIME_EXTRAPOLATION'}
 
     def __getattr__(self, attr):
         if attr in self.symbol_map:
             attr = self.symbol_map[attr]
             return IntrinsicNode(None, ccode=attr)
         else:
-            raise AttributeError("""Unknown error code encountered: %s"""
+            raise AttributeError("""Unknown status code encountered: %s"""
                                  % attr)
 
 
