@@ -30,7 +30,6 @@ if MPI:
 
 __all__ = ['ParticleSet']
 
-
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
@@ -246,15 +245,6 @@ class ParticleSet(object):
             return self._plist_c[bracket_index][slot_index]
         else:
             return None
-
-    # def allocate_cptrs(self):
-    #     nparticles = 0
-    #     for sublist in self.plist:
-    #         nparticles += sublist.shape[0]
-    #     # == Allocate underlying data for C-allocated particles == #
-    #     if self.ptype.uses_jit:
-    #         self._particle_data = np.empty(nparticles, dtype=self.ptype.dtype)
-    #     return nparticles
 
     def get_list_array_index(self, pdata):
         """Searches for the list-array indices for a given particle.
@@ -503,8 +493,9 @@ class ParticleSet(object):
     def __repr__(self):
         return "\n".join([str(p) for sublist in self._plist for p in sublist])
 
-    def __len__(self):
-        return self.size
+    # def __len__(self):
+    #     return len(self._plist)
+    #     # return self.size
 
     def __getitem__(self, key):
         bracket_index = 0
@@ -547,6 +538,9 @@ class ParticleSet(object):
                     self._plist_c.append(sublist)
         else:
             raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
+
+        # for sublist in particles.particles_c:
+        #     self._plist_c.append(sublist)
 
     def _merge_brackets_(self):
         lw_bound_nlist = int(self.nlist_limit / 2)
