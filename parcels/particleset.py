@@ -30,7 +30,6 @@ if MPI:
 
 __all__ = ['ParticleSet']
 
-
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
@@ -154,9 +153,7 @@ class ParticleSet(object):
             'lon lat depth precision should be set to either np.float32 or np.float64'
         JITParticle.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
-        # == this should be a list not a dict! == #
-        self._pid_mapping_bounds = []  # plist bracket_index -> (min_id, max_id, size_bracket)
-        # ======================================= #
+        self._pid_mapping_bounds = [] # plist bracket_index -> (min_id, max_id, size_bracket)
         self.nlist_limit = 4096
         # self.particles = np.empty(lon.size, dtype=pclass)
         assert lon.shape[0] == lat.shape[0], ('Length of lon and lat do not match.')
@@ -501,34 +498,27 @@ class ParticleSet(object):
         for bracket_index in range(len(self._pid_mapping_bounds)):
             nparticles += self._pid_mapping_bounds[bracket_index][2]
         return nparticles
-        # return self.particles.size
 
     def __repr__(self):
         return "\n".join([str(p) for sublist in self._plist for p in sublist])
 
     def __len__(self):
-        # return len(self._plist)
         return self.size
 
     def __getitem__(self, key):
         bracket_index = 0
         start_index = 0
         end_index = self._pid_mapping_bounds[bracket_index][2]
-        # while start_index<key:
-        # while end_index >= key:
         while key >= end_index:
             start_index = end_index
             end_index = start_index+self._pid_mapping_bounds[bracket_index][2]
             bracket_index += 1
         slot_index = key - start_index
         return self._plist[bracket_index][slot_index]
-    #     return self.particles[key]
 
     def __setitem__(self, key, value):
         assert isinstance(key, tuple) and len(key) == 2, ("Error: trying to set/address data item without (bracket_index, slot_index) key.")
         self._plist[key[0]][key[1]] = value
-    # def __setitem__(self, key, value):
-    #     self.particles[key] = value
 
     def __iadd__(self, particles):
         self.add(particles)
@@ -556,18 +546,6 @@ class ParticleSet(object):
                     self._plist_c.append(sublist)
         else:
             raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
-
-        # if isinstance(particles, ParticleSet):
-        #     particles = particles.particles
-        # else:
-        #     raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
-        # self.particles = np.append(self.particles, particles)
-        # if self.ptype.uses_jit:
-        #     particles_data = [p._cptr for p in particles]
-        #     self._particle_data = np.append(self._particle_data, particles_data)
-        #     # Update C-pointer on particles
-        #     for p, pdata in zip(self.particles, self._particle_data):
-        #         p._cptr = pdata
 
     def _merge_brackets_(self):
         lw_bound_nlist = int(self.nlist_limit / 2)
@@ -685,26 +663,10 @@ class ParticleSet(object):
             self._remove_(bracket_index, local_indices)
         self._merge_brackets_()
 
-        # if isinstance(indices, collections.Iterable):
-        #     particles = [self.particles[i] for i in indices]
-        # else:
-        #     particles = self.particles[indices]
-        # self.particles = np.delete(self.particles, indices)
-        # if self.ptype.uses_jit:
-        #     self._particle_data = np.delete(self._particle_data, indices)
-        #     # == Update C-pointer on particles == #
-        #     for p, pdata in zip(self.particles, self._particle_data):
-        #         p._cptr = pdata
-        # return particles
-
     def remove_local_particles(self, bracket_index, local_indices):
         return self._remove_(bracket_index, local_indices)
 
     def _remove_(self, bracket_index, local_indices):
-        # if isinstance(indices, collections.Iterable):
-        #     particles = [self.particles[i] for i in indices]
-        # else:
-        #     particles = self.particles[indices]
         if isinstance(local_indices, collections.Iterable):
             local_indices = np.array(local_indices)
         return_p = self._plist[bracket_index][local_indices]
