@@ -932,16 +932,6 @@ class ParticleSet(object):
                     _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
                 density[yi, xi] += particle_val[bracket_index][slot_index]
 
-        # for pi, p in enumerate(self.particles):
-        #     try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
-        #         if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
-        #             raise('error')
-        #         xi = p.xi[field.igrid]
-        #         yi = p.yi[field.igrid]
-        #     except:
-        #         _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
-        #     density[yi, xi] += particle_val[pi]
-
         if relative:
             psum = 0
             for bracket_index, subfield in enumerate(particle_val):
