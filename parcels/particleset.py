@@ -493,9 +493,9 @@ class ParticleSet(object):
     def __repr__(self):
         return "\n".join([str(p) for sublist in self._plist for p in sublist])
 
-    # def __len__(self):
-    #     return len(self._plist)
-    #     # return self.size
+    def __len__(self):
+        # return len(self._plist)
+        return self.size
 
     def __getitem__(self, key):
         bracket_index = 0
