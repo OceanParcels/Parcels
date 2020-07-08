@@ -415,8 +415,7 @@ class Kernel(object):
         # Remove all particles that signalled deletion
         self.remove_deleted(pset, output_file=output_file, endtime=endtime)
 
-        # == Identify particles that threw errors == #
-        # error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
+        # == Identify particles that threw errors == #\
         error_particles = [p for subfield in pset.particles_a for p in subfield if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
         while len(error_particles) > 0:
@@ -448,7 +447,6 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            # error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
             error_particles = [p for subfield in pset.particles_a for p in subfield if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
     def merge(self, kernel):
