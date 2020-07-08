@@ -232,7 +232,6 @@ class ParticleFile(object):
             if not isinstance(pset, list):
                 pset = pset.particles_a
 
-            # if pset.size == 0:
             if len(pset) == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
