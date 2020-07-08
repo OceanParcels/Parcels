@@ -276,9 +276,11 @@ class ParticleSet(object):
             return (bracket_index, slot_index)
         elif isinstance(pdata, self.pclass):
             # == parameter is a particle itself == #
+            # nparticle = 0
             bracket_index = 0
             bracket_info = self.pid_mapping_bounds[bracket_index]
             while bracket_index < len(self._plist) and ((pdata.id < bracket_info[0]) or (pdata.id > bracket_info[1])):
+                # nparticle += bracket_info[2]
                 bracket_index += 1
                 bracket_info = self.pid_mapping_bounds[bracket_index]
             if bracket_index >= len(self._plist):
@@ -287,9 +289,11 @@ class ParticleSet(object):
             slot_index = 0
             while (slot_index < self._plist[bracket_index].shape[0]) and (self._plist[bracket_index][slot_index].id != pdata.id):
                 slot_index += 1
+                # nparticle += 1
             if slot_index >= self._plist[bracket_index].shape[0]:
                 logger.warn_once("ParticleSet.get_cptr_index() - requested particle ({}) not found.".format(pdata))
                 return -1
+            # return nparticle
             return (bracket_index, slot_index)
 
     def get_list_array_index_by_PID(self, pdata):
