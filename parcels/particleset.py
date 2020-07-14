@@ -30,6 +30,7 @@ if MPI:
 
 __all__ = ['ParticleSet']
 
+
 class ParticleSet(object):
     """Container class for storing particle and executing kernel over them.
 
@@ -153,7 +154,7 @@ class ParticleSet(object):
             'lon lat depth precision should be set to either np.float32 or np.float64'
         JITParticle.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
 
-        self._pid_mapping_bounds = [] # plist bracket_index -> (min_id, max_id, size_bracket)
+        self._pid_mapping_bounds = []  # plist bracket_index -> (min_id, max_id, size_bracket)
         self.nlist_limit = 4096
         # self.particles = np.empty(lon.size, dtype=pclass)
         assert lon.shape[0] == lat.shape[0], ('Length of lon and lat do not match.')
