@@ -415,7 +415,7 @@ class Kernel(object):
         # Remove all particles that signalled deletion
         self.remove_deleted(pset, output_file=output_file, endtime=endtime)
 
-        # == Identify particles that threw errors == #\
+        # == Identify particles that threw errors == #
         error_particles = [p for subfield in pset.particles_a for p in subfield if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
 
         while len(error_particles) > 0:
