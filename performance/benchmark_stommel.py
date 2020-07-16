@@ -4,9 +4,10 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
+from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.field import Field, VectorField, NestedField, SummedField
-from parcels import plotTrajectoriesFile_loadedField
+# from parcels import plotTrajectoriesFile_loadedField
 from datetime import timedelta as delta
 import math
 from argparse import ArgumentParser
@@ -20,7 +21,6 @@ import gc
 import os
 import time as ostime
 import matplotlib.pyplot as plt
-from parcels.tools import perlin3d
 
 from parcels import rng as random
 
@@ -52,69 +52,87 @@ a = 10000 * 1e3
 b = 10000 * 1e3
 scalefac = 0.05  # to scale for physically meaningful velocities
 
-class PerformanceLog():
-    samples = []
-    times_steps = []
-    memory_steps = []
-    #self.fds_steps = []
-    Nparticles_step = []
-    _iter = 0
-
-    def advance(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            process = psutil.Process(os.getpid())
-            mem_B_used = process.memory_info().rss
-            mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
-            if pset is not None:
-                Nparticles_local = len(pset)
-                Nparticles_global = mpi_comm.reduce(Nparticles_local, op=MPI.SUM, root=0)
-            if mpi_rank == 0:
-                #self.times_steps.append(MPI.Wtime())
-                self.times_steps.append(ostime.process_time())
-                self.memory_steps.append(mem_B_used_total)
-                if pset is not None:
-                    self.Nparticles_step.append(Nparticles_global)
-                self.samples.append(self._iter)
-                self._iter+=1
-        else:
-            process = psutil.Process(os.getpid())
-            #self.times_steps.append(ostime.time())
-            self.times_steps.append(ostime.process_time())
-            self.memory_steps.append(process.memory_info().rss)
-            if pset is not None:
-                self.Nparticles_step.append(len(pset))
-            self.samples.append(self._iter)
-            self._iter+=1
-
-def plot(x, times, memory_used, nparts, imageFilePath):
+def plot_internal(total_times = None, compute_times = None, io_times = None, memory_used = None, nparticles = None, imageFilePath = ""):
+    if total_times is None:
+        total_times = []
+    if compute_times is None:
+        compute_times = []
+    if io_times is None:
+        io_times = []
+    if memory_used is None:
+        memory_used = []
+    if nparticles is None:
+        nparticles = []
     plot_t = []
-    t_scaler = 1. * 10./1.0
-    for i in range(len(times)):
-        if i==0:
-            plot_t.append( (times[i]-global_t_0)*t_scaler )
-        else:
-            plot_t.append( (times[i]-times[i-1])*t_scaler )
-    mem_scaler = (1*10)/(1024*1024*1024)
-    plot_mem = []
-    for i in range(len(memory_used)):
-        plot_mem.append(memory_used[i] * mem_scaler)
-    npart_scaler = 1.0 / 1000.0
+    plot_ct = []
+    plot_iot = []
     plot_npart = []
-    for i in range(len(nparts)):
-        plot_npart.append(nparts[i] * npart_scaler)
+    cum_t = 0
+    cum_ct = 0
+    cum_iot = 0
+    t_scaler = 1. * 10./1.0
+    npart_scaler = 1.0 / 1000.0
+    for i in range(0, len(total_times)):
+        plot_t.append( total_times[i]*t_scaler )
+        cum_t += (total_times[i])
 
+    for i in range(0, len(compute_times)):
+        plot_ct.append(compute_times[i] * t_scaler)
+        cum_ct += compute_times[i]
+    for i in range(0, len(io_times)):
+        plot_iot.append(io_times[i] * t_scaler)
+        cum_iot += io_times[i]
+    for i in range(0, len(nparticles)):
+        plot_npart.append(nparticles[i] * npart_scaler)
+
+
+    plot_mem = []
+    if memory_used is not None:
+        #mem_scaler = (1*10)/(1024*1024*1024)
+        mem_scaler = 1 / (1024 * 1024 * 1024)
+        for i in range(0, len(memory_used)):
+            plot_mem.append(memory_used[i] * mem_scaler)
+
+    do_iot_plot = True
+    do_mem_plot = True
+    do_npart_plot = True
+    assert (len(plot_t) == len(plot_ct))
+    # assert (len(plot_t) == len(plot_iot))
+    if len(plot_t) != len(plot_iot):
+        print("plot_t and plot_iot have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
+        do_iot_plot = False
+    # assert (len(plot_t) == len(plot_mem))
+    if len(plot_t) != len(plot_mem):
+        print("plot_t and plot_mem have different lengths ({} vs {})".format(len(plot_t), len(plot_mem)))
+        do_mem_plot = False
+    # assert (len(plot_t) == len(plot_npart))
+    if len(plot_t) != len(plot_npart):
+        print("plot_t and plot_npart have different lengths ({} vs {})".format(len(plot_t), len(plot_npart)))
+        do_npart_plot = False
+    x = []
+    for i in range(len(plot_t)):
+        x.append(i)
 
     fig, ax = plt.subplots(1, 1, figsize=(21, 12))
-    ax.plot(x, plot_t, 'o-', label="time_spent [100ms]")
-    ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [100 MB]")
-    ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
+    ax.plot(x, plot_t, 'o-', label="total time_spent [100ms]")
+    ax.plot(x, plot_ct, 'o-', label="compute time_spent [100ms]")
+    # == this is still the part that breaks - as they are on different time scales, possibly leave them out ? == #
+    if do_iot_plot:
+        ax.plot(x, plot_iot, 'o-', label="io time_spent [100ms]")
+    if (memory_used is not None) and do_mem_plot:
+        #ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [100 MB]")
+        ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [1 GB]")
+    if do_npart_plot:
+        ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
     plt.xlim([0, 730])
     plt.ylim([0, 120])
     plt.legend()
     ax.set_xlabel('iteration')
     plt.savefig(os.path.join(odir, imageFilePath), dpi=600, format='png')
+
+    sys.stdout.write("cumulative total runtime: {}\n".format(cum_t))
+    sys.stdout.write("cumulative compute time: {}\n".format(cum_ct))
+    sys.stdout.write("cumulative I/O time: {}\n".format(cum_iot))
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
@@ -433,9 +451,7 @@ if __name__=='__main__':
     delete_func = RenewParticle
     if args.delete_particle:
         delete_func=DeleteParticle
-
-    perflog = PerformanceLog()
-    postProcessFuncs = [perflog.advance,]
+    postProcessFuncs = []
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -476,48 +492,69 @@ if __name__=='__main__':
         #endtime = ostime.time()
         endtime = ostime.process_time()
 
+    # if MPI:
+    #     mpi_comm = MPI.COMM_WORLD
+    #     if mpi_comm.Get_rank() == 0:
+    #         dt_time = []
+    #         for i in range(len(perflog.times_steps)):
+    #             if i==0:
+    #                 dt_time.append( (perflog.times_steps[i]-global_t_0) )
+    #             else:
+    #                 dt_time.append( (perflog.times_steps[i]-perflog.times_steps[i-1]) )
+    #         sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
+    #         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
+    #         avg_time = np.mean(np.array(dt_time, dtype=np.float64))
+    #         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
+    # else:
+    #     dt_time = []
+    #     for i in range(len(perflog.times_steps)):
+    #         if i == 0:
+    #             dt_time.append((perflog.times_steps[i] - global_t_0))
+    #         else:
+    #             dt_time.append((perflog.times_steps[i] - perflog.times_steps[i - 1]))
+    #     sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
+    #     sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
+    #     avg_time = np.mean(np.array(dt_time, dtype=np.float64))
+    #     sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
+
+    size_Npart = len(pset.nparticle_log)
+    Npart = pset.nparticle_log.get_param(size_Npart-1)
     if MPI:
         mpi_comm = MPI.COMM_WORLD
+        Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
-            dt_time = []
-            for i in range(len(perflog.times_steps)):
-                if i==0:
-                    dt_time.append( (perflog.times_steps[i]-global_t_0) )
-                else:
-                    dt_time.append( (perflog.times_steps[i]-perflog.times_steps[i-1]) )
-            sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
+            if size_Npart>0:
+                sys.stdout.write("final # particles: {}\n".format( Npart ))
             sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
-            avg_time = np.mean(np.array(dt_time, dtype=np.float64))
+            avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
             sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
     else:
-        dt_time = []
-        for i in range(len(perflog.times_steps)):
-            if i == 0:
-                dt_time.append((perflog.times_steps[i] - global_t_0))
-            else:
-                dt_time.append((perflog.times_steps[i] - perflog.times_steps[i - 1]))
-        sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
+        if size_Npart > 0:
+            sys.stdout.write("final # particles: {}\n".format( Npart ))
         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
-        avg_time = np.mean(np.array(dt_time, dtype=np.float64))
+        avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
 
-    if args.write_out:
-        output_file.close()
-        if args.visualize:
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                if mpi_comm.Get_rank() == 0:
-                    plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"),
-                                                     tracerfield=fieldset.U)
-            else:
-                plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"),tracerfield=fieldset.U)
+    # if args.write_out:
+    #     output_file.close()
+    #     if args.visualize:
+    #         if MPI:
+    #             mpi_comm = MPI.COMM_WORLD
+    #             if mpi_comm.Get_rank() == 0:
+    #                 plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"), tracerfield=fieldset.U)
+    #         else:
+    #             plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"),tracerfield=fieldset.U)
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
-        mpi_comm.Barrier()
+        Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
+        Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
-            plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
+            # plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
+            # plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), pset.mem_log.get_params(), pset.nparticle_log.get_params(), imageFileName)
+            plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), Nmem, Nparticles, imageFileName)
     else:
-        plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
+        # plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
+        plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), pset.mem_log.get_params(), pset.nparticle_log.get_params(), imageFileName)
 
 

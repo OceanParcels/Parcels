@@ -26,17 +26,42 @@ class ParticleSet_TimingLog():
     stime = 0
     etime = 0
     mtime = 0
-    samples = []
-    times_steps = []
+    _samples = []
+    _times_steps = []
     _iter = 0
+
+    def __init__(self):
+        self.stime = 0
+        self.etime = 0
+        self.mtime = 0
+        self._samples = []
+        self._times_steps = []
+        self._iter = 0
+
+    @property
+    def timing(self):
+        return self._times_steps
+
+    @property
+    def samples(self):
+        return self._samples
+
+    def __len__(self):
+        return len(self._samples)
+
+    def get_values(self):
+        return self._times_steps
+
+    def get_value(self, index):
+        return self._times_steps[index]
 
     def start_timing(self):
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                #self.stime = MPI.Wtime()
-                #self.stime = time_module.perf_counter()
+                # self.stime = MPI.Wtime()
+                # self.stime = time_module.perf_counter()
                 self.stime = time_module.process_time()
         else:
             self.stime = time_module.perf_counter()
@@ -46,8 +71,8 @@ class ParticleSet_TimingLog():
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                #self.etime = MPI.Wtime()
-                #self.etime = time_module.perf_counter()
+                # self.etime = MPI.Wtime()
+                # self.etime = time_module.perf_counter()
                 self.etime = time_module.process_time()
         else:
             self.etime = time_module.perf_counter()
@@ -68,33 +93,56 @@ class ParticleSet_TimingLog():
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                self.times_steps.append(self.mtime)
-                self.samples.append(self._iter)
-                self._iter+=1
+                self._times_steps.append(self.mtime)
+                self._samples.append(self._iter)
+                self._iter += 1
             self.mtime = 0
         else:
-            self.times_steps.append(self.mtime)
-            self.samples.append(self._iter)
-            self._iter+=1
+            self._times_steps.append(self.mtime)
+            self._samples.append(self._iter)
+            self._iter += 1
             self.mtime = 0
 
+
 class ParticleSet_ParamLogging():
-    samples = []
-    params = []
+    _samples = []
+    _params = []
     _iter = 0
+
+    def __init__(self):
+        self._samples = []
+        self._params = []
+        self._iter = 0
+
+    @property
+    def samples(self):
+        return self._samples
+
+    @property
+    def params(self):
+        return self._params
+
+    def get_params(self):
+        return self._params
+
+    def get_param(self, index):
+        return self._params[index]
+
+    def __len__(self):
+        return len(self._samples)
 
     def advance_iteration(self, param):
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
-                self.params.append(param)
-                self.samples.append(self._iter)
-                self._iter+=1
+                self._params.append(param)
+                self._samples.append(self._iter)
+                self._iter += 1
         else:
-            self.params.append(param)
-            self.samples.append(self._iter)
-            self._iter+=1
+            self._params.append(param)
+            self._samples.append(self._iter)
+            self._iter += 1
 
 
 class ParticleSet_Benchmark(ParticleSet):
@@ -107,8 +155,8 @@ class ParticleSet_Benchmark(ParticleSet):
         self.io_log = ParticleSet_TimingLog()
         self.plot_log = ParticleSet_TimingLog()
         self.nparticle_log = ParticleSet_ParamLogging()
-        self.process = psutil.Process(os.getpid())
         self.mem_log = ParticleSet_ParamLogging()
+        self.process = psutil.Process(os.getpid())
 
     #@profile
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
@@ -308,12 +356,13 @@ class ParticleSet_Benchmark(ParticleSet):
             self.total_log.stop_timing()
             self.total_log.accumulate_timing()
             mem_B_used_total = 0
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mem_B_used = self.process.memory_info().rss
-                mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
-            else:
-                mem_B_used_total = self.process.memory_info().rss
+            # if MPI:
+            #     mpi_comm = MPI.COMM_WORLD
+            #     mem_B_used = self.process.memory_info().rss
+            #     mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
+            # else:
+            #     mem_B_used_total = self.process.memory_info().rss
+            mem_B_used_total = self.process.memory_info().rss
             self.mem_log.advance_iteration(mem_B_used_total)
 
             self.compute_log.advance_iteration()
