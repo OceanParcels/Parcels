@@ -1,7 +1,15 @@
 from parcels import (FieldSet, ParticleSet, Field, ScipyParticle, JITParticle,
-                     Variable, ErrorCode, CurvilinearZGrid)
+                     Variable, ErrorCode, CurvilinearZGrid, AdvectionRK4)
 import numpy as np
 import pytest
+from parcels.compiler import get_cache_dir
+from parcels.tools import logger
+from os import path
+
+try:
+    from mpi4py import MPI
+except:
+    MPI = None
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -422,3 +430,45 @@ def test_from_field_exact_val(staggered_grid):
     assert (np.array([p.lon for p in pset]) <= 1).all()
     test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)
     assert test.all()
+
+    def run_test_pset_add_explicit(fset, mode, npart=100):
+        lon = np.linspace(0, 1, npart, dtype=np.float64)
+        lat = np.linspace(1, 0, npart, dtype=np.float64)
+        outfilepath = path.join(get_cache_dir(), "add_explicit", "pfile_node_add_explicit.nc")
+        pset = ParticleSet(fieldset=fset, pclass=ptype[mode], lon=lon, lat=lat, lonlatdepth_dtype=np.float64)
+        pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
+
+        for i in range(npart):
+            particle = ParticleSet(pclass=ptype[mode], lon=lon[i], lat=lat[i],
+                                   fieldset=fieldset, lonlatdepth_dtype=np.float64)
+            pset.add(particle)
+
+        for tstep in range(3):
+            pfile.write(pset, tstep)
+        pfile.close()
+        logger.info("# particles: {}".format(pset.size))
+        assert (pset.size > 0)
+        assert (pset.size <= 2 * npart)
+
+    def run_test_pset_node_execute(fset, mode, npart=10000):
+        lon = np.linspace(0, 1, npart, dtype=np.float64)
+        lat = np.linspace(1, 0, npart, dtype=np.float64)
+        outfilepath = path.join(get_cache_dir(), "pfile_node_execute_test.nc")
+        pset = ParticleSet(fieldset=fset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype=np.float64)
+        pfile = pset.ParticleFile(name=outfilepath, outputdt=360.0)
+        for i in range(npart):
+            particle = ParticleSet(pclass=ptype[mode], lon=lon[i], lat=lat[i],
+                                   fieldset=fieldset, lonlatdepth_dtype=np.float64)
+            pset.add(particle)
+        pset.execute(AdvectionRK4, runtime=0., dt=(360.0 * 24.0 * 10.0), output_file=pfile)
+        pfile.close()
+        logger.info("# particles: {}".format(pset.size))
+        assert (pset.size > 0)
+        assert (pset.size <= 2 * npart)
+
+    if __name__ == '__main__':
+        fset = fieldset()
+        run_test_pset_add_explicit(fset, 'jit')
+        run_test_pset_add_explicit(fset, 'scipy')
+        run_test_pset_node_execute(fset, 'jit')
+        run_test_pset_node_execute(fset, 'scipy')
