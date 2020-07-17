@@ -6,7 +6,6 @@ import os
 
 
 import numpy as np
-import progressbar
 
 try:
     from mpi4py import MPI
@@ -17,132 +16,11 @@ from parcels.compiler import GNUCompiler
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particleset import ParticleSet
 from parcels.particle import JITParticle
-from parcels.kernel import Kernel
+from parcels.kernel_benchmark import Kernel_Benchmark, Kernel
 from parcels.tools.loggers import logger
+from parcels.tools.performance_logger import TimingLog, ParamLogging
 
 __all__ = ['ParticleSet_Benchmark']
-
-class ParticleSet_TimingLog():
-    stime = 0
-    etime = 0
-    mtime = 0
-    _samples = []
-    _times_steps = []
-    _iter = 0
-
-    def __init__(self):
-        self.stime = 0
-        self.etime = 0
-        self.mtime = 0
-        self._samples = []
-        self._times_steps = []
-        self._iter = 0
-
-    @property
-    def timing(self):
-        return self._times_steps
-
-    @property
-    def samples(self):
-        return self._samples
-
-    def __len__(self):
-        return len(self._samples)
-
-    def get_values(self):
-        return self._times_steps
-
-    def get_value(self, index):
-        return self._times_steps[index]
-
-    def start_timing(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                # self.stime = MPI.Wtime()
-                # self.stime = time_module.perf_counter()
-                self.stime = time_module.process_time()
-        else:
-            self.stime = time_module.perf_counter()
-
-    def stop_timing(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                # self.etime = MPI.Wtime()
-                # self.etime = time_module.perf_counter()
-                self.etime = time_module.process_time()
-        else:
-            self.etime = time_module.perf_counter()
-
-    def accumulate_timing(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                self.mtime += (self.etime-self.stime)
-            else:
-                self.mtime = 0
-        else:
-            self.mtime += (self.etime-self.stime)
-
-    def advance_iteration(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                self._times_steps.append(self.mtime)
-                self._samples.append(self._iter)
-                self._iter += 1
-            self.mtime = 0
-        else:
-            self._times_steps.append(self.mtime)
-            self._samples.append(self._iter)
-            self._iter += 1
-            self.mtime = 0
-
-
-class ParticleSet_ParamLogging():
-    _samples = []
-    _params = []
-    _iter = 0
-
-    def __init__(self):
-        self._samples = []
-        self._params = []
-        self._iter = 0
-
-    @property
-    def samples(self):
-        return self._samples
-
-    @property
-    def params(self):
-        return self._params
-
-    def get_params(self):
-        return self._params
-
-    def get_param(self, index):
-        return self._params[index]
-
-    def __len__(self):
-        return len(self._samples)
-
-    def advance_iteration(self, param):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                self._params.append(param)
-                self._samples.append(self._iter)
-                self._iter += 1
-        else:
-            self._params.append(param)
-            self._samples.append(self._iter)
-            self._iter += 1
 
 
 class ParticleSet_Benchmark(ParticleSet):
@@ -150,12 +28,12 @@ class ParticleSet_Benchmark(ParticleSet):
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None,
                  lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSet_Benchmark, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt, lonlatdepth_dtype, pid_orig, **kwargs)
-        self.total_log = ParticleSet_TimingLog()
-        self.compute_log = ParticleSet_TimingLog()
-        self.io_log = ParticleSet_TimingLog()
-        self.plot_log = ParticleSet_TimingLog()
-        self.nparticle_log = ParticleSet_ParamLogging()
-        self.mem_log = ParticleSet_ParamLogging()
+        self.total_log = TimingLog()
+        self.compute_log = TimingLog()
+        self.io_log = TimingLog()
+        self.plot_log = TimingLog()
+        self.nparticle_log = ParamLogging()
+        self.mem_log = ParamLogging()
         self.process = psutil.Process(os.getpid())
 
     #@profile
@@ -307,7 +185,8 @@ class ParticleSet_Benchmark(ParticleSet):
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             # ==== compute ==== #
-            self.compute_log.start_timing()
+            if not isinstance(self.kernel, Kernel_Benchmark):
+                self.compute_log.start_timing()
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
@@ -318,7 +197,13 @@ class ParticleSet_Benchmark(ParticleSet):
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
-            self.compute_log.stop_timing()
+            if not isinstance(self.kernel, Kernel_Benchmark):
+                self.compute_log.stop_timing()
+            else:
+                self.compute_log.add_aux_measure(self.kernel.compute_timings.sum())
+                self.kernel.compute_timings.reset()
+                self.io_log.add_aux_measure(self.kernel.io_timings.sum())
+                self.kernel.io_timings.reset()
             self.compute_log.accumulate_timing()
             self.nparticle_log.advance_iteration(len(self))
             # ==== end compute ==== #
@@ -380,3 +265,11 @@ class ParticleSet_Benchmark(ParticleSet):
             pbar.finish()
             self.plot_log.stop_timing()
             self.plot_log.accumulate_timing()
+
+    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel_benchmark.Kernel` object
+        based on `fieldset` and `ptype` of the ParticleSet
+        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        """
+        return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+                      delete_cfiles=delete_cfiles)
