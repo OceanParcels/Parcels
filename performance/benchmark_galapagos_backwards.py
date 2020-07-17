@@ -1,4 +1,5 @@
-from parcels import FieldSet, Field, ParticleSet_Benchmark, JITParticle, AdvectionRK4, ErrorCode, Variable
+from parcels import FieldSet, JITParticle, AdvectionRK4, ErrorCode, Variable
+from parcels import ParticleSet_Benchmark
 from datetime import timedelta as delta
 from glob import glob
 import numpy as np
@@ -56,7 +57,17 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
     return fieldset, fU
 
 
-def plot(total_times = [], compute_times = [], io_times = [], memory_used = [], nparticles = [], imageFilePath = ""):
+def plot(total_times = None, compute_times = None, io_times = None, memory_used = None, nparticles = None, imageFilePath = ""):
+    if total_times is None:
+        total_times = []
+    if compute_times is None:
+        compute_times = []
+    if io_times is None:
+        io_times = []
+    if memory_used is None:
+        memory_used = []
+    if nparticles is None:
+        nparticles = []
     plot_t = []
     plot_ct = []
     plot_iot = []
@@ -67,12 +78,6 @@ def plot(total_times = [], compute_times = [], io_times = [], memory_used = [], 
     t_scaler = 1. * 10./1.0
     npart_scaler = 1.0 / 1000.0
     for i in range(0, len(total_times)):
-        #if i==0:
-        #    plot_t.append( (total_times[i]-global_t_0)*t_scaler )
-        #    cum_t += (total_times[i]-global_t_0)
-        #else:
-        #    plot_t.append( (total_times[i]-total_times[i-1])*t_scaler )
-        #    cum_t += (total_times[i]-total_times[i-1])
         plot_t.append( total_times[i]*t_scaler )
         cum_t += (total_times[i])
 
@@ -85,14 +90,14 @@ def plot(total_times = [], compute_times = [], io_times = [], memory_used = [], 
     for i in range(0, len(nparticles)):
         plot_npart.append(nparticles[i] * npart_scaler)
 
+
+    plot_mem = []
     if memory_used is not None:
         #mem_scaler = (1*10)/(1024*1024*1024)
         mem_scaler = 1 / (1024 * 1024 * 1024)
-        plot_mem = []
         for i in range(0, len(memory_used)):
             plot_mem.append(memory_used[i] * mem_scaler)
 
-    # do_ct_plot = True
     do_iot_plot = True
     do_mem_plot = True
     do_npart_plot = True
@@ -110,7 +115,7 @@ def plot(total_times = [], compute_times = [], io_times = [], memory_used = [], 
         print("plot_t and plot_npart have different lengths ({} vs {})".format(len(plot_t), len(plot_npart)))
         do_npart_plot = False
     x = []
-    for i in itertools.islice(itertools.count(), 0, len(plot_t)):
+    for i in range(len(plot_t)):
         x.append(i)
 
     fig, ax = plt.subplots(1, 1, figsize=(21, 12))
@@ -178,8 +183,11 @@ if __name__=='__main__':
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
     args = parser.parse_args()
 
-    time_in_days = int(float(eval(args.time_in_days)))
     wstokes = args.stokes
+    imageFileName=args.imageFileName
+    periodicFlag=args.periodic
+    time_in_days = int(float(eval(args.time_in_days)))
+    with_GC = args.useGC
 
     headdir = ""
     odir = ""
@@ -208,7 +216,7 @@ if __name__=='__main__':
 
 
 
-    fieldset, fu = create_galapagos_fieldset(datahead, True, wstokes)
+    fieldset, fU = create_galapagos_fieldset(datahead, True, wstokes)
     fname = os.path.join(odir,"galapagosparticles_bwd_wstokes_v2.nc") if wstokes else os.path.join(odir,"galapagosparticles_bwd_v2.nc")
 
     galapagos_extent = [-91.8, -89, -1.4, 0.7]
@@ -216,6 +224,10 @@ if __name__=='__main__':
                                      np.arange(galapagos_extent[2], galapagos_extent[3], 0.2))
 
     pset = ParticleSet_Benchmark(fieldset=fieldset, pclass=GalapagosParticle, lon=startlon, lat=startlat, time=fU.grid.time[-1], repeatdt=delta(days=7))
+    """ Kernal + Execution"""
+    postProcessFuncs = []
+    if with_GC:
+        postProcessFuncs.append(perIterGC)
     outfile = pset.ParticleFile(name=fname, outputdt=delta(days=1))
     kernel = pset.Kernel(AdvectionRK4)+pset.Kernel(Age)+pset.Kernel(periodicBC)
 
@@ -232,7 +244,7 @@ if __name__=='__main__':
         #starttime = ostime.time()
         starttime = ostime.process_time()
 
-    pset.execute(kernel, dt=delta(hours=-1), output_file=outfile, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+    pset.execute(kernel, dt=delta(hours=-1), output_file=outfile, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(days=1))
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD

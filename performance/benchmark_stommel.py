@@ -4,9 +4,10 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
 from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
-from parcels.field import Field, VectorField, NestedField, SummedField
+# from parcels.kernel_benchmark import Kernel_Benchmark as Kernel
+from parcels.field import VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
 from datetime import timedelta as delta
 import math
@@ -16,7 +17,6 @@ import numpy as np
 import xarray as xr
 # import pytest
 import fnmatch
-import psutil
 import gc
 import os
 import time as ostime
@@ -34,7 +34,7 @@ with_GC = False
 pset = None
 
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+# ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 global_t_0 = 0
 Nparticle = int(math.pow(2,10)) # equals to Nparticle = 1024
@@ -260,7 +260,7 @@ class AgeParticle_JIT(StommelParticleJ):
     life_expectancy = Variable('life_expectancy', dtype=np.float64, initial=np.finfo(np.float64).max)
     initialized_dynamic = Variable('initialized_dynamic', dtype=np.int32, initial=0)
 
-class AgeParticle_SciPy(ScipyParticle):
+class AgeParticle_SciPy(StommelParticleS):
     age = Variable('age', dtype=np.float64, initial=0.0)
     life_expectancy = Variable('life_expectancy', dtype=np.float64, initial=np.finfo(np.float64).max)
     initialized_dynamic = Variable('initialized_dynamic', dtype=np.int32, initial=0)
@@ -277,7 +277,7 @@ def Age(particle, fieldset, time):
     if particle.age > particle.life_expectancy:
         particle.delete()
 
-
+ptype = {'scipy': StommelParticleS, 'jit': StommelParticleJ}
 age_ptype = {'scipy': AgeParticle_SciPy, 'jit': AgeParticle_JIT}
 
 if __name__=='__main__':

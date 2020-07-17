@@ -20,14 +20,13 @@ from glob import glob
 import sys
 import pandas as pd
 
-import psutil
 import os
 import time as ostime
 import matplotlib.pyplot as plt
 import fnmatch
 
 # import dask
-# import gc
+import gc
 
 try:
     from mpi4py import MPI
@@ -41,44 +40,17 @@ warnings.simplefilter("ignore", category=xr.SerializationWarning)
 global_t_0 = 0
 odir = ""
 
-class PerformanceLog():
-    samples = []
-    times_steps = []
-    memory_steps = []
-    Nparticles_step = []
-    _iter = 0
-    pset = None
-
-    def advance(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            process = psutil.Process(os.getpid())
-            mem_B_used = process.memory_info().rss
-            mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
-            Nparticles_global = 0
-            if self.pset is not None:
-                Nparticles_local = len(self.pset)
-                Nparticles_global = mpi_comm.reduce(Nparticles_local, op=MPI.SUM, root=0)
-            if mpi_rank == 0:
-                #self.times_steps.append(MPI.Wtime())
-                self.times_steps.append(ostime.process_time())
-                self.memory_steps.append(mem_B_used_total)
-                if self.pset is not None:
-                    self.Nparticles_step.append(Nparticles_global)
-                self.samples.append(self._iter)
-                self._iter+=1
-        else:
-            process = psutil.Process(os.getpid())
-            #self.times_steps.append(ostime.time())
-            self.times_steps.append(ostime.process_time())
-            self.memory_steps.append(process.memory_info().rss)
-            if self.pset is not None:
-                self.Nparticles_step.append(len(self.pset))
-            self.samples.append(self._iter)
-            self._iter+=1
-
-def plot(total_times, compute_times, io_times, memory_used, nparticles, imageFilePath):
+def plot(total_times = None, compute_times = None, io_times = None, memory_used = None, nparticles = None, imageFilePath = ""):
+    if total_times is None:
+        total_times = []
+    if compute_times is None:
+        compute_times = []
+    if io_times is None:
+        io_times = []
+    if memory_used is None:
+        memory_used = []
+    if nparticles is None:
+        nparticles = []
     plot_t = []
     plot_ct = []
     plot_iot = []
@@ -88,33 +60,27 @@ def plot(total_times, compute_times, io_times, memory_used, nparticles, imageFil
     cum_iot = 0
     t_scaler = 1. * 10./1.0
     npart_scaler = 1.0 / 1000.0
-    for i in range(len(total_times)):
-        #if i==0:
-        #    plot_t.append( (total_times[i]-global_t_0)*t_scaler )
-        #    cum_t += (total_times[i]-global_t_0)
-        #else:
-        #    plot_t.append( (total_times[i]-total_times[i-1])*t_scaler )
-        #    cum_t += (total_times[i]-total_times[i-1])
+    for i in range(0, len(total_times)):
         plot_t.append( total_times[i]*t_scaler )
         cum_t += (total_times[i])
 
-    for i in range(len(compute_times)):
+    for i in range(0, len(compute_times)):
         plot_ct.append(compute_times[i] * t_scaler)
         cum_ct += compute_times[i]
-    for i in range(len(io_times)):
+    for i in range(0, len(io_times)):
         plot_iot.append(io_times[i] * t_scaler)
         cum_iot += io_times[i]
-    for i in range(len(nparticles)):
+    for i in range(0, len(nparticles)):
         plot_npart.append(nparticles[i] * npart_scaler)
 
+
+    plot_mem = []
     if memory_used is not None:
         #mem_scaler = (1*10)/(1024*1024*1024)
         mem_scaler = 1 / (1024 * 1024 * 1024)
-        plot_mem = []
-        for i in range(len(memory_used)):
+        for i in range(0, len(memory_used)):
             plot_mem.append(memory_used[i] * mem_scaler)
 
-    # do_ct_plot = True
     do_iot_plot = True
     do_mem_plot = True
     do_npart_plot = True
@@ -132,7 +98,7 @@ def plot(total_times, compute_times, io_times, memory_used, nparticles, imageFil
         print("plot_t and plot_npart have different lengths ({} vs {})".format(len(plot_t), len(plot_npart)))
         do_npart_plot = False
     x = []
-    for i in itertools.islice(itertools.count(), 0, len(plot_t)):
+    for i in range(len(plot_t)):
         x.append(i)
 
     fig, ax = plt.subplots(1, 1, figsize=(21, 12))
@@ -152,9 +118,9 @@ def plot(total_times, compute_times, io_times, memory_used, nparticles, imageFil
     ax.set_xlabel('iteration')
     plt.savefig(os.path.join(odir, imageFilePath), dpi=600, format='png')
 
-    sys.stdout.write("cumulative total runtime: {}".format(cum_t))
-    sys.stdout.write("cumulative compute time: {}".format(cum_ct))
-    sys.stdout.write("cumulative I/O time: {}".format(cum_iot))
+    sys.stdout.write("cumulative total runtime: {}\n".format(cum_t))
+    sys.stdout.write("cumulative compute time: {}\n".format(cum_ct))
+    sys.stdout.write("cumulative I/O time: {}\n".format(cum_iot))
 
 
 def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, mesh_mask='/scratch/ckehl/experiments/palaeo-parcels/NEMOdata/domain/coordinates.nc'):
@@ -276,10 +242,14 @@ def Sink(particle, fieldset, time):
         particle.delete()
 
 def Age(particle, fieldset, time):
-    particle.age = particle.age + math.fabs(particle.dt)  
+    if particle.state == ErrorCode.Evaluate:
+        particle.age = particle.age + math.fabs(particle.dt)
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
+
+def perIterGC():
+    gc.collect()
 
 def initials(particle, fieldset, time):
     if particle.age==0.:
@@ -290,7 +260,6 @@ def initials(particle, fieldset, time):
         particle.lon0 = particle.lon
         particle.lat0 = particle.lat
         particle.depth0 = particle.depth
-
 
 
 if __name__ == "__main__":
@@ -306,7 +275,10 @@ if __name__ == "__main__":
 
     sp = args.sp # The sinkspeed m/day
     dd = args.dd  # The dwelling depth
+    imageFileName=args.imageFileName
+    periodicFlag=args.periodic
     time_in_days = int(float(eval(args.time_in_days)))
+    with_GC = args.useGC
 
     headdir = ""
     odir = ""
@@ -409,10 +381,10 @@ if __name__ == "__main__":
 
     pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
 
-    # perflog = PerformanceLog()
-    # perflog.pset = pset
-    # postProcessFuncs = [perflog.advance,]
-
+    """ Kernal + Execution"""
+    postProcessFuncs = []
+    if with_GC:
+        postProcessFuncs.append(perIterGC)
     pfile = pset.ParticleFile(os.path.join(dirwrite, outfile), convert_at_end=True, write_ondelete=True)
     kernels = pset.Kernel(initials) + Sink + Age  + pset.Kernel(AdvectionRK4_3D) + Age
 
@@ -433,7 +405,7 @@ if __name__ == "__main__":
     # recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs)
     # postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12)
     pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(hours=-12), output_file=pfile, verbose_progress=False,
-                 recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
+                 recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=np.infty)
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
