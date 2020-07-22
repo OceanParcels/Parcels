@@ -491,8 +491,8 @@ class Field(object):
                 raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
             data = lib.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
-            raise NotImplementedError(
-                'Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
+            if lib == da:
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
             data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
