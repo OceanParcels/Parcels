@@ -436,7 +436,7 @@ class Field(object):
 
     @classmethod
     def from_xarray(cls, da, name, dimensions, mesh='spherical', allow_time_extrapolation=None,
-                    time_periodic=False, **kwargs):
+                    time_periodic=False, deferred_load=False, **kwargs):
         """Create field from xarray Variable
 
         :param da: Xarray DataArray
@@ -467,6 +467,11 @@ class Field(object):
         time = time_origin.reltime(time)
 
         grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
+
+        if deferred_load:
+            grid.defer_load = True
+            grid.ti = -1
+
         return cls(name, data, grid=grid, allow_time_extrapolation=allow_time_extrapolation,
                    interp_method=interp_method, **kwargs)
 
@@ -1090,8 +1095,14 @@ class Field(object):
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
                 if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
+                    # we need to load the block because it was requested, or it's meant
+                    # to be loaded but isn't there
                     block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
+                    self.data_chunks[block_id] = np.array(
+                        self.data.blocks[
+                            (slice(self.grid.ti, self.grid.ti + self.grid.tdim),)
+                            + block
+                        ])
                 elif self.grid.load_chunk[block_id] == 0:
                     if isinstance(self.data_chunks, list):
                         self.data_chunks[block_id] = None
@@ -2200,8 +2211,7 @@ class NetcdfFileBuffer(object):
                             self.rechunk_callback_fields()
                             self.chunking_finalized = True
                     else:
-                        # ==== I think this can be "pass" too ==== #
-                        data = data.rechunk(self.chunk_mapping)
+                        # don't rechunk for non-auto chunk sizes
                         self.chunking_finalized = True
             else:
                 da_data = da.from_array(data, chunks=self.field_chunksize)
