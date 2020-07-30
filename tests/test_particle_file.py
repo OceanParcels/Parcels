@@ -85,6 +85,10 @@ def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
     assert 'lat' not in ncfile.variables
     ncfile.close()
 
+    # For pytest purposes, we need to reset to original status
+    pset.set_variable_write_status('depth', True)
+    pset.set_variable_write_status('lat', True)
+
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
