@@ -396,7 +396,7 @@ class Field(object):
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
                                       interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                      field_chunksize=False) as filebuffer:
+                                      creation_log = self.creation_log, field_chunksize=False) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -1296,7 +1296,8 @@ class Field(object):
                                       data_full_zdim=self.data_full_zdim,
                                       field_chunksize=self.field_chunksize,
                                       rechunk_callback_fields=self.chunk_setup,
-                                      chunkdims_name_map=self.netcdf_chunkdims_name_map)
+                                      chunkdims_name_map=self.netcdf_chunkdims_name_map,
+                                      creation_log=self.creation_log)
         filebuffer.__enter__()
         time_data = filebuffer.time
         time_data = g.time_origin.reltime(time_data)
@@ -1759,6 +1760,7 @@ class NetcdfFileBuffer(object):
         self.rechunk_callback_fields = rechunk_callback_fields
         self.chunking_finalized = False
         self.lock_file = lock_file
+        self.creation_log = kwargs.get("creation_log")
         if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
             for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
                 for value in dim_name_arr:
@@ -2156,7 +2158,7 @@ class NetcdfFileBuffer(object):
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
-            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
+            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_tracer']:
                 for dim in ['depth', 'lat', 'lon']:
                     if not isinstance(self.indices[dim], (list, range)):
                         raise NotImplementedError("For B grids, indices must be provided as a range")
@@ -2175,6 +2177,46 @@ class NetcdfFileBuffer(object):
                 else:
                     data = lib.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
                                            da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
+            elif self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method == 'bgrid_w_velocity' and self.creation_log != 'from_mom5':             
+                for dim in ['depth', 'lat', 'lon']:
+                    if not isinstance(self.indices[dim], (list, range)):
+                        raise NotImplementedError("For B grids, indices must be provided as a range")
+                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+                d0 = self.indices['depth'][0]
+                d1 = self.indices['depth'][-1]+1
+                lat0 = self.indices['lat'][0]
+                lat1 = self.indices['lat'][-1]+1
+                lon0 = self.indices['lon'][0]
+                lon1 = self.indices['lon'][-1]+1
+                if(type(ti) in [list, range]):
+                    t0 = ti[0]
+                    t1 = ti[-1]+1
+                    data = lib.concatenate((data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1],
+                                           da.zeros((t1-t0, 1, lat1-lat0, lon1-lon0))), axis=1)
+                else:
+                    data = lib.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
+                                           da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
+            elif self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method == 'bgrid_w_velocity' and self.creation_log == 'from_mom5':          
+                for dim in ['depth', 'lat', 'lon']:
+                    if not isinstance(self.indices[dim], (list, range)):
+                        raise NotImplementedError("For B grids, indices must be provided as a range")
+                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+                d0 = self.indices['depth'][0]
+                d1 = self.indices['depth'][-1]+1
+                lat0 = self.indices['lat'][0]
+                lat1 = self.indices['lat'][-1]+1
+                lon0 = self.indices['lon'][0]
+                lon1 = self.indices['lon'][-1]+1
+                if(type(ti) in [list, range]):
+                    t0 = ti[0]
+                    t1 = ti[-1]+1
+                    data = lib.concatenate((data[t0:t1, d0, lat0:lat1, lon0:lon1],
+                                           data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1]), axis=1)
+                    logger.warning_once("The top layer of W has been repeated to account for Parcels expecting B-grid velocities at the top corner of grid cells")
+                else:
+                    data = lib.concatenate((data[ti, [d0], lat0:lat1, lon0:lon1],
+                                           data[ti, d0:d1-1, lat0:lat1, lon0:lon1]), axis=0)
+                    logger.warning_once("The top layer of W has been repeated to account for Parcels expecting B-grid velocities at the top corner of grid cells")
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
 
