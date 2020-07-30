@@ -1,6 +1,7 @@
 from os import path, system
 from netCDF4 import Dataset
 import numpy as np
+import pytest  # noqa
 try:
     from mpi4py import MPI
 except:
