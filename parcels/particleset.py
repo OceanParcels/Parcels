@@ -813,3 +813,12 @@ def search_kernel(particle, fieldset, time):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
+
+    def set_variable_write_status(self, var, write_status):
+        """Method to set the write status of a Variable
+        :param var: Name of the variable (string)
+        :param status: Write status of the variable (True, False or 'once')
+        """
+        for v in self.ptype.variables:
+            if v.name == var:
+                v.to_write = write_status

@@ -66,6 +66,27 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
+    filepath = tmpdir.join("pfile_set_towrite_False.nc")
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=0.5*np.ones(npart))
+    pset.set_variable_write_status('depth', False)
+    pset.set_variable_write_status('lat', False)
+    pfile = pset.ParticleFile(filepath, outputdt=1)
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset.execute(Update_lon, runtime=10, output_file=pfile)
+    ncfile = close_and_compare_netcdffiles(filepath, pfile)
+    assert 'time' in ncfile.variables
+    assert 'depth' not in ncfile.variables
+    assert 'lat' not in ncfile.variables
+    ncfile.close()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, mode, tmpdir, npart=10):
 
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
