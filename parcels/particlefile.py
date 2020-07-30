@@ -171,7 +171,7 @@ class ParticleFile(object):
             self.lon.units = "degrees_east"
             self.lon.axis = "X"
 
-        if ('depth' in self.var_names):
+        if ('depth' in self.var_names) or ('z' in self.var_names):
             self.z = self.dataset.createVariable("z", lonlatdepth_precision, coords, fill_value=np.nan)
             self.z.long_name = ""
             self.z.standard_name = "depth"
