@@ -396,7 +396,7 @@ class Field(object):
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
                                       interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                      creation_log = self.creation_log, field_chunksize=False) as filebuffer:
+                                      creation_log=kwargs.get("creation_log"), field_chunksize=False) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -2177,7 +2177,7 @@ class NetcdfFileBuffer(object):
                 else:
                     data = lib.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
                                            da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            elif self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method == 'bgrid_w_velocity' and self.creation_log != 'from_mom5':             
+            elif self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method == 'bgrid_w_velocity' and self.creation_log != 'from_mom5':
                 for dim in ['depth', 'lat', 'lon']:
                     if not isinstance(self.indices[dim], (list, range)):
                         raise NotImplementedError("For B grids, indices must be provided as a range")
@@ -2196,7 +2196,7 @@ class NetcdfFileBuffer(object):
                 else:
                     data = lib.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
                                            da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            elif self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method == 'bgrid_w_velocity' and self.creation_log == 'from_mom5':          
+            elif self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method == 'bgrid_w_velocity' and self.creation_log == 'from_mom5':
                 for dim in ['depth', 'lat', 'lon']:
                     if not isinstance(self.indices[dim], (list, range)):
                         raise NotImplementedError("For B grids, indices must be provided as a range")

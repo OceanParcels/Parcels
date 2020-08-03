@@ -635,8 +635,8 @@ class FieldSet(object):
 
     @classmethod
     def from_mom5(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                 allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False,
+                  tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of MOM5 fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -689,11 +689,14 @@ class FieldSet(object):
 
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mom5'
-        fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic, allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method, field_chunksize=field_chunksize, **kwargs)
+        fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
+                                           field_chunksize=field_chunksize, **kwargs)
         fieldset.W.set_scaling_factor(-1.)  # change the W direction
         logger.warning_once("Parcels assumes W is positive in direction of increasing depth. For MOM5 this is down. Scaling factor has been set to -1 for fieldset.W.")
+
         return fieldset
-    
+
     @classmethod
     def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
