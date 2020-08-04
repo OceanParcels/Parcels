@@ -365,7 +365,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
            and node.func.attr == 'state':
             node = IntrinsicNode(node, "return DELETE")
 
-        if isinstance(node.func, FieldEvalCallNode):
+        elif isinstance(node.func, FieldEvalCallNode):
             # get a temporary value to assign result to
             tmp = self.get_tmp()
             # whether to convert
