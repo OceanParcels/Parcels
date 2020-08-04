@@ -54,18 +54,25 @@ class FieldNode(IntrinsicNode):
         if isinstance(getattr(self.obj, attr), Grid):
             return GridNode(getattr(self.obj, attr),
                             ccode="%s->%s" % (self.ccode, attr))
+        elif attr == "eval":
+            return FieldEvalCallNode(self)
         else:
             raise NotImplementedError('Access to Field attributes are not (yet) implemented in JIT mode')
 
-    def __getitem__(self, attr):
-        return FieldEvalNode(self.obj, attr)
+
+class FieldEvalCallNode(IntrinsicNode):
+    def __init__(self, field):
+        self.field = field
+        self.obj = field.obj
+        self.ccode = ""
 
 
 class FieldEvalNode(IntrinsicNode):
-    def __init__(self, field, args, var, var2=None):
+    def __init__(self, field, args, var, convert=True):
         self.field = field
         self.args = args
         self.var = var  # the variable in which the interpolated field is written
+        self.convert = convert  # whether to convert the result (like field.applyConversion)
 
 
 class VectorFieldNode(IntrinsicNode):
@@ -352,9 +359,28 @@ class IntrinsicTransformer(ast.NodeTransformer):
     def visit_Call(self, node):
         node.func = self.visit(node.func)
         node.args = [self.visit(a) for a in node.args]
+        node.keywords = {kw.arg: self.visit(kw.value) for kw in node.keywords}
+
         if isinstance(node.func, ParticleAttributeNode) \
            and node.func.attr == 'state':
             node = IntrinsicNode(node, "return DELETE")
+
+        if isinstance(node.func, FieldEvalCallNode):
+            # get a temporary value to assign result to
+            tmp = self.get_tmp()
+            # whether to convert
+            convert = True
+            if "applyConversion" in node.keywords:
+                k = node.keywords["applyConversion"]
+                if isinstance(k, ast.NameConstant):
+                    convert = k.value
+
+            # convert args to Index(Tuple(*args))
+            args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
+
+            self.stmt_stack += [FieldEvalNode(node.func.field, args, tmp, convert)]
+            return ast.Name(id=tmp)
+
         return node
 
 
@@ -751,11 +777,16 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
+
         ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
-        ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
-        conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
-        node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS(err)")])
+        stmts = [c.Assign("err", ccode_eval)]
+
+        if node.convert:
+            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+            stmts += [conv_stat]
+
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS(err)")])
 
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
