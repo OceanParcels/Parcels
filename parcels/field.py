@@ -80,7 +80,8 @@ class Field(object):
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False,
+                 gridindexingtype='nemo', **kwargs):
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -116,6 +117,7 @@ class Field(object):
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
         else:
             self.interp_method = interp_method
+        self.gridindexingtype = gridindexingtype
         if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
            self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
             logger.warning_once('General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.')
@@ -664,7 +666,13 @@ class Field(object):
                     xi = len(grid.lon) - 2
                 else:
                     xi = lon_index.argmin() - 1 if lon_index.any() else 0
-                xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+
+                if self.gridindexingtype == 'mitgcm':
+                    xi += 1
+                    xsi = (x-grid.lon[xi-1]) / (grid.lon[xi]-grid.lon[xi-1])
+                else:
+                    xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
+
                 if xsi < 0:
                     xi -= 1
                     xsi = (x-grid.lon[xi]) / (grid.lon[xi+1]-grid.lon[xi])
@@ -701,7 +709,13 @@ class Field(object):
             else:
                 yi = lat_index.argmin() - 1 if lat_index.any() else 0
 
-            eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+            if self.gridindexingtype == 'mitgcm':
+                yi += 1
+                eta = (y-grid.lat[yi-1]) / (grid.lat[yi]-grid.lat[yi-1])
+            else:
+                print(self.gridindexingtype)
+                eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
+
             if eta < 0:
                 yi -= 1
                 eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
@@ -828,6 +842,9 @@ class Field(object):
             yii = yi if eta <= .5 else yi+1
             return self.data[ti, yii, xii]
         elif self.interp_method in ['linear', 'bgrid_velocity']:
+            if self.gridindexingtype == 'mitgcm':
+                xi -= 1
+                yi -= 1
             val = (1-xsi)*(1-eta) * self.data[ti, yi, xi] + \
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
@@ -1339,6 +1356,7 @@ class VectorField(object):
         self.V = V
         self.W = W
         self.vector_type = '3D' if W else '2D'
+        self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
@@ -1374,6 +1392,9 @@ class VectorField(object):
         xi = int(grid.xdim / 2) - 1
         yi = int(grid.ydim / 2) - 1
         (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+        if self.gridindexingtype == 'mitgcm':
+            xi -= 1
+            yi -= 1
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
