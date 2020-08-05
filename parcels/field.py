@@ -1407,10 +1407,16 @@ class VectorField(object):
                 V0 = self.V.data[ti, yi, xi+1] * c1
                 V1 = self.V.data[ti, yi+1, xi+1] * c3
         else:
-            U0 = self.U.data[ti, zi, yi+1, xi] * c4
-            U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
-            V0 = self.V.data[ti, zi, yi, xi+1] * c1
-            V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
+            if self.gridindexingtype == 'mitgcm':
+                U0 = self.U.data[ti, zi, yi, xi] * c4
+                U1 = self.U.data[ti, zi, yi, xi+1] * c2
+                V0 = self.V.data[ti, zi, yi, xi] * c1
+                V1 = self.V.data[ti, zi, yi+1, xi] * c3
+            else:
+                U0 = self.U.data[ti, zi, yi+1, xi] * c4
+                U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
+                V0 = self.V.data[ti, zi, yi, xi+1] * c1
+                V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
         U = (1-xsi) * U0 + xsi * U1
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
@@ -1460,13 +1466,20 @@ class VectorField(object):
         else:
             pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
                            grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])
-
-        u0 = self.U.data[ti, zi, yi+1, xi]
-        u1 = self.U.data[ti, zi, yi+1, xi+1]
-        v0 = self.V.data[ti, zi, yi, xi+1]
-        v1 = self.V.data[ti, zi, yi+1, xi+1]
-        w0 = self.W.data[ti, zi, yi+1, xi+1]
-        w1 = self.W.data[ti, zi+1, yi+1, xi+1]
+        if self.gridindexingtype == 'mitgcm':
+            u0 = self.U.data[ti, zi, yi, xi]
+            u1 = self.U.data[ti, zi, yi, xi+1]
+            v0 = self.V.data[ti, zi, yi, xi]
+            v1 = self.V.data[ti, zi, yi+1, xi]
+            w0 = self.W.data[ti, zi, yi, xi]
+            w1 = self.W.data[ti, zi+1, yi, xi]
+        else:
+            u0 = self.U.data[ti, zi, yi+1, xi]
+            u1 = self.U.data[ti, zi, yi+1, xi+1]
+            v0 = self.V.data[ti, zi, yi, xi+1]
+            v1 = self.V.data[ti, zi, yi+1, xi+1]
+            w0 = self.W.data[ti, zi, yi+1, xi+1]
+            w1 = self.W.data[ti, zi+1, yi+1, xi+1]
 
         U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zet, 'zonal', grid.mesh)
         U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zet, 'zonal', grid.mesh)
@@ -2211,8 +2224,10 @@ class NetcdfFileBuffer(object):
                             self.chunking_finalized = True
                     else:
                         # ==== I think this can be "pass" too ==== #
-                        data = data.rechunk(self.chunk_mapping)
-                        self.chunking_finalized = True
+                        
+                        pass
+#                         data = data.rechunk(self.chunk_mapping)
+#                         self.chunking_finalized = True
             else:
                 da_data = da.from_array(data, chunks=self.field_chunksize)
                 if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
