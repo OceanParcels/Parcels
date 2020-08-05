@@ -1605,13 +1605,15 @@ class VectorField(object):
         if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, &%s, &%s, %s)" \
-                   % (varU, varV, varW, U.interp_method.upper())
+                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                   "&%s, &%s, &%s, %s, %s)" \
+                   % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, &%s, %s)" \
-                   % (varU, varV, U.interp_method.upper())
+                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                   " &%s, &%s, %s, %s)" \
+                   % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
 
 
 class DeferredArray():
