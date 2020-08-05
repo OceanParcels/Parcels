@@ -80,7 +80,7 @@ class Field(object):
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo', **kwargs):
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -116,6 +116,7 @@ class Field(object):
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
         else:
             self.interp_method = interp_method
+        self.gridindexingtype = gridindexingtype
         if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
            self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
             logger.warning_once('General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.')
@@ -1339,6 +1340,7 @@ class VectorField(object):
         self.V = V
         self.W = W
         self.vector_type = '3D' if W else '2D'
+        self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
@@ -1394,10 +1396,16 @@ class VectorField(object):
         c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
         c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
         if grid.zdim == 1:
-            U0 = self.U.data[ti, yi+1, xi] * c4
-            U1 = self.U.data[ti, yi+1, xi+1] * c2
-            V0 = self.V.data[ti, yi, xi+1] * c1
-            V1 = self.V.data[ti, yi+1, xi+1] * c3
+            if self.gridindexingtype == 'mitgcm':
+                U0 = self.U.data[ti, yi, xi] * c4
+                U1 = self.U.data[ti, yi, xi+1] * c2
+                V0 = self.V.data[ti, yi, xi] * c1
+                V1 = self.V.data[ti, yi+1, xi] * c3
+            else:
+                U0 = self.U.data[ti, yi+1, xi] * c4
+                U1 = self.U.data[ti, yi+1, xi+1] * c2
+                V0 = self.V.data[ti, yi, xi+1] * c1
+                V1 = self.V.data[ti, yi+1, xi+1] * c3
         else:
             U0 = self.U.data[ti, zi, yi+1, xi] * c4
             U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
