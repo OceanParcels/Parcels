@@ -2200,8 +2200,8 @@ class NetcdfFileBuffer(object):
                             self.rechunk_callback_fields()
                             self.chunking_finalized = True
                     else:
-                        # ==== I think this can be "pass" too ==== #
-                        data = data.rechunk(self.chunk_mapping)
+                        # # ==== I think this can be "pass" too ==== #
+                        # data = data.rechunk(self.chunk_mapping)
                         self.chunking_finalized = True
             else:
                 da_data = da.from_array(data, chunks=self.field_chunksize)
