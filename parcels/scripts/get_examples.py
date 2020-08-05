@@ -21,6 +21,8 @@ example_data_files = (
         "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]]
     + ["OFAM_example_data/" + fn for fn in [
         "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
+    + ["MITgcm_example_data/" + fn for fn in [
+        "mitgcm_regridded.nc", "mitgcm_regridded_grid.nc"]]
     + ["Peninsula_data/" + fn for fn in [
         "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]]
     + ["GlobCurrent_example_data/" + fn for fn in [
