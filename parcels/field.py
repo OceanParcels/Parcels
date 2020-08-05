@@ -713,6 +713,7 @@ class Field(object):
                 yi += 1
                 eta = (y-grid.lat[yi-1]) / (grid.lat[yi]-grid.lat[yi-1])
             else:
+                print(self.gridindexingtype)
                 eta = (y-grid.lat[yi]) / (grid.lat[yi+1]-grid.lat[yi])
 
             if eta < 0:
