@@ -3,14 +3,11 @@ import os
 import random
 import shutil
 import string
-from datetime import timedelta as delta
 from glob import glob
 
 import netCDF4
 import numpy as np
 
-from parcels.tools.statuscodes import OperationCode
-from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
 except:
@@ -28,16 +25,6 @@ except:
 
 
 __all__ = ['ParticleFile']
-
-
-def _to_write_particles(pd, time):
-    """We don't want to write a particle that is not started yet.
-    Particle will be written if particle.time is between time-dt/2 and time+dt/2
-    """
-    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & (np.isfinite(pd['id']))
-            & (np.isfinite(pd['time'])))
 
 
 def _set_calendar(origin_calendar):
@@ -218,58 +205,6 @@ class ParticleFile(object):
         else:
             setattr(self.dataset, name, message)
 
-    def convert_pset_to_dict(self, pset, time, deleted_only=False):
-        """Convert all Particle data from one time step to a python dictionary.
-        :param pset: ParticleSet object to write
-        :param time: Time at which to write ParticleSet
-        :param deleted_only: Flag to write only the deleted Particles
-        returns two dictionaries: one for all variables to be written each outputdt,
-         and one for all variables to be written once
-        """
-        data_dict = {}
-        data_dict_once = {}
-
-        time = time.total_seconds() if isinstance(time, delta) else time
-
-        pd = pset.particle_data
-
-        if self.lasttime_written != time and \
-           (self.write_ondelete is False or deleted_only is not False):
-            if pd['id'].size == 0:
-                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
-            else:
-                if deleted_only is not False:
-                    to_write = deleted_only
-                else:
-                    to_write = _to_write_particles(pd, time)
-                if np.any(to_write) > 0:
-                    for var in self.var_names:
-                        data_dict[var] = pd[var][to_write]
-                    self.maxid_written = max(self.maxid_written, np.max(data_dict['id']))
-
-                pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
-                             & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
-                if np.count_nonzero(pset_errs) > 0:
-                    logger.warning_once(
-                        'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
-
-                if time not in self.time_written:
-                    self.time_written.append(time)
-
-                if len(self.var_names_once) > 0:
-                    first_write = (_to_write_particles(pd, time)
-                                   & np.isin(pd['id'], self.written_once, invert=True))
-                    if np.any(first_write):
-                        data_dict_once['id'] = pd['id'][first_write]
-                        for var in self.var_names_once:
-                            data_dict_once[var] = pd[var][first_write]
-                        self.written_once.extend(pd['id'][first_write])
-
-            if deleted_only is False:
-                self.lasttime_written = time
-
-        return data_dict, data_dict_once
-
     def dump_dict_to_npy(self, data_dict, data_dict_once):
         """Buffer data to set of temporary numpy files, using np.save"""
 
@@ -307,7 +242,7 @@ class ParticleFile(object):
         :param deleted_only: Flag to write only the deleted Particles
         """
 
-        data_dict, data_dict_once = self.convert_pset_to_dict(pset, time, deleted_only=deleted_only)
+        data_dict, data_dict_once = pset.convert_pset_to_dict(self, time, deleted_only=deleted_only)
         self.dump_dict_to_npy(data_dict, data_dict_once)
         self.dump_psetinfo_to_npy()
 
