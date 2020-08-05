@@ -25,10 +25,10 @@ from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
 from parcels.tools.converters import convert_xarray_time_units
-from parcels.tools.error import FieldOutOfBoundError
-from parcels.tools.error import FieldOutOfBoundSurfaceError
-from parcels.tools.error import FieldSamplingError
-from parcels.tools.error import TimeExtrapolationError
+from parcels.tools.statuscodes import FieldOutOfBoundError
+from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
+from parcels.tools.statuscodes import FieldSamplingError
+from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
 from netCDF4 import Dataset as ncDataset
 
