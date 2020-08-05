@@ -640,6 +640,8 @@ def test_mitgridindexing(mode, gridindexingtype):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     fieldset.U.interp_method = 'cgrid_velocity'
     fieldset.V.interp_method = 'cgrid_velocity'
+    fieldset.U.gridindexingtype = gridindexingtype
+    fieldset.V.gridindexingtype = gridindexingtype
 
     def UpdateR(particle, fieldset, time):
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
