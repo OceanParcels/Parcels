@@ -605,7 +605,10 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
+@pytest.mark.parametrize('cgridfieldshape', ['even', 'uneven'])
 def test_mitgridindexing(mode, gridindexingtype):
+    if cgridfieldshape == 'uneven' and 'gridindexingtype' == 'nemo':
+        pytest.skip("When NEMO-indexing is used, even field shapes are expected.")
     xdim = ydim = 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -620,10 +623,14 @@ def test_mitgridindexing(mode, gridindexingtype):
         return np.sqrt(ln ** 2 + lt ** 2), np.arctan2(ln, lt)
 
     def calculate_UVR(lat, lon, dx, dy, omega):
-        U = np.zeros((lat.size, lon.size), dtype=np.float32)
-        V = np.zeros((lat.size, lon.size), dtype=np.float32)
-        R = np.zeros((lat.size, lon.size), dtype=np.float32)
-
+        if cgridfieldshape == 'uneven':
+            U = np.zeros((lat.size - 1, lon.size), dtype=np.float32)
+            V = np.zeros((lat.size, lon.size - 1), dtype=np.float32)
+            R = np.zeros((lat.size, lon.size), dtype=np.float32)
+        else:
+            U = np.zeros((lat.size, lon.size), dtype=np.float32)
+            V = np.zeros((lat.size, lon.size), dtype=np.float32)
+            R = np.zeros((lat.size, lon.size), dtype=np.float32)
         for i in range(lon.size):
             for j in range(lat.size):
                 r, phi = calc_r_phi(lon[i], lat[j])
