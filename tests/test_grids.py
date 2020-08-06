@@ -653,5 +653,65 @@ def test_mitgridindexing(mode, gridindexingtype):
     pset = ParticleSet(fieldset, pclass=MyParticle, lon=0, lat=4e3, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4,
-                 runtime=delta(hours=12), dt=delta(minutes=5))
+                 runtime=delta(hours=14), dt=delta(minutes=5))
+    assert np.allclose(pset.radius, pset.radius_start, atol=10)
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
+def test_mitgridindexing_3D(mode, gridindexingtype):
+    xdim = zdim = 201
+    ydim = 2
+    a = c = 20000  # domain size
+    b = 2
+    lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
+    lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
+    depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
+    dx, dy, dz = lon[1] - lon[0], lat[1] - lat[0], depth[1] - depth[0]
+    omega = 2 * np.pi / delta(days=1).total_seconds()
+
+    index_signs = {'nemo': -1, 'mitgcm': 1}
+    isign = index_signs[gridindexingtype]
+
+    def calc_r_phi(ln, dp):
+        return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
+
+    def calculate_UVWR(lat, lon, depth, dx, dz, omega):
+        U = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
+        V = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
+        W = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
+        R = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
+
+        for i in range(lon.size):
+            for j in range(lat.size):
+                for k in range(depth.size):
+                    r, phi = calc_r_phi(lon[i], depth[k])
+                    R[k, j, i] = r
+                    r, phi = calc_r_phi(lon[i] + isign * dx / 2, depth[k])
+                    W[k, j, i] = -omega * r * np.sin(phi)
+                    r, phi = calc_r_phi(lon[i], depth[k] + dz / 2)
+                    U[k, j, i] = omega * r * np.cos(phi)
+        return U, V, W, R
+
+    U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
+    data = {"U": U, "V": V, "W": W, "R": R}
+    dimensions = {"lon": lon, "lat": lat, "depth": depth}
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset.U.interp_method = "cgrid_velocity"
+    fieldset.V.interp_method = "cgrid_velocity"
+    fieldset.W.interp_method = "cgrid_velocity"
+    fieldset.U.gridindexingtype = gridindexingtype
+    fieldset.V.gridindexingtype = gridindexingtype
+    fieldset.W.gridindexingtype = gridindexingtype
+
+    def UpdateR(particle, fieldset, time):
+        particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
+
+    class MyParticle(ptype[mode]):
+        radius = Variable('radius', dtype=np.float32, initial=0.)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
+
+    pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
+                 runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
