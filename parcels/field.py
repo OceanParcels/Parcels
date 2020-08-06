@@ -1473,7 +1473,7 @@ class VectorField(object):
         v1 = self.V.data[ti, zi, yi+1, xi+1]
         w0 = self.W.data[ti, zi, yi+1, xi+1]
         w1 = self.W.data[ti, zi+1, yi+1, xi+1]
-            
+
         U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zet, 'zonal', grid.mesh)
         U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zet, 'zonal', grid.mesh)
         V0 = v0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 0, zet, 'meridional', grid.mesh)
@@ -2217,10 +2217,8 @@ class NetcdfFileBuffer(object):
                             self.chunking_finalized = True
                     else:
                         # ==== I think this can be "pass" too ==== #
-                        
-                        pass
-#                         data = data.rechunk(self.chunk_mapping)
-#                         self.chunking_finalized = True
+                        data = data.rechunk(self.chunk_mapping)
+                        self.chunking_finalized = True
             else:
                 da_data = da.from_array(data, chunks=self.field_chunksize)
                 if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
