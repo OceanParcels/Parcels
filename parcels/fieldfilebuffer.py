@@ -43,6 +43,7 @@ class XarrayFileBuffer(_FileBuffer):
 
 class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
+        self.lib = np
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.lock_file = kwargs.pop('lock_file', True)
         super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
@@ -152,6 +153,58 @@ class NetcdfFileBuffer(_FileBuffer):
             self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
             return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
 
+    def _check_extend_depth(self, data, di):
+        return (self.indices['depth'][-1] == self.data_full_zdim-1
+                and data.shape[di] == self.data_full_zdim-1
+                and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'])
+
+    def _extend_depth_dimension(self, data, ti):
+        # Add a bottom level of zeros for B-grid if missing in the data.
+        # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
+        # to match Parcels data shape. for W, last level must be 0 for impermeability
+        for dim in ['depth', 'lat', 'lon']:
+            if not isinstance(self.indices[dim], (list, range)):
+                raise NotImplementedError("For B grids, indices must be provided as a range")
+                # this is because da.concatenate needs data which are indexed using slices, not a range of indices
+        d0 = self.indices['depth'][0]
+        d1 = self.indices['depth'][-1] + 1
+        lat0 = self.indices['lat'][0]
+        lat1 = self.indices['lat'][-1] + 1
+        lon0 = self.indices['lon'][0]
+        lon1 = self.indices['lon'][-1] + 1
+        if len(data.shape) == 3:
+            data = self.lib.concatenate((data[d0:d1 - 1, lat0:lat1, lon0:lon1],
+                                        da.zeros((1, lat1 - lat0, lon1 - lon0))), axis=0)
+        else:
+            if (type(ti) in [list, range]):
+                t0 = ti[0]
+                t1 = ti[-1] + 1
+                data = self.lib.concatenate((data[t0:t1, d0:d1 - 1, lat0:lat1, lon0:lon1],
+                                             self.lib.zeros((t1 - t0, 1, lat1 - lat0, lon1 - lon0))), axis=1)
+            else:
+                data = self.lib.concatenate((data[ti, d0:d1 - 1, lat0:lat1, lon0:lon1],
+                                             self.lib.zeros((1, lat1 - lat0, lon1 - lon0))), axis=0)
+
+        return data
+
+    def _apply_indices(self, data, ti):
+        if len(data.shape) == 2:
+            data = data[self.indices['lat'], self.indices['lon']]
+        elif len(data.shape) == 3:
+            if self._check_extend_depth(data, 0):
+                data = self._extend_depth_dimension(data, ti)
+            elif len(self.indices['depth']) > 1:
+                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
+            else:
+                data = data[ti, self.indices['lat'], self.indices['lon']]
+        else:
+            if self._check_extend_depth(data, 1):
+                data = self._extend_depth_dimension(data, ti)
+            else:
+                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
+
+        return data
+
     @property
     def data(self):
         return self.data_access()
@@ -159,54 +212,7 @@ class NetcdfFileBuffer(_FileBuffer):
     def data_access(self):
         data = self.dataset[self.name]
         ti = range(data.shape[0]) if self.ti is None else self.ti
-        if len(data.shape) == 2:
-            data = data[self.indices['lat'], self.indices['lon']]
-        elif len(data.shape) == 3:
-            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[0] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                # Add a bottom level of zeros for B-grid if missing in the data.
-                # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
-                # to match Parcels data shape. for W, last level must be 0 for impermeability
-                for dim in ['depth', 'lat', 'lon']:
-                    if not isinstance(self.indices[dim], (list, range)):
-                        raise NotImplementedError("For B grids, indices must be provided as a range")
-                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-                d0 = self.indices['depth'][0]
-                d1 = self.indices['depth'][-1]+1
-                lat0 = self.indices['lat'][0]
-                lat1 = self.indices['lat'][-1]+1
-                lon0 = self.indices['lon'][0]
-                lon1 = self.indices['lon'][-1]+1
-                data = np.concatenate((data[d0:d1-1, lat0:lat1, lon0:lon1],
-                                      da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            elif len(self.indices['depth']) > 1:
-                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
-            else:
-                data = data[ti, self.indices['lat'], self.indices['lon']]
-        else:
-            if self.indices['depth'][-1] == self.data_full_zdim - 1 and data.shape[
-                1] == self.data_full_zdim - 1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity',
-                                                                         'bgrid_tracer']:
-                for dim in ['depth', 'lat', 'lon']:
-                    if not isinstance(self.indices[dim], (list, range)):
-                        raise NotImplementedError("For B grids, indices must be provided as a range")
-                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-                d0 = self.indices['depth'][0]
-                d1 = self.indices['depth'][-1] + 1
-                lat0 = self.indices['lat'][0]
-                lat1 = self.indices['lat'][-1] + 1
-                lon0 = self.indices['lon'][0]
-                lon1 = self.indices['lon'][-1] + 1
-                if (type(ti) in [list, range]):
-                    t0 = ti[0]
-                    t1 = ti[-1] + 1
-                    data = np.concatenate((data[t0:t1, d0:d1 - 1, lat0:lat1, lon0:lon1],
-                                           da.zeros((t1 - t0, 1, lat1 - lat0, lon1 - lon0))), axis=1)
-                else:
-                    data = np.concatenate((data[ti, d0:d1 - 1, lat0:lat1, lon0:lon1],
-                                           da.zeros((1, lat1 - lat0, lon1 - lon0))), axis=0)
-            else:
-                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
-
+        data = self._apply_indices(data, ti)
         return np.array(data)
 
     @property
@@ -243,6 +249,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
     """ Class that encapsulates and manages deferred access to file data. """
     def __init__(self, *args, **kwargs):
+        self.lib = da
         self.field_chunksize = kwargs.pop('field_chunksize', 'auto')
         self.chunk_mapping = None
         self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
@@ -536,90 +543,39 @@ class DaskFileBuffer(NetcdfFileBuffer):
             else:
                 self._chunksize_to_chunkmap()
         data = self.dataset[self.name]
-        libcheck = data.data if isinstance(data, xr.DataArray) else data
-        lib = np if isinstance(libcheck, np.ndarray) else da
-        libcheck = None
 
         ti = range(data.shape[0]) if self.ti is None else self.ti
-        if len(data.shape) == 2:
-            data = data[self.indices['lat'], self.indices['lon']]
-        elif len(data.shape) == 3:
-            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[0] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                # Add a bottom level of zeros for B-grid if missing in the data.
-                # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
-                # to match Parcels data shape. for W, last level must be 0 for impermeability
-                for dim in ['depth', 'lat', 'lon']:
-                    if not isinstance(self.indices[dim], (list, range)):
-                        raise NotImplementedError("For B grids, indices must be provided as a range")
-                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-                d0 = self.indices['depth'][0]
-                d1 = self.indices['depth'][-1]+1
-                lat0 = self.indices['lat'][0]
-                lat1 = self.indices['lat'][-1]+1
-                lon0 = self.indices['lon'][0]
-                lon1 = self.indices['lon'][-1]+1
-                data = lib.concatenate((data[d0:d1-1, lat0:lat1, lon0:lon1],
-                                       da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            elif len(self.indices['depth']) > 1:
-                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
-            else:
-                data = data[ti, self.indices['lat'], self.indices['lon']]
-        else:
-            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                for dim in ['depth', 'lat', 'lon']:
-                    if not isinstance(self.indices[dim], (list, range)):
-                        raise NotImplementedError("For B grids, indices must be provided as a range")
-                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-                d0 = self.indices['depth'][0]
-                d1 = self.indices['depth'][-1]+1
-                lat0 = self.indices['lat'][0]
-                lat1 = self.indices['lat'][-1]+1
-                lon0 = self.indices['lon'][0]
-                lon1 = self.indices['lon'][-1]+1
-                if(type(ti) in [list, range]):
-                    t0 = ti[0]
-                    t1 = ti[-1]+1
-                    data = lib.concatenate((data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1],
-                                           da.zeros((t1-t0, 1, lat1-lat0, lon1-lon0))), axis=1)
-                else:
-                    data = lib.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
-                                           da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            else:
-                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
-
+        data = self._apply_indices(data, ti)
         if isinstance(data, xr.DataArray):
             data = data.data
-        if self.field_chunksize is False:
-            data = np.array(data)
-            self.chunking_finalized = True
-        else:
-            if isinstance(data, da.core.Array):
-                if not self.chunking_finalized:
-                    if self.field_chunksize == 'auto':
-                        if data.shape[-2:] != data.chunksize[-2:]:
-                            data = data.rechunk(self.field_chunksize)
-                        self.chunk_mapping = {}
-                        chunkIndex = 0
-                        startblock = 0
-                        for chunkDim in data.chunksize[startblock:]:
-                            self.chunk_mapping[chunkIndex] = chunkDim
-                            chunkIndex += 1
-                        self._chunkmap_to_chunksize()
-                        if self.rechunk_callback_fields is not None:
-                            self.rechunk_callback_fields()
-                            self.chunking_finalized = True
-                    else:
-                        # ==== I think this can be "pass" too ==== #
-                        data = data.rechunk(self.chunk_mapping)
+
+        if isinstance(data, da.core.Array):
+            if not self.chunking_finalized:
+                if self.field_chunksize == 'auto':
+                    if data.shape[-2:] != data.chunksize[-2:]:
+                        data = data.rechunk(self.field_chunksize)
+                    self.chunk_mapping = {}
+                    chunkIndex = 0
+                    startblock = 0
+                    for chunkDim in data.chunksize[startblock:]:
+                        self.chunk_mapping[chunkIndex] = chunkDim
+                        chunkIndex += 1
+                    self._chunkmap_to_chunksize()
+                    if self.rechunk_callback_fields is not None:
+                        self.rechunk_callback_fields()
                         self.chunking_finalized = True
-            else:
-                da_data = da.from_array(data, chunks=self.field_chunksize)
-                if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
-                    data = np.array(data)
                 else:
-                    data = da_data
-                if not self.chunking_finalized and self.rechunk_callback_fields is not None:
-                    self.rechunk_callback_fields()
+                    # ==== I think this can be "pass" too ==== #
+                    data = data.rechunk(self.chunk_mapping)
                     self.chunking_finalized = True
+        else:
+            da_data = da.from_array(data, chunks=self.field_chunksize)
+            if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
+                data = np.array(data)
+            else:
+                data = da_data
+            if not self.chunking_finalized and self.rechunk_callback_fields is not None:
+                self.rechunk_callback_fields()
+                self.chunking_finalized = True
 
         return data
