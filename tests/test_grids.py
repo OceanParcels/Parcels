@@ -606,8 +606,8 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('cgridfieldshape', ['even', 'uneven'])
-def test_mitgridindexing(mode, gridindexingtype):
-    if cgridfieldshape == 'uneven' and 'gridindexingtype' == 'nemo':
+def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
+    if cgridfieldshape == 'uneven' and gridindexingtype == 'nemo':
         pytest.skip("When NEMO-indexing is used, even field shapes are expected.")
     xdim = ydim = 201
     a = b = 20000  # domain size
