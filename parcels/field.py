@@ -13,7 +13,7 @@ import xarray as xr
 from pathlib import Path
 
 import parcels.tools.interpolation_utils as i_u
-from .fieldfilebuffer import NetcdfFileBuffer
+from .fieldfilebuffer import XarrayFileBuffer, NetcdfFileBuffer, DaskFileBuffer
 from .grid import CGrid
 from .grid import Grid
 from .grid import GridCode
@@ -70,7 +70,7 @@ class Field(object):
     :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
            The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
-    :param chunkdims_name_map (opt.): gives a name map to the NetCDFFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
+    :param chunkdims_name_map (opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
            required only if currently incompatible OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
     """
 
@@ -165,6 +165,7 @@ class Field(object):
         self.dataFiles = kwargs.pop('dataFiles', None)
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
+        self.FieldFileBuffer = kwargs.pop('FieldFileBuffer', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
@@ -284,7 +285,12 @@ class Field(object):
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
 
-        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=False) as filebuffer:
+        if netcdf_engine == 'xarray':
+            FieldFileBuffer = XarrayFileBuffer
+        else:
+            FieldFileBuffer = NetcdfFileBuffer
+
+        with FieldFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
@@ -292,7 +298,7 @@ class Field(object):
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method, field_chunksize=False, lock_file=False) as filebuffer:
+            with FieldFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions['depth'] == 'not_yet_set':
                     depth = filebuffer.read_depth_dimensions
@@ -324,7 +330,7 @@ class Field(object):
                 timeslices = []
                 dataFiles = []
                 for fname in data_filenames:
-                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
+                    with FieldFileBuffer(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
                         ftime = filebuffer.time
                         timeslices.append(ftime)
                         dataFiles.append([fname] * len(ftime))
@@ -360,7 +366,7 @@ class Field(object):
                 field_timeslices = []
                 dataFiles = []
                 for fname in data_filenames:
-                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
+                    with FieldFileBuffer(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
                         ftime = filebuffer.time
                         field_timeslices.append(ftime)
                         dataFiles.append([fname] * len(ftime))
@@ -390,9 +396,9 @@ class Field(object):
             data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                      interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                      field_chunksize=False) as filebuffer:
+                with FieldFileBuffer(fname, dimensions, indices, netcdf_engine,
+                                     interp_method=interp_method, data_full_zdim=data_full_zdim,
+                                     field_chunksize=False) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -426,6 +432,9 @@ class Field(object):
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
+        if 'field_chunksize' in kwargs.keys() and kwargs['field_chunksize'] not in [False, None]:
+            FieldFileBuffer = DaskFileBuffer
+        kwargs['FieldFileBuffer'] = FieldFileBuffer
 
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
@@ -1286,13 +1295,13 @@ class Field(object):
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
-        filebuffer = NetcdfFileBuffer(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
-                                      self.netcdf_engine, timestamp=timestamp,
-                                      interp_method=self.interp_method,
-                                      data_full_zdim=self.data_full_zdim,
-                                      field_chunksize=self.field_chunksize,
-                                      rechunk_callback_fields=self.chunk_setup,
-                                      chunkdims_name_map=self.netcdf_chunkdims_name_map)
+        filebuffer = self.FieldFileBuffer(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
+                                          netcdf_engine=self.netcdf_engine, timestamp=timestamp,
+                                          interp_method=self.interp_method,
+                                          data_full_zdim=self.data_full_zdim,
+                                          field_chunksize=self.field_chunksize,
+                                          rechunk_callback_fields=self.chunk_setup,
+                                          chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
         time_data = g.time_origin.reltime(time_data)
