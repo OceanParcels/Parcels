@@ -1466,21 +1466,14 @@ class VectorField(object):
         else:
             pz = np.array([grid.depth[zi, yi, xi], grid.depth[zi, yi, xi+1], grid.depth[zi, yi+1, xi+1], grid.depth[zi, yi+1, xi],
                            grid.depth[zi+1, yi, xi], grid.depth[zi+1, yi, xi+1], grid.depth[zi+1, yi+1, xi+1], grid.depth[zi+1, yi+1, xi]])
-        if self.gridindexingtype == 'mitgcm':
-            u0 = self.U.data[ti, zi, yi, xi]
-            u1 = self.U.data[ti, zi, yi, xi+1]
-            v0 = self.V.data[ti, zi, yi, xi]
-            v1 = self.V.data[ti, zi, yi+1, xi]
-            w0 = self.W.data[ti, zi, yi, xi]
-            w1 = self.W.data[ti, zi+1, yi, xi]
-        else:
-            u0 = self.U.data[ti, zi, yi+1, xi]
-            u1 = self.U.data[ti, zi, yi+1, xi+1]
-            v0 = self.V.data[ti, zi, yi, xi+1]
-            v1 = self.V.data[ti, zi, yi+1, xi+1]
-            w0 = self.W.data[ti, zi, yi+1, xi+1]
-            w1 = self.W.data[ti, zi+1, yi+1, xi+1]
 
+        u0 = self.U.data[ti, zi, yi+1, xi]
+        u1 = self.U.data[ti, zi, yi+1, xi+1]
+        v0 = self.V.data[ti, zi, yi, xi+1]
+        v1 = self.V.data[ti, zi, yi+1, xi+1]
+        w0 = self.W.data[ti, zi, yi+1, xi+1]
+        w1 = self.W.data[ti, zi+1, yi+1, xi+1]
+            
         U0 = u0 * i_u.jacobian3D_lin_face(px, py, pz, 0, eta, zet, 'zonal', grid.mesh)
         U1 = u1 * i_u.jacobian3D_lin_face(px, py, pz, 1, eta, zet, 'zonal', grid.mesh)
         V0 = v0 * i_u.jacobian3D_lin_face(px, py, pz, xsi, 0, zet, 'meridional', grid.mesh)
