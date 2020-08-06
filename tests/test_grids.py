@@ -656,6 +656,7 @@ def test_mitgridindexing(mode, gridindexingtype):
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 def test_mitgridindexing_3D(mode, gridindexingtype):
@@ -666,7 +667,7 @@ def test_mitgridindexing_3D(mode, gridindexingtype):
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
     depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
-    dx, dy, dz = lon[1] - lon[0], lat[1] - lat[0], depth[1] - depth[0]
+    dx, dz = lon[1] - lon[0], depth[1] - depth[0]
     omega = 2 * np.pi / delta(days=1).total_seconds()
 
     index_signs = {'nemo': -1, 'mitgcm': 1}
