@@ -157,23 +157,26 @@ class ParticleFile(object):
         else:
             lonlatdepth_precision = "f4"
 
-        self.lat = self.dataset.createVariable("lat", lonlatdepth_precision, coords, fill_value=np.nan)
-        self.lat.long_name = ""
-        self.lat.standard_name = "latitude"
-        self.lat.units = "degrees_north"
-        self.lat.axis = "Y"
+        if ('lat' in self.var_names):
+            self.lat = self.dataset.createVariable("lat", lonlatdepth_precision, coords, fill_value=np.nan)
+            self.lat.long_name = ""
+            self.lat.standard_name = "latitude"
+            self.lat.units = "degrees_north"
+            self.lat.axis = "Y"
 
-        self.lon = self.dataset.createVariable("lon", lonlatdepth_precision, coords, fill_value=np.nan)
-        self.lon.long_name = ""
-        self.lon.standard_name = "longitude"
-        self.lon.units = "degrees_east"
-        self.lon.axis = "X"
+        if ('lon' in self.var_names):
+            self.lon = self.dataset.createVariable("lon", lonlatdepth_precision, coords, fill_value=np.nan)
+            self.lon.long_name = ""
+            self.lon.standard_name = "longitude"
+            self.lon.units = "degrees_east"
+            self.lon.axis = "X"
 
-        self.z = self.dataset.createVariable("z", lonlatdepth_precision, coords, fill_value=np.nan)
-        self.z.long_name = ""
-        self.z.standard_name = "depth"
-        self.z.units = "m"
-        self.z.positive = "down"
+        if ('depth' in self.var_names) or ('z' in self.var_names):
+            self.z = self.dataset.createVariable("z", lonlatdepth_precision, coords, fill_value=np.nan)
+            self.z.long_name = ""
+            self.z.standard_name = "depth"
+            self.z.units = "m"
+            self.z.positive = "down"
 
         for vname in self.var_names:
             if vname not in ['time', 'lat', 'lon', 'depth', 'id']:

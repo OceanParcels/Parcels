@@ -813,3 +813,16 @@ def search_kernel(particle, fieldset, time):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
+
+    def set_variable_write_status(self, var, write_status):
+        """Method to set the write status of a Variable
+        :param var: Name of the variable (string)
+        :param status: Write status of the variable (True, False or 'once')
+        """
+        var_changed = False
+        for v in self.ptype.variables:
+            if v.name == var:
+                v.to_write = write_status
+                var_changed = True
+        if not var_changed:
+            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
