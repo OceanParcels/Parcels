@@ -13,17 +13,9 @@ from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.loggers import logger
 
 
-class NetcdfFileBuffer(object):
-    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG'],
-                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
-                  'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz',
-                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1', 'Zl', 'Zu', 'level'],
-                  'time': ['time', 'time_count', 'time_counter', 'timer_count', 't']}
-    _min_dim_chunksize = 16
-
-    """ Class that encapsulates and manages deferred access to file data. """
+class _FileBuffer(object):
     def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', data_full_zdim=None, field_chunksize='auto', rechunk_callback_fields=None, lock_file=True, **kwargs):
+                 interp_method='linear', data_full_zdim=None, **kwargs):
         self.filename = filename
         self.dimensions = dimensions  # Dict with dimension keys for file data
         self.indices = indices
@@ -33,16 +25,29 @@ class NetcdfFileBuffer(object):
         self.ti = None
         self.interp_method = interp_method
         self.data_full_zdim = data_full_zdim
-        self.field_chunksize = field_chunksize
+
+
+class NetcdfFileBuffer(_FileBuffer):
+    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG'],
+                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
+                  'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz',
+                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1', 'Zl', 'Zu', 'level'],
+                  'time': ['time', 'time_count', 'time_counter', 'timer_count', 't']}
+    _min_dim_chunksize = 16
+
+    """ Class that encapsulates and manages deferred access to file data. """
+    def __init__(self, *args, **kwargs):
+        self.field_chunksize = kwargs.pop('field_chunksize', 'auto')
         self.chunk_mapping = None
-        self.rechunk_callback_fields = rechunk_callback_fields
+        self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
         self.chunking_finalized = False
-        self.lock_file = lock_file
+        self.lock_file = kwargs.pop('lock_file', True)
         if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
             for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
                 for value in dim_name_arr:
                     if value not in self._name_maps[key]:
                         self._name_maps[key].append(value)
+        super(NetcdfFileBuffer, self).__init__(*args, **kwargs)
 
     def __enter__(self):
         if self.netcdf_engine == 'xarray':
