@@ -499,6 +499,33 @@ class FieldSet(object):
         return fieldset
 
     @classmethod
+    def from_mitgcm(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                    allow_time_extrapolation=None, time_periodic=False,
+                    tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
+        """Initialises FieldSet object from NetCDF files of MITgcm fields.
+           All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
+           gridindexing is set to 'mitgcm' for grids that have the shape
+                _________________V[k,j+1,i]__________________
+               |                                             |
+               |                                             |
+               U[k,j,i]     W[k:k+2,j,i], T[k,j,i]           U[k,j,i+1]
+               |                                             |
+               |                                             |
+               |_________________V[k,j,i]____________________|
+
+        """
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_mitgcm'
+        if kwargs.pop('gridindexingtype', 'mitgcm') != 'mitgcm':
+            raise ValueError("gridindexingtype must be 'mitgcm' in FieldSet.from_mitgcm(). Use FieldSet.from_c_grid_dataset otherwise")
+        fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
+                                           field_chunksize=field_chunksize, gridindexingtype='mitgcm', **kwargs)
+        if hasattr(fieldset, 'W'):
+            fieldset.W.set_scaling_factor(-1.)
+        return fieldset
+
+    @classmethod
     def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
                             tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
