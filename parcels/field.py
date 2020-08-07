@@ -878,8 +878,12 @@ class Field(object):
             return self.data[ti, zii, yii, xii]
         elif self.interp_method == 'cgrid_velocity':
             # evaluating W velocity in c_grid
-            f0 = self.data[ti, zi, yi+1, xi+1]
-            f1 = self.data[ti, zi+1, yi+1, xi+1]
+            if self.gridindexingtype == 'nemo':
+                f0 = self.data[ti, zi, yi+1, xi+1]
+                f1 = self.data[ti, zi+1, yi+1, xi+1]
+            elif self.gridindexingtype == 'mitgcm':
+                f0 = self.data[ti, zi, yi, xi]
+                f1 = self.data[ti, zi+1, yi, xi]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method == 'linear_invdist_land_tracer':
             land = np.isclose(self.data[ti, zi:zi+2, yi:yi+2, xi:xi+2], 0.)
@@ -1042,8 +1046,8 @@ class Field(object):
 
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s)" \
-            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
+        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
+            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
 
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
