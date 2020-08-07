@@ -11,6 +11,7 @@ from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.grid import Grid
 from parcels.gridset import GridSet
+from parcels.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
@@ -221,7 +222,7 @@ class FieldSet(object):
             if type(value) is Field:
                 assert value.name == attr, 'Field %s.name (%s) is not consistent' % (value.name, attr)
 
-        def check_velocityfields(U, V):
+        def check_velocityfields(U, V, W):
             if (U.interp_method == 'cgrid_velocity' and V.interp_method != 'cgrid_velocity') or \
                     (U.interp_method != 'cgrid_velocity' and V.interp_method == 'cgrid_velocity'):
                 raise ValueError("If one of U,V.interp_method='cgrid_velocity', the other should be too")
@@ -233,11 +234,22 @@ class FieldSet(object):
                 if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
+            if U.gridindexingtype not in ['nemo', 'mitgcm']:
+                raise ValueError("Field.gridindexing has to be one of 'nemo' or 'mitgcm'")
+
+            if U.gridindexingtype == 'mitgcm' and U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearZGrid]:
+                raise NotImplementedError('Curvilinear Grids are not implemented for mitgcm-style grid indexing.'
+                                          'If you have a use-case for this, please let us know by filing an Issue on github')
+
+            if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
+                raise ValueError('Not all velocity Fields have the same gridindexingtype')
+
+        W = self.W if hasattr(self, 'W') else None
         if isinstance(self.U, (SummedField, NestedField)):
             for U, V in zip(self.U, self.V):
-                check_velocityfields(U, V)
+                check_velocityfields(U, V, W)
         else:
-            check_velocityfields(self.U, self.V)
+            check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
             g.check_zonal_periodic()
