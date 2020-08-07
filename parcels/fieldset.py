@@ -244,11 +244,12 @@ class FieldSet(object):
             if V.gridindexingtype != U.gridindexingtype or (W and W.gridindexingtype != U.gridindexingtype):
                 raise ValueError('Not all velocity Fields have the same gridindexingtype')
 
-        W = self.W if hasattr(self, 'W') else None
         if isinstance(self.U, (SummedField, NestedField)):
-            for U, V in zip(self.U, self.V):
+            w = self.W if hasattr(self, 'W') else [None]*len(self.U)
+            for U, V, W in zip(self.U, self.V, w):
                 check_velocityfields(U, V, W)
         else:
+            W = self.W if hasattr(self, 'W') else None
             check_velocityfields(self.U, self.V, W)
 
         for g in self.gridset.grids:
