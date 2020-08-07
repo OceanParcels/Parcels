@@ -242,7 +242,7 @@ class ParticleFile(object):
         :param deleted_only: Flag to write only the deleted Particles
         """
 
-        data_dict, data_dict_once = pset.convert_pset_to_dict(self, time, deleted_only=deleted_only)
+        data_dict, data_dict_once = pset.to_dict(self, time, deleted_only=deleted_only)
         self.dump_dict_to_npy(data_dict, data_dict_once)
         self.dump_psetinfo_to_npy()
 

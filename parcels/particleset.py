@@ -513,7 +513,7 @@ class ParticleSet(object):
                 return np.float64
         return np.float32
 
-    def convert_pset_to_dict(self, pfile, time, deleted_only=False):
+    def to_dict(self, pfile, time, deleted_only=False):
         """Convert all Particle data from one time step to a python dictionary.
         :param pfile: ParticleFile object requesting the conversion
         :param time: Time at which to write ParticleSet
