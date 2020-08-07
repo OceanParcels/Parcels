@@ -631,8 +631,8 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
             U = np.zeros((lat.size, lon.size), dtype=np.float32)
             V = np.zeros((lat.size, lon.size), dtype=np.float32)
             R = np.zeros((lat.size, lon.size), dtype=np.float32)
-        for i in range(lon.size):
-            for j in range(lat.size):
+        for i in range(lon.size-1):
+            for j in range(lat.size-1):
                 r, phi = calc_r_phi(lon[i], lat[j])
                 R[j, i] = r
                 r, phi = calc_r_phi(lon[i] + isign * dx / 2, lat[j])
@@ -643,7 +643,12 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
 
     U, V, R = calculate_UVR(lat, lon, dx, dy, omega)
     data = {'U': U, 'V': V, 'R': R}
-    dimensions = {'lon': lon, 'lat': lat}
+    if cgridfieldshape == 'uneven':
+        dimensions = {'U': {'lon': lon, 'lat': lat[:-1]},
+                      'V': {'lon': lon[:-1], 'lat': lat},
+                      'R': {'lon': lon, 'lat': lat}}
+    else:
+        dimensions = {'lon': lon, 'lat': lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
     fieldset.U.interp_method = 'cgrid_velocity'
     fieldset.V.interp_method = 'cgrid_velocity'
