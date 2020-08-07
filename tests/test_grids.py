@@ -666,7 +666,8 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-def test_mitgridindexing_3D(mode, gridindexingtype):
+@pytest.mark.parametrize('withtime', [False, True])
+def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -676,6 +677,13 @@ def test_mitgridindexing_3D(mode, gridindexingtype):
     depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
     dx, dz = lon[1] - lon[0], depth[1] - depth[0]
     omega = 2 * np.pi / delta(days=1).total_seconds()
+    if withtime:
+        time = np.linspace(0, 24*60*60, 10)
+        dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
+        dsize = (time.size, depth.size, lat.size, lon.size)
+    else:
+        dimensions = {"lon": lon, "lat": lat, "depth": depth}
+        dsize = (depth.size, lat.size, lon.size)
 
     index_signs = {'nemo': -1, 'mitgcm': 1}
     isign = index_signs[gridindexingtype]
@@ -684,25 +692,33 @@ def test_mitgridindexing_3D(mode, gridindexingtype):
         return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
 
     def calculate_UVWR(lat, lon, depth, dx, dz, omega):
-        U = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
-        V = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
-        W = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
-        R = np.zeros((depth.size, lat.size, lon.size), dtype=np.float32)
+        U = np.zeros(dsize, dtype=np.float32)
+        V = np.zeros(dsize, dtype=np.float32)
+        W = np.zeros(dsize, dtype=np.float32)
+        R = np.zeros(dsize, dtype=np.float32)
 
         for i in range(lon.size):
             for j in range(lat.size):
                 for k in range(depth.size):
                     r, phi = calc_r_phi(lon[i], depth[k])
-                    R[k, j, i] = r
+                    if withtime:
+                        R[:, k, j, i] = r
+                    else:
+                        R[k, j, i] = r
                     r, phi = calc_r_phi(lon[i] + isign * dx / 2, depth[k])
-                    W[k, j, i] = -omega * r * np.sin(phi)
+                    if withtime:
+                        W[:, k, j, i] = -omega * r * np.sin(phi)
+                    else:
+                        W[k, j, i] = -omega * r * np.sin(phi)
                     r, phi = calc_r_phi(lon[i], depth[k] + dz / 2)
-                    U[k, j, i] = omega * r * np.cos(phi)
+                    if withtime:
+                        U[:, k, j, i] = omega * r * np.cos(phi)
+                    else:
+                        U[k, j, i] = omega * r * np.cos(phi)
         return U, V, W, R
 
     U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
     data = {"U": U, "V": V, "W": W, "R": R}
-    dimensions = {"lon": lon, "lat": lat, "depth": depth}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
     fieldset.U.interp_method = "cgrid_velocity"
     fieldset.V.interp_method = "cgrid_velocity"
