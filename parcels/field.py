@@ -1400,27 +1400,27 @@ class VectorField(object):
         c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
         c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
         if grid.zdim == 1:
-            if self.gridindexingtype == 'mitgcm':
-                U0 = self.U.data[ti, yi, xi] * c4
-                U1 = self.U.data[ti, yi, xi+1] * c2
-                V0 = self.V.data[ti, yi, xi] * c1
-                V1 = self.V.data[ti, yi+1, xi] * c3
-            else:
+            if self.gridindexingtype == 'nemo':
                 U0 = self.U.data[ti, yi+1, xi] * c4
                 U1 = self.U.data[ti, yi+1, xi+1] * c2
                 V0 = self.V.data[ti, yi, xi+1] * c1
                 V1 = self.V.data[ti, yi+1, xi+1] * c3
+            elif self.gridindexingtype == 'mitgcm':
+                U0 = self.U.data[ti, yi, xi] * c4
+                U1 = self.U.data[ti, yi, xi + 1] * c2
+                V0 = self.V.data[ti, yi, xi] * c1
+                V1 = self.V.data[ti, yi + 1, xi] * c3
         else:
-            if self.gridindexingtype == 'mitgcm':
-                U0 = self.U.data[ti, zi, yi, xi] * c4
-                U1 = self.U.data[ti, zi, yi, xi+1] * c2
-                V0 = self.V.data[ti, zi, yi, xi] * c1
-                V1 = self.V.data[ti, zi, yi+1, xi] * c3
-            else:
+            if self.gridindexingtype == 'nemo':
                 U0 = self.U.data[ti, zi, yi+1, xi] * c4
                 U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
                 V0 = self.V.data[ti, zi, yi, xi+1] * c1
                 V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
+            elif self.gridindexingtype == 'mitgcm':
+                U0 = self.U.data[ti, zi, yi, xi] * c4
+                U1 = self.U.data[ti, zi, yi, xi + 1] * c2
+                V0 = self.V.data[ti, zi, yi, xi] * c1
+                V1 = self.V.data[ti, zi, yi + 1, xi] * c3
         U = (1-xsi) * U0 + xsi * U1
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
@@ -1601,7 +1601,7 @@ class VectorField(object):
             else:
                 # Skip temporal interpolation if time is outside
                 # of the defined time range or if we have hit an
-                # excat value in the time array.
+                # exact value in the time array.
                 if self.vector_type == '3D':
                     return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti])
                 else:
