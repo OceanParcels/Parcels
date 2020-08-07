@@ -355,6 +355,8 @@ class FieldSet(object):
                deferred_load=False is however sometimes necessary for plotting the fields.
         :param interp_method: Method for interpolation. Options are 'linear' (default), 'nearest',
                'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
+        :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+               See also the Grid indexing documentation on oceanparcels.org
         :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
@@ -461,6 +463,7 @@ class FieldSet(object):
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
                In 3D, the depth is the one corresponding to W nodes
+               The gridindexingtype is set to 'nemo'. See also the Grid indexing documentation on oceanparcels.org
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -486,9 +489,11 @@ class FieldSet(object):
 
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_nemo'
+        if kwargs.pop('gridindexingtype', 'nemo') != 'nemo':
+            raise ValueError("gridindexingtype must be 'nemo' in FieldSet.from_nemo(). Use FieldSet.from_c_grid_dataset otherwise")
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           field_chunksize=field_chunksize, **kwargs)
+                                           field_chunksize=field_chunksize, gridindexingtype='nemo', **kwargs)
         if hasattr(fieldset, 'W'):
             fieldset.W.set_scaling_factor(-1.)
         return fieldset
@@ -544,6 +549,8 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
+        :param gridindexingtype: The type of gridindexing.Set to 'nemo' in FieldSet.from_nemo()
+               See also the Grid indexing documentation on oceanparcels.org
         :param field_chunksize: size of the chunks in dask loading
 
         """

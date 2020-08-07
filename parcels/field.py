@@ -238,6 +238,8 @@ class Field(object):
                fully load them (default: True). It is advised to deferred load the data, since in
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
+        :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+               See also the Grid indexing documentation on oceanparcels.org
         :param field_chunksize: size of the chunks in dask loading
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
