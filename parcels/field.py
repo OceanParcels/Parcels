@@ -316,9 +316,7 @@ class Field(object):
         if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
 
-        if grid is None:
-            # Concatenate time variable to determine overall dimension
-            # across multiple files
+        def collect_timeslices():
             if timestamps is not None:
                 dataFiles = []
                 for findex in range(len(data_filenames)):
@@ -342,11 +340,17 @@ class Field(object):
             time_origin = TimeConverter(time[0])
             time = time_origin.reltime(time)
 
-            if not np.all((time[1:]-time[:-1]) > 0):
+            if not np.all((time[1:] - time[:-1]) > 0):
                 id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
-                                     % (dataFiles[id_not_ordered], dataFiles[id_not_ordered+1]))
+                raise AssertionError(
+                    'Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
+                    % (dataFiles[id_not_ordered], dataFiles[id_not_ordered + 1]))
+            return time, time_origin, timeslices, dataFiles
 
+        if grid is None:
+            # Concatenate time variable to determine overall dimension
+            # across multiple files
+            time, time_origin, timeslices, dataFiles = collect_timeslices()
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
@@ -355,34 +359,7 @@ class Field(object):
         elif grid is not None and ('dataFiles' not in kwargs or kwargs['dataFiles'] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            if timestamps is not None:
-                dataFiles = []
-                for findex in range(len(data_filenames)):
-                    for f in [data_filenames[findex], ] * len(timestamps[findex]):
-                        dataFiles.append(f)
-                field_timeslices = np.array([stamp for file in timestamps for stamp in file])
-                field_time = field_timeslices
-            else:
-                field_timeslices = []
-                dataFiles = []
-                for fname in data_filenames:
-                    with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
-                        ftime = filebuffer.time
-                        field_timeslices.append(ftime)
-                        dataFiles.append([fname] * len(ftime))
-                field_timeslices = np.array(field_timeslices)
-                field_time = np.concatenate(field_timeslices)
-                dataFiles = np.concatenate(np.array(dataFiles))
-            if field_time.size == 1 and field_time[0] is None:
-                field_time[0] = 0
-            time_origin = TimeConverter(field_time[0])
-            field_time = time_origin.reltime(field_time)
-            if not np.all((field_time[1:]-field_time[:-1]) > 0):
-                id_not_ordered = np.where(field_time[1:] < field_time[:-1])[0][0]
-                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
-                                     % (dataFiles[id_not_ordered], dataFiles[id_not_ordered+1]))
-            if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
-                grid.master_chunksize = kwargs['field_chunksize']
+            _, _, _, dataFiles = collect_timeslices()
             kwargs['dataFiles'] = dataFiles
 
         if 'time' in indices:
