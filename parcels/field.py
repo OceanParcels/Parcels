@@ -13,7 +13,7 @@ import xarray as xr
 from pathlib import Path
 
 import parcels.tools.interpolation_utils as i_u
-from .fieldfilebuffer import XarrayFileBuffer, NetcdfFileBuffer, DaskFileBuffer
+from .fieldfilebuffer import XarrayFileBuffer, NetcdfFileBuffer, DeferredNetcdfFileBuffer, DaskFileBuffer
 from .grid import CGrid
 from .grid import Grid
 from .grid import GridCode
@@ -353,8 +353,6 @@ class Field(object):
             time, time_origin, timeslices, dataFiles = collect_timeslices()
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
-            if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
-                grid.master_chunksize = kwargs['field_chunksize']
             kwargs['dataFiles'] = dataFiles
         elif grid is not None and ('dataFiles' not in kwargs or kwargs['dataFiles'] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
@@ -362,20 +360,33 @@ class Field(object):
             _, _, _, dataFiles = collect_timeslices()
             kwargs['dataFiles'] = dataFiles
 
+        if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
+            grid.master_chunksize = kwargs['field_chunksize']
+
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
 
         if 'full_load' in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs['full_load']
 
-        if grid.time.size <= 3 or deferred_load is False:
+        if netcdf_engine == 'xarray':
+            _field_fb_class = XarrayFileBuffer
+        elif 'field_chunksize' in kwargs.keys() and kwargs['field_chunksize'] not in [False, None]:
+            _field_fb_class = DaskFileBuffer
+        elif grid.time.size <= 3 or deferred_load is False:
+            _field_fb_class = NetcdfFileBuffer
+        else:
+            _field_fb_class = DeferredNetcdfFileBuffer
+        kwargs['FieldFileBuffer'] = _field_fb_class
+
+        if _field_fb_class is NetcdfFileBuffer:
             # Pre-allocate data before reading files into buffer
             data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                with _grid_fb_class(fname, dimensions, indices, netcdf_engine,
-                                    interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                    field_chunksize=False) as filebuffer:
+                with _field_fb_class(fname, dimensions, indices, netcdf_engine,
+                                     interp_method=interp_method, data_full_zdim=data_full_zdim,
+                                     field_chunksize=False) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -409,13 +420,6 @@ class Field(object):
         kwargs['indices'] = indices
         kwargs['time_periodic'] = time_periodic
         kwargs['netcdf_engine'] = netcdf_engine
-        if netcdf_engine == 'xarray':
-            _field_fb_class = XarrayFileBuffer
-        elif 'field_chunksize' in kwargs.keys() and kwargs['field_chunksize'] not in [False, None]:
-            _field_fb_class = DaskFileBuffer
-        else:
-            _field_fb_class = NetcdfFileBuffer
-        kwargs['FieldFileBuffer'] = _field_fb_class
 
         return cls(variable, data, grid=grid, timestamps=timestamps,
                    allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method, **kwargs)
