@@ -29,6 +29,18 @@ def k_sample_uv_fixture():
     return k_sample_uv()
 
 
+def k_sample_uv_noconvert():
+    def SampleUVNoConvert(particle, fieldset, time):
+        particle.u = fieldset.U.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
+        particle.v = fieldset.V.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
+    return SampleUVNoConvert
+
+
+@pytest.fixture(name="k_sample_uv_noconvert")
+def k_sample_uv_noconvert_fixture():
+    return k_sample_uv_noconvert()
+
+
 def k_sample_p():
     def SampleP(particle, fieldset, time):
         particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
@@ -295,6 +307,22 @@ def test_fieldset_sample_geographic(fieldset_geometric, mode, k_sample_uv, npart
     pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.u, lat, rtol=1e-6)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_sample_geographic_noconvert(fieldset_geometric, mode, k_sample_uv_noconvert, npart=120):
+    """ Sample a fieldset without conversion to geographic units. """
+    fieldset = fieldset_geometric
+    lon = np.linspace(-170, 170, npart)
+    lat = np.linspace(-80, 80, npart)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
+    pset.execute(pset.Kernel(k_sample_uv_noconvert), endtime=1., dt=1.)
+    assert np.allclose(pset.v, lon * 1000 * 1.852 * 60, rtol=1e-6)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
+    pset.execute(pset.Kernel(k_sample_uv_noconvert), endtime=1., dt=1.)
+    assert np.allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
