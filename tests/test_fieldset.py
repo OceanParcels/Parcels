@@ -178,7 +178,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     indices_back = indices.copy()
-    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
+    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices, field_chunksize=None)
     assert indices == indices_back
     assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices['lat']])
@@ -395,7 +395,9 @@ def test_fieldset_write_curvilinear(tmpdir):
     newfile = tmpdir.join('curv_field')
     fieldset.write(newfile)
 
-    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'},
+                                     dimensions={'time': 'time_counter', 'depth': 'depthdx',
+                                                 'lon': 'nav_lon', 'lat': 'nav_lat'})
     assert fieldset2.dx.creation_log == 'from_netcdf'
 
     for var in ['lon', 'lat', 'data']:

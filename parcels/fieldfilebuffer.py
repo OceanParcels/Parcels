@@ -573,3 +573,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.chunking_finalized = True
 
         return data
+
+
+class DeferredDaskFileBuffer(DaskFileBuffer):
+    def __init__(self, *args, **kwargs):
+        super(DeferredDaskFileBuffer, self).__init__(*args, **kwargs)
