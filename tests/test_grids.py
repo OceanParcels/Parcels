@@ -642,18 +642,14 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
         return U, V, R
 
     U, V, R = calculate_UVR(lat, lon, dx, dy, omega)
-    data = {'U': U, 'V': V, 'R': R}
     if cgridfieldshape == 'uneven':
-        dimensions = {'U': {'lon': lon, 'lat': lat[:-1]},
-                      'V': {'lon': lon[:-1], 'lat': lat},
-                      'R': {'lon': lon, 'lat': lat}}
+        data = {'U': U[:, :-1], 'V': V[:-1, :], 'R': R}
     else:
-        dimensions = {'lon': lon, 'lat': lat}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+        data = {'U': U, 'V': V, 'R': R}
+    dimensions = {'lon': lon, 'lat': lat}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', gridindexingtype=gridindexingtype)
     fieldset.U.interp_method = 'cgrid_velocity'
     fieldset.V.interp_method = 'cgrid_velocity'
-    fieldset.U.gridindexingtype = gridindexingtype
-    fieldset.V.gridindexingtype = gridindexingtype
 
     def UpdateR(particle, fieldset, time):
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
@@ -724,13 +720,10 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
 
     U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
     data = {"U": U, "V": V, "W": W, "R": R}
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
     fieldset.U.interp_method = "cgrid_velocity"
     fieldset.V.interp_method = "cgrid_velocity"
     fieldset.W.interp_method = "cgrid_velocity"
-    fieldset.U.gridindexingtype = gridindexingtype
-    fieldset.V.gridindexingtype = gridindexingtype
-    fieldset.W.gridindexingtype = gridindexingtype
 
     def UpdateR(particle, fieldset, time):
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
