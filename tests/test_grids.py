@@ -609,7 +609,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
     if cgridfieldshape == 'uneven' and gridindexingtype == 'nemo':
         pytest.skip("When NEMO-indexing is used, even field shapes are expected.")
-    xdim = ydim = 201
+    xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
     lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
@@ -623,16 +623,11 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
         return np.sqrt(ln ** 2 + lt ** 2), np.arctan2(ln, lt)
 
     def calculate_UVR(lat, lon, dx, dy, omega):
-        if cgridfieldshape == 'uneven':
-            U = np.zeros((lat.size - 1, lon.size), dtype=np.float32)
-            V = np.zeros((lat.size, lon.size - 1), dtype=np.float32)
-            R = np.zeros((lat.size, lon.size), dtype=np.float32)
-        else:
-            U = np.zeros((lat.size, lon.size), dtype=np.float32)
-            V = np.zeros((lat.size, lon.size), dtype=np.float32)
-            R = np.zeros((lat.size, lon.size), dtype=np.float32)
-        for i in range(lon.size-1):
-            for j in range(lat.size-1):
+        U = np.zeros((lat.size, lon.size), dtype=np.float32)
+        V = np.zeros((lat.size, lon.size), dtype=np.float32)
+        R = np.zeros((lat.size, lon.size), dtype=np.float32)
+        for i in range(lon.size):
+            for j in range(lat.size):
                 r, phi = calc_r_phi(lon[i], lat[j])
                 R[j, i] = r
                 r, phi = calc_r_phi(lon[i] + isign * dx / 2, lat[j])
@@ -643,7 +638,7 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
 
     U, V, R = calculate_UVR(lat, lon, dx, dy, omega)
     if cgridfieldshape == 'uneven':
-        data = {'U': U[:, :-1], 'V': V[:-1, :], 'R': R}
+        data = {'U': U[:-1, :], 'V': V[:, :-1], 'R': R}
     else:
         data = {'U': U, 'V': V, 'R': R}
     dimensions = {'lon': lon, 'lat': lat}
