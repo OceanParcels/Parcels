@@ -19,6 +19,7 @@ except ImportError:
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [
         "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]]
+    + ["MITgcm_example_data/mitgcm_UV_surface_zonally_reentrent.nc"]
     + ["OFAM_example_data/" + fn for fn in [
         "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
     + ["Peninsula_data/" + fn for fn in [
