@@ -508,11 +508,11 @@ class FieldSet(object):
                 _________________V[k,j+1,i]__________________
                |                                             |
                |                                             |
-               U[k,j,i]     W[k:k+2,j,i], T[k,j,i]           U[k,j,i+1]
+               U[k,j,i]     W[k-1:k,j,i], T[k,j,i]           U[k,j,i+1]
                |                                             |
                |                                             |
                |_________________V[k,j,i]____________________|
-
+            (For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -528,7 +528,7 @@ class FieldSet(object):
     @classmethod
     def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
+                            tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -549,14 +549,14 @@ class FieldSet(object):
                 _________________V[k,j+1,i+1]________________
                |                                             |
                |                                             |
-               U[k,j+1,i]   W[k:k+2,j+1,i+1], T[k,j+1,i+1]   U[k,j+1,i+1]
+               U[k,j+1,i]   W[k-1:k,j+1,i+1], T[k,j+1,i+1]   U[k,j+1,i+1]
                |                                             |
                |                                             |
                |_________________V[k,j,i+1]__________________|
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
-               In 3D, the depth is the one corresponding to W nodes
+               In 3D, the depth is the one corresponding to W nodes.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -576,7 +576,7 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
-        :param gridindexingtype: The type of gridindexing.Set to 'nemo' in FieldSet.from_nemo()
+        :param gridindexingtype: The type of gridindexing. Set to 'nemo' in FieldSet.from_nemo()
                See also the Grid indexing documentation on oceanparcels.org
         :param field_chunksize: size of the chunks in dask loading
 
@@ -600,7 +600,7 @@ class FieldSet(object):
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               field_chunksize=field_chunksize, **kwargs)
+                               field_chunksize=field_chunksize, gridindexingtype=grindindexingtype, **kwargs)
 
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
