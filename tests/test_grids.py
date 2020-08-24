@@ -605,10 +605,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-@pytest.mark.parametrize('cgridfieldshape', ['even', 'uneven'])
-def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
-    if cgridfieldshape == 'uneven' and gridindexingtype == 'nemo':
-        pytest.skip("When NEMO-indexing is used, even field shapes are expected.")
+def test_mitgridindexing(mode, gridindexingtype):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -637,10 +634,7 @@ def test_mitgridindexing(mode, gridindexingtype, cgridfieldshape):
         return U, V, R
 
     U, V, R = calculate_UVR(lat, lon, dx, dy, omega)
-    if cgridfieldshape == 'uneven':
-        data = {'U': U[:-1, :], 'V': V[:, :-1], 'R': R}
-    else:
-        data = {'U': U, 'V': V, 'R': R}
+    data = {'U': U, 'V': V, 'R': R}
     dimensions = {'lon': lon, 'lat': lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', gridindexingtype=gridindexingtype)
     fieldset.U.interp_method = 'cgrid_velocity'
