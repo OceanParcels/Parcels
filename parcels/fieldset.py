@@ -600,7 +600,7 @@ class FieldSet(object):
 
         return cls.from_netcdf(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                allow_time_extrapolation=allow_time_extrapolation, interp_method=interp_method,
-                               field_chunksize=field_chunksize, gridindexingtype=grindindexingtype, **kwargs)
+                               field_chunksize=field_chunksize, gridindexingtype=gridindexingtype, **kwargs)
 
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
