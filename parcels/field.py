@@ -500,33 +500,17 @@ class Field(object):
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            if self.gridindexingtype == 'nemo':
-                assert (data.shape == (self.grid.tdim, self.grid.zdim,
-                                       self.grid.ydim - 2 * self.grid.meridional_halo,
-                                       self.grid.xdim - 2 * self.grid.zonal_halo)), \
-                    ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                     'Flag transpose=True could help to reorder the data.' % self.name)
-            elif self.gridindexingtype == 'mitgcm':
-                assert ((data.shape[:2] == (self.grid.tdim, self.grid.zdim))
-                        and (data.shape[2] == self.grid.ydim or data.shape[2] == self.grid.ydim-1)
-                        and (data.shape[3] == self.grid.xdim or data.shape[3] == self.grid.xdim-1)), \
-                       ('Field %s with mitgcm indexing expecting a data shape of '
-                        '[tdim, zdim, ydim or ydim-1, xdim or xdim-1]. '
-                        'Flag transpose=True could help to reorder the data.' % self.name)
+            assert (data.shape == (self.grid.tdim, self.grid.zdim,
+                                   self.grid.ydim - 2 * self.grid.meridional_halo,
+                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
+                ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                 'Flag transpose=True could help to reorder the data.' % self.name)
         else:
-            if self.gridindexingtype == 'nemo':
-                assert (data.shape == (self.grid.tdim,
-                                       self.grid.ydim - 2 * self.grid.meridional_halo,
-                                       self.grid.xdim - 2 * self.grid.zonal_halo)), \
-                    ('Field %s expecting a data shape of [tdim, ydim, xdim]. '
-                     'Flag transpose=True could help to reorder the data.' % self.name)
-            elif self.gridindexingtype == 'mitgcm':
-                assert ((data.shape[0] == (self.grid.tdim))
-                        and (data.shape[1] == self.grid.ydim or data.shape[1] == self.grid.ydim-1)
-                        and (data.shape[2] == self.grid.xdim or data.shape[2] == self.grid.xdim-1)), \
-                       ('Field %s with mitgcm indexing expecting a data shape of '
-                        '[tdim, ydim or ydim-1, xdim or xdim-1]. '
-                        'Flag transpose=True could help to reorder the data.' % self.name)
+            assert (data.shape == (self.grid.tdim,
+                                   self.grid.ydim - 2 * self.grid.meridional_halo,
+                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
+                ('Field %s expecting a data shape of [tdim, ydim, xdim]. '
+                 'Flag transpose=True could help to reorder the data.' % self.name)
         if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
             data = self.add_periodic_halo(zonal=self.grid.zonal_halo > 0, meridional=self.grid.meridional_halo > 0, halosize=max(self.grid.meridional_halo, self.grid.zonal_halo), data=data)
         return data
