@@ -48,7 +48,7 @@ def run_mitgcm_zonally_reentrant(mode):
         finish=(fieldset.U.grid.lon[-5], fieldset.U.grid.lat[-5]),
         size=10,
     )
-    pfile = ParticleFile(f"MIT_particles_{mode}.nc", pset, outputdt=delta(days=1))
+    pfile = ParticleFile("MIT_particles_"+str(mode)+".nc", pset, outputdt=delta(days=1))
     kernels = AdvectionRK4 + pset.Kernel(periodicBC)
     pset.execute(
         kernels, runtime=delta(days=5), dt=delta(minutes=30), output_file=pfile
