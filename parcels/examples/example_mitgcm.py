@@ -1,9 +1,7 @@
 from datetime import timedelta as delta
-from glob import glob
 from os import path
 
 import numpy as np
-import pytest
 import xarray as xr
 from parcels import (
     AdvectionRK4,
