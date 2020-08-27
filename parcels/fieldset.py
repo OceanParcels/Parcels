@@ -969,7 +969,8 @@ class FieldSet(object):
                         for i in range(len(f.data)):
                             del f.data[i, :]
 
-                data = da.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                lib = np if f.field_chunksize in [False, None] else da
+                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
