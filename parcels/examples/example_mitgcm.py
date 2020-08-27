@@ -31,12 +31,13 @@ def run_mitgcm_zonally_reentrant(mode):
     fieldset = FieldSet.from_mitgcm(filenames, variables, dimensions, mesh="flat")
 
     fieldset.add_periodic_halo(zonal=True)
+    fieldset.add_constant('domain_width', 1000000)
 
     def periodicBC(particle, fieldset, time):
         if particle.lon < 0:
-            particle.lon += 1000000
-        elif particle.lon > 1000000:
-            particle.lon -= 1000000
+            particle.lon += fieldset.domain_width
+        elif particle.lon > fieldset.domain_width:
+            particle.lon -= fieldset.domain_width
 
     # Release particles 5 cells away from the Eastern boundary
     pset = ParticleSet.from_line(

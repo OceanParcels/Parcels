@@ -1356,9 +1356,8 @@ class VectorField(object):
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
-            if U.gridindexingtype == 'nemo':
-                assert self.U.grid is self.V.grid, (
-                    'Grids of U and V are not the same.')
+            assert self.U.grid is self.V.grid, (
+                'Grids of U and V are not the same.')
             if self.vector_type == '3D':
                 assert self.W.interp_method == 'cgrid_velocity', (
                     'Interpolation methods of U and W are not the same.')
