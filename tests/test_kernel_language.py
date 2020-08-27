@@ -79,10 +79,12 @@ def test_expression_float(mode, name, expr, result, npart=10):
     ('And', 'True and False', False),
     ('Or', 'True or False', True),
     ('Equal', '5 == 5', True),
+    ('NotEqual', '3 != 4', True),
     ('Lesser', '5 < 3', False),
     ('LesserEq', '3 <= 5', True),
     ('Greater', '4 > 2', True),
     ('GreaterEq', '2 >= 4', False),
+    ('CheckNaN', 'math.nan != math.nan', True),
 ])
 def test_expression_bool(mode, name, expr, result, npart=10):
     """ Test basic arithmetic expressions """

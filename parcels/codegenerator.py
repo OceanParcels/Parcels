@@ -152,7 +152,7 @@ class ConstNode(IntrinsicNode):
 
 
 class MathNode(IntrinsicNode):
-    symbol_map = {'pi': 'M_PI', 'e': 'M_E'}
+    symbol_map = {'pi': 'M_PI', 'e': 'M_E', 'nan': 'NAN'}
 
     def __getattr__(self, attr):
         if hasattr(math, attr):
@@ -703,6 +703,9 @@ class KernelGenerator(ast.NodeVisitor):
 
     def visit_Eq(self, node):
         node.ccode = "=="
+
+    def visit_NotEq(self, node):
+        node.ccode = "!="
 
     def visit_Lt(self, node):
         node.ccode = "<"
