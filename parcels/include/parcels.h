@@ -488,19 +488,19 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
 
   // define a helper macro that will select the appropriate interpolation method
   // depending on whether we need 2D or 3D
-#define INTERP(fn_2d, fn_3d)						\
-  do {									\
-    if (grid->zdim == 1) {						\
-      for (int i = 0; i < tii; i++) {					\
-	status = fn_2d(xsi, eta, data2D[i], &val[i]);			\
-	CHECKSTATUS(status);						\
-      }									\
-    } else {								\
-      for (int i = 0; i < tii; i++) {					\
-	status = fn_3d(xsi, eta, zeta, data3D[i], &val[i]);		\
-	CHECKSTATUS(status);						\
-      }									\
-    }									\
+#define INTERP(fn_2d, fn_3d)                                            \
+  do {                                                                  \
+    if (grid->zdim == 1) {                                              \
+      for (int i = 0; i < tii; i++) {                                   \
+        status = fn_2d(xsi, eta, data2D[i], &val[i]);                   \
+        CHECKSTATUS(status);                                            \
+      }                                                                 \
+    } else {                                                            \
+      for (int i = 0; i < tii; i++) {                                   \
+        status = fn_3d(xsi, eta, zeta, data3D[i], &val[i]);             \
+        CHECKSTATUS(status);                                            \
+      }                                                                 \
+    }                                                                   \
   } while (0)
 
   if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY) ||
@@ -508,13 +508,13 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     // adjust the normalised coordinate for flux-based interpolation methods
     if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)) {
       if (gridindexingtype == NEMO) {
-	// velocity is on the northeast of a tracer cell
-	xsi = 1;
-	eta = 1;
+        // velocity is on the northeast of a tracer cell
+        xsi = 1;
+        eta = 1;
       } else if (gridindexingtype == MITGCM) {
-	// velocity is on the southwest of a tracer cell
-	xsi = 0;
-	eta = 0;
+        // velocity is on the southwest of a tracer cell
+        xsi = 0;
+        eta = 0;
       }
     } else if (interp_method == BGRID_VELOCITY) {
       zeta = 0;
