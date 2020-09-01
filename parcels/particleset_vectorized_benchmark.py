@@ -16,7 +16,8 @@ except:
 
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.particleset_vectorized import ParticleSet
-from parcels.kernel_vectorized import Kernel
+# from parcels.kernel_vectorized import Kernel
+from parcels.kernel_vec_benchmark import Kernel_Benchmark, Kernel
 # from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
@@ -293,7 +294,7 @@ class ParticleSet_Benchmark(ParticleSet):
         based on `fieldset` and `ptype` of the ParticleSet
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+        return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
     def plot_and_log(self, total_times = None, compute_times = None, io_times = None, plot_times = None, memory_used = None, nparticles = None, target_N = 1, imageFilePath = "", odir = os.getcwd(), xlim_range=None, ylim_range=None):
