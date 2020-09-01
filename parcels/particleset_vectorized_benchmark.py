@@ -116,6 +116,7 @@ class ParticleSet_Benchmark(ParticleSet):
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+                # self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir()), "."], tmp_dir=get_cache_dir()))
                 self.kernel.load_lib()
 
