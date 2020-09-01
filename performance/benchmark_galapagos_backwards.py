@@ -1,5 +1,6 @@
 from parcels import FieldSet, JITParticle, AdvectionRK4, ErrorCode, Variable
-from parcels import ParticleSet_Benchmark
+# from parcels.particleset_node_benchmark import ParticleSet_Benchmark
+from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
 from datetime import timedelta as delta
 from glob import glob
 import numpy as np
@@ -75,6 +76,12 @@ def Age(particle, fieldset, time):
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
+
+def RenewParticle(particle, fieldset, time):
+    dlon = -89.0 + 91.8
+    dlat = 0.7 + 1.4
+    particle.lat = np.random.rand() * dlon -91.8
+    particle.lon = np.random.rand() * dlat -1.4
 
 
 def periodicBC(particle, fieldSet, time):
@@ -207,3 +214,6 @@ if __name__=='__main__':
             pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=1, imageFilePath=imageFileName, odir=odir)
     else:
         pset.plot_and_log(target_N=1, imageFilePath=imageFileName, odir=odir)
+
+    print('Execution finished')
+    exit(0)
