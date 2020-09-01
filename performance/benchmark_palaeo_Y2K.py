@@ -9,7 +9,8 @@ import itertools
 from parcels import (FieldSet, JITParticle, AdvectionRK4_3D,
                      Field, ErrorCode, ParticleFile, Variable)
 # from parcels import ParticleSet
-from parcels import ParticleSet_Benchmark
+# from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
+from parcels.particleset_node_benchmark import ParticleSet_Benchmark
 
 from argparse import ArgumentParser
 from datetime import timedelta as delta
@@ -324,7 +325,7 @@ if __name__ == "__main__":
     # recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs)
     # postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12)
     pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(hours=-12), output_file=pfile, verbose_progress=False, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=np.infty)
-    
+
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
@@ -370,6 +371,7 @@ if __name__ == "__main__":
         pset.plot_and_log(target_N=1, imageFilePath=imageFileName, odir=odir)
 
     print('Execution finished')
+    exit(0)
 
 
 
