@@ -17,7 +17,8 @@ except:
 
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.particleset_vectorized import ParticleSet
-from parcels.kernel_vectorized import Kernel
+# from parcels.kernel_vectorized import Kernel
+from parcels.kernel_vec_benchmark import Kernel_Benchmark, Kernel
 # from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle

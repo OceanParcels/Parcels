@@ -3,7 +3,7 @@ from parcels import (FieldSet, Field, ScipyParticle, JITParticle,
 from parcels.particleset_vectorized import ParticleSet
 import numpy as np
 import pytest
-from parcels.compiler import get_cache_dir
+from parcels.tools.global_statics import get_cache_dir
 from parcels.tools import logger
 from os import path
 

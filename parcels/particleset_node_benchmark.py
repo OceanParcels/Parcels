@@ -21,107 +21,10 @@ from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools import idgen
+from parcels.kernel_node_benchmark import Kernel_Benchmark, Kernel
+from parcels.tools.performance_logger import TimingLog, ParamLogging
 
 __all__ = ['ParticleSet_Benchmark']
-
-
-class ParticleSet_TimingLog():
-    _stime = 0
-    _etime = 0
-    _mtime = 0
-    _samples = None
-    _timings = None
-    _iter = 0
-
-    def __init__(self):
-        self._stime = 0
-        self._etime = 0
-        self._mtime = 0
-        self._samples = []
-        self._timings = []
-        self._iter = 0
-
-    def start_timing(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                # self._stime = MPI.Wtime()
-                # self._stime = time_module.perf_counter()
-                self._stime = time_module.process_time()
-        else:
-            self._stime = time_module.perf_counter()
-
-    def stop_timing(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                # self._etime = MPI.Wtime()
-                # self._etime = time_module.perf_counter()
-                self._etime = time_module.process_time()
-        else:
-            self._etime = time_module.perf_counter()
-
-    def accumulate_timing(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                self._mtime += (self._etime-self._stime)
-            else:
-                self._mtime = 0
-        else:
-            self._mtime += (self._etime-self._stime)
-
-    def advance_iteration(self):
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                self._timings.append(self._mtime)
-                self._samples.append(self._iter)
-                self._iter += 1
-            self._mtime = 0
-        else:
-            self._timings.append(self._mtime)
-            self._samples.append(self._iter)
-            self._iter += 1
-            self._mtime = 0
-
-    def __len__(self):
-        return len(self._timings)
-
-    def get_values(self):
-        return self._timings
-
-    def get_value(self, index):
-        return self._timings[index]
-
-
-class ParticleSet_ParamLogging():
-    _samples = None
-    _params = None
-    _iter = 0
-
-    def __init__(self):
-        self._samples = []
-        self._params = []
-        self._iter = 0
-
-    def advance_iteration(self, param):
-        self._params.append(param)
-        self._samples.append(self._iter)
-        self._iter += 1
-
-    def __len__(self):
-        return len(self._params)
-
-    def get_params(self):
-        return self._params
-
-    def get_param(self, index):
-        return self._params[index]
 
 
 class ParticleSet_Benchmark(ParticleSet):
@@ -129,13 +32,13 @@ class ParticleSet_Benchmark(ParticleSet):
     def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None,
                  lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSet_Benchmark, self).__init__(fieldset, pclass, lon, lat, depth, time, repeatdt, lonlatdepth_dtype, pid_orig, **kwargs)
-        self.total_log = ParticleSet_TimingLog()
-        self.compute_log = ParticleSet_TimingLog()
-        self.io_log = ParticleSet_TimingLog()
-        self.plot_log = ParticleSet_TimingLog()
-        self.nparticle_log = ParticleSet_ParamLogging()
+        self.total_log = TimingLog()
+        self.compute_log = TimingLog()
+        self.io_log = TimingLog()
+        self.plot_log = TimingLog()
+        self.nparticle_log = ParamLogging()
+        self.mem_log = ParamLogging()
         self.process = psutil.Process(os.getpid())
-        self.mem_log = ParticleSet_ParamLogging()
 
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
@@ -165,8 +68,11 @@ class ParticleSet_Benchmark(ParticleSet):
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
-        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each
+                                        iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval
+                            to (latestly) interrupt the running kernel and invoke post-iteration
+                            callbacks from 'postIterationCallbacks'.
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -294,7 +200,8 @@ class ParticleSet_Benchmark(ParticleSet):
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             # ==== compute ==== #
-            self.compute_log.start_timing()
+            if not isinstance(self._kernel, Kernel_Benchmark):
+                self.compute_log.start_timing()
             self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 if self.rparam.get_particle_id(0) is None:
@@ -321,9 +228,14 @@ class ParticleSet_Benchmark(ParticleSet):
                         self.add(self._nclass(id=pid, data=pdata))
                         add_iter += 1
                 next_prelease += self.repeatdt * np.sign(dt)
-            self.compute_log.stop_timing()
+            if not isinstance(self._kernel, Kernel_Benchmark):
+                self.compute_log.stop_timing()
+            else:
+                self.compute_log.add_aux_measure(self._kernel.compute_timings.sum())
+                self._kernel.compute_timings.reset()
+                self.io_log.add_aux_measure(self._kernel.io_timings.sum())
+                self._kernel.io_timings.reset()
             self.compute_log.accumulate_timing()
-            # logger.info("Pset length: {}".format(len(self)))
             self.nparticle_log.advance_iteration(len(self))
             # ==== end compute ==== #
             if abs(time-next_output) < tol:  # ==== IO ==== #
@@ -359,8 +271,14 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.plot_log.accumulate_timing()
             self.total_log.stop_timing()
             self.total_log.accumulate_timing()
+            mem_B_used_total = 0
+            # if MPI:
+            #     mpi_comm = MPI.COMM_WORLD
+            #     mem_B_used = self.process.memory_info().rss
+            #     mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
+            # else:
+            #     mem_B_used_total = self.process.memory_info().rss
             mem_B_used_total = self.process.memory_info().rss
-            # mem_B_used_total = psutil.Process(os.getpid()).rss
             self.mem_log.advance_iteration(mem_B_used_total)
 
             self.compute_log.advance_iteration()
@@ -379,3 +297,11 @@ class ParticleSet_Benchmark(ParticleSet):
             pbar.finish()
             self.plot_log.stop_timing()
             self.plot_log.accumulate_timing()
+
+    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel_benchmark.Kernel` object
+        based on `fieldset` and `ptype` of the ParticleSet
+        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        """
+        return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+                      delete_cfiles=delete_cfiles)
