@@ -318,9 +318,7 @@ def test_ofam_3D(mode, chunk_mode):
 
 
 @pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('chunk_mode', [False,
-                                        pytest.param('auto', marks=pytest.mark.xfail()),  # TODO: Needs to pass; see #904
-                                        pytest.param('specific', marks=pytest.mark.xfail())])  # TODO: Needs to pass; see #904
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_mitgcm_regridded(mode, chunk_mode):
     if chunk_mode == 'auto':
         dask.config.set({'array.chunk-size': '1024KiB'})
@@ -333,10 +331,8 @@ def test_mitgcm_regridded(mode, chunk_mode):
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # MITgcm_regridded sample file dimensions: time=10, XG=400, YG=200
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    if chunk_mode is False:
+    if chunk_mode in [False, 'auto']:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
-        assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
     assert np.allclose(pset[0].lon, 5.27e5, atol=1e3)

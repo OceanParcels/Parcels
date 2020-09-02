@@ -321,35 +321,35 @@ class DaskFileBuffer(NetcdfFileBuffer):
             if loni >= 0 and chunk_index >= 0:
                 init_chunk_dict[lonname] = self.field_chunksize[chunk_index]
                 tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
+                chunk_index -= 1
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lon'))
-            chunk_index -= 1
 
             lati, latname, _ = self._is_dimension_in_dataset('lat')
             if lati >= 0 and chunk_index >= 0:
                 init_chunk_dict[latname] = self.field_chunksize[chunk_index]
                 tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
+                chunk_index -= 1
             else:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('lat'))
-            chunk_index -= 1
 
             depthi, depthname, _ = self._is_dimension_in_dataset('depth')
             if depthi >= 0 and chunk_index >= 0:
                 if self._is_dimension_available('depth'):
                     init_chunk_dict[depthname] = self.field_chunksize[chunk_index]
                     tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
+                    chunk_index -= 1
             elif depthname:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('depth'))
-            chunk_index -= 1
 
             timei, timename, _ = self._is_dimension_in_dataset('time')
             if timei >= 0 and chunk_index >= 0:
                 if self._is_dimension_available('time'):
                     init_chunk_dict[timename] = self.field_chunksize[chunk_index]
                     tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
+                    chunk_index -= 1
             elif timename:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('time'))
-            chunk_index -= 1
 
             # ==== re-arrange the tupe and correct for empty dimensions ==== #
             for chunk_index in range(len(self.field_chunksize)-1, -1, -1):
@@ -383,11 +383,11 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.dataset.close()
         # ==== check if the chunksize reading is successful. if not, load the file ONCE really into memory and ==== #
         # ==== deduce the chunking from the array dims.                                                         ==== #
+        self.autochunkingfailed = False
         try:
-            if len(init_chunk_dict) < 3:
-                raise AttributeError("Too few known chunk dimension arguments.")
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
         except:
+            self.autochunkingfailed = True
             # ==== fail - open it as a normal array and deduce the dimensions from the read field ==== #
             init_chunk_dict = {}
             self.dataset = ncDataset(str(self.filename))
@@ -559,8 +559,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         self.rechunk_callback_fields()
                         self.chunking_finalized = True
                 else:
-                    # ==== I think this can be "pass" too ==== #
-                    data = data.rechunk(self.chunk_mapping)
+                    if not self.autochunkingfailed:
+                        data = data.rechunk(self.chunk_mapping)
                     self.chunking_finalized = True
         else:
             da_data = da.from_array(data, chunks=self.field_chunksize)
