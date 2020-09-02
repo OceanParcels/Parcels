@@ -338,7 +338,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 if self._is_dimension_available('depth'):
                     init_chunk_dict[depthname] = self.field_chunksize[chunk_index]
                     tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-            else:
+            elif depthname:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('depth'))
             chunk_index -= 1
 
@@ -347,7 +347,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 if self._is_dimension_available('time'):
                     init_chunk_dict[timename] = self.field_chunksize[chunk_index]
                     tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-            else:
+            elif timename:
                 logger.warning_once(self._netcdf_DimNotFound_warning_message('time'))
             chunk_index -= 1
 
