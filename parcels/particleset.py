@@ -7,9 +7,10 @@ from datetime import timedelta as delta
 import numpy as np
 import xarray as xr
 from operator import attrgetter
+from os import path
 import progressbar
 
-from parcels.compiler import GNUCompiler
+from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -19,6 +20,7 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
 from parcels.tools.converters import _get_cftime_calendars
+from parcels.tools.global_statics import get_package_dir
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
 try:
@@ -669,7 +671,7 @@ class ParticleSet(object):
             if self.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
