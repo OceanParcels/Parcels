@@ -8,7 +8,7 @@ from sys import platform
 
 import numpy.ctypeslib as npct
 
-from parcels.tools import get_cache_dir, get_package_dir
+from parcels.tools.global_statics import get_cache_dir, get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.tools.loggers import logger
 
