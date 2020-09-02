@@ -22,8 +22,6 @@ example_data_files = (
     + ["MITgcm_example_data/mitgcm_UV_surface_zonally_reentrant.nc"]
     + ["OFAM_example_data/" + fn for fn in [
         "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
-    + ["MITgcm_example_data/" + fn for fn in [
-        "mitgcm_regridded.nc", "mitgcm_regridded_grid.nc"]]
     + ["Peninsula_data/" + fn for fn in [
         "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]]
     + ["GlobCurrent_example_data/" + fn for fn in [
