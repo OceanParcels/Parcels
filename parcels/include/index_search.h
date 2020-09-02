@@ -21,6 +21,10 @@ typedef enum
     LINEAR=0, NEAREST=1, CGRID_VELOCITY=2, CGRID_TRACER=3, BGRID_VELOCITY=4, BGRID_W_VELOCITY=5, BGRID_TRACER=6, LINEAR_INVDIST_LAND_TRACER=7
   } InterpCode;
 
+typedef enum
+  {
+    NEMO = 0, MITGCM = 1
+  } GridIndexingType;
 
 typedef struct
 {

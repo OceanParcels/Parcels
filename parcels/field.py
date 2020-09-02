@@ -77,7 +77,7 @@ class Field(object):
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, **kwargs):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo', **kwargs):
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -113,6 +113,7 @@ class Field(object):
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % name)
         else:
             self.interp_method = interp_method
+        self.gridindexingtype = gridindexingtype
         if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'] and \
            self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
             logger.warning_once('General s-levels are not supported in B-grid. RectilinearSGrid and CurvilinearSGrid can still be used to deal with shaved cells, but the levels must be horizontal.')
@@ -235,6 +236,8 @@ class Field(object):
                fully load them (default: True). It is advised to deferred load the data, since in
                that case Parcels deals with a better memory management during particle set execution.
                deferred_load=False is however sometimes necessary for plotting the fields.
+        :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
+               See also the Grid indexing documentation on oceanparcels.org
         :param field_chunksize: size of the chunks in dask loading
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
@@ -499,11 +502,17 @@ class Field(object):
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            assert data.shape == (self.grid.tdim, self.grid.zdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
-                                 ('Field %s expecting a data shape of a [tdim, zdim, ydim, xdim]. Flag transpose=True could help to reorder the data.' % (self.name))
+            assert (data.shape == (self.grid.tdim, self.grid.zdim,
+                                   self.grid.ydim - 2 * self.grid.meridional_halo,
+                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
+                ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                 'Flag transpose=True could help to reorder the data.' % self.name)
         else:
-            assert data.shape == (self.grid.tdim, self.grid.ydim-2*self.grid.meridional_halo, self.grid.xdim-2*self.grid.zonal_halo), \
-                                 ('Field %s expecting a data shape of a [ydim, xdim], [zdim, ydim, xdim], [tdim, ydim, xdim]. Flag transpose=True could help to reorder the data.' % (self.name))
+            assert (data.shape == (self.grid.tdim,
+                                   self.grid.ydim - 2 * self.grid.meridional_halo,
+                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
+                ('Field %s expecting a data shape of [tdim, ydim, xdim]. '
+                 'Flag transpose=True could help to reorder the data.' % self.name)
         if self.grid.meridional_halo > 0 or self.grid.zonal_halo > 0:
             data = self.add_periodic_halo(zonal=self.grid.zonal_halo > 0, meridional=self.grid.meridional_halo > 0, halosize=max(self.grid.meridional_halo, self.grid.zonal_halo), data=data)
         return data
@@ -879,8 +888,12 @@ class Field(object):
             return self.data[ti, zii, yii, xii]
         elif self.interp_method == 'cgrid_velocity':
             # evaluating W velocity in c_grid
-            f0 = self.data[ti, zi, yi+1, xi+1]
-            f1 = self.data[ti, zi+1, yi+1, xi+1]
+            if self.gridindexingtype == 'nemo':
+                f0 = self.data[ti, zi, yi+1, xi+1]
+                f1 = self.data[ti, zi+1, yi+1, xi+1]
+            elif self.gridindexingtype == 'mitgcm':
+                f0 = self.data[ti, zi, yi, xi]
+                f1 = self.data[ti, zi+1, yi, xi]
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method == 'linear_invdist_land_tracer':
             land = np.isclose(self.data[ti, zi:zi+2, yi:yi+2, xi:xi+2], 0.)
@@ -1043,8 +1056,8 @@ class Field(object):
 
     def ccode_eval(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s)" \
-            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
+        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
+            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
 
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
@@ -1341,6 +1354,7 @@ class VectorField(object):
         self.V = V
         self.W = W
         self.vector_type = '3D' if W else '2D'
+        self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
@@ -1396,15 +1410,27 @@ class VectorField(object):
         c3 = self.dist(px[2], px[3], py[2], py[3], grid.mesh, np.dot(i_u.phi2D_lin(xsi, 1.), py))
         c4 = self.dist(px[3], px[0], py[3], py[0], grid.mesh, np.dot(i_u.phi2D_lin(0., eta), py))
         if grid.zdim == 1:
-            U0 = self.U.data[ti, yi+1, xi] * c4
-            U1 = self.U.data[ti, yi+1, xi+1] * c2
-            V0 = self.V.data[ti, yi, xi+1] * c1
-            V1 = self.V.data[ti, yi+1, xi+1] * c3
+            if self.gridindexingtype == 'nemo':
+                U0 = self.U.data[ti, yi+1, xi] * c4
+                U1 = self.U.data[ti, yi+1, xi+1] * c2
+                V0 = self.V.data[ti, yi, xi+1] * c1
+                V1 = self.V.data[ti, yi+1, xi+1] * c3
+            elif self.gridindexingtype == 'mitgcm':
+                U0 = self.U.data[ti, yi, xi] * c4
+                U1 = self.U.data[ti, yi, xi + 1] * c2
+                V0 = self.V.data[ti, yi, xi] * c1
+                V1 = self.V.data[ti, yi + 1, xi] * c3
         else:
-            U0 = self.U.data[ti, zi, yi+1, xi] * c4
-            U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
-            V0 = self.V.data[ti, zi, yi, xi+1] * c1
-            V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
+            if self.gridindexingtype == 'nemo':
+                U0 = self.U.data[ti, zi, yi+1, xi] * c4
+                U1 = self.U.data[ti, zi, yi+1, xi+1] * c2
+                V0 = self.V.data[ti, zi, yi, xi+1] * c1
+                V1 = self.V.data[ti, zi, yi+1, xi+1] * c3
+            elif self.gridindexingtype == 'mitgcm':
+                U0 = self.U.data[ti, zi, yi, xi] * c4
+                U1 = self.U.data[ti, zi, yi, xi + 1] * c2
+                V0 = self.V.data[ti, zi, yi, xi] * c1
+                V1 = self.V.data[ti, zi, yi + 1, xi] * c3
         U = (1-xsi) * U0 + xsi * U1
         V = (1-eta) * V0 + eta * V1
         rad = np.pi/180.
@@ -1585,7 +1611,7 @@ class VectorField(object):
             else:
                 # Skip temporal interpolation if time is outside
                 # of the defined time range or if we have hit an
-                # excat value in the time array.
+                # exact value in the time array.
                 if self.vector_type == '3D':
                     return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti])
                 else:
@@ -1599,13 +1625,15 @@ class VectorField(object):
         if self.vector_type == '3D':
             return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, &%s, &%s, %s)" \
-                   % (varU, varV, varW, U.interp_method.upper())
+                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                   "&%s, &%s, &%s, %s, %s)" \
+                   % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
         else:
             return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
                    % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, &%s, %s)" \
-                   % (varU, varV, U.interp_method.upper())
+                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                   " &%s, &%s, %s, %s)" \
+                   % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
 
 
 class DeferredArray():
