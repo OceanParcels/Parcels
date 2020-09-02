@@ -1,6 +1,7 @@
 from parcels import FieldSet, JITParticle, AdvectionRK4, ErrorCode, Variable
 # from parcels.particleset_node_benchmark import ParticleSet_Benchmark
 from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
+from parcels.tools import idgen
 from datetime import timedelta as delta
 from glob import glob
 import numpy as np
@@ -112,6 +113,8 @@ if __name__=='__main__':
     periodicFlag=args.periodic
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
+
+    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
 
     headdir = ""
     odir = ""
