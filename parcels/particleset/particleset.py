@@ -18,6 +18,7 @@ from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
+from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
@@ -84,24 +85,7 @@ class ParticleAccessor(object):
         return str + "time=%s)" % time_string
 
 
-class ParticleSetIterator:
-    def __init__(self, pset):
-        self.p = pset.data_accessor()
-        self.max_len = pset.size
-        self._index = 0
-
-    def __next__(self):
-        ''''Returns the next value from ParticleSet object's lists '''
-        if self._index < self.max_len:
-            self.p.set_index(self._index)
-            result = self.p
-            self._index += 1
-            return result
-        # End of Iteration
-        raise StopIteration
-
-
-class ParticleSet(object):
+class ParticleSet(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
 
     Please note that this currently only supports fixed size particle sets.
@@ -309,9 +293,6 @@ class ParticleSet(object):
             return self.__dict__[name]
         else:
             return False
-
-    def __iter__(self):
-        return ParticleSetIterator(self)
 
     def __getitem__(self, index):
         self.p = self.data_accessor()
