@@ -26,21 +26,6 @@ class _FileBuffer(object):
         self.data_full_zdim = data_full_zdim
 
 
-class XarrayFileBuffer(_FileBuffer):
-    def __init__(self, *args, **kwargs):
-        super(XarrayFileBuffer, self).__init__(*args, **kwargs)
-
-    def __enter__(self):
-        self.dataset = self.filename
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
-
-    def close(self):
-        pass
-
-
 class NetcdfFileBuffer(_FileBuffer):
     def __init__(self, *args, **kwargs):
         self.lib = np

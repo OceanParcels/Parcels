@@ -57,4 +57,3 @@ jobs:
           ./.github/scripts/windows_install.bat
           ./.github/scripts/windows_test.bat
         shell: powershell
-

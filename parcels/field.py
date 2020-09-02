@@ -13,7 +13,7 @@ import xarray as xr
 from pathlib import Path
 
 import parcels.tools.interpolation_utils as i_u
-from .fieldfilebuffer import (XarrayFileBuffer, NetcdfFileBuffer, DeferredNetcdfFileBuffer,
+from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
                               DaskFileBuffer, DeferredDaskFileBuffer)
 from .grid import CGrid
 from .grid import Grid
@@ -289,10 +289,7 @@ class Field(object):
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
 
-        if netcdf_engine == 'xarray':
-            _grid_fb_class = XarrayFileBuffer
-        else:
-            _grid_fb_class = NetcdfFileBuffer
+        _grid_fb_class = NetcdfFileBuffer
 
         with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
             lon, lat = filebuffer.read_lonlat
@@ -377,9 +374,7 @@ class Field(object):
         if grid.time.size <= 3 or deferred_load is False:
             deferred_load = False
 
-        if netcdf_engine == 'xarray':
-            _field_fb_class = XarrayFileBuffer
-        elif field_chunksize not in [False, None]:
+        if field_chunksize not in [False, None]:
             if deferred_load:
                 _field_fb_class = DeferredDaskFileBuffer
             else:
@@ -489,11 +484,11 @@ class Field(object):
             data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
         if self.grid.xdim == 1 and len(data.shape) < 4:
             if lib == da:
-                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use field_chunksize=None')
             data = lib.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
             if lib == da:
-                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use field_chunksize=None')
             data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:

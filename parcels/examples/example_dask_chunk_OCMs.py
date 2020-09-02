@@ -121,7 +121,7 @@ def fieldset_from_ofam(chunk_mode):
     return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs, chunkdims_name_map=name_map)
 
 
-def fieldset_from_mitgcm_regrid(chunk_mode):
+def fieldset_from_mitgcm(chunk_mode):
     data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
     filenames = {"U": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
                  "V": data_path + "mitgcm_UV_surface_zonally_reentrant.nc"}
@@ -319,17 +319,17 @@ def test_ofam_3D(mode, chunk_mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
-def test_mitgcm_regridded(mode, chunk_mode):
+def test_mitgcm(mode, chunk_mode):
     if chunk_mode == 'auto':
         dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    field_set = fieldset_from_mitgcm_regrid(chunk_mode)
+    field_set = fieldset_from_mitgcm(chunk_mode)
     lons, lats = 5e5, 5e5
 
     pset = ParticleSet.from_list(fieldset=field_set, pclass=ptype[mode], lon=lons, lat=lats)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
-    # MITgcm_regridded sample file dimensions: time=10, XG=400, YG=200
+    # MITgcm sample file dimensions: time=10, XG=400, YG=200
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode in [False, 'auto']:
         assert (len(field_set.U.grid.load_chunk) == 1)
