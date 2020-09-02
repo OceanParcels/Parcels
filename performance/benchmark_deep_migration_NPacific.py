@@ -1,6 +1,7 @@
 from parcels import FieldSet, JITParticle, ScipyParticle, AdvectionRK4_3D, AdvectionRK4, ErrorCode, ParticleFile, Variable, Field, NestedField, VectorField, timer
 from parcels.particleset_node_benchmark import ParticleSet_Benchmark
 # from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
+from parcels.tools import idgen
 from parcels.kernels import seawaterdensity
 from argparse import ArgumentParser
 from datetime import timedelta as delta
@@ -242,6 +243,9 @@ if __name__ == "__main__":
     periodicFlag=args.periodic
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
+
+    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+
     headdir = ""
     odir = ""
     datahead = ""
@@ -343,6 +347,8 @@ if __name__ == "__main__":
     chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 200, 'x': 200}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs, time_periodic=delta(days=365))
     depths = fieldset.U.depth
+
+    idgen.setDepthLimits(np.min(depths), np.max(depths))
 
     outfile = 'Kooi+NEMO_3D_grid10by10_rho'+str(int(rho_pl))+'_r'+ r_pl+'_'+str(simdays)+'days_'+str(secsdt)+'dtsecs_'+str(hrsoutdt)+'hrsoutdt'
     dirwrite = os.path.join(odir, "rho_"+str(int(rho_pl))+"kgm-3")

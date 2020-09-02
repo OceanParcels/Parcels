@@ -75,9 +75,9 @@ def periodicBC(particle, fieldSet, time):
     particle.lat = min(particle.lat, 90.0)
     particle.lat = max(particle.lat, -80.0)
     # if particle.lat > 90.0:
-    #     particle.lat -= 170.0
+    #     particle.lat -= 160.0
     # if particle.lat < -80.0:
-    #     particle.lat += 170.0
+    #     particle.lat += 160.0
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
@@ -358,4 +358,5 @@ if __name__=='__main__':
         pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
     # idgen.close()
     # del idgen
+    print('Execution finished')
     exit(0)
