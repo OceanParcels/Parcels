@@ -307,15 +307,15 @@ if __name__=='__main__':
                     psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
                     pset.add(psetA)
 
-                # for i in range(int(Nparticle/2.0)):
-                #     lon = np.random.random() * a
-                #     lat = np.random.random() * b
-                #     pdepth = 0
-                #     ptime = simStart
-                #     pindex = idgen.total_length
-                #     pid = idgen.nextID(lon, lat, pdepth, ptime)
-                #     pdata = age_ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
-                #     pset.add(pdata)
+                    # for i in range(int(Nparticle/2.0)):
+                    #     lon = np.random.random() * a
+                    #     lat = np.random.random() * b
+                    #     pdepth = 0
+                    #     ptime = simStart
+                    #     pindex = idgen.total_length
+                    #     pid = idgen.nextID(lon, lat, pdepth, ptime)
+                    #     pdata = age_ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
+                    #     pset.add(pdata)
                 else:
                     # ==== NODE VERSION OF THE ADD ==== #
                     lonlat_field = np.random.rand(int(Nparticle/2.0), 2)
@@ -333,15 +333,15 @@ if __name__=='__main__':
                     psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
                     pset.add(psetA)
 
-                # for i in range(int(Nparticle/2.0)):
-                #     lon = np.random.random() * a
-                #     lat = np.random.random() * b
-                #     pdepth = 0
-                #     ptime = simStart
-                #     pindex = idgen.total_length
-                #     pid = idgen.nextID(lon, lat, pdepth, ptime)
-                #     pdata = ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
-                #     pset.add(pdata)
+                    # for i in range(int(Nparticle/2.0)):
+                    #     lon = np.random.random() * a
+                    #     lat = np.random.random() * b
+                    #     pdepth = 0
+                    #     ptime = simStart
+                    #     pindex = idgen.total_length
+                    #     pid = idgen.nextID(lon, lat, pdepth, ptime)
+                    #     pdata = ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
+                    #     pset.add(pdata)
                 else:
                     # ==== NODE VERSION OF THE ADD ==== #
                     lonlat_field = np.random.rand(int(Nparticle/2.0), 2)
@@ -361,15 +361,15 @@ if __name__=='__main__':
                     psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
                     pset.add(psetA)
 
-                # for i in range(int(Nparticle/2.0)):
-                #     lon = np.random.random() * a
-                #     lat = np.random.random() * b
-                #     pdepth = 0
-                #     ptime = simStart
-                #     pindex = idgen.total_length
-                #     pid = idgen.nextID(lon, lat, pdepth, ptime)
-                #     pdata = age_ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
-                #     pset.add(pdata)
+                    # for i in range(int(Nparticle/2.0)):
+                    #     lon = np.random.random() * a
+                    #     lat = np.random.random() * b
+                    #     pdepth = 0
+                    #     ptime = simStart
+                    #     pindex = idgen.total_length
+                    #     pid = idgen.nextID(lon, lat, pdepth, ptime)
+                    #     pdata = age_ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
+                    #     pset.add(pdata)
 
                 else:
                     # ==== NODE VERSION OF THE ADD ==== #
@@ -388,15 +388,15 @@ if __name__=='__main__':
                     psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * a, lat=np.random.rand(int(Nparticle/2.0), 1) * b, time=simStart)
                     pset.add(psetA)
 
-                # for i in range(int(Nparticle/2.0)):
-                #     lon = np.random.random() * a
-                #     lat = np.random.random() * b
-                #     pdepth = 0
-                #     ptime = simStart
-                #     pindex = idgen.total_length
-                #     pid = idgen.nextID(lon, lat, pdepth, ptime)
-                #     pdata = ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
-                #     pset.add(pdata)
+                    # for i in range(int(Nparticle/2.0)):
+                    #     lon = np.random.random() * a
+                    #     lat = np.random.random() * b
+                    #     pdepth = 0
+                    #     ptime = simStart
+                    #     pindex = idgen.total_length
+                    #     pid = idgen.nextID(lon, lat, pdepth, ptime)
+                    #     pdata = ptype[(args.compute_mode).lower()](lon=lon, lat=lat, pid=pid, fieldset=fieldset, depth=pdepth, time=ptime, index=pindex)
+                    #     pset.add(pdata)
 
                 else:
                     # ==== NODE VERSION OF THE ADD ==== #
