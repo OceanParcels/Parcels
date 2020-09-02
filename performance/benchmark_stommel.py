@@ -6,6 +6,7 @@ Date: 11-02-2020
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, RectilinearZGrid, ErrorCode
 from parcels.particleset_node_benchmark import ParticleSet_Benchmark as ParticleSet
+# from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.field import VectorField, NestedField, SummedField
 from parcels.tools import idgen
 # from parcels import plotTrajectoriesFile_loadedField
@@ -15,7 +16,6 @@ from argparse import ArgumentParser
 import datetime
 import numpy as np
 import xarray as xr
-# import pytest
 import fnmatch
 import gc
 import os
@@ -29,7 +29,7 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
-with_GC = False
+# with_GC = False
 
 pset = None
 
@@ -447,11 +447,8 @@ if __name__=='__main__':
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         if mpi_rank==0:
-            # starttime = ostime.time()
-            # starttime = MPI.Wtime()
             starttime = ostime.process_time()
     else:
-        # starttime = ostime.time()
         starttime = ostime.process_time()
     kernels = pset.Kernel(AdvectionRK4,delete_cfiles=True)
     if agingParticles:
@@ -478,31 +475,6 @@ if __name__=='__main__':
             endtime = ostime.process_time()
     else:
         endtime = ostime.process_time()
-
-    # if MPI:
-    #     mpi_comm = MPI.COMM_WORLD
-    #     if mpi_comm.Get_rank() == 0:
-    #         dt_time = []
-    #         for i in range(len(perflog.times_steps)):
-    #             if i==0:
-    #                 dt_time.append( (perflog.times_steps[i]-global_t_0) )
-    #             else:
-    #                 dt_time.append( (perflog.times_steps[i]-perflog.times_steps[i-1]) )
-    #         sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
-    #         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
-    #         avg_time = np.mean(np.array(dt_time, dtype=np.float64))
-    #         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
-    # else:
-    #     dt_time = []
-    #     for i in range(len(perflog.times_steps)):
-    #         if i == 0:
-    #             dt_time.append((perflog.times_steps[i] - global_t_0))
-    #         else:
-    #             dt_time.append((perflog.times_steps[i] - perflog.times_steps[i - 1]))
-    #     sys.stdout.write("final # particles: {}\n".format(perflog.Nparticles_step[len(perflog.Nparticles_step)-1]))
-    #     sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
-    #     avg_time = np.mean(np.array(dt_time, dtype=np.float64))
-    #     sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -546,5 +518,6 @@ if __name__=='__main__':
         pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
     # idgen.close()
     # del idgen
+    print('Execution finished')
     exit(0)
 
