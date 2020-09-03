@@ -1,10 +1,11 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, StateCode
 from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
 from parcels.kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
-from parcels import ParcelsRandom
+import random as py_random
+# from parcels import random as parcels_random => this doesn't work, and we should not 'ghost' up which random module is used; the module shoudl really get a different name
+from parcels import rng as ParcelsRandom
 import numpy as np
 import pytest
-import random as py_random
 from os import path
 import sys
 
