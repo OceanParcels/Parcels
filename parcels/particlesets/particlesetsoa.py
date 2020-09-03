@@ -55,7 +55,6 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         self._iterindex = 0
 
     def __next__(self):
-        ''''Returns the next value from ParticleSet object's lists '''
         if self._iterindex < self.max_len:
             self._index = self._iterindex
             self._iterindex += 1
