@@ -19,6 +19,7 @@ from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
 from parcels.particlesets.baseparticleset import BaseParticleSet
+from parcels.particlesets.baseparticleset import BaseParticleAccessor
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
@@ -46,9 +47,21 @@ def _to_write_particles(pd, time):
             & (np.isfinite(pd['time'])))
 
 
-class ParticleAccessor(object):
+class ParticleAccessorSOA(BaseParticleAccessor):
     def __init__(self, pset):
         self.pset = pset
+        self.max_len = pset.size
+        self._index = 0
+        self._iterindex = 0
+
+    def __next__(self):
+        ''''Returns the next value from ParticleSet object's lists '''
+        if self._iterindex < self.max_len:
+            self._index = self._iterindex
+            self._iterindex += 1
+            return self
+        # End of Iteration
+        raise StopIteration
 
     def set_index(self, index):
         self._index = index
@@ -70,7 +83,7 @@ class ParticleAccessor(object):
         return self.pset.particle_data[name][self._index]
 
     def __setattr__(self, name, value):
-        if name in ['pset', '_index']:
+        if name in ['pset', 'max_len', '_index', '_iterindex']:
             object.__setattr__(self, name, value)
         else:
             # avoid recursion
@@ -284,8 +297,13 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
+    def __iter__(self):
+        return ParticleAccessorSOA(self)
+
     def data_accessor(self):
-        return ParticleAccessor(self)
+        """Note: this function is deprecated and will be removed """
+        logger.warning_once("The data_accessor function on ParticleSets is deprecated and will be removed in future versions.")
+        return self.__iter__()
 
     def __getattr__(self, name):
         if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
