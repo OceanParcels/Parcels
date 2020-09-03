@@ -250,39 +250,6 @@ class CCompiler_SS(CCompiler):
         self._create_compile_process_(cc, src, log)
 
 
-class CCompiler_MS(CCompiler):
-    """
-    multi-stage C-compiler: used for multiple source files
-    """
-    def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
-        super(CCompiler_MS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
-
-    def compile(self, src, obj, log):
-        objs = []
-        for src_file in src:
-            src_file_wo_ext = os.path.splitext(src_file)[0]
-            src_file_wo_ppath = os.path.basename(src_file_wo_ext)
-            if MPI and MPI.COMM_WORLD.Get_size() > 1:
-                src_file_wo_ppath = "%s_%d" % (src_file_wo_ppath, MPI.COMM_WORLD.Get_rank())
-            obj_file = os.path.join(self._tmp_dir, src_file_wo_ppath) + "." + self._obj_ext
-            objs.append(obj_file)
-            slog_file = os.path.join(self._tmp_dir, src_file_wo_ppath) + "_o" + "." + "log"
-            #  cc = [self._cc] + self._cppargs + ["-c", src_file]
-            cc = [self._cc] + self._cppargs + ['-c', src_file] + ['-o', obj_file]
-            with open(log, 'w') as logfile:
-                logfile.write("Compiling: %s\n" % " ".join(cc))
-            success = self._create_compile_process_(cc, src_file, slog_file)
-            if success and os._exists(slog_file):
-                os.remove(slog_file)
-        cc = [self._cc] + objs + ['-o', obj] + self._ldargs
-        with open(log, 'a') as logfile:
-            logfile.write("Linking: %s\n" % " ".join(cc))
-        self._create_compile_process_(cc, obj, log)
-        for fpath in objs:
-            if os.path.exists(fpath):
-                os.remove(fpath)
-
-
 class GNUCompiler_SS(CCompiler_SS):
     """A compiler object for the GNU Linux toolchain.
 
@@ -303,28 +270,6 @@ class GNUCompiler_SS(CCompiler_SS):
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
         super(GNUCompiler_SS, self).compile(src, obj, log)
-
-
-class GNUCompiler_MS(CCompiler_MS):
-    """A compiler object for the GNU Linux toolchain.
-
-    :arg cppargs: A list of arguments to pass to the C compiler
-         (optional).
-    :arg ldargs: A list of arguments to pass to the linker (optional)."""
-    def __init__(self, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
-        c_params = GNU_parameters(cppargs, ldargs, incdirs, libdirs, libs)
-        super(GNUCompiler_MS, self).__init__(c_params.compiler, cppargs=c_params.cppargs, ldargs=c_params.ldargs, incdirs=c_params.incdirs, libdirs=c_params.libdirs, libs=c_params.libs, tmp_dir=tmp_dir)
-        self._dynlib_ext = c_params.dynlib_ext
-        self._stclib_ext = c_params.stclib_ext
-        self._obj_ext = c_params.obj_ext
-        self._exe_ext = c_params.exe_ext
-
-    def compile(self, src, obj, log):
-        lib_pathfile = os.path.basename(obj)
-        lib_pathdir = os.path.dirname(obj)
-        obj = os.path.join(lib_pathdir, lib_pathfile)
-
-        super(GNUCompiler_MS, self).compile(src, obj, log)
 
 
 GNUCompiler = GNUCompiler_SS
