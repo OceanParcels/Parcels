@@ -13,7 +13,7 @@ from parcels.tools.loggers import logger
 __all__ = ['seed', 'random', 'uniform', 'randint', 'normalvariate', 'expovariate', 'vonmisesvariate']
 
 
-class Random(object):
+class RandomC(object):
     stmt_import = """#include "parcels.h"\n\n"""
     fnct_seed = """
 extern void pcls_seed(int seed){
@@ -66,22 +66,22 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
             with open(self.src_file, 'w') as f:
                 f.write(self.ccode)
             compiler.compile(self.src_file, self.lib_file, self.log_file)
-            logger.info("Compiled %s ==> %s" % ("random", self.lib_file))
+            logger.info("Compiled %s ==> %s" % ("ParcelsRandom", self.lib_file))
             self._lib = npct.load_library(self.lib_file, '.')
         return self._lib
 
 
-parcels_random = Random()
+_parcels_random_ccodeconverter = RandomC()
 
 
 def seed(seed):
     """Sets the seed for parcels internal RNG"""
-    parcels_random.lib.pcls_seed(c_int(seed))
+    _parcels_random_ccodeconverter.lib.pcls_seed(c_int(seed))
 
 
 def random():
     """Returns a random float between 0. and 1."""
-    rnd = parcels_random.lib.pcls_random
+    rnd = _parcels_random_ccodeconverter.lib.pcls_random
     rnd.argtype = []
     rnd.restype = c_float
     return rnd()
@@ -89,7 +89,7 @@ def random():
 
 def uniform(low, high):
     """Returns a random float between `low` and `high`"""
-    rnd = parcels_random.lib.pcls_uniform
+    rnd = _parcels_random_ccodeconverter.lib.pcls_uniform
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
     return rnd(c_float(low), c_float(high))
@@ -97,7 +97,7 @@ def uniform(low, high):
 
 def randint(low, high):
     """Returns a random int between `low` and `high`"""
-    rnd = parcels_random.lib.pcls_randint
+    rnd = _parcels_random_ccodeconverter.lib.pcls_randint
     rnd.argtype = [c_int, c_int]
     rnd.restype = c_int
     return rnd(c_int(low), c_int(high))
@@ -105,7 +105,7 @@ def randint(low, high):
 
 def normalvariate(loc, scale):
     """Returns a random float on normal distribution with mean `loc` and width `scale`"""
-    rnd = parcels_random.lib.pcls_normalvariate
+    rnd = _parcels_random_ccodeconverter.lib.pcls_normalvariate
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
     return rnd(c_float(loc), c_float(scale))
@@ -113,7 +113,7 @@ def normalvariate(loc, scale):
 
 def expovariate(lamb):
     """Returns a randome float of an exponential distribution with parameter lamb"""
-    rnd = parcels_random.lib.pcls_expovariate
+    rnd = _parcels_random_ccodeconverter.lib.pcls_expovariate
     rnd.argtype = c_float
     rnd.restype = c_float
     return rnd(c_float(lamb))
@@ -122,7 +122,7 @@ def expovariate(lamb):
 def vonmisesvariate(mu, kappa):
     """Returns a randome float of a Von Mises distribution
     with mean angle mu and concentration parameter kappa"""
-    rnd = parcels_random.lib.pcls_vonmisesvariate
+    rnd = _parcels_random_ccodeconverter.lib.pcls_vonmisesvariate
     rnd.argtype = [c_float, c_float]
     rnd.restype = c_float
     return rnd(c_float(mu), c_float(kappa))

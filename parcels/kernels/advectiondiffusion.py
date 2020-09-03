@@ -1,7 +1,7 @@
 """Collection of pre-built advection-diffusion kernels"""
 import math
 
-from parcels import rng as random
+import parcels.rng as ParcelsRandom
 
 
 __all__ = ['DiffusionUniformKh', 'AdvectionDiffusionM1', 'AdvectionRK4DiffusionM1',
@@ -28,8 +28,8 @@ def DiffusionUniformKh(particle, fieldset, time):
     doi.org/10.1007/s10236-012-0523-y for more information.
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
-    dWy = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWx = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWy = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
 
     bx = math.sqrt(2 * fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon])
     by = math.sqrt(2 * fieldset.Kh_meridional[time, particle.depth, particle.lat, particle.lon])
@@ -61,8 +61,8 @@ def AdvectionDiffusionM1(particle, fieldset, time):
     doi.org/10.1007/s10236-012-0523-y for more information.
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
-    dWy = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWx = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWy = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
@@ -118,8 +118,8 @@ def AdvectionRK4DiffusionM1(particle, fieldset, time):
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
 
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
-    dWy = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWx = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWy = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
@@ -155,8 +155,8 @@ def AdvectionDiffusionEM(particle, fieldset, time):
     doi.org/10.1007/s10236-012-0523-y for more information.
     """
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
-    dWy = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWx = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWy = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]
@@ -206,8 +206,8 @@ def AdvectionRK4DiffusionEM(particle, fieldset, time):
     (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
 
     # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
-    dWy = random.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWx = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
+    dWy = ParcelsRandom.uniform(-1., 1.) * math.sqrt(math.fabs(particle.dt) * 3)
 
     Kxp1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon + fieldset.dres]
     Kxm1 = fieldset.Kh_zonal[time, particle.depth, particle.lat, particle.lon - fieldset.dres]

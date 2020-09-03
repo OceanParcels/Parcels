@@ -8,7 +8,7 @@ from parcels import Field
 from parcels import FieldSet
 from parcels import JITParticle
 from parcels import ParticleSet
-from parcels import random
+from parcels import ParcelsRandom
 from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -32,11 +32,11 @@ def test_brownian_example(mode, mesh, npart=3000):
     fieldset.add_field(Field('Kh_meridional', kh_meridional, lon=0, lat=0, mesh=mesh))
 
     # Set random seed
-    random.seed(123456)
+    ParcelsRandom.seed(123456)
 
     runtime = delta(days=1)
 
-    random.seed(1234)
+    ParcelsRandom.seed(1234)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(DiffusionUniformKh),

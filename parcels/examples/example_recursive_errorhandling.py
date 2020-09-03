@@ -5,7 +5,7 @@ from parcels import ErrorCode
 from parcels import FieldSet
 from parcels import JITParticle
 from parcels import ParticleSet
-from parcels import random
+from parcels import ParcelsRandom
 from parcels import ScipyParticle
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -49,9 +49,9 @@ def test_recursive_errorhandling(mode, xdim=2, ydim=2):
     def Error_RandomiseLon(particle, fieldset, time):
         """Error handling kernel that draws a new longitude.
         Note that this new longitude can be smaller than fieldset.minlon"""
-        particle.lon = random.uniform(0., 1.)
+        particle.lon = ParcelsRandom.uniform(0., 1.)
 
-    random.seed(123456)
+    ParcelsRandom.seed(123456)
 
     # The .execute below is only run for one timestep. Yet the
     # recovery={ErrorCode.Error: Error_RandomiseLon} assures Parcels keeps
