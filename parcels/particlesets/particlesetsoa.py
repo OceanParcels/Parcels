@@ -18,7 +18,7 @@ from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
-from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
@@ -85,7 +85,7 @@ class ParticleAccessor(object):
         return str + "time=%s)" % time_string
 
 
-class ParticleSet(BaseParticleSet):
+class ParticleSetSOA(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
 
     Please note that this currently only supports fixed size particle sets.
@@ -888,3 +888,6 @@ def search_kernel(particle, fieldset, time):
                 var_changed = True
         if not var_changed:
             raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
+
+
+ParticleSet = ParticleSetSOA
