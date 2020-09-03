@@ -8,7 +8,7 @@ from sys import platform
 
 import numpy.ctypeslib as npct
 
-from parcels.tools.global_statics import get_cache_dir, get_package_dir
+from parcels.tools import get_cache_dir, get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.tools.loggers import logger
 
@@ -89,6 +89,27 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         self._lib = npct.load_library(self.lib_file, '.')
         self._loaded = True
 
+    def remove_lib(self):
+        # If file already exists, pull new names. This is necessary on a Windows machine, because
+        # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
+        if path.isfile(self.lib_file):
+            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
+
+    def compile(self, compiler=None):
+        if self.src_file is None or self.lib_file is None or self.log_file is None:
+            basename = 'parcels_random_%s' % uuid.uuid4()
+            lib_filename = "lib" + basename
+            basepath = path.join(get_cache_dir(), "%s" % basename)
+            libpath = path.join(get_cache_dir(), "%s" % lib_filename)
+            # basename = path.join(get_cache_dir(), 'parcels_random_%s' % uuid.uuid4())
+            self.src_file = "%s.c" % basepath
+            self.lib_file = "%s.so" % libpath
+            self.log_file = "%s.log" % basepath
+        ccompiler = compiler
+        if ccompiler is None:
+            cppargs = []
+            incdirs = [path.join(get_package_dir(), 'include'), ]
+            ccompiler = GNUCompiler(cppargs=cppargs, incdirs=incdirs)
     def remove_lib(self):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
