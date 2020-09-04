@@ -1,7 +1,6 @@
 import os
 import subprocess
 from struct import calcsize
-#  from pathlib import Path
 
 try:
     from mpi4py import MPI

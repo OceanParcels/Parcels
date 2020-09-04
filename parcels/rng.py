@@ -101,7 +101,6 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
             lib_filename = "lib" + basename
             basepath = path.join(get_cache_dir(), "%s" % basename)
             libpath = path.join(get_cache_dir(), "%s" % lib_filename)
-            # basename = path.join(get_cache_dir(), 'parcels_random_%s' % uuid.uuid4())
             self.src_file = "%s.c" % basepath
             self.lib_file = "%s.so" % libpath
             self.log_file = "%s.log" % basepath
