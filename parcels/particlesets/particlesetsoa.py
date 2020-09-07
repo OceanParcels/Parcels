@@ -20,6 +20,7 @@ from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
 from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.particlesets.baseparticleset import BaseParticleAccessor
+from parcels.particlesets.baseparticleset import BaseParticleSetIterator
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
@@ -50,17 +51,6 @@ def _to_write_particles(pd, time):
 class ParticleAccessorSOA(BaseParticleAccessor):
     def __init__(self, pset):
         self.pset = pset
-        self.max_len = pset.size
-        self._index = 0
-        self._iterindex = 0
-
-    def __next__(self):
-        if self._iterindex < self.max_len:
-            self._index = self._iterindex
-            self._iterindex += 1
-            return self
-        # End of Iteration
-        raise StopIteration
 
     def set_index(self, index):
         self._index = index
@@ -82,7 +72,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         return self.pset.particle_data[name][self._index]
 
     def __setattr__(self, name, value):
-        if name in ['pset', 'max_len', '_index', '_iterindex']:
+        if name in ['pset', '_index']:
             object.__setattr__(self, name, value)
         else:
             # avoid recursion
@@ -95,6 +85,31 @@ class ParticleAccessorSOA(BaseParticleAccessor):
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += "%s=%f, " % (var.name, getattr(self, var.name))
         return str + "time=%s)" % time_string
+
+
+class ParticleSetIteratorSOA(BaseParticleSetIterator):
+    def __init__(self, pset):
+        # super().__init__()  # Do not actually need this
+        self.p = pset.data_accessor()
+        self.max_len = pset.size
+        self._index = 0
+        self._head = pset.data_accessor()
+        self._head.set_index(0)
+        self._tail = pset.data_accessor()
+        self._tail.set_index(self.max_len - 1)
+
+    def __next__(self):
+        if self._index < self.max_len:
+            self.p.set_index(self._index)
+            result = self.p
+            self._index += 1
+            return result
+        # End of Iteration
+        raise StopIteration
+
+    @property
+    def current(self):
+        return self.p
 
 
 class ParticleSetSOA(BaseParticleSet):
@@ -297,12 +312,10 @@ class ParticleSetSOA(BaseParticleSet):
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     def __iter__(self):
-        return ParticleAccessorSOA(self)
+        return ParticleSetIteratorSOA(self)
 
     def data_accessor(self):
-        """Note: this function is deprecated and will be removed """
-        logger.warning_once("The data_accessor function on ParticleSets is deprecated and will be removed in future versions.")
-        return self.__iter__()
+        return ParticleAccessorSOA(self)
 
     def __getattr__(self, name):
         if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
@@ -588,8 +601,8 @@ class ParticleSetSOA(BaseParticleSet):
     def __repr__(self):
         return "\n".join([str(p) for p in self])
 
-    def __len__(self):
-        return self.size
+    # def __len__(self):
+        # return self.size
 
     def __iadd__(self, particles):
         self.add(particles)
