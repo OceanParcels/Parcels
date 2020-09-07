@@ -35,6 +35,16 @@ if MPI:
 __all__ = ['ParticleSet']
 
 
+def _to_write_particles(pd, time):
+    """We don't want to write a particle that is not started yet.
+    Particle will be written if particle.time is between time-dt/2 and time+dt/2
+    """
+    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & (np.isfinite(pd['id']))
+            & (np.isfinite(pd['time'])))
+
+
 class ParticleAccessor(object):
     def __init__(self, pset):
         self.pset = pset
@@ -503,6 +513,58 @@ class ParticleSet(object):
                 return np.float64
         return np.float32
 
+    def to_dict(self, pfile, time, deleted_only=False):
+        """Convert all Particle data from one time step to a python dictionary.
+        :param pfile: ParticleFile object requesting the conversion
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        returns two dictionaries: one for all variables to be written each outputdt,
+         and one for all variables to be written once
+        """
+        data_dict = {}
+        data_dict_once = {}
+
+        time = time.total_seconds() if isinstance(time, delta) else time
+
+        pd = self.particle_data
+
+        if pfile.lasttime_written != time and \
+           (pfile.write_ondelete is False or deleted_only is not False):
+            if pd['id'].size == 0:
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            else:
+                if deleted_only is not False:
+                    to_write = deleted_only
+                else:
+                    to_write = _to_write_particles(pd, time)
+                if np.any(to_write) > 0:
+                    for var in pfile.var_names:
+                        data_dict[var] = pd[var][to_write]
+                    pfile.maxid_written = max(pfile.maxid_written, np.max(data_dict['id']))
+
+                pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
+                             & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
+                if np.count_nonzero(pset_errs) > 0:
+                    logger.warning_once(
+                        'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
+
+                if time not in pfile.time_written:
+                    pfile.time_written.append(time)
+
+                if len(pfile.var_names_once) > 0:
+                    first_write = (_to_write_particles(pd, time)
+                                   & np.isin(pd['id'], pfile.written_once, invert=True))
+                    if np.any(first_write):
+                        data_dict_once['id'] = pd['id'][first_write]
+                        for var in pfile.var_names_once:
+                            data_dict_once[var] = pd[var][first_write]
+                        pfile.written_once.extend(pd['id'][first_write])
+
+            if deleted_only is False:
+                pfile.lasttime_written = time
+
+        return data_dict, data_dict_once
+
     @property
     def size(self):
         return len(self.particle_data['lon'])
@@ -813,3 +875,16 @@ def search_kernel(particle, fieldset, time):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
+
+    def set_variable_write_status(self, var, write_status):
+        """Method to set the write status of a Variable
+        :param var: Name of the variable (string)
+        :param status: Write status of the variable (True, False or 'once')
+        """
+        var_changed = False
+        for v in self.ptype.variables:
+            if v.name == var:
+                v.to_write = write_status
+                var_changed = True
+        if not var_changed:
+            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
