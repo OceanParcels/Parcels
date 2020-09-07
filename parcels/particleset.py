@@ -282,7 +282,7 @@ class ParticleSet(object):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.size):
-                        if np.isnan(time[i]):
+                        if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                                'Add a "time=" to ParticleSet construction')
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
