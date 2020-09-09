@@ -14,7 +14,7 @@ jobs:
           python -m flake8 tests/
         shell: bash
   test_macOS:
-    name: Testing on macOS
+    name: Testing on macOS: python latest
     runs-on: macOS-latest
     steps:  
       - uses: actions/checkout@master
@@ -28,21 +28,8 @@ jobs:
           ./.github/scripts/osx_test.sh
         shell: bash
   test_linux:
-    name: Testing on Linux
-    runs-on: ubuntu-latest
-    steps: 
-      - uses: actions/checkout@master
-      - name: Test linux
-        env: 
-          OS_NAME: linux
-          PY_VERSION: 3
-          MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
-        run: |
-          ./.github/scripts/linux_install.sh
-          ./.github/scripts/linux_test.sh
-        shell: bash
   test_linux_py36:
-    name: Testing on Linux
+    name: Testing on Linux: Python 3.6
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -56,7 +43,7 @@ jobs:
           ./.github/scripts/linux_test.sh
         shell: bash
   test_windows:
-    name: Testing on Windows
+    name: Testing on Windows: python latest
     runs-on: windows-2016
     steps:
       - uses: actions/checkout@master
