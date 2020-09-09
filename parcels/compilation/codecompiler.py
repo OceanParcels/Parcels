@@ -77,15 +77,15 @@ class GNU_parameters(Compiler_parameters):
             libs = []
 
         Iflags = []
-        if incdirs is not None and isinstance(incdirs, list):
+        if isinstance(incdirs, list):
             for i, dir in enumerate(incdirs):
                 Iflags.append("-I"+dir)
         Lflags = []
-        if libdirs is not None and isinstance(libdirs, list):
+        if isinstance(libdirs, list):
             for i, dir in enumerate(libdirs):
                 Lflags.append("-L"+dir)
         lflags = []
-        if libs is not None and isinstance(libs, list):
+        if isinstance(libs, list):
             for i, lib in enumerate(libs):
                 lflags.append("-l" + lib)
 
@@ -94,17 +94,14 @@ class GNU_parameters(Compiler_parameters):
         opt_flags = ['-g', '-O3']
         arch_flag = ['-m64' if calcsize("P") == 8 else '-m32']
         self._cppargs = ['-Wall', '-fPIC']
-        if len(incdirs) > 0:
-            self._cppargs += Iflags
+        self._cppargs += Iflags
         self._cppargs += opt_flags + cppargs + arch_flag
         self._ldargs = ['-shared']
-        if len(Lflags) > 0:
-            self._ldargs += Lflags
-        if len(lflags) > 0:
-            self._ldargs += lflags
+        self._ldargs += Lflags
+        self._ldargs += lflags
         self._ldargs += ldargs
         if len(Lflags) > 0:
-            self._ldargs += ['-Wl,-rpath=%s' % (":".join(libdirs))]
+            self._ldargs += ['-Wl, -rpath=%s' % (":".join(libdirs))]
         self._ldargs += arch_flag
         self._incdirs = incdirs
         self._libdirs = libdirs
