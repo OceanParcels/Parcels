@@ -6,6 +6,7 @@ dependencies:
   - cachetools>=1.0.0
   - cgen>=2020.1
   - coverage
+  - ffmpeg>=3.2.3
   - flake8>=2.1.0
   - git
   - jupyter
