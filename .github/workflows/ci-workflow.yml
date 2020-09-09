@@ -41,6 +41,20 @@ jobs:
           ./.github/scripts/linux_install.sh
           ./.github/scripts/linux_test.sh
         shell: bash
+  test_linux_py36:
+    name: Testing on Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Test linux
+        env:
+          OS_NAME: linux
+          PY_VERSION: 3.6
+          MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
+        run: |
+          ./.github/scripts/linux_install.sh
+          ./.github/scripts/linux_test.sh
+        shell: bash
   test_windows:
     name: Testing on Windows
     runs-on: windows-2016
