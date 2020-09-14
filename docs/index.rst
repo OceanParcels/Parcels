@@ -60,7 +60,7 @@ parcels.kernels.advection module
     :members:
     :show-inheritance:
 
-parcels.kernels.diffusion module
+parcels.kernels.advectiondiffusion module
 --------------------------------
 
 .. automodule:: parcels.kernels.advectiondiffusion
