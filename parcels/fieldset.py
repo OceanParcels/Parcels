@@ -573,11 +573,14 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: POP is discretised on a B-grid:
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
-               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
-               |                                         |
-               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
-               |                                         |
-               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j+1,i],V[k,j+1,i]        |-----------------------------|U[k,j+1,i+1],V[k,j+1,i+1]    |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |              |              |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|              |              |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j,i],V[k,j,i]            |-----------------------------+U[k,j,i+1],V[k,j,i+1]        |
+               +-----------------------------+-----------------------------+-----------------------------+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
                In 3D: U and V nodes are at the midlle of the cell vertical edges,
