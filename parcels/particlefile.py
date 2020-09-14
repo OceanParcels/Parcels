@@ -49,6 +49,7 @@ def _set_calendar(origin_calendar):
 
 class ParticleFile(object):
     """Initialise trajectory output.
+    
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
     :param outputdt: Interval which dictates the update frequency of file output
