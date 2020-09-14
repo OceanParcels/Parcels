@@ -852,6 +852,7 @@ class FieldSet(object):
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
+
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         logger.warning_once("Fieldset.advancetime() is deprecated.\n \
@@ -881,6 +882,7 @@ class FieldSet(object):
         This is used when FieldSet uses data imported from netcdf,
         with default option deferred_load. The loaded time steps are at or immediatly before time
         and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+
         :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
         :param dt: time step of the integration scheme
         """

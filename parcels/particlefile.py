@@ -49,7 +49,7 @@ def _set_calendar(origin_calendar):
 
 class ParticleFile(object):
     """Initialise trajectory output.
-    
+
     :param name: Basename of the output file
     :param particleset: ParticleSet to output
     :param outputdt: Interval which dictates the update frequency of file output
@@ -120,6 +120,7 @@ class ParticleFile(object):
         http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#discrete-sampling-geometries
         The current implementation is based on the NCEI template:
         http://www.nodc.noaa.gov/data/formats/netcdf/v2.0/trajectoryIncomplete.cdl
+
         :param data_shape: shape of the variables in the NetCDF4 file
         """
         extension = os.path.splitext(str(self.name))[1]
@@ -208,6 +209,7 @@ class ParticleFile(object):
 
     def add_metadata(self, name, message):
         """Add metadata to :class:`parcels.particleset.ParticleSet`
+
         :param name: Name of the metadata variabale
         :param message: message to be written
         """
@@ -218,6 +220,7 @@ class ParticleFile(object):
 
     def convert_pset_to_dict(self, pset, time, deleted_only=False):
         """Convert all Particle data from one time step to a python dictionary.
+
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
@@ -300,6 +303,7 @@ class ParticleFile(object):
     def write(self, pset, time, deleted_only=False):
         """Write all data from one time step to a temporary npy-file
         using a python dictionary. The data is saved in the folder 'out'.
+
         :param pset: ParticleSet object to write
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
@@ -311,6 +315,7 @@ class ParticleFile(object):
 
     def read_from_npy(self, file_list, time_steps, var):
         """Read NPY-files for one variable using a loop over all files.
+
         :param file_list: List that  contains all file names in the output directory
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
@@ -387,6 +392,7 @@ class ParticleFile(object):
 
     def delete_tempwritedir(self, tempwritedir=None):
         """Deleted all temporary npy files
+
         :param tempwritedir Optional path of the directory to delete
         """
         if tempwritedir is None:
