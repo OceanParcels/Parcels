@@ -33,6 +33,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
     :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
     :param show_plt: Boolean whether plot should directly be show (for py.test)
+    :param central_longitude: Degrees East at which to center the plot
     """
 
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
