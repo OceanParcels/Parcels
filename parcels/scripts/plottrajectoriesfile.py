@@ -89,7 +89,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         cartopy_colorbar(cs, plt, fig, ax)
         ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
-        ax.set_xlim(np.nanmin((lon+central_longitude+180)%360 - 180), np.nanmax((lon+central_longitude+180)%360 - 180))
+        ax.set_xlim(np.nanmin((lon+central_longitude+180) % 360 - 180), np.nanmax((lon+central_longitude+180) % 360 - 180))
         ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         plottimes = np.unique(time)
         if not movie_forward:
