@@ -27,7 +27,6 @@ jobs:
           ./.github/scripts/linux_install.sh
           ./.github/scripts/osx_test.sh
         shell: bash
-  test_linux:
   test_linux_py36:
     name: Testing on Linux: Python 3.6
     runs-on: ubuntu-latest
