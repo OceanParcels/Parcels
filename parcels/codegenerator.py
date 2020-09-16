@@ -426,9 +426,6 @@ class KernelGenerator(ast.NodeVisitor):
         # Untangle Pythonic tuple-assignment statements
         py_ast = TupleSplitter().visit(py_ast)
 
-        # Store the docstring so that it can be removed in visit_Str (#753)
-        self.docstr = ast.get_docstring(py_ast)
-
         # Generate C-code for all nodes in the Python AST
         self.visit(py_ast)
         self.ccode = py_ast.ccode
@@ -909,15 +906,10 @@ class KernelGenerator(ast.NodeVisitor):
         node.ccode = c.Statement('printf("%s\\n", %s)' % (stat, vars))
 
     def visit_Str(self, node):
-
-        def _isdocstr(node):
-            # Check if node is docstr. Comparison only on text, not whitespace etc
-            return [c for c in node.s if c.isalpha()] == [c for c in self.docstr if c.isalpha()]
-
-        if self.docstr is not None and _isdocstr(node):
-            node.ccode = ''
-        else:
+        if node.s == 'parcels_customed_Cfunc_pointer_args':
             node.ccode = node.s
+        else:
+            node.ccode = ''
 
 
 class LoopGenerator(object):
