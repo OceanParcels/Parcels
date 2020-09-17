@@ -35,7 +35,7 @@ jobs:
       - name: Test linux
         env:
           OS_NAME: linux
-          PY_VERSION: 3.6
+          PY_VERSION: 3
           MINICONDA_NAME: Miniconda3-latest-Linux-x86_64.sh
         run: |
           ./.github/scripts/linux_install.sh
