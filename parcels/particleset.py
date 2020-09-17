@@ -39,7 +39,7 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt/2
     """
-    if np.all(pd['dt']) != 0:
+    if np.any(pd['dt']) == True:
         return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
                 & np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
                 & (np.isfinite(pd['id']))
