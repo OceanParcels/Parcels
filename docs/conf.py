@@ -59,7 +59,7 @@ author = u'Michael Lange and Erik van Sebille'
 # built documents.
 #
 # The short X.Y version.
-version = ''
+version = '2.2.0'
 # The full version, including alpha/beta/rc tags.
 release = ''
 
