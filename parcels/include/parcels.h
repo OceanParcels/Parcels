@@ -507,7 +507,7 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
       (interp_method == BGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)) {
     // adjust the normalised coordinate for flux-based interpolation methods
     if ((interp_method == CGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)) {
-      if (gridindexingtype == NEMO) {
+      if ((gridindexingtype == NEMO)   || (gridindexingtype == MOM5)) {
         // velocity is on the northeast of a tracer cell
         xsi = 1;
         eta = 1;
