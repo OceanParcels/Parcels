@@ -655,7 +655,7 @@ def test_mitgridindexing(mode, gridindexingtype):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo', 'mom5'])
+@pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
 def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
@@ -675,12 +675,12 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
         dimensions = {"lon": lon, "lat": lat, "depth": depth}
         dsize = (depth.size, lat.size, lon.size)
 
-    hindex_signs = {'nemo': -1, 'mitgcm': 1, 'mom5': -1}
-    vindex_signs = {'nemo': 0, 'mitgcm': 0, 'mom5': 1}
-    hsign = hindex_signs[gridindexingtype]
-    vsign = vindex_signs[gridindexingtype]
+    index_signs = {'nemo': -1, 'mitgcm': 1}
+    isign = index_signs[gridindexingtype]
 
     def calc_r_phi(ln, dp):
+        # r = np.sqrt(ln ** 2 + dp ** 2)
+        # phi = np.arcsin(dp/r) if r > 0 else 0
         return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
 
     def calculate_UVWR(lat, lon, depth, dx, dz, omega):
@@ -697,7 +697,7 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
                         R[:, k, j, i] = r
                     else:
                         R[k, j, i] = r
-                    r, phi = calc_r_phi(lon[i] + hsign * dx / 2, depth[k] + vsign * dz)
+                    r, phi = calc_r_phi(lon[i] + isign * dx / 2, depth[k])
                     if withtime:
                         W[:, k, j, i] = -omega * r * np.sin(phi)
                     else:
@@ -712,14 +712,9 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
     U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
     data = {"U": U, "V": V, "W": W, "R": R}
     fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
-    if gridindexingtype == 'mom5':
-        fieldset.U.interp_method = "bgrid_velocity"
-        fieldset.V.interp_method = "bgrid_velocity"
-        fieldset.W.interp_method = "bgrid_w_velocity"
-    else:
-        fieldset.U.interp_method = "cgrid_velocity"
-        fieldset.V.interp_method = "cgrid_velocity"
-        fieldset.W.interp_method = "cgrid_velocity"
+    fieldset.U.interp_method = "cgrid_velocity"
+    fieldset.V.interp_method = "cgrid_velocity"
+    fieldset.W.interp_method = "cgrid_velocity"
 
     def UpdateR(particle, fieldset, time):
         particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
