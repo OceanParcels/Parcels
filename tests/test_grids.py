@@ -733,3 +733,62 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('w_level', ['top', 'base'])
+def test_momgridindexing_3D(mode, w_level):
+
+    domainsizeX, domainsizeZ = (1.e5, 5.e4)
+    X = np.linspace(0, domainsizeX, 100, dtype=np.float32)
+    Z = np.linspace(0, domainsizeZ, 20, dtype=np.float32)
+
+    u0 = 1
+    x0 = domainsizeX / 2
+    R = 0.32 * domainsizeX / 2
+
+    # Create the fields
+    x, z = np.meshgrid(X, Z, sparse=True, indexing='xy')
+    P = np.expand_dims((u0 * R ** 2 * z / ((x - x0) ** 2 + z ** 2) - u0 * z) / 1e3, axis=1)
+
+    U = np.zeros(P.shape)
+    V = np.zeros(P.shape)
+    W = np.zeros(P.shape)
+
+    U_Agrid = np.expand_dims(u0 - u0 * R ** 2 * ((x - x0) ** 2 - z ** 2) / (((x - x0) ** 2 + z ** 2) ** 2), axis=1)
+    U[1:, 0, :] = (U_Agrid[:-1, 0, :] + U_Agrid[1:, 0, :]) / 2.
+
+    W_Agrid = np.expand_dims(-2 * u0 * R ** 2 * ((x - x0) * z) / (((x - x0) ** 2 + z ** 2) ** 2), axis=1)
+    if w_level == 'base':
+        W[1:, 0, :] = (W_Agrid[:-1, 0, :] + W_Agrid[1:, 0, :]) / 2.
+        gridindexingtype = 'nemo'
+    elif w_level == 'top':
+        W[:-1, 0, :] = (W_Agrid[:-1, 0, :] + W_Agrid[1:, 0, :]) / 2.
+        gridindexingtype = 'mom5'
+
+    # Set land points to NaN
+    landpoints = P >= 0.
+    P[landpoints] = np.nan
+    U[landpoints] = np.nan
+    V[landpoints] = np.nan
+    W[landpoints] = np.nan
+
+    data = {'U': U, 'V': V, 'W': W, 'P': P}
+    dimensions = {'lon': X, 'lat': 0, 'depth': Z}
+
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
+    fieldset.U.interp_method = "bgrid_velocity"
+    fieldset.V.interp_method = "bgrid_velocity"
+    fieldset.W.interp_method = "bgrid_w_velocity"
+
+    def UpdateP(particle, fieldset, time):
+        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+
+    class MyParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32, initial=0.)
+        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
+
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=1e4, lon=3000, lat=0, time=0)
+    pset.execute(pset.Kernel(AdvectionRK4_3D) + UpdateP, runtime=delta(hours=14), dt=delta(minutes=1))
+
+    assert np.allclose(pset.p_start, pset.p, atol=0.2)
