@@ -675,8 +675,8 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
         dimensions = {"lon": lon, "lat": lat, "depth": depth}
         dsize = (depth.size, lat.size, lon.size)
 
-    index_signs = {'nemo': -1, 'mitgcm': 1}
-    isign = index_signs[gridindexingtype]
+    hindex_signs = {'nemo': -1, 'mitgcm': 1}
+    hsign = hindex_signs[gridindexingtype]
 
     def calc_r_phi(ln, dp):
         # r = np.sqrt(ln ** 2 + dp ** 2)
@@ -697,7 +697,7 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
                         R[:, k, j, i] = r
                     else:
                         R[k, j, i] = r
-                    r, phi = calc_r_phi(lon[i] + isign * dx / 2, depth[k])
+                    r, phi = calc_r_phi(lon[i] + hsign * dx / 2, depth[k])
                     if withtime:
                         W[:, k, j, i] = -omega * r * np.sin(phi)
                     else:
@@ -731,59 +731,101 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('w_level', ['top', 'base'])
-def test_momgridindexing_3D(mode, w_level):
+@pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
+@pytest.mark.parametrize('withtime', [False, True])
+def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
+    """
+    Similar to test_mitgridindexing_3D, but here U and W are swapped,
+    also in the RK4 kernel, to allow for vertical gradients in W.
+    """
+    xdim = zdim = 201
+    ydim = 2
+    a = c = 20000  # domain size
+    b = 2
+    lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
+    lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
+    depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
+    dx, dz = lon[1] - lon[0], depth[1] - depth[0]
+    omega = 2 * np.pi / delta(days=1).total_seconds()
+    if withtime:
+        time = np.linspace(0, 24*60*60, 10)
+        dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
+        dsize = (time.size, depth.size, lat.size, lon.size)
+    else:
+        dimensions = {"lon": lon, "lat": lat, "depth": depth}
+        dsize = (depth.size, lat.size, lon.size)
 
-    domainsizeX, domainsizeZ = (1.e5, 5.e4)
-    X = np.linspace(0, domainsizeX, 100, dtype=np.float32)
-    Z = np.linspace(0, domainsizeZ, 20, dtype=np.float32)
+    vindex_signs = {'pop': 0, 'mom5': 1}
+    vsign = vindex_signs[gridindexingtype]
 
-    u0 = 1
-    x0 = domainsizeX / 2
-    R = 0.32 * domainsizeX / 2
+    def calc_r_phi(ln, dp):
+        # r = np.sqrt(ln ** 2 + dp ** 2)
+        # phi = np.arcsin(dp/r) if r > 0 else 0
+        return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
 
-    # Create the fields
-    x, z = np.meshgrid(X, Z, sparse=True, indexing='xy')
-    P = np.expand_dims((u0 * R ** 2 * z / ((x - x0) ** 2 + z ** 2) - u0 * z) / 1e3, axis=1)
+    def calculate_UVWR(lat, lon, depth, dx, dz, omega):
+        U = np.zeros(dsize, dtype=np.float32)
+        V = np.zeros(dsize, dtype=np.float32)
+        W = np.zeros(dsize, dtype=np.float32)
+        R = np.zeros(dsize, dtype=np.float32)
 
-    U = np.zeros(P.shape)
-    V = np.zeros(P.shape)
-    W = np.zeros(P.shape)
+        for i in range(lon.size):
+            for j in range(lat.size):
+                for k in range(depth.size):
+                    r, phi = calc_r_phi(lon[i], depth[k])
+                    if withtime:
+                        R[:, k, j, i] = r
+                    else:
+                        R[k, j, i] = r
+                    r, phi = calc_r_phi(lon[i] - dx / 2, depth[k] + vsign * dz)
+                    if withtime:
+                        W[:, k, j, i] = omega * r * np.cos(phi)
+                    else:
+                        W[k, j, i] = omega * r * np.cos(phi)
+                    r, phi = calc_r_phi(lon[i], depth[k] + dz / 2)
+                    if withtime:
+                        U[:, k, j, i] = -omega * r * np.sin(phi)
+                    else:
+                        U[k, j, i] = -omega * r * np.sin(phi)
+        return U, V, W, R
 
-    U_Agrid = np.expand_dims(u0 - u0 * R ** 2 * ((x - x0) ** 2 - z ** 2) / (((x - x0) ** 2 + z ** 2) ** 2), axis=1)
-    U[1:, 0, :] = (U_Agrid[:-1, 0, :] + U_Agrid[1:, 0, :]) / 2.
-
-    W_Agrid = np.expand_dims(-2 * u0 * R ** 2 * ((x - x0) * z) / (((x - x0) ** 2 + z ** 2) ** 2), axis=1)
-    if w_level == 'base':
-        W[1:, 0, :] = (W_Agrid[:-1, 0, :] + W_Agrid[1:, 0, :]) / 2.
-        gridindexingtype = 'nemo'
-    elif w_level == 'top':
-        W[:-1, 0, :] = (W_Agrid[:-1, 0, :] + W_Agrid[1:, 0, :]) / 2.
-        gridindexingtype = 'mom5'
-
-    # Set land points to NaN
-    landpoints = P >= 0.
-    P[landpoints] = np.nan
-    U[landpoints] = np.nan
-    V[landpoints] = np.nan
-    W[landpoints] = np.nan
-
-    data = {'U': U, 'V': V, 'W': W, 'P': P}
-    dimensions = {'lon': X, 'lat': 0, 'depth': Z}
-
-    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
+    U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
+    data = {"U": U, "V": V, "W": W, "R": R}
+    if gridindexingtype == "mom5":
+        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype="mom5")
+    elif gridindexingtype == "pop":
+        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype="nemo")
     fieldset.U.interp_method = "bgrid_velocity"
     fieldset.V.interp_method = "bgrid_velocity"
     fieldset.W.interp_method = "bgrid_w_velocity"
 
-    def UpdateP(particle, fieldset, time):
-        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+    def UpdateR(particle, fieldset, time):
+        particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
 
     class MyParticle(ptype[mode]):
-        p = Variable('p', dtype=np.float32, initial=0.)
-        p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
+        radius = Variable('radius', dtype=np.float32, initial=0.)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
 
-    pset = ParticleSet(fieldset, pclass=MyParticle, depth=1e4, lon=3000, lat=0, time=0)
-    pset.execute(pset.Kernel(AdvectionRK4_3D) + UpdateP, runtime=delta(hours=14), dt=delta(minutes=1))
+    def AdvectionRK4_3D_swappedUW(particle, fieldset, time):
+        (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
+        lon1 = particle.lon + w1*.5*particle.dt
+        lat1 = particle.lat + v1*.5*particle.dt
+        dep1 = particle.depth + u1*.5*particle.dt
+        (u2, v2, w2) = fieldset.UVW[time + .5 * particle.dt, dep1, lat1, lon1]
+        lon2 = particle.lon + w2*.5*particle.dt
+        lat2 = particle.lat + v2*.5*particle.dt
+        dep2 = particle.depth + u2*.5*particle.dt
+        (u3, v3, w3) = fieldset.UVW[time + .5 * particle.dt, dep2, lat2, lon2]
+        lon3 = particle.lon + w3*particle.dt
+        lat3 = particle.lat + v3*particle.dt
+        dep3 = particle.depth + u3*particle.dt
+        (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3]
+        particle.lon += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt
+        particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
+        particle.depth += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
 
-    assert np.allclose(pset.p_start, pset.p, atol=0.2)
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
+
+    pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D_swappedUW,
+                 runtime=delta(hours=14), dt=delta(minutes=5))
+    assert np.allclose(pset.radius, pset.radius_start, atol=10)
