@@ -108,6 +108,7 @@ class ParticleSet(object):
            and np.float64 if the interpolation method is 'cgrid_velocity'
     :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
            are distributed automatically on the processors
+
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
@@ -321,8 +322,9 @@ class ParticleSet(object):
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
+
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
-       """
+        """
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod

@@ -1,6 +1,6 @@
 """Collection of pre-built advection-diffusion kernels
 
-See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_ for a detailed explanation"""
+See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_ for a detailed explanation"""
 import math
 
 from parcels import rng as random

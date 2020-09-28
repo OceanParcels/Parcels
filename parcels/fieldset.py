@@ -434,11 +434,11 @@ class FieldSet(object):
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
                +-----------------------------+-----------------------------+-----------------------------+
-               |_____________________________|_________V[k,j+1,i+1]________|_____________________________|
+               |                             |         V[k,j+1,i+1]        |                             |
                +-----------------------------+-----------------------------+-----------------------------+
                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
                +-----------------------------+-----------------------------+-----------------------------+
-               |_____________________________|_________V[k,j,i+1]__________+_____________________________|
+               |                             |         V[k,j,i+1]          +                             |
                +-----------------------------+-----------------------------+-----------------------------+
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
@@ -498,11 +498,11 @@ class FieldSet(object):
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
                +-----------------------------+-----------------------------+-----------------------------+
-               |_____________________________|_________V[k,j+1,i+1]________|_____________________________|
+               |                             |         V[k,j+1,i+1]        |                             |
                +-----------------------------+-----------------------------+-----------------------------+
                |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
                +-----------------------------+-----------------------------+-----------------------------+
-               |_____________________________|_________V[k,j,i+1]__________+_____________________________|
+               |                             |         V[k,j,i+1]          +                             |
                +-----------------------------+-----------------------------+-----------------------------+
 
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
@@ -575,11 +575,11 @@ class FieldSet(object):
                Watch out: POP is discretised on a B-grid:
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
                +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j+1,i],V[k,j+1,i]        |_____________________________|U[k,j+1,i+1],V[k,j+1,i+1]    |
+               |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
                +-----------------------------+-----------------------------+-----------------------------+
                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
                +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j,i],V[k,j,i]            |_____________________________+U[k,j,i+1],V[k,j,i+1]        |
+               |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
                +-----------------------------+-----------------------------+-----------------------------+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
@@ -645,11 +645,11 @@ class FieldSet(object):
                dimension names are different for each variable.
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
                +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j+1,i],V[k,j+1,i]        |_____________________________|U[k,j+1,i+1],V[k,j+1,i+1]    |
+               |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
                +-----------------------------+-----------------------------+-----------------------------+
                |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
                +-----------------------------+-----------------------------+-----------------------------+
-               |U[k,j,i],V[k,j,i]            |_____________________________+U[k,j,i+1],V[k,j,i+1]        |
+               |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
                +-----------------------------+-----------------------------+-----------------------------+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
