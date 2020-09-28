@@ -504,6 +504,7 @@ class FieldSet(object):
                +-----------------------------+-----------------------------+-----------------------------+
                |_____________________________|_________V[k,j,i+1]__________+_____________________________|
                +-----------------------------+-----------------------------+-----------------------------+
+
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )

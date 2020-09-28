@@ -1632,6 +1632,8 @@ class SummedField(list):
     still be queried through their list index (e.g. SummedField[1]).
     SummedField is composed of either Fields or VectorFields.
 
+    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_ for the tutorial
+
     :param name: Name of the SummedField
     :param F: List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
     :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
