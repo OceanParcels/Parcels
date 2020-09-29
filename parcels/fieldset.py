@@ -83,6 +83,17 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
+
+        For usage examples see the following tutorials:
+
+        * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
+
+        * `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
+
+        * `Interpolation <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_interpolation.ipynb>`_
+
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+
         """
 
         fields = {}
@@ -119,6 +130,13 @@ class FieldSet(object):
 
         :param field: :class:`parcels.field.Field` object to be added
         :param name: Name of the :class:`parcels.field.Field` object to be added
+
+        For usage examples see the following tutorials:
+
+        * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+
         """
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
@@ -341,6 +359,17 @@ class FieldSet(object):
         :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+
+        For usage examples see the following tutorials:
+
+        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_
+
+        * `Argo floats <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`_
+
+        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
+
+        * `Time-evolving depth dimensions <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
+
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
         if timestamps is not None and 'time' in dimensions:
@@ -418,6 +447,13 @@ class FieldSet(object):
                   tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
+        for a detailed tutorial on the setup for 2D NEMO fields and `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`_
+        for the tutorial on the setup for 3D NEMO fields.
+
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        for a more detailed explanation of the different methods that can be used for c-grid datasets.
+
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
                or be a list of file.
@@ -433,6 +469,7 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+
                +-----------------------------+-----------------------------+-----------------------------+
                |                             |         V[k,j+1,i+1]        |                             |
                +-----------------------------+-----------------------------+-----------------------------+
@@ -440,6 +477,7 @@ class FieldSet(object):
                +-----------------------------+-----------------------------+-----------------------------+
                |                             |         V[k,j,i+1]          +                             |
                +-----------------------------+-----------------------------+-----------------------------+
+
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -480,7 +518,10 @@ class FieldSet(object):
     def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
                             tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
-        """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
+        """Initialises FieldSet object from NetCDF files of curvilinear c-grid fields.
+
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        for a more detailed explanation of the different methods that can be used for c-grid datasets.
 
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
@@ -497,6 +538,7 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
+
                +-----------------------------+-----------------------------+-----------------------------+
                |                             |         V[k,j+1,i+1]        |                             |
                +-----------------------------+-----------------------------+-----------------------------+
@@ -574,6 +616,7 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: POP is discretised on a B-grid:
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+
                +-----------------------------+-----------------------------+-----------------------------+
                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
                +-----------------------------+-----------------------------+-----------------------------+
@@ -581,6 +624,7 @@ class FieldSet(object):
                +-----------------------------+-----------------------------+-----------------------------+
                |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
                +-----------------------------+-----------------------------+-----------------------------+
+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
                In 3D: U and V nodes are at the middle of the cell vertical edges,
@@ -644,6 +688,7 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
+
                +-----------------------------+-----------------------------+-----------------------------+
                |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
                +-----------------------------+-----------------------------+-----------------------------+
@@ -651,6 +696,7 @@ class FieldSet(object):
                +-----------------------------+-----------------------------+-----------------------------+
                |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
                +-----------------------------+-----------------------------+-----------------------------+
+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
                In 3D: U and V nodes are at the midlle of the cell vertical edges,
@@ -816,6 +862,11 @@ class FieldSet(object):
         """Add a constant to the FieldSet. Note that all constants are
         stored as 32-bit floats. While constants can be updated during
         execution in SciPy mode, they can not be updated in JIT mode.
+
+        Tutorials using fieldset.add_constant:
+        `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
+        `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
+        `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
 
         :param name: Name of the constant
         :param value: Value of the constant (stored as 32-bit float)
