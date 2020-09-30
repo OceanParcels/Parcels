@@ -438,3 +438,19 @@ def test_from_field_exact_val(staggered_grid):
     assert (np.array([p.lon for p in pset]) <= 1).all()
     test = np.logical_or(np.array([p.lon for p in pset]) <= 0, np.array([p.lat for p in pset]) >= 51)
     assert test.all()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_iteration_forward(fieldset, mode, npart=10):
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                       pclass=ptype[mode])
+
+    assert np.all(np.diff(np.array([p.id for p in pset])) > 0)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pset_iteration_backward(fieldset, mode, npart=10):
+    pset = ParticleSet(fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
+                       pclass=ptype[mode])
+
+    assert np.all(np.diff(np.array([p.id for p in reversed(pset)])) < 0)
