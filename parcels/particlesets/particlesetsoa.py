@@ -50,23 +50,7 @@ def _to_write_particles(pd, time):
 
 class ParticleAccessorSOA(BaseParticleAccessor):
     def __init__(self, pset):
-        self.pset = pset
-
-    def set_index(self, index):
-        self._index = index
-
-    def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if not np.isnan(self._next_dt):
-                self.dt, self._next_dt = self._next_dt, np.nan
-        else:
-            self._next_dt = next_dt
-
-    def delete(self):
-        self.state = OperationCode.Delete
-
-    def set_state(self, state):
-        self.state = state
+        super().__init__(pset)
 
     def __getattr__(self, name):
         return self.pset.particle_data[name][self._index]
@@ -88,18 +72,22 @@ class ParticleAccessorSOA(BaseParticleAccessor):
 
 
 class ParticleSetIteratorSOA(BaseParticleSetIterator):
-    def __init__(self, pset):
-        # super().__init__()  # Do not actually need this
+    def __init__(self, pset, reverse=False):
+        # super().__init__(pset)  # Do not actually need this
+        self._reverse = reverse
         self.p = pset.data_accessor()
         self.max_len = pset.size
-        self._index = 0
+        if reverse:
+            self._index = self.max_len - 1
+        else:
+            self._index = 0
         self._head = pset.data_accessor()
         self._head.set_index(0)
         self._tail = pset.data_accessor()
         self._tail.set_index(self.max_len - 1)
 
     def __next__(self):
-        if self._index < self.max_len:
+        if not self._reverse and self._index < self.max_len:
             self.p.set_index(self._index)
             result = self.p
             self._index += 1
@@ -107,9 +95,21 @@ class ParticleSetIteratorSOA(BaseParticleSetIterator):
         # End of Iteration
         raise StopIteration
 
+        if self._reverse and self._index >= 0:
+            self.p.set_index(self._index)
+            result = self.p
+            self._index -= 1
+            return result
+        raise StopIteration
+
     @property
     def current(self):
         return self.p
+
+    def __repr__(self):
+        direction_str = 'Backward' if self._reverse else 'Forward'
+        return f"{direction_str} iteration at index {self._index} of" \
+               f" {self.max_len}."
 
 
 class ParticleSetSOA(BaseParticleSet):
@@ -312,6 +312,9 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __iter__(self):
         return ParticleSetIteratorSOA(self)
+
+    def __reversed__(self):
+        return ParticleSetIteratorSOA(self, True)
 
     def data_accessor(self):
         return ParticleAccessorSOA(self)
