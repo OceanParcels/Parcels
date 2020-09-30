@@ -604,8 +604,11 @@ class ParticleSetSOA(BaseParticleSet):
     def __repr__(self):
         return "\n".join([str(p) for p in self])
 
-    # def __len__(self):
-        # return self.size
+    def __len__(self):
+        return self.size
+
+    def __sizeof__(self):
+        raise NotImplementedError()
 
     def __iadd__(self, particles):
         self.add(particles)
