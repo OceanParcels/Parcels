@@ -2,7 +2,7 @@ from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, JITParticle
                      DiffusionUniformKh, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
                      AdvectionDiffusionEM, AdvectionRK4DiffusionEM, ScipyParticle,
                      Variable)
-from parcels import rng as random
+from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import numpy as np
 import pytest
@@ -37,7 +37,7 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     npart = 1000
     runtime = delta(days=1)
 
-    random.seed(1234)
+    ParcelsRandom.seed(1234)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(DiffusionUniformKh),
@@ -80,7 +80,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
     npart = 100
     runtime = delta(days=1)
 
-    random.seed(1636)
+    ParcelsRandom.seed(1636)
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
                        lon=np.zeros(npart), lat=np.zeros(npart))
     pset.execute(pset.Kernel(kernel),
@@ -103,13 +103,13 @@ def test_randomexponential(mode, lambd, npart=1000):
     fieldset.lambd = lambd
 
     # Set random seed
-    random.seed(1234)
+    ParcelsRandom.seed(1234)
 
     pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     def vertical_randomexponential(particle, fieldset, time):
         # Kernel for random exponential variable in depth direction
-        particle.depth = random.expovariate(fieldset.lambd)
+        particle.depth = ParcelsRandom.expovariate(fieldset.lambd)
 
     pset.execute(vertical_randomexponential, runtime=1, dt=1)
 
@@ -129,14 +129,14 @@ def test_randomvonmises(mode, mu, kappa, npart=10000):
     fieldset.kappa = kappa
 
     # Set random seed
-    random.seed(1234)
+    ParcelsRandom.seed(1234)
 
     class AngleParticle(ptype[mode]):
         angle = Variable('angle')
     pset = ParticleSet(fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     def vonmises(particle, fieldset, time):
-        particle.angle = random.vonmisesvariate(fieldset.mu, fieldset.kappa)
+        particle.angle = ParcelsRandom.vonmisesvariate(fieldset.mu, fieldset.kappa)
 
     pset.execute(vonmises, runtime=1, dt=1)
 

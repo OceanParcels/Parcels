@@ -3,11 +3,11 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python>=3.4
+  - python=3.6
   - cachetools>=1.0.0
   - cgen
   - coverage
-  - ffmpeg>=3.2.3,<3.2.6
+  - ffmpeg>=3.2.3
   - flake8>=2.1.0
   - git
   - gcc_linux-64
@@ -26,6 +26,6 @@ dependencies:
   - xarray>=0.10.8
   - cftime
   - dask>=2.0
-  - pytest<4.0
+  - pytest
   - nbval
   - scikit-learn

@@ -6,7 +6,7 @@ dependencies:
   - cachetools>=1.0.0
   - cgen>=2020.1
   - coverage
-  - ffmpeg>=3.2.3,<3.2.6
+  - ffmpeg>=3.2.3
   - flake8>=2.1.0
   - git
   - jupyter
@@ -24,5 +24,5 @@ dependencies:
   - dask>=2.0
   - cftime
   - ipykernel<5.0
-  - pytest<4.0
+  - pytest
   - nbval
