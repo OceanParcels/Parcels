@@ -7,6 +7,29 @@ from parcels.tools.statuscodes import OperationCode
 
 class ParticleCollection(ABC):
     """Interface."""
+    @abstractmethod
+    def __iter__(self):
+        """Returns an Iterator that allows for forward iteration over the
+        elements in the ParticleCollection (e.g. `for p in pset:`).
+        """
+        pass
+
+    def __reversed__(self):
+        """Returns an Iterator that allows for backwards iteration over
+        the elements in the ParticleCollection (e.g.
+        `for p in reversed(pset):`).
+        """
+        pass
+
+    @abstractmethod
+    def __sizeof__(self):
+        pass
+
+    @abstractmethod
+    def __len__(self):
+        """Reports the number of elements (particles) in the collection.
+        """
+        pass
 
 
 class NDCluster(ABC):
@@ -86,22 +109,60 @@ class BaseParticleAccessor(ABC):
         """
         pass
 
-class BaseParticleSet(ParticleCollection, NDCluster):
-    """Base ParticleSet."""
     @abstractmethod
-    def __iter__(self):
-        """Returns an Iterator for the ParticleSet."""
+    def __setattr__(self, name, value):
+        """The ParticleAccessor should provide an implementation of this
+        built-in function to allow setting particle attributes in its
+        corresponding ParticleSet datastructure.
+        """
         pass
 
+    @abstractmethod
+    def __repr__(self):
+        """The ParticleAccessor should provide an implementation of this
+        built-in function that returns a string representation of the
+        Particle that it currently provides access to.
+        """
+        pass
+
+
+class BaseParticleSet(ParticleCollection, NDCluster):
+    """Base ParticleSet."""
     @abstractmethod
     def data_accessor(self):
         """Returns an Accessor for the particles in this ParticleSet."""
         pass
 
-    @property
     @abstractmethod
-    def size(self):
-        pass
+    def execute(self, pyfunc, endtime, runtime, dt, moviedt, recovery,
+                output_file, movie_background_field, verbose_progress,
+                postIterationCallbacks, callbackdt):
+        """Execute a given kernel function over the particle set for
+        multiple timesteps. Optionally also provide sub-timestepping
+        for particle output.
 
-    def __len__(self):
-        return self.size
+        :param pyfunc: Kernel function to execute. This can be the name of a
+                       defined Python function or a :class:`parcels.kernel.Kernel` object.
+                       Kernels can be concatenated using the + operator
+        :param endtime: End time for the timestepping loop.
+                        It is either a datetime object or a positive double.
+        :param runtime: Length of the timestepping loop. Use instead of endtime.
+                        It is either a timedelta object or a positive double.
+        :param dt: Timestep interval to be passed to the kernel.
+                   It is either a timedelta object or a double.
+                   Use a negative value for a backward-in-time simulation.
+        :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
+                         the update frequency of animation.
+                         It is either a timedelta object or a positive double.
+                         None value means no animation.
+        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
+        :param recovery: Dictionary with additional `:mod:parcels.tools.error`
+                         recovery kernels to allow custom recovery behaviour in case of
+                         kernel errors.
+        :param movie_background_field: field plotted as background in the movie if moviedt is set.
+                                       'vector' shows the velocity as a vector field.
+        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
+        """
+        pass
