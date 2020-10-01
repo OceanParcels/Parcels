@@ -5,6 +5,11 @@ from abc import abstractmethod
 from .baseparticleset import BaseParticleAccessor
 from parcels.particle import ScipyParticle, JITParticle
 
+"""
+Author: Dr. Christian Kehl
+github relation: #913 (particleset_class_hierarchy)
+"""
+
 class ParticleCollection(ABC):
     _ncount = -1
 
