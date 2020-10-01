@@ -1549,10 +1549,14 @@ class VectorField(object):
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
         """
-          __ V1 __
-        |          |
-        U0         U1
-        | __ V0 __ |
+        +---+---+---+
+        |   |V1 |   |
+        +---+---+---+
+        |U0 |   |U1 |
+        +---+---+---+
+        |   |V0 |   |
+        +---+---+---+
+        
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and
         interpolating linearly V depending on the latitude coordinate.

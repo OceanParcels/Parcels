@@ -73,7 +73,7 @@ class FieldSet(object):
                (e.g. dimensions['U'], dimensions['V'], etc).
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -84,7 +84,8 @@ class FieldSet(object):
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
 
-        For usage examples see the following tutorials:
+        Usage examples
+        ==============
 
         * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
 
@@ -336,7 +337,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -489,7 +490,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -639,7 +640,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -812,7 +813,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
