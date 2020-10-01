@@ -933,7 +933,6 @@ class Field(object):
         elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
             if self.interp_method == 'bgrid_velocity':
                 zeta = 0.
-                data = self.data[ti, zi, :, :]
             elif self.interp_method == 'bgrid_w_velocity':
                 eta = 1.
                 xsi = 1.
