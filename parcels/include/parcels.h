@@ -483,7 +483,11 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     // (rather than both)
     status = getCell2D(f, xi[igrid], yi[igrid], ti[igrid], data2D, tii == 1); CHECKSTATUS(status);
   } else {
-    status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
+    if ((interp_method == BGRID_W_VELOCITY) && (gridindexingtype == MOM5)) {
+      status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid]-1, ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
+    } else {
+      status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
+    }
   }
 
   // define a helper macro that will select the appropriate interpolation method
