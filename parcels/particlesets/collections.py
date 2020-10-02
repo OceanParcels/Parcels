@@ -10,7 +10,8 @@ Author: Dr. Christian Kehl
 github relation: #913 (particleset_class_hierarchy)
 """
 
-class ParticleCollection(ABC):
+
+class Collection(ABC):
     _ncount = -1
 
     @abstractmethod
@@ -28,6 +29,10 @@ class ParticleCollection(ABC):
         ParticleCollection - Destructor
         """
         pass
+
+    @property
+    def ncount(self):
+        return self._ncount
 
     def __add__(self, other):
         """
@@ -57,7 +62,6 @@ class ParticleCollection(ABC):
         assert pcollection is not None, "Trying to add another particle collection to this one, but the other one is None - invalid operation."
         assert isinstance(pcollection, ParticleCollection), "Trying to add another particle collection to this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
-
 
     def add_single(self, particle_obj):
         """
@@ -521,4 +525,72 @@ class ParticleCollection(ABC):
         This function physically removes all elements of the collection, yielding an empty collection as result of the
         operation.
         """
+        pass
+
+
+class ParticleCollection(ABC, Collection):
+    """
+    TODO: Class and memmber functions still require appropriate docstrings
+    """
+    _pu_indicators = None  # formerly: partitions
+    _pu_centers = None
+    _offset = 0
+    _pclass = None
+    _ptype = None
+    _latlondepth_dtype = np.float32
+    _data = None  # formerly: particle_data
+
+    def __init__(self):
+        # super(Collection, self).__init__()    # -> function is abstract, so it cannot be called upon
+        self._ncount = -1
+        self._pu_indicators = None  # formerly: partitions
+        self._pu_centers = None
+        self._offset = 0
+        self._pclass = None
+        self._ptype = None
+        self._latlondepth_dtype = np.float32
+        self._data = None  # formerly: particle_data
+
+    def __del__(self):
+        # super(Collection, self).__del__()    # -> function is abstract, so it cannot be called upon
+        pass
+
+    @property
+    def pu_indicators(self):
+        return self._pu_indicators
+
+    @property
+    def pu_centers(self):
+        return self._pu_centers
+
+    @property
+    def pclass(self):
+        return self._pclass
+
+    @property
+    def ptype(self):
+        return self._ptype
+
+    @property
+    def latlondepth_dtype(self):
+        return self._latlondepth_dtype
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def particle_data(self):
+        return self._data
+
+    @abstractmethod
+    def cstruct(self):
+        pass
+
+    @abstractmethod
+    def toDictionary(self):     # formerly: ParticleSet.to_dict()
+        pass
+
+    @abstractmethod
+    def set_variable_write_status(self):
         pass
