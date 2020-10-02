@@ -11,7 +11,7 @@ from parcels import (FieldSet, JITParticle, AdvectionRK4_3D,
 # from parcels import ParticleSet
 # from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
 from parcels.particleset_node_benchmark import ParticleSet_Benchmark
-
+from parcels.tools import idgen
 from argparse import ArgumentParser
 from datetime import timedelta as delta
 from datetime import datetime
@@ -212,6 +212,8 @@ if __name__ == "__main__":
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
 
+    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+
     branch = "benchmarking"
     computer_env = "local/unspecified"
     scenario = "palaeo-parcels"
@@ -305,6 +307,10 @@ if __name__ == "__main__":
     fieldset.add_constant('sinkspeed', sp/86400.)
     fieldset.add_constant('maxage', 300000.*86400)
     fieldset.add_constant('surface', 2.5)
+
+    # ==== Set min/max depths in the fieldset ==== #
+    fs_depths = fieldset.U.depth
+    idgen.setDepthLimits(np.min(fs_depths), np.max(fs_depths))
 
     pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
 

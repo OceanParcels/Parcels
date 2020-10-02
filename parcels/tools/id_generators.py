@@ -15,6 +15,7 @@ except:
 
 class BaseIdGenerator(ABC):
     _total_ids = 0
+    _recover_ids = False
 
     def __init__(self):
         self._total_ids = 0
@@ -41,6 +42,20 @@ class BaseIdGenerator(ABC):
     @property
     def total_length(self):
         return self._total_ids
+
+    @property
+    def recover_ids(self):
+        return self._recover_ids
+
+    @recover_ids.setter
+    def recover_ids(self, bool_param):
+        self._recover_ids = bool_param
+
+    def enable_ID_recovery(self):
+        self._recover_ids = True
+
+    def disable_ID_recovery(self):
+        self._recover_ids = False
 
     @abstractmethod
     def getID(self, lon, lat, depth, time):
@@ -70,6 +85,7 @@ class SequentialIdGenerator(BaseIdGenerator):
         super(SequentialIdGenerator, self).__init__()
         self.released_ids = []
         self.next_id = np.uint64(0)
+        self._recover_ids = False
 
     def __del__(self):
         if len(self.released_ids) > 0:
@@ -87,6 +103,8 @@ class SequentialIdGenerator(BaseIdGenerator):
             return np.uint64(result)
 
     def releaseID(self, id):
+        if not self._recover_ids:
+            return
         self.released_ids.append(id)
 
     def preGenerateIDs(self, high_value):
@@ -127,6 +145,7 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._total_ids = 0
+        self._recover_ids = False
 
     def __del__(self):
         if self.local_ids is not None:
@@ -202,6 +221,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
         return id
 
     def _release_id(self, spatiotemporal_id, local_id):
+        if not self._recover_ids:
+            return
         if spatiotemporal_id not in self.released_ids.keys():
             self.released_ids[spatiotemporal_id] = []
         self.released_ids[spatiotemporal_id].append(local_id)
@@ -217,6 +238,7 @@ class GenerateID_Service(BaseIdGenerator):
         self._serverrank = 0
         self._request_tag = 5
         self._response_tag = 6
+        self._recover_ids = False
         self._use_subprocess = True
 
         if MPI:
@@ -311,6 +333,8 @@ class GenerateID_Service(BaseIdGenerator):
         return self.getID(lon, lat, depth, time)
 
     def releaseID(self, id):
+        if not self._recover_ids:
+            return
         if MPI and self._use_subprocess:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
