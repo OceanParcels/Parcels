@@ -320,6 +320,7 @@ class ParticleSetSOA(BaseParticleSet):
         return ParticleAccessorSOA(self)
 
     def __getattr__(self, name):
+        # Comment CK: this either a member function of the accessor or the collection - not the PSet itself
         if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
             return self.__dict__['particle_data'][name]
         elif name in self.__dict__:
@@ -328,6 +329,7 @@ class ParticleSetSOA(BaseParticleSet):
             return False
 
     def __getitem__(self, index):
+        # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
         self.p = self.data_accessor()
         self.p.set_index(index)
         return self.p
