@@ -3,7 +3,7 @@ from abc import ABC
 from abc import abstractmethod
 
 from .baseparticleset import BaseParticleAccessor
-from parcels.particle import ScipyParticle, JITParticle
+from parcels.particle import ScipyParticle
 
 """
 Author: Dr. Christian Kehl
@@ -424,5 +424,101 @@ class ParticleCollection(ABC):
         that have not otherwise been recovered.
         This methods in heavily dependent on the actual collection type and should be implemented very specific
         to the actual data structure, to remove objects 'the fastest way possible'.
+        """
+        pass
+
+    @abstractmethod
+    def merge(self, same_class=None):
+        """
+        This function merge two strictly equally-structured ParticleCollections into one. This can be, for example,
+        quite handy to merge two particle subsets that - due to continuous removal - become too small to be effective.
+
+        On the other hand, this function can also internally merge individual particles that are tagged by status as
+        being 'merged' (see the particle status for information on that).
+
+        In order to distinguish both use cases, we can evaluate the 'same_class' parameter. In cases where this is
+        'None', the merge operation semantically refers to an internal merge of individual particles - otherwise,
+        it performs a 2-collection merge.
+
+        Comment: the function can be simplified later by pre-evaluating the function parameter and then reference
+        the individual, specific functions for internal- or external merge.
+
+        The function shall return the merged ParticleCollection.
+        """
+        return None
+
+    @abstractmethod
+    def split(self, indices=None):
+        """
+        This function splits this collection into two disect equi-structured collections. The reason for it can, for
+        example, be that the set exceeds a pre-defined maximum number of elements, which for performance reasons
+        mandates a split.
+
+        On the other hand, this function can also internally split individual particles that are tagged byt status as
+        to be 'split' (see the particle status for information on that).
+
+        In order to distinguish both use cases, we can evaluate the 'indices' parameter. In cases where this is
+        'None', the split operation semantically refers to an internal split of individual particles - otherwise,
+        it performs a collection-split.
+
+        Comment: the function can be simplified later by pre-evaluating the function parameter and then reference
+        the individual, specific functions for element- or collection split.
+
+        The function shall return the newly created or extended Particle collection, i.e. either the collection that
+        results from a collection split or this very collection, containing the newly-split particles.
+        """
+        return None
+
+    def __str__(self):
+        """
+        This function returns and informative string about the collection (i.e. the type of collection) and a summary
+        of its internal, distinct values.
+        """
+        return "ParticleCollection - N: {}".format(self._ncount)
+
+    @abstractmethod
+    def toArray(self):
+        """
+        This function converts (or: transforms; reformats; translates) this collection into an array-like structure
+        (e.g. Python list or numpy nD array) that can be addressed by index. In the common case of 'no ID recovery',
+        the global ID and the index match exactly.
+
+        While this function may be very convenient for may users, it is STRONGLY DISADVISED to use the function to
+        often, and the performance- and memory overhead malus may be exceed any speed-up one could get from optimised
+        data structures - in fact, for large collections with an implicit-order structure (i.e. ordered lists, sets,
+        trees, etc.), this may be 'the most constly' function in any kind of simulation.
+
+        It can be - though - useful at the final stage of a simulation to dump the results to disk.
+        """
+        pass
+
+    def __len__(self):
+        """
+        This function returns the length, in terms of 'number of elements, of a collection.
+        """
+        return self._ncount
+
+    @abstractmethod
+    def __sizeof__(self):
+        """
+        This function returns the size in actual bytes required in memory to hold the collection. Ideally and simply,
+        the size is computed as follows:
+
+        sizeof(self) = len(self) * sizeof(pclass)
+        """
+        pass
+
+    def empty(self):
+        """
+        This function retuns a boolean value, expressing if a collection is emoty (i.e. does not [anymore] contain any
+        elements) or not.
+        """
+        return (self._ncount < 1)
+
+    @abstractmethod
+    def clear(self):
+        """
+        This function physically removes all elements of the collection, yielding an empty collection as result of the
+        operation.
         """
         pass
