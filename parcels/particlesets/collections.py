@@ -218,18 +218,45 @@ class ParticleCollection(ABC):
         assert type(id) in [np.int64, np.uint64], "Trying to remove a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
 
     def remove_same(self, same_class):
+        """
+        This function removes particles from this collection that are themselves stored in another object of an equi-
+        structured ParticleCollection. As the structures of both collections are the same, a more efficient M-in-N
+        removal can be applied without an in-between reformatting.
+        """
         assert same_class is not None, "Trying to remove another {} from this one, but the other one is None - invalid operation.".format(type(self))
         assert type(same_class) is type(self)
 
     def remove_collection(self, pcollection):
+        """
+        This function removes particles from this collection that are themselves stored in a ParticleCollection, which
+        is differently structured than this one. Tht means the removal first requires the removal-collection to be re-
+        formatted in an intermediary format, before executing the removal.
+        That said, this method should still be at least as efficient as a removal via common Python collections (i.e.
+        lists, dicts, numpy's nD arrays & dense arrays). Despite this, due to the reformatting, in some cases it may
+        be more efficient to remove items then rather by IDs oder indices.
+        """
         assert pcollection is not None, "Trying to remove another particle collection from this one, but the other one is None - invalid operation."
         assert isinstance(pcollection, ParticleCollection), "Trying to remove another particle collection from this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
 
     def remove_multi_by_PyCollection_Particles(self, pycollectionp):
+        """
+        This function removes particles from this collection, which are themselves in common Python collections, such as
+        lists, dicts and numpy structures. In order to perform the removal, we can either directly remove the referred
+        Particle instances (for internally-ordered collections, e.g. ordered lists, sets, trees) or we may need to parse
+        each instance for its index (for random-access structures), which results in a considerable performance malus.
+
+        For collections where removal-by-object incurs a performance malus, it is advisable to multi-remove particles
+        by indices or IDs.
+        """
         assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to remove a collection of Particles, but their container is not a valid Python-collection - invalid operation."
 
     def remove_multi_by_indices(self, indices):
+        """
+        This function removes particles from this collection based on their indices. This works best for random-access
+        collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
+        shall rather use a removal-via-object-reference strategy.
+        """
         assert indices is not None, "Trying to remove particles by their collection indices, but the index list is None - invalid operation."
         assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(indices) is not dict:
@@ -238,6 +265,11 @@ class ParticleCollection(ABC):
             assert indices.values()[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
 
     def remove_multi_by_IDs(self, ids):
+        """
+        This function removes particles from this collection based on their IDs. For collections where this removal
+        strategy would require a collection transformation or by-ID parsing, it is advisable to rather apply a removal-
+        by-objects or removal-by-indices scheme.
+        """
         assert ids is not None, "Trying to remove particles by their IDs, but the ID list is None - invalid operation."
         assert type(ids) in [list, dict, np.ndarray], "Trying to remove particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(ids) is not dict:
