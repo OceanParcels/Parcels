@@ -72,34 +72,42 @@ class ParticleAccessorSOA(BaseParticleAccessor):
 
 
 class ParticleSetIteratorSOA(BaseParticleSetIterator):
-    def __init__(self, pset, reverse=False):
+    def __init__(self, pset, reverse=False, subset=None):
         # super().__init__(pset)  # Do not actually need this
-        self._reverse = reverse
-        self.p = pset.data_accessor()
-        self.max_len = pset.size
-        if reverse:
-            self._index = self.max_len - 1
+
+        if subset is not None:
+            if type(subset[0]) not in [int, np.int32]:
+                raise TypeError("Iteration over a subset of particles in the"
+                                " particleset requires a list or numpy array"
+                                " of indices (of type int or np.int32).")
+            if reverse:
+                self._indices = subset.reverse()
+            else:
+                self._indices = subset
+            self.max_len = len(subset)
         else:
-            self._index = 0
+            self.max_len = len(pset)
+            if reverse:
+                self._indices = range(self.max_len - 1, -1, -1)
+            else:
+                self._indices = range(self.max_len)
+
+        self._reverse = reverse
+        self._index = 0
+        self.p = pset.data_accessor()
         self._head = pset.data_accessor()
         self._head.set_index(0)
         self._tail = pset.data_accessor()
         self._tail.set_index(self.max_len - 1)
 
     def __next__(self):
-        if not self._reverse and self._index < self.max_len:
-            self.p.set_index(self._index)
+        if self._index < self.max_len:
+            self.p.set_index(self._indices[self._index])
             result = self.p
             self._index += 1
             return result
-        # End of Iteration
-        raise StopIteration
 
-        if self._reverse and self._index >= 0:
-            self.p.set_index(self._index)
-            result = self.p
-            self._index -= 1
-            return result
+        # End of Iteration
         raise StopIteration
 
     @property
@@ -107,9 +115,9 @@ class ParticleSetIteratorSOA(BaseParticleSetIterator):
         return self.p
 
     def __repr__(self):
-        direction_str = 'Backward' if self._reverse else 'Forward'
-        return f"{direction_str} iteration at index {self._index} of" \
-               f" {self.max_len}."
+        dir_str = 'Backward' if self._reverse else 'Forward'
+        str = f"{dir_str} iteration at index {self._index} of {self.max_len}."
+        return str
 
 
 class ParticleSetSOA(BaseParticleSet):
