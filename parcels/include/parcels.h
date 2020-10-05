@@ -484,7 +484,12 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     status = getCell2D(f, xi[igrid], yi[igrid], ti[igrid], data2D, tii == 1); CHECKSTATUS(status);
   } else {
     if ((interp_method == BGRID_W_VELOCITY) && (gridindexingtype == MOM5)) {
-      status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid]-1, ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
+      if (zi[igrid] > 0) {
+        status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid]-1, ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
+      } else {
+        status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
+        zeta = 0;
+      }
     } else {
       status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
     }

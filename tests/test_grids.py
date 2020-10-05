@@ -824,7 +824,7 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
         particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
         particle.depth += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
 
-    pset = ParticleSet(fieldset, pclass=MyParticle, depth=4e3, lon=0, lat=0, time=0)
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D_swappedUW,
                  runtime=delta(hours=14), dt=delta(minutes=5))

@@ -936,7 +936,7 @@ class Field(object):
             elif self.interp_method == 'bgrid_w_velocity':
                 eta = 1.
                 xsi = 1.
-            if self.interp_method == 'bgrid_w_velocity' and self.gridindexingtype == 'mom5':
+            if (self.interp_method == 'bgrid_w_velocity') and (self.gridindexingtype == 'mom5') and (zi > 0):
                 data = self.data[ti, zi-1, :, :]
             else:
                 data = self.data[ti, zi, :, :]
