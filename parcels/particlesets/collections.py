@@ -167,9 +167,9 @@ class Collection(ABC):
         elif type(other) in [list, dict, np.ndarray]:
             # multi-removal routines - hard to discern at this point
             if type(other) is not dict:
-                if other[0] in [int, np.int32]:
+                if type(other[0]) in [int, np.int32]:
                     self.remove_multi_by_indices(other)
-                elif other[0] in [np.int64, np.uint64]:
+                elif type(other[0]) in [np.int64, np.uint64]:
                     self.remove_multi_by_IDs(other)
                 else:
                     self.remove_multi_by_PyCollection_Particles(other)
@@ -321,9 +321,9 @@ class Collection(ABC):
         elif type(other) in [list, dict, np.ndarray]:
             # multi-removal routines - hard to discern at this point
             if type(other) is not dict:
-                if other[0] in [int, np.int32]:
+                if type(other[0]) in [int, np.int32]:
                     self.pop_multi_by_indices(other)
-                elif other[0] in [np.int64, np.uint64]:
+                elif type(other[0]) in [np.int64, np.uint64]:
                     self.pop_multi_by_IDs(other)
             else:
                 if other.values()[0] in [int, np.int32]:
