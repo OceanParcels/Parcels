@@ -23,7 +23,7 @@ example_data_files = (
     + ["OFAM_example_data/" + fn for fn in [
         "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
     + ["Peninsula_data/" + fn for fn in [
-        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]]
+        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc", "peninsulaT.nc"]]
     + ["GlobCurrent_example_data/" + fn for fn in [
         "%s000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc" % (
             date.strftime("%Y%m%d"))
