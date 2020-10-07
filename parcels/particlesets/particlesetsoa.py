@@ -7,12 +7,9 @@ from datetime import timedelta as delta
 import numpy as np
 import xarray as xr
 from operator import attrgetter
-import progressbar
 
 from parcels.compiler import GNUCompiler
 from parcels.field import Field
-from parcels.field import NestedField
-from parcels.field import SummedField
 from parcels.grid import GridCode
 from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
@@ -263,8 +260,11 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
         self.p.set_index(index)
         return self.p
 
-    @property
-    def ctypes_struct(self):
+    def cstruct(self):
+        """
+        'cstruct' returns the ctypes mapping of the combined collections cstruct and the fieldset cstruct.
+        This depends on the specific structure in question.
+        """
         class CParticles(Structure):
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self.ptype.variables]
 
@@ -277,69 +277,19 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
         cstruct = CParticles(*cdata)
         return cstruct
 
-    @classmethod
-    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
-        """Initialise the ParticleSet from lists of lon and lat
-
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param lon: List of initial longitude values for particles
-        :param lat: List of initial latitude values for particles
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
-        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
-       """
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
+    @property
+    def ctypes_struct(self):
+        return self.cstruct()
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
-        """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
-        Note that this method uses simple numpy.linspace calls and does not take into account
-        great circles, so may not be a exact on a globe
-
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param start: Starting point for initialisation of particles on a straight line.
-        :param finish: End point for initialisation of particles on a straight line.
-        :param size: Initial size of particle set
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+    def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
         """
+        Converts a starting field into a monte-carlo sample of lons and lats.
 
-        lon = np.linspace(start[0], finish[0], size)
-        lat = np.linspace(start[1], finish[1], size)
-        if type(depth) in [int, float]:
-            depth = [depth] * size
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
+        :param start_field: :mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
 
-    @classmethod
-    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
-        """Initialise the ParticleSet randomly drawn according to distribution from a field
-
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param start_field: Field for initialising particles stochastically (horizontally)  according to the presented density field.
-        :param size: Initial size of particle set
-        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
+        returns list(lon), list(lat)
         """
-
         if mode == 'monte_carlo':
             data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
             if start_field.interp_method == 'cgrid_tracer':
@@ -376,7 +326,27 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+    @classmethod
+    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+        """Initialise the ParticleSet randomly drawn according to distribution from a field
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start_field: Field for initialising particles stochastically (horizontally)  according to the presented density field.
+        :param size: Initial size of particle set
+        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
+        :param depth: Optional list of initial depth values for particles. Default is 0m
+        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        """
+        lon, lat = cls.monte_carlo_sample(start_field, mode)
+
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
+                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -447,17 +417,6 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
-    @staticmethod
-    def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
-            for f in field:
-                if f.interp_method == 'cgrid_velocity':
-                    return np.float64
-        else:
-            if field.interp_method == 'cgrid_velocity':
-                return np.float64
-        return np.float32
-
     def to_dict(self, pfile, time, deleted_only=False):
         """
         Convert all Particle data from one time step to a python dictionary.
@@ -527,17 +486,6 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
     def __iadd__(self, particles):
         self.add(particles)
         return self
-
-    def __create_progressbar(self, starttime, endtime):
-        pbar = None
-        try:
-            pbar = progressbar.ProgressBar(max_value=abs(endtime - starttime)).start()
-        except:  # for old versions of progressbar
-            try:
-                pbar = progressbar.ProgressBar(maxvalue=abs(endtime - starttime)).start()
-            except:  # for even older OR newer versions
-                pbar = progressbar.ProgressBar(maxval=abs(endtime - starttime)).start()
-        return pbar
 
     def add(self, particles):
         """Method to add particles to the ParticleSet"""
