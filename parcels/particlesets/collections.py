@@ -34,6 +34,81 @@ class Collection(ABC):
     def ncount(self):
         return self._ncount
 
+    @abstractmethod
+    def __getitem__(self, item):
+        """
+        This function should return an item [accessor, as reference] at a certain 'position', in the sense of
+
+        item_ref = collection_object[<some_indexing_concept>]
+
+        The actual return and implementation of this will depend on the specific collection at hand. Ideally, this
+        function demands as 'key' an object that matches the most-performant access method, i.e.
+
+        ordered lists, sets, trees -> getitem(key = [int64, uint64] id) -> operates on a list-iterator
+        arrays, vectors, dense arrays & matrices -> getitem(key = [int, int32] index) -> operates on an index-managed iterator
+
+        Out of performance reasons, there should be no alternative getitem with other positional arguments than the
+        optimal one.
+        """
+        pass
+
+    @abstractmethod
+    def __iter__(self):
+        """
+        This function represents a forward-iteration over the collection, the the sense it is called
+
+        for item in collection_object:
+            <do something>
+
+        In this sense, this function (if actually being implemented as such - which is not necessarily the sensible case
+        for every collection) would here return an iterator (either re-created or persistent; preferably created anew).
+
+        For iterating over a collection, it is possible to 'iterate' over an iterator, such that:
+
+        collection_iterator = collection_object.iterator()
+        for item in collection_iterator:
+            <do something>
+        """
+        pass
+
+    def iterator(self):
+        """
+        This function is an explicit object-return of a forward-iterator over this collection. If this iterator is
+        persistent or re-created upon call depends on the specific implementation of the '__iter__' function.
+
+        This function is an explicit forward to the Collection::__iter__() member function.
+        """
+        return self.__iter__()
+
+    @abstractmethod
+    def __reversed__(self):
+        """
+        This function represents a backward-iteration over the collection, the the sense it is called
+
+        for item in reversed(collection_object):
+            <do something>
+
+        In this sense, this function (if actually being implemented as such - which is not necessarily the sensible case
+        for every collection) would here return a reverse-iterator (either re-created or persistent; preferably created
+        anew).
+
+        For iterating over a collection, it is possible to 'iterate' over an iterator, such that:
+
+        collection_iterator = collection_object.reverse_iterator()
+        for item in collection_iterator:
+            <do something>
+        """
+        pass
+
+    def reverse_iterator(self):
+        """
+        This function is an explicit object-return of a backward-iterator over this collection. If this iterator is
+        persistent or re-created upon call depends on the specific implementation of the '__reversed__' function.
+
+        This function is an explicit forward to the Collection::__reversed__() member function.
+        """
+        return self.__reversed__()
+
     def __add__(self, other):
         """
         This is a generic super-method to add one- or multiple objects to this collection. Ideally, it just discerns
@@ -136,15 +211,71 @@ class Collection(ABC):
         """
         pass
 
+    @abstractmethod
+    def __delitem__(self, key):
+        """
+        This is the high-performance method to delete a specific object from this collection.
+        As the most-performant way depends on the specific collection in question, the function is abstract.
+
+        Highlight for the specific implementation:
+        The 'key' parameter should still be evaluated for being a single or a multi-entry delete, and needs to check
+        that it received the correct type of 'indexing' argument (i.e. index, id or iterator).
+        """
+        pass
+
+    def delete(self, key):
+        """
+        This is the generic super-method to indicate obejct deletion of a specific object from this collection.
+
+        Comment/Annotation:
+        Functions for deleting multiple objects are more specialised than just a for-each loop of single-item deletion,
+        because certain data structures can delete multiple objects in-bulk faster with specialised function than making a
+        roundtrip per-item delete operation. Because of the sheer size of those containers and the resulting
+        performance demands, we need to make use of those specialised 'del' functions, where available.
+        """
+        if key is None:
+            return
+        if type(key) in [int, np.int32]:
+            self.delete_by_index(key)
+        elif type(key) in [np.int64, np.uint64]:
+            self.delete_by_ID(key)
+
+    @abstractmethod
+    def delete_by_index(self, index):
+        """
+        This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
+        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+        is handled by 'recovery' dictionary during simulation execution.
+        """
+        pass
+
+    @abstractmethod
+    def delete_by_ID(self, id):
+        """
+        This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
+        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+        is handled by 'recovery' dictionary during simulation execution.
+        """
+        pass
+
     def __sub__(self, other):
         """
-        This is a generic super-method to remove one- or multiple Particles (via their object, their ParticleAccessor,
+        This is a high-performance method to remove an object (via their object, their ParticleAccessor,
         their ID or their index) from the collection. As the function applies to collections itself, it maps directly
         to:
 
         a-b -> a.remove(b)
         """
-        self.remove(other)
+        if other is None:
+            return
+        if type(other) is type(self):
+            self.remove_same(other)
+        elif isinstance(other, ParticleCollection):
+            self.remove_collection(other)
 
     def remove(self, other):
         """
@@ -379,46 +510,6 @@ class Collection(ABC):
         else:
             assert ids.values()[0] in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         return None
-
-    def __delitem__(self, key):
-        """
-        This is a generic super-method to delete a specific object from this collection. Ideally, it just discerns
-        between the types of the 'key' parameter, and then forwards the call to the related specific function.
-
-        Comment/Annotation:
-        Functions for deleting multiple objects are more specialised than just a for-each loop of single-item deletion,
-        because certain data structures can delete multiple objects in-bulk faster with specialised function than making a
-        roundtrip per-item delete operation. Because of the sheer size of those containers and the resulting
-        performance demands, we need to make use of those specialised 'del' functions, where available.
-        """
-        if key is None:
-            return
-        if type(key) in [int, np.int32]:
-            self.delete_by_index(key)
-        elif type(key) in [np.int64, np.uint64]:
-            self.delete_by_ID(key)
-
-    @abstractmethod
-    def delete_by_index(self, index):
-        """
-        This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
-        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
-        """
-        pass
-
-    @abstractmethod
-    def delete_by_ID(self, id):
-        """
-        This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
-        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
-        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
-        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
-        is handled by 'recovery' dictionary during simulation execution.
-        """
-        pass
 
     @abstractmethod
     def _clear_deleted_(self):
