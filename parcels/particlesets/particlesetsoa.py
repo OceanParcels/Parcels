@@ -477,8 +477,8 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
         return np.float32
 
     def to_dict(self, pfile, time, deleted_only=False):
-        """Convert all Particle data from one time step to a python dictionary.
-
+        """
+        Convert all Particle data from one time step to a python dictionary.
         :param pfile: ParticleFile object requesting the conversion
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
@@ -844,7 +844,8 @@ def search_kernel(particle, fieldset, time):
         return ParticleFile(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):
-        """Method to set the write status of a Variable
+        """
+        Method to set the write status of a Variable
         :param var: Name of the variable (string)
         :param status: Write status of the variable (True, False or 'once')
         """
