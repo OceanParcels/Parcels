@@ -1,8 +1,8 @@
 import numpy as np
 
 from .collections import ParticleCollection
-from .baseparticleset import BaseParticleAccessor
-from .baseparticleset import BaseParticleCollectionIterator
+from .iterators import BaseParticleAccessor
+from .iterators import BaseParticleCollectionIterator
 # from parcels.particle import ScipyParticle
 
 """
