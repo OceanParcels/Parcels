@@ -18,9 +18,8 @@ from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
-from parcels.particlesets.baseparticleset import BaseParticleSet
-from parcels.particlesets.baseparticleset import BaseParticleAccessor
-from parcels.particlesets.baseparticleset import BaseParticleSetIterator
+from .baseparticleset import BaseParticleSet
+from .soa import ParticleCollectionSOA
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
@@ -48,79 +47,7 @@ def _to_write_particles(pd, time):
             & (np.isfinite(pd['time'])))
 
 
-class ParticleAccessorSOA(BaseParticleAccessor):
-    def __init__(self, pset):
-        super().__init__(pset)
-
-    def __getattr__(self, name):
-        return self.pset.particle_data[name][self._index]
-
-    def __setattr__(self, name, value):
-        if name in ['pset', '_index']:
-            object.__setattr__(self, name, value)
-        else:
-            # avoid recursion
-            self.pset.particle_data[name][self._index] = value
-
-    def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
-        str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
-        for var in self.pset.ptype.variables:
-            if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
-                str += "%s=%f, " % (var.name, getattr(self, var.name))
-        return str + "time=%s)" % time_string
-
-
-class ParticleSetIteratorSOA(BaseParticleSetIterator):
-    def __init__(self, pset, reverse=False, subset=None):
-        # super().__init__(pset)  # Do not actually need this
-
-        if subset is not None:
-            if type(subset[0]) not in [int, np.int32]:
-                raise TypeError("Iteration over a subset of particles in the"
-                                " particleset requires a list or numpy array"
-                                " of indices (of type int or np.int32).")
-            if reverse:
-                self._indices = subset.reverse()
-            else:
-                self._indices = subset
-            self.max_len = len(subset)
-        else:
-            self.max_len = len(pset)
-            if reverse:
-                self._indices = range(self.max_len - 1, -1, -1)
-            else:
-                self._indices = range(self.max_len)
-
-        self._reverse = reverse
-        self._index = 0
-        self.p = pset.data_accessor()
-        self._head = pset.data_accessor()
-        self._head.set_index(0)
-        self._tail = pset.data_accessor()
-        self._tail.set_index(self.max_len - 1)
-
-    def __next__(self):
-        if self._index < self.max_len:
-            self.p.set_index(self._indices[self._index])
-            result = self.p
-            self._index += 1
-            return result
-
-        # End of Iteration
-        raise StopIteration
-
-    @property
-    def current(self):
-        return self.p
-
-    def __repr__(self):
-        dir_str = 'Backward' if self._reverse else 'Forward'
-        str = f"{dir_str} iteration at index {self._index} of {self.max_len}."
-        return str
-
-
-class ParticleSetSOA(BaseParticleSet):
+class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
     """Container class for storing particle and executing kernel over them.
 
     Please note that this currently only supports fixed size particle sets.
@@ -318,14 +245,8 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
-    def __iter__(self):
-        return ParticleSetIteratorSOA(self)
-
-    def __reversed__(self):
-        return ParticleSetIteratorSOA(self, True)
-
-    def data_accessor(self):
-        return ParticleAccessorSOA(self)
+    # def data_accessor(self):
+        # return ParticleAccessorSOA(self)
 
     def __getattr__(self, name):
         # Comment CK: this either a member function of the accessor or the collection - not the PSet itself
