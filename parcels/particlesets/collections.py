@@ -17,8 +17,8 @@ class Collection(ABC):
     @abstractmethod
     def __init__(self):
         """
-        ParticleCollection - Constructor
-        Initializes a particle collection by pre-allocating memory (where needed), initialising indexing structures
+        Collection - Constructor
+        Initializes a collection by pre-allocating memory (where needed), initialising indexing structures
         (where needed), initialising iterators and preparing the C-JIT-glue.
         """
         pass
@@ -26,7 +26,7 @@ class Collection(ABC):
     @abstractmethod
     def __del__(self):
         """
-        ParticleCollection - Destructor
+        Collection - Destructor
         """
         pass
 
@@ -620,9 +620,6 @@ class Collection(ABC):
 
 
 class ParticleCollection(ABC, Collection):
-    """
-    TODO: Class and memmber functions still require appropriate docstrings
-    """
     _pu_indicators = None  # formerly: partitions
     _pu_centers = None
     _offset = 0
@@ -632,7 +629,13 @@ class ParticleCollection(ABC, Collection):
     _data = None  # formerly: particle_data
 
     def __init__(self):
-        # super(Collection, self).__init__()    # -> function is abstract, so it cannot be called upon
+        """
+        ParticleCollection - Constructor
+        Initializes a particle collection by pre-allocating memory (where needed), initialising indexing structures
+        (where needed), initialising iterators (if maintaining a persistent iterator) and preparing the C-JIT-glue.
+
+        Furthermore, initialising the PU distribution and its distribution metrics.
+        """
         self._ncount = -1
         self._pu_indicators = None  # formerly: partitions
         self._pu_centers = None
@@ -643,46 +646,104 @@ class ParticleCollection(ABC, Collection):
         self._data = None  # formerly: particle_data
 
     def __del__(self):
-        # super(Collection, self).__del__()    # -> function is abstract, so it cannot be called upon
+        """
+        ParticleCollection - Destructor
+        """
         pass
 
     @property
     def pu_indicators(self):
+        """
+        The 'pu_indicator' is an [array or dictionary]-of-indicators, where each indicator entry tells per item
+        (i.e. particle) in the collection to which processing unit (PU) in a parallelised setup it belongs to.
+        """
         return self._pu_indicators
 
     @property
     def pu_centers(self):
+        """
+        The 'pu_centers" is an array of 2D/3D vectors storing the center of each cluster-of-particle partion that
+        is handled by the respective PU. Storing the centers allows us to only run the initial kMeans segmentation
+        once and then, on later particle additions, just (i) makes a closest-distance calculation, (ii) attaches the
+        new particle to the closest cluster and (iii) updates the new cluster center. The last part may require at some
+        point to merge overlaying clusters and them split them again in equi-sized partions.
+        """
         return self._pu_centers
 
     @property
     def pclass(self):
+        """
+        'pclass' stores the actual class type of the particles allocated and managed in this collection
+        """
         return self._pclass
 
     @property
     def ptype(self):
+        """
+        'ptype' returns an instance of the particular type of class 'ParticleType' of the particle class of the particles
+        in this collection.
+
+        basically:
+        pytpe -> pclass().getPType()
+        """
         return self._ptype
 
     @property
     def latlondepth_dtype(self):
+        """
+        'latlondepth_dtype' stores the numeric data type that is used to represent the lon, lat and depth of a particle.
+        This can be either 'float32' (default) or 'float64'
+        """
         return self._latlondepth_dtype
 
     @property
     def data(self):
+        """
+        'data' is a reference to the actual barebone-storage of the particle data, and thus depends directly on the
+        specific collection in question.
+        """
         return self._data
 
     @property
     def particle_data(self):
+        """
+        'particle_data' is a reference to the actual barebone-storage of the particle data, and thus depends directly on the
+        specific collection in question. This property is just available for convenience and backward-compatibility, and
+        this returns the same as 'data'.
+        """
         return self._data
 
     @abstractmethod
     def cstruct(self):
+        """
+        'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
+        """
         pass
 
     @abstractmethod
     def toDictionary(self):     # formerly: ParticleSet.to_dict()
+        """
+        Convert all Particle data from one time step to a python dictionary.
+        :param pfile: ParticleFile object requesting the conversion
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        returns two dictionaries: one for all variables to be written each outputdt,
+         and one for all variables to be written once
+
+         This function depends on the specific collection in question and thus needs to be specified in specific
+         derivatives classes.
+        """
         pass
 
     @abstractmethod
     def set_variable_write_status(self):
+        """
+        Method to set the write status of a Variable
+        :param var: Name of the variable (string)
+        :param status: Write status of the variable (True, False or 'once')
+
+         This function depends on the specific collection in question and thus needs to be specified in specific
+         derivatives classes.
+        """
         pass
 
