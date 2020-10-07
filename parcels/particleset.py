@@ -39,8 +39,8 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt/2
     """
-    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+    return (np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+            & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
@@ -282,7 +282,7 @@ class ParticleSet(object):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.size):
-                        if np.isnan(time[i]):
+                        if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                                'Add a "time=" to ParticleSet construction')
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
