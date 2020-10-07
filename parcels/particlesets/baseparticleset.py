@@ -1,44 +1,20 @@
 import numpy as np
 from abc import ABC
 from abc import abstractmethod
+import warnings
 
 from parcels.tools.statuscodes import OperationCode
-
-
-class ParticleCollection(ABC):
-    """Interface."""
-    @abstractmethod
-    def __iter__(self):
-        """Returns an Iterator that allows for forward iteration over the
-        elements in the ParticleCollection (e.g. `for p in pset:`).
-        """
-        pass
-
-    def __reversed__(self):
-        """Returns an Iterator that allows for backwards iteration over
-        the elements in the ParticleCollection (e.g.
-        `for p in reversed(pset):`).
-        """
-        pass
-
-    @abstractmethod
-    def __sizeof__(self):
-        pass
-
-    @abstractmethod
-    def __len__(self):
-        """Reports the number of elements (particles) in the collection.
-        """
-        pass
+from .collections import ParticleCollection
 
 
 class NDCluster(ABC):
     """Interface."""
 
 
-class BaseParticleSetIterator(ABC):
-    """Interface for the ParticleSet iterator. Provides the ability to
-    iterate over the particles in the ParticleSet."""
+class BaseParticleCollectionIterator(ABC):
+    """Interface for the ParticleCollection iterator. Provides the
+    ability to iterate over the particles in the ParticleCollection.
+    """
     def ___init___(self):
         self._head = None
         self._tail = None
@@ -74,11 +50,11 @@ class BaseParticleSetIterator(ABC):
 class BaseParticleAccessor(ABC):
     """Interface for the ParticleAccessor. Implements a wrapper around
     particles to provide easy access."""
-    def __init__(self, pset):
+    def __init__(self, pcoll):
         """Initialize the ParticleAccessor object with at least a
         reference to the ParticleSet it encapsulates.
         """
-        self.pset = pset
+        self.pcoll = pcoll
 
     def set_index(self, index):
         # Convert into a "proper" property?
@@ -128,10 +104,15 @@ class BaseParticleAccessor(ABC):
 
 class BaseParticleSet(ParticleCollection, NDCluster):
     """Base ParticleSet."""
-    @abstractmethod
     def data_accessor(self):
-        """Returns an Accessor for the particles in this ParticleSet."""
-        pass
+        """Returns an Accessor for the particles in this ParticleSet.
+        Deprecated - the accessor must not be manipulated directly.
+        """
+        warnings.warn(
+            "This method of accessing particle data is deprecated",
+            DeprecationWarning,
+            stacklevel=2
+        )
 
     @abstractmethod
     def execute(self, pyfunc, endtime, runtime, dt, moviedt, recovery,
