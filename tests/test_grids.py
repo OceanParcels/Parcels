@@ -830,8 +830,7 @@ def test_bgrid_interpolation(gridindexingtype, mode, surface):
                       "V": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
                       "W": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"}}
 
-        fieldset = FieldSet.from_b_grid_dataset(filenames, variables, dimensions, gridindexingtype="mom5")
-        fieldset.W.set_scaling_factor(-1)
+        fieldset = FieldSet.from_mom5(filenames, variables, dimensions)
         ds_u = xr.open_dataset(ufile)
         ds_v = xr.open_dataset(vfile)
         ds_w = xr.open_dataset(wfile)
