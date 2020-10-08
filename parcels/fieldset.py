@@ -682,8 +682,8 @@ class FieldSet(object):
 
     @classmethod
     def from_mom5(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
-                 allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+                  allow_time_extrapolation=None, time_periodic=False,
+                  tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of MOM5 fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
