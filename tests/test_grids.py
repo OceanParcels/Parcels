@@ -803,7 +803,6 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
         radius = Variable('radius', dtype=np.float32, initial=0.)
         radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
 
-
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
