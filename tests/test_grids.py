@@ -755,12 +755,10 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
         dimensions = {"lon": lon, "lat": lat, "depth": depth}
         dsize = (depth.size, lat.size, lon.size)
 
-    vindex_signs = {'pop': 0, 'mom5': 1}
+    vindex_signs = {'pop': -1, 'mom5': 1}
     vsign = vindex_signs[gridindexingtype]
 
     def calc_r_phi(ln, dp):
-        # r = np.sqrt(ln ** 2 + dp ** 2)
-        # phi = np.arcsin(dp/r) if r > 0 else 0
         return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
 
     def calculate_UVWR(lat, lon, depth, dx, dz, omega):
@@ -777,12 +775,15 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
                         R[:, k, j, i] = r
                     else:
                         R[k, j, i] = r
-                    r, phi = calc_r_phi(lon[i] - dx / 2, depth[k] + vsign * dz)
+                    r, phi = calc_r_phi(lon[i] - dx / 2, depth[k])
                     if withtime:
                         W[:, k, j, i] = omega * r * np.cos(phi)
                     else:
                         W[k, j, i] = omega * r * np.cos(phi)
-                    r, phi = calc_r_phi(lon[i], depth[k] + dz / 2)
+                    # Since Parcels loads as dimensions only the depth of W-points
+                    # and lon/lat of UV-points, W-points are similarly interpolated
+                    # in MOM5 and POP. Indexing is shifted for UV-points.
+                    r, phi = calc_r_phi(lon[i], depth[k] + vsign * dz / 2)
                     if withtime:
                         U[:, k, j, i] = -omega * r * np.sin(phi)
                     else:
