@@ -483,16 +483,7 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     // (rather than both)
     status = getCell2D(f, xi[igrid], yi[igrid], ti[igrid], data2D, tii == 1); CHECKSTATUS(status);
   } else {
-    if ((interp_method == BGRID_W_VELOCITY) && (gridindexingtype == MOM5)) {
-      if (zi[igrid] > 0) {
-        status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid]-1, ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
-      } else {
-        status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
-        zeta = 0;
-      }
-    } else {
-      status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
-    }
+    status = getCell3D(f, xi[igrid], yi[igrid], zi[igrid], ti[igrid], data3D, tii == 1); CHECKSTATUS(status);
   }
 
   // define a helper macro that will select the appropriate interpolation method
@@ -526,7 +517,11 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
         eta = 0;
       }
     } else if (interp_method == BGRID_VELOCITY) {
-      zeta = 0;
+      if (gridindexingtype == MOM5) {
+        zeta = 1;
+      } else {
+        zeta = 0;
+      }
     }
 
     INTERP(spatial_interpolation_bilinear, spatial_interpolation_trilinear);

@@ -932,22 +932,19 @@ class Field(object):
                 return (1 - zeta) * f0 + zeta * f1
         elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
             if self.interp_method == 'bgrid_velocity':
-                zeta = 0.
+                if self.gridindexingtype == 'mom5':
+                    zeta = 1.
+                else:
+                    zeta = 0.
             elif self.interp_method == 'bgrid_w_velocity':
                 eta = 1.
                 xsi = 1.
-            if (self.interp_method == 'bgrid_w_velocity') and (self.gridindexingtype == 'mom5') and (zi > 0):
-                data = self.data[ti, zi-1, :, :]
-            else:
-                data = self.data[ti, zi, :, :]
+            data = self.data[ti, zi, :, :]
             f0 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
-            if self.interp_method == 'bgrid_w_velocity' and self.gridindexingtype == 'mom5':
-                data = self.data[ti, zi, :, :]
-            else:
-                data = self.data[ti, zi+1, :, :]
+            data = self.data[ti, zi+1, :, :]
             f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
