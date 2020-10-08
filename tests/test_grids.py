@@ -811,7 +811,8 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_mom5_interpolation(mode):
+@pytest.mark.parametrize('surface', [True, False])
+def test_mom5_interpolation(mode, surface):
     ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
     vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
     wfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
@@ -840,9 +841,10 @@ def test_mom5_interpolation(mode):
     ds_v = xr.open_dataset(vfile)
     ds_w = xr.open_dataset(wfile)
 
-    u_point = ds_u.u.isel(time=0, st_ocean=2, yu_ocean=2, xu_ocean=5)
-    v_point = ds_v.v.isel(time=0, st_ocean=2, yu_ocean=2, xu_ocean=5)
-    w_point = ds_w.wt.isel(time=0, sw_ocean=3, yt_ocean=2, xt_ocean=5)
+    zi = 2 if not surface else 0
+    u_point = ds_u.u.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
+    v_point = ds_v.v.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
+    w_point = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=2, xt_ocean=5)
 
     class myParticle(ptype[mode]):
         Uvel = Variable("Uvel", dtype=np.float32, initial=0.0)
@@ -862,6 +864,8 @@ def test_mom5_interpolation(mode):
             lons = w_point.xt_ocean.data.reshape(1)
             lats = w_point.yt_ocean.data.reshape(1)
             deps = w_point.sw_ocean.data.reshape(1)
+        if surface:
+            deps = 0
 
         pset = ParticleSet.from_list(fieldset=fieldset, pclass=myParticle, lon=lons, lat=lats, depth=deps)
 
@@ -870,4 +874,7 @@ def test_mom5_interpolation(mode):
             assert np.allclose(pset.Uvel[0], u_point)
             assert np.allclose(pset.Vvel[0], v_point)
         elif pointtype == "W":
-            assert np.allclose(pset.Wvel[0], -w_point)
+            if surface:
+                assert np.allclose(pset.Wvel[0], 0)
+            else:
+                assert np.allclose(pset.Wvel[0], -w_point)
