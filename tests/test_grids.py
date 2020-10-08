@@ -734,10 +734,6 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('withtime', [False, True])
 def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
-    """
-    Similar to test_mitgridindexing_3D, but here U and W are swapped,
-    also in the RK4 kernel, to allow for vertical gradients in W.
-    """
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -755,7 +751,7 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
         dimensions = {"lon": lon, "lat": lat, "depth": depth}
         dsize = (depth.size, lat.size, lon.size)
 
-    vindex_signs = {'pop': -1, 'mom5': 1}
+    vindex_signs = {'pop': 1, 'mom5': -1}
     vsign = vindex_signs[gridindexingtype]
 
     def calc_r_phi(ln, dp):
@@ -777,17 +773,17 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
                         R[k, j, i] = r
                     r, phi = calc_r_phi(lon[i] - dx / 2, depth[k])
                     if withtime:
-                        W[:, k, j, i] = omega * r * np.cos(phi)
+                        W[:, k, j, i] = -omega * r * np.sin(phi)
                     else:
-                        W[k, j, i] = omega * r * np.cos(phi)
+                        W[k, j, i] = -omega * r * np.sin(phi)
                     # Since Parcels loads as dimensions only the depth of W-points
                     # and lon/lat of UV-points, W-points are similarly interpolated
                     # in MOM5 and POP. Indexing is shifted for UV-points.
                     r, phi = calc_r_phi(lon[i], depth[k] + vsign * dz / 2)
                     if withtime:
-                        U[:, k, j, i] = -omega * r * np.sin(phi)
+                        U[:, k, j, i] = omega * r * np.cos(phi)
                     else:
-                        U[k, j, i] = -omega * r * np.sin(phi)
+                        U[k, j, i] = omega * r * np.cos(phi)
         return U, V, W, R
 
     U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
@@ -807,27 +803,10 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
         radius = Variable('radius', dtype=np.float32, initial=0.)
         radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
 
-    def AdvectionRK4_3D_swappedUW(particle, fieldset, time):
-        (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
-        lon1 = particle.lon + w1*.5*particle.dt
-        lat1 = particle.lat + v1*.5*particle.dt
-        dep1 = particle.depth + u1*.5*particle.dt
-        (u2, v2, w2) = fieldset.UVW[time + .5 * particle.dt, dep1, lat1, lon1]
-        lon2 = particle.lon + w2*.5*particle.dt
-        lat2 = particle.lat + v2*.5*particle.dt
-        dep2 = particle.depth + u2*.5*particle.dt
-        (u3, v3, w3) = fieldset.UVW[time + .5 * particle.dt, dep2, lat2, lon2]
-        lon3 = particle.lon + w3*particle.dt
-        lat3 = particle.lat + v3*particle.dt
-        dep3 = particle.depth + u3*particle.dt
-        (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3]
-        particle.lon += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt
-        particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
-        particle.depth += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
 
     pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
 
-    pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D_swappedUW,
+    pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
