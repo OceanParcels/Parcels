@@ -810,41 +810,53 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
 
 
+@pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('surface', [True, False])
-def test_mom5_interpolation(mode, surface):
-    ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
-    vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
-    wfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
+def test_bgrid_interpolation(gridindexingtype, mode, surface):
+    zi = 2 if not surface else 0
+    if gridindexingtype == 'mom5':
+        ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
+        vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
+        wfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
 
-    filenames = {"U": {"lon": ufile, "lat": ufile, "depth": wfile, "data": ufile},
-                 "V": {"lon": ufile, "lat": ufile, "depth": wfile, "data": vfile},
-                 "W": {"lon": ufile, "lat": ufile, "depth": wfile, "data": wfile}}
+        filenames = {"U": {"lon": ufile, "lat": ufile, "depth": wfile, "data": ufile},
+                     "V": {"lon": ufile, "lat": ufile, "depth": wfile, "data": vfile},
+                     "W": {"lon": ufile, "lat": ufile, "depth": wfile, "data": wfile}}
 
-    variables = {"U": "u", "V": "v", "W": "wt"}
+        variables = {"U": "u", "V": "v", "W": "wt"}
 
-    dimensions = {"U": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
-                  "V": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
-                  "W": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"}}
+        dimensions = {"U": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
+                      "V": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
+                      "W": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"}}
 
-    fieldset = FieldSet.from_b_grid_dataset(filenames, variables, dimensions, gridindexingtype="mom5")
+        fieldset = FieldSet.from_b_grid_dataset(filenames, variables, dimensions, gridindexingtype="mom5")
+        fieldset.W.set_scaling_factor(-1)
+        ds_u = xr.open_dataset(ufile)
+        ds_v = xr.open_dataset(vfile)
+        ds_w = xr.open_dataset(wfile)
+        u = ds_u.u.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
+        v = ds_v.v.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
+        w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=2, xt_ocean=5)
+
+    elif gridindexingtype == 'pop':
+        filename = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
+        variables = {'U': 'U', 'V': 'V', 'W': 'W'}
+        dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': 'w_dep', 'time': 'time'}
+
+        fieldset = FieldSet.from_pop(filename, variables, dimensions)
+        ds = xr.open_dataset(filename)
+        u = ds.U.isel(time=0, depth_t=zi, lat=2, lon=3)
+        v = ds.V.isel(time=0, depth_t=zi, lat=2, lon=3)
+        w = ds.W.isel(time=0, depth_t=zi, lat=2, lon=3)
+
     fieldset.U.units = UnitConverter()
     fieldset.V.units = UnitConverter()
-    fieldset.W.set_scaling_factor(-1)
 
     def VelocityInterpolator(particle, fieldset, time):
         particle.Uvel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
         particle.Vvel = fieldset.V[time, particle.depth, particle.lat, particle.lon]
         particle.Wvel = fieldset.W[time, particle.depth, particle.lat, particle.lon]
-
-    ds_u = xr.open_dataset(ufile)
-    ds_v = xr.open_dataset(vfile)
-    ds_w = xr.open_dataset(wfile)
-
-    zi = 2 if not surface else 0
-    u_point = ds_u.u.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
-    v_point = ds_v.v.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
-    w_point = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=2, xt_ocean=5)
 
     class myParticle(ptype[mode]):
         Uvel = Variable("Uvel", dtype=np.float32, initial=0.0)
@@ -852,29 +864,34 @@ def test_mom5_interpolation(mode, surface):
         Wvel = Variable("Wvel", dtype=np.float32, initial=0.0)
 
     for pointtype in ["U", "V", "W"]:
-        if pointtype == "U":
-            lons = u_point.xu_ocean.data.reshape(1)
-            lats = u_point.yu_ocean.data.reshape(1)
-            deps = u_point.st_ocean.data.reshape(1)
+        if gridindexingtype == "pop":
+            lons = u.lon.data.reshape(1)
+            lats = u.lat.data.reshape(1)
+            deps = u.depth_t.data.reshape(1)
         elif pointtype == "U":
-            lons = v_point.xu_ocean.data.reshape(1)
-            lats = v_point.yu_ocean.data.reshape(1)
-            deps = v_point.st_ocean.data.reshape(1)
+            lons = u.xu_ocean.data.reshape(1)
+            lats = u.yu_ocean.data.reshape(1)
+            deps = u.st_ocean.data.reshape(1)
+        elif pointtype == "U":
+            lons = v.xu_ocean.data.reshape(1)
+            lats = v.yu_ocean.data.reshape(1)
+            deps = v.st_ocean.data.reshape(1)
         elif pointtype == "W":
-            lons = w_point.xt_ocean.data.reshape(1)
-            lats = w_point.yt_ocean.data.reshape(1)
-            deps = w_point.sw_ocean.data.reshape(1)
+            lons = w.xt_ocean.data.reshape(1)
+            lats = w.yt_ocean.data.reshape(1)
+            deps = w.sw_ocean.data.reshape(1)
         if surface:
             deps = 0
 
         pset = ParticleSet.from_list(fieldset=fieldset, pclass=myParticle, lon=lons, lat=lats, depth=deps)
+        pset.execute(VelocityInterpolator, dt=0)
 
-        pset.execute(VelocityInterpolator, runtime=delta(minutes=1), dt=delta(minutes=1))
+        wconvfactor = 0.01 if gridindexingtype == "pop" else 1.
         if pointtype in ["U", "V"]:
-            assert np.allclose(pset.Uvel[0], u_point)
-            assert np.allclose(pset.Vvel[0], v_point)
+            assert np.allclose(pset.Uvel[0], u)
+            assert np.allclose(pset.Vvel[0], v)
         elif pointtype == "W":
-            if surface:
+            if surface and gridindexingtype == "mom5":
                 assert np.allclose(pset.Wvel[0], 0)
             else:
-                assert np.allclose(pset.Wvel[0], -w_point)
+                assert np.allclose(pset.Wvel[0], -w*wconvfactor)
