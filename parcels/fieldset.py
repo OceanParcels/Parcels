@@ -234,8 +234,8 @@ class FieldSet(object):
                 if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
-            if U.gridindexingtype not in ['nemo', 'mitgcm']:
-                raise ValueError("Field.gridindexing has to be one of 'nemo' or 'mitgcm'")
+            if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5']:
+                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm' or 'mom5")
 
             if U.gridindexingtype == 'mitgcm' and U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearZGrid]:
                 raise NotImplementedError('Curvilinear Grids are not implemented for mitgcm-style grid indexing.'
@@ -678,6 +678,72 @@ class FieldSet(object):
                 fieldset.W.set_scaling_factor(-1.)  # change the W direction but keep W in cm/s because depth is in cm
             else:
                 raise SyntaxError("'depth_units' has to be 'm' or 'cm'")
+        return fieldset
+
+    @classmethod
+    def from_mom5(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
+                  allow_time_extrapolation=None, time_periodic=False,
+                  tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+        """Initialises FieldSet object from NetCDF files of MOM5 fields.
+
+        :param filenames: Dictionary mapping variables to file(s). The
+               filepath may contain wildcards to indicate multiple files,
+               or be a list of file.
+               filenames can be a list [files], a dictionary {var:[files]},
+               a dictionary {dim:[files]} (if lon, lat, depth and/or data not stored in same files as data),
+               or a dictionary of dictionaries {var:{dim:[files]}}
+               time values are in filenames[data]
+        :param variables: Dictionary mapping variables to variable names in the netCDF file(s).
+               Note that the built-in Advection kernels assume that U and V are in m/s
+        :param dimensions: Dictionary mapping data dimensions (lon,
+               lat, depth, time, data) to dimensions in the netCF file(s).
+               Note that dimensions can also be a dictionary of dictionaries if
+               dimension names are different for each variable.
+               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
+               |                                         |
+               |      W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]      |
+               |                                         |
+               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+               In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
+                      T node is at the cell centre and interpolated constant per cell as a C-grid.
+               In 3D: U and V nodes are at the midlle of the cell vertical edges,
+                      They are interpolated bilinearly (independently of z) in the cell.
+                      W nodes are at the centre of the horizontal interfaces, but below the U and V.
+                      They are interpolated linearly (as a function of z) in the cell.
+                      Note that W is normally directed upward in MOM5, but Parcels requires W
+                      in the positive z-direction (downward) so W is multiplied by -1.
+                      T node is at the cell centre, and constant per cell.
+        :param indices: Optional dictionary of indices for each dimension
+               to read from file(s), to allow for reading of subset of data.
+               Default is to read the full extent of each dimension.
+               Note that negative indices are not allowed.
+        :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
+               (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
+        :param mesh: String indicating the type of mesh coordinates and
+               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+
+               1. spherical (default): Lat and lon in degree, with a
+                  correction for zonal velocity U near the poles.
+               2. flat: No conversion, lat/lon are assumed to be in m.
+        :param allow_time_extrapolation: boolean whether to allow for extrapolation
+               (i.e. beyond the last available time snapshot)
+               Default is False if dimensions includes time, else True
+        :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
+               This flag overrides the allow_time_interpolation and sets it to False
+        :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'bgrid_tracer' (default)
+               Note that in the case of from_mom5() and from_bgrid(), the velocity fields are default to 'bgrid_velocity'
+        :param field_chunksize: size of the chunks in dask loading
+
+
+        """
+
+        if 'creation_log' not in kwargs.keys():
+            kwargs['creation_log'] = 'from_mom5'
+        fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
+                                           allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
+                                           field_chunksize=field_chunksize, gridindexingtype='mom5', **kwargs)
+        if hasattr(fieldset, 'W'):
+            fieldset.W.set_scaling_factor(-1)
         return fieldset
 
     @classmethod
