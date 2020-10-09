@@ -235,7 +235,7 @@ class FieldSet(object):
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
             if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5']:
-                raise ValueError("Field.gridindexing has to be one of 'nemo' or 'mitgcm'")
+                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm' or 'mom5")
 
             if U.gridindexingtype == 'mitgcm' and U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearZGrid]:
                 raise NotImplementedError('Curvilinear Grids are not implemented for mitgcm-style grid indexing.'
