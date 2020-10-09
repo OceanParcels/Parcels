@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+import warnings
 
 
 class BaseParticleCollectionIterator(ABC):
@@ -48,11 +49,19 @@ class BaseParticleAccessor(ABC):
         self.pcoll = pcoll
 
     def set_index(self, index):
-        # Convert into a "proper" property?
+        # Accessor objects should not be mutable.
+        warnings.warn(
+            "The Accessor cannot switch to representing a different particle"
+            " after its creation.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self._index = index
 
     def update_next_dt(self, next_dt=None):
-        # == OBJECTION CK: Also here - make a guarded forward ... == #
+        # == OBJECTION CK: Also here - make a guarded forward ...  == #
+        # == RESPONSE RB: The response I provided below I think is == #
+        # == particularly applicable here.                         == #
         # if next_dt is None:
         #     if not np.isnan(self._next_dt):
         #         self.dt, self._next_dt = self._next_dt, np.nan
@@ -63,6 +72,12 @@ class BaseParticleAccessor(ABC):
     def delete(self):
         # == OBJECTION CK: the actual operation, which is the particle's state, shall be done by the particle. So, == #
         # == this function should just forward the delete-call to the particle in question.                        == #
+        # == RESPONSE RB: There might be a problem with that in some cases. As we discussed, the ParticleAccessor  == #
+        # == basically acts like a shell around the particle (data), providing uniform access regardless of the    == #
+        # == underlying datastructure. The SOA approach, for example, does not use a particle class on which       == #
+        # == functions can be defined. So it makes sense, I think, to implement any function that requires more    == #
+        # == logic than just setting a property on the Accessor level. The state-thing is not really a good        == #
+        # == example, although the delete-alias may be useful over just treating it as a property.                 == #
         # self.state = OperationCode.Delete
         pass
 
@@ -74,6 +89,12 @@ class BaseParticleAccessor(ABC):
 
         # == OBJECTION CK: the actual operation, which is the particle's state, shall be done by the particle. So, == #
         # == this function should just forward the delete-call to the particle in question.                        == #
+        # == RESPONSE RB: There might be a problem with that in some cases. As we discussed, the ParticleAccessor  == #
+        # == basically acts like a shell around the particle (data), providing uniform access regardless of the    == #
+        # == underlying datastructure. The SOA approach, for example, does not use a particle class on which       == #
+        # == functions can be defined. So it makes sense, I think, to implement any function that requires more    == #
+        # == logic than just setting a property on the Accessor level. The state-thing is not really a good        == #
+        # == example, although the delete-alias may be useful over just treating it as a property.                 == #
 
         # self.state = state
         pass
