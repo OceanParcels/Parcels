@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC
 from abc import abstractmethod
 
-from .baseparticleset import BaseParticleAccessor
+from .iterators import BaseParticleAccessor
 from parcels.particle import ScipyParticle
 
 """
@@ -619,7 +619,7 @@ class Collection(ABC):
         pass
 
 
-class ParticleCollection(ABC, Collection):
+class ParticleCollection(Collection):
     _pu_indicators = None  # formerly: partitions
     _pu_centers = None
     _offset = 0

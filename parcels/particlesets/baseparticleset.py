@@ -23,6 +23,13 @@ class NDCluster(ABC):
 # == class BaseParticleSetNDCluster):
 # ==     def __init__(self, collection_type): # this is NOT an abstract method then
 # ==         assert inspect.isclass(collection_type, ParticleCollection)
+# == Response RB: Yes, I think I agree with option (a). This disentangles the inheritance-structure quite a bit. It
+# ==              would mean that collections and particlesets form their own separate hierarchies (so no ParticleSet
+# ==              is a subclass of a collection), bounded together by a "has-a"-relation, meaning that a ParticleSet
+# ==              always 'carries' an instance of a (Particle)Collection. However, this has an impact on the data-access:
+# ==              Currently you call e.g. `p = pset.data_accessor().set_index(3)`, in the old inheritance-idea this would
+# ==              have become something like `p = pset.get_by_index(3)`, but with this suggestion that would change to
+# ==              `p = pset.collection.get_by_index(3)`.
 #== END AMMENDMENT
 class BaseParticleSet(ParticleCollection, NDCluster):
     """Base ParticleSet."""
