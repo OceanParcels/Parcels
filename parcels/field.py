@@ -1018,18 +1018,6 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
-    def depth_index(self, depth, lat, lon):
-        """Find the index in the depth array associated with a given depth"""
-        if depth > self.grid.depth[-1]:
-            raise FieldOutOfBoundError(lon, lat, depth, field=self)
-        depth_index = self.grid.depth <= depth
-        if depth_index.all():
-            # If given depth == largest field depth, use the second-last
-            # field depth (as zidx+1 needed in interpolation)
-            return len(self.grid.depth) - 2
-        else:
-            return depth_index.argmin() - 1 if depth_index.any() else 0
-
     def eval(self, time, z, y, x, applyConversion=True):
         """Interpolate field values in space and time.
 
