@@ -96,8 +96,10 @@ class ParticleFile(object):
             mpi_rank = 0
         self.tempwritedir = os.path.join(self.tempwritedir_base, "%d" % mpi_rank)
 
-        if pset_info is None:  # otherwise arrive here from convert_npydir_to_netcdf
-            self.delete_tempwritedir()
+        if not os.path.exists(self.tempwritedir):
+            os.makedirs(self.tempwritedir)
+        elif pset_info is None:
+            raise IOError("output directory %s already exists. Please remove first." % self.tempwritedir)
 
     def open_netcdf_file(self, data_shape):
         """Initialise NetCDF4.Dataset for trajectory output.
@@ -207,9 +209,6 @@ class ParticleFile(object):
 
     def dump_dict_to_npy(self, data_dict, data_dict_once):
         """Buffer data to set of temporary numpy files, using np.save"""
-
-        if not os.path.exists(self.tempwritedir):
-            os.makedirs(self.tempwritedir)
 
         if len(data_dict) > 0:
             tmpfilename = os.path.join(self.tempwritedir, str(len(self.file_list)) + ".npy")

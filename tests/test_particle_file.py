@@ -7,6 +7,7 @@ import pytest
 import os
 from netCDF4 import Dataset
 import cftime
+import random as py_random
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -231,7 +232,7 @@ def test_write_timebackward(fieldset, mode, tmpdir):
     def Update_lon(particle, fieldset, time):
         particle.lon -= 0.1 * particle.dt
 
-    pset = ParticleSet(fieldset, pclass=JITParticle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
                        time=[1, 2, 3])
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
@@ -246,3 +247,22 @@ def test_set_calendar():
         date = getattr(cftime, cf_datetime)(1990, 1, 1)
         assert _set_calendar(date.calendar) == date.calendar
     assert _set_calendar('np_datetime64') == 'standard'
+
+
+def test_error_duplicate_outputdir(fieldset, tmpdir):
+    outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
+    pset1 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+
+    py_random.seed(1234)
+    pfile1 = pset1.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
+
+    py_random.seed(1234)
+    error_thrown = False
+    try:
+        pset2.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
+    except IOError:
+        error_thrown = True
+    assert error_thrown
+
+    pfile1.delete_tempwritedir()
