@@ -36,7 +36,7 @@ class NetcdfFileBuffer(_FileBuffer):
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
             # (which we would rather want to have being auto-managed).
-            # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
+            # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine)
             self.dataset['decoded'] = True
         except:
@@ -252,7 +252,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
             # (which we would rather want to have being auto-managed).
-            # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
+            # If 'lock' is not specified, the Lock-object is auto-created and managed by xarray internally.
             if self.lock_file:
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
             else:
