@@ -205,8 +205,8 @@ class Field(object):
         else:
             return filenames
 
-    @classmethod
-    def collect_timeslices(cls, timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
+    @staticmethod
+    def collect_timeslices(timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
         if timestamps is not None:
             dataFiles = []
             for findex in range(len(data_filenames)):
