@@ -206,6 +206,38 @@ class Field(object):
             return filenames
 
     @classmethod
+    def collect_timeslices(cls, timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
+        if timestamps is not None:
+            dataFiles = []
+            for findex in range(len(data_filenames)):
+                for f in [data_filenames[findex], ] * len(timestamps[findex]):
+                    dataFiles.append(f)
+            timeslices = np.array([stamp for file in timestamps for stamp in file])
+            time = timeslices
+        else:
+            timeslices = []
+            dataFiles = []
+            for fname in data_filenames:
+                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
+                    ftime = filebuffer.time
+                    timeslices.append(ftime)
+                    dataFiles.append([fname] * len(ftime))
+            timeslices = np.array(timeslices)
+            time = np.concatenate(timeslices)
+            dataFiles = np.concatenate(np.array(dataFiles))
+        if time.size == 1 and time[0] is None:
+            time[0] = 0
+        time_origin = TimeConverter(time[0])
+        time = time_origin.reltime(time)
+
+        if not np.all((time[1:] - time[:-1]) > 0):
+            id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
+            raise AssertionError(
+                'Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
+                % (dataFiles[id_not_ordered], dataFiles[id_not_ordered + 1]))
+        return time, time_origin, timeslices, dataFiles
+
+    @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
                     deferred_load=True, **kwargs):
@@ -317,48 +349,20 @@ class Field(object):
         if len(data_filenames) > 1 and 'time' not in dimensions and timestamps is None:
             raise RuntimeError('Multiple files given but no time dimension specified')
 
-        def collect_timeslices():
-            if timestamps is not None:
-                dataFiles = []
-                for findex in range(len(data_filenames)):
-                    for f in [data_filenames[findex], ] * len(timestamps[findex]):
-                        dataFiles.append(f)
-                timeslices = np.array([stamp for file in timestamps for stamp in file])
-                time = timeslices
-            else:
-                timeslices = []
-                dataFiles = []
-                for fname in data_filenames:
-                    with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
-                        ftime = filebuffer.time
-                        timeslices.append(ftime)
-                        dataFiles.append([fname] * len(ftime))
-                timeslices = np.array(timeslices)
-                time = np.concatenate(timeslices)
-                dataFiles = np.concatenate(np.array(dataFiles))
-            if time.size == 1 and time[0] is None:
-                time[0] = 0
-            time_origin = TimeConverter(time[0])
-            time = time_origin.reltime(time)
-
-            if not np.all((time[1:] - time[:-1]) > 0):
-                id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-                raise AssertionError(
-                    'Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
-                    % (dataFiles[id_not_ordered], dataFiles[id_not_ordered + 1]))
-            return time, time_origin, timeslices, dataFiles
-
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            time, time_origin, timeslices, dataFiles = collect_timeslices()
+            time, time_origin, timeslices, dataFiles = cls.collect_timeslices(timestamps, data_filenames,
+                                                                              _grid_fb_class, dimensions,
+                                                                              indices, netcdf_engine)
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
             kwargs['dataFiles'] = dataFiles
         elif grid is not None and ('dataFiles' not in kwargs or kwargs['dataFiles'] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            _, _, _, dataFiles = collect_timeslices()
+            _, _, _, dataFiles = cls.collect_timeslices(timestamps, data_filenames, _grid_fb_class,
+                                                        dimensions, indices, netcdf_engine)
             kwargs['dataFiles'] = dataFiles
 
         field_chunksize = kwargs.get('field_chunksize', None)
