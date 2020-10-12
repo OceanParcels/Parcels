@@ -49,7 +49,8 @@ class BaseParticleAccessor(ABC):
         self.pcoll = pcoll
 
     def set_index(self, index):
-        # Accessor objects should not be mutable.
+        # Accessor objects should not be mutable. This functionaility
+        # will be removed.
         warnings.warn(
             "The Accessor cannot switch to representing a different particle"
             " after its creation.",
