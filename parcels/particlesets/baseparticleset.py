@@ -30,9 +30,16 @@ class NDCluster(ABC):
 # ==              Currently you call e.g. `p = pset.data_accessor().set_index(3)`, in the old inheritance-idea this would
 # ==              have become something like `p = pset.get_by_index(3)`, but with this suggestion that would change to
 # ==              `p = pset.collection.get_by_index(3)`.
+# == Conclusion CK+RB: for now decided to follow option (a) member variable; to be seen how many function-forwards are
+# ==                   required to 'make this bird fly' ...
 #== END AMMENDMENT
-class BaseParticleSet(ParticleCollection, NDCluster):
+class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
+    _collection = None
+
+    def __init__(self):
+        self._collection = None
+
     def data_accessor(self):
         """Returns an Accessor for the particles in this ParticleSet.
         Deprecated - the accessor must not be manipulated directly.
@@ -53,6 +60,10 @@ class BaseParticleSet(ParticleCollection, NDCluster):
             if field.interp_method == 'cgrid_velocity':
                 return np.float64
         return np.float32
+
+    @property
+    def collection(self):
+        return self._collection
 
     @abstractmethod
     def cstruct(self):
