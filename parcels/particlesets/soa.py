@@ -4,6 +4,9 @@ from .collections import ParticleCollection
 from .iterators import BaseParticleAccessor
 from .iterators import BaseParticleCollectionIterator
 from parcels.particle import ScipyParticle, JITParticle
+from parcels.field import Field
+from parcels.tools.loggers import logger
+from operator import attrgetter
 
 try:
     from mpi4py import MPI
@@ -81,7 +84,7 @@ class ParticleCollectionSOA(ParticleCollection):
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
         if partitions is not None and partitions is not False:
-            partitions = convert_to_flat_array(partitions)
+            self._pu_indicators = convert_to_flat_array(partitions)
 
         for kwvar in kwargs:
             # kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])  # input reformatting - particleset-task
@@ -99,23 +102,23 @@ class ParticleCollectionSOA(ParticleCollection):
 
             if mpi_size > 1:
                 if partitions is not False:
-                    if partitions is None:
+                    if self._pu_indicators is None:
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                            partitions = kmeans.labels_
+                            self._pu_indicators = kmeans.labels_
                         else:
-                            partitions = None
-                        partitions = mpi_comm.bcast(partitions, root=0)
-                    elif np.max(partitions) >= mpi_size:
+                            self._pu_indicators = None
+                        self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
+                    elif np.max(self._pu_indicators) >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
-                    lon = lon[partitions == mpi_rank]
-                    lat = lat[partitions == mpi_rank]
-                    time = time[partitions == mpi_rank]
-                    depth = depth[partitions == mpi_rank]
-                    pid = pid[partitions == mpi_rank]
+                    lon = lon[self._pu_indicators == mpi_rank]
+                    lat = lat[self._pu_indicators == mpi_rank]
+                    time = time[self._pu_indicators == mpi_rank]
+                    depth = depth[self._pu_indicators == mpi_rank]
+                    pid = pid[self._pu_indicators == mpi_rank]
                     for kwvar in kwargs:
-                        kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
+                        kwargs[kwvar] = kwargs[kwvar][self._pu_indicators == mpi_rank]
                 offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
 
         # -- Repeat-dt structure (and thus possibly also flat-array conversion) to be done by the particle set -- #
@@ -159,12 +162,11 @@ class ParticleCollectionSOA(ParticleCollection):
             else:
                 self._data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
-        self.
+        self._ncount = self._data['lon'].shape[0]
 
         if lon is not None and lat is not None:
-            init_count = len(lon)
             # Initialise from lists of lon/lat coordinates
-            assert self._ncount == len(lon) and self._ncount == len(lat), (
+            assert self.ncount == len(lon) and self.ncount == len(lat), (
                 'Size of ParticleSet does not match length of lon and lat.')
 
             # mimic the variables that get initialised in the constructor
@@ -176,7 +178,7 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data['fileid'][:] = -1
 
             # special case for exceptions which can only be handled from scipy
-            self._data['exception'] = np.empty(init_count, dtype=object)
+            self._data['exception'] = np.empty(self.ncount, dtype=object)
 
             initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
 
@@ -193,19 +195,19 @@ class ParticleCollectionSOA(ParticleCollection):
                     continue
 
                 if isinstance(v.initial, Field):
-                    for i in range(self.size):
+                    for i in range(self.ncount):
                         if np.isnan(time[i]):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                                'Add a "time=" to ParticleSet construction')
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
-                        self.particle_data[v.name][i] = v.initial[
+                        self._data[v.name][i] = v.initial[
                             time[i], depth[i], lat[i], lon[i]
                         ]
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
                 elif isinstance(v.initial, attrgetter):
-                    self.particle_data[v.name][:] = v.initial(self)
+                    self._data[v.name][:] = v.initial(self)
                 else:
-                    self.particle_data[v.name][:] = v.initial
+                    self._data[v.name][:] = v.initial
 
                 initialised.add(v.name)
         else:
