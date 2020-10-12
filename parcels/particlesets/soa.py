@@ -228,8 +228,12 @@ class ParticleCollectionSOA(ParticleCollection):
 
 
 class ParticleAccessorSOA(BaseParticleAccessor):
-    def __init__(self, pcoll):
+    def __init__(self, pcoll, index):
+        """Initializes the ParticleAccessor to provide access to one
+        specific particle.
+        """
         super().__init__(pcoll)
+        self._index = index
 
     def __getattr__(self, name):
         return self.pcoll.particle_data[name][self._index]
@@ -273,18 +277,16 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
 
         self._reverse = reverse
         self._index = 0
-        self.p = pcoll.data_accessor()
-        self._head = pcoll.data_accessor()
-        self._head.set_index(0)
-        self._tail = pcoll.data_accessor()
-        self._tail.set_index(self.max_len - 1)
+        self._head = ParticleAccessorSOA(pcoll, self._indices[0])
+        self._tail = ParticleAccessorSOA(pcoll,
+                                         self._indices[self.max_len - 1])
+        self.p = self._head
 
     def __next__(self):
         if self._index < self.max_len:
-            self.p.set_index(self._indices[self._index])
-            result = self.p
+            self.p = ParticleAccessorSOA(pcoll, self._indices[self._index])
             self._index += 1
-            return result
+            return self.p
 
         # End of Iteration
         raise StopIteration
