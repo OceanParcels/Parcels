@@ -644,6 +644,7 @@ class ParticleCollection(Collection):
         self._ptype = None
         self._latlondepth_dtype = np.float32
         self._data = None  # formerly: particle_data
+        super(ParticleCollection, self).__init__()
 
     def __del__(self):
         """
