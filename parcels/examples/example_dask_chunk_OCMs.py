@@ -121,6 +121,23 @@ def fieldset_from_ofam(chunk_mode):
     return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs, chunkdims_name_map=name_map)
 
 
+def fieldset_from_mitgcm(chunk_mode):
+    data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
+    filenames = {"U": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
+                 "V": data_path + "mitgcm_UV_surface_zonally_reentrant.nc"}
+    variables = {"U": "UVEL", "V": "VVEL"}
+    dimensions = {"U": {"lon": "XG", "lat": "YG", "time": "time"},
+                  "V": {"lon": "XG", "lat": "YG", "time": "time"}}
+
+    chs = False
+    name_map = {'lon': 'XG', 'lat': 'YG', 'time': 'time'}
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific':
+        chs = (1, 50, 100)
+    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs, chunkdims_name_map=name_map)
+
+
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
 
     def periodicBC(particle, fieldSet, time):
@@ -298,6 +315,27 @@ def test_ofam_3D(mode, chunk_mode):
         assert (matching_uniformblocks or (matching_fields and matching_numblocks))
     assert(abs(pset[0].lon - 173) < 1)
     assert(abs(pset[0].lat - 11) < 1)
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
+def test_mitgcm(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '1024KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
+    field_set = fieldset_from_mitgcm(chunk_mode)
+    lons, lats = 5e5, 5e5
+
+    pset = ParticleSet.from_list(fieldset=field_set, pclass=ptype[mode], lon=lons, lat=lats)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    # MITgcm sample file dimensions: time=10, XG=400, YG=200
+    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+    if chunk_mode in [False, 'auto']:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'specific':
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
+    assert np.allclose(pset[0].lon, 5.27e5, atol=1e3)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
