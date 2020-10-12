@@ -38,14 +38,14 @@ def convert_to_flat_array(var):
 
 class ParticleCollectionSOA(ParticleCollection):
 
-    def __init__(self, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, lonlatdepth_dtype=None, pid_orig=None, ngrid=1, **kwargs):
+    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, partitions=None, pid_orig=None, ngrid=1, **kwargs):
         """
         :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
         field references of the ctypes-link of particles that are allocated
         """
 
         super(ParticleCollection, self).__init__()
-        partitions = kwargs.pop('partitions', None)
+        #partitions = kwargs.pop('partitions', None)
 
         # lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)  # input reformatting - particleset-task
         # lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)  # input reformatting - particleset-task
