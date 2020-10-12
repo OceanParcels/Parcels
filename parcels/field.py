@@ -563,7 +563,11 @@ class Field(object):
         z = np.float32(z)
         if grid.depth[-1] > grid.depth[0]:
             if z < grid.depth[0]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
+                if self.gridindexingtype == "mom5" and z > 2*grid.depth[0] - grid.depth[1]:
+                    return (-1, z / grid.depth[0])
+                else:
+                    raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z > grid.depth[-1]:
                 raise FieldOutOfBoundError(0, 0, z, field=self)
             depth_indices = grid.depth <= z
@@ -925,7 +929,10 @@ class Field(object):
                 return (1 - zeta) * f0 + zeta * f1
         elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
             if self.interp_method == 'bgrid_velocity':
-                zeta = 0.
+                if self.gridindexingtype == 'mom5':
+                    zeta = 1.
+                else:
+                    zeta = 0.
             elif self.interp_method == 'bgrid_w_velocity':
                 eta = 1.
                 xsi = 1.
@@ -939,7 +946,11 @@ class Field(object):
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
-            return (1-zeta) * f0 + zeta * f1
+            if self.interp_method == 'bgrid_w_velocity' and self.gridindexingtype == 'mom5' and zi == -1:
+                # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in upper cell)
+                return zeta * f1
+            else:
+                return (1-zeta) * f0 + zeta * f1
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, zi, yi+1, xi+1]
         else:
@@ -1010,18 +1021,6 @@ class Field(object):
             return (0, 0)
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
-
-    def depth_index(self, depth, lat, lon):
-        """Find the index in the depth array associated with a given depth"""
-        if depth > self.grid.depth[-1]:
-            raise FieldOutOfBoundError(lon, lat, depth, field=self)
-        depth_index = self.grid.depth <= depth
-        if depth_index.all():
-            # If given depth == largest field depth, use the second-last
-            # field depth (as zidx+1 needed in interpolation)
-            return len(self.grid.depth) - 2
-        else:
-            return depth_index.argmin() - 1 if depth_index.any() else 0
 
     def eval(self, time, z, y, x, applyConversion=True):
         """Interpolate field values in space and time.
