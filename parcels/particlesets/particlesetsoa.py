@@ -44,7 +44,23 @@ def _to_write_particles(pd, time):
             & (np.isfinite(pd['time'])))
 
 
-class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
+def convert_to_array(var):
+    # Convert lists and single integers/floats to one-dimensional numpy arrays
+    if isinstance(var, np.ndarray):
+        return var.flatten()
+    elif isinstance(var, (int, float, np.float32, np.int32)):
+        return np.array([var])
+    else:
+        return np.array(var)
+
+
+
+def convert_to_reltime(time):
+    if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
+        return True
+    return False
+
+class ParticleSetSOA(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
 
     Please note that this currently only supports fixed size particle sets.
@@ -68,6 +84,7 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
     """
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+        super(ParticleSetSOA, self).__init__()
         self.fieldset = fieldset
         if self.fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. "
@@ -76,20 +93,12 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
-        def convert_to_array(var):
-            # Convert lists and single integers/floats to one-dimensional numpy arrays
-            if isinstance(var, np.ndarray):
-                return var.flatten()
-            elif isinstance(var, (int, float, np.float32, np.int32)):
-                return np.array([var])
-            else:
-                return np.array(var)
-
         lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
         lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
+
         if isinstance(pid_orig, (type(None), type(False))):
             pid_orig = np.arange(lon.size)
-        pid = pid_orig + pclass.lastID
+        #pid = pid_orig + pclass.lastID
 
         if depth is None:
             mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
@@ -102,57 +111,31 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
-        def _convert_to_reltime(time):
-            if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
-                return True
-            return False
-
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
         self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
+        time = np.array([self.time_origin.reltime(t) if convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
-        if partitions is not None and partitions is not False:
-            partitions = convert_to_array(partitions)
+        if lonlatdepth_dtype is None:
+            if fieldset is not None:
+                lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+            else:
+                lonlatdepth_dtype = np.float32
+        assert lonlatdepth_dtype in [np.float32, np.float64], \
+            'lon lat depth precision should be set to either np.float32 or np.float64'
+
+
+        # if partitions is not None and partitions is not False:
+        #     partitions = convert_to_array(partitions)
 
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
-
-        offset = np.max(pid) if len(pid) > 0 else -1
-        if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            mpi_size = mpi_comm.Get_size()
-
-            if lon.size < mpi_size and mpi_size > 1:
-                raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
-
-            if mpi_size > 1:
-                if partitions is not False:
-                    if partitions is None:
-                        if mpi_rank == 0:
-                            coords = np.vstack((lon, lat)).transpose()
-                            kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-                            partitions = kmeans.labels_
-                        else:
-                            partitions = None
-                        partitions = mpi_comm.bcast(partitions, root=0)
-                    elif np.max(partitions) >= mpi_size:
-                        raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
-                    lon = lon[partitions == mpi_rank]
-                    lat = lat[partitions == mpi_rank]
-                    time = time[partitions == mpi_rank]
-                    depth = depth[partitions == mpi_rank]
-                    pid = pid[partitions == mpi_rank]
-                    for kwvar in kwargs:
-                        kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
-                offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
 
         self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
         if self.repeatdt:
@@ -163,85 +146,113 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
             self.repeat_starttime = time[0]
             self.repeatlon = lon
             self.repeatlat = lat
-            self.repeatpid = pid - pclass.lastID
             self.repeatdepth = depth
             self.repeatpclass = pclass
-            self.partitions = partitions
             self.repeatkwargs = kwargs
-        pclass.setLastID(offset+1)
 
-        if lonlatdepth_dtype is None:
-            if fieldset is not None:
-                self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
-            else:
-                self.lonlatdepth_dtype = np.float32
-        else:
-            self.lonlatdepth_dtype = lonlatdepth_dtype
-        assert self.lonlatdepth_dtype in [np.float32, np.float64], \
-            'lon lat depth precision should be set to either np.float32 or np.float64'
-        pclass.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
+        ngrids = fieldset.gridset.size if fieldset is not None else 1
+        self._collection = ParticleCollectionSOA(pclass, partitions, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, ngrid=ngrids)
 
-        self.ptype = pclass.getPType()
+        # offset = np.max(pid) if len(pid) > 0 else -1
+        # if MPI:
+        #     mpi_comm = MPI.COMM_WORLD
+        #     mpi_rank = mpi_comm.Get_rank()
+        #     mpi_size = mpi_comm.Get_size()
+
+        #     if lon.size < mpi_size and mpi_size > 1:
+        #         raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
+
+        #     if mpi_size > 1:
+        #         if partitions is not False:
+        #             if partitions is None:
+        #                 if mpi_rank == 0:
+        #                     coords = np.vstack((lon, lat)).transpose()
+        #                     kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
+        #                     partitions = kmeans.labels_
+        #                 else:
+        #                     partitions = None
+        #                 partitions = mpi_comm.bcast(partitions, root=0)
+        #             elif np.max(partitions) >= mpi_size:
+        #                 raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
+        #             lon = lon[partitions == mpi_rank]
+        #             lat = lat[partitions == mpi_rank]
+        #             time = time[partitions == mpi_rank]
+        #             depth = depth[partitions == mpi_rank]
+        #             pid = pid[partitions == mpi_rank]
+        #             for kwvar in kwargs:
+        #                 kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
+        #         offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
+
+        # pclass.setLastID(offset+1)
+        # pclass.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
+        # self.ptype = pclass.getPType()
+
+
+        if self.repeatdt:
+            # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
+            self.repeatpid = pid_orig
+            self.partitions = self.collection.pu_indicators()
+
         self.kernel = None
 
         # store particle data as an array per variable (structure of arrays approach)
-        self.particle_data = {}
-        initialised = set()
-        for v in self.ptype.variables:
-            if v.name in ['xi', 'yi', 'zi', 'ti']:
-                ngrid = fieldset.gridset.size if fieldset is not None else 1
-                self.particle_data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
-            else:
-                self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
+        # self.particle_data = {}
+        # initialised = set()
+        # for v in self.ptype.variables:
+        #     if v.name in ['xi', 'yi', 'zi', 'ti']:
+        #         ngrid = fieldset.gridset.size if fieldset is not None else 1
+        #         self.particle_data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
+        #     else:
+        #         self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
-        if lon is not None and lat is not None:
-            # Initialise from lists of lon/lat coordinates
-            assert self.size == len(lon) and self.size == len(lat), (
-                'Size of ParticleSet does not match length of lon and lat.')
+        # if lon is not None and lat is not None:
+        #     # Initialise from lists of lon/lat coordinates
+        #     assert self.size == len(lon) and self.size == len(lat), (
+        #         'Size of ParticleSet does not match length of lon and lat.')
 
-            # mimic the variables that get initialised in the constructor
-            self.particle_data['lat'][:] = lat
-            self.particle_data['lon'][:] = lon
-            self.particle_data['depth'][:] = depth
-            self.particle_data['time'][:] = time
-            self.particle_data['id'][:] = pid
-            self.particle_data['fileid'][:] = -1
+        #     # mimic the variables that get initialised in the constructor
+        #     self.particle_data['lat'][:] = lat
+        #     self.particle_data['lon'][:] = lon
+        #     self.particle_data['depth'][:] = depth
+        #     self.particle_data['time'][:] = time
+        #     self.particle_data['id'][:] = pid
+        #     self.particle_data['fileid'][:] = -1
 
-            # special case for exceptions which can only be handled from scipy
-            self.particle_data['exception'] = np.empty(self.size, dtype=object)
+        #     # special case for exceptions which can only be handled from scipy
+        #     self.particle_data['exception'] = np.empty(self.size, dtype=object)
 
-            initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
+        #     initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
 
-            # any fields that were provided on the command line
-            for kwvar, kwval in kwargs.items():
-                if not hasattr(pclass, kwvar):
-                    raise RuntimeError('Particle class does not have Variable %s' % kwvar)
-                self.particle_data[kwvar][:] = kwval
-                initialised.add(kwvar)
+        #     # any fields that were provided on the command line
+        #     for kwvar, kwval in kwargs.items():
+        #         if not hasattr(pclass, kwvar):
+        #             raise RuntimeError('Particle class does not have Variable %s' % kwvar)
+        #         self.particle_data[kwvar][:] = kwval
+        #         initialised.add(kwvar)
 
-            # initialise the rest to their default values
-            for v in self.ptype.variables:
-                if v.name in initialised:
-                    continue
+        #     # initialise the rest to their default values
+        #     for v in self.ptype.variables:
+        #         if v.name in initialised:
+        #             continue
 
-                if isinstance(v.initial, Field):
-                    for i in range(self.size):
-                        if (time[i] is None) or (np.isnan(time[i])):
-                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
-                                               'Add a "time=" to ParticleSet construction')
-                        v.initial.fieldset.computeTimeChunk(time[i], 0)
-                        self.particle_data[v.name][i] = v.initial[
-                            time[i], depth[i], lat[i], lon[i]
-                        ]
-                        logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
-                elif isinstance(v.initial, attrgetter):
-                    self.particle_data[v.name][:] = v.initial(self)
-                else:
-                    self.particle_data[v.name][:] = v.initial
+        #         if isinstance(v.initial, Field):
+        #             for i in range(self.size):
+        #                 if np.isnan(time[i]):
+        #                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
+        #                                        'Add a "time=" to ParticleSet construction')
+        #                 v.initial.fieldset.computeTimeChunk(time[i], 0)
+        #                 self.particle_data[v.name][i] = v.initial[
+        #                     time[i], depth[i], lat[i], lon[i]
+        #                 ]
+        #                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
+        #         elif isinstance(v.initial, attrgetter):
+        #             self.particle_data[v.name][:] = v.initial(self)
+        #         else:
+        #             self.particle_data[v.name][:] = v.initial
 
-                initialised.add(v.name)
-        else:
-            raise ValueError("Latitude and longitude required for generating ParticleSet")
+        #         initialised.add(v.name)
+        # else:
+        #     raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     # def data_accessor(self):
         # return ParticleAccessorSOA(self)
@@ -536,6 +547,7 @@ class ParticleSetSOA(BaseParticleSet, ParticleCollectionSOA):
         :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
         :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
+        # ==== TODO: when all the restructuring is done, it should be possible to move this to the base class ==== #
 
         # check if pyfunc has changed since last compile. If so, recompile
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
