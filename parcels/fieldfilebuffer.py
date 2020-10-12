@@ -69,7 +69,7 @@ class NetcdfFileBuffer(_FileBuffer):
         return name
 
     @property
-    def read_lonlat(self):
+    def lonlat(self):
         lon = self.dataset[self.dimensions['lon']]
         lat = self.dataset[self.dimensions['lat']]
         xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
@@ -106,7 +106,7 @@ class NetcdfFileBuffer(_FileBuffer):
         return lon_subset, lat_subset
 
     @property
-    def read_depth(self):
+    def depth(self):
         if 'depth' in self.dimensions:
             depth = self.dataset[self.dimensions['depth']]
             depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
@@ -123,7 +123,7 @@ class NetcdfFileBuffer(_FileBuffer):
             return np.zeros(1)
 
     @property
-    def read_depth_dimensions(self):
+    def depth_dimensions(self):
         if 'depth' in self.dimensions:
             data = self.dataset[self.name]
             depthsize = data.shape[-3]

@@ -292,7 +292,7 @@ class Field(object):
         _grid_fb_class = NetcdfFileBuffer
 
         with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
-            lon, lat = filebuffer.read_lonlat
+            lon, lat = filebuffer.lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
             if 'parcels_mesh' in filebuffer.dataset.attrs:
@@ -302,10 +302,10 @@ class Field(object):
             with _grid_fb_class(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions['depth'] == 'not_yet_set':
-                    depth = filebuffer.read_depth_dimensions
+                    depth = filebuffer.depth_dimensions
                     kwargs['depth_field'] = 'not_yet_set'
                 else:
-                    depth = filebuffer.read_depth
+                    depth = filebuffer.depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
