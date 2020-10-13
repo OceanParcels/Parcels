@@ -1,13 +1,20 @@
-from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode
-from parcels import AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D
+from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode, StateCode,
+                     AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
+                     AdvectionAnalytical, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
+                     AdvectionDiffusionEM, AdvectionRK4DiffusionEM)
 import numpy as np
 import pytest
 import math
+from netCDF4 import Dataset
 from datetime import timedelta as delta
 
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
-kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45}
+kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
+          'AdvDiffEM': AdvectionDiffusionEM,
+          'AdvDiffM1': AdvectionDiffusionM1,
+          'AdvRK4DiffEM': AdvectionRK4DiffusionEM,
+          'AdvRK4DiffM1': AdvectionRK4DiffusionM1}
 
 # Some constants
 f = 1.e-4
@@ -134,7 +141,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         particle.depth = 0
         AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
-        particle.set_state(ErrorCode.Success)
+        particle.set_state(StateCode.Success)
 
     recovery_dict = {ErrorCode.ErrorOutOfBounds: DeleteParticle}
     if wErrorThroughSurface:
@@ -201,6 +208,47 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('u', [-0.3, np.array(0.2)])
+@pytest.mark.parametrize('v', [0.2, np.array(1)])
+@pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
+def test_length1dimensions(mode, u, v, w):
+    (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
+    (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
+    (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
+    dimensions = {'lon': lon, 'lat': lat, 'depth': depth}
+
+    dims = []
+    if zdim > 1:
+        dims.append(zdim)
+    if ydim > 1:
+        dims.append(ydim)
+    if xdim > 1:
+        dims.append(xdim)
+    if len(dims) > 0:
+        U = u * np.ones(dims, dtype=np.float32)
+        V = v * np.ones(dims, dtype=np.float32)
+        if w is not None:
+            W = w * np.ones(dims, dtype=np.float32)
+    else:
+        U, V, W = u, v, w
+
+    data = {'U': U, 'V': V}
+    if w is not None:
+        data['W'] = W
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    x0, y0, z0 = 2, 8, -4
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    kernel = AdvectionRK4 if w is None else AdvectionRK4_3D
+    pset.execute(kernel, runtime=4)
+
+    assert np.abs(pset.lon - x0 - 4 * u) < 1e-6
+    assert np.abs(pset.lat - y0 - 4 * v) < 1e-6
+    if w:
+        assert np.abs(pset.depth - z0 - 4 * w) < 1e-6
+
+
 def truth_stationary(x_0, y_0, t):
     lat = y_0 - u_0 / f * (1 - math.cos(f * t))
     lon = x_0 + u_0 / f * math.sin(f * t)
@@ -224,12 +272,20 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [
-    ('EE', 1e-2),
-    ('RK4', 1e-5),
-    ('RK45', 1e-5)])
-def test_stationary_eddy(fieldset_stationary, mode, method, rtol, npart=1):
+@pytest.mark.parametrize('method, rtol, diffField', [
+    ('EE', 1e-2, False),
+    ('AdvDiffEM', 1e-2, True),
+    ('AdvDiffM1', 1e-2, True),
+    ('AdvRK4DiffEM', 1e-5, True),
+    ('AdvRK4DiffM1', 1e-5, True),
+    ('RK4', 1e-5, False),
+    ('RK45', 1e-5, False)])
+def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_stationary
+    if diffField:
+        fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
+        fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
+        fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
@@ -305,12 +361,20 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [
-    ('EE', 1e-2),
-    ('RK4', 1e-5),
-    ('RK45', 1e-5)])
-def test_moving_eddy(fieldset_moving, mode, method, rtol, npart=1):
+@pytest.mark.parametrize('method, rtol, diffField', [
+    ('EE', 1e-2, False),
+    ('AdvDiffEM', 1e-2, True),
+    ('AdvDiffM1', 1e-2, True),
+    ('AdvRK4DiffEM', 1e-5, True),
+    ('AdvRK4DiffM1', 1e-5, True),
+    ('RK4', 1e-5, False),
+    ('RK45', 1e-5, False)])
+def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_moving
+    if diffField:
+        fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
+        fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
+        fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
@@ -349,12 +413,20 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('method, rtol', [
-    ('EE', 1e-2),
-    ('RK4', 1e-5),
-    ('RK45', 1e-5)])
-def test_decaying_eddy(fieldset_decaying, mode, method, rtol, npart=1):
+@pytest.mark.parametrize('method, rtol, diffField', [
+    ('EE', 1e-2, False),
+    ('AdvDiffEM', 1e-2, True),
+    ('AdvDiffM1', 1e-2, True),
+    ('AdvRK4DiffEM', 1e-5, True),
+    ('AdvRK4DiffM1', 1e-5, True),
+    ('RK4', 1e-5, False),
+    ('RK45', 1e-5, False)])
+def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
     fieldset = fieldset_decaying
+    if diffField:
+        fieldset.add_field(Field('Kh_zonal', np.zeros(fieldset.U.data.shape), grid=fieldset.U.grid))
+        fieldset.add_field(Field('Kh_meridional', np.zeros(fieldset.V.data.shape), grid=fieldset.V.grid))
+        fieldset.add_constant('dres', 0.1)
     lon = np.linspace(12000, 21000, npart)
     lat = np.linspace(12500, 12500, npart)
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lon, lat=lat)
@@ -364,3 +436,58 @@ def test_decaying_eddy(fieldset_decaying, mode, method, rtol, npart=1):
     exp_lat = [truth_decaying(x, y, endtime)[1] for x, y, in zip(lon, lat)]
     assert np.allclose(pset.lon, exp_lon, rtol=rtol)
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_analyticalAgrid(mode):
+    lon = np.arange(0, 15, dtype=np.float32)
+    lat = np.arange(0, 15, dtype=np.float32)
+    U = np.ones((lat.size, lon.size), dtype=np.float32)
+    V = np.ones((lat.size, lon.size), dtype=np.float32)
+    fieldset = FieldSet.from_data({'U': U, 'V': V}, {'lon': lon, 'lat': lat}, mesh='flat')
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=1, lat=1)
+    failed = False
+    try:
+        pset.execute(AdvectionAnalytical, runtime=1)
+    except NotImplementedError:
+        failed = True
+    assert failed
+
+
+@pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
+@pytest.mark.parametrize('u', [1, -0.2, -0.3, 0])
+@pytest.mark.parametrize('v', [1, -0.3, 0, -1])
+@pytest.mark.parametrize('w', [None, 1, -0.3, 0, -1])
+@pytest.mark.parametrize('direction', [1, -1])
+def test_uniform_analytical(mode, u, v, w, direction, tmpdir):
+    lon = np.arange(0, 15, dtype=np.float32)
+    lat = np.arange(0, 15, dtype=np.float32)
+    if w is not None:
+        depth = np.arange(0, 40, 2, dtype=np.float32)
+        U = u * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
+        V = v * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
+        W = w * np.ones((depth.size, lat.size, lon.size), dtype=np.float32)
+        fieldset = FieldSet.from_data({'U': U, 'V': V, 'W': W}, {'lon': lon, 'lat': lat, 'depth': depth}, mesh='flat')
+        fieldset.W.interp_method = 'cgrid_velocity'
+    else:
+        U = u * np.ones((lat.size, lon.size), dtype=np.float32)
+        V = v * np.ones((lat.size, lon.size), dtype=np.float32)
+        fieldset = FieldSet.from_data({'U': U, 'V': V}, {'lon': lon, 'lat': lat}, mesh='flat')
+    fieldset.U.interp_method = 'cgrid_velocity'
+    fieldset.V.interp_method = 'cgrid_velocity'
+
+    x0, y0, z0 = 6.1, 6.2, 20
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+
+    outfile = tmpdir.join("uniformanalytical.nc")
+    pset.execute(AdvectionAnalytical, runtime=4, dt=direction,
+                 output_file=pset.ParticleFile(name=outfile, outputdt=1))
+    assert np.abs(pset.lon - x0 - 4 * u * direction) < 1e-6
+    assert np.abs(pset.lat - y0 - 4 * v * direction) < 1e-6
+    if w:
+        assert np.abs(pset.depth - z0 - 4 * w * direction) < 1e-4
+
+    time = Dataset(outfile, 'r', 'NETCDF4').variables['time'][:]
+    assert np.allclose(time, direction*np.arange(0, 5))
+    lons = Dataset(outfile, 'r', 'NETCDF4').variables['lon'][:]
+    assert np.allclose(lons, x0+direction*u*np.arange(0, 5))

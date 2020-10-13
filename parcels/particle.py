@@ -4,7 +4,7 @@ from operator import attrgetter
 import numpy as np
 
 from parcels.field import Field
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
@@ -22,8 +22,6 @@ class Variable(object):
     :param to_write: Boolean to control whether Variable is written to NetCDF file
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
-        if name == 'z':
-            raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -62,7 +60,6 @@ class ParticleType(object):
             raise TypeError("Class object required to derive ParticleType")
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
-
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
         # Pick Variable objects out of __dict__.
@@ -71,6 +68,13 @@ class ParticleType(object):
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
+                for v in self.variables:
+                    if v.name in [v.name for v in ptype.variables]:
+                        raise AttributeError(
+                            "Custom Variable name '%s' is not allowed, as it is also a built-in variable" % v.name)
+                    if v.name == 'z':
+                        raise AttributeError(
+                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
                 self.variables = ptype.variables + self.variables
         # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
         self.variables = [v for v in self.variables if v.is64bit()] + \
@@ -170,10 +174,14 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
+    xi = Variable('xi', dtype=np.int32, to_write=False)
+    yi = Variable('yi', dtype=np.int32, to_write=False)
+    zi = Variable('zi', dtype=np.int32, to_write=False)
+    ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)
     id = Variable('id', dtype=np.int32)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
@@ -188,6 +196,13 @@ class ScipyParticle(_Particle):
         type(self).fileid.initial = -1
         type(self).dt.initial = None
         type(self).next_dt.initial = np.nan
+
+        for index in ['xi', 'yi', 'zi', 'ti']:
+            if index != 'ti':
+                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+            else:
+                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+
         super(ScipyParticle, self).__init__()
 
     def __repr__(self):
@@ -199,7 +214,7 @@ class ScipyParticle(_Particle):
         return str + "time=%s)" % time_string
 
     def delete(self):
-        self.state = ErrorCode.Delete
+        self.state = OperationCode.Delete
 
     def set_state(self, state):
         self.state = state
@@ -234,11 +249,6 @@ class JITParticle(ScipyParticle):
 
     """
 
-    xi = Variable('xi', dtype=np.int32, to_write=False)
-    yi = Variable('yi', dtype=np.int32, to_write=False)
-    zi = Variable('zi', dtype=np.int32, to_write=False)
-    ti = Variable('ti', dtype=np.int32, to_write=False)
-
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         if self._cptr is None:
@@ -247,11 +257,6 @@ class JITParticle(ScipyParticle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-        fieldset = kwargs.get('fieldset')
         for index in ['xi', 'yi', 'zi', 'ti']:
-            if index != 'ti':
-                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
-            else:
-                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
             setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
             setattr(self, 'c'+index, getattr(self, index+'p').value)

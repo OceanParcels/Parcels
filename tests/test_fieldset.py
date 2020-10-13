@@ -178,7 +178,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     indices_back = indices.copy()
-    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
+    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices, field_chunksize=None)
     assert indices == indices_back
     assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices['lat']])
@@ -188,6 +188,18 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     ixgrid = np.ix_([0], indices['lat'], indices['lon'])
     assert np.allclose(fieldsetsub.U.data, fieldsetfull.U.data[ixgrid])
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
+
+
+def test_empty_indices(tmpdir, filename='test_subsets'):
+    data, dimensions = generate_fieldset(100, 100)
+    filepath = tmpdir.join(filename)
+    FieldSet.from_data(data, dimensions).write(filepath)
+    error_thrown = False
+    try:
+        FieldSet.from_parcels(filepath, indices={'lon': []})
+    except RuntimeError:
+        error_thrown = True
+    assert error_thrown
 
 
 @pytest.mark.parametrize('calltype', ['from_data', 'from_nemo'])
@@ -262,6 +274,20 @@ def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
     assert fieldset.U.grid == fieldset.V.grid
     assert fieldset.U.grid.master_chunksize == fieldset.V.grid.master_chunksize
     assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
+
+
+@pytest.mark.parametrize('gridtype', ['A', 'C'])
+def test_fieldset_dimlength1_cgrid(gridtype):
+    fieldset = FieldSet.from_data({'U': 0, 'V': 0}, {'lon': 0, 'lat': 0})
+    if gridtype == 'C':
+        fieldset.U.interp_method = 'cgrid_velocity'
+        fieldset.V.interp_method = 'cgrid_velocity'
+    try:
+        fieldset.check_complete()
+        success = True if gridtype == 'A' else False
+    except NotImplementedError:
+        success = True if gridtype == 'C' else False
+    assert success
 
 
 def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
@@ -369,7 +395,9 @@ def test_fieldset_write_curvilinear(tmpdir):
     newfile = tmpdir.join('curv_field')
     fieldset.write(newfile)
 
-    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'},
+                                     dimensions={'time': 'time_counter', 'depth': 'depthdx',
+                                                 'lon': 'nav_lon', 'lat': 'nav_lat'})
     assert fieldset2.dx.creation_log == 'from_netcdf'
 
     for var in ['lon', 'lat', 'data']:
@@ -653,7 +681,8 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
 
     # testing for combination of deferred-loaded and numpy Fields
-    fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
+    with pytest.raises(ValueError):
+        fieldset.add_field(Field('numpyfield', np.zeros((10, zdim, 3, 3)), grid=fieldset.U.grid))
 
     # testing for scaling factors
     fieldset.U.set_scaling_factor(scale_fac)

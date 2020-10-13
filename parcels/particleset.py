@@ -17,9 +17,9 @@ from parcels.grid import GridCode
 from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
-from parcels.particle import Variable
 from parcels.particlefile import ParticleFile
-from parcels.tools.error import ErrorCode
+from parcels.tools.converters import _get_cftime_calendars
+from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger
 try:
     from mpi4py import MPI
@@ -33,6 +33,16 @@ if MPI:
                                'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSet']
+
+
+def _to_write_particles(pd, time):
+    """We don't want to write a particle that is not started yet.
+    Particle will be written if particle.time is between time-dt/2 and time+dt/2
+    """
+    return (np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+            & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+            & (np.isfinite(pd['id']))
+            & (np.isfinite(pd['time'])))
 
 
 class ParticleAccessor(object):
@@ -50,7 +60,7 @@ class ParticleAccessor(object):
             self._next_dt = next_dt
 
     def delete(self):
-        self.state = ErrorCode.Delete
+        self.state = OperationCode.Delete
 
     def set_state(self, state):
         self.state = state
@@ -68,9 +78,9 @@ class ParticleAccessor(object):
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
-        for var in vars(type(self)):
-            if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
-                str += "%s=%f, " % (var, getattr(self, var))
+        for var in self.pset.ptype.variables:
+            if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
+                str += "%s=%f, " % (var.name, getattr(self, var.name))
         return str + "time=%s)" % time_string
 
 
@@ -96,7 +106,8 @@ class ParticleSet(object):
 
     Please note that this currently only supports fixed size particle sets.
 
-    :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+    :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
+           While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
     :param pclass: Optional :mod:`parcels.particle.JITParticle` or
                  :mod:`parcels.particle.ScipyParticle` object that defines custom particle
     :param lon: List of initial longitude values for particles
@@ -112,9 +123,13 @@ class ParticleSet(object):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self.fieldset = fieldset
-        self.fieldset.check_complete()
+        if self.fieldset is None:
+            logger.warning_once("No FieldSet provided in ParticleSet generation. "
+                                "This breaks most Parcels functionality")
+        else:
+            self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
         def convert_to_array(var):
@@ -133,7 +148,7 @@ class ParticleSet(object):
         pid = pid_orig + pclass.lastID
 
         if depth is None:
-            mindepth, _ = self.fieldset.gridset.dimrange('depth')
+            mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
             depth = np.ones(lon.size) * mindepth
         else:
             depth = convert_to_array(depth)
@@ -142,12 +157,18 @@ class ParticleSet(object):
 
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
+
+        def _convert_to_reltime(time):
+            if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
+                return True
+            return False
+
         if time.size > 0 and type(time[0]) in [datetime, date]:
             time = np.array([np.datetime64(t) for t in time])
-        self.time_origin = fieldset.time_origin
+        self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        time = np.array([self.time_origin.reltime(t) if isinstance(t, np.datetime64) else t for t in time])
+        time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
@@ -157,7 +178,7 @@ class ParticleSet(object):
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
+                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 
         offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
@@ -178,7 +199,7 @@ class ParticleSet(object):
                         else:
                             partitions = None
                         partitions = mpi_comm.bcast(partitions, root=0)
-                    elif np.max(partitions >= mpi_rank):
+                    elif np.max(partitions) >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[partitions == mpi_rank]
                     lat = lat[partitions == mpi_rank]
@@ -206,7 +227,10 @@ class ParticleSet(object):
         pclass.setLastID(offset+1)
 
         if lonlatdepth_dtype is None:
-            self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+            if fieldset is not None:
+                self.lonlatdepth_dtype = self.lonlatdepth_dtype_from_field_interp_method(fieldset.U)
+            else:
+                self.lonlatdepth_dtype = np.float32
         else:
             self.lonlatdepth_dtype = lonlatdepth_dtype
         assert self.lonlatdepth_dtype in [np.float32, np.float64], \
@@ -221,7 +245,8 @@ class ParticleSet(object):
         initialised = set()
         for v in self.ptype.variables:
             if v.name in ['xi', 'yi', 'zi', 'ti']:
-                self.particle_data[v.name] = np.empty((len(lon), fieldset.gridset.size), dtype=v.dtype)
+                ngrid = fieldset.gridset.size if fieldset is not None else 1
+                self.particle_data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
             else:
                 self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
@@ -257,7 +282,7 @@ class ParticleSet(object):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.size):
-                        if np.isnan(time[i]):
+                        if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                                'Add a "time=" to ParticleSet construction')
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
@@ -409,10 +434,10 @@ class ParticleSet(object):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
     @classmethod
-    def from_particlefile(cls, fieldset, pclass, filename, restart=True, repeatdt=None, lonlatdepth_dtype=None):
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
-        This creates a new ParticleSet based on the last locations and time of all particles
-        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
+        This creates a new ParticleSet based on locations of all particles written
+        in a netcdf ParticleFile at a certain time. Particle IDs are preserved if restart=True
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
         :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
@@ -420,31 +445,62 @@ class ParticleSet(object):
         :param filename: Name of the particlefile from which to read initial conditions
         :param restart: Boolean to signal if pset is used for a restart (default is True).
                In that case, Particle IDs are preserved.
+        :param restarttime: time at which the Particles will be restarted. Default is the last time written.
+               Alternatively, restarttime could be a time value (including np.datetime64) or
+               a callable function such as np.nanmin. The last is useful when running with dt < 0.
         :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
+        if repeatdt is not None:
+            logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
+                           'setting a new repeatdt will start particles from the _new_ particle '
+                           'locations.' % filename)
+
         pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile_vars = [v for v in pfile.data_vars]
 
-        lon = np.ma.filled(pfile.variables['lon'][:, -1], np.nan)
-        lat = np.ma.filled(pfile.variables['lat'][:, -1], np.nan)
-        depth = np.ma.filled(pfile.variables['z'][:, -1], np.nan)
-        time = np.ma.filled(pfile.variables['time'][:, -1], np.nan)
-        pid = np.ma.filled(pfile.variables['trajectory'][:, -1], np.nan)
-        if isinstance(time[0], np.timedelta64):
-            time = np.array([t/np.timedelta64(1, 's') for t in time])
+        vars = {}
+        to_write = {}
+        for v in pclass.getPType().variables:
+            if v.name in pfile_vars:
+                vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+                    and v.to_write:
+                raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
+            to_write[v.name] = v.to_write
+        vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
+        vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
 
-        inds = np.where(np.isfinite(lon))[0]
-        lon = lon[inds]
-        lat = lat[inds]
-        depth = depth[inds]
-        time = time[inds]
-        pid = pid[inds] if restart else None
+        if isinstance(vars['time'][0, 0], np.timedelta64):
+            vars['time'] = np.array([t/np.timedelta64(1, 's') for t in vars['time']])
 
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
-                   pid_orig=pid, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+        if restarttime is None:
+            restarttime = np.nanmax(vars['time'])
+        elif callable(restarttime):
+            restarttime = restarttime(vars['time'])
+        else:
+            restarttime = restarttime
+
+        inds = np.where(vars['time'] == restarttime)
+        for v in vars:
+            if to_write[v] is True:
+                vars[v] = vars[v][inds]
+            elif to_write[v] == 'once':
+                vars[v] = vars[v][inds[0]]
+            if v not in ['lon', 'lat', 'depth', 'time', 'id']:
+                kwargs[v] = vars[v]
+
+        if restart:
+            pclass.setLastID(0)  # reset to zero offset
+        else:
+            vars['id'] = None
+
+        return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
+                   depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
+                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
 
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
@@ -456,6 +512,58 @@ class ParticleSet(object):
             if field.interp_method == 'cgrid_velocity':
                 return np.float64
         return np.float32
+
+    def to_dict(self, pfile, time, deleted_only=False):
+        """Convert all Particle data from one time step to a python dictionary.
+        :param pfile: ParticleFile object requesting the conversion
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        returns two dictionaries: one for all variables to be written each outputdt,
+         and one for all variables to be written once
+        """
+        data_dict = {}
+        data_dict_once = {}
+
+        time = time.total_seconds() if isinstance(time, delta) else time
+
+        pd = self.particle_data
+
+        if pfile.lasttime_written != time and \
+           (pfile.write_ondelete is False or deleted_only is not False):
+            if pd['id'].size == 0:
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            else:
+                if deleted_only is not False:
+                    to_write = deleted_only
+                else:
+                    to_write = _to_write_particles(pd, time)
+                if np.any(to_write) > 0:
+                    for var in pfile.var_names:
+                        data_dict[var] = pd[var][to_write]
+                    pfile.maxid_written = max(pfile.maxid_written, np.max(data_dict['id']))
+
+                pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
+                             & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
+                if np.count_nonzero(pset_errs) > 0:
+                    logger.warning_once(
+                        'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
+
+                if time not in pfile.time_written:
+                    pfile.time_written.append(time)
+
+                if len(pfile.var_names_once) > 0:
+                    first_write = (_to_write_particles(pd, time)
+                                   & np.isin(pd['id'], pfile.written_once, invert=True))
+                    if np.any(first_write):
+                        data_dict_once['id'] = pd['id'][first_write]
+                        for var in pfile.var_names_once:
+                            data_dict_once[var] = pd[var][first_write]
+                        pfile.written_once.extend(pd['id'][first_write])
+
+            if deleted_only is False:
+                pfile.lasttime_written = time
+
+        return data_dict, data_dict_once
 
     @property
     def size(self):
@@ -488,12 +596,12 @@ class ParticleSet(object):
             raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
 
         for d in self.particle_data:
-            self.particle_data[d] = np.append(self.particle_data[d], particles.particle_data[d])
+            self.particle_data[d] = np.concatenate((self.particle_data[d], particles.particle_data[d]))
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
         for d in self.particle_data:
-            self.particle_data[d] = np.delete(self.particle_data[d], indices)
+            self.particle_data[d] = np.delete(self.particle_data[d], indices, axis=0)
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
@@ -571,7 +679,7 @@ class ParticleSet(object):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
-        mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
         if np.any(np.isnan(self.particle_data['time'])):
             self.particle_data['time'][np.isnan(self.particle_data['time'])] = mintime if dt >= 0 else maxtime
 
@@ -619,7 +727,7 @@ class ParticleSet(object):
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
+        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         tol = 1e-12
         if verbose_progress is None:
@@ -767,3 +875,16 @@ def search_kernel(particle, fieldset, time):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
+
+    def set_variable_write_status(self, var, write_status):
+        """Method to set the write status of a Variable
+        :param var: Name of the variable (string)
+        :param status: Write status of the variable (True, False or 'once')
+        """
+        var_changed = False
+        for v in self.ptype.variables:
+            if v.name == var:
+                v.to_write = write_status
+                var_changed = True
+        if not var_changed:
+            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)

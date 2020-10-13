@@ -7,6 +7,7 @@ import pytest
 import os
 from netCDF4 import Dataset
 import cftime
+import random as py_random
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -63,6 +64,31 @@ def test_pfile_array_remove_particles(fieldset, mode, tmpdir, npart=10):
     pfile.write(pset, 1)
     ncfile = close_and_compare_netcdffiles(filepath, pfile)
     ncfile.close()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_pfile_set_towrite_False(fieldset, mode, tmpdir, npart=10):
+    filepath = tmpdir.join("pfile_set_towrite_False.nc")
+    pset = ParticleSet(fieldset, pclass=ptype[mode],
+                       lon=np.linspace(0, 1, npart),
+                       lat=0.5*np.ones(npart))
+    pset.set_variable_write_status('depth', False)
+    pset.set_variable_write_status('lat', False)
+    pfile = pset.ParticleFile(filepath, outputdt=1)
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset.execute(Update_lon, runtime=10, output_file=pfile)
+    ncfile = close_and_compare_netcdffiles(filepath, pfile)
+    assert 'time' in ncfile.variables
+    assert 'depth' not in ncfile.variables
+    assert 'lat' not in ncfile.variables
+    ncfile.close()
+
+    # For pytest purposes, we need to reset to original status
+    pset.set_variable_write_status('depth', True)
+    pset.set_variable_write_status('lat', True)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -206,7 +232,7 @@ def test_write_timebackward(fieldset, mode, tmpdir):
     def Update_lon(particle, fieldset, time):
         particle.lon -= 0.1 * particle.dt
 
-    pset = ParticleSet(fieldset, pclass=JITParticle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
                        time=[1, 2, 3])
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
@@ -221,3 +247,22 @@ def test_set_calendar():
         date = getattr(cftime, cf_datetime)(1990, 1, 1)
         assert _set_calendar(date.calendar) == date.calendar
     assert _set_calendar('np_datetime64') == 'standard'
+
+
+def test_error_duplicate_outputdir(fieldset, tmpdir):
+    outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
+    pset1 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+
+    py_random.seed(1234)
+    pfile1 = pset1.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
+
+    py_random.seed(1234)
+    error_thrown = False
+    try:
+        pset2.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
+    except IOError:
+        error_thrown = True
+    assert error_thrown
+
+    pfile1.delete_tempwritedir()

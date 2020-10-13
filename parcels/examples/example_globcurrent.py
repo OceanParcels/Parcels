@@ -269,8 +269,8 @@ def test_globcurrent_pset_fromfile(mode, dt, pid_offset, tmpdir):
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt, output_file=pfile)
     pfile.close()
 
-    ptype[mode].setLastID(0)  # need to reset to zero
-    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename)
+    restarttime = np.nanmax if dt > 0 else np.nanmin
+    pset_new = ParticleSet.from_particlefile(fieldset, pclass=ptype[mode], filename=filename, restarttime=restarttime)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
     pset_new.execute(AdvectionRK4, runtime=delta(days=1), dt=dt)
 

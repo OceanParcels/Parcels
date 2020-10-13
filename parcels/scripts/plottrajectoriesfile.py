@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-import sys
 from argparse import ArgumentParser
 from os import environ
 
@@ -11,9 +9,6 @@ from parcels.plotting import cartopy_colorbar
 from parcels.plotting import create_parcelsfig_axis
 from parcels.plotting import plotfield
 try:
-    if sys.platform == 'darwin' and sys.version_info[0] == 3:
-        import matplotlib
-        matplotlib.use("Agg")
     import matplotlib.animation as animation
     from matplotlib import rc
 except:
@@ -22,7 +17,7 @@ except:
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
                          tracerlon='x', tracerlat='y', recordedvar=None, movie_forward=True,
-                         bins=20, show_plt=True):
+                         bins=20, show_plt=True, central_longitude=0):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
@@ -38,6 +33,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
     :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
     :param show_plt: Boolean whether plot should directly be show (for py.test)
+    :param central_longitude: Degrees East at which to center the plot
     """
 
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
@@ -52,7 +48,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     mesh = pfile.attrs['parcels_mesh'] if 'parcels_mesh' in pfile.attrs else 'spherical'
 
     if(recordedvar is not None):
-        record = pfile.variables[recordedvar]
+        record = np.ma.filled(pfile.variables[recordedvar], np.nan)
     pfile.close()
 
     if tracerfile is not None and mode != 'hist2d':
@@ -63,7 +59,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         titlestr = ' and ' + tracerfield
     else:
         spherical = False if mode == '3d' or mesh == 'flat' else True
-        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical)
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical, central_longitude=central_longitude)
         if plt is None:
             return  # creating axes was not possible
         titlestr = ''
@@ -93,7 +89,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         cartopy_colorbar(cs, plt, fig, ax)
         ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
-        ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
+        ax.set_xlim(np.nanmin((lon+central_longitude+180) % 360 - 180), np.nanmax((lon+central_longitude+180) % 360 - 180))
         ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         plottimes = np.unique(time)
         if not movie_forward:
@@ -106,17 +102,27 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
             except:
                 pass
         b = time == plottimes[0]
+
+        def timestr(plottimes, index):
+            if isinstance(plottimes[index], np.timedelta64):
+                if plottimes[-1] > np.timedelta64(1, 'h'):
+                    return str(plottimes[index].astype('timedelta64[h]'))
+                elif plottimes[-1] > np.timedelta64(1, 's'):
+                    return str(plottimes[index].astype('timedelta64[s]'))
+            else:
+                return str(plottimes[index])
+
         if cartopy:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k', transform=cartopy.crs.Geodetic())
         else:
             scat = ax.scatter(lon[b], lat[b], s=20, color='k')
-        ttl = ax.set_title('Particles' + titlestr + ' at time ' + str(plottimes[0]))
+        ttl = ax.set_title('Particles' + titlestr + ' at time ' + timestr(plottimes, 0))
         frames = np.arange(0, len(plottimes))
 
         def animate(t):
             b = time == plottimes[t]
             scat.set_offsets(np.vstack((lon[b], lat[b])).transpose())
-            ttl.set_text('Particle' + titlestr + ' at time ' + str(plottimes[t]))
+            ttl.set_text('Particle' + titlestr + ' at time ' + timestr(plottimes, t))
             if recordedvar is not None:
                 scat.set_array(record[b])
             return scat,

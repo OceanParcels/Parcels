@@ -1,12 +1,9 @@
 """Get example scripts, notebooks, and data files."""
 import argparse
-import json
 import os
 from datetime import datetime
 from datetime import timedelta
-from glob import glob
 import shutil
-import sys
 
 import pkg_resources
 from progressbar import ProgressBar
@@ -22,10 +19,11 @@ except ImportError:
 example_data_files = (
     ["MovingEddies_data/" + fn for fn in [
         "moving_eddiesP.nc", "moving_eddiesU.nc", "moving_eddiesV.nc"]]
+    + ["MITgcm_example_data/mitgcm_UV_surface_zonally_reentrant.nc"]
     + ["OFAM_example_data/" + fn for fn in [
         "OFAM_simple_U.nc", "OFAM_simple_V.nc"]]
     + ["Peninsula_data/" + fn for fn in [
-        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc"]]
+        "peninsulaU.nc", "peninsulaV.nc", "peninsulaP.nc", "peninsulaT.nc"]]
     + ["GlobCurrent_example_data/" + fn for fn in [
         "%s000000-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc" % (
             date.strftime("%Y%m%d"))
@@ -44,6 +42,7 @@ example_data_files = (
     + ["POPSouthernOcean_data/" + fn for fn in ["t.x1_SAMOC_flux.169000.nc", "t.x1_SAMOC_flux.169001.nc",
                                                 "t.x1_SAMOC_flux.169002.nc", "t.x1_SAMOC_flux.169003.nc",
                                                 "t.x1_SAMOC_flux.169004.nc", "t.x1_SAMOC_flux.169005.nc"]]
+    + ["SWASH_data/" + fn for fn in ["field_0065532.nc", "field_0065537.nc", "field_0065542.nc", "field_0065548.nc", "field_0065552.nc", "field_0065557.nc"]]
     + ["WOA_data/" + fn for fn in ["woa18_decav_t%.2d_04.nc" % m
                                    for m in range(1, 13)]])
 
@@ -72,25 +71,6 @@ def copy_data_and_examples_from_package_to(target_path):
     except Exception as e:
         print(e)
         pass
-
-
-def set_jupyter_kernel_to_python_version(path, python_version=2):
-    """Set notebook kernelspec to desired python version.
-
-    This also drops all other meta data from the notebook.
-    """
-    for file_name in glob(os.path.join(path, "*.ipynb")):
-
-        with open(file_name, 'r') as f:
-            notebook_data = json.load(f)
-
-        notebook_data['metadata'] = {"kernelspec": {
-            "display_name": "Python {}".format(python_version),
-            "language": "python",
-            "name": "python{}".format(python_version)}}
-
-        with open(file_name, 'w') as f:
-            json.dump(notebook_data, f, indent=2)
 
 
 def _still_to_download(file_names, target_path):
@@ -137,11 +117,6 @@ def main(target_path=None):
 
     # copy data and examples
     copy_data_and_examples_from_package_to(target_path)
-
-    # make sure the notebooks use the correct python version
-    set_jupyter_kernel_to_python_version(
-        target_path,
-        python_version=sys.version_info[0])
 
     # try downloading remaining files
     remaining_example_data_files = _still_to_download(

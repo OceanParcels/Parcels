@@ -15,6 +15,7 @@ from os import path
 from os import remove
 from sys import platform
 from sys import version_info
+from weakref import finalize
 
 import numpy as np
 import numpy.ctypeslib as npct
@@ -33,9 +34,11 @@ from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
+from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
-from parcels.tools.error import ErrorCode
-from parcels.tools.error import recovery_map as recovery_base_map
+from parcels.kernels.advection import AdvectionAnalytical
+from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
+from parcels.tools.statuscodes import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
 
 
@@ -50,7 +53,7 @@ def fix_indentation(string):
     lines = string.split('\n')
     indent = re_indent.match(lines[0])
     if indent:
-        lines = [l.replace(indent.groups()[0], '', 1) for l in lines]
+        lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
     return "\n".join(lines)
 
 
@@ -73,6 +76,8 @@ class Kernel(object):
         self.ptype = ptype
         self._lib = None
         self.delete_cfiles = delete_cfiles
+        self._cleanup_files = None
+        self._cleanup_lib = None
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
@@ -88,6 +93,14 @@ class Kernel(object):
             if warning:
                 logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                     '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
+        elif pyfunc is AdvectionAnalytical:
+            if ptype.uses_jit:
+                raise NotImplementedError('Analytical Advection only works in Scipy mode')
+            if fieldset.U.interp_method != 'cgrid_velocity':
+                raise NotImplementedError('Analytical Advection only works with C-grids')
+            if fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
+                raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
+
         if funcvars is not None:
             self.funcvars = funcvars
         elif hasattr(pyfunc, '__code__'):
@@ -104,6 +117,8 @@ class Kernel(object):
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
                 user_ctx['random'] = globals()['random']
+                user_ctx['StateCode'] = globals()['StateCode']
+                user_ctx['OperationCode'] = globals()['OperationCode']
                 user_ctx['ErrorCode'] = globals()['ErrorCode']
             except:
                 logger.warning("Could not access user context when merging kernels")
@@ -164,17 +179,6 @@ class Kernel(object):
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
 
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            del self._lib
-            self._lib = None
-            if path.isfile(self.lib_file) and self.delete_cfiles:
-                [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-
     @property
     def _cache_key(self):
         field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
@@ -188,6 +192,14 @@ class Kernel(object):
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
+
+        # deactivate the cleanup finalizers for the current set of files
+        if self._cleanup_files is not None:
+            self._cleanup_files.detach()
+
+        if self._cleanup_lib is not None:
+            self._cleanup_lib.detach()
+
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if path.isfile(self.lib_file):
@@ -211,42 +223,45 @@ class Kernel(object):
             f.write(self.ccode)
         compiler.compile(self.src_file, self.lib_file, self.log_file)
         logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+        self._cleanup_files = finalize(self, cleanup_remove_files, self.delete_cfiles, self.src_file, self.lib_file, self.log_file)
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
+        self._cleanup_lib = finalize(self, cleanup_unload_lib, self._lib)
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2:
+        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2 and pset.fieldset is not None:
             assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
                 'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
-        for g in pset.fieldset.gridset.grids:
-            g.cstruct = None  # This force to point newly the grids from Python to C
-        # Make a copy of the transposed array to enforce
-        # C-contiguous memory layout for JIT mode.
-        for f in pset.fieldset.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField]:
-                continue
-            if f in self.field_args.values():
-                f.chunk_data()
-            else:
-                for block_id in range(len(f.data_chunks)):
-                    f.data_chunks[block_id] = None
-                    f.c_data_chunks[block_id] = None
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                g.cstruct = None  # This force to point newly the grids from Python to C
+            # Make a copy of the transposed array to enforce
+            # C-contiguous memory layout for JIT mode.
+            for f in pset.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                if f in self.field_args.values():
+                    f.chunk_data()
+                else:
+                    for block_id in range(len(f.data_chunks)):
+                        f.data_chunks[block_id] = None
+                        f.c_data_chunks[block_id] = None
 
-        for g in pset.fieldset.gridset.grids:
-            g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
-            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                if not g.load_chunk.flags.c_contiguous:
-                    g.load_chunk = g.load_chunk.copy()
-            if not g.depth.flags.c_contiguous:
-                g.depth = g.depth.copy()
-            if not g.lon.flags.c_contiguous:
-                g.lon = g.lon.copy()
-            if not g.lat.flags.c_contiguous:
-                g.lat = g.lat.copy()
+            for g in pset.fieldset.gridset.grids:
+                g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
+                if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                    if not g.load_chunk.flags.c_contiguous:
+                        g.load_chunk = g.load_chunk.copy()
+                if not g.depth.flags.c_contiguous:
+                    g.depth = g.depth.copy()
+                if not g.lon.flags.c_contiguous:
+                    g.lon = g.lon.copy()
+                if not g.lat.flags.c_contiguous:
+                    g.lat = g.lat.copy()
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_double(f) for f in self.const_args.values()]
@@ -258,15 +273,24 @@ class Kernel(object):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
 
+        if 'AdvectionAnalytical' in self.pyfunc.__name__:
+            analytical = True
+            if not np.isinf(dt):
+                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
+            dt = np.inf
+        else:
+            analytical = False
+
         particles = pset.data_accessor()
 
-        # back up variables in case of ErrorCode.Repeat
+        # back up variables in case of OperationCode.Repeat
         p_var_back = {}
 
-        for f in self.fieldset.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField]:
-                continue
-            f.data = np.array(f.data)
+        if self.fieldset is not None:
+            for f in self.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                f.data = np.array(f.data)
 
         for p in range(pset.size):
             particles.set_index(p)
@@ -280,10 +304,10 @@ class Kernel(object):
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
                 if abs(particles.time) >= abs(endtime):
-                    particles.set_state(ErrorCode.Success)
+                    particles.set_state(StateCode.Success)
                 continue
 
-            while particles.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
+            while particles.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
 
                 for var in pset.ptype.variables:
                     p_var_back[var.name] = getattr(particles, var.name)
@@ -293,13 +317,13 @@ class Kernel(object):
                     state_prev = particles.state
                     res = self.pyfunc(particles, pset.fieldset, particles.time)
                     if res is None:
-                        res = ErrorCode.Success
+                        res = StateCode.Success
 
-                    if res is ErrorCode.Success and particles.state != state_prev:
+                    if res is StateCode.Success and particles.state != state_prev:
                         res = particles.state
 
-                    if res == ErrorCode.Success and not np.isclose(particles.dt, pdt_prekernels):
-                        res = ErrorCode.Repeat
+                    if not analytical and res == StateCode.Success and not np.isclose(particles.dt, pdt_prekernels):
+                        res = OperationCode.Repeat
 
                 except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
@@ -316,15 +340,17 @@ class Kernel(object):
                     particles.exception = e
 
                 # Handle particle time and time loop
-                if res in [ErrorCode.Success, ErrorCode.Delete]:
+                if res in [StateCode.Success, OperationCode.Delete]:
                     # Update time and repeat
                     particles.time += particles.dt
                     particles.update_next_dt()
+                    if analytical:
+                        particles.dt = np.inf
                     dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
 
                     sign_end_part = np.sign(endtime - particles.time)
-                    if res != ErrorCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
-                        res = ErrorCode.Evaluate
+                    if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                        res = StateCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
@@ -349,14 +375,14 @@ class Kernel(object):
         particles = pset.data_accessor()
         for p in range(pset.size):
             particles.set_index(p)
-            particles.set_state(ErrorCode.Evaluate)
+            particles.set_state(StateCode.Evaluate)
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
-            indices = pset.particle_data['state'] == ErrorCode.Delete
+            indices = pset.particle_data['state'] == OperationCode.Delete
             if np.count_nonzero(indices) > 0 and output_file is not None:
                 output_file.write(pset, endtime, deleted_only=indices)
             pset.remove_booleanvector(indices)
@@ -368,9 +394,10 @@ class Kernel(object):
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
 
-        for g in pset.fieldset.gridset.grids:
-            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                    g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
@@ -382,21 +409,21 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
+        error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
         while np.any(error_particles):
             # Apply recovery kernel
             for p in np.where(error_particles)[0]:
                 particles.set_index(p)
-                if particles.state == ErrorCode.StopExecution:
+                if particles.state == OperationCode.StopExecution:
                     return
-                if particles.state == ErrorCode.Repeat:
-                    particles.set_state(ErrorCode.Evaluate)
+                if particles.state == OperationCode.Repeat:
+                    particles.set_state(StateCode.Evaluate)
                 elif particles.state in recovery_map:
                     recovery_kernel = recovery_map[particles.state]
-                    particles.set_state(ErrorCode.Success)
+                    particles.set_state(StateCode.Success)
                     recovery_kernel(particles, self.fieldset, particles.time)
-                    if particles.state == ErrorCode.Success:
-                        particles.set_state(ErrorCode.Evaluate)
+                    if particles.state == StateCode.Success:
+                        particles.set_state(StateCode.Evaluate)
                 else:
                     logger.warning_once('Deleting particle because of bug in #749 and #737')
                     particles.delete()
@@ -410,7 +437,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = np.isin(pset.particle_data['state'], [ErrorCode.Success, ErrorCode.Evaluate], invert=True)
+            error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
@@ -432,3 +459,16 @@ class Kernel(object):
         if not isinstance(kernel, Kernel):
             kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self)
+
+
+def cleanup_remove_files(delete_cfiles, src_file, lib_file, log_file):
+    if path.isfile(lib_file) and delete_cfiles:
+        [remove(s) for s in [src_file, lib_file, log_file]]
+
+
+def cleanup_unload_lib(lib):
+    # Clean-up the in-memory dynamic linked libraries.
+    # This is not really necessary, as these programs are not that large, but with the new random
+    # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
+    if lib is not None:
+        _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)

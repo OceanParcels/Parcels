@@ -29,6 +29,18 @@ def k_sample_uv_fixture():
     return k_sample_uv()
 
 
+def k_sample_uv_noconvert():
+    def SampleUVNoConvert(particle, fieldset, time):
+        particle.u = fieldset.U.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
+        particle.v = fieldset.V.eval(time, particle.depth, particle.lat, particle.lon, applyConversion=False)
+    return SampleUVNoConvert
+
+
+@pytest.fixture(name="k_sample_uv_noconvert")
+def k_sample_uv_noconvert_fixture():
+    return k_sample_uv_noconvert()
+
+
 def k_sample_p():
     def SampleP(particle, fieldset, time):
         particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
@@ -215,6 +227,41 @@ def test_nearest_neighbour_interpolation3D(mode, k_sample_p, npart=81):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('arrtype', ['ones', 'rand'])
+def test_inversedistance_nearland(mode, arrtype, k_sample_p, npart=81):
+    dims = (4, 4, 6)
+    P = np.random.rand(dims[0], dims[1], dims[2])+2 if arrtype == 'rand' else np.ones(dims, dtype=np.float32)
+    P[1, 1:2, 1:6] = np.nan  # setting some values to land (NaN)
+    dimensions = {'lon': np.linspace(0., 1., dims[2], dtype=np.float32),
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
+                  'depth': np.linspace(0., 1., dims[0], dtype=np.float32)}
+    data = {'U': np.zeros(dims, dtype=np.float32),
+            'V': np.zeros(dims, dtype=np.float32),
+            'P': P}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+    fieldset.P.interp_method = 'linear_invdist_land_tracer'
+
+    xv, yv = np.meshgrid(np.linspace(0.1, 0.9, int(np.sqrt(npart))), np.linspace(0.1, 0.9, int(np.sqrt(npart))))
+    # combine a pset at 0m with pset at 1m, as meshgrid does not do 3D
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.zeros(npart))
+    pset2 = ParticleSet(fieldset, pclass=pclass(mode), lon=xv.flatten(), lat=yv.flatten(), depth=np.ones(npart))
+    pset.add(pset2)
+    pset.execute(k_sample_p, endtime=1, dt=1)
+    if arrtype == 'rand':
+        assert np.all((pset.p > 2) & (pset.p < 3))
+    else:
+        assert np.allclose(pset.p, 1.0, rtol=1e-5)
+
+    success = False
+    try:
+        fieldset.U.interp_method = 'linear_invdist_land_tracer'
+        fieldset.check_complete()
+    except NotImplementedError:
+        success = True
+    assert success
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
 def test_fieldset_sample_particle(mode, k_sample_uv, lat_flip, npart=120):
     """ Sample the fieldset using an array of particles.
@@ -260,6 +307,22 @@ def test_fieldset_sample_geographic(fieldset_geometric, mode, k_sample_uv, npart
     pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
     pset.execute(pset.Kernel(k_sample_uv), endtime=1., dt=1.)
     assert np.allclose(pset.u, lat, rtol=1e-6)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_fieldset_sample_geographic_noconvert(fieldset_geometric, mode, k_sample_uv_noconvert, npart=120):
+    """ Sample a fieldset without conversion to geographic units. """
+    fieldset = fieldset_geometric
+    lon = np.linspace(-170, 170, npart)
+    lat = np.linspace(-80, 80, npart)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lon=lon, lat=np.zeros(npart) + 70.)
+    pset.execute(pset.Kernel(k_sample_uv_noconvert), endtime=1., dt=1.)
+    assert np.allclose(pset.v, lon * 1000 * 1.852 * 60, rtol=1e-6)
+
+    pset = ParticleSet(fieldset, pclass=pclass(mode), lat=lat, lon=np.zeros(npart) - 45.)
+    pset.execute(pset.Kernel(k_sample_uv_noconvert), endtime=1., dt=1.)
+    assert np.allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

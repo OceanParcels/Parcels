@@ -17,7 +17,7 @@ class GridSet(object):
         grid = field.grid
         existing_grid = False
         for g in self.grids:
-            if field.field_chunksize != grid.master_chunksize:
+            if field.field_chunksize != grid.master_chunksize and grid.master_chunksize not in [None, False]:
                 logger.warning_once("Field chunksize and Grid master chunksize are not equal - erroneous behaviour expected.")
                 break
             if g == grid:
@@ -39,9 +39,6 @@ class GridSet(object):
                 continue
             sameGrid &= (grid.master_chunksize == g.master_chunksize) or (grid.master_chunksize in [False, None] and g.master_chunksize in [False, None])
             if not sameGrid and sameDims and grid.master_chunksize is not None:
-                print(field.field_chunksize)
-                print(grid.master_chunksize)
-                print(g.master_chunksize)
                 res = False
                 if (isinstance(grid.master_chunksize, tuple) and isinstance(g.master_chunksize, tuple)) or \
                         (isinstance(grid.master_chunksize, dict) and isinstance(g.master_chunksize, dict)):
@@ -70,7 +67,7 @@ class GridSet(object):
 
         maxleft, minright = (-np.inf, np.inf)
         for g in self.grids:
-            if len(getattr(g, dim)) == 1:
+            if getattr(g, dim).size == 1:
                 continue  # not including grids where only one entry
             else:
                 if dim == 'depth':

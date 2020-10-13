@@ -65,16 +65,23 @@ class Grid(object):
         self.chunk_info = None
         self.master_chunksize = None
         self._add_last_periodic_data_timestep = False
+        self.depth_field = None
 
     @staticmethod
     def create_grid(lon, lat, depth, time, time_origin, mesh, **kwargs):
-        if len(lon.shape) == 1:
-            if depth is None or len(depth.shape) == 1:
+        if not isinstance(lon, np.ndarray):
+            lon = np.array(lon)
+        if not isinstance(lat, np.ndarray):
+            lat = np.array(lat)
+        if not (depth is None or isinstance(depth, np.ndarray)):
+            depth = np.array(depth)
+        if len(lon.shape) <= 1:
+            if depth is None or len(depth.shape) <= 1:
                 return RectilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return RectilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
         else:
-            if depth is None or len(depth.shape) == 1:
+            if depth is None or len(depth.shape) <= 1:
                 return CurvilinearZGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
             else:
                 return CurvilinearSGrid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh, **kwargs)
@@ -151,7 +158,7 @@ class Grid(object):
             raise RuntimeError("Time of field_new in Field.advancetime() overlaps with times in old Field")
 
     def check_zonal_periodic(self):
-        if self.zonal_periodic or self.mesh == 'flat':
+        if self.zonal_periodic or self.mesh == 'flat' or self.lon.size == 1:
             return
         dx = (self.lon[1:] - self.lon[:-1]) if len(self.lon.shape) == 1 else self.lon[0, 1:] - self.lon[0, :-1]
         dx = np.where(dx < -180, dx+360, dx)
@@ -234,8 +241,8 @@ class RectilinearGrid(Grid):
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
-        assert(isinstance(lon, np.ndarray) and len(lon.shape) == 1), 'lon is not a numpy vector'
-        assert(isinstance(lat, np.ndarray) and len(lat.shape) == 1), 'lat is not a numpy vector'
+        assert(isinstance(lon, np.ndarray) and len(lon.shape) <= 1), 'lon is not a numpy vector'
+        assert(isinstance(lat, np.ndarray) and len(lat.shape) <= 1), 'lat is not a numpy vector'
         assert (isinstance(time, np.ndarray) or not time), 'time is not a numpy array'
         if isinstance(time, np.ndarray):
             assert(len(time.shape) == 1), 'time is not a vector'
@@ -244,7 +251,7 @@ class RectilinearGrid(Grid):
         self.xdim = self.lon.size
         self.ydim = self.lat.size
         self.tdim = self.time.size
-        if self.lat[-1] < self.lat[0]:
+        if self.ydim > 1 and self.lat[-1] < self.lat[0]:
             self.lat = np.flip(self.lat, axis=0)
             self.lat_flipped = True
             logger.warning_once("Flipping lat data from North-South to South-North")
@@ -299,7 +306,7 @@ class RectilinearZGrid(RectilinearGrid):
     def __init__(self, lon, lat, depth=None, time=None, time_origin=None, mesh='flat'):
         super(RectilinearZGrid, self).__init__(lon, lat, time, time_origin, mesh)
         if isinstance(depth, np.ndarray):
-            assert(len(depth.shape) == 1), 'depth is not a vector'
+            assert(len(depth.shape) <= 1), 'depth is not a vector'
 
         self.gtype = GridCode.RectilinearZGrid
         self.depth = np.zeros(1, dtype=np.float32) if depth is None else depth
@@ -342,9 +349,10 @@ class RectilinearSGrid(RectilinearGrid):
         self.zdim = self.depth.shape[-3]
         self.z4d = len(self.depth.shape) == 4
         if self.z4d:
-            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
@@ -472,9 +480,10 @@ class CurvilinearSGrid(CurvilinearGrid):
         self.zdim = self.depth.shape[-3]
         self.z4d = len(self.depth.shape) == 4
         if self.z4d:
-            assert self.tdim == self.depth.shape[0], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
-            assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            # self.depth.shape[0] is 0 for S grids loaded from netcdf file
+            assert self.tdim == self.depth.shape[0] or self.depth.shape[0] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.xdim == self.depth.shape[-1] or self.depth.shape[-1] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
+            assert self.ydim == self.depth.shape[-2] or self.depth.shape[-2] == 0, 'depth dimension has the wrong format. It should be [tdim, zdim, ydim, xdim]'
         else:
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
