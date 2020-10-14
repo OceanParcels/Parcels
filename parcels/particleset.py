@@ -539,12 +539,7 @@ class ParticleSet(object):
                     to_write = _to_write_particles(pd, time)
                 if np.any(to_write) > 0:
                     for var in pfile.var_names:
-                        # if type(getattr(pset_towrite[0], var)) in [np.uint64, np.int64, np.uint32]:
-                        #     data_dict[var] = np.array([np.int32(getattr(p, var)) for p in pset_towrite])
-                        # else:
-                        #     data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
                         data_dict[var] = pd[var][to_write]
-                    # pfile.maxid_written = max(pfile.maxid_written, np.max(data_dict['id']))
                     pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
@@ -559,8 +554,6 @@ class ParticleSet(object):
                 if len(pfile.var_names_once) > 0:
                     first_write = (_to_write_particles(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
-                        # data_dict_once['id'] = pd['id'][first_write]
-                        # data_dict_once['id'] = np.array(pd['id'][first_write]).astype(dtype=np.int32)
                         data_dict_once['id'] = np.array(pd['id'][first_write]).astype(dtype=np.int64)
                         for var in pfile.var_names_once:
                             data_dict_once[var] = pd[var][first_write]
