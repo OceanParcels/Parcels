@@ -14,6 +14,7 @@ import progressbar
 class NDCluster(ABC):
     """Interface."""
 
+
 # == Ammendment CK: The based ParticleSet probably itself does NOT need to be a specific subclass of ParticleCollection.
 # ==                Possibly, the constraint can be resolved by either (a) make the collection just a member variable of
 # ==                the particle set or (b) requiring a collection as 'unused' constraint of the constructor, so that
@@ -32,7 +33,7 @@ class NDCluster(ABC):
 # ==              `p = pset.collection.get_by_index(3)`.
 # == Conclusion CK+RB: for now decided to follow option (a) member variable; to be seen how many function-forwards are
 # ==                   required to 'make this bird fly' ...
-#== END AMMENDMENT
+# == END AMMENDMENT
 class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
     _collection = None

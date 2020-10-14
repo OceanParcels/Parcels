@@ -26,6 +26,7 @@ purpose: defines all the specific functions for a ParticleCollection, ParticleAc
          to a structure-of-array (SoA) data arrangement.
 """
 
+
 def convert_to_flat_array(var):
     # Convert lists and single integers/floats to one-dimensional numpy arrays
     if isinstance(var, np.ndarray):
@@ -45,7 +46,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
 
         super(ParticleCollection, self).__init__()
-        #partitions = kwargs.pop('partitions', None)
+        # partitions = kwargs.pop('partitions', None)
 
         # lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)  # input reformatting - particleset-task
         # lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)  # input reformatting - particleset-task
@@ -213,6 +214,13 @@ class ParticleCollectionSOA(ParticleCollection):
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
+    def __getitem__(self, index):
+        """Access a particle in this collection."""
+        if type(index) not in [int, np.int32]:
+            raise TypeError("Trying to access a particle by index, but"
+                            f" but index {index} is not a 32-bit integer.")
+        return ParticleAccessorSOA(self, index)
+
     def __iter__(self):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
@@ -276,6 +284,7 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
                 self._indices = range(self.max_len)
 
         self._reverse = reverse
+        self._pcoll = pcoll
         self._index = 0
         self._head = ParticleAccessorSOA(pcoll, self._indices[0])
         self._tail = ParticleAccessorSOA(pcoll,
@@ -284,7 +293,8 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
 
     def __next__(self):
         if self._index < self.max_len:
-            self.p = ParticleAccessorSOA(pcoll, self._indices[self._index])
+            self.p = ParticleAccessorSOA(self._pcoll,
+                                         self._indices[self._index])
             self._index += 1
             return self.p
 

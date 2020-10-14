@@ -54,11 +54,11 @@ def convert_to_array(var):
         return np.array(var)
 
 
-
 def convert_to_reltime(time):
     if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
         return True
     return False
+
 
 class ParticleSetSOA(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
@@ -98,7 +98,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         if isinstance(pid_orig, (type(None), type(False))):
             pid_orig = np.arange(lon.size)
-        #pid = pid_orig + pclass.lastID
+        # pid = pid_orig + pclass.lastID
 
         if depth is None:
             mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
@@ -127,7 +127,6 @@ class ParticleSetSOA(BaseParticleSet):
                 lonlatdepth_dtype = np.float32
         assert lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
-
 
         # if partitions is not None and partitions is not False:
         #     partitions = convert_to_array(partitions)
@@ -186,7 +185,6 @@ class ParticleSetSOA(BaseParticleSet):
         # pclass.setLastID(offset+1)
         # pclass.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
         # self.ptype = pclass.getPType()
-
 
         if self.repeatdt:
             # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
@@ -757,7 +755,7 @@ def search_kernel(particle, fieldset, time):
 
         # for i in range(self.size):
             # p.set_index(i)
-        for p in self:
+        for i, p in enumerate(self):
             try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
                 if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
                     raise('error')
