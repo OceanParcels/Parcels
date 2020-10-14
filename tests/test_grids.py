@@ -900,7 +900,6 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
         pset.execute(VelocityInterpolator, dt=0)
 
         convfactor = 0.01 if gridindexingtype == "pop" else 1.
-        print(pointtype, pset.Uvel[0], u.values * convfactor, pset.Wvel[0], w.values * convfactor)
         if pointtype in ["U", "V"]:
             assert np.allclose(pset.Uvel[0], u*convfactor)
             assert np.allclose(pset.Vvel[0], v*convfactor)

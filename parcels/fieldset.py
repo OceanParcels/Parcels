@@ -234,8 +234,8 @@ class FieldSet(object):
                 if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
-            if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5']:
-                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm' or 'mom5")
+            if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5', 'pop']:
+                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5' or 'pop'")
 
             if U.gridindexingtype == 'mitgcm' and U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearZGrid]:
                 raise NotImplementedError('Curvilinear Grids are not implemented for mitgcm-style grid indexing.'
@@ -665,7 +665,7 @@ class FieldSet(object):
             kwargs['creation_log'] = 'from_pop'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           field_chunksize=field_chunksize, **kwargs)
+                                           field_chunksize=field_chunksize, gridindexingtype='pop', **kwargs)
         if hasattr(fieldset, 'U'):
             fieldset.U.set_scaling_factor(0.01)  # cm/s to m/s
         if hasattr(fieldset, 'V'):

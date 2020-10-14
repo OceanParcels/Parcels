@@ -501,11 +501,15 @@ class Field(object):
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            assert (data.shape == (self.grid.tdim, self.grid.zdim,
-                                   self.grid.ydim - 2 * self.grid.meridional_halo,
-                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
-                ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                 'Flag transpose=True could help to reorder the data.' % self.name)
+            errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                            'Flag transpose=True could help to reorder the data.' % self.name)
+            assert data.shape[0] == self.grid.tdim, errormessage
+            assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
+            assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
+            if self.gridindexingtype == 'pop':
+                assert data.shape[1] == self.grid.zdim or data.shape[1] == self.grid.zdim-1, errormessage
+            else:
+                assert data.shape[1] == self.grid.zdim, errormessage
         else:
             assert (data.shape == (self.grid.tdim,
                                    self.grid.ydim - 2 * self.grid.meridional_halo,
@@ -945,6 +949,9 @@ class Field(object):
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
+            if self.gridindexingtype == 'pop' and zi >= self.grid.zdim-2:
+                # Since POP is indexed at cell top, allow linear interpolation of W to zero in upper cell)
+                return (1-zeta) * f0
             data = self.data[ti, zi+1, :, :]
             f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
