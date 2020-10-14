@@ -9,7 +9,7 @@ from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
-indicators_64bit = [np.float64, np.int64, c_void_p]
+indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
 
 class Variable(object):
@@ -178,7 +178,7 @@ class ScipyParticle(_Particle):
     yi = Variable('yi', dtype=np.int32, to_write=False)
     zi = Variable('zi', dtype=np.int32, to_write=False)
     ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)
-    id = Variable('id', dtype=np.int32)
+    id = Variable('id', dtype=np.int64)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
