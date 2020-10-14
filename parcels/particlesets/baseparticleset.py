@@ -50,6 +50,12 @@ class BaseParticleSet(NDCluster):
             stacklevel=2
         )
 
+    def __iter__(self):
+        """Allows for more intuitive iteration over a particleset, while
+        in reality iterating over the particles in the collection.
+        """
+        return iter(self._collection)
+
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
         if type(field) in [SummedField, NestedField]:
