@@ -540,7 +540,7 @@ class ParticleSet(object):
                 if np.any(to_write) > 0:
                     for var in pfile.var_names:
                         data_dict[var] = pd[var][to_write]
-                    pfile.maxid_written = max(pfile.maxid_written, np.max(data_dict['id']))
+                    pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
                              & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
@@ -552,10 +552,9 @@ class ParticleSet(object):
                     pfile.time_written.append(time)
 
                 if len(pfile.var_names_once) > 0:
-                    first_write = (_to_write_particles(pd, time)
-                                   & np.isin(pd['id'], pfile.written_once, invert=True))
+                    first_write = (_to_write_particles(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
-                        data_dict_once['id'] = pd['id'][first_write]
+                        data_dict_once['id'] = np.array(pd['id'][first_write]).astype(dtype=np.int64)
                         for var in pfile.var_names_once:
                             data_dict_once[var] = pd[var][first_write]
                         pfile.written_once.extend(pd['id'][first_write])
