@@ -268,9 +268,9 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __getitem__(self, index):
         # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
-        self.p = self.data_accessor()
-        self.p.set_index(index)
-        return self.p
+        # Comment RB: The collection should provide this function indeed. Until we made a (more) definitive decision on how we want
+        #             this to be interfaced, forward this to the collection.
+        return self._collection[index]
 
     def cstruct(self):
         """
@@ -663,9 +663,11 @@ class ParticleSetSOA(BaseParticleSet):
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
                                        partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
-                p = pset_new.data_accessor()
-                for i in range(pset_new.size):
-                    p.set_index(i)
+                # p = pset_new.data_accessor()
+                # for i in range(pset_new.size):
+                    # p.set_index(i)
+                    # p.dt = dt
+                for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
@@ -751,10 +753,11 @@ def search_kernel(particle, fieldset, time):
             particle_val = particle_val if particle_val else np.ones(self.size)
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
-        p = self.data_accessor()
+        # p = self.data_accessor()
 
-        for i in range(self.size):
-            p.set_index(i)
+        # for i in range(self.size):
+            # p.set_index(i)
+        for p in self:
             try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
                 if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
                     raise('error')
