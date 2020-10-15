@@ -274,6 +274,13 @@ static inline StatusCode spatial_interpolation_tracer_c_grid_3D(double _xsi, dou
   return SUCCESS;
 }
 
+static inline StatusCode spatial_interpolation_tracer_c_grid_bottom(double _xsi, double _eta, double _zeta,
+								float data[2][2][2], float *value)
+{
+  *value = data[1][1][1];
+  return SUCCESS;
+}
+
 static inline int getBlock2D(int *chunk_info, int yi, int xi, int *block, int *index_local)
 {
   int ndim = chunk_info[0];
@@ -564,7 +571,11 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
   } else if (interp_method == NEAREST) {
     INTERP(spatial_interpolation_nearest2D, spatial_interpolation_nearest3D);
   } else if ((interp_method == CGRID_TRACER) || (interp_method == BGRID_TRACER)) {
-    INTERP(spatial_interpolation_tracer_c_grid_2D, spatial_interpolation_tracer_c_grid_3D);
+    if ((gridindexingtype == POP) && (zi[igrid] == grid->zdim-2)) {
+      INTERP(spatial_interpolation_tracer_c_grid_2D, spatial_interpolation_tracer_c_grid_bottom);
+    } else {
+      INTERP(spatial_interpolation_tracer_c_grid_2D, spatial_interpolation_tracer_c_grid_3D);
+    }
   } else if (interp_method == LINEAR_INVDIST_LAND_TRACER) {
     INTERP(spatial_interpolation_bilinear_invdist_land, spatial_interpolation_trilinear_invdist_land);
   } else {
