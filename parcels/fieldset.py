@@ -1038,7 +1038,7 @@ class FieldSet(object):
                             del f.data[i, :]
 
                 lib = np if f.field_chunksize in [False, None] else da
-                if f.gridindexingtype == 'pop':
+                if f.gridindexingtype == 'pop' and g.zdim > 1:
                     zd = g.zdim - 1
                 else:
                     zd = g.zdim
@@ -1063,7 +1063,11 @@ class FieldSet(object):
 
             elif g.update_status == 'updated':
                 lib = np if isinstance(f.data, np.ndarray) else da
-                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                if f.gridindexingtype == 'pop' and g.zdim > 1:
+                    zd = g.zdim - 1
+                else:
+                    zd = g.zdim
+                data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.loaded_time_indices = [2]
                     if f.filebuffers[0] is not None:
