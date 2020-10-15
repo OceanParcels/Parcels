@@ -1,4 +1,6 @@
-"""Collection of pre-built advection-diffusion kernels"""
+"""Collection of pre-built advection-diffusion kernels
+
+See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_ for a detailed explanation"""
 import math
 
 import parcels.rng as ParcelsRandom

@@ -120,6 +120,7 @@ class ParticleSet(object):
            and np.float64 if the interpolation method is 'cgrid_velocity'
     :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
            are distributed automatically on the processors
+
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
@@ -347,8 +348,16 @@ class ParticleSet(object):
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
+
         Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
-       """
+
+        For usage examples see the following tutorials:
+
+        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_
+
+        * `NEMO 2D <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
+
+        """
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
@@ -369,6 +378,15 @@ class ParticleSet(object):
         :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
+
+        For usage examples see the following tutorials:
+
+        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_
+
+        * `NEMO 3D <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`_
+
+        * `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+
         """
 
         lon = np.linspace(start[0], finish[0], size)
@@ -515,6 +533,7 @@ class ParticleSet(object):
 
     def to_dict(self, pfile, time, deleted_only=False):
         """Convert all Particle data from one time step to a python dictionary.
+
         :param pfile: ParticleFile object requesting the conversion
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
@@ -865,6 +884,7 @@ def search_kernel(particle, fieldset, time):
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet
+
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
         return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
