@@ -533,7 +533,7 @@ class ParticleSet(object):
 
     def to_dict(self, pfile, time, deleted_only=False):
         """Convert all Particle data from one time step to a python dictionary.
-        
+
         :param pfile: ParticleFile object requesting the conversion
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles

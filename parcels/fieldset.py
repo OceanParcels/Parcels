@@ -569,7 +569,7 @@ class FieldSet(object):
                             allow_time_extrapolation=None, time_periodic=False,
                             tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
-        
+
         See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
         for a more detailed explanation of the different methods that can be used for c-grid datasets.
 

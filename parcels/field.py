@@ -1587,7 +1587,7 @@ class VectorField(object):
         +---+---+---+
         |   |V0 |   |
         +---+---+---+
-        
+
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and
         interpolating linearly V depending on the latitude coordinate.
