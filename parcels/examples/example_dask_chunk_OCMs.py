@@ -72,7 +72,7 @@ def fieldset_from_pop_1arcs(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'i': 8, 'j': 8, 'w_dep': 3}
+        chs = {'i': 8, 'j': 8, 'k': 3, 'w_dep': 3}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, field_chunksize=chs, timestamps=timestamps)
     return fieldset
@@ -100,6 +100,42 @@ def fieldset_from_swash(chunk_mode):
     fieldset.V.set_depth_from_field(fieldset.depth_u)
     fieldset.W.set_depth_from_field(fieldset.depth)
     return fieldset
+
+
+def fieldset_from_ofam(chunk_mode):
+    filenames = {'U': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_U.nc'),
+                 'V': path.join(path.dirname(__file__), 'OFAM_example_data', 'OFAM_simple_V.nc')}
+    variables = {'U': 'u', 'V': 'v'}
+    dimensions = {'lat': 'yu_ocean', 'lon': 'xu_ocean', 'depth': 'st_ocean',
+                  'time': 'Time'}
+
+    chs = False
+    name_map = {'lon': ['xu_ocean'],
+                'lat': ['yu_ocean'],
+                'depth': ['st_edges_ocean', 'st_ocean'],
+                'time': 'Time'}
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific':
+        chs = (1, 60, 50, 100)
+    return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs, chunkdims_name_map=name_map)
+
+
+def fieldset_from_mitgcm(chunk_mode):
+    data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
+    filenames = {"U": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
+                 "V": data_path + "mitgcm_UV_surface_zonally_reentrant.nc"}
+    variables = {"U": "UVEL", "V": "VVEL"}
+    dimensions = {"U": {"lon": "XG", "lat": "YG", "time": "time"},
+                  "V": {"lon": "XG", "lat": "YG", "time": "time"}}
+
+    chs = False
+    name_map = {'lon': 'XG', 'lat': 'YG', 'time': 'time'}
+    if chunk_mode == 'auto':
+        chs = 'auto'
+    elif chunk_mode == 'specific':
+        chs = (1, 50, 100)
+    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs, chunkdims_name_map=name_map)
 
 
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
@@ -142,6 +178,13 @@ def compute_swash_particle_advection(field_set, mode, lonp, latp, depthp):
     return pset
 
 
+def compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp):
+    pset = ParticleSet(field_set, pclass=ptype[mode], lon=lonp, lat=latp, depth=depthp)
+    pfile = ParticleFile("ofam_particles_chunk", pset, outputdt=delta(minutes=10))
+    pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5), output_file=pfile)
+    return pset
+
+
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_nemo_3D(mode, chunk_mode):
@@ -177,7 +220,7 @@ def test_pop(mode, chunk_mode):
     lonp = 70.0 * np.ones(npart)
     latp = [i for i in -45.0+(-0.25+np.random.rand(npart)*2.0*0.25)]
     compute_pop_particle_advection(field_set, mode, lonp, latp)
-    # POP sample file dimensions: k=20, j=60, i=60
+    # POP sample file dimensions: k=21, j=60, i=60
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     if chunk_mode is False:
@@ -185,6 +228,7 @@ def test_pop(mode, chunk_mode):
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
+        print(field_set.U.grid.chunk_info)
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 
@@ -235,6 +279,63 @@ def test_globcurrent_2D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(41.0/16.0)) * int(math.ceil(81.0/16.0))))
     assert(abs(pset[0].lon - 23.8) < 1)
     assert(abs(pset[0].lat - -35.3) < 1)
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
+def test_ofam_3D(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '1024KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
+    field_set = fieldset_from_ofam(chunk_mode)
+    lonp = [180]
+    latp = [10]
+    depthp = [2.5]  # the depth of the first layer in OFAM
+    pset = compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp)
+    # OFAM sample file dimensions: time=UNLIMITED, st_ocean=1, st_edges_ocean=52, lat=601, lon=2001
+    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+    if chunk_mode is False:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'auto':
+        assert (len(field_set.U.grid.load_chunk) != 1)
+    elif chunk_mode == 'specific':
+        print(field_set.U.grid.chunk_info)
+        numblocks = [i for i in field_set.U.grid.chunk_info[1:3]]
+        dblocks = 1
+        vblocks = 0
+        for bsize in field_set.U.grid.chunk_info[3:3+numblocks[0]]:
+            vblocks += bsize
+        ublocks = 0
+        for bsize in field_set.U.grid.chunk_info[3+numblocks[0]:3+numblocks[0]+numblocks[1]]:
+            ublocks += bsize
+        matching_numblocks = (ublocks == 2001 and vblocks == 601 and dblocks == 1)
+        matching_fields = (field_set.U.grid.chunk_info == field_set.V.grid.chunk_info)
+        matching_uniformblocks = (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(1.0/60.0)) * int(math.ceil(601.0/50.0)) * int(math.ceil(2001.0/100.0))))
+        assert (matching_uniformblocks or (matching_fields and matching_numblocks))
+    assert(abs(pset[0].lon - 173) < 1)
+    assert(abs(pset[0].lat - 11) < 1)
+
+
+@pytest.mark.parametrize('mode', ['jit'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
+def test_mitgcm(mode, chunk_mode):
+    if chunk_mode == 'auto':
+        dask.config.set({'array.chunk-size': '1024KiB'})
+    else:
+        dask.config.set({'array.chunk-size': '128MiB'})
+    field_set = fieldset_from_mitgcm(chunk_mode)
+    lons, lats = 5e5, 5e5
+
+    pset = ParticleSet.from_list(fieldset=field_set, pclass=ptype[mode], lon=lons, lat=lats)
+    pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
+    # MITgcm sample file dimensions: time=10, XG=400, YG=200
+    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+    if chunk_mode in [False, 'auto']:
+        assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode == 'specific':
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
+    assert np.allclose(pset[0].lon, 5.27e5, atol=1e3)
 
 
 @pytest.mark.parametrize('mode', ['jit'])

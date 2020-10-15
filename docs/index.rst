@@ -64,6 +64,7 @@ parcels.kernels.advection module
 parcels.kernels.advectiondiffusion module
 -----------------------------------------
 
+
 .. automodule:: parcels.kernels.advectiondiffusion
     :members:
     :show-inheritance:
@@ -103,10 +104,10 @@ parcels.rng module
     :members:
     :undoc-members:
 
-parcels.tools.error module
+parcels.tools.statuscodes module
 --------------------------
 
-.. automodule:: parcels.tools.error
+.. automodule:: parcels.tools.statuscodes
     :members:
     :show-inheritance:
 

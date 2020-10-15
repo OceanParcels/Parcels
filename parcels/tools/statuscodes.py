@@ -1,17 +1,24 @@
 """Collection of pre-built recovery kernels"""
 
 
-__all__ = ['ErrorCode', 'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
+__all__ = ['StateCode', 'OperationCode', 'ErrorCode',
+           'FieldSamplingError', 'FieldOutOfBoundError', 'TimeExtrapolationError',
            'KernelError', 'OutOfBoundsError', 'ThroughSurfaceError', 'OutOfTimeError',
            'recovery_map']
 
 
-class ErrorCode(object):
+class StateCode(object):
     Success = 0
     Evaluate = 1
+
+
+class OperationCode(object):
     Repeat = 2
     Delete = 3
     StopExecution = 4
+
+
+class ErrorCode(object):
     Error = 5
     ErrorInterpolation = 51
     ErrorOutOfBounds = 6
