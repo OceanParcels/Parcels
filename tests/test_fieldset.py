@@ -178,7 +178,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     indices_back = indices.copy()
-    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
+    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices, field_chunksize=None)
     assert indices == indices_back
     assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices['lat']])
@@ -188,6 +188,18 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     ixgrid = np.ix_([0], indices['lat'], indices['lon'])
     assert np.allclose(fieldsetsub.U.data, fieldsetfull.U.data[ixgrid])
     assert np.allclose(fieldsetsub.V.data, fieldsetfull.V.data[ixgrid])
+
+
+def test_empty_indices(tmpdir, filename='test_subsets'):
+    data, dimensions = generate_fieldset(100, 100)
+    filepath = tmpdir.join(filename)
+    FieldSet.from_data(data, dimensions).write(filepath)
+    error_thrown = False
+    try:
+        FieldSet.from_parcels(filepath, indices={'lon': []})
+    except RuntimeError:
+        error_thrown = True
+    assert error_thrown
 
 
 @pytest.mark.parametrize('calltype', ['from_data', 'from_nemo'])
@@ -383,7 +395,9 @@ def test_fieldset_write_curvilinear(tmpdir):
     newfile = tmpdir.join('curv_field')
     fieldset.write(newfile)
 
-    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'},
+                                     dimensions={'time': 'time_counter', 'depth': 'depthdx',
+                                                 'lon': 'nav_lon', 'lat': 'nav_lat'})
     assert fieldset2.dx.creation_log == 'from_netcdf'
 
     for var in ['lon', 'lat', 'data']:

@@ -1,6 +1,6 @@
 from os import path
 from parcels import (
-    FieldSet, ParticleSet, ScipyParticle, JITParticle, ErrorCode, KernelError,
+    FieldSet, ParticleSet, ScipyParticle, JITParticle, StateCode, OperationCode, ErrorCode, KernelError,
     OutOfBoundsError, AdvectionRK4
 )
 import numpy as np
@@ -12,7 +12,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
 
 def DoNothing(particle, fieldset, time):
-    return ErrorCode.Success
+    return StateCode.Success
 
 
 def fieldset(xdim=20, ydim=20):
@@ -94,7 +94,7 @@ def test_execution_fail_timed(fieldset, mode, npart=10):
         if particle.time >= 10.:
             return ErrorCode.Error
         else:
-            return ErrorCode.Success
+            return StateCode.Success
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
@@ -115,7 +115,7 @@ def test_execution_fail_python_exception(fieldset, mode, npart=10):
         if particle.time >= 10.:
             raise RuntimeError("Enough is enough!")
         else:
-            return ErrorCode.Success
+            return StateCode.Success
 
     pset = ParticleSet(fieldset, pclass=ptype[mode],
                        lon=np.linspace(0, 1, npart),
@@ -254,7 +254,7 @@ def test_update_kernel_in_script(fieldset, mode):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_errorcode_repeat(fieldset, mode):
+def test_statuscode_repeat(fieldset, mode):
     def simpleKernel(particle, fieldset, time):
         if particle.lon > .1 and time < 1.:
             # if particle.lon is not re-setted before kernel repetition, it will break here
@@ -262,9 +262,9 @@ def test_errorcode_repeat(fieldset, mode):
         particle.lon += 0.1
         if particle.dt > 1.49:
             # dt is used to leave the repetition loop (dt is the only variable not re-setted)
-            return ErrorCode.Success
+            return StateCode.Success
         particle.dt += .1
-        return ErrorCode.Repeat
+        return OperationCode.Repeat
 
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.], lat=[0.])
     pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)

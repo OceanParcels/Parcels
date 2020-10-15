@@ -1,4 +1,4 @@
-from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode,
+from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode, StateCode,
                      AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
                      AdvectionAnalytical, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
                      AdvectionDiffusionEM, AdvectionRK4DiffusionEM)
@@ -141,7 +141,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
         particle.depth = 0
         AdvectionRK4(particle, fieldset, time)  # perform a 2D advection because vertical flow will always push up in this case
         particle.time = time + particle.dt  # to not trigger kernels again, otherwise infinite loop
-        particle.set_state(ErrorCode.Success)
+        particle.set_state(StateCode.Success)
 
     recovery_dict = {ErrorCode.ErrorOutOfBounds: DeleteParticle}
     if wErrorThroughSurface:

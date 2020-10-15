@@ -8,7 +8,7 @@ extern "C" {
 #include <stdlib.h>
 #include <math.h>
 
-#define CHECKERROR(res) do {if (res != SUCCESS) return res;} while (0)
+#define CHECKSTATUS(res) do {if (res != SUCCESS) return res;} while (0)
 
 #ifdef DOUBLE_COORD_VARIABLES
 typedef double type_coord;
@@ -21,6 +21,10 @@ typedef enum
     LINEAR=0, NEAREST=1, CGRID_VELOCITY=2, CGRID_TRACER=3, BGRID_VELOCITY=4, BGRID_W_VELOCITY=5, BGRID_TRACER=6, LINEAR_INVDIST_LAND_TRACER=7
   } InterpCode;
 
+typedef enum
+  {
+    NEMO = 0, MITGCM = 1, MOM5 = 2
+  } GridIndexingType;
 
 typedef struct
 {
@@ -45,16 +49,21 @@ typedef struct
 typedef enum
   {
     SUCCESS=0, EVALUATE=1, REPEAT=2, DELETE=3, STOP_EXECUTION=4, ERROR=5, ERROR_INTERPOLATION=51, ERROR_OUT_OF_BOUNDS=6, ERROR_THROUGH_SURFACE=61, ERROR_TIME_EXTRAPOLATION=7
-  } ErrorCode;
+  } StatusCode;
 
 typedef enum
   {
     RECTILINEAR_Z_GRID=0, RECTILINEAR_S_GRID=1, CURVILINEAR_Z_GRID=2, CURVILINEAR_S_GRID=3
   } GridCode;
 
-static inline ErrorCode search_indices_vertical_z(type_coord z, int zdim, float *zvals, int *zi, double *zeta)
+static inline StatusCode search_indices_vertical_z(type_coord z, int zdim, float *zvals, int *zi, double *zeta, int gridindexingtype)
 {
   if (zvals[zdim-1] > zvals[0]){
+    if ((z < zvals[0]) && (gridindexingtype == MOM5) && (z > 2 * zvals[0] - zvals[1])){
+      *zi = -1;
+      *zeta = z / zvals[0];
+      return SUCCESS;
+    }
     if (z < zvals[0]) {return ERROR_THROUGH_SURFACE;}
     if (z > zvals[zdim-1]) {return ERROR_OUT_OF_BOUNDS;}
     while (*zi < zdim-1 && z > zvals[*zi+1]) ++(*zi);
@@ -72,7 +81,7 @@ static inline ErrorCode search_indices_vertical_z(type_coord z, int zdim, float 
   return SUCCESS;
 }
 
-static inline ErrorCode search_indices_vertical_s(type_coord z, int xdim, int ydim, int zdim, float *zvals,
+static inline StatusCode search_indices_vertical_s(type_coord z, int xdim, int ydim, int zdim, float *zvals,
                                     int xi, int yi, int *zi, double xsi, double eta, double *zeta,
                                     int z4d, int ti, int tdim, double time, double t0, double t1, int interp_method)
 {
@@ -156,9 +165,10 @@ static inline void reconnect_bnd_indices(int *xi, int *yi, int xdim, int ydim, i
 }
 
 
-static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
+static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
-                                                   int ti, double time, double t0, double t1, int interp_method)
+                                                   int ti, double time, double t0, double t1, int interp_method,
+                                                   int gridindexingtype)
 {
   int xdim = grid->xdim;
   int ydim = grid->ydim;
@@ -231,21 +241,21 @@ static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, t
     *eta = (y - yvals[*yi]) / (yvals[*yi+1] - yvals[*yi]);
   }
 
-  ErrorCode err;
+  StatusCode status;
   if (zdim > 1){
     switch(gcode){
       case RECTILINEAR_Z_GRID:
-        err = search_indices_vertical_z(z, zdim, zvals, zi, zeta);
+        status = search_indices_vertical_z(z, zdim, zvals, zi, zeta, gridindexingtype);
         break;
       case RECTILINEAR_S_GRID:
-        err = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
+        status = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
                                         *xi, *yi, zi, *xsi, *eta, zeta,
                                         z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
-        err = ERROR_INTERPOLATION;
+        status = ERROR_INTERPOLATION;
     }
-    CHECKERROR(err);
+    CHECKSTATUS(status);
   }
   else
     *zeta = 0;
@@ -258,9 +268,10 @@ static inline ErrorCode search_indices_rectilinear(type_coord x, type_coord y, t
 }
 
 
-static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
+static inline StatusCode search_indices_curvilinear(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid, GridCode gcode,
                                                    int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
-                                                   int ti, double time, double t0, double t1, int interp_method)
+                                                   int ti, double time, double t0, double t1, int interp_method,
+                                                   int gridindexingtype)
 {
   int xi_old = *xi;
   int yi_old = *yi;
@@ -367,21 +378,21 @@ static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, t
   if (*eta < 0) *eta = 0;
   if (*eta > 1) *eta = 1;
 
-  ErrorCode err;
+  StatusCode status;
   if (zdim > 1){
     switch(gcode){
       case CURVILINEAR_Z_GRID:
-        err = search_indices_vertical_z(z, zdim, zvals, zi, zeta);
+        status = search_indices_vertical_z(z, zdim, zvals, zi, zeta, gridindexingtype);
         break;
       case CURVILINEAR_S_GRID:
-        err = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
+        status = search_indices_vertical_s(z, xdim, ydim, zdim, zvals,
                                         *xi, *yi, zi, *xsi, *eta, zeta,
                                         z4d, ti, tdim, time, t0, t1, interp_method);
         break;
       default:
-        err = ERROR_INTERPOLATION;
+        status = ERROR_INTERPOLATION;
     }
-    CHECKERROR(err);
+    CHECKSTATUS(status);
   }
   else
     *zeta = 0;
@@ -396,20 +407,21 @@ static inline ErrorCode search_indices_curvilinear(type_coord x, type_coord y, t
 /* Local linear search to update grid index
  * params ti, sizeT, time. t0, t1 are only used for 4D S grids
  * */
-static inline ErrorCode search_indices(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid,
+static inline StatusCode search_indices(type_coord x, type_coord y, type_coord z, CStructuredGrid *grid,
                                        int *xi, int *yi, int *zi, double *xsi, double *eta, double *zeta,
-                                       GridCode gcode, int ti, double time, double t0, double t1, int interp_method)
+                                       GridCode gcode, int ti, double time, double t0, double t1, int interp_method,
+                                       int gridindexingtype)
 {
   switch(gcode){
     case RECTILINEAR_Z_GRID:
     case RECTILINEAR_S_GRID:
       return search_indices_rectilinear(x, y, z, grid, gcode, xi, yi, zi, xsi, eta, zeta,
-                                   ti, time, t0, t1, interp_method);
+                                   ti, time, t0, t1, interp_method, gridindexingtype);
       break;
     case CURVILINEAR_Z_GRID:
     case CURVILINEAR_S_GRID:
       return search_indices_curvilinear(x, y, z, grid, gcode, xi, yi, zi, xsi, eta, zeta,
-                                   ti, time, t0, t1, interp_method);
+                                   ti, time, t0, t1, interp_method, gridindexingtype);
       break;
     default:
       printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID, CURVILINEAR_Z_GRID and CURVILINEAR_S_GRID grids are currently implemented\n");
@@ -418,7 +430,7 @@ static inline ErrorCode search_indices(type_coord x, type_coord y, type_coord z,
 }
 
 /* Local linear search to update time index */
-static inline ErrorCode search_time_index(double *t, int size, double *tvals, int *ti, int time_periodic, double tfull_min, double tfull_max, int *periods)
+static inline StatusCode search_time_index(double *t, int size, double *tvals, int *ti, int time_periodic, double tfull_min, double tfull_max, int *periods)
 {
   if (*ti < 0)
     *ti = 0;

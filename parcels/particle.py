@@ -4,12 +4,12 @@ from operator import attrgetter
 import numpy as np
 
 from parcels.field import Field
-from parcels.tools.error import ErrorCode
+from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
 __all__ = ['ScipyParticle', 'JITParticle', 'Variable']
 
-indicators_64bit = [np.float64, np.int64, c_void_p]
+indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
 
 class Variable(object):
@@ -24,8 +24,6 @@ class Variable(object):
     :type to_write: (bool, 'once', optional)
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
-        if name == 'z':
-            raise NotImplementedError("Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
         self.name = name
         self.dtype = dtype
         self.initial = initial
@@ -64,7 +62,6 @@ class ParticleType(object):
             raise TypeError("Class object required to derive ParticleType")
         if not issubclass(pclass, ScipyParticle):
             raise TypeError("Class object does not inherit from parcels.ScipyParticle")
-
         self.name = pclass.__name__
         self.uses_jit = issubclass(pclass, JITParticle)
         # Pick Variable objects out of __dict__.
@@ -73,6 +70,13 @@ class ParticleType(object):
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
                 ptype = cls.getPType()
+                for v in self.variables:
+                    if v.name in [v.name for v in ptype.variables]:
+                        raise AttributeError(
+                            "Custom Variable name '%s' is not allowed, as it is also a built-in variable" % v.name)
+                    if v.name == 'z':
+                        raise AttributeError(
+                            "Custom Variable name 'z' is not allowed, as it is used for depth in ParticleFile")
                 self.variables = ptype.variables + self.variables
         # Sort variables with all the 64-bit first so that they are aligned for the JIT cptr
         self.variables = [v for v in self.variables if v.is64bit()] + \
@@ -176,10 +180,10 @@ class ScipyParticle(_Particle):
     yi = Variable('yi', dtype=np.int32, to_write=False)
     zi = Variable('zi', dtype=np.int32, to_write=False)
     ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)
-    id = Variable('id', dtype=np.int32)
+    id = Variable('id', dtype=np.int64)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
-    state = Variable('state', dtype=np.int32, initial=ErrorCode.Evaluate, to_write=False)
+    state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
@@ -212,7 +216,7 @@ class ScipyParticle(_Particle):
         return str + "time=%s)" % time_string
 
     def delete(self):
-        self.state = ErrorCode.Delete
+        self.state = OperationCode.Delete
 
     def set_state(self, state):
         self.state = state
