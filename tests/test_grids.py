@@ -605,7 +605,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-def test_mitgridindexing(mode, gridindexingtype):
+def test_cgrid_indexing(mode, gridindexingtype):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -657,7 +657,7 @@ def test_mitgridindexing(mode, gridindexingtype):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
+def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -733,7 +733,7 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
+def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -788,10 +788,7 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
 
     U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
     data = {"U": U, "V": V, "W": W, "R": R}
-    if gridindexingtype == "mom5":
-        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype="mom5")
-    elif gridindexingtype == "pop":
-        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype="nemo")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
     fieldset.U.interp_method = "bgrid_velocity"
     fieldset.V.interp_method = "bgrid_velocity"
     fieldset.W.interp_method = "bgrid_w_velocity"
@@ -843,7 +840,7 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
         w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=yi, xt_ocean=xi)
 
     elif gridindexingtype == 'pop':
-        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popdata.nc')
+        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'data.nc')
         coordfname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
         filenames = {"U": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
                      "V": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
