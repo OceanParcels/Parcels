@@ -34,6 +34,7 @@ class FieldSet(object):
     """
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
+        self.completed = False
         if U:
             self.add_field(U, 'U')
             self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
@@ -121,6 +122,8 @@ class FieldSet(object):
         :param field: :class:`parcels.field.Field` object to be added
         :param name: Name of the :class:`parcels.field.Field` object to be added
         """
+        if self.completed:
+            raise RuntimeError("FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?")
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
@@ -298,6 +301,7 @@ class FieldSet(object):
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
                     f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+        self.completed = True
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):

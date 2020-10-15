@@ -253,6 +253,26 @@ def test_add_duplicate_field(dupobject):
     assert error_thrown
 
 
+@pytest.mark.parametrize('fieldtype', ['normal', 'vector'])
+def test_add_field_after_pset(fieldtype):
+    data, dimensions = generate_fieldset(100, 100)
+    fieldset = FieldSet.from_data(data, dimensions)
+    pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset.check_complete
+    field1 = Field('field1', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
+    field2 = Field('field2', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
+    vfield = VectorField('vfield', field1, field2)
+    error_thrown = False
+    try:
+        if fieldtype == 'normal':
+            fieldset.add_field(field1)
+        elif fieldtype == 'vector':
+            fieldset.add_vector_field(vfield)
+    except RuntimeError:
+        error_thrown = True
+
+    assert error_thrown
+
+
 def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
