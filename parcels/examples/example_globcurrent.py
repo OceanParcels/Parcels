@@ -218,8 +218,11 @@ def test_globcurrent_startparticles_between_time_arrays(mode, dt, with_starttime
     else:
         pset = ParticleSet(fieldset, pclass=MyParticle, lon=[25], lat=[-35])
 
-    with pytest.raises(TimeExtrapolationError):
-        pset.execute(pset.Kernel(AdvectionRK4)+SampleP, runtime=delta(days=1), dt=dt)
+    if with_starttime:
+        with pytest.raises(TimeExtrapolationError):
+            pset.execute(pset.Kernel(AdvectionRK4)+SampleP, runtime=delta(days=1), dt=dt)
+    else:
+        pset.execute(pset.Kernel(AdvectionRK4) + SampleP, runtime=delta(days=1), dt=dt)
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
