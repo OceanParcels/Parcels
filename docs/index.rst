@@ -8,7 +8,7 @@ Parcels documentation
 ===================================
 
 Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function.
-The documentation corresponds to the latest anaconda release, for newer documentation see the docstrings in the code.
+The documentation corresponds to the latest conda release, for newer documentation see the docstrings in the code.
 
 See http://www.oceanparcels.org for general information on the Parcels project, including how to install and use.
 
