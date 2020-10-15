@@ -636,6 +636,8 @@ class FieldSet(object):
                       W nodes are at the centre of the horizontal interfaces.
                       They are interpolated linearly (as a function of z) in the cell.
                       T node is at the cell centre, and constant per cell.
+                      Note that Parcels assumes that the length of the depth dimension (at the W-points)
+                      is one larger than the size of the velocity and tracer fields in the depth dimension.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -1036,7 +1038,11 @@ class FieldSet(object):
                             del f.data[i, :]
 
                 lib = np if f.field_chunksize in [False, None] else da
-                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                if f.gridindexingtype == 'pop':
+                    zd = g.zdim - 1
+                else:
+                    zd = g.zdim
+                data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:

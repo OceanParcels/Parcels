@@ -151,7 +151,6 @@ class NetcdfFileBuffer(_FileBuffer):
                 data = data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
-
         return data
 
     @property
