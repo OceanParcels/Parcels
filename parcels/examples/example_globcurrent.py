@@ -237,7 +237,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
     def DeleteParticle(particle, fieldset, time):
         particle.delete()
 
-    pset0 = ParticleSet(fieldset, pclass=JITParticle,
+    pset0 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],
                         lat=[-35, -35],
                         time=time0)
@@ -247,7 +247,7 @@ def test_globcurrent_particle_independence(mode, rundays=5):
                   dt=delta(minutes=5),
                   recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle})
 
-    pset1 = ParticleSet(fieldset, pclass=JITParticle,
+    pset1 = ParticleSet(fieldset, pclass=ptype[mode],
                         lon=[25, 25],
                         lat=[-35, -35],
                         time=time0)
