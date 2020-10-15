@@ -840,7 +840,7 @@ def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
         w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=yi, xt_ocean=xi)
 
     elif gridindexingtype == 'pop':
-        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'data.nc')
+        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popdata.nc')
         coordfname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
         filenames = {"U": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
                      "V": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
