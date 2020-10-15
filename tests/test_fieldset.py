@@ -464,6 +464,36 @@ def test_vector_fields(mode, swapUV):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_add_second_vector_field(mode):
+    lon = np.linspace(0., 10., 12, dtype=np.float32)
+    lat = np.linspace(0., 10., 10, dtype=np.float32)
+    U = np.ones((10, 12), dtype=np.float32)
+    V = np.zeros((10, 12), dtype=np.float32)
+    data = {'U': U, 'V': V}
+    dimensions = {'U': {'lat': lat, 'lon': lon},
+                  'V': {'lat': lat, 'lon': lon}}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    data2 = {'U2': U, 'V2': V}
+    dimensions2 = {'lon': [ln + 0.1 for ln in lon], 'lat': [lt - 0.1 for lt in lat]}
+    fieldset2 = FieldSet.from_data(data2, dimensions2, mesh='flat')
+
+    UV2 = VectorField('UV2', fieldset2.U2, fieldset2.V2)
+    fieldset.add_vector_field(UV2)
+
+    def SampleUV2(particle, fieldset, time):
+        u, v = fieldset.UV2[time, particle.depth, particle.lat, particle.lon]
+        particle.lon += u * particle.dt
+        particle.lat += v * particle.dt
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0.5, lat=0.5)
+    pset.execute(AdvectionRK4+pset.Kernel(SampleUV2), dt=1, runtime=1)
+
+    assert abs(pset.lon[0] - 2.5) < 1e-9
+    assert abs(pset.lat[0] - .5) < 1e-9
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('field_chunksize', [False, 'auto', (1, 32, 32)])
 @pytest.mark.parametrize('with_GC', [False, True])
