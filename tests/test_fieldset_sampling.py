@@ -608,12 +608,11 @@ def test_multiple_grid_addlater_error():
     P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
               lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
               lat=np.linspace(0., 1., ydim*10, dtype=np.float32))
-    fieldset.add_field(P)
 
     fail = False
     try:
-        pset.execute(AdvectionRK4, runtime=10, dt=1)
-    except:
+        fieldset.add_field(P)
+    except RuntimeError:
         fail = True
     assert fail
 
