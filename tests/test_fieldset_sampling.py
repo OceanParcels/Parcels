@@ -43,7 +43,7 @@ def k_sample_uv_noconvert_fixture():
 
 def k_sample_p():
     def SampleP(particle, fieldset, time):
-        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+        particle.p = fieldset.P[particle]
     return SampleP
 
 

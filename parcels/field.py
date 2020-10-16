@@ -532,7 +532,11 @@ class Field(object):
         self.grid.depth_field = field
 
     def __getitem__(self, key):
-        return self.eval(*key)
+        # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
+        if hasattr(key, 'set_index'):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key.zi, key.yi, key.xi)
+        else:
+            return self.eval(*key)
 
     def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
@@ -833,9 +837,7 @@ class Field(object):
         else:
             return self.search_indices_curvilinear(x, y, z, xi, yi, ti, time, search2D=search2D)
 
-    def interpolator2D(self, ti, z, y, x):
-        xi = 0
-        yi = 0
+    def interpolator2D(self, ti, z, y, x, yi, xi):
         (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
@@ -880,10 +882,8 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
-    def interpolator3D(self, ti, z, y, x, time):
-        xi = int(self.grid.xdim / 2) - 1
-        yi = int(self.grid.ydim / 2) - 1
-        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)
+    def interpolator3D(self, ti, z, y, x, time, zi, yi, xi):
+        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)  # TODO: Also zi as input?
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -979,13 +979,13 @@ class Field(object):
             f1 = self.data[ti+1, :]
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    def spatial_interpolation(self, ti, z, y, x, time):
+    def spatial_interpolation(self, ti, z, y, x, time, zi, yi, xi):
         """Interpolate horizontal field values using a SciPy interpolator"""
 
         if self.grid.zdim == 1:
-            val = self.interpolator2D(ti, z, y, x)
+            val = self.interpolator2D(ti, z, y, x, yi, xi)
         else:
-            val = self.interpolator3D(ti, z, y, x, time)
+            val = self.interpolator3D(ti, z, y, x, time, zi, yi, xi)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldOutOfBoundError(x, y, z, field=self)
@@ -1026,7 +1026,7 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
-    def eval(self, time, z, y, x, applyConversion=True):
+    def eval(self, time, z, y, x, zi=0, yi=0, xi=0, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -1036,8 +1036,8 @@ class Field(object):
         (ti, periods) = self.time_index(time)
         time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
-            f0 = self.spatial_interpolation(ti, z, y, x, time)
-            f1 = self.spatial_interpolation(ti + 1, z, y, x, time)
+            f0 = self.spatial_interpolation(ti, z, y, x, time, zi, yi, xi)
+            f1 = self.spatial_interpolation(ti + 1, z, y, x, time, zi, yi, xi)
             t0 = self.grid.time[ti]
             t1 = self.grid.time[ti + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -1045,7 +1045,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], zi, yi, xi)
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
