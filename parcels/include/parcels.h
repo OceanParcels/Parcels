@@ -247,10 +247,25 @@ static inline StatusCode spatial_interpolation_nearest2D(double xsi, double eta,
 }
 
 /* C grid interpolation routine for tracers on 2D grid */
-static inline StatusCode spatial_interpolation_tracer_c_grid_2D(double _xsi, double _eta,
+static inline StatusCode spatial_interpolation_tracer_bc_grid_2D(double _xsi, double _eta,
 								float data[2][2], float *value)
 {
   *value = data[1][1];
+  return SUCCESS;
+}
+
+/* C grid interpolation routine for tracers on 3D grid */
+static inline StatusCode spatial_interpolation_tracer_bc_grid_3D(double _xsi, double _eta, double _zeta,
+								float data[2][2][2], float *value)
+{
+  *value = data[0][1][1];
+  return SUCCESS;
+}
+
+static inline StatusCode spatial_interpolation_tracer_bc_grid_bottom(double _xsi, double _eta, double _zeta,
+								float data[2][2][2], float *value)
+{
+  *value = data[1][1][1];
   return SUCCESS;
 }
 
@@ -263,21 +278,6 @@ static inline StatusCode spatial_interpolation_nearest3D(double xsi, double eta,
   if (eta < .5) {j = 0;} else {j = 1;}
   if (zeta < .5) {k = 0;} else {k = 1;}
   *value = data[k][j][i];
-  return SUCCESS;
-}
-
-/* C grid interpolation routine for tracers on 3D grid */
-static inline StatusCode spatial_interpolation_tracer_c_grid_3D(double _xsi, double _eta, double _zeta,
-								float data[2][2][2], float *value)
-{
-  *value = data[0][1][1];
-  return SUCCESS;
-}
-
-static inline StatusCode spatial_interpolation_tracer_c_grid_bottom(double _xsi, double _eta, double _zeta,
-								float data[2][2][2], float *value)
-{
-  *value = data[1][1][1];
   return SUCCESS;
 }
 
@@ -572,9 +572,9 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     INTERP(spatial_interpolation_nearest2D, spatial_interpolation_nearest3D);
   } else if ((interp_method == CGRID_TRACER) || (interp_method == BGRID_TRACER)) {
     if ((gridindexingtype == POP) && (zi[igrid] == grid->zdim-2)) {
-      INTERP(spatial_interpolation_tracer_c_grid_2D, spatial_interpolation_tracer_c_grid_bottom);
+      INTERP(spatial_interpolation_tracer_bc_grid_2D, spatial_interpolation_tracer_bc_grid_bottom);
     } else {
-      INTERP(spatial_interpolation_tracer_c_grid_2D, spatial_interpolation_tracer_c_grid_3D);
+      INTERP(spatial_interpolation_tracer_bc_grid_2D, spatial_interpolation_tracer_bc_grid_3D);
     }
   } else if (interp_method == LINEAR_INVDIST_LAND_TRACER) {
     INTERP(spatial_interpolation_bilinear_invdist_land, spatial_interpolation_trilinear_invdist_land);
