@@ -603,7 +603,7 @@ def test_multiple_grid_addlater_error():
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
 
-    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])
+    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset.check_complete
 
     P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
               lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
