@@ -75,7 +75,7 @@ class FieldSet(object):
                (e.g. dimensions['U'], dimensions['V'], etc).
         :param transpose: Boolean whether to transpose data on read-in
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -85,6 +85,18 @@ class FieldSet(object):
                Default is False if dimensions includes time, else True
         :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object). (Default: False)
                This flag overrides the allow_time_interpolation and sets it to False
+
+        Usage examples
+        ==============
+
+        * `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
+
+        * `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
+
+        * `Interpolation <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_interpolation.ipynb>`_
+
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+
         """
 
         fields = {}
@@ -121,6 +133,13 @@ class FieldSet(object):
 
         :param field: :class:`parcels.field.Field` object to be added
         :param name: Name of the :class:`parcels.field.Field` object to be added
+
+        For usage examples see the following tutorials:
+
+        * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
+
         """
         if self.completed:
             raise RuntimeError("FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?")
@@ -342,7 +361,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tuturial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -367,6 +386,17 @@ class FieldSet(object):
         :param field_chunksize: size of the chunks in dask loading
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
+
+        For usage examples see the following tutorials:
+
+        * `Basic Parcels setup <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/parcels_tutorial.ipynb>`_
+
+        * `Argo floats <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_Argofloats.ipynb>`_
+
+        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
+
+        * `Time-evolving depth dimensions <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
+
         """
         # Ensure that times are not provided both in netcdf file and in 'timestamps'.
         if timestamps is not None and 'time' in dimensions:
@@ -444,6 +474,13 @@ class FieldSet(object):
                   tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
+        for a detailed tutorial on the setup for 2D NEMO fields and `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_3D.ipynb>`_
+        for the tutorial on the setup for 3D NEMO fields.
+
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        for a more detailed explanation of the different methods that can be used for c-grid datasets.
+
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
                or be a list of file.
@@ -459,13 +496,15 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
-                _________________V[k,j+1,i+1]________________
-               |                                             |
-               |                                             |
-               U[k,j+1,i]   W[k:k+2,j+1,i+1], T[k,j+1,i+1]   U[k,j+1,i+1]
-               |                                             |
-               |                                             |
-               |_________________V[k,j,i+1]__________________|
+
+               +-----------------------------+-----------------------------+-----------------------------+
+               |                             |         V[k,j+1,i+1]        |                             |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |                             |         V[k,j,i+1]          +                             |
+               +-----------------------------+-----------------------------+-----------------------------+
+
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -478,7 +517,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -538,6 +577,9 @@ class FieldSet(object):
                             tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', field_chunksize='auto', **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
+        See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
+        for a more detailed explanation of the different methods that can be used for c-grid datasets.
+
         :param filenames: Dictionary mapping variables to file(s). The
                filepath may contain wildcards to indicate multiple files,
                or be a list of file.
@@ -553,13 +595,15 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: NEMO is discretised on a C-grid:
                U and V velocities are not located on the same nodes (see https://www.nemo-ocean.eu/doc/node19.html ).
-                _________________V[k,j+1,i+1]________________
-               |                                             |
-               |                                             |
-               U[k,j+1,i]   W[k-1:k,j+1,i+1], T[k,j+1,i+1]   U[k,j+1,i+1]
-               |                                             |
-               |                                             |
-               |_________________V[k,j,i+1]__________________|
+
+               +-----------------------------+-----------------------------+-----------------------------+
+               |                             |         V[k,j+1,i+1]        |                             |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j+1,i]                   |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|U[k,j+1,i+1]                 |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |                             |         V[k,j,i+1]          +                             |
+               +-----------------------------+-----------------------------+-----------------------------+
+
                To interpolate U, V velocities on the C-grid, Parcels needs to read the f-nodes,
                which are located on the corners of the cells.
                (for indexing details: https://www.nemo-ocean.eu/doc/img360.png )
@@ -631,14 +675,18 @@ class FieldSet(object):
                dimension names are different for each variable.
                Watch out: POP is discretised on a B-grid:
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
-               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
-               |                                         |
-               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
-               |                                         |
-               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
+               +-----------------------------+-----------------------------+-----------------------------+
+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
-               In 3D: U and V nodes are at the midlle of the cell vertical edges,
+               In 3D: U and V nodes are at the middle of the cell vertical edges,
                       They are interpolated bilinearly (independently of z) in the cell.
                       W nodes are at the centre of the horizontal interfaces.
                       They are interpolated linearly (as a function of z) in the cell.
@@ -650,7 +698,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -773,11 +821,15 @@ class FieldSet(object):
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
                U and V velocity nodes are not located as W velocity and T tracer nodes (see http://www.cesm.ucar.edu/models/cesm1.0/pop2/doc/sci/POPRefManual.pdf ).
-               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
-               |                                         |
-               |      W[k:k+2,j+1,i+1],T[k,j+1,i+1]      |
-               |                                         |
-               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j+1,i],V[k,j+1,i]        |                             |U[k,j+1,i+1],V[k,j+1,i+1]    |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |                             |W[k:k+2,j+1,i+1],T[k,j+1,i+1]|                             |
+               +-----------------------------+-----------------------------+-----------------------------+
+               |U[k,j,i],V[k,j,i]            |                             +U[k,j,i+1],V[k,j,i+1]        |
+               +-----------------------------+-----------------------------+-----------------------------+
+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
                In 3D: U and V nodes are at the midlle of the cell vertical edges,
@@ -893,7 +945,7 @@ class FieldSet(object):
         :param fieldtype: Optional dictionary mapping fields to fieldtypes to be used for UnitConverter.
                (either 'U', 'V', 'Kh_zonal', 'Kh_meridional' or None)
         :param mesh: String indicating the type of mesh coordinates and
-               units used during velocity interpolation, see also https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb:
+               units used during velocity interpolation, see also `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_:
 
                1. spherical (default): Lat and lon in degree, with a
                   correction for zonal velocity U near the poles.
@@ -944,6 +996,11 @@ class FieldSet(object):
         stored as 32-bit floats. While constants can be updated during
         execution in SciPy mode, they can not be updated in JIT mode.
 
+        Tutorials using fieldset.add_constant:
+        `Analytical advection <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_analyticaladvection.ipynb>`_
+        `Diffusion <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_diffusion.ipynb>`_
+        `Periodic boundaries <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+
         :param name: Name of the constant
         :param value: Value of the constant (stored as 32-bit float)
         """
@@ -984,6 +1041,7 @@ class FieldSet(object):
 
     def advancetime(self, fieldset_new):
         """Replace oldest time on FieldSet with new FieldSet
+
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         logger.warning_once("Fieldset.advancetime() is deprecated.\n \
@@ -1013,6 +1071,7 @@ class FieldSet(object):
         This is used when FieldSet uses data imported from netcdf,
         with default option deferred_load. The loaded time steps are at or immediatly before time
         and the two time steps immediately following time if dt is positive (and inversely for negative dt)
+
         :param time: Time around which the FieldSet chunks are to be loaded. Time is provided as a double, relatively to Fieldset.time_origin
         :param dt: time step of the integration scheme
         """

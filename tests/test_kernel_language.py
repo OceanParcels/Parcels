@@ -295,6 +295,25 @@ def test_random_float(mode, rngfunc, rngargs, npart=10):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('concat', [False, True])
+def test_random_kernel_concat(fieldset, mode, concat):
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32)
+
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def RandomKernel(particle, fieldset, time):
+        particle.p += ParcelsRandom.uniform(0, 1)
+
+    def AddOne(particle, fieldset, time):
+        particle.p += 1.
+
+    kernels = pset.Kernel(RandomKernel)+pset.Kernel(AddOne) if concat else RandomKernel
+    pset.execute(kernels, dt=0)
+    assert pset.p > 1 if concat else pset.p < 1
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('c_inc', ['str', 'file'])
 def test_c_kernel(fieldset, mode, c_inc):
     coord_type = np.float32 if c_inc == 'str' else np.float64
