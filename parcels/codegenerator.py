@@ -778,11 +778,15 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.field)
         self.visit(node.args)
 
-        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+        if node.args.ccode == 'particles':
+            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        else:
+            args = node.args.ccode
+        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
         stmts = [c.Assign("err", ccode_eval)]
 
         if node.convert:
-            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+            ccode_conv = node.field.obj.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
             stmts += [conv_stat]
 
@@ -813,8 +817,12 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.args)
         cstat = []
         for fld, var in zip(node.fields.obj, node.var):
-            ccode_eval = fld.ccode_eval(var, *node.args.ccode)
-            ccode_conv = fld.ccode_convert(*node.args.ccode)
+            if node.args.ccode == 'particles':
+                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            else:
+                args = node.args.ccode
+            ccode_eval = fld.ccode_eval(var, *args)
+            ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
             cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
         node.ccode = c.Block(cstat)
@@ -846,8 +854,12 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.args)
         cstat = []
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, *node.args.ccode)
-            ccode_conv = fld.ccode_convert(*node.args.ccode)
+            if node.args.ccode == 'particles':
+                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            else:
+                args = node.args.ccode
+            ccode_eval = fld.ccode_eval(node.var, *args)
+            ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
             cstat += [c.Assign("err", ccode_eval),
                       conv_stat,
