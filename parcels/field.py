@@ -1750,6 +1750,14 @@ class SummedField(list):
                 self.append(fld)
         return self
 
+    def get_fields(self):
+        """Returns a list of all the :class:`parcels.field.Field` objects associated with this SummedField"""
+        fields = []
+        for v in self.__dict__.values():
+            if isinstance(v, Field) and v not in fields:
+                fields.append(v)
+        return fields
+
 
 class NestedField(list):
     """Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
@@ -1801,3 +1809,11 @@ class NestedField(list):
                     else:
                         pass
             return val
+
+    def get_fields(self):
+        """Returns a list of all the :class:`parcels.field.Field` objects associated with this NestedField"""
+        fields = []
+        for v in self.__dict__.values():
+            if isinstance(v, Field) and v not in fields:
+                fields.append(v)
+        return fields
