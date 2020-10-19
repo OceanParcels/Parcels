@@ -232,9 +232,8 @@ class FieldSet(object):
         :param vfield: :class:`parcels.field.VectorField` object to be added
         """
         setattr(self, vfield.name, vfield)
-        ref_names = [f.name for f in self.get_fields()]
-        for v in vfield.get_fields():
-            if v.name not in ref_names:
+        for v in vfield.__dict__.values():
+            if isinstance(v, Field) and (v not in self.get_fields()):
                 self.add_field(v)
         vfield.fieldset = self
         if isinstance(vfield, NestedField):
