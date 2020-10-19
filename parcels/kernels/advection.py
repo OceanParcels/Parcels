@@ -14,11 +14,11 @@ def AdvectionRK4(particle, fieldset, time):
     Function needs to be converted to Kernel object before execution"""
     (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1*.5*particle.dt, particle.lat + v1*.5*particle.dt)
-    (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat1, lon1]  # TODO how to also pass xi, yi, zi here?
+    (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat1, lon1, particle]
     lon2, lat2 = (particle.lon + u2*.5*particle.dt, particle.lat + v2*.5*particle.dt)
-    (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat2, lon2]
+    (u3, v3) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (particle.lon + u3*particle.dt, particle.lat + v3*particle.dt)
-    (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3]
+    (u4, v4) = fieldset.UV[time + particle.dt, particle.depth, lat3, lon3, particle]
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
 
@@ -31,15 +31,15 @@ def AdvectionRK4_3D(particle, fieldset, time):
     lon1 = particle.lon + u1*.5*particle.dt
     lat1 = particle.lat + v1*.5*particle.dt
     dep1 = particle.depth + w1*.5*particle.dt
-    (u2, v2, w2) = fieldset.UVW[time + .5 * particle.dt, dep1, lat1, lon1]
+    (u2, v2, w2) = fieldset.UVW[time + .5 * particle.dt, dep1, lat1, lon1, particle]
     lon2 = particle.lon + u2*.5*particle.dt
     lat2 = particle.lat + v2*.5*particle.dt
     dep2 = particle.depth + w2*.5*particle.dt
-    (u3, v3, w3) = fieldset.UVW[time + .5 * particle.dt, dep2, lat2, lon2]
+    (u3, v3, w3) = fieldset.UVW[time + .5 * particle.dt, dep2, lat2, lon2, particle]
     lon3 = particle.lon + u3*particle.dt
     lat3 = particle.lat + v3*particle.dt
     dep3 = particle.depth + w3*particle.dt
-    (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3]
+    (u4, v4, w4) = fieldset.UVW[time + particle.dt, dep3, lat3, lon3, particle]
     particle.lon += (u1 + 2*u2 + 2*u3 + u4) / 6. * particle.dt
     particle.lat += (v1 + 2*v2 + 2*v3 + v4) / 6. * particle.dt
     particle.depth += (w1 + 2*w2 + 2*w3 + w4) / 6. * particle.dt
@@ -70,22 +70,22 @@ def AdvectionRK45(particle, fieldset, time):
     b4 = [25./216., 0., 1408./2565., 2197./4104., -1./5.]
     b5 = [16./135., 0., 6656./12825., 28561./56430., -9./50., 2./55.]
 
-    (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+    (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
     lon1, lat1 = (particle.lon + u1 * A[0][0] * particle.dt,
                   particle.lat + v1 * A[0][0] * particle.dt)
-    (u2, v2) = fieldset.UV[time + c[0] * particle.dt, particle.depth, lat1, lon1]
+    (u2, v2) = fieldset.UV[time + c[0] * particle.dt, particle.depth, lat1, lon1, particle]
     lon2, lat2 = (particle.lon + (u1 * A[1][0] + u2 * A[1][1]) * particle.dt,
                   particle.lat + (v1 * A[1][0] + v2 * A[1][1]) * particle.dt)
-    (u3, v3) = fieldset.UV[time + c[1] * particle.dt, particle.depth, lat2, lon2]
+    (u3, v3) = fieldset.UV[time + c[1] * particle.dt, particle.depth, lat2, lon2, particle]
     lon3, lat3 = (particle.lon + (u1 * A[2][0] + u2 * A[2][1] + u3 * A[2][2]) * particle.dt,
                   particle.lat + (v1 * A[2][0] + v2 * A[2][1] + v3 * A[2][2]) * particle.dt)
-    (u4, v4) = fieldset.UV[time + c[2] * particle.dt, particle.depth, lat3, lon3]
+    (u4, v4) = fieldset.UV[time + c[2] * particle.dt, particle.depth, lat3, lon3, particle]
     lon4, lat4 = (particle.lon + (u1 * A[3][0] + u2 * A[3][1] + u3 * A[3][2] + u4 * A[3][3]) * particle.dt,
                   particle.lat + (v1 * A[3][0] + v2 * A[3][1] + v3 * A[3][2] + v4 * A[3][3]) * particle.dt)
-    (u5, v5) = fieldset.UV[time + c[3] * particle.dt, particle.depth, lat4, lon4]
+    (u5, v5) = fieldset.UV[time + c[3] * particle.dt, particle.depth, lat4, lon4, particle]
     lon5, lat5 = (particle.lon + (u1 * A[4][0] + u2 * A[4][1] + u3 * A[4][2] + u4 * A[4][3] + u5 * A[4][4]) * particle.dt,
                   particle.lat + (v1 * A[4][0] + v2 * A[4][1] + v3 * A[4][2] + v4 * A[4][3] + v5 * A[4][4]) * particle.dt)
-    (u6, v6) = fieldset.UV[time + c[4] * particle.dt, particle.depth, lat5, lon5]
+    (u6, v6) = fieldset.UV[time + c[4] * particle.dt, particle.depth, lat5, lon5, particle]
 
     lon_4th = particle.lon + (u1 * b4[0] + u2 * b4[1] + u3 * b4[2] + u4 * b4[3] + u5 * b4[4]) * particle.dt
     lat_4th = particle.lat + (v1 * b4[0] + v2 * b4[1] + v3 * b4[2] + v4 * b4[3] + v5 * b4[4]) * particle.dt
@@ -125,7 +125,7 @@ def AdvectionAnalytical(particle, fieldset, time):
         ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
 
     xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth,
-                                                           particle.xi[0], particle.yi[0])
+                                                           particle=particle)
     if withW:
         if abs(xsi - 1) < tol:
             if fieldset.U.data[0, zi+1, yi+1, xi+1] > 0:

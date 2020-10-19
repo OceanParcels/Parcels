@@ -780,6 +780,8 @@ class KernelGenerator(ast.NodeVisitor):
 
         if node.args.ccode == 'particles':
             args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        elif node.args.ccode[-1] == 'particles':
+            args = node.args.ccode[:-1]
         else:
             args = node.args.ccode
         ccode_eval = node.field.obj.ccode_eval(node.var, *args)
@@ -797,6 +799,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.args)
         if node.args.ccode == 'particles':
             args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        elif node.args.ccode[-1] == 'particles':
+            args = node.args.ccode[:-1]
         else:
             args = node.args.ccode
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
@@ -823,6 +827,8 @@ class KernelGenerator(ast.NodeVisitor):
         for fld, var in zip(node.fields.obj, node.var):
             if node.args.ccode == 'particles':
                 args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            elif node.args.ccode[-1] == 'particles':
+                args = node.args.ccode[:-1]
             else:
                 args = node.args.ccode
             ccode_eval = fld.ccode_eval(var, *args)
@@ -838,6 +844,8 @@ class KernelGenerator(ast.NodeVisitor):
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
             if node.args.ccode == 'particles':
                 args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            elif node.args.ccode[-1] == 'particles':
+                args = node.args.ccode[:-1]
             else:
                 args = node.args.ccode
             ccode_eval = fld.ccode_eval(var, var2, var3,
@@ -864,6 +872,8 @@ class KernelGenerator(ast.NodeVisitor):
         for fld in node.fields.obj:
             if node.args.ccode == 'particles':
                 args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            elif node.args.ccode[-1] == 'particles':
+                args = node.args.ccode[:-1]
             else:
                 args = node.args.ccode
             ccode_eval = fld.ccode_eval(node.var, *args)
@@ -882,6 +892,8 @@ class KernelGenerator(ast.NodeVisitor):
         for fld in node.fields.obj:
             if node.args.ccode == 'particles':
                 args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            elif node.args.ccode[-1] == 'particles':
+                args = node.args.ccode[:-1]
             else:
                 args = node.args.ccode
             ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
