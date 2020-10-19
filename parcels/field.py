@@ -1387,6 +1387,14 @@ class VectorField(object):
                 assert self.W.grid is self.U.grid, (
                     'Grids of U and W are not the same.')
 
+    def get_fields(self):
+        """Returns a list of all the :class:`parcels.field.Field` objects associated with this VectorField"""
+        fields = []
+        for v in self.__dict__.values():
+            if isinstance(v, Field) and v not in fields:
+                fields.append(v)
+        return fields
+
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
             rad = np.pi/180.
