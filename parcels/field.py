@@ -1698,7 +1698,11 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                val = list.__getitem__(self, iField).eval(*key)
+                if hasattr(key, 'set_index'):
+                    val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon,
+                                                              key.zi, key.yi, key.xi)
+                else:
+                    val = list.__getitem__(self, iField).eval(*key)
                 vals.append(val)
             return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
 
@@ -1752,7 +1756,11 @@ class NestedField(list):
         else:
             for iField in range(len(self)):
                 try:
-                    val = list.__getitem__(self, iField).eval(*key)
+                    if hasattr(key, 'set_index'):
+                        val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon,
+                                                                  key.zi, key.yi, key.xi)
+                    else:
+                        val = list.__getitem__(self, iField).eval(*key)
                     break
                 except (FieldOutOfBoundError, FieldSamplingError):
                     if iField == len(self)-1:
