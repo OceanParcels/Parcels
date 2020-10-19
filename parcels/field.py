@@ -1574,10 +1574,10 @@ class VectorField(object):
             w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
-    def eval(self, time, z, y, x):
+    def eval(self, time, z, y, x, zi=0, yi=0, xi=0):
         if self.U.interp_method != 'cgrid_velocity':
-            u = self.U.eval(time, z, y, x, False)
-            v = self.V.eval(time, z, y, x, False)
+            u = self.U.eval(time, z, y, x, applyConversion=False)  # TODO use xi here too
+            v = self.V.eval(time, z, y, x, applyConversion=False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
             if self.vector_type == '3D':
@@ -1616,7 +1616,10 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti])
 
     def __getitem__(self, key):
-        return self.eval(*key)
+        if hasattr(key, 'set_index'):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key.zi, key.yi, key.xi)
+        else:
+            return self.eval(*key)
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
