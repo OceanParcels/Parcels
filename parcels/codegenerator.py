@@ -250,7 +250,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         if node.id == 'fieldset' and self.fieldset is not None:
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
-            node = ParticleNode(self.ptype, ccode='particles')
+            node = ParticleNode(self.ptype, ccode='particles')  # TODO, could also change the ccode here, instead of all the visit_* functions below?
         elif node.id in ['StateCode', 'OperationCode', 'ErrorCode', 'Error']:
             node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
@@ -795,18 +795,22 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
+        if node.args.ccode == 'particles':
+            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        else:
+            args = node.args.ccode
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
                                                node.field.obj.U, node.field.obj.V, node.field.obj.W,
-                                               *node.args.ccode)
+                                               *args)
         if node.field.obj.U.interp_method != 'cgrid_velocity':
-            ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
-            ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
+            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
             statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                           c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
         else:
             statements = []
         if node.field.obj.vector_type == '3D':
-            ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
+            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
         node.ccode = c.Block([c.Assign("err", ccode_eval),
@@ -832,18 +836,22 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.args)
         cstat = []
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
+            if node.args.ccode == 'particles':
+                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            else:
+                args = node.args.ccode
             ccode_eval = fld.ccode_eval(var, var2, var3,
                                         fld.U, fld.V, fld.W,
-                                        *node.args.ccode)
+                                        *args)
             if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
-                ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
                               c.Statement("%s *= %s" % (var2, ccode_conv2))]
             else:
                 statements = []
             if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
         cstat += [c.Statement("CHECKSTATUS(err)")]
@@ -872,18 +880,22 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.args)
         cstat = []
         for fld in node.fields.obj:
+            if node.args.ccode == 'particles':
+                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+            else:
+                args = node.args.ccode
             ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
                                         fld.U, fld.V, fld.W,
-                                        *node.args.ccode)
+                                        *args)
             if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
-                ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                               c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
             else:
                 statements = []
             if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval),
                       c.Block(statements),
