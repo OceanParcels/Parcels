@@ -1743,7 +1743,6 @@ class SummedField(list):
         return self
 
 
-
 class NestedField(list):
     """Class NestedField is a list of Fields from which the first one to be not declared out-of-boundaries
     at particle position is interpolated. This induces that the order of the fields in the list matters.
