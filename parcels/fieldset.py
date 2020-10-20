@@ -34,6 +34,7 @@ class FieldSet(object):
     """
     def __init__(self, U, V, fields=None):
         self.gridset = GridSet()
+        self.completed = False
         if U:
             self.add_field(U, 'U')
             self.time_origin = self.U.grid.time_origin if isinstance(self.U, Field) else self.U[0].grid.time_origin
@@ -140,6 +141,8 @@ class FieldSet(object):
         * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
 
         """
+        if self.completed:
+            raise RuntimeError("FieldSet has already been completed. Are you trying to add a Field after you've created the ParticleSet?")
         name = field.name if name is None else name
         if hasattr(self, name):  # check if Field with same name already exists when adding new Field
             raise RuntimeError("FieldSet already has a Field with name '%s'" % name)
@@ -229,6 +232,9 @@ class FieldSet(object):
         :param vfield: :class:`parcels.field.VectorField` object to be added
         """
         setattr(self, vfield.name, vfield)
+        for v in vfield.__dict__.values():
+            if isinstance(v, Field) and (v not in self.get_fields()):
+                self.add_field(v)
         vfield.fieldset = self
         if isinstance(vfield, NestedField):
             for f in vfield:
@@ -314,6 +320,7 @@ class FieldSet(object):
                 if not f.grid.defer_load:
                     depth_data = f.grid.depth_field.data
                     f.grid.depth = depth_data if isinstance(depth_data, np.ndarray) else np.array(depth_data)
+        self.completed = True
 
     @classmethod
     def parse_wildcards(cls, paths, filenames, var):
