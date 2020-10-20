@@ -616,7 +616,7 @@ class Field(object):
         zeta = (z-grid.depth[zi]) / (grid.depth[zi+1]-grid.depth[zi])
         return (zi, zeta)
 
-    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):  # TODO change xi, yi to particle
+    def search_indices_vertical_s(self, x, y, z, xi, yi, xsi, eta, ti, time):
         grid = self.grid
         if self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
             xsi = 1
