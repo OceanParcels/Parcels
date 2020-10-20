@@ -766,12 +766,17 @@ class Field(object):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             raise FieldSamplingError(x, y, z, field=self)
 
+        if particle:
+            particle.xi[self.igrid] = xi
+            particle.yi[self.igrid] = yi
+            particle.zi[self.igrid] = zi
+
         return (xsi, eta, zeta, xi, yi, zi)
 
     def search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         if particle:
-            xi = particle.xi[0]  # TODO [0] needs to be grid number
-            yi = particle.yi[0]
+            xi = particle.xi[self.igrid]
+            yi = particle.yi[self.igrid]
         else:
             xi = int(self.grid.xdim / 2) - 1
             yi = int(self.grid.ydim / 2) - 1
@@ -856,9 +861,9 @@ class Field(object):
             raise FieldSamplingError(x, y, z, field=self)
 
         if particle:
-            particle.xi = xi
-            particle.yi = yi
-            particle.zi = zi
+            particle.xi[self.igrid] = xi
+            particle.yi[self.igrid] = yi
+            particle.zi[self.igrid] = zi
 
         return (xsi, eta, zeta, xi, yi, zi)
 
