@@ -42,7 +42,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
 
     if field is None:
         spherical = True if particles.fieldset.U.grid.mesh == 'spherical' else False
-        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection)
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection, cartopy_features=kwargs.pop('cartopy_features', []))
         if plt is None:
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
@@ -75,7 +75,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         depth_level = kwargs.pop('depth_level', 0)
         plt, fig, ax, cartopy = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
                                           projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=None,
-                                          titlestr='Particles and ', depth_level=depth_level)
+                                          titlestr='Particles and ', depth_level=depth_level, **kwargs)
         if plt is None:
             return  # creating axes was not possible
 
@@ -128,7 +128,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
                        'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
 
-    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection)
+    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection, cartopy_features=kwargs.pop('cartopy_features', []))
     if plt is None:
         return None, None, None, None  # creating axes was not possible
 
@@ -258,7 +258,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0):
+def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0, cartopy_features=[]):
     try:
         import matplotlib.pyplot as plt
     except:
@@ -288,7 +288,12 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
         except:
             pass
 
-        if land:
+        for feature in cartopy_features:
+            ax.add_feature(feature)
+
+        if isinstance(land, str):
+            ax.coastlines(land)
+        elif land:
             ax.coastlines()
     else:
         cartopy = None

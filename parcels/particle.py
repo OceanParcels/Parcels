@@ -19,7 +19,9 @@ class Variable(object):
     :param dtype: Data type (numpy.dtype) of the variable
     :param initial: Initial value of the variable. Note that this can also be a Field object,
              which will then be sampled at the location of the particle
-    :param to_write: Boolean to control whether Variable is written to NetCDF file
+    :param to_write: Boolean or 'once'. Controls whether Variable is written to NetCDF file.
+             If to_write = 'once', the variable will be written as a time-independent 1D array
+    :type to_write: (bool, 'once', optional)
     """
     def __init__(self, name, dtype=np.float32, initial=0, to_write=True):
         self.name = name

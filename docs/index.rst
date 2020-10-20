@@ -7,7 +7,8 @@
 Parcels documentation
 ===================================
 
-Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function. 
+Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function.
+The documentation corresponds to the latest conda release, for newer documentation see the docstrings in the code.
 
 See http://www.oceanparcels.org for general information on the Parcels project, including how to install and use.
 
@@ -61,7 +62,8 @@ parcels.kernels.advection module
     :show-inheritance:
 
 parcels.kernels.advectiondiffusion module
---------------------------------
+-----------------------------------------
+
 
 .. automodule:: parcels.kernels.advectiondiffusion
     :members:
