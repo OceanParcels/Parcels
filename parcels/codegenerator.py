@@ -250,7 +250,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         if node.id == 'fieldset' and self.fieldset is not None:
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
-            node = ParticleNode(self.ptype, ccode='particles')  # TODO, could also change the ccode here, instead of all the visit_* functions below?
+            node = ParticleNode(self.ptype, ccode='particles')
         elif node.id in ['StateCode', 'OperationCode', 'ErrorCode', 'Error']:
             node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
@@ -453,6 +453,16 @@ class KernelGenerator(ast.NodeVisitor):
             self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
 
         return self.ccode
+
+    @staticmethod
+    def _check_FieldSamplingArguments(ccode):
+        if ccode == 'particles':
+            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        elif ccode[-1] == 'particles':
+            args = ccode[:-1]
+        else:
+            args = ccode
+        return args
 
     def visit_FunctionDef(self, node):
         # Generate "ccode" attribute by traversing the Python AST
@@ -777,13 +787,7 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-
-        if node.args.ccode == 'particles':
-            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-        elif node.args.ccode[-1] == 'particles':
-            args = node.args.ccode[:-1]
-        else:
-            args = node.args.ccode
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval(node.var, *args)
         stmts = [c.Assign("err", ccode_eval)]
 
@@ -797,12 +801,7 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-        if node.args.ccode == 'particles':
-            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-        elif node.args.ccode[-1] == 'particles':
-            args = node.args.ccode[:-1]
-        else:
-            args = node.args.ccode
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
                                                node.field.obj.U, node.field.obj.V, node.field.obj.W,
                                                *args)
@@ -824,13 +823,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld, var in zip(node.fields.obj, node.var):
-            if node.args.ccode == 'particles':
-                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-            elif node.args.ccode[-1] == 'particles':
-                args = node.args.ccode[:-1]
-            else:
-                args = node.args.ccode
             ccode_eval = fld.ccode_eval(var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
@@ -841,13 +835,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
-            if node.args.ccode == 'particles':
-                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-            elif node.args.ccode[-1] == 'particles':
-                args = node.args.ccode[:-1]
-            else:
-                args = node.args.ccode
             ccode_eval = fld.ccode_eval(var, var2, var3,
                                         fld.U, fld.V, fld.W,
                                         *args)
@@ -869,13 +858,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            if node.args.ccode == 'particles':
-                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-            elif node.args.ccode[-1] == 'particles':
-                args = node.args.ccode[:-1]
-            else:
-                args = node.args.ccode
             ccode_eval = fld.ccode_eval(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
@@ -889,13 +873,8 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            if node.args.ccode == 'particles':
-                args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-            elif node.args.ccode[-1] == 'particles':
-                args = node.args.ccode[:-1]
-            else:
-                args = node.args.ccode
             ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
                                         fld.U, fld.V, fld.W,
                                         *args)
