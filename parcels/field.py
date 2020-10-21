@@ -73,6 +73,12 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     :param chunkdims_name_map (opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
            required only if currently incompatible OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
+
+    For usage examples see the following tutorials:
+
+    * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+
+    * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -271,6 +277,10 @@ class Field(object):
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
         :param field_chunksize: size of the chunks in dask loading
+
+        For usage examples see the following tutorial:
+
+        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
@@ -524,6 +534,10 @@ class Field(object):
         """Scales the field data by some constant factor.
 
         :param factor: scaling factor
+
+        For usage examples see the following tutorial:
+
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
         """
 
         if self._scaling_factor:
@@ -533,6 +547,12 @@ class Field(object):
             self.data *= factor
 
     def set_depth_from_field(self, field):
+        """Define the depth dimensions from another (time-varying) field
+
+        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
+        for a detailed explanation on how to set up time-evolving depth dimensions
+
+        """
         self.grid.depth_field = field
 
     def __getitem__(self, key):
@@ -1185,6 +1205,9 @@ class Field(object):
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
 
+        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+        for a detailed explanation on how to set up periodic boundaries
+
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
@@ -1564,10 +1587,14 @@ class VectorField(object):
 
     def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
         """
-          __ V1 __
-        |          |
-        U0         U1
-        | __ V0 __ |
+        +---+---+---+
+        |   |V1 |   |
+        +---+---+---+
+        |U0 |   |U1 |
+        +---+---+---+
+        |   |V0 |   |
+        +---+---+---+
+
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and
         interpolating linearly V depending on the latitude coordinate.
@@ -1673,6 +1700,9 @@ class SummedField(list):
     still be queried through their list index (e.g. SummedField[1]).
     SummedField is composed of either Fields or VectorFields.
 
+    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
+    for a detailed tutorial
+
     :param name: Name of the SummedField
     :param F: List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
     :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
@@ -1727,6 +1757,9 @@ class NestedField(list):
     than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.
     NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
     NestedField is composed of either Fields or VectorFields.
+
+    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+    for a detailed tutorial
 
     :param name: Name of the NestedField
     :param F: List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
