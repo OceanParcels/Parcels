@@ -337,7 +337,7 @@ class FieldSet(object):
     @classmethod
     def from_netcdf(cls, filenames, variables, dimensions, indices=None, fieldtype=None,
                     mesh='spherical', timestamps=None, allow_time_extrapolation=None, time_periodic=False,
-                    deferred_load=True, field_chunksize='auto', **kwargs):
+                    deferred_load=True, field_chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -383,7 +383,7 @@ class FieldSet(object):
                'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
-        :param field_chunksize: size of the chunks in dask loading
+        :param field_chunksize: size of the chunks in dask loading. Default is None (no chunking)
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
 
@@ -471,7 +471,7 @@ class FieldSet(object):
     @classmethod
     def from_nemo(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
+                  tracer_interp_method='cgrid_tracer', field_chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_nemo_curvilinear.ipynb>`_
@@ -529,7 +529,7 @@ class FieldSet(object):
                This flag overrides the allow_time_interpolation and sets it to False
         :param tracer_interp_method: Method for interpolation of tracer fields. It is recommended to use 'cgrid_tracer' (default)
                Note that in the case of from_nemo() and from_cgrid(), the velocity fields are default to 'cgrid_velocity'
-        :param field_chunksize: size of the chunks in dask loading
+        :param field_chunksize: size of the chunks in dask loading. Default is None (no chunking)
 
         """
 
@@ -547,7 +547,7 @@ class FieldSet(object):
     @classmethod
     def from_mitgcm(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                     allow_time_extrapolation=None, time_periodic=False,
-                    tracer_interp_method='cgrid_tracer', field_chunksize='auto', **kwargs):
+                    tracer_interp_method='cgrid_tracer', field_chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
            All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
            gridindexing is set to 'mitgcm' for grids that have the shape
@@ -574,7 +574,7 @@ class FieldSet(object):
     @classmethod
     def from_c_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', field_chunksize='auto', **kwargs):
+                            tracer_interp_method='cgrid_tracer', gridindexingtype='nemo', field_chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Curvilinear NEMO fields.
 
         See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/documentation_indexing.ipynb>`_
@@ -656,7 +656,7 @@ class FieldSet(object):
     @classmethod
     def from_pop(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                  allow_time_extrapolation=None, time_periodic=False,
-                 tracer_interp_method='bgrid_tracer', field_chunksize='auto', depth_units='m', **kwargs):
+                 tracer_interp_method='bgrid_tracer', field_chunksize=None, depth_units='m', **kwargs):
         """Initialises FieldSet object from NetCDF files of POP fields.
             It is assumed that the velocities in the POP fields is in cm/s.
 
@@ -738,7 +738,7 @@ class FieldSet(object):
     @classmethod
     def from_mom5(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                   allow_time_extrapolation=None, time_periodic=False,
-                  tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+                  tracer_interp_method='bgrid_tracer', field_chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of MOM5 fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -804,7 +804,7 @@ class FieldSet(object):
     @classmethod
     def from_b_grid_dataset(cls, filenames, variables, dimensions, indices=None, mesh='spherical',
                             allow_time_extrapolation=None, time_periodic=False,
-                            tracer_interp_method='bgrid_tracer', field_chunksize='auto', **kwargs):
+                            tracer_interp_method='bgrid_tracer', field_chunksize=None, **kwargs):
         """Initialises FieldSet object from NetCDF files of Bgrid fields.
 
         :param filenames: Dictionary mapping variables to file(s). The
@@ -885,7 +885,7 @@ class FieldSet(object):
     @classmethod
     def from_parcels(cls, basename, uvar='vozocrtx', vvar='vomecrty', indices=None, extra_fields=None,
                      allow_time_extrapolation=None, time_periodic=False, deferred_load=True,
-                     field_chunksize='auto', **kwargs):
+                     field_chunksize=None, **kwargs):
         """Initialises FieldSet data from NetCDF files using the Parcels FieldSet.write() conventions.
 
         :param basename: Base name of the file(s); may contain
