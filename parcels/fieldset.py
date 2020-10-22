@@ -165,6 +165,12 @@ class FieldSet(object):
             if (isinstance(field.data, DeferredArray) or isinstance(field.data, da.core.Array)) and len(self.get_fields()) > 0:
                 # ==== check for inhabiting the same grid, and homogenise the grid chunking ==== #
                 g_set = field.grid
+                # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
+
+                # TODO: insert check HERE for chunksize == auto -> no matter if chunksize is globally 'auto' or just one
+                #       field is set to 'auto', or even one sub-dimension is set to 'auto' - if 'auto' is anywhere in chunksize
+                #       the field gets its own grid, end of story. Basically: if that is the case, set 'grid' to None
+
                 grid_chunksize = field.field_chunksize
                 dFiles = field.dataFiles
                 is_processed_grid = False
@@ -201,15 +207,23 @@ class FieldSet(object):
                                 # ==== check here that the dims of field_chunksize are the same ==== #
                                 if g_set.master_chunksize is not None:
                                     res = False
-                                    if (isinstance(field.field_chunksize, tuple) and isinstance(g_set.master_chunksize, tuple)) or (isinstance(field.field_chunksize, dict) and isinstance(g_set.master_chunksize, dict)):
+                                    if (isinstance(field.field_chunksize, tuple) and isinstance(g_set.master_chunksize, tuple)):
                                         res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, field.field_chunksize, g_set.master_chunksize), True)
+                                    elif (isinstance(field.field_chunksize, dict) and isinstance(g_set.master_chunksize, dict)):
+                                        res |= functools.reduce(lambda i, j: i and j,
+                                                                map(lambda m, k: m == k, field.field_chunksize,  # 'm == k' evaluates the tuples-equality as a unit, aternative: (m[0] == k[0]) and (m[1] == k[1])
+                                                                    g_set.master_chunksize), True)
                                     else:
+                                        # assess that, e.g. 'U': False == 'V': False
                                         res |= (field.field_chunksize == g_set.master_chunksize)
                                     if res:
-                                        grid_chunksize = g_set.master_chunksize
-                                        if field.grid.master_chunksize is not None:
-                                            logger.warning_once("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                                        # CHANGE: the result here is that the requested chunksizes is equal-or-compatible - good! then we can initialize it as requested
+                                        grid_chunksize = field.field_chunksize
+                                        if field.grid.master_chunksize in [None, False] and grid_chunksize not in [None, False]:
+                                            # CHANGE: prohibit a situation where people load UVW without chunking and then want to add a chunked tracer field -> either use chunking all the way, or don't use it! #
+                                            raise ValueError("Trying add a chunked field to an uninitialised grid(set) - action prohibited. Please construct your initial FieldSet with an explicit chunking first, before adding a chunked field.")
                                     else:
+                                        # TODO: well this case just means: the requested chunk size and the available grids don't match, so this field gets it own grid - Question: how-to ?
                                         raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                                 if procpaths == nowpaths:
                                     dFiles = fld.dataFiles
@@ -383,7 +397,10 @@ class FieldSet(object):
                'linear_invdist_land_tracer', 'cgrid_velocity', 'cgrid_tracer' and 'bgrid_velocity'
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
-        :param field_chunksize: size of the chunks in dask loading. Default is None (no chunking)
+        :param field_chunksize: size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
+               'auto' (chunking is done in the background, but results in one grid per field individually), a four-value
+               tuple (time_chunksize, z_chunksize, y_chunksize, x_chunksize) that only works on A-Grids, or a dict in the format
+               '{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}', where 'parcels_dimname' is one of ('time', 'depth', 'lat', 'lon')
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
 
@@ -420,11 +437,16 @@ class FieldSet(object):
             cls.checkvaliddimensionsdict(dims)
             inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
-            chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize
+            chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize  # <varname> -> {<netcdf_dimname>: (<parcels_dimname>, <chunksize_as_int_numeral>) }
+            # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
 
             grid = None
             grid_chunksize = chunksize
             dFiles = None
+            # TODO: insert check HERE for chunksize == auto -> no matter if chunksize is globally 'auto' or just one
+            #       field is set to 'auto', or even one sub-dimension is set to 'auto' - if 'auto' is anywhere in chunksize
+            #       the field gets its own grid, end of story. Basically: if that is the case, set 'grid' to None
+
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
@@ -447,14 +469,22 @@ class FieldSet(object):
                         # ==== check here that the dims of field_chunksize are the same ==== #
                         if grid.master_chunksize is not None:
                             res = False
-                            if (isinstance(chunksize, tuple) and isinstance(grid.master_chunksize, tuple)) or (isinstance(chunksize, dict) and isinstance(grid.master_chunksize, dict)):
+                            # ==== check that, if chunksizes of 'the' master-grid and the requested field are tuple-types, and sub-entities are equal ==== #
+                            # ==== example: grid.chunksize = (1, 5, 25, 25); field.chunksize = (1, 5, 25, 25) -> shared grid; otherwise: new grid     ==== #
+                            if (isinstance(chunksize, tuple) and isinstance(grid.master_chunksize, tuple)):
                                 res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid.master_chunksize), True)
+                            elif (isinstance(chunksize, dict) and isinstance(grid.master_chunksize, dict)):
+                                res |= functools.reduce(lambda i, j: i and j,
+                                                        map(lambda m, k: m == k, chunksize, grid.master_chunksize),  # 'm == k' evaluates the tuples-equality as a unit, aternative: (m[0] == k[0]) and (m[1] == k[1])
+                                                        True)
                             else:
+                                # assess that, e.g. 'U': False == 'V': False
                                 res |= (chunksize == grid.master_chunksize)
                             if res:
-                                grid_chunksize = grid.master_chunksize
-                                logger.warning_once("Trying to initialize a shared grid with different chunking sizes - action prohibited. Replacing requested field_chunksize with grid's master chunksize.")
+                                # CHANGE: the result here is that the requested chunksizes is equal-or-compatible - good! then we can initialize it as requested
+                                grid_chunksize = chunksize
                             else:
+                                # TODO: well this case just means: the requested chunk size and the available grids don't match, so this field gets it own grid - Question: how-to ?
                                 raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                         if procpaths == nowpaths:
                             dFiles = fields[procvar].dataFiles
