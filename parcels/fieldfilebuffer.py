@@ -445,28 +445,28 @@ class DaskFileBuffer(NetcdfFileBuffer):
         chunk_index_map = {}
         if 'lon' in self.field_chunksize.keys():
             loni, lonname, _ = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.field_chunksize['lon'][0])
-            if self.field_chunksize['lon'][0] is not None and self.field_chunksize['lon'][0] not in self._static_name_maps:
+            if self.field_chunksize['lon'][0] not in self._static_name_maps:
                 self._static_name_maps['lon'].append(self.field_chunksize['lon'][0])
             if loni is not None:
                 chunk_dict[lonname] = self.field_chunksize['lon'][1]
                 chunk_index_map[loni] = self.field_chunksize['lon'][1]
         if 'lat' in self.field_chunksize.keys():
             lati, latname, _ = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.field_chunksize['lat'][0])
-            if self.field_chunksize['lat'][0] is not None and self.field_chunksize['lat'][0] not in self._static_name_maps:
+            if self.field_chunksize['lat'][0] not in self._static_name_maps:
                 self._static_name_maps['lat'].append(self.field_chunksize['lat'][0])
             if lati is not None:
                 chunk_dict[latname] = self.field_chunksize['lon'][1]
                 chunk_index_map[lati] = self.field_chunksize['lon'][1]
         if 'depth' in self.field_chunksize.keys():
             depthi, depthname, _ = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.field_chunksize['depth'][0])
-            if self.field_chunksize['depth'][0] is not None and self.field_chunksize['depth'][0] not in self._static_name_maps:
+            if self.field_chunksize['depth'][0] not in self._static_name_maps:
                 self._static_name_maps['depth'].append(self.field_chunksize['depth'][0])
             if depthi is not None:
                 chunk_dict[depthname] = self.field_chunksize['lon'][1]
                 chunk_index_map[depthi] = self.field_chunksize['lon'][1]
         if 'time' in self.field_chunksize.keys():
             timei, timename, _ = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.field_chunksize['time'][0])
-            if self.field_chunksize['time'][0] is not None and self.field_chunksize['time'][0] not in self._static_name_maps:
+            if self.field_chunksize['time'][0] not in self._static_name_maps:
                 self._static_name_maps['time'].append(self.field_chunksize['time'][0])
             if timei is not None:
                 chunk_dict[timename] = self.field_chunksize['lon'][1]
