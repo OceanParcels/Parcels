@@ -555,15 +555,15 @@ class DaskFileBuffer(NetcdfFileBuffer):
                     logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
             loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
             lati, latname, latvalue = self._is_dimension_in_dataset('lat')
-            if lati >= 0 and loni >= 0:
+            if lati is not None and loni is not None and lati >= 0 and loni >= 0:
                 pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
                 init_chunk_dict[latname] = min(latvalue, pDim)
                 init_chunk_dict[lonname] = min(lonvalue, pDim)
             timei, timename, _ = self._is_dimension_in_dataset('time')
-            if timei >= 0:
+            if timei is not None and timei >= 0:
                 init_chunk_dict[timename] = 1
             depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
-            if depthi >= 0:
+            if depthi is not None and depthi >= 0:
                 init_chunk_dict[depthname] = max(1, depthvalue)
         # ==== closing check-opened requested dataset ==== #
         self.dataset.close()
