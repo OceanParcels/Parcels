@@ -219,9 +219,9 @@ class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
 
 class DaskFileBuffer(NetcdfFileBuffer):
     _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
-                          'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
-                                    'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
-                                    'Zl', 'Zu', 'level'],
+                         'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
+                                   'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
+                                   'Zl', 'Zu', 'level'],
                          'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
                          'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
     _min_dim_chunksize = 16
@@ -339,7 +339,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
             return False
         return dimension_name in self.dimensions
 
-    def _is_dimension_in_dataset(self, parcels_dimension_name, netcdf_dimension_name = None):
+    def _is_dimension_in_dataset(self, parcels_dimension_name, netcdf_dimension_name=None):
         k, dname, dvalue = (-1, '', 0)
         if self.dimensions is None or self.dataset is None:
             return k, dname, dvalue
@@ -440,8 +440,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
                     self.field_chunksize[self.dimensions[dim_name]] = chunk_map[dim_index]
                     dim_index += 1
 
-
-
     def _get_initial_chunk_dictionary_by_dict_(self):
         chunk_dict = {}
         chunk_index_map = {}
@@ -474,7 +472,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 chunk_dict[timename] = self.field_chunksize['lon'][1]
                 chunk_index_map[timei] = self.field_chunksize['lon'][1]
         return chunk_dict, chunk_index_map
-
 
     def _get_initial_chunk_dictionary_by_tuple_(self):
         chunk_dict = {}
@@ -526,7 +523,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 chunksize_as_list.pop(chunk_index)
 
         return chunksize_as_list, chunk_dict, chunk_index_map
-
 
     def _get_initial_chunk_dictionary(self):
         # ==== check-opening requested dataset to access metadata                   ==== #
