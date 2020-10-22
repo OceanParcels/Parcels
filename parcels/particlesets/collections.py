@@ -148,6 +148,7 @@ class Collection(ABC):
         else:
             self.get_single_by_object(other)
 
+    @abstractmethod
     def get_single_by_index(self, index):
         """
         This function gets a (particle) object from the collection based on its index within the collection. For
@@ -376,7 +377,7 @@ class Collection(ABC):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        pass
+        assert type(index) in [int, np.int32], "Trying to delete a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
 
     @abstractmethod
     def delete_by_ID(self, id):
@@ -387,7 +388,7 @@ class Collection(ABC):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        pass
+        assert type(id) in [np.int64, np.uint64], "Trying to delete a particle by ID, but ID {} is not a 64-bit (signed or unsigned) integer - invalid operation.".format(id)
 
     def __sub__(self, other):
         """
