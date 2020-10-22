@@ -348,7 +348,9 @@ class ParticleCollectionSOA(ParticleCollection):
         parsing and concatenation.
         """
         super().add_same(same_class)
-        raise NotImplementedError
+
+        for d in self._data:
+            self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
 
     def __iadd__(self, same_class):
         """
@@ -514,7 +516,8 @@ class ParticleCollectionSOA(ParticleCollection):
         shall rather use a removal-via-object-reference strategy.
         """
         super().remove_multi_by_indices(indices)
-        raise NotImplementedError
+        for d in self._data:
+            self._data[d] = np.delete(self._data[d], indices, axis=0)
 
     def remove_multi_by_IDs(self, ids):
         """
@@ -678,16 +681,19 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         raise NotImplementedError
 
-    def set_variable_write_status(self):
+    def set_variable_write_status(self, var, write_status):
         """
         Method to set the write status of a Variable
         :param var: Name of the variable (string)
         :param status: Write status of the variable (True, False or 'once')
-
-         This function depends on the specific collection in question and thus needs to be specified in specific
-         derivatives classes.
         """
-        raise NotImplementedError
+        var_changed = False
+        for v in self._ptype.variables:
+            if v.name == var:
+                v.to_write = write_status
+                var_changed = True
+        if not var_changed:
+            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
 
 
 class ParticleAccessorSOA(BaseParticleAccessor):
