@@ -35,24 +35,6 @@ class Collection(ABC):
         return self._ncount
 
     @abstractmethod
-    def __getitem__(self, item):
-        """
-        This function should return an item [accessor, as reference] at a certain 'position', in the sense of
-
-        item_ref = collection_object[<some_indexing_concept>]
-
-        The actual return and implementation of this will depend on the specific collection at hand. Ideally, this
-        function demands as 'key' an object that matches the most-performant access method, i.e.
-
-        ordered lists, sets, trees -> getitem(key = [int64, uint64] id) -> operates on a list-iterator
-        arrays, vectors, dense arrays & matrices -> getitem(key = [int, int32] index) -> operates on an index-managed iterator
-
-        Out of performance reasons, there should be no alternative getitem with other positional arguments than the
-        optimal one.
-        """
-        pass
-
-    @abstractmethod
     def __iter__(self):
         """
         This function represents a forward-iteration over the collection, the the sense it is called
@@ -108,6 +90,151 @@ class Collection(ABC):
         This function is an explicit forward to the Collection::__reversed__() member function.
         """
         return self.__reversed__()
+
+    @abstractmethod
+    def __getitem__(self, item):
+        """
+        This function should return an item [accessor, as reference] at a certain 'position', in the sense of
+
+        item_ref = collection_object[<some_indexing_concept>]
+
+        The actual return and implementation of this will depend on the specific collection at hand. Ideally, this
+        function demands as 'key' an object that matches the most-performant access method, i.e.
+
+        ordered lists, sets, trees -> getitem(key = [int64, uint64] id) -> operates on a list-iterator
+        arrays, vectors, dense arrays & matrices -> getitem(key = [int, int32] index) -> operates on an index-managed iterator
+
+        Out of performance reasons, there should be no alternative getitem with other positional arguments than the
+        optimal one.
+        """
+        pass
+
+    def get(self, other):
+        """
+        This is a generic super-method to get one- or multiple Particles (via their object, their ParticleAccessor,
+        their ID or their index) from the collection. Ideally, it just discerns between the types of the 'other'
+        parameter, and then forwards the call to the related specific function.
+
+        Comment/Annotation:
+        Not all arguments have a sensible use-case in every datastructure, so some concrete classes may not implementat
+        all of them.
+        """
+        if other is None:
+            return
+        if type(other) is type(self):
+            self.get_same(other)
+        elif isinstance(other, ParticleCollection):
+            self.get_collection(other)
+        elif type(other) in [list, dict, np.ndarray]:
+            # multi-get routines - hard to discern at this point
+            if type(other) is not dict:
+                if type(other[0]) in [int, np.int32]:
+                    self.get_multi_by_indices(other)
+                elif type(other[0]) in [np.int64, np.uint64]:
+                    self.get_multi_by_IDs(other)
+                else:
+                    self.get_multi_by_PyCollection_Particles(other)
+            else:
+                if other.values()[0] in [int, np.int32]:
+                    self.get_multi_by_indices(other)
+                elif other.values()[0] in [np.int64, np.uint64]:
+                    self.get_multi_by_IDs(other)
+                else:
+                    self.get_multi_by_PyCollection_Particles(other)
+        elif type(other) in [int, np.int32]:
+            self.get_single_by_index(other)
+        elif type(other) in [np.int64, np.uint64]:
+            self.get_single_by_ID(other)
+        else:
+            self.get_single_by_object(other)
+
+    def get_single_by_index(self, index):
+        """
+        This function gets a (particle) object from the collection based on its index within the collection. For
+        collections that are not based on random access (e.g. ordered lists, sets, trees), this function involves a
+        translation of the index into the specific object reference in the collection - or (if unavoidable) the
+        translation of the collection from a none-indexable, none-random-access structure into an indexable structure.
+        In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
+        get function, e.g. get-by-ID.
+        """
+        assert type(index) in [int, np.int32], "Trying to get a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+
+    def get_single_by_object(self, particle_obj):
+        """
+        This function gets a (particle) object from the collection based on its actual object. For collections that
+        are random-access and based on indices (e.g. unordered list, vectors, arrays and dense matrices), this function
+        would involve a parsing of the whole list and translation of the object into an index in the collection - which
+        results in a significant performance malus.
+        In cases where a get-by-object would result in a performance malus, it is highly-advisable to use a different
+        get function, e.g. get-by-index or get-by-ID.
+        """
+        assert (isinstance(particle_obj, BaseParticleAccessor) or isinstance(particle_obj, ScipyParticle))
+
+    def get_single_by_ID(self, id):
+        """
+        This function gets a (particle) object from the collection based on the object's ID. For some collections,
+        this operation may involve a parsing of the whole list and translation of the object's ID into an index  or an
+        object reference in the collection - which results in a significant performance malus.
+        In cases where a get-by-ID would result in a performance malus, it is highly-advisable to use a different
+        get function, e.g. get-by-index.
+        """
+        assert type(id) in [np.int64, np.uint64], "Trying to get a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
+
+    def get_same(self, same_class):
+        """
+        This function gets particles from this collection that are themselves stored in another object of an equi-
+        structured ParticleCollection.
+        """
+        assert same_class is not None, "Trying to get another {} from this one, but the other one is None - invalid operation.".format(type(self))
+        assert type(same_class) is type(self)
+
+    def get_collection(self, pcollection):
+        """
+        This function gets particles from this collection that are themselves stored in a ParticleCollection, which
+        is differently structured than this one. That means the other-collection has to be re-formatted first in an
+        intermediary format.
+        """
+        assert pcollection is not None, "Trying to get another particle collection from this one, but the other one is None - invalid operation."
+        assert isinstance(pcollection, ParticleCollection), "Trying to get another particle collection from this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
+        assert type(pcollection) is not type(self)
+
+    def get_multi_by_PyCollection_Particles(self, pycollectionp):
+        """
+        This function gets particles from this collection, which are themselves in common Python collections, such as
+        lists, dicts and numpy structures. We can either directly get the referred Particle instances (for internally-
+        ordered collections, e.g. ordered lists, sets, trees) or we may need to parse each instance for its index (for
+        random-access structures), which results in a considerable performance malus.
+
+        For collections where get-by-object incurs a performance malus, it is advisable to multi-get particles
+        by indices or IDs.
+        """
+        assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to get a collection of Particles, but their container is not a valid Python-collection - invalid operation."
+
+    def get_multi_by_indices(self, indices):
+        """
+        This function gets particles from this collection based on their indices. This works best for random-access
+        collections (e.g. numpy's ndarrays, dense matrices and dense arrays), whereas internally ordered collections
+        shall rather use a get-via-object-reference strategy.
+        """
+        assert indices is not None, "Trying to get particles by their collection indices, but the index list is None - invalid operation."
+        assert type(indices) in [list, dict, np.ndarray], "Trying to get particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        if type(indices) is not dict:
+            assert indices[0] in [int, np.int32], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+        else:
+            assert indices.values()[0] in [int, np.int32], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+
+    def get_multi_by_IDs(self, ids):
+        """
+        This function gets particles from this collection based on their IDs. For collections where this removal
+        strategy would require a collection transformation or by-ID parsing, it is advisable to rather apply a get-
+        by-objects or get-by-indices scheme.
+        """
+        assert ids is not None, "Trying to get particles by their IDs, but the ID list is None - invalid operation."
+        assert type(ids) in [list, dict, np.ndarray], "Trying to get particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        if type(ids) is not dict:
+            assert ids[0] in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+        else:
+            assert ids.values()[0] in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
 
     def __add__(self, other):
         """
@@ -747,4 +874,3 @@ class ParticleCollection(Collection):
          derivatives classes.
         """
         pass
-
