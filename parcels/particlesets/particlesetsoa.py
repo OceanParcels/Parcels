@@ -251,9 +251,6 @@ class ParticleSetSOA(BaseParticleSet):
         # else:
         #     raise ValueError("Latitude and longitude required for generating ParticleSet")
 
-    # def data_accessor(self):
-        # return ParticleAccessorSOA(self)
-
     def __getattr__(self, name):
         # Comment CK: this either a member function of the accessor or the collection - not the PSet itself
         if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
@@ -481,7 +478,7 @@ class ParticleSetSOA(BaseParticleSet):
 
     @property
     def size(self):
-        return len(self.particle_data['lon'])
+        return len(self._collection)
 
     def __repr__(self):
         return "\n".join([str(p) for p in self])
@@ -498,16 +495,15 @@ class ParticleSetSOA(BaseParticleSet):
 
     def add(self, particles):
         """Method to add particles to the ParticleSet"""
-        if not isinstance(particles, ParticleSet):
-            raise NotImplementedError('Only ParticleSets can be added to a ParticleSet')
-
-        for d in self.particle_data:
-            self.particle_data[d] = np.concatenate((self.particle_data[d], particles.particle_data[d]))
+        # Method forward to new implementation
+        # TODO: discuss difference of add/iadd
+        self._collection += particles
+        return self
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
-        for d in self.particle_data:
-            self.particle_data[d] = np.delete(self.particle_data[d], indices, axis=0)
+        # Method forward to new implementation
+        self._collection.remove_multi_by_indices(indices)
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
@@ -661,10 +657,6 @@ class ParticleSetSOA(BaseParticleSet):
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
                                        partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
-                # p = pset_new.data_accessor()
-                # for i in range(pset_new.size):
-                    # p.set_index(i)
-                    # p.dt = dt
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
@@ -751,10 +743,6 @@ def search_kernel(particle, fieldset, time):
             particle_val = particle_val if particle_val else np.ones(self.size)
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
 
-        # p = self.data_accessor()
-
-        # for i in range(self.size):
-            # p.set_index(i)
         for i, p in enumerate(self):
             try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
                 if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
@@ -792,13 +780,8 @@ def search_kernel(particle, fieldset, time):
         :param var: Name of the variable (string)
         :param status: Write status of the variable (True, False or 'once')
         """
-        var_changed = False
-        for v in self.ptype.variables:
-            if v.name == var:
-                v.to_write = write_status
-                var_changed = True
-        if not var_changed:
-            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
+        # Method forward (for now)
+        self._collection.set_variable_write_status(var, write_status)
 
 
 ParticleSet = ParticleSetSOA
