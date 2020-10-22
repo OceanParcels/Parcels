@@ -48,13 +48,14 @@ Nparticle = int(math.pow(2,10)) # equals to Nparticle = 1024
 #Nparticle = int(math.pow(2,19)) # equals to Nparticle = 524288
 
 noctaves=3
-#noctaves=4 # formerly
-perlinres=(1,32,8)
-shapescale=(4,8,8)
-#shapescale=(8,6,6) # formerly
+# noctaves=4  # formerly
+perlinres=(1,24,12)
+shapescale=(4,4,4)
+# shapescale=(4,6,6)  # larger, also working
+# shapescale=(8,6,6)  # formerly
 perlin_persistence=0.3
-a = 1000 * 1e3
-b = 1000 * 1e3
+a = 100 * 1e3  # [m]
+b = 100 * 1e3  # [m]
 scalefac = 2.0
 tsteps = 61
 tscale = 6
@@ -99,6 +100,7 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
     U = np.transpose(U, (0,2,1))
     V = perlin2d.generate_fractal_noise_temporal2d(img_shape, tsteps, (perlinres[1], perlinres[2]), noctaves, perlin_persistence, max_shift=((-1, 2), (-1, 2)))
     V = np.transpose(V, (0,2,1))
+
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     if periodic_wrap:
@@ -124,18 +126,16 @@ def perlin_fieldset_from_xarray(periodic_wrap=False):
     totime = img_shape[0] * 24.0 * 60.0 * 60.0
     time = np.linspace(0., totime, img_shape[0], dtype=np.float32)
 
-    # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
-    # surface height) all on A-grid
+    # Define arrays U (zonal), V (meridional), W (vertical)
     U = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
     U = np.transpose(U, (0,2,1))
     V = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
     V = np.transpose(V, (0,2,1))
-    #P = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
 
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     dims = ('time', 'lat', 'lon')
     data = {'Uxr': xr.DataArray(U, coords=dimensions, dims=dims),
-            'Vxr': xr.DataArray(V, coords=dimensions, dims=dims)}   #,'Pxr': xr.DataArray(P, coords=dimensions, dims=dims)
+            'Vxr': xr.DataArray(V, coords=dimensions, dims=dims)}
     ds = xr.Dataset(data)
 
     variables = {'U': 'Uxr', 'V': 'Vxr'}
