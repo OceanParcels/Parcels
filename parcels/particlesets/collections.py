@@ -160,6 +160,7 @@ class Collection(ABC):
         """
         assert type(index) in [int, np.int32], "Trying to get a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
 
+    @abstractmethod
     def get_single_by_object(self, particle_obj):
         """
         This function gets a (particle) object from the collection based on its actual object. For collections that
@@ -171,6 +172,7 @@ class Collection(ABC):
         """
         assert (isinstance(particle_obj, BaseParticleAccessor) or isinstance(particle_obj, ScipyParticle))
 
+    @abstractmethod
     def get_single_by_ID(self, id):
         """
         This function gets a (particle) object from the collection based on the object's ID. For some collections,
@@ -181,6 +183,7 @@ class Collection(ABC):
         """
         assert type(id) in [np.int64, np.uint64], "Trying to get a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
 
+    @abstractmethod
     def get_same(self, same_class):
         """
         This function gets particles from this collection that are themselves stored in another object of an equi-
@@ -189,6 +192,7 @@ class Collection(ABC):
         assert same_class is not None, "Trying to get another {} from this one, but the other one is None - invalid operation.".format(type(self))
         assert type(same_class) is type(self)
 
+    @abstractmethod
     def get_collection(self, pcollection):
         """
         This function gets particles from this collection that are themselves stored in a ParticleCollection, which
@@ -199,6 +203,7 @@ class Collection(ABC):
         assert isinstance(pcollection, ParticleCollection), "Trying to get another particle collection from this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
 
+    @abstractmethod
     def get_multi_by_PyCollection_Particles(self, pycollectionp):
         """
         This function gets particles from this collection, which are themselves in common Python collections, such as
@@ -211,6 +216,7 @@ class Collection(ABC):
         """
         assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to get a collection of Particles, but their container is not a valid Python-collection - invalid operation."
 
+    @abstractmethod
     def get_multi_by_indices(self, indices):
         """
         This function gets particles from this collection based on their indices. This works best for random-access
@@ -224,6 +230,7 @@ class Collection(ABC):
         else:
             assert indices.values()[0] in [int, np.int32], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
 
+    @abstractmethod
     def get_multi_by_IDs(self, ids):
         """
         This function gets particles from this collection based on their IDs. For collections where this removal
@@ -257,6 +264,7 @@ class Collection(ABC):
         else:
             self.add_single(other)
 
+    @abstractmethod
     def add_collection(self, pcollection):
         """
         Adds another, differently structured ParticleCollection to this collection. This is done by, for example,
@@ -266,6 +274,7 @@ class Collection(ABC):
         assert isinstance(pcollection, ParticleCollection), "Trying to add another particle collection to this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
 
+    @abstractmethod
     def add_single(self, particle_obj):
         """
         Adding a single Particle to the collection - either as a 'Particle; object in parcels itself, or
@@ -273,6 +282,7 @@ class Collection(ABC):
         """
         assert (isinstance(particle_obj, BaseParticleAccessor) or isinstance(particle_obj, ScipyParticle))
 
+    @abstractmethod
     def add_same(self, same_class):
         """
         Adds another, equi-structured ParticleCollection to this collection. This is done by concatenating
@@ -282,6 +292,7 @@ class Collection(ABC):
         assert same_class is not None, "Trying to add another {}} to this one, but the other one is None - invalid operation.".format(type(self))
         assert type(same_class) is type(self)
 
+    @abstractmethod
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -446,6 +457,7 @@ class Collection(ABC):
         else:
             self.remove_single_by_object(other)
 
+    @abstractmethod
     def remove_single_by_index(self, index):
         """
         This function removes a (particle) object from the collection based on its index within the collection. For
@@ -458,6 +470,7 @@ class Collection(ABC):
         """
         assert type(index) in [int, np.int32], "Trying to remove a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
 
+    @abstractmethod
     def remove_single_by_object(self, particle_obj):
         """
         This function removes a (particle) object from the collection based on its actual object. For collections that
@@ -469,6 +482,7 @@ class Collection(ABC):
         """
         assert (isinstance(particle_obj, BaseParticleAccessor) or isinstance(particle_obj, ScipyParticle))
 
+    @abstractmethod
     def remove_single_by_ID(self, id):
         """
         This function removes a (particle) object from the collection based on the object's ID. For some collections,
@@ -480,6 +494,7 @@ class Collection(ABC):
         """
         assert type(id) in [np.int64, np.uint64], "Trying to remove a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
 
+    @abstractmethod
     def remove_same(self, same_class):
         """
         This function removes particles from this collection that are themselves stored in another object of an equi-
@@ -489,6 +504,7 @@ class Collection(ABC):
         assert same_class is not None, "Trying to remove another {} from this one, but the other one is None - invalid operation.".format(type(self))
         assert type(same_class) is type(self)
 
+    @abstractmethod
     def remove_collection(self, pcollection):
         """
         This function removes particles from this collection that are themselves stored in a ParticleCollection, which
@@ -502,6 +518,7 @@ class Collection(ABC):
         assert isinstance(pcollection, ParticleCollection), "Trying to remove another particle collection from this one, but the other is not of the type of 'ParticleCollection' - invalid operation."
         assert type(pcollection) is not type(self)
 
+    @abstractmethod
     def remove_multi_by_PyCollection_Particles(self, pycollectionp):
         """
         This function removes particles from this collection, which are themselves in common Python collections, such as
@@ -514,6 +531,7 @@ class Collection(ABC):
         """
         assert type(pycollectionp) in [list, dict, np.ndarray], "Trying to remove a collection of Particles, but their container is not a valid Python-collection - invalid operation."
 
+    @abstractmethod
     def remove_multi_by_indices(self, indices):
         """
         This function removes particles from this collection based on their indices. This works best for random-access
@@ -527,6 +545,7 @@ class Collection(ABC):
         else:
             assert indices.values()[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
 
+    @abstractmethod
     def remove_multi_by_IDs(self, ids):
         """
         This function removes particles from this collection based on their IDs. For collections where this removal
@@ -590,6 +609,7 @@ class Collection(ABC):
                 elif other.values()[0] in [np.int64, np.uint64]:
                     self.pop_multi_by_IDs(other)
 
+    @abstractmethod
     def pop_single_by_index(self, index):
         """
         Searches for Particle at index 'index', removes that Particle from the Collection and returns that Particle (or: ParticleAccessor).
@@ -601,6 +621,7 @@ class Collection(ABC):
         assert type(index) in [int, np.int32], "Trying to pop a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
         return None
 
+    @abstractmethod
     def pop_single_by_ID(self, id):
         """
         Searches for Particle with ID 'id', removes that Particle from the Collection and returns that Particle (or: ParticleAccessor).
@@ -609,6 +630,7 @@ class Collection(ABC):
         assert type(id) in [np.int64, np.uint64], "Trying to pop a particle by ID, but ID {} is not a 64-bit (signed or unsigned) iteger - invalid operation.".format(id)
         return None
 
+    @abstractmethod
     def pop_multi_by_indices(self, indices):
         """
         Searches for Particles with the indices registered in 'indices', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
@@ -626,6 +648,7 @@ class Collection(ABC):
             assert indices.values()[0] in [int, np.int32], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         return None
 
+    @abstractmethod
     def pop_multi_by_IDs(self, ids):
         """
         Searches for Particles with the IDs registered in 'ids', removes the Particles from the Collection and returns the Particles (or: their ParticleAccessors).
