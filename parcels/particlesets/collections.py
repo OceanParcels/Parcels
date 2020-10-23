@@ -888,7 +888,7 @@ class ParticleCollection(Collection):
         pass
 
     @abstractmethod
-    def set_variable_write_status(self):
+    def set_variable_write_status(self, var, write_status):
         """
         Method to set the write status of a Variable
         :param var: Name of the variable (string)
