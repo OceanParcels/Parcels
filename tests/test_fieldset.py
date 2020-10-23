@@ -359,7 +359,6 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, field_chunksize, filename='te
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
-    chs = 'auto'
     fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=field_chunksize)
 
     fieldset_file.add_field(field_data, "B")
