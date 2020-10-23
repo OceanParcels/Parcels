@@ -323,7 +323,7 @@ class ParticleSet_Benchmark(ParticleSet):
         if len(plot_t) != len(plot_iot):
             print("plot_t and plot_iot have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
             do_iot_plot = False
-        if len(plot_t != len(plot_drawt)):
+        if len(plot_t) != len(plot_drawt):
             print("plot_t and plot_drawt have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
             do_drawt_plot = False
         if len(plot_t) != len(plot_mem):
