@@ -17,6 +17,8 @@ class GridSet(object):
         grid = field.grid
         existing_grid = False
         for g in self.grids:
+            if field.field_chunksize == 'auto':
+                break
             if field.field_chunksize != grid.master_chunksize and grid.master_chunksize not in [None, False]:
                 logger.warning_once("Field chunksize and Grid master chunksize are not equal - erroneous behaviour expected.")
                 break

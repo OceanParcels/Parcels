@@ -162,7 +162,7 @@ class FieldSet(object):
         else:
             setattr(self, name, field)
 
-            if (isinstance(field.data, DeferredArray) or isinstance(field.data, da.core.Array)) and len(self.get_fields()) > 0:
+            if (isinstance(field.data, DeferredArray) or isinstance(field.data, da.core.Array)) and len(self.get_fields()) > 0 and (field.field_chunksize != 'auto'):
                 # ==== check for inhabiting the same grid, and homogenise the grid chunking ==== #
                 g_set = field.grid
                 # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
@@ -454,6 +454,8 @@ class FieldSet(object):
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
                 if procdims == dims and procinds == inds:
+                    if chunksize == 'auto':
+                        break
                     if 'depth' in dims and dims['depth'] == 'not_yet_set':
                         break
                     processedGrid = False
