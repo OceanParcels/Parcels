@@ -511,11 +511,15 @@ class Field(object):
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            assert (data.shape == (self.grid.tdim, self.grid.zdim,
-                                   self.grid.ydim - 2 * self.grid.meridional_halo,
-                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
-                ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                 'Flag transpose=True could help to reorder the data.' % self.name)
+            errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                            'Flag transpose=True could help to reorder the data.' % self.name)
+            assert data.shape[0] == self.grid.tdim, errormessage
+            assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
+            assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
+            if self.gridindexingtype == 'pop':
+                assert data.shape[1] == self.grid.zdim or data.shape[1] == self.grid.zdim-1, errormessage
+            else:
+                assert data.shape[1] == self.grid.zdim, errormessage
         else:
             assert (data.shape == (self.grid.tdim,
                                    self.grid.ydim - 2 * self.grid.meridional_halo,
@@ -552,7 +556,11 @@ class Field(object):
         self.grid.depth_field = field
 
     def __getitem__(self, key):
-        return self.eval(*key)
+        # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
+        if hasattr(key, 'set_index'):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)
+        else:
+            return self.eval(*key)
 
     def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
@@ -682,7 +690,7 @@ class Field(object):
                 xi = xdim - xi
         return xi, yi
 
-    def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, search2D=False):
+    def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         grid = self.grid
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
@@ -762,9 +770,20 @@ class Field(object):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             raise FieldSamplingError(x, y, z, field=self)
 
+        if particle:
+            particle.xi[self.igrid] = xi
+            particle.yi[self.igrid] = yi
+            particle.zi[self.igrid] = zi
+
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices_curvilinear(self, x, y, z, xi, yi, ti=-1, time=-1, search2D=False):
+    def search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+        if particle:
+            xi = particle.xi[self.igrid]
+            yi = particle.yi[self.igrid]
+        else:
+            xi = int(self.grid.xdim / 2) - 1
+            yi = int(self.grid.ydim / 2) - 1
         xsi = eta = -1
         grid = self.grid
         invA = np.array([[1, 0, 0, 0],
@@ -845,18 +864,21 @@ class Field(object):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             raise FieldSamplingError(x, y, z, field=self)
 
+        if particle:
+            particle.xi[self.igrid] = xi
+            particle.yi[self.igrid] = yi
+            particle.zi[self.igrid] = zi
+
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices(self, x, y, z, xi, yi, ti=-1, time=-1, search2D=False):
+    def search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
-            return self.search_indices_rectilinear(x, y, z, ti, time, search2D=search2D)
+            return self.search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
         else:
-            return self.search_indices_curvilinear(x, y, z, xi, yi, ti, time, search2D=search2D)
+            return self.search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
 
-    def interpolator2D(self, ti, z, y, x):
-        xi = 0
-        yi = 0
-        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
+    def interpolator2D(self, ti, z, y, x, particle=None):
+        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, particle=particle)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -900,10 +922,8 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
-    def interpolator3D(self, ti, z, y, x, time):
-        xi = int(self.grid.xdim / 2) - 1
-        yi = int(self.grid.ydim / 2) - 1
-        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)
+    def interpolator3D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, ti, time, particle=particle)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -965,13 +985,16 @@ class Field(object):
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
+            if self.gridindexingtype == 'pop' and zi >= self.grid.zdim-2:
+                # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
+                return (1-zeta) * f0
             data = self.data[ti, zi+1, :, :]
             f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
             if self.interp_method == 'bgrid_w_velocity' and self.gridindexingtype == 'mom5' and zi == -1:
-                # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in upper cell)
+                # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
                 return zeta * f1
             else:
                 return (1-zeta) * f0 + zeta * f1
@@ -999,13 +1022,13 @@ class Field(object):
             f1 = self.data[ti+1, :]
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    def spatial_interpolation(self, ti, z, y, x, time):
+    def spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator"""
 
         if self.grid.zdim == 1:
-            val = self.interpolator2D(ti, z, y, x)
+            val = self.interpolator2D(ti, z, y, x, particle=particle)
         else:
-            val = self.interpolator3D(ti, z, y, x, time)
+            val = self.interpolator3D(ti, z, y, x, time, particle=particle)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldOutOfBoundError(x, y, z, field=self)
@@ -1046,7 +1069,7 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
-    def eval(self, time, z, y, x, applyConversion=True):
+    def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -1056,8 +1079,8 @@ class Field(object):
         (ti, periods) = self.time_index(time)
         time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
-            f0 = self.spatial_interpolation(ti, z, y, x, time)
-            f1 = self.spatial_interpolation(ti + 1, z, y, x, time)
+            f0 = self.spatial_interpolation(ti, z, y, x, time, particle=particle)
+            f1 = self.spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
             t0 = self.grid.time[ti]
             t1 = self.grid.time[ti + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -1065,7 +1088,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
@@ -1419,11 +1442,9 @@ class VectorField(object):
         jac = dxdxsi*dydeta - dxdeta*dydxsi
         return jac
 
-    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time):
+    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        xi = int(grid.xdim / 2) - 1
-        yi = int(grid.ydim / 2) - 1
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
@@ -1485,11 +1506,9 @@ class VectorField(object):
             v = v.compute()
         return (u, v)
 
-    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time):
+    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        xi = int(grid.xdim / 2) - 1
-        yi = int(grid.ydim / 2) - 1
-        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
@@ -1591,7 +1610,7 @@ class VectorField(object):
             w = w.compute()
         return (u, v, w)
 
-    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
+    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None):
         """
         +---+---+---+
         |   |V1 |   |
@@ -1607,21 +1626,21 @@ class VectorField(object):
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
-            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time)
+            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
-            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-            w = self.W.eval(time, z, y, x, False)
+            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+            w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
-    def eval(self, time, z, y, x):
+    def eval(self, time, z, y, x, particle=None):
         if self.U.interp_method != 'cgrid_velocity':
-            u = self.U.eval(time, z, y, x, False)
-            v = self.V.eval(time, z, y, x, False)
+            u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
+            v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
             if self.vector_type == '3D':
-                w = self.W.eval(time, z, y, x, False)
+                w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
                 w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
             else:
@@ -1634,12 +1653,12 @@ class VectorField(object):
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
                 if self.vector_type == '3D':
-                    (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time)
-                    (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time)
+                    (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time, particle=particle)
+                    (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time, particle=particle)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
                 else:
-                    (u0, v0) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-                    (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time)
+                    (u0, v0) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+                    (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time, particle=particle)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
                 if self.vector_type == '3D':
@@ -1651,12 +1670,15 @@ class VectorField(object):
                 # of the defined time range or if we have hit an
                 # exact value in the time array.
                 if self.vector_type == '3D':
-                    return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti])
+                    return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti], particle=particle)
                 else:
-                    return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti])
+                    return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        return self.eval(*key)
+        if hasattr(key, 'set_index'):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)
+        else:
+            return self.eval(*key)
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
@@ -1741,7 +1763,10 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                val = list.__getitem__(self, iField).eval(*key)
+                if hasattr(key, 'set_index'):
+                    val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
+                else:
+                    val = list.__getitem__(self, iField).eval(*key)
                 vals.append(val)
             return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
 
@@ -1798,7 +1823,10 @@ class NestedField(list):
         else:
             for iField in range(len(self)):
                 try:
-                    val = list.__getitem__(self, iField).eval(*key)
+                    if hasattr(key, 'set_index'):
+                        val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
+                    else:
+                        val = list.__getitem__(self, iField).eval(*key)
                     break
                 except (FieldOutOfBoundError, FieldSamplingError):
                     if iField == len(self)-1:

@@ -136,51 +136,21 @@ class NetcdfFileBuffer(_FileBuffer):
                 and data.shape[di] == self.data_full_zdim-1
                 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer'])
 
-    def _extend_depth_dimension(self, data, ti):
-        # Add a bottom level of zeros for B-grid if missing in the data.
-        # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
-        # to match Parcels data shape. for W, last level must be 0 for impermeability
-        for dim in ['depth', 'lat', 'lon']:
-            if not isinstance(self.indices[dim], (list, range)):
-                raise NotImplementedError("For B grids, indices must be provided as a range")
-                # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-        d0 = self.indices['depth'][0]
-        d1 = self.indices['depth'][-1] + 1
-        lat0 = self.indices['lat'][0]
-        lat1 = self.indices['lat'][-1] + 1
-        lon0 = self.indices['lon'][0]
-        lon1 = self.indices['lon'][-1] + 1
-        if len(data.shape) == 3:
-            data = self.lib.concatenate((data[d0:d1 - 1, lat0:lat1, lon0:lon1],
-                                        da.zeros((1, lat1 - lat0, lon1 - lon0))), axis=0)
-        else:
-            if (type(ti) in [list, range]):
-                t0 = ti[0]
-                t1 = ti[-1] + 1
-                data = self.lib.concatenate((data[t0:t1, d0:d1 - 1, lat0:lat1, lon0:lon1],
-                                             self.lib.zeros((t1 - t0, 1, lat1 - lat0, lon1 - lon0))), axis=1)
-            else:
-                data = self.lib.concatenate((data[ti, d0:d1 - 1, lat0:lat1, lon0:lon1],
-                                             self.lib.zeros((1, lat1 - lat0, lon1 - lon0))), axis=0)
-
-        return data
-
     def _apply_indices(self, data, ti):
         if len(data.shape) == 2:
             data = data[self.indices['lat'], self.indices['lon']]
         elif len(data.shape) == 3:
             if self._check_extend_depth(data, 0):
-                data = self._extend_depth_dimension(data, ti)
+                data = data[self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
             elif len(self.indices['depth']) > 1:
                 data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
             else:
                 data = data[ti, self.indices['lat'], self.indices['lon']]
         else:
             if self._check_extend_depth(data, 1):
-                data = self._extend_depth_dimension(data, ti)
+                data = data[ti, self.indices['depth'][:-1], self.indices['lat'], self.indices['lon']]
             else:
                 data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
-
         return data
 
     @property
