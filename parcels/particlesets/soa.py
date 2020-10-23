@@ -7,6 +7,7 @@ from parcels.particle import ScipyParticle, JITParticle
 from parcels.field import Field
 from parcels.tools.loggers import logger
 from operator import attrgetter
+from ctypes import Structure, POINTER
 
 try:
     from mpi4py import MPI
@@ -39,6 +40,7 @@ def convert_to_flat_array(var):
 
 class ParticleCollectionSOA(ParticleCollection):
 
+    # ==== already user-exposed ==== #
     def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, partitions=None, pid_orig=None, ngrid=1, **kwargs):
         """
         :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
@@ -214,12 +216,14 @@ class ParticleCollectionSOA(ParticleCollection):
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
+    # ==== already user-exposed ==== #
     def __del__(self):
         """
         Collection - Destructor
         """
         raise NotImplementedError
 
+    # ==== already user-exposed ==== #
     def __iter__(self):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
@@ -233,6 +237,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         return ParticleCollectionIteratorSOA(self, True)
 
+    # ==== already user-exposed ==== #
     def __getitem__(self, index):
         """
         Access a particle in this collection using the fastest access
@@ -352,6 +357,7 @@ class ParticleCollectionSOA(ParticleCollection):
         for d in self._data:
             self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
 
+    # ==== already user-exposed ==== #
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -405,6 +411,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         raise NotImplementedError
 
+    # ==== already user-exposed ==== #
     def __delitem__(self, key):
         """
         This is the high-performance method to delete a specific object from this collection.
@@ -528,6 +535,7 @@ class ParticleCollectionSOA(ParticleCollection):
         super().remove_multi_by_IDs(ids)
         raise NotImplementedError
 
+    # ==== already user-exposed ==== #
     def __isub__(self, other):
         """
         This method performs an incremental removal of the equi-structured ParticleCollections, such to allow
@@ -630,21 +638,7 @@ class ParticleCollectionSOA(ParticleCollection):
         # super().split(indices)
         raise NotImplementedError
 
-    def toArray(self):
-        """
-        This function converts (or: transforms; reformats; translates) this collection into an array-like structure
-        (e.g. Python list or numpy nD array) that can be addressed by index. In the common case of 'no ID recovery',
-        the global ID and the index match exactly.
-
-        While this function may be very convenient for may users, it is STRONGLY DISADVISED to use the function to
-        often, and the performance- and memory overhead malus may be exceed any speed-up one could get from optimised
-        data structures - in fact, for large collections with an implicit-order structure (i.e. ordered lists, sets,
-        trees, etc.), this may be 'the most constly' function in any kind of simulation.
-
-        It can be - though - useful at the final stage of a simulation to dump the results to disk.
-        """
-        raise NotImplementedError
-
+    # ==== already user-exposed ==== #
     def __sizeof__(self):
         """
         This function returns the size in actual bytes required in memory to hold the collection. Ideally and simply,
@@ -654,6 +648,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         raise NotImplementedError
 
+    # ==== already user-exposed ==== #
     def clear(self):
         """
         This function physically removes all elements of the collection, yielding an empty collection as result of the
@@ -665,7 +660,17 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
         """
-        raise NotImplementedError
+        class CParticles(Structure):
+            _variable_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
+
+        def flatten_dense_data_array(v):
+            data_flat = self._data[v.name].view()
+            data_flat.shape = -1
+            return np.ctypeslib.as_ctypes(data_flat)
+
+        cdata = [flatten_dense_data_array(v) for v in self._ptype.variables]
+        cstruct = CParticles(*cdata)
+        return cstruct
 
     def toDictionary(self):     # formerly: ParticleSet.to_dict()
         """
@@ -678,6 +683,21 @@ class ParticleCollectionSOA(ParticleCollection):
 
          This function depends on the specific collection in question and thus needs to be specified in specific
          derivatives classes.
+        """
+        raise NotImplementedError
+
+    def toArray(self):
+        """
+        This function converts (or: transforms; reformats; translates) this collection into an array-like structure
+        (e.g. Python list or numpy nD array) that can be addressed by index. In the common case of 'no ID recovery',
+        the global ID and the index match exactly.
+
+        While this function may be very convenient for may users, it is STRONGLY DISADVISED to use the function to
+        often, and the performance- and memory overhead malus may be exceed any speed-up one could get from optimised
+        data structures - in fact, for large collections with an implicit-order structure (i.e. ordered lists, sets,
+        trees, etc.), this may be 'the most constly' function in any kind of simulation.
+
+        It can be - though - useful at the final stage of a simulation to dump the results to disk.
         """
         raise NotImplementedError
 

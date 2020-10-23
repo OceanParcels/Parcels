@@ -4,6 +4,7 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
 
+import sys
 import numpy as np
 import xarray as xr
 from operator import attrgetter
@@ -82,6 +83,7 @@ class ParticleSetSOA(BaseParticleSet):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
+    # ==== already user-exposed ==== #
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
         self.fieldset = fieldset
@@ -260,6 +262,7 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             return False
 
+    # ==== already user-exposed ==== #
     def __getitem__(self, index):
         # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
         # Comment RB: The collection should provide this function indeed. Until we made a (more) definitive decision on how we want
@@ -271,16 +274,7 @@ class ParticleSetSOA(BaseParticleSet):
         'cstruct' returns the ctypes mapping of the combined collections cstruct and the fieldset cstruct.
         This depends on the specific structure in question.
         """
-        class CParticles(Structure):
-            _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self.ptype.variables]
-
-        def cdata_for(v):
-            data_flat = self.particle_data[v.name].view()
-            data_flat.shape = -1
-            return np.ctypeslib.as_ctypes(data_flat)
-
-        cdata = [cdata_for(v) for v in self.ptype.variables]
-        cstruct = CParticles(*cdata)
+        cstruct = self._collection.cstruct()
         return cstruct
 
     @property
@@ -332,6 +326,7 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
+    # ==== already user-exposed ==== #
     @classmethod
     def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
@@ -354,6 +349,7 @@ class ParticleSetSOA(BaseParticleSet):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
+    # ==== already user-exposed ==== #
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
@@ -476,23 +472,30 @@ class ParticleSetSOA(BaseParticleSet):
 
         return data_dict, data_dict_once
 
+    # ==== already user-exposed ==== #
     @property
     def size(self):
+        # ==== to change at some point - len and size are different things ==== #
         return len(self._collection)
 
+    # ==== already user-exposed ==== #
     def __repr__(self):
         return "\n".join([str(p) for p in self])
 
+    # ==== already user-exposed ==== #
     def __len__(self):
-        return self.size
+        return len(self._collection)
 
+    # ==== already user-exposed ==== #
     def __sizeof__(self):
-        raise NotImplementedError()
+        return sys.getsizeof(self._collection)
 
+    # ==== already user-exposed ==== #
     def __iadd__(self, particles):
         self.add(particles)
         return self
 
+    # ==== already user-exposed ==== #
     def add(self, particles):
         """Method to add particles to the ParticleSet"""
         # Method forward to new implementation
@@ -500,16 +503,19 @@ class ParticleSetSOA(BaseParticleSet):
         self._collection += particles
         return self
 
+    # ==== to be removed later ==== #
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
         # Method forward to new implementation
         self._collection.remove_multi_by_indices(indices)
 
+    # ==== to be removed later ==== #
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
         for d in self.particle_data:
             self.particle_data[d] = self.particle_data[d][~indices, ...]
 
+    # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -686,6 +692,7 @@ class ParticleSetSOA(BaseParticleSet):
         if verbose_progress:
             pbar.finish()
 
+    # ==== already user-exposed ==== #
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet
@@ -705,6 +712,7 @@ class ParticleSetSOA(BaseParticleSet):
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
                       projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
+    # ==== already user-exposed ==== #
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
@@ -735,7 +743,7 @@ def search_kernel(particle, fieldset, time):
             funcvars=["particle", "fieldset", "time", "x"],
             funccode=f_str,
         )
-        self.execute(k, runtime=0)
+        self.execute(pyfunc=k, runtime=0)
 
         if isinstance(particle_val, str):
             particle_val = self.particle_data[particle_val]
@@ -761,6 +769,7 @@ def search_kernel(particle, fieldset, time):
 
         return density
 
+    # ==== already user-exposed ==== #
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet
@@ -769,6 +778,7 @@ def search_kernel(particle, fieldset, time):
         return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
+    # ==== already user-exposed ==== #
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
@@ -781,6 +791,7 @@ def search_kernel(particle, fieldset, time):
         :param status: Write status of the variable (True, False or 'once')
         """
         # Method forward (for now)
+        # Method forward (shall stay) - CK
         self._collection.set_variable_write_status(var, write_status)
 
 
