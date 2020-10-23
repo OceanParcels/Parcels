@@ -228,11 +228,13 @@ def test_pop(mode, chunk_mode):
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     if chunk_mode is False:
+        assert field_set.gridset.size == 1
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
+        assert field_set.gridset.size == 3  # because three different grids in 'auto' mode
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
-        print(field_set.U.grid.chunk_info)
+        assert field_set.gridset.size == 1
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 
