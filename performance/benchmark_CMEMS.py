@@ -40,88 +40,6 @@ method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 global_t_0 = 0
 odir = ""
 
-def plot_internal(total_times = None, compute_times = None, io_times = None, memory_used = None, nparticles = None, imageFilePath = ""):
-    if total_times is None:
-        total_times = []
-    if compute_times is None:
-        compute_times = []
-    if io_times is None:
-        io_times = []
-    if memory_used is None:
-        memory_used = []
-    if nparticles is None:
-        nparticles = []
-    plot_t = []
-    plot_ct = []
-    plot_iot = []
-    plot_npart = []
-    cum_t = 0
-    cum_ct = 0
-    cum_iot = 0
-    t_scaler = 1. * 10./1.0
-    npart_scaler = 1.0 / 1000.0
-    for i in range(0, len(total_times)):
-        plot_t.append( total_times[i]*t_scaler )
-        cum_t += (total_times[i])
-
-    for i in range(0, len(compute_times)):
-        plot_ct.append(compute_times[i] * t_scaler)
-        cum_ct += compute_times[i]
-    for i in range(0, len(io_times)):
-        plot_iot.append(io_times[i] * t_scaler)
-        cum_iot += io_times[i]
-    for i in range(0, len(nparticles)):
-        plot_npart.append(nparticles[i] * npart_scaler)
-
-
-    plot_mem = []
-    if memory_used is not None:
-        #mem_scaler = (1*10)/(1024*1024*1024)
-        mem_scaler = 1 / (1024 * 1024 * 1024)
-        for i in range(0, len(memory_used)):
-            plot_mem.append(memory_used[i] * mem_scaler)
-
-    do_iot_plot = True
-    do_mem_plot = True
-    do_npart_plot = True
-    assert (len(plot_t) == len(plot_ct))
-    # assert (len(plot_t) == len(plot_iot))
-    if len(plot_t) != len(plot_iot):
-        print("plot_t and plot_iot have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
-        do_iot_plot = False
-    # assert (len(plot_t) == len(plot_mem))
-    if len(plot_t) != len(plot_mem):
-        print("plot_t and plot_mem have different lengths ({} vs {})".format(len(plot_t), len(plot_mem)))
-        do_mem_plot = False
-    # assert (len(plot_t) == len(plot_npart))
-    if len(plot_t) != len(plot_npart):
-        print("plot_t and plot_npart have different lengths ({} vs {})".format(len(plot_t), len(plot_npart)))
-        do_npart_plot = False
-    x = []
-    for i in range(len(plot_t)):
-        x.append(i)
-
-    fig, ax = plt.subplots(1, 1, figsize=(21, 12))
-    ax.plot(x, plot_t, 'o-', label="total time_spent [100ms]")
-    ax.plot(x, plot_ct, 'o-', label="compute time_spent [100ms]")
-    # == this is still the part that breaks - as they are on different time scales, possibly leave them out ? == #
-    if do_iot_plot:
-        ax.plot(x, plot_iot, 'o-', label="io time_spent [100ms]")
-    if (memory_used is not None) and do_mem_plot:
-        #ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [100 MB]")
-        ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [1 GB]")
-    if do_npart_plot:
-        ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
-    plt.xlim([0, 730])
-    plt.ylim([0, 120])
-    plt.legend()
-    ax.set_xlabel('iteration')
-    plt.savefig(os.path.join(odir, imageFilePath), dpi=600, format='png')
-
-    sys.stdout.write("cumulative total runtime: {}\n".format(cum_t))
-    sys.stdout.write("cumulative compute time: {}\n".format(cum_ct))
-    sys.stdout.write("cumulative I/O time: {}\n".format(cum_iot))
-
 
 def create_CMEMS_fieldset(datahead, periodic_wrap):
     ddir = os.path.join(datahead, "CMEMS/GLOBAL_REANALYSIS_PHY_001_030/")
@@ -294,6 +212,8 @@ if __name__=='__main__':
         refresh_cycle = (delta(days=time_in_days).total_seconds() / (addParticleN/start_N_particles)) / math.sqrt(3/2)
         repeatRateMinutes = int(refresh_cycle/60.0) if repeatRateMinutes == 720 else repeatRateMinutes
 
+    target_N = Nparticle
+
     if backwardSimulation:
         # ==== backward simulation ==== #
         if agingParticles:
@@ -418,12 +338,10 @@ if __name__=='__main__':
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
+        # mpi_comm.Barrier()
         Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
         Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
-            # plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
-            # plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), pset.mem_log.get_params(), pset.nparticle_log.get_params(), imageFileName)
-            plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), Nmem, Nparticles, imageFileName)
+            pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir)
     else:
-        # plot(perflog.samples, perflog.times_steps, perflog.memory_steps, perflog.Nparticles_step, os.path.join(odir, imageFileName))
-        plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), pset.mem_log.get_params(), pset.nparticle_log.get_params(), imageFileName)
+        pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir)
