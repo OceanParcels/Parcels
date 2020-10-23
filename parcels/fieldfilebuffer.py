@@ -481,25 +481,25 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['time']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("time", chunk_value_indices['time'], chunk_value_indices['time'], self.field_chunksize[input_chunk_index]))
-            input_chunk_index+=1
+            input_chunk_index += 1
         if self._is_dimension_available('depth'):
             if chunk_value_indices['depth'] is not None:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['depth']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("depth", chunk_value_indices['depth'], chunk_value_indices['depth'], self.field_chunksize[input_chunk_index]))
-            input_chunk_index+=1
+            input_chunk_index += 1
         if self._is_dimension_available('lat'):
             if chunk_value_indices['lat'] is not None:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['lat']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("lat", chunk_value_indices['lat'], chunk_value_indices['lat'], self.field_chunksize[input_chunk_index]))
-            input_chunk_index+=1
+            input_chunk_index += 1
         if self._is_dimension_available('lon'):
             if chunk_value_indices['lon'] is not None:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['lon']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("lon", chunk_value_indices['lon'], chunk_value_indices['lon'], self.field_chunksize[input_chunk_index]))
-            input_chunk_index+=1
+            input_chunk_index += 1
 
         return chunk_dict, chunk_index_map
 
