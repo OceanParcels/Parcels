@@ -273,7 +273,8 @@ def test_add_field_after_pset(fieldtype):
     assert error_thrown
 
 
-def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
+@pytest.mark.parametrize('field_chunksize', ['auto', None])
+def test_fieldset_samegrids_from_file(tmpdir, field_chunksize, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath1 = tmpdir.join(filename+'_1')
@@ -287,13 +288,16 @@ def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
-    chs = 'auto'
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=field_chunksize)
 
-    assert fieldset.gridset.size == 1
-    assert fieldset.U.grid == fieldset.V.grid
-    assert fieldset.U.grid.master_chunksize == fieldset.V.grid.master_chunksize
-    assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
+    if field_chunksize == 'auto':
+        assert fieldset.gridset.size == 2
+        assert fieldset.U.grid != fieldset.V.grid
+    else:
+        assert fieldset.gridset.size == 1
+        assert fieldset.U.grid == fieldset.V.grid
+        assert fieldset.U.grid.master_chunksize == fieldset.V.grid.master_chunksize
+        assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
 
 
 @pytest.mark.parametrize('gridtype', ['A', 'C'])
@@ -310,7 +314,8 @@ def test_fieldset_dimlength1_cgrid(gridtype):
     assert success
 
 
-def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
+@pytest.mark.parametrize('field_chunksize', ['auto', None])
+def test_fieldset_diffgrids_from_file(tmpdir, field_chunksize, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath1 = tmpdir.join(filename+'_1')
@@ -328,14 +333,17 @@ def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
-    chs = 'auto'
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
-    assert fieldset.gridset.size == 2
-    assert fieldset.U.grid != fieldset.V.grid
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=field_chunksize)
+    if field_chunksize == 'auto':
+        assert fieldset.gridset.size == 2
+    else:
+        assert fieldset.gridset.size == 2
+        assert fieldset.U.grid != fieldset.V.grid
 
 
-def test_fieldset_diffgrids_from_file_data(tmpdir, filename='test_subsets'):
+@pytest.mark.parametrize('field_chunksize', ['auto', None])
+def test_fieldset_diffgrids_from_file_data(tmpdir, field_chunksize, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
@@ -352,11 +360,14 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, filename='test_subsets'):
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
     chs = 'auto'
-    fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+    fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=field_chunksize)
 
     fieldset_file.add_field(field_data, "B")
     assert len(fieldset_file.get_fields()) == 3
-    assert fieldset_file.gridset.size == 2
+    if field_chunksize == 'auto':
+        assert fieldset_file.gridset.size == 3
+    else:
+        assert fieldset_file.gridset.size == 2
     assert fieldset_file.U.grid != fieldset_file.B.grid
 
 
