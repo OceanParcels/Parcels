@@ -291,11 +291,11 @@ class ParticleSet_Benchmark(ParticleSet):
         if not isinstance(io_times, np.ndarray):
             io_times = np.array(io_times)
         if plot_times is None or type(plot_times) not in [list, dict, np.ndarray]:
-            plot_times = []
+            plot_times = self.plot_log.get_values()
         if not isinstance(plot_times, np.ndarray):
             plot_times = np.array(plot_times)
         if memory_used is None or type(memory_used) not in [list, dict, np.ndarray]:
-            memory_used = []
+            memory_used = self.mem_log.get_params()
         if not isinstance(memory_used, np.ndarray):
             memory_used = np.array(memory_used)
         if nparticles is None or type(nparticles) not in [list, dict, np.ndarray]:
