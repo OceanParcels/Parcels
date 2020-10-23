@@ -287,7 +287,7 @@ class ParticleSet_Benchmark(ParticleSet):
         if not isinstance(compute_times, np.ndarray):
             compute_times = np.array(compute_times)
         if io_times is None or type(io_times) not in [list, dict, np.ndarray]:
-            io_times = self.compute_log.get_values()
+            io_times = self.io_log.get_values()
         if not isinstance(io_times, np.ndarray):
             io_times = np.array(io_times)
         if plot_times is None or type(plot_times) not in [list, dict, np.ndarray]:
