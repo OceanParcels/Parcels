@@ -39,9 +39,9 @@ def fieldset_from_nemo_3D(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'U': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16},
-               'V': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16},
-               'W': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16}}
+        chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+               'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+               'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
 
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     return fieldset
@@ -56,8 +56,8 @@ def fieldset_from_globcurrent(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'U': {'lat': 16, 'lon': 16},
-               'V': {'lat': 16, 'lon': 16}}
+        chs = {'U': {'lat': ('lat', 16), 'lon': ('lon', 16)},
+               'V': {'lat': ('lat', 16), 'lon': ('lon', 16)}}
 
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     return fieldset
@@ -72,7 +72,8 @@ def fieldset_from_pop_1arcs(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'i': 8, 'j': 8, 'k': 3, 'w_dep': 3}
+        chs = (1, 3, 8, 8)
+        # chs = {'i': 8, 'j': 8, 'k': 3, 'w_dep': 3}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, field_chunksize=chs, timestamps=timestamps)
     return fieldset
@@ -130,12 +131,14 @@ def fieldset_from_mitgcm(chunk_mode):
                   "V": {"lon": "XG", "lat": "YG", "time": "time"}}
 
     chs = False
-    name_map = {'lon': 'XG', 'lat': 'YG', 'time': 'time'}
+    # name_map = {'lon': 'XG', 'lat': 'YG', 'time': 'time'}
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = (1, 50, 100)
-    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs, chunkdims_name_map=name_map)
+        chs = {'U': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XG', 100)},
+               'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XG', 100)}}
+        # chs = (1, 50, 100)
+    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)  # chunkdims_name_map=name_map
 
 
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
@@ -351,8 +354,8 @@ def test_diff_entry_dimensions_chunks(mode):
                  'V': 'vo'}
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}}
-    chs = {'U': {'depthu': 75, 'depthv': 75, 'y': 16, 'x': 16},
-           'V': {'depthu': 75, 'depthv': 75, 'y': 16, 'x': 16}}
+    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+           'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     npart = 20
     lonp = 5.2 * np.ones(npart)
@@ -416,9 +419,9 @@ def test_diff_entry_chunksize_error_nemo_simple(mode):
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
-           'V': {'depthv': 20, 'y': 4, 'x': 16},
-           'W': {'depthw': 15, 'y': 16, 'x': 4}}
+    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+           'V': {'depth': ('depthv', 20), 'lat': ('y', 4), 'lon': ('x', 16)},
+           'W': {'depth': ('depthw', 16), 'lat': ('y', 16), 'lon': ('x', 4)}}
     try:
         fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     except ValueError:
@@ -449,9 +452,9 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 16},
-           'V': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 4, 'x': 16},
-           'W': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 16, 'x': 4}}
+    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+           'V': {'depth': ('depthv', 75), 'lat': ('y', 4), 'lon': ('x', 16)},
+           'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 4)}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     npart = 20
     lonp = 5.2 * np.ones(npart)
@@ -464,15 +467,15 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     npart_V = [npart_V * k for k in fieldset.V.nchunks[1:]]
     npart_W = 1
     npart_W = [npart_W * k for k in fieldset.V.nchunks[1:]]
-    chn = {'U': {'lat': int(math.ceil(201.0/chs['U']['y'])),
-                 'lon': int(math.ceil(151.0/chs['U']['x'])),
-                 'depth': int(math.ceil(75.0/chs['U']['depthu']))},
-           'V': {'lat': int(math.ceil(201.0/chs['V']['y'])),
-                 'lon': int(math.ceil(151.0/chs['V']['x'])),
-                 'depth': int(math.ceil(75.0/chs['V']['depthv']))},
-           'W': {'lat': int(math.ceil(201.0/chs['W']['y'])),
-                 'lon': int(math.ceil(151.0/chs['W']['x'])),
-                 'depth': int(math.ceil(75.0/chs['W']['depthw']))}}
+    chn = {'U': {'lat': int(math.ceil(201.0/chs['U']['lat'][1])),
+                 'lon': int(math.ceil(151.0/chs['U']['lon'][1])),
+                 'depth': int(math.ceil(75.0/chs['U']['depth'][1]))},
+           'V': {'lat': int(math.ceil(201.0/chs['V']['lat'][1])),
+                 'lon': int(math.ceil(151.0/chs['V']['lon'][1])),
+                 'depth': int(math.ceil(75.0/chs['V']['depth'][1]))},
+           'W': {'lat': int(math.ceil(201.0/chs['W']['lat'][1])),
+                 'lon': int(math.ceil(151.0/chs['W']['lon'][1])),
+                 'depth': int(math.ceil(75.0/chs['W']['depth'][1]))}}
     npart_U_request = 1
     npart_U_request = [npart_U_request * chn['U'][k] for k in chn['U']]
     npart_V_request = 1
@@ -504,8 +507,8 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
                  'V': 'vo'}
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depthu': 75, 'depthv': 15, 'y': 16, 'x': 16},
-           'V': {'depthu': 75, 'depthv': 15, 'y': 4, 'x': 16}}
+    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+           'V': {'depth': ('depthv', 15), 'lat': ('y', 4), 'lon': ('x', 16)}}
     fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     npart = 20
     lonp = 5.2 * np.ones(npart)
@@ -536,9 +539,9 @@ def test_erroneous_fieldset_init(mode):
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'},
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw', 'time': 'time_counter'}}
-    chs = {'U': {'depthu': 75, 'y': 16, 'x': 16},
-           'V': {'depthv': 75, 'y': 16, 'x': 16},
-           'W': {'depthw': 75, 'y': 16, 'x': 16}}
+    chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+           'V': {'depth': ('depthv', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
+           'W': {'depth': ('depthw', 75), 'lat': ('y', 16), 'lon': ('x', 16)}}
 
     try:
         FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
@@ -553,8 +556,8 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
                           '200201*-GLOBCURRENT-L4-CUReul_hs-ALT_SUM-v02.0-fv01.0.nc')
     variables = {'U': 'eastward_eulerian_current_velocity', 'V': 'northward_eulerian_current_velocity'}
     dimensions = {'lat': 'lat', 'lon': 'lon', 'time': 'time'}
-    chs = {'U': {'lat': 16, 'lon': 16},
-           'V': {'lat': 16, 'lon': 4}}
+    chs = {'U': {'lat': ('lat', 16), 'lon': ('lon', 16)},
+           'V': {'lat': ('lat', 16), 'lon': ('lon', 4)}}
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     lonp = [25]
     latp = [-35]
@@ -565,10 +568,10 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     npart_V = 1
     npart_V = [npart_V * k for k in fieldset.V.nchunks[1:]]
     npart_V_request = 1
-    chn = {'U': {'lat': int(math.ceil(41.0/chs['U']['lat'])),
-                 'lon': int(math.ceil(81.0/chs['U']['lon']))},
-           'V': {'lat': int(math.ceil(41.0/chs['V']['lat'])),
-                 'lon': int(math.ceil(81.0/chs['V']['lon']))}}
+    chn = {'U': {'lat': int(math.ceil(41.0/chs['U']['lat'][1])),
+                 'lon': int(math.ceil(81.0/chs['U']['lon'][1]))},
+           'V': {'lat': int(math.ceil(41.0/chs['V']['lat'][1])),
+                 'lon': int(math.ceil(81.0/chs['V']['lon'][1]))}}
     npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
     assert (npart_U == npart_V)
     assert (npart_V != npart_V_request)
