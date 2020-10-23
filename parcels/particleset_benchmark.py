@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import timedelta as delta
 import psutil
 import os
+import matplotlib.pyplot as plt
+import sys
 
 
 import numpy as np
@@ -354,7 +356,7 @@ class ParticleSet_Benchmark(ParticleSet):
         sys.stdout.write("cumulative I/O time: {}\n".format(io_times.sum()))
         sys.stdout.write("cumulative plot time: {}\n".format(plot_times.sum()))
 
-        csv_file = os.path.splitext(imageFileName)[0]+".csv"
+        csv_file = os.path.splitext(imageFilePath)[0]+".csv"
         with open(os.path.join(odir, csv_file), 'w') as f:
             nparticles_t0 = 0
             nparticles_tN = 0

@@ -363,7 +363,7 @@ if __name__ == "__main__":
         if mpi_comm.Get_rank() == 0:
             pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=1, imageFilePath=imageFileName, odir=odir)
     else:
-        pset.plot_and_log(target_N=target_1, imageFilePath=imageFileName, odir=odir)
+        pset.plot_and_log(target_N=1, imageFilePath=imageFileName, odir=odir)
 
     print('Execution finished')
 
