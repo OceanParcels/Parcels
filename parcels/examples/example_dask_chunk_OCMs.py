@@ -72,7 +72,7 @@ def fieldset_from_pop_1arcs(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = (1, 3, 8, 8)
+        chs = {'lon': ('i', 8), 'lat': ('j', 8), 'depth': ('k', 3)}
         # chs = {'i': 8, 'j': 8, 'k': 3, 'w_dep': 3}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, field_chunksize=chs, timestamps=timestamps)
@@ -95,7 +95,7 @@ def fieldset_from_swash(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = (1, 7, 4, 4)
+        chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
@@ -191,7 +191,7 @@ def compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_nemo_3D(mode, chunk_mode):
-    if chunk_mode == 'auto':
+    if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '2MiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
@@ -215,7 +215,7 @@ def test_nemo_3D(mode, chunk_mode):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_pop(mode, chunk_mode):
-    if chunk_mode == 'auto':
+    if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '1MiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
@@ -241,7 +241,7 @@ def test_pop(mode, chunk_mode):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_swash(mode, chunk_mode):
-    if chunk_mode == 'auto':
+    if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '32KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
@@ -267,8 +267,8 @@ def test_swash(mode, chunk_mode):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_globcurrent_2D(mode, chunk_mode):
-    if chunk_mode == 'auto':
-        dask.config.set({'array.chunk-size': '32KiB'})
+    if chunk_mode in ['auto', ]:
+        dask.config.set({'array.chunk-size': '16KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_globcurrent(chunk_mode)
@@ -290,7 +290,7 @@ def test_globcurrent_2D(mode, chunk_mode):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_ofam_3D(mode, chunk_mode):
-    if chunk_mode == 'auto':
+    if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
@@ -326,7 +326,7 @@ def test_ofam_3D(mode, chunk_mode):
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_mitgcm(mode, chunk_mode):
-    if chunk_mode == 'auto':
+    if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
@@ -432,8 +432,11 @@ def test_diff_entry_chunksize_error_nemo_simple(mode):
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    return False
+    try:
+        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    except IndexError:
+        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
+    return True
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -462,7 +465,10 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    try:
+        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
+    except IndexError:
+        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
@@ -519,10 +525,10 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
     try:
         compute_nemo_particle_advection(fieldset, mode, lonp, latp)
     except IndexError:  # incorrect data access, in case grids were created
-        return True
+        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
     except AssertionError:  # U-V grids are not equal to one another, throwing assertion errors
-        return True
-    return False
+        raise NotImplementedError("U-V-W grids should be able to get their own grids when the chunking differs")
+    return True
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -564,7 +570,10 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     lonp = [25]
     latp = [-35]
-    compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
+    try:
+        compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
+    except IndexError:
+        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
