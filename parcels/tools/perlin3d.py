@@ -1,4 +1,8 @@
 import numpy as np
+from numpy.random import MT19937
+from numpy.random import RandomState, SeedSequence
+from scipy import ndimage
+from time import time
     
 def generate_perlin_noise_3d(shape, res):
     def f(t):
@@ -40,6 +44,7 @@ def generate_perlin_noise_3d(shape, res):
     return ((1-t[:,:,:,2])*n0 + t[:,:,:,2]*n1)
     
 def generate_fractal_noise_3d(shape, res, octaves=1, persistence=0.5):
+    rs = RandomState( MT19937(SeedSequence(int(round(time() * 1000)))) )
     noise = np.zeros(shape)
     frequency = 1
     amplitude = 1
@@ -48,7 +53,29 @@ def generate_fractal_noise_3d(shape, res, octaves=1, persistence=0.5):
         frequency *= 2
         amplitude *= persistence
     return noise
-    
+
+def generate_fractal_noise_temporal3d(shape, tsteps, res, octaves=1, persistence=0.5, max_shift=(1, 1, 1)):
+    rs = RandomState( MT19937(SeedSequence(int(round(time() * 1000)))) )
+    noise = np.zeros(shape)
+    frequency = 1
+    amplitude = 1
+    for _ in range(octaves):
+        noise += amplitude * generate_perlin_noise_3d(shape, (frequency*res[0], frequency*res[1], frequency*res[2]))
+        frequency *= 2
+        amplitude *= persistence
+
+    ishape = (tsteps, )+shape
+    result = np.zeros(ishape)
+    timage = np.zeros(noise.shape)
+    for i in range(0, tsteps):
+        result[i,:,:] = noise
+        sx = np.random.randint(-max_shift[0], max_shift[0], dtype=np.int32)
+        sy = np.random.randint(-max_shift[1], max_shift[1], dtype=np.int32)
+        sz = np.random.randint(-max_shift[2], max_shift[2], dtype=np.int32)
+        ndimage.shift(noise, (sx, sy, sz), timage, order=3, mode='mirror')
+        noise = timage
+    return result
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation

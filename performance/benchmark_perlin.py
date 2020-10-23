@@ -22,6 +22,7 @@ import os
 import time as ostime
 import matplotlib.pyplot as plt
 from parcels.tools import perlin3d
+from parcels.tools import perlin2d
 
 try:
     from mpi4py import MPI
@@ -53,6 +54,8 @@ perlin_persistence=0.3
 a = 1000 * 1e3
 b = 1000 * 1e3
 scalefac = 2.0
+tsteps = 244
+tscale = 1.5
 
 # Idea for 4D: perlin3D creates a time-consistent 3D field
 # Thus, we can use skimage to create shifted/rotated/morphed versions
@@ -61,88 +64,6 @@ scalefac = 2.0
 
 # we need to modify the kernel.execute / pset.execute so that it returns from the JIT
 # in a given time WITHOUT writing to disk via outfie => introduce a pyloop_dt
-
-def plot_internal(total_times = None, compute_times = None, io_times = None, memory_used = None, nparticles = None, imageFilePath = ""):
-    if total_times is None:
-        total_times = []
-    if compute_times is None:
-        compute_times = []
-    if io_times is None:
-        io_times = []
-    if memory_used is None:
-        memory_used = []
-    if nparticles is None:
-        nparticles = []
-    plot_t = []
-    plot_ct = []
-    plot_iot = []
-    plot_npart = []
-    cum_t = 0
-    cum_ct = 0
-    cum_iot = 0
-    t_scaler = 1. * 10./1.0
-    npart_scaler = 1.0 / 1000.0
-    for i in range(0, len(total_times)):
-        plot_t.append( total_times[i]*t_scaler )
-        cum_t += (total_times[i])
-
-    for i in range(0, len(compute_times)):
-        plot_ct.append(compute_times[i] * t_scaler)
-        cum_ct += compute_times[i]
-    for i in range(0, len(io_times)):
-        plot_iot.append(io_times[i] * t_scaler)
-        cum_iot += io_times[i]
-    for i in range(0, len(nparticles)):
-        plot_npart.append(nparticles[i] * npart_scaler)
-
-
-    plot_mem = []
-    if memory_used is not None:
-        #mem_scaler = (1*10)/(1024*1024*1024)
-        mem_scaler = 1 / (1024 * 1024 * 1024)
-        for i in range(0, len(memory_used)):
-            plot_mem.append(memory_used[i] * mem_scaler)
-
-    do_iot_plot = True
-    do_mem_plot = True
-    do_npart_plot = True
-    assert (len(plot_t) == len(plot_ct))
-    # assert (len(plot_t) == len(plot_iot))
-    if len(plot_t) != len(plot_iot):
-        print("plot_t and plot_iot have different lengths ({} vs {})".format(len(plot_t), len(plot_iot)))
-        do_iot_plot = False
-    # assert (len(plot_t) == len(plot_mem))
-    if len(plot_t) != len(plot_mem):
-        print("plot_t and plot_mem have different lengths ({} vs {})".format(len(plot_t), len(plot_mem)))
-        do_mem_plot = False
-    # assert (len(plot_t) == len(plot_npart))
-    if len(plot_t) != len(plot_npart):
-        print("plot_t and plot_npart have different lengths ({} vs {})".format(len(plot_t), len(plot_npart)))
-        do_npart_plot = False
-    x = []
-    for i in range(len(plot_t)):
-        x.append(i)
-
-    fig, ax = plt.subplots(1, 1, figsize=(21, 12))
-    ax.plot(x, plot_t, 'o-', label="total time_spent [100ms]")
-    ax.plot(x, plot_ct, 'o-', label="compute time_spent [100ms]")
-    # == this is still the part that breaks - as they are on different time scales, possibly leave them out ? == #
-    if do_iot_plot:
-        ax.plot(x, plot_iot, 'o-', label="io time_spent [100ms]")
-    if (memory_used is not None) and do_mem_plot:
-        #ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [100 MB]")
-        ax.plot(x, plot_mem, 'x-', label="memory_used (cumulative) [1 GB]")
-    if do_npart_plot:
-        ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
-    plt.xlim([0, 730])
-    plt.ylim([0, 120])
-    plt.legend()
-    ax.set_xlabel('iteration')
-    plt.savefig(os.path.join(odir, imageFilePath), dpi=600, format='png')
-
-    sys.stdout.write("cumulative total runtime: {}\n".format(cum_t))
-    sys.stdout.write("cumulative compute time: {}\n".format(cum_ct))
-    sys.stdout.write("cumulative I/O time: {}\n".format(cum_iot))
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
@@ -163,29 +84,33 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
     Perlin, Ken (July 1985). "An Image Synthesizer". SIGGRAPH Comput. Graph. 19 (97–8930), p. 287–296.
     doi:10.1145/325165.325247, https://dl.acm.org/doi/10.1145/325334.325247
     """
-    img_shape = (perlinres[0]*shapescale[0], int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
+    img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
 
     # Coordinates of the test fieldset (on A-grid in deg)
-    lon = np.linspace(0, a, img_shape[1], dtype=np.float32)
-    #sys.stdout.write("lon field: {}\n".format(lon.size))
-    lat = np.linspace(0, b, img_shape[2], dtype=np.float32)
-    #sys.stdout.write("lat field: {}\n".format(lat.size))
-    totime = img_shape[0]*24.0*60.0*60.0
-    time = np.linspace(0., totime, img_shape[0], dtype=np.float64)
+    lon = np.linspace(-a*0.5, a*0.5, img_shape[0], dtype=np.float32)
+    # sys.stdout.write("lon field: {}\n".format(lon.size))
+    lat = np.linspace(-b*0.5, b*0.5, img_shape[1], dtype=np.float32)
+    # sys.stdout.write("lat field: {}\n".format(lat.size))
+    totime = tsteps*tscale*24.0*60.0*60.0
+    time = np.linspace(0., totime, tsteps, dtype=np.float64)
+    # sys.stdout.write("time field: {}\n".format(time.size))
 
-    # Define arrays U (zonal), V (meridional), W (vertical) and P (sea
-    # surface height) all on A-grid
-    U = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
+    # Define arrays U (zonal), V (meridional)
+    U = perlin2d.generate_fractal_noise_temporal2d(img_shape, tsteps, (perlinres[1], perlinres[2]), noctaves, perlin_persistence, max_shift=((-1, 2), (-1, 2)))
     U = np.transpose(U, (0,2,1))
-    #U = np.swapaxes(U, 1, 2)
-    #sys.stdout.write("U field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(U.shape, time.shape[0], lat.shape[0], lon.shape[0]))
-    V = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
+    # U = np.swapaxes(U, 1, 2)
+    # print("U-statistics - min: {:10.7f}; max: {:10.7f}; avg. {:10.7f}; std_dev: {:10.7f}".format(U.min(initial=0), U.max(initial=0), U.mean(), U.std()))
+    V = perlin2d.generate_fractal_noise_temporal2d(img_shape, tsteps, (perlinres[1], perlinres[2]), noctaves, perlin_persistence, max_shift=((-1, 2), (-1, 2)))
     V = np.transpose(V, (0,2,1))
-    #V = np.swapaxes(V, 1, 2)
+    # V = np.swapaxes(V, 1, 2)
+    # print("V-statistics - min: {:10.7f}; max: {:10.7f}; avg. {:10.7f}; std_dev: {:10.7f}".format(V.min(initial=0), V.max(initial=0), V.mean(), V.std()))
 
-    #P = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
-    #P = np.transpose(P, (0,2,1))
-    ##P = np.swapaxes(P, 1, 2)
+    # U = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
+    # U = np.transpose(U, (0,2,1))
+    # sys.stdout.write("U field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(U.shape, time.shape[0], lat.shape[0], lon.shape[0]))
+    # V = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
+    # V = np.transpose(V, (0,2,1))
+    # sys.stdout.write("V field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(V.shape, time.shape[0], lat.shape[0], lon.shape[0]))
 
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
@@ -357,6 +282,8 @@ if __name__=='__main__':
         refresh_cycle = (delta(days=time_in_days).total_seconds() / (addParticleN/start_N_particles)) / math.sqrt(3/2)
         repeatRateMinutes = int(refresh_cycle/60.0) if repeatRateMinutes == 720 else repeatRateMinutes
 
+    target_N = Nparticle
+
     if backwardSimulation:
         # ==== backward simulation ==== #
         if agingParticles:
@@ -475,11 +402,12 @@ if __name__=='__main__':
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
+        # mpi_comm.Barrier()
         Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
         Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
-            plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), Nmem, Nparticles, imageFileName)
+            pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir)
     else:
-        plot_internal(pset.total_log.get_values(), pset.compute_log.get_values(), pset.io_log.get_values(), pset.mem_log.get_params(), pset.nparticle_log.get_params(), imageFileName)
+        pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir)
 
 
