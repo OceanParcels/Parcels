@@ -48,7 +48,7 @@ class TimingLog():
                 # self.stime = time_module.perf_counter()
                 self.stime = time_module.process_time()
         else:
-            self.stime = time_module.perf_counter()
+            self.stime = time_module.process_time()
 
     def stop_timing(self):
         if MPI:
@@ -59,7 +59,7 @@ class TimingLog():
                 # self.etime = time_module.perf_counter()
                 self.etime = time_module.process_time()
         else:
-            self.etime = time_module.perf_counter()
+            self.etime = time_module.process_time()
 
     def accumulate_timing(self):
         if MPI:
