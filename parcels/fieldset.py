@@ -259,8 +259,8 @@ class FieldSet(object):
                 if U.grid.xdim == 1 or U.grid.ydim == 1 or V.grid.xdim == 1 or V.grid.ydim == 1:
                     raise NotImplementedError('C-grid velocities require longitude and latitude dimensions at least length 2')
 
-            if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5']:
-                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm' or 'mom5")
+            if U.gridindexingtype not in ['nemo', 'mitgcm', 'mom5', 'pop']:
+                raise ValueError("Field.gridindexing has to be one of 'nemo', 'mitgcm', 'mom5' or 'pop'")
 
             if U.gridindexingtype == 'mitgcm' and U.grid.gtype in [GridCode.CurvilinearZGrid, GridCode.CurvilinearZGrid]:
                 raise NotImplementedError('Curvilinear Grids are not implemented for mitgcm-style grid indexing.'
@@ -691,6 +691,8 @@ class FieldSet(object):
                       W nodes are at the centre of the horizontal interfaces.
                       They are interpolated linearly (as a function of z) in the cell.
                       T node is at the cell centre, and constant per cell.
+                      Note that Parcels assumes that the length of the depth dimension (at the W-points)
+                      is one larger than the size of the velocity and tracer fields in the depth dimension.
         :param indices: Optional dictionary of indices for each dimension
                to read from file(s), to allow for reading of subset of data.
                Default is to read the full extent of each dimension.
@@ -720,7 +722,7 @@ class FieldSet(object):
             kwargs['creation_log'] = 'from_pop'
         fieldset = cls.from_b_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
-                                           field_chunksize=field_chunksize, **kwargs)
+                                           field_chunksize=field_chunksize, gridindexingtype='pop', **kwargs)
         if hasattr(fieldset, 'U'):
             fieldset.U.set_scaling_factor(0.01)  # cm/s to m/s
         if hasattr(fieldset, 'V'):
@@ -1102,7 +1104,11 @@ class FieldSet(object):
                             del f.data[i, :]
 
                 lib = np if f.field_chunksize in [False, None] else da
-                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                if f.gridindexingtype == 'pop' and g.zdim > 1:
+                    zd = g.zdim - 1
+                else:
+                    zd = g.zdim
+                data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 f.loaded_time_indices = range(3)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
@@ -1123,7 +1129,11 @@ class FieldSet(object):
 
             elif g.update_status == 'updated':
                 lib = np if isinstance(f.data, np.ndarray) else da
-                data = lib.empty((g.tdim, g.zdim, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
+                if f.gridindexingtype == 'pop' and g.zdim > 1:
+                    zd = g.zdim - 1
+                else:
+                    zd = g.zdim
+                data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
                     f.loaded_time_indices = [2]
                     if f.filebuffers[0] is not None:

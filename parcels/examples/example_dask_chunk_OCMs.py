@@ -226,9 +226,8 @@ def test_pop(mode, chunk_mode):
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
-        assert (len(field_set.U.grid.load_chunk) != 1)
+        assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'specific':
-        print(field_set.U.grid.chunk_info)
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 

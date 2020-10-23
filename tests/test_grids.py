@@ -609,7 +609,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-def test_mitgridindexing(mode, gridindexingtype):
+def test_cgrid_indexing(mode, gridindexingtype):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -661,7 +661,7 @@ def test_mitgridindexing(mode, gridindexingtype):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
+def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -737,7 +737,7 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
+def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -792,10 +792,7 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
 
     U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
     data = {"U": U, "V": V, "W": W, "R": R}
-    if gridindexingtype == "mom5":
-        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype="mom5")
-    elif gridindexingtype == "pop":
-        fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype="nemo")
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
     fieldset.U.interp_method = "bgrid_velocity"
     fieldset.V.interp_method = "bgrid_velocity"
     fieldset.W.interp_method = "bgrid_w_velocity"
@@ -816,9 +813,13 @@ def test_mom5gridindexing_3D(mode, gridindexingtype, withtime):
 
 @pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('surface', [True, False])
-def test_bgrid_interpolation(gridindexingtype, mode, surface):
-    zi = 2 if not surface else 0
+@pytest.mark.parametrize('extrapolation', [True, False])
+def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
+    xi, yi = 3, 2
+    if extrapolation:
+        zi = 0 if gridindexingtype == 'mom5' else -1
+    else:
+        zi = 2
     if gridindexingtype == 'mom5':
         ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
         vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
@@ -838,20 +839,26 @@ def test_bgrid_interpolation(gridindexingtype, mode, surface):
         ds_u = xr.open_dataset(ufile)
         ds_v = xr.open_dataset(vfile)
         ds_w = xr.open_dataset(wfile)
-        u = ds_u.u.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
-        v = ds_v.v.isel(time=0, st_ocean=zi, yu_ocean=2, xu_ocean=5)
-        w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=2, xt_ocean=5)
+        u = ds_u.u.isel(time=0, st_ocean=zi, yu_ocean=yi, xu_ocean=xi)
+        v = ds_v.v.isel(time=0, st_ocean=zi, yu_ocean=yi, xu_ocean=xi)
+        w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=yi, xt_ocean=xi)
 
     elif gridindexingtype == 'pop':
-        filename = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
-        variables = {'U': 'U', 'V': 'V', 'W': 'W'}
-        dimensions = {'lon': 'lon', 'lat': 'lat', 'depth': 'w_dep', 'time': 'time'}
+        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popdata.nc')
+        coordfname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
+        filenames = {"U": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
+                     "V": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
+                     "W": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname}}
 
-        fieldset = FieldSet.from_pop(filename, variables, dimensions)
-        ds = xr.open_dataset(filename)
-        u = ds.U.isel(time=0, depth_t=zi, lat=2, lon=3)
-        v = ds.V.isel(time=0, depth_t=zi, lat=2, lon=3)
-        w = ds.W.isel(time=0, depth_t=zi, lat=2, lon=3)
+        variables = {'U': 'UVEL', 'V': 'VVEL', 'W': 'WVEL'}
+        dimensions = {'lon': 'U_LON_2D', 'lat': 'U_LAT_2D', 'depth': 'w_dep'}
+
+        fieldset = FieldSet.from_pop(filenames, variables, dimensions)
+        dsc = xr.open_dataset(coordfname)
+        dsd = xr.open_dataset(datafname)
+        u = dsd.UVEL.isel(k=zi, j=yi, i=xi)
+        v = dsd.VVEL.isel(k=zi, j=yi, i=xi)
+        w = dsd.WVEL.isel(k=zi, j=yi, i=xi)
 
     fieldset.U.units = UnitConverter()
     fieldset.V.units = UnitConverter()
@@ -868,33 +875,37 @@ def test_bgrid_interpolation(gridindexingtype, mode, surface):
 
     for pointtype in ["U", "V", "W"]:
         if gridindexingtype == "pop":
-            lons = u.lon.data.reshape(1)
-            lats = u.lat.data.reshape(1)
-            deps = u.depth_t.data.reshape(1)
-        elif pointtype == "U":
-            lons = u.xu_ocean.data.reshape(1)
-            lats = u.yu_ocean.data.reshape(1)
-            deps = u.st_ocean.data.reshape(1)
-        elif pointtype == "U":
-            lons = v.xu_ocean.data.reshape(1)
-            lats = v.yu_ocean.data.reshape(1)
-            deps = v.st_ocean.data.reshape(1)
-        elif pointtype == "W":
-            lons = w.xt_ocean.data.reshape(1)
-            lats = w.yt_ocean.data.reshape(1)
-            deps = w.sw_ocean.data.reshape(1)
-        if surface:
-            deps = 0
+            if pointtype in ["U", "V"]:
+                lons = dsc.U_LON_2D[yi, xi].values
+                lats = dsc.U_LAT_2D[yi, xi].values
+                deps = dsc.depth_t[zi]
+            elif pointtype == "W":
+                lons = dsc.T_LON_2D[yi, xi].values
+                lats = dsc.T_LAT_2D[yi, xi].values
+                deps = dsc.w_dep[zi]
+            if extrapolation:
+                deps = 5499.
+        elif gridindexingtype == "mom5":
+            if pointtype in ["U", "V"]:
+                lons = u.xu_ocean.data.reshape(1)
+                lats = u.yu_ocean.data.reshape(1)
+                deps = u.st_ocean.data.reshape(1)
+            elif pointtype == "W":
+                lons = w.xt_ocean.data.reshape(1)
+                lats = w.yt_ocean.data.reshape(1)
+                deps = w.sw_ocean.data.reshape(1)
+            if extrapolation:
+                deps = 0
 
         pset = ParticleSet.from_list(fieldset=fieldset, pclass=myParticle, lon=lons, lat=lats, depth=deps)
         pset.execute(VelocityInterpolator, dt=0)
 
-        wconvfactor = 0.01 if gridindexingtype == "pop" else 1.
+        convfactor = 0.01 if gridindexingtype == "pop" else 1.
         if pointtype in ["U", "V"]:
-            assert np.allclose(pset.Uvel[0], u)
-            assert np.allclose(pset.Vvel[0], v)
+            assert np.allclose(pset.Uvel[0], u*convfactor)
+            assert np.allclose(pset.Vvel[0], v*convfactor)
         elif pointtype == "W":
-            if surface and gridindexingtype == "mom5":
-                assert np.allclose(pset.Wvel[0], 0)
+            if extrapolation:
+                assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
             else:
-                assert np.allclose(pset.Wvel[0], -w*wconvfactor)
+                assert np.allclose(pset.Wvel[0], -w*convfactor)
