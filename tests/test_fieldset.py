@@ -738,7 +738,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 1, 2, 2))
 
     # testing for combination of deferred-loaded and numpy Fields
     with pytest.raises(ValueError):
@@ -781,7 +781,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     dims0['depth'] = np.arange(0, 4, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 1, 2, 2))
 
     def SampleField(particle, fieldset, time):
         particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]

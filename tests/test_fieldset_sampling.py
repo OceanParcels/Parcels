@@ -499,7 +499,10 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
                                     field_chunksize=chs)
 
     fieldset.add_constant('sample_depth', 2.5)
-    assert fieldset.U.grid is fieldset.V.grid
+    if chs == 'auto':
+        assert fieldset.U.grid != fieldset.V.grid
+    else:
+        assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
     class TestParticle(ptype[mode]):
