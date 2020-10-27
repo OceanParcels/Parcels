@@ -84,22 +84,26 @@ def fieldset_from_swash(chunk_mode):
     variables = {'U': 'cross-shore velocity',
                  'V': 'along-shore velocity',
                  'W': 'vertical velocity',
-                 'depth': 'time varying depth',
+                 'depth_w': 'time varying depth',
                  'depth_u': 'time varying depth_u'}
     dimensions = {'U': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
                   'V': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
                   'W': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
-                  'depth': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'depth_w': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
                   'depth_u': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'}}
     chs = False
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
+        chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'V': {'time': ('t', 1), 'depth': ('z_u', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'W': {'time': ('t', 1), 'depth': ('z', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'depth_u': {'time': ('t', 1), 'depth': ('z_u', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'depth_w': {'time': ('t', 1), 'depth': ('z', 1), 'lat': ('y', 4), 'lon': ('x', 4)}}
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
-    fieldset.W.set_depth_from_field(fieldset.depth)
+    fieldset.W.set_depth_from_field(fieldset.depth_w)
     return fieldset
 
 
