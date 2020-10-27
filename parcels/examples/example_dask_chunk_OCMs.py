@@ -95,7 +95,13 @@ def fieldset_from_swash(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
+        # chs = (1,4,4,4)
+        # chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
+        chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'V': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'W': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'depth': {'depth': ('z', 4)},
+               'depth_u': {'depth': ('z_u', 4)}}
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
@@ -135,9 +141,9 @@ def fieldset_from_mitgcm(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'U': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XG', 100)},
-               'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XG', 100)}}
-        # chs = (1, 50, 100)
+        # chs = {'U': {'time': ('time', 1), 'lat': ('YC', 50), 'lon': ('XG', 50)},
+        #        'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XC', 50)}}
+        chs = (1, 0, 50, 50)
     return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)  # chunkdims_name_map=name_map
 
 
@@ -259,10 +265,12 @@ def test_swash(mode, chunk_mode):
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
+        print(field_set.U.grid.chunk_info)
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(7.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        print(field_set.U.grid.chunk_info)
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 4.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(7.0 / 4.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -341,7 +349,7 @@ def test_mitgcm(mode, chunk_mode):
     if chunk_mode in [False, 'auto']:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'specific':
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/50.0))))
     assert np.allclose(pset[0].lon, 5.27e5, atol=1e3)
 
 
