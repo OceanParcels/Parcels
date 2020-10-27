@@ -554,6 +554,8 @@ class Field(object):
 
         """
         self.grid.depth_field = field
+        if self.grid != field.grid:
+            field.grid.depth_field = field
 
     def __getitem__(self, key):
         # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
