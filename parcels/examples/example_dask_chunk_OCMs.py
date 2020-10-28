@@ -84,29 +84,33 @@ def fieldset_from_swash(chunk_mode):
     variables = {'U': 'cross-shore velocity',
                  'V': 'along-shore velocity',
                  'W': 'vertical velocity',
-                 'depth': 'time varying depth',
+                 'depth_w': 'time varying depth',
                  'depth_u': 'time varying depth_u'}
     dimensions = {'U': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
                   'V': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
                   'W': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
-                  'depth': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
+                  'depth_w': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'},
                   'depth_u': {'lon': 'x', 'lat': 'y', 'depth': 'not_yet_set', 'time': 't'}}
     chs = False
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        # chs = (1,8,4,4)
-        chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
-        # chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-        #        'V': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-        #        'W': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-        #        'depth': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-        #        'depth_u': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)}
-        #         }
+        chs = {'U': {'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'V': {'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'W': {'depth': ('z', 7), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'depth_w': {'depth': ('z', 7), 'lat': ('y', 4), 'lon': ('x', 4)},
+               'depth_u': {'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)}
+               }
+        # chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'V': {'time': ('t', 1), 'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'W': {'time': ('t', 1), 'depth': ('z', 7), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'depth_w': {'time': ('t', 1), 'depth': ('z', 7), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'depth_u': {'time': ('t', 1), 'depth': ('z_u', 6), 'lat': ('y', 4), 'lon': ('x', 4)}
+        #        }
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
-    fieldset.W.set_depth_from_field(fieldset.depth)
+    fieldset.W.set_depth_from_field(fieldset.depth_w)
     return fieldset
 
 
@@ -142,10 +146,11 @@ def fieldset_from_mitgcm(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
+        chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
+               'V': {'lat': ('YG', 50), 'lon': ('XC', 100)}}
         # chs = {'U': {'time': ('time', 1), 'lat': ('YC', 50), 'lon': ('XG', 100)},
         #        'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XC', 100)}}
-        chs = (1, 50, 100)
-    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)  # chunkdims_name_map=name_map
+    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)
 
 
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
@@ -260,9 +265,10 @@ def test_swash(mode, chunk_mode):
     depthp = [-0.1, ] * npart
     compute_swash_particle_advection(field_set, mode, lonp, latp, depthp)
     # SWASH sample file dimensions: t=1, z=7, z_u=6, y=21, x=51
-    print(field_set.U.grid.chunk_info)
-    print(field_set.U.grid.chunk_info)
-    print(field_set.gridset.size)
+    print("U-grid chunk info: {}".format(field_set.U.grid.chunk_info))
+    print("V-grid chunk info: {}".format(field_set.V.grid.chunk_info))
+    print("W-grid chunk info: {}".format(field_set.W.grid.chunk_info))
+    print("Gridsize: {}".format(field_set.gridset.size))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode != 'auto':
         assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
@@ -271,8 +277,9 @@ def test_swash(mode, chunk_mode):
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 8.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
-        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(7.0 / 8.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.W.grid.load_chunk) == (1 * int(math.ceil(7.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -317,7 +324,6 @@ def test_ofam_3D(mode, chunk_mode):
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
-        print(field_set.U.grid.chunk_info)
         numblocks = [i for i in field_set.U.grid.chunk_info[1:3]]
         dblocks = 1
         vblocks = 0
@@ -350,9 +356,9 @@ def test_mitgcm(mode, chunk_mode):
     pset = ParticleSet.from_list(fieldset=field_set, pclass=ptype[mode], lon=lons, lat=lats)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
-    print(field_set.U.grid.chunk_info)
-    print(field_set.U.grid.chunk_info)
-    print(field_set.gridset.size)
+    print("U-grid chunk info: {}".format(field_set.U.grid.chunk_info))
+    print("V-grid chunk info: {}".format(field_set.V.grid.chunk_info))
+    print("Gridsize: {}".format(field_set.gridset.size))
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode in [False, 'auto']:
         assert (len(field_set.U.grid.load_chunk) == 1)

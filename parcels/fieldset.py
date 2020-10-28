@@ -449,7 +449,6 @@ class FieldSet(object):
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 procchunk = field_chunksize[procvar] if (chunksize and procvar in field_chunksize) else chunksize
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                print(procchunk, chunksize)
                 if procdims == dims and procinds == inds and procchunk == chunksize:
                     if chunksize == 'auto':
                         break

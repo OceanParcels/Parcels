@@ -240,9 +240,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
             self.dataset['decoded'] = False
 
-        # print("init_chunk_dict: {}".format(init_chunk_dict))
-        # print("chunk_mapping: {}".format(self.chunk_mapping))
-        # print("field_chunksize: {}".format(self.field_chunksize))
+        print("init_chunk_dict: {}".format(init_chunk_dict))
+        print("chunk_mapping: {}".format(self.chunk_mapping))
+        print("field_chunksize: {}".format(self.field_chunksize))
 
         for inds in self.indices.values():
             if type(inds) not in [list, range]:
@@ -274,8 +274,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 result[name] = None
                 tpl_offset += 1
                 neg_offset += 1
-            elif ((type(self.field_chunksize) is dict) and (name not in self.field_chunksize)) or \
-                    ((type(self.field_chunksize) is tuple) and name in self.dimensions and (self.field_chunksize[i-tpl_offset] == 0)):
+            elif ((type(self.field_chunksize) is dict) and (name not in self.field_chunksize or (type(self.field_chunksize[name]) is tuple and len(self.field_chunksize[name]) == 2 and self.field_chunksize[name][1] <= 1))) or \
+                    ((type(self.field_chunksize) is tuple) and name in self.dimensions and (self.field_chunksize[i-tpl_offset] <= 1)):
                 result[name] = None
                 neg_offset += 1
             else:
@@ -399,46 +399,60 @@ class DaskFileBuffer(NetcdfFileBuffer):
     def _get_initial_chunk_dictionary_by_dict_(self):
         chunk_dict = {}
         chunk_index_map = {}
-        if 'lon' in self.field_chunksize.keys():
-            loni, lonname, _ = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.field_chunksize['lon'][0])
-            # print("{} ({}) -> {}: {}".format(lonname, loni, self.field_chunksize['lon'][0], self.field_chunksize['lon'][1]))
-            if self.field_chunksize['lon'][0] not in self._static_name_maps:
-                self._static_name_maps['lon'].append(self.field_chunksize['lon'][0])
-            if loni is not None:
-                chunk_dict[lonname] = self.field_chunksize['lon'][1]
-                chunk_index_map[loni] = self.field_chunksize['lon'][1]
-        if 'lat' in self.field_chunksize.keys():
-            lati, latname, _ = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.field_chunksize['lat'][0])
-            # print("{} ({}) -> {}: {}".format(latname, lati, self.field_chunksize['lat'][0], self.field_chunksize['lat'][1]))
-            if self.field_chunksize['lat'][0] not in self._static_name_maps:
-                self._static_name_maps['lat'].append(self.field_chunksize['lat'][0])
-            if lati is not None:
-                chunk_dict[latname] = self.field_chunksize['lat'][1]
-                chunk_index_map[lati] = self.field_chunksize['lat'][1]
-        if 'depth' in self.field_chunksize.keys():
-            depthi, depthname, _ = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.field_chunksize['depth'][0])
-            # print("{} ({}) -> {}: {}".format(depthname, depthi, self.field_chunksize['depth'][0], self.field_chunksize['depth'][1]))
-            if self.field_chunksize['depth'][0] not in self._static_name_maps:
-                self._static_name_maps['depth'].append(self.field_chunksize['depth'][0])
-            if depthi is not None:
-                chunk_dict[depthname] = self.field_chunksize['depth'][1]
-                chunk_index_map[depthi] = self.field_chunksize['depth'][1]
+        neg_offset = 0
         if 'time' in self.field_chunksize.keys():
-            timei, timename, _ = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.field_chunksize['time'][0])
+            timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.field_chunksize['time'][0])
+            timevalue = self.field_chunksize['time'][1]
             # print("{} ({}) -> {}: {}".format(timename, timei, self.field_chunksize['time'][0], self.field_chunksize['time'][1]))
             if self.field_chunksize['time'][0] not in self._static_name_maps:
                 self._static_name_maps['time'].append(self.field_chunksize['time'][0])
-            if timei is not None:
-                chunk_dict[timename] = self.field_chunksize['time'][1]
-                chunk_index_map[timei] = self.field_chunksize['time'][1]
+            if timei is not None and timei >= 0 and timevalue > 1:
+                timevalue = min(timesize, timevalue)
+                chunk_dict[timename] = timevalue
+                chunk_index_map[timei-neg_offset] = timevalue
+            else:
+                self.field_chunksize.pop('time')
+        if 'depth' in self.field_chunksize.keys():
+            depthi, depthname, depthsize = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.field_chunksize['depth'][0])
+            depthvalue = self.field_chunksize['depth'][1]
+            # print("{} ({}) -> {}: {}".format(depthname, depthi, self.field_chunksize['depth'][0], self.field_chunksize['depth'][1]))
+            if self.field_chunksize['depth'][0] not in self._static_name_maps:
+                self._static_name_maps['depth'].append(self.field_chunksize['depth'][0])
+            if depthi is not None and depthi >= 0 and depthvalue > 1:
+                depthvalue = min(depthsize, depthvalue)
+                chunk_dict[depthname] = depthvalue
+                chunk_index_map[depthi-neg_offset] = depthvalue
+            else:
+                self.field_chunksize.pop('depth')
+        if 'lat' in self.field_chunksize.keys():
+            lati, latname, latsize = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.field_chunksize['lat'][0])
+            latvalue = self.field_chunksize['lat'][1]
+            # print("{} ({}) -> {}: {}".format(latname, lati, self.field_chunksize['lat'][0], self.field_chunksize['lat'][1]))
+            if self.field_chunksize['lat'][0] not in self._static_name_maps:
+                self._static_name_maps['lat'].append(self.field_chunksize['lat'][0])
+            if lati is not None and lati >= 0 and latvalue > 1:
+                latvalue = min(latsize, latvalue)
+                chunk_dict[latname] = latvalue
+                chunk_index_map[lati-neg_offset] = latvalue
+            else:
+                self.field_chunksize.pop('lat')
+        if 'lon' in self.field_chunksize.keys():
+            loni, lonname, lonsize = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.field_chunksize['lon'][0])
+            lonvalue = self.field_chunksize['lon'][1]
+            # print("{} ({}) -> {}: {}".format(lonname, loni, self.field_chunksize['lon'][0], self.field_chunksize['lon'][1]))
+            if self.field_chunksize['lon'][0] not in self._static_name_maps:
+                self._static_name_maps['lon'].append(self.field_chunksize['lon'][0])
+            if loni is not None and loni >= 0 and lonvalue > 1:
+                lonvalue = min(lonsize, lonvalue)
+                chunk_dict[lonname] = lonvalue
+                chunk_index_map[loni-neg_offset] = lonvalue
+            else:
+                self.field_chunksize.pop('lon')
         return chunk_dict, chunk_index_map
 
     def _get_initial_chunk_dictionary_by_tuple_(self):
         chunk_dict = []
         chunk_index_map = {}
-        # chunksize_as_list = [0, ] * len(self.field_chunksize)
-        # chunk_index = len(self.field_chunksize) - 1
-
         input_chunk_index = 0
         if self.field_chunksize[input_chunk_index] > 1 and self._is_dimension_available('time'):
             # time is at the end - reverse the tuple
@@ -448,25 +462,25 @@ class DaskFileBuffer(NetcdfFileBuffer):
         assert n_chunkdims >= n_parcelsdims
         chunk_value_indices = self._get_available_dims_indices_by_request()
         if self._is_dimension_available('time'):
-            if chunk_value_indices['time'] is not None:
+            if chunk_value_indices['time'] is not None:  # and self.field_chunksize[input_chunk_index] > 1:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['time']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("time", chunk_value_indices['time'], chunk_value_indices['time'], self.field_chunksize[input_chunk_index]))
             input_chunk_index += 1
         if self._is_dimension_available('depth'):
-            if chunk_value_indices['depth'] is not None:
+            if chunk_value_indices['depth'] is not None:  # and self.field_chunksize[input_chunk_index] > 1:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['depth']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("depth", chunk_value_indices['depth'], chunk_value_indices['depth'], self.field_chunksize[input_chunk_index]))
             input_chunk_index += 1
         if self._is_dimension_available('lat'):
-            if chunk_value_indices['lat'] is not None:
+            if chunk_value_indices['lat'] is not None:  # and self.field_chunksize[input_chunk_index] > 1:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['lat']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("lat", chunk_value_indices['lat'], chunk_value_indices['lat'], self.field_chunksize[input_chunk_index]))
             input_chunk_index += 1
         if self._is_dimension_available('lon'):
-            if chunk_value_indices['lon'] is not None:
+            if chunk_value_indices['lon'] is not None:  # and self.field_chunksize[input_chunk_index] > 1:
                 chunk_dict.append(self.field_chunksize[input_chunk_index])
                 chunk_index_map[chunk_value_indices['lon']] = self.field_chunksize[input_chunk_index]
                 # print("{} ({}) -> {}: {}".format("lon", chunk_value_indices['lon'], chunk_value_indices['lon'], self.field_chunksize[input_chunk_index]))
@@ -590,8 +604,21 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         self.chunking_finalized = True
                 else:
                     if not self.autochunkingfailed:
-                        logger.warning_once("Chunking {}-field into chunkmap ({}) (i.e. chunksize is {}".format(self.name, self.chunk_mapping, self.field_chunksize))
-                        data = data.rechunk(self.chunk_mapping)
+                        chunk_map = self.chunk_mapping
+                        # if isinstance(self.chunk_mapping, dict):
+                        #     np_chskeys = np.array(list(self.chunk_mapping.keys()))
+                        #     max_index = np_chskeys.max(initial=0)
+                        #     min_index = np_chskeys.min(initial=max_index)
+                        #     valid_chunks = True
+                        #     for i in range(min_index, max_index+1):
+                        #         valid_chunks &= (i in self.chunk_mapping.keys())
+                        #     assert valid_chunks
+                        #     chunk_map = tuple()
+                        #     for i in range(min_index, max_index+1):
+                        #         chunk_map += (self.chunk_mapping[i], )
+                        logger.warning("Chunking {}-field into chunkmap ({}) (i.e. chunksize is {}".format(self.name, chunk_map, self.field_chunksize))
+                        # data = data.rechunk(self.chunk_mapping)
+                        data = data.rechunk(chunk_map)
                     self.chunking_finalized = True
         else:
             da_data = da.from_array(data, chunks=self.field_chunksize)
