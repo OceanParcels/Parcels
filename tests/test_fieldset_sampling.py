@@ -469,7 +469,7 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('npart', [1, 10])
-@pytest.mark.parametrize('chs', [False, 'auto', (10, 10)])
+@pytest.mark.parametrize('chs', [False, 'auto', {'lat': ('y', 10), 'lon': ('x', 10)}])
 def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs, filename='test_subsets'):
     xdim, ydim = 100, 200
     filepath = tmpdir.join(filename)

@@ -525,7 +525,7 @@ def test_add_second_vector_field(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('field_chunksize', [False, 'auto', (1, 32, 32)])
+@pytest.mark.parametrize('field_chunksize', [False, 'auto', {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('with_GC', [False, True])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
 def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, with_GC):
@@ -592,7 +592,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, wi
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('field_chunksize', [False, 'auto', {'x': 32, 'y': 32}, {'time_counter': 1, 'x': 32, 'y': 32}, (32, 32), (1, 32, 32)])
+@pytest.mark.parametrize('field_chunksize', [False, 'auto', {'lat': ('y', 32), 'lon': ('x', 32)}, {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('deferLoad', [True, False])
 def test_from_netcdf_field_chunking(mode, time_periodic, field_chunksize, deferLoad):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
@@ -738,7 +738,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 1, 2, 2))
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize={'time': ('time_counter', 1), 'depth': ('depthu', 1), 'lat': ('y', 2), 'lon': ('x', 2)})
 
     # testing for combination of deferred-loaded and numpy Fields
     with pytest.raises(ValueError):
@@ -781,7 +781,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     dims0['depth'] = np.arange(0, 4, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 1, 2, 2))
+    fieldset = FieldSet.from_parcels(filepath, field_chunksize={'time': ('time_counter', 1), 'depth': ('depthu', 1), 'lat': ('y', 2), 'lon': ('x', 2)})
 
     def SampleField(particle, fieldset, time):
         particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]

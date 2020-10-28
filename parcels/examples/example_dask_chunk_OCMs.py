@@ -129,8 +129,9 @@ def fieldset_from_ofam(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = (1, 60, 50, 100)
-    return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs, chunkdims_name_map=name_map)
+        chs = {'lon': ('xu_ocean', 100), 'lat': ('yu_ocean', 50), 'depth': ('st_edges_ocean', 60), 'time': ('Time', 1)}
+        # chs = (1, 60, 50, 100)
+    return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
 
 
 def fieldset_from_mitgcm(chunk_mode):
