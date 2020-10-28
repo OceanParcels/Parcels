@@ -139,8 +139,8 @@ def fieldset_from_mitgcm(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'U': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XG', 100)},
-               'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XG', 100)}}
+        chs = {'U': {'lat': ('YG', 50), 'lon': ('XG', 100)},
+               'V': {'lat': ('YG', 50), 'lon': ('XG', 100)}}
         # chs = (1, 50, 100)
     return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)  # chunkdims_name_map=name_map
 
