@@ -6,8 +6,11 @@ from .iterators import BaseParticleCollectionIterator
 from parcels.particle import ScipyParticle, JITParticle
 from parcels.field import Field
 from parcels.tools.loggers import logger
+from parcels.tools.statuscodes import OperationCode
 from operator import attrgetter
 from ctypes import Structure, POINTER
+from bisect import bisect_left
+from math import floor
 
 try:
     from mpi4py import MPI
@@ -221,7 +224,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         Collection - Destructor
         """
-        raise NotImplementedError
+        super().__del__()
 
     # ==== already user-exposed ==== #
     def __iter__(self):
@@ -230,6 +233,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         return ParticleCollectionIteratorSOA(self)
 
+    # ==== already user-exposed ==== #
     def __reversed__(self):
         """Returns an Iterator that allows for backwards iteration over
         the elements in the ParticleCollection (e.g.
@@ -257,6 +261,7 @@ class ParticleCollectionSOA(ParticleCollection):
         get function, e.g. get-by-ID.
         """
         super().get_single_by_index(index)
+
         return ParticleAccessorSOA(self, index)
 
     def get_single_by_object(self, particle_obj):
@@ -269,7 +274,11 @@ class ParticleCollectionSOA(ParticleCollection):
         get function, e.g. get-by-index or get-by-ID.
         """
         super().get_single_by_object(particle_obj)
-        raise NotImplementedError
+
+        # We cannot look for the object directly, so we will look for one of
+        # its properties that has the nice property of being stored in an
+        # ordered list
+        return self.get_single_by_ID(particle_obj.id)
 
     def get_single_by_ID(self, id):
         """
@@ -278,9 +287,19 @@ class ParticleCollectionSOA(ParticleCollection):
         object reference in the collection - which results in a significant performance malus.
         In cases where a get-by-ID would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-index.
+
+        Note that this implementation assumes that IDs of particles are strictly increasing with increasing index. So
+        a particle with a larger index will always have a larger ID as well. The assumption holds for this datastructure
+        as new particles always get a larger ID than any existing particle (IDs are not recycled) and their data are
+        appended at the end of the list (largest index). This allows for the use of binary search in the look-up.
         """
         super().get_single_by_ID(id)
-        raise NotImplementedError
+
+        index = bisect_left(self._data['id'], id)
+        if index == len(self._data['id']) or self._data['id'][index] != id:
+            raise ValueError("Trying to access a particle with a non-existing"
+                             f" ID: {id}.")
+        return self.get_single_by_index(index)
 
     def get_same(self, same_class):
         """
@@ -319,16 +338,59 @@ class ParticleCollectionSOA(ParticleCollection):
         shall rather use a get-via-object-reference strategy.
         """
         super().get_multi_by_indices(indices)
-        raise NotImplementedError
+        if type(indices) is dict:
+            indices = indices.values()
+        return ParticleCollectionIteratorSOA(self, subset=indices)
 
     def get_multi_by_IDs(self, ids):
         """
         This function gets particles from this collection based on their IDs. For collections where this removal
         strategy would require a collection transformation or by-ID parsing, it is advisable to rather apply a get-
         by-objects or get-by-indices scheme.
+
+        Note that this implementation assumes that IDs of particles are strictly increasing with increasing index. So
+        a particle with a larger index will always have a larger ID as well. The assumption holds for this datastructure
+        as new particles always get a larger ID than any existing particle (IDs are not recycled) and their data are
+        appended at the end of the list (largest index). This allows for the use of binary search in the look-up.
         """
         super().get_multi_by_IDs(ids)
-        raise NotImplementedError
+        if type(ids) is dict:
+            ids = ids.values()
+
+        indices = self._recursive_ID_lookup(0, len(self._data['id']), np.array(ids))
+        return self.get_multi_by_indices(indices)
+
+    def _recursive_ID_lookup(self, low, high, sublist):
+        # Identify the middle element of the sublist and perform a binary
+        # search on it.
+        # NOTE: This implementation has not been tested yet
+        median = floor(len(sublist) / 2)
+        index = bisect_left(self._data['id'][low:high], sublist[median])
+        if len(sublist) == 1:
+            # edge case
+            if index == len(self._data['id']) or \
+               self._data['id'][index] != sublist[median]:
+                # Should a ValueError be raised here as well?
+                return np.array([])
+            return np.array([index])
+
+        # The edge-cases have to be handled slightly differently
+        if index == len(self._data['id']):
+            # Continue with the same bounds, but drop the median.
+            return self._recursive_ID_lookup(low, high, np.delete(sublist, median))
+        elif self._data['id'][index] != sublist[median]:
+            # We can split, because we received the index that the median
+            # ID would have been inserted in, but we do not return the
+            # index and keep it in our search space.
+            left = self._recursive_ID_lookup(low, index, sublist[:median])
+            right = self._recursive_ID_lookup(index, high, sublist[median + 1:])
+            return np.concatenate((left, right))
+
+        # Otherwise, we located the median, so we include it in our
+        # result, and split the search space on it, without including it.
+        left = self._recursive_ID_lookup(low, index, sublist[:median])
+        right = self._recursive_ID_lookup(index + 1, high, sublist[median + 1:])
+        return np.concatenate((left, np.array(index), right))
 
     def add_collection(self, pcollection):
         """
@@ -432,7 +494,8 @@ class ParticleCollectionSOA(ParticleCollection):
         is handled by 'recovery' dictionary during simulation execution.
         """
         super().delete_by_index(index)
-        raise NotImplementedError
+
+        self._data['state'][index] = OperationCode.Delete
 
     def delete_by_ID(self, id):
         """
@@ -443,7 +506,12 @@ class ParticleCollectionSOA(ParticleCollection):
         is handled by 'recovery' dictionary during simulation execution.
         """
         super().delete_by_ID(id)
-        raise NotImplementedError
+
+        index = bisect_left(self._data['id'], id)
+        if index == len(self._data['id']) or self._data['id'][index] != id:
+            raise ValueError("Trying to delete a particle with a non-existing"
+                             f" ID: {id}.")
+        return self.delete_by_index(index)
 
     def remove_single_by_index(self, index):
         """
@@ -456,7 +524,9 @@ class ParticleCollectionSOA(ParticleCollection):
         removal functions, e.g. remove-by-object or remove-by-ID.
         """
         super().remove_single_by_index(index)
-        raise NotImplementedError
+
+        for d in self._data:
+            self._data[d] = np.delete(self._data[d], index, axis=0)
 
     def remove_single_by_object(self, particle_obj):
         """
@@ -468,7 +538,11 @@ class ParticleCollectionSOA(ParticleCollection):
         removal functions, e.g. remove-by-index or remove-by-ID.
         """
         super().remove_single_by_object(particle_obj)
-        raise NotImplementedError
+
+        # We cannot look for the object directly, so we will look for one of
+        # its properties that has the nice property of being stored in an
+        # ordered list
+        self.remove_single_by_ID(particle_obj.id)
 
     def remove_single_by_ID(self, id):
         """
@@ -480,7 +554,12 @@ class ParticleCollectionSOA(ParticleCollection):
         removal functions, e.g. remove-by-object or remove-by-index.
         """
         super().remove_single_by_ID(id)
-        raise NotImplementedError
+
+        index = bisect_left(self._data['id'], id)
+        if index == len(self._data['id']) or self._data['id'][index] != id:
+            raise ValueError("Trying to remove a particle with a non-existing"
+                             f" ID: {id}.")
+        self.remove_single_by_index(index)
 
     def remove_same(self, same_class):
         """
@@ -523,6 +602,7 @@ class ParticleCollectionSOA(ParticleCollection):
         shall rather use a removal-via-object-reference strategy.
         """
         super().remove_multi_by_indices(indices)
+
         for d in self._data:
             self._data[d] = np.delete(self._data[d], indices, axis=0)
 
@@ -533,7 +613,11 @@ class ParticleCollectionSOA(ParticleCollection):
         by-objects or removal-by-indices scheme.
         """
         super().remove_multi_by_IDs(ids)
-        raise NotImplementedError
+        if type(ids) is dict:
+            ids = ids.values()
+
+        indices = self._recursive_ID_lookup(0, len(self._data['id']), np.array(ids))
+        self.remove_multi_by_indices(indices)
 
     # ==== already user-exposed ==== #
     def __isub__(self, other):
@@ -545,7 +629,17 @@ class ParticleCollectionSOA(ParticleCollection):
         with 'a' and 'b' begin the two equi-structured objects (or: 'b' being and individual object).
         This operation is equal to an in-place removal of (an) element(s).
         """
-        raise NotImplementedError
+        if other is None:
+            return
+        if type(other) is type(self):
+            self.remove_same(other)
+        elif (isinstance(other, BaseParticleAccessor)
+              or isinstance(other, ScipyParticle)):
+            self.remove_single_by_object(other)
+        else:
+            raise TypeError("Trying to do an incremental removal of an"
+                            f" element of type {type(other)}, which is"
+                            " not supported.")
 
     def pop_single_by_index(self, index):
         """
@@ -725,19 +819,19 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         self._index = index
 
     def __getattr__(self, name):
-        return self.pcoll.particle_data[name][self._index]
+        return self.pcoll._data[name][self._index]
 
     def __setattr__(self, name, value):
         if name in ['pcoll', '_index']:
             object.__setattr__(self, name, value)
         else:
             # avoid recursion
-            self.pcoll.particle_data[name][self._index] = value
+            self.pcoll._data[name][self._index] = value
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
-        for var in self.pcoll.ptype.variables:
+        for var in self.pcoll._ptype.variables:
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += "%s=%f, " % (var.name, getattr(self, var.name))
         return str + "time=%s)" % time_string
