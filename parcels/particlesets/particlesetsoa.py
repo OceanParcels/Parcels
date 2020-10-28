@@ -499,7 +499,7 @@ class ParticleSetSOA(BaseParticleSet):
     def add(self, particles):
         """Method to add particles to the ParticleSet"""
         # Method forward to new implementation
-        # TODO: discuss difference of add/iadd
+        # Note that this is implemented as an incremental add!
         self._collection += particles
         return self
 
@@ -512,8 +512,8 @@ class ParticleSetSOA(BaseParticleSet):
     # ==== to be removed later ==== #
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
-        for d in self.particle_data:
-            self.particle_data[d] = self.particle_data[d][~indices, ...]
+        # Method forward
+        remove_indices(np.where(indices))
 
     # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
