@@ -95,14 +95,14 @@ def fieldset_from_swash(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        # chs = (1,4,4,4)
-        # chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
-        chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'V': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'W': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'depth': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'depth_u': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)}
-                }
+        # chs = (1,8,4,4)
+        chs = {'time': ('t', 1), 'depth': ('z', 6), 'depth_u': ('z_u', 7), 'lat': ('y', 4), 'lom': ('x', 4)}
+        # chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'V': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'W': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'depth': {'time': ('t', 1), 'depth': ('z', 4), 'lat': ('y', 4), 'lon': ('x', 4)},
+        #        'depth_u': {'time': ('t', 1), 'depth': ('z_u', 4), 'lat': ('y', 4), 'lon': ('x', 4)}
+        #         }
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
@@ -142,9 +142,9 @@ def fieldset_from_mitgcm(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        # chs = {'U': {'time': ('time', 1), 'lat': ('YC', 50), 'lon': ('XG', 50)},
-        #        'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XC', 50)}}
-        chs = (1, 50, 50)
+        # chs = {'U': {'time': ('time', 1), 'lat': ('YC', 50), 'lon': ('XG', 100)},
+        #        'V': {'time': ('time', 1), 'lat': ('YG', 50), 'lon': ('XC', 100)}}
+        chs = (1, 50, 100)
     return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)  # chunkdims_name_map=name_map
 
 
@@ -271,8 +271,8 @@ def test_swash(mode, chunk_mode):
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 4.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
-        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(7.0 / 4.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 8.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(7.0 / 8.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -357,7 +357,7 @@ def test_mitgcm(mode, chunk_mode):
     if chunk_mode in [False, 'auto']:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'specific':
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/50.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
     assert np.allclose(pset[0].lon, 5.27e5, atol=1e3)
 
 
@@ -442,18 +442,11 @@ def test_diff_entry_chunksize_error_nemo_simple(mode):
     chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
            'V': {'depth': ('depthv', 20), 'lat': ('y', 4), 'lon': ('x', 16)},
            'W': {'depth': ('depthw', 16), 'lat': ('y', 16), 'lon': ('x', 4)}}
-    try:
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
-    except ValueError:
-        return True
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
-    return True
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -482,10 +475,7 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
@@ -508,10 +498,10 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
     npart_W_request = 1
     npart_W_request = [npart_W_request * chn['W'][k] for k in chn['W']]
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
-    assert (npart_U == npart_V)
-    assert (npart_U == npart_W)
+    # assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    # assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
+    # assert (npart_U == npart_V)
+    # assert (npart_U == npart_W)
     assert (npart_U != npart_U_request)
     assert (npart_V != npart_V_request)
     assert (npart_W != npart_W_request)
@@ -539,13 +529,7 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:  # incorrect data access, in case grids were created
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
-    except AssertionError:  # U-V grids are not equal to one another, throwing assertion errors
-        raise NotImplementedError("U-V-W grids should be able to get their own grids when the chunking differs")
-    return True
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -587,10 +571,7 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     lonp = [25]
     latp = [-35]
-    try:
-        compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
+    compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
@@ -602,6 +583,8 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
            'V': {'lat': int(math.ceil(41.0/chs['V']['lat'][1])),
                  'lon': int(math.ceil(81.0/chs['V']['lon'][1]))}}
     npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
-    assert (npart_U == npart_V)
-    assert (npart_V != npart_V_request)
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    assert (npart_V_request != npart_U)
+    assert (npart_V_request == npart_V)
+    # assert (npart_U == npart_V)
+    # assert (npart_V != npart_V_request)
+    # assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
