@@ -95,11 +95,11 @@ def fieldset_from_swash(chunk_mode):
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
-        chs = {'U': {'time': ('t', 1), 'depth': ('z_u', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'V': {'time': ('t', 1), 'depth': ('z_u', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'W': {'time': ('t', 1), 'depth': ('z', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'depth_u': {'time': ('t', 1), 'depth': ('z_u', 1), 'lat': ('y', 4), 'lon': ('x', 4)},
-               'depth_w': {'time': ('t', 1), 'depth': ('z', 1), 'lat': ('y', 4), 'lon': ('x', 4)}}
+        chs = {'U': {'depth': ('z_u', 4), 'lat': ('y', 20), 'lon': ('x', 40)},
+               'V': {'depth': ('z_u', 4), 'lat': ('y', 20), 'lon': ('x', 40)},
+               'W': {'depth': ('z', 4), 'lat': ('y', 20), 'lon': ('x', 40)},
+               'depth_u': {'depth': ('z_u', 4), 'lat': ('y', 20), 'lon': ('x', 40)},
+               'depth_w': {'depth': ('z', 4), 'lat': ('y', 20), 'lon': ('x', 40)}}
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, mesh='flat', allow_time_extrapolation=True, field_chunksize=chs)
     fieldset.U.set_depth_from_field(fieldset.depth_u)
     fieldset.V.set_depth_from_field(fieldset.depth_u)
@@ -265,8 +265,9 @@ def test_swash(mode, chunk_mode):
     elif chunk_mode == 'auto':
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
-        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(7.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
+        print(len(field_set.W.grid.load_chunk), (1 * int(math.ceil(6.0 / 4.0)) * int(math.ceil(21.0 / 20.0)) * int(math.ceil(51.0 / 40.0))))
+        assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 4.0)) * int(math.ceil(21.0 / 20.0)) * int(math.ceil(51.0 / 40.0))))
+        assert (len(field_set.W.grid.load_chunk) == (1 * int(math.ceil(7.0 / 4.0)) * int(math.ceil(21.0 / 20.0)) * int(math.ceil(51.0 / 40.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
