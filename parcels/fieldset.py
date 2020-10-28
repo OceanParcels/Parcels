@@ -441,19 +441,16 @@ class FieldSet(object):
             # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
 
             grid = None
-            grid_chunksize = chunksize
             dFiles = None
-            # TODO: insert check HERE for chunksize == auto -> no matter if chunksize is globally 'auto' or just one
-            #       field is set to 'auto', or even one sub-dimension is set to 'auto' - if 'auto' is anywhere in chunksize
-            #       the field gets its own grid, end of story. Basically: if that is the case, set 'grid' to None
-
             # check if grid has already been processed (i.e. if other fields have same filenames, dimensions and indices)
             for procvar, _ in fields.items():
                 procdims = dimensions[procvar] if procvar in dimensions else dimensions
                 procinds = indices[procvar] if (indices and procvar in indices) else indices
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
+                procchunk = field_chunksize[procvar] if (chunksize and procvar in field_chunksize) else chunksize
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                if procdims == dims and procinds == inds:
+                print(procchunk, chunksize)
+                if procdims == dims and procinds == inds and procchunk == chunksize:
                     if chunksize == 'auto':
                         break
                     if 'depth' in dims and dims['depth'] == 'not_yet_set':
@@ -468,33 +465,13 @@ class FieldSet(object):
                                 processedGrid *= filenames[procvar][dim] == filenames[var][dim]
                     if processedGrid:
                         grid = fields[procvar].grid
-                        # ==== check here that the dims of field_chunksize are the same ==== #
-                        if grid.master_chunksize is not None:
-                            res = False
-                            # ==== check that, if chunksizes of 'the' master-grid and the requested field are tuple-types, and sub-entities are equal ==== #
-                            # ==== example: grid.chunksize = (1, 5, 25, 25); field.chunksize = (1, 5, 25, 25) -> shared grid; otherwise: new grid     ==== #
-                            if (isinstance(chunksize, tuple) and isinstance(grid.master_chunksize, tuple)):
-                                res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, chunksize, grid.master_chunksize), True)
-                            elif (isinstance(chunksize, dict) and isinstance(grid.master_chunksize, dict)):
-                                res |= functools.reduce(lambda i, j: i and j,
-                                                        map(lambda m, k: m == k, chunksize, grid.master_chunksize),  # 'm == k' evaluates the tuples-equality as a unit, aternative: (m[0] == k[0]) and (m[1] == k[1])
-                                                        True)
-                            else:
-                                # assess that, e.g. 'U': False == 'V': False
-                                res |= (chunksize == grid.master_chunksize)
-                            if res:
-                                # CHANGE: the result here is that the requested chunksizes is equal-or-compatible - good! then we can initialize it as requested
-                                grid_chunksize = chunksize
-                            else:
-                                # TODO: well this case just means: the requested chunk size and the available grids don't match, so this field gets it own grid - Question: how-to ?
-                                raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
                         if procpaths == nowpaths:
                             dFiles = fields[procvar].dataFiles
                             break
             fields[var] = Field.from_netcdf(paths, (var, name), dims, inds, grid=grid, mesh=mesh, timestamps=timestamps,
                                             allow_time_extrapolation=allow_time_extrapolation,
                                             time_periodic=time_periodic, deferred_load=deferred_load,
-                                            fieldtype=fieldtype, field_chunksize=grid_chunksize, dataFiles=dFiles, **kwargs)
+                                            fieldtype=fieldtype, field_chunksize=chunksize, dataFiles=dFiles, **kwargs)
 
         u = fields.pop('U', None)
         v = fields.pop('V', None)

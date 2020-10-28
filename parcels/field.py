@@ -1404,21 +1404,13 @@ class VectorField(object):
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
-            if self.U.field_chunksize == 'auto':
-                assert self._check_grid_dimensions(U.grid, V.grid), (
-                    'Dimensions of U and V are not the same.')
-            else:
-                assert self.U.grid is self.V.grid, (
-                    'Grids of U and V are not the same.')
+            assert self._check_grid_dimensions(U.grid, V.grid), (
+                'Dimensions of U and V are not the same.')
             if self.vector_type == '3D':
                 assert self.W.interp_method == 'cgrid_velocity', (
                     'Interpolation methods of U and W are not the same.')
-                if self.U.field_chunksize == 'auto':
-                    assert self._check_grid_dimensions(U.grid, W.grid), (
-                        'Dimensions of U and W are not the same.')
-                else:
-                    assert self.W.grid is self.U.grid, (
-                        'Grids of U and W are not the same.')
+                assert self._check_grid_dimensions(U.grid, W.grid), (
+                    'Dimensions of U and W are not the same.')
 
     @staticmethod
     def _check_grid_dimensions(grid1, grid2):

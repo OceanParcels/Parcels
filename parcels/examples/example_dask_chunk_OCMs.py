@@ -431,18 +431,11 @@ def test_diff_entry_chunksize_error_nemo_simple(mode):
     chs = {'U': {'depth': ('depthu', 75), 'lat': ('y', 16), 'lon': ('x', 16)},
            'V': {'depth': ('depthv', 20), 'lat': ('y', 4), 'lon': ('x', 16)},
            'W': {'depth': ('depthw', 16), 'lat': ('y', 16), 'lon': ('x', 4)}}
-    try:
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
-    except ValueError:
-        return True
+    fieldset = FieldSet.from_nemo(filenames, variables, dimensions, field_chunksize=chs)
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
-    return True
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -471,10 +464,7 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
     # Nemo sample file dimensions: depthu=75, y=201, x=151
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
@@ -497,10 +487,10 @@ def test_diff_entry_chunksize_error_nemo_complex_conform_depth(mode):
     npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
     npart_W_request = 1
     npart_W_request = [npart_W_request * chn['W'][k] for k in chn['W']]
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
-    assert (npart_U == npart_V)
-    assert (npart_U == npart_W)
+    # assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    # assert (len(fieldset.U.grid.load_chunk) == len(fieldset.W.grid.load_chunk))
+    # assert (npart_U == npart_V)
+    # assert (npart_U == npart_W)
     assert (npart_U != npart_U_request)
     assert (npart_V != npart_V_request)
     assert (npart_W != npart_W_request)
@@ -528,13 +518,7 @@ def test_diff_entry_chunksize_error_nemo_complex_nonconform_depth(mode):
     npart = 20
     lonp = 5.2 * np.ones(npart)
     latp = [i for i in 52.0+(-1e-3+np.random.rand(npart)*2.0*1e-3)]
-    try:
-        compute_nemo_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:  # incorrect data access, in case grids were created
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
-    except AssertionError:  # U-V grids are not equal to one another, throwing assertion errors
-        raise NotImplementedError("U-V-W grids should be able to get their own grids when the chunking differs")
-    return True
+    compute_nemo_particle_advection(fieldset, mode, lonp, latp)
 
 
 @pytest.mark.parametrize('mode', ['jit'])
@@ -576,10 +560,7 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, field_chunksize=chs)
     lonp = [25]
     latp = [-35]
-    try:
-        compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
-    except IndexError:
-        raise NotImplementedError("We need to make sure that if two parcels variables chunk the same netcdf dimensions but in different sizes, they get a different grid!")
+    compute_globcurrent_particle_advection(fieldset, mode, lonp, latp)
     # GlobCurrent sample file dimensions: time=UNLIMITED, lat=41, lon=81
     npart_U = 1
     npart_U = [npart_U * k for k in fieldset.U.nchunks[1:]]
@@ -591,6 +572,6 @@ def test_diff_entry_chunksize_correction_globcurrent(mode):
            'V': {'lat': int(math.ceil(41.0/chs['V']['lat'][1])),
                  'lon': int(math.ceil(81.0/chs['V']['lon'][1]))}}
     npart_V_request = [npart_V_request * chn['V'][k] for k in chn['V']]
-    assert (npart_U == npart_V)
-    assert (npart_V != npart_V_request)
-    assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
+    # assert (npart_U == npart_V)
+    # assert (npart_V != npart_V_request)
+    # assert (len(fieldset.U.grid.load_chunk) == len(fieldset.V.grid.load_chunk))
