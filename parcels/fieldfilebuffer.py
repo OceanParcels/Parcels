@@ -204,6 +204,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.chunk_mapping = None
         self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
         self.chunking_finalized = False
+        self.autochunkingfailed = False
 
         # if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
         #     for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
@@ -589,6 +590,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         self.chunking_finalized = True
                 else:
                     if not self.autochunkingfailed:
+                        logger.warning_once("Chunking {}-field into chunkmap ({}) (i.e. chunksize is {}".format(self.name, self.chunk_mapping, self.field_chunksize))
                         data = data.rechunk(self.chunk_mapping)
                     self.chunking_finalized = True
         else:
