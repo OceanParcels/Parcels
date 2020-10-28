@@ -152,7 +152,7 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
-        self._collection = ParticleCollectionSOA(pclass, partitions, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, ngrid=ngrids)
+        self._collection = ParticleCollectionSOA(pclass, lon, lat, depth, time, lonlatdepth_dtype, partitions, pid_orig, ngrid=ngrids)
 
         # offset = np.max(pid) if len(pid) > 0 else -1
         # if MPI:
