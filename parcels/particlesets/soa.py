@@ -357,7 +357,9 @@ class ParticleCollectionSOA(ParticleCollection):
         if type(ids) is dict:
             ids = ids.values()
 
-        indices = self._recursive_ID_lookup(0, len(self._data['id']), np.array(ids))
+        # This is efficient if len(ids) << self.len
+        sorted_ids = np.sort(np.array(ids))
+        indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
         return self.get_multi_by_indices(indices)
 
     def _recursive_ID_lookup(self, low, high, sublist):
@@ -511,7 +513,7 @@ class ParticleCollectionSOA(ParticleCollection):
         if index == len(self._data['id']) or self._data['id'][index] != id:
             raise ValueError("Trying to delete a particle with a non-existing"
                              f" ID: {id}.")
-        return self.delete_by_index(index)
+        self.delete_by_index(index)
 
     def remove_single_by_index(self, index):
         """
@@ -616,7 +618,9 @@ class ParticleCollectionSOA(ParticleCollection):
         if type(ids) is dict:
             ids = ids.values()
 
-        indices = self._recursive_ID_lookup(0, len(self._data['id']), np.array(ids))
+        # This is efficient if len(ids) << self.len
+        sorted_ids = np.sort(np.array(ids))
+        indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
         self.remove_multi_by_indices(indices)
 
     # ==== already user-exposed ==== #
