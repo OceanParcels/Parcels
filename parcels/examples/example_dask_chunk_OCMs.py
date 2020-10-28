@@ -122,10 +122,6 @@ def fieldset_from_ofam(chunk_mode):
                   'time': 'Time'}
 
     chs = False
-    name_map = {'lon': ['xu_ocean'],
-                'lat': ['yu_ocean'],
-                'depth': ['st_edges_ocean', 'st_ocean'],
-                'time': 'Time'}
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
