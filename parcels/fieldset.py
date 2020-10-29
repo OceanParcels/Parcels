@@ -449,7 +449,15 @@ class FieldSet(object):
                 procpaths = filenames[procvar] if isinstance(filenames, dict) and procvar in filenames else filenames
                 procchunk = field_chunksize[procvar] if (chunksize and procvar in field_chunksize) else chunksize
                 nowpaths = filenames[var] if isinstance(filenames, dict) and var in filenames else filenames
-                if procdims == dims and procinds == inds and procchunk == chunksize:
+                if procdims == dims and procinds == inds:
+                    possibly_samegrid = True
+                    if procchunk != chunksize:
+                        for dim in chunksize:
+                            if chunksize[dim][1] != procchunk[dim][1]:
+                                possibly_samegrid = False  # or create a helper function to break out of two for loops?
+                                break
+                    if not possibly_samegrid:
+                        break
                     if chunksize == 'auto':
                         break
                     if 'depth' in dims and dims['depth'] == 'not_yet_set':

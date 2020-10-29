@@ -134,9 +134,12 @@ def fieldset_from_mitgcm(chunk_mode):
     # name_map = {'lon': 'XG', 'lat': 'YG', 'time': 'time'}
     if chunk_mode == 'auto':
         chs = 'auto'
-    elif chunk_mode == 'specific':
+    elif chunk_mode == 'specific_same':
         chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
                'V': {'lat': ('YG', 50), 'lon': ('XC', 100)}}
+    elif chunk_mode == 'specific_different':
+        chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
+               'V': {'lat': ('YG', 40), 'lon': ('XC', 100)}}
     return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)
 
 
@@ -324,7 +327,7 @@ def test_ofam_3D(mode, chunk_mode):
 
 
 @pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
+@pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific_same', 'specific_different'])
 def test_mitgcm(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '1024KiB'})
@@ -336,11 +339,16 @@ def test_mitgcm(mode, chunk_mode):
     pset = ParticleSet.from_list(fieldset=field_set, pclass=ptype[mode], lon=lons, lat=lats)
     pset.execute(AdvectionRK4, runtime=delta(days=1), dt=delta(minutes=5))
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
-    assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
+    if chunk_mode != 'specific_different':
+        assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode in [False, 'auto']:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'specific':
+    elif 'specific' in chunk_mode:
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
+    if chunk_mode == 'specific_same':
+        assert field_set.gridset.size == 1
+    elif chunk_mode == 'specific_different':
+        assert field_set.gridset.size == 2
     assert np.allclose(pset[0].lon, 5.27e5, atol=1e3)
 
 
