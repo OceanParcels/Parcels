@@ -361,7 +361,6 @@ class FieldSet(object):
             inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
             chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize  # <varname> -> {<netcdf_dimname>: (<parcels_dimname>, <chunksize_as_int_numeral>) }
-            # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
 
             grid = None
             dFiles = None
