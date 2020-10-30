@@ -122,7 +122,7 @@ def fieldset_from_ofam(chunk_mode):
     return FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
 
 
-def fieldset_from_mitgcm(chunk_mode):
+def fieldset_from_mitgcm(chunk_mode, using_add_field=True):
     data_path = path.join(path.dirname(__file__), "MITgcm_example_data/")
     filenames = {"U": data_path + "mitgcm_UV_surface_zonally_reentrant.nc",
                  "V": data_path + "mitgcm_UV_surface_zonally_reentrant.nc"}
@@ -140,7 +140,18 @@ def fieldset_from_mitgcm(chunk_mode):
     elif chunk_mode == 'specific_different':
         chs = {'U': {'lat': ('YC', 50), 'lon': ('XG', 100)},
                'V': {'lat': ('YG', 40), 'lon': ('XC', 100)}}
-    return FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)
+    if using_add_field:
+        if chs in [False, 'auto']:
+            chs = {'U': chs, 'V': chs}
+        fieldset = FieldSet.from_mitgcm(filenames['U'], {'U': variables['U']}, dimensions['U'],
+                                        mesh='flat', field_chunksize=chs['U'])
+        chunk = chs['V'] if 'V' in chs else chs
+        fieldset2 = FieldSet.from_mitgcm(filenames['V'], {'V': variables['V']}, dimensions['V'],
+                                         mesh='flat', field_chunksize=chs['V'])
+        fieldset.add_field(fieldset2.V)
+    else:
+        fieldset = FieldSet.from_mitgcm(filenames, variables, dimensions, mesh='flat', field_chunksize=chs)
+    return fieldset
 
 
 def compute_nemo_particle_advection(field_set, mode, lonp, latp):
@@ -328,12 +339,13 @@ def test_ofam_3D(mode, chunk_mode):
 
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific_same', 'specific_different'])
-def test_mitgcm(mode, chunk_mode):
+@pytest.mark.parametrize('using_add_field', [False, True])
+def test_mitgcm(mode, chunk_mode, using_add_field):
     if chunk_mode in ['auto', ]:
         dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
-    field_set = fieldset_from_mitgcm(chunk_mode)
+    field_set = fieldset_from_mitgcm(chunk_mode, using_add_field)
     lons, lats = 5e5, 5e5
 
     pset = ParticleSet.from_list(fieldset=field_set, pclass=ptype[mode], lon=lons, lat=lats)
