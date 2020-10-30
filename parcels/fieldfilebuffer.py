@@ -634,7 +634,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         self.chunking_finalized = True
                 else:
                     if not self.autochunkingfailed:
-                        logger.warning("Chunking {}-field into chunkmap ({}) (i.e. chunksize is {}".format(self.name, self.chunk_mapping, self.field_chunksize))
                         data = data.rechunk(self.chunk_mapping)
                     self.chunking_finalized = True
         else:
