@@ -15,7 +15,6 @@ from parcels.grid import GridCode
 from parcels.tools.converters import TimeConverter, convert_xarray_time_units
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
-import functools
 try:
     from mpi4py import MPI
 except:
@@ -161,83 +160,7 @@ class FieldSet(object):
             raise NotImplementedError('FieldLists have been replaced by SummedFields. Use the + operator instead of []')
         else:
             setattr(self, name, field)
-
-            if (isinstance(field.data, DeferredArray) or isinstance(field.data, da.core.Array)) and len(self.get_fields()) > 0 and (field.field_chunksize != 'auto'):
-                # ==== check for inhabiting the same grid, and homogenise the grid chunking ==== #
-                g_set = field.grid
-                # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
-
-                # TODO: insert check HERE for chunksize == auto -> no matter if chunksize is globally 'auto' or just one
-                #       field is set to 'auto', or even one sub-dimension is set to 'auto' - if 'auto' is anywhere in chunksize
-                #       the field gets its own grid, end of story. Basically: if that is the case, set 'grid' to None
-
-                grid_chunksize = field.field_chunksize
-                dFiles = field.dataFiles
-                is_processed_grid = False
-                is_same_grid = False
-                for fld in self.get_fields():       # avoid re-processing/overwriting existing and working fields
-                    if type(fld) in [VectorField, NestedField, SummedField] or fld.dataFiles is None:
-                        continue
-                    if fld.grid == g_set:
-                        is_processed_grid |= True
-                        break
-                if not is_processed_grid:
-                    for fld in self.get_fields():
-                        if type(fld) in [VectorField, NestedField, SummedField] or fld.dataFiles is None:
-                            continue
-                        procdims = fld.dimensions
-                        procinds = fld.indices
-                        procpaths = fld.dataFiles
-                        nowpaths = field.dataFiles
-                        if procdims == field.dimensions and procinds == field.indices:
-                            is_same_grid = False
-                            if field.grid.mesh == fld.grid.mesh:
-                                is_same_grid = True
-                            else:
-                                is_same_grid = True
-                                for dim in ['lon', 'lat', 'depth', 'time']:
-                                    if dim in field.dimensions.keys() and dim in fld.dimensions.keys():
-                                        is_same_grid &= (field.dimensions[dim] == fld.dimensions[dim])
-                                fld_g_dims = [fld.grid.tdim, fld.grid.zdim, fld.ydim, fld.xdim]
-                                field_g_dims = [field.grid.tdim, field.grid.zdim, field.grid.ydim, field.grid.xdim]
-                                for i in range(0, len(fld_g_dims)):
-                                    is_same_grid &= (field_g_dims[i] == fld_g_dims[i])
-                            if is_same_grid:
-                                g_set = fld.grid
-                                # ==== check here that the dims of field_chunksize are the same ==== #
-                                if g_set.master_chunksize is not None:
-                                    res = False
-                                    if (isinstance(field.field_chunksize, tuple) and isinstance(g_set.master_chunksize, tuple)):
-                                        res |= functools.reduce(lambda i, j: i and j, map(lambda m, k: m == k, field.field_chunksize, g_set.master_chunksize), True)
-                                    elif (isinstance(field.field_chunksize, dict) and isinstance(g_set.master_chunksize, dict)):
-                                        res |= functools.reduce(lambda i, j: i and j,
-                                                                map(lambda m, k: m == k, field.field_chunksize,  # 'm == k' evaluates the tuples-equality as a unit, aternative: (m[0] == k[0]) and (m[1] == k[1])
-                                                                    g_set.master_chunksize), True)
-                                    else:
-                                        # assess that, e.g. 'U': False == 'V': False
-                                        res |= (field.field_chunksize == g_set.master_chunksize)
-                                    if res:
-                                        # CHANGE: the result here is that the requested chunksizes is equal-or-compatible - good! then we can initialize it as requested
-                                        grid_chunksize = field.field_chunksize
-                                        if field.grid.master_chunksize in [None, False] and grid_chunksize not in [None, False]:
-                                            # CHANGE: prohibit a situation where people load UVW without chunking and then want to add a chunked tracer field -> either use chunking all the way, or don't use it! #
-                                            raise ValueError("Trying add a chunked field to an uninitialised grid(set) - action prohibited. Please construct your initial FieldSet with an explicit chunking first, before adding a chunked field.")
-                                    else:
-                                        # TODO: well this case just means: the requested chunk size and the available grids don't match, so this field gets it own grid - Question: how-to ?
-                                        raise ValueError("Conflict between grids of the same fieldset chunksize and requested field chunksize as well as the chunked name dimensions - Please apply the same chunksize to all fields in a shared grid!")
-                                if procpaths == nowpaths:
-                                    dFiles = fld.dataFiles
-                                    break
-                    if is_same_grid:
-                        if field.grid != g_set:
-                            field.grid = g_set
-                        if field.field_chunksize != grid_chunksize:
-                            field.field_chunksize = grid_chunksize
-                        if field.dataFiles != dFiles:
-                            field.dataFiles = dFiles
-
             self.gridset.add_grid(field)
-
             field.fieldset = self
 
     def add_vector_field(self, vfield):

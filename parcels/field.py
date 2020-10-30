@@ -376,8 +376,8 @@ class Field(object):
             kwargs['dataFiles'] = dataFiles
 
         field_chunksize = kwargs.get('field_chunksize', None)
-        if field_chunksize and grid.master_chunksize is None:
-            grid.master_chunksize = field_chunksize
+        if field_chunksize and grid.chunksize is None:
+            grid.chunksize = field_chunksize
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
