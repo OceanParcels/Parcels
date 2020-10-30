@@ -438,7 +438,6 @@ class FieldSet(object):
             inds = indices[var] if (indices and var in indices) else indices
             fieldtype = fieldtype[var] if (fieldtype and var in fieldtype) else fieldtype
             chunksize = field_chunksize[var] if (field_chunksize and var in field_chunksize) else field_chunksize  # <varname> -> {<netcdf_dimname>: (<parcels_dimname>, <chunksize_as_int_numeral>) }
-            # TODO: potentially check that at least the type of the dictionary entries are all the same, to prohibit abominative combinations #
 
             grid = None
             dFiles = None
@@ -454,7 +453,7 @@ class FieldSet(object):
                     if procchunk != chunksize:
                         for dim in chunksize:
                             if chunksize[dim][1] != procchunk[dim][1]:
-                                possibly_samegrid = False  # or create a helper function to break out of two for loops?
+                                possibly_samegrid = False  # or create a helper function to break out of two for loops? - CK: looks good to me
                                 break
                     if not possibly_samegrid:
                         break
