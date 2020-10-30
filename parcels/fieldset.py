@@ -454,8 +454,7 @@ class FieldSet(object):
                     if procchunk != chunksize:
                         for dim in chunksize:
                             if chunksize[dim][1] != procchunk[dim][1]:
-                                possibly_samegrid = False  # or create a helper function to break out of two for loops?
-                                break
+                                possibly_samegrid &= False
                     if not possibly_samegrid:
                         break
                     if chunksize == 'auto':

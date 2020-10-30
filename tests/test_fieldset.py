@@ -296,7 +296,6 @@ def test_fieldset_samegrids_from_file(tmpdir, field_chunksize, filename='test_su
     else:
         assert fieldset.gridset.size == 1
         assert fieldset.U.grid == fieldset.V.grid
-        assert fieldset.U.grid.master_chunksize == fieldset.V.grid.master_chunksize
         assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
 
 
@@ -335,11 +334,8 @@ def test_fieldset_diffgrids_from_file(tmpdir, field_chunksize, filename='test_su
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=field_chunksize)
-    if field_chunksize == 'auto':
-        assert fieldset.gridset.size == 2
-    else:
-        assert fieldset.gridset.size == 2
-        assert fieldset.U.grid != fieldset.V.grid
+    assert fieldset.gridset.size == 2
+    assert fieldset.U.grid != fieldset.V.grid
 
 
 @pytest.mark.parametrize('field_chunksize', ['auto', None])
