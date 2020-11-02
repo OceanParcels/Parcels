@@ -25,6 +25,7 @@ from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools import idgen
 from parcels.kernel_node_benchmark import Kernel_Benchmark
+from parcels.kernel_node_benchmark import Kernel
 from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
 
 from resource import getrusage, RUSAGE_SELF
