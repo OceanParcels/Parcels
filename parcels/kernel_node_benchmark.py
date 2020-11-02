@@ -33,6 +33,7 @@ class Kernel_Benchmark(Kernel):
         super(Kernel_Benchmark, self).__init__(fieldset, ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
         self._compute_timings = TimingLog()
         self._io_timings = TimingLog()
+        self._mem_io_log = TimingLog()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -43,6 +44,10 @@ class Kernel_Benchmark(Kernel):
     @property
     def io_timings(self):
         return self._io_timings
+
+    @property
+    def mem_io_timings(self):
+        return self._mem_io_log
 
     @property
     def compute_timings(self):
@@ -77,7 +82,10 @@ class Kernel_Benchmark(Kernel):
                 for block_id in range(len(f.data_chunks)):
                     f.data_chunks[block_id] = None
                     f.c_data_chunks[block_id] = None
+        self._io_timings.stop_timing()
+        self._io_timings.accumulate_timing()
 
+        self._mem_io_log.start_timing()
         for g in pset.fieldset.gridset.grids:
             g.load_chunk = np.where(g.load_chunk == 1, 2, g.load_chunk)
             if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
@@ -89,8 +97,8 @@ class Kernel_Benchmark(Kernel):
                 g.lon = g.lon.copy()
             if not g.lat.flags.c_contiguous:
                 g.lat = g.lat.copy()
-        self._io_timings.stop_timing()
-        self._io_timings.accumulate_timing()
+        self._mem_io_log.stop_timing()
+        self._mem_io_log.accumulate_timing()
 
         self._compute_timings.start_timing()
         fargs = []
@@ -109,6 +117,7 @@ class Kernel_Benchmark(Kernel):
         self._compute_timings.accumulate_timing()
 
         self._io_timings.advance_iteration()
+        self._mem_io_log.advance_iteration()
         self._compute_timings.advance_iteration()
 
     def execute_python(self, pset, endtime, dt):
@@ -118,13 +127,17 @@ class Kernel_Benchmark(Kernel):
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
 
-        self._io_timings.start_timing()
         for f in self.fieldset.get_fields():
             if type(f) in [VectorField, NestedField, SummedField]:
                 continue
-            f.data = np.array(f.data)
-        self._io_timings.stop_timing()
-        self._io_timings.accumulate_timing()
+            self._io_timings.start_timing()
+            loaded_data = f.data
+            self._io_timings.stop_timing()
+            self._io_timings.accumulate_timing()
+            self._mem_io_log.start_timing()
+            f.data = np.array(loaded_data)
+            self._mem_io_log.stop_timing()
+            self._mem_io_log.accumulate_timing()
 
         self._compute_timings.start_timing()
         # ========= OLD ======= #
@@ -212,5 +225,6 @@ class Kernel_Benchmark(Kernel):
         self._compute_timings.accumulate_timing()
 
         self._io_timings.advance_iteration()
+        self._mem_io_log.advance_iteration()
         self._compute_timings.advance_iteration()
 
