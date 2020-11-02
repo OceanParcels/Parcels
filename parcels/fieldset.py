@@ -321,8 +321,7 @@ class FieldSet(object):
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
         :param chunksize: size of the chunks in dask loading. Default is None (no chunking). Can be None or False (no chunking),
-               'auto' (chunking is done in the background, but results in one grid per field individually), a four-value
-               tuple (time_chunksize, z_chunksize, y_chunksize, x_chunksize) that only works on A-Grids, or a dict in the format
+               'auto' (chunking is done in the background, but results in one grid per field individually), or a dict in the format
                '{parcels_varname: {netcdf_dimname : (parcels_dimname, chunksize_as_int)}, ...}', where 'parcels_dimname' is one of ('time', 'depth', 'lat', 'lon')
         :param netcdf_engine: engine to use for netcdf reading in xarray. Default is 'netcdf',
                but in cases where this doesn't work, setting netcdf_engine='scipy' could help
