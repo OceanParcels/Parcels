@@ -223,7 +223,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         another process. This is significant in a cluster setup.
         """
         if self.chunksize not in [False, None, 'auto'] and type(self.chunksize) is not dict:
-            raise AttributeError("'chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
+            raise AttributeError("'chunksize' is of wrong type. Parameter is expected to be a dict per data dimension, or be False, None or 'auto'.")
         if isinstance(self.chunksize, list):
             self.chunksize = tuple(self.chunksize)
 
