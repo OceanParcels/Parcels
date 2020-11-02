@@ -145,7 +145,6 @@ def fieldset_from_mitgcm(chunk_mode, using_add_field=True):
             chs = {'U': chs, 'V': chs}
         fieldset = FieldSet.from_mitgcm(filenames['U'], {'U': variables['U']}, dimensions['U'],
                                         mesh='flat', field_chunksize=chs['U'])
-        chunk = chs['V'] if 'V' in chs else chs
         fieldset2 = FieldSet.from_mitgcm(filenames['V'], {'V': variables['V']}, dimensions['V'],
                                          mesh='flat', field_chunksize=chs['V'])
         fieldset.add_field(fieldset2.V)
