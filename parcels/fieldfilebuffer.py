@@ -311,6 +311,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
     def _get_available_dims_indices_by_netcdf_file(self):
         """
         [private function - not to be called from outside the class]
+        [File needs to be open (i.e. self.dataset is not None) for this to work - otherwise generating an error]
         Returns a dict mapping 'parcels_dimname' -> [None, int32_index_data_array].
         This dictionary is based on the information provided by the requested dimensions.
         Example: {'time': 0, 'depth': 5, 'lat': 3, 'lon': 1}
@@ -322,7 +323,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                      yr: [0 2139]
                      z: [0 75]
         """
-        assert self.dataset is not None, "Trying to parse NetCDF header information before opening the file - IOError."
+        if self.dataset is None:
+            raise IOError("Trying to parse NetCDF header information before opening the file.")
         result = {}
         for pcls_dimname in ['time', 'depth', 'lat', 'lon']:
             for nc_dimname in self._static_name_maps[pcls_dimname]:
@@ -359,11 +361,14 @@ class DaskFileBuffer(NetcdfFileBuffer):
     def _is_dimension_in_dataset(self, parcels_dimension_name, netcdf_dimension_name=None):
         """
         [private function - not to be called from outside the class]
+        [File needs to be open (i.e. self.dataset is not None) for this to work - otherwise generating an error]
         This function returns the index, the name and the size of a NetCDF dimension in the file (in order: index, name, size).
         It requires as input the name of the related parcels dimension (i.e. one of ['time', 'depth', 'lat', 'lon']. If
-        no hint on its mapping to a NetCDF dimension is provided, a heuristic base on the pre-defined name dictionary
-        is used. If a hin is provided, a connections is made between parcels-dimension and NetCDF dimension.
+        no hint on its mapping to a NetCDF dimension is provided, a heuristic based on the pre-defined name dictionary
+        is used. If a hint is provided, a connections is made between the designated parcels-dimension and NetCDF dimension.
         """
+        if self.dataset is None:
+            raise IOError("Trying to parse NetCDF header information before opening the file.")
         k, dname, dvalue = (-1, '', 0)
         dimension_name = parcels_dimension_name.lower()
         dim_indices = self._get_available_dims_indices_by_request()
@@ -411,6 +416,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
     def _chunkmap_to_chunksize(self):
         """
         [private function - not to be called from outside the class]
+        [File needs to be open via the '__enter__'-method for this to work - otherwise generating an error]
         This functions translates the array-index-to-chunksize chunk map into a proper fieldsize dictionary that
         can later be used for re-qunking, if a previously-opened file is re-opened again.
         """
@@ -450,6 +456,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
     def _get_initial_chunk_dictionary_by_dict_(self):
         """
         [private function - not to be called from outside the class]
+        [File needs to be open (i.e. self.dataset is not None) for this to work - otherwise generating an error]
         Maps and correlates the requested dictionary-style chunksize with the requested parcels dimensions, variables
         and the NetCDF-available dimensions. Thus, it takes care to remove chunksize arguments that are not in the
         Parcels- or NetCDF dimensions, or whose chunking would be omitted due to an empty chunk dimension.
