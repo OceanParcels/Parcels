@@ -204,7 +204,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         rechunk callback function. Also chunking-related variables are initialized.
         """
         self.lib = da
-        self.field_chunksize = kwargs.pop('field_chunksize', 'auto')
+        self.chunksize = kwargs.pop('chunksize', 'auto')
         self.lock_file = kwargs.pop('lock_file', True)
         self.chunk_mapping = None
         self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
@@ -222,13 +222,13 @@ class DaskFileBuffer(NetcdfFileBuffer):
         where - due to the chunking, the file is 'locked', meaning that it cannot be simultaneously accessed by
         another process. This is significant in a cluster setup.
         """
-        if self.field_chunksize not in [False, None, 'auto'] and type(self.field_chunksize) is not dict:
-            raise AttributeError("'field_chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
-        if isinstance(self.field_chunksize, list):
-            self.field_chunksize = tuple(self.field_chunksize)
+        if self.chunksize not in [False, None, 'auto'] and type(self.chunksize) is not dict:
+            raise AttributeError("'chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
+        if isinstance(self.chunksize, list):
+            self.chunksize = tuple(self.chunksize)
 
         init_chunk_dict = None
-        if self.field_chunksize not in [False, None]:
+        if self.chunksize not in [False, None]:
             init_chunk_dict = self._get_initial_chunk_dictionary()
         try:
             # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
@@ -288,8 +288,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 result[name] = None
                 tpl_offset += 1
                 neg_offset += 1
-            elif ((type(self.field_chunksize) is dict) and (name not in self.field_chunksize or (type(self.field_chunksize[name]) is tuple and len(self.field_chunksize[name]) == 2 and self.field_chunksize[name][1] <= 1))) or \
-                    ((type(self.field_chunksize) is tuple) and name in self.dimensions and (self.field_chunksize[i-tpl_offset] <= 1)):
+            elif ((type(self.chunksize) is dict) and (name not in self.chunksize or (type(self.chunksize[name]) is tuple and len(self.chunksize[name]) == 2 and self.chunksize[name][1] <= 1))) or \
+                    ((type(self.chunksize) is tuple) and name in self.dimensions and (self.chunksize[i-tpl_offset] <= 1)):
                 result[name] = None
                 neg_offset += 1
             else:
@@ -349,11 +349,11 @@ class DaskFileBuffer(NetcdfFileBuffer):
         dimensions, the NetCDF file dataset, and is also required to be chunked according to the requested
         chunksize dictionary. If any of the two conditions is not met, if returns 'False'.
         """
-        if self.dimensions is None or self.dataset is None or self.field_chunksize in [None, False, 'auto']:
+        if self.dimensions is None or self.dataset is None or self.chunksize in [None, False, 'auto']:
             return False
         dim_chunked = False
-        dim_chunked = True if (not dim_chunked and type(self.field_chunksize) is dict and dimension_name in self.field_chunksize.keys()) else False
-        dim_chunked = True if (not dim_chunked and type(self.field_chunksize) in [None, False]) else False
+        dim_chunked = True if (not dim_chunked and type(self.chunksize) is dict and dimension_name in self.chunksize.keys()) else False
+        dim_chunked = True if (not dim_chunked and type(self.chunksize) in [None, False]) else False
         return (dimension_name in self.dimensions) and dim_chunked
 
     def _is_dimension_in_dataset(self, parcels_dimension_name, netcdf_dimension_name=None):
@@ -395,8 +395,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         parcels_dimension_name = parcels_dimension_name.lower()
         dim_indices = self._get_available_dims_indices_by_request()
         i = dim_indices[parcels_dimension_name]
-        name = self.field_chunksize[parcels_dimension_name][0]
-        value = self.field_chunksize[parcels_dimension_name][1]
+        name = self.chunksize[parcels_dimension_name][0]
+        value = self.chunksize[parcels_dimension_name][1]
         k, dname, dvalue = i, name, value
         return k, dname, dvalue
 
@@ -406,7 +406,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         Helper function that issues a warning message if a certain requested NetCDF dimension is not found in the file.
         """
         display_name = dimension_name if (dimension_name not in self.dimensions) else self.dimensions[dimension_name]
-        return "Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names, e.g.\n field_chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
+        return "Did not find {} in NetCDF dims. Please specifiy chunksize as dictionary for NetCDF dimension names, e.g.\n chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
 
     def _chunkmap_to_chunksize(self):
         """
@@ -414,37 +414,37 @@ class DaskFileBuffer(NetcdfFileBuffer):
         This functions translates the array-index-to-chunksize chunk map into a proper fieldsize dictionary that
         can later be used for re-qunking, if a previously-opened file is re-opened again.
         """
-        if self.field_chunksize in [False, None]:
+        if self.chunksize in [False, None]:
             return
-        self.field_chunksize = {}
+        self.chunksize = {}
         chunk_map = self.chunk_mapping
         timei, timename, timevalue = self._is_dimension_in_dataset('time')
         depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
         lati, latname, latvalue = self._is_dimension_in_dataset('lat')
         loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
         if len(chunk_map) == 2:
-            self.field_chunksize['lon'] = (latname, chunk_map[0])
-            self.field_chunksize['lat'] = (lonname, chunk_map[1])
+            self.chunksize['lon'] = (latname, chunk_map[0])
+            self.chunksize['lat'] = (lonname, chunk_map[1])
         elif len(chunk_map) == 3:
             chunk_dim_index = 0
             if depthi is not None and depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
-                self.field_chunksize['depth'] = (depthname, chunk_map[chunk_dim_index])
+                self.chunksize['depth'] = (depthname, chunk_map[chunk_dim_index])
                 chunk_dim_index += 1
             elif timei is not None and timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
-                self.field_chunksize['time'] = (timename, chunk_map[chunk_dim_index])
+                self.chunksize['time'] = (timename, chunk_map[chunk_dim_index])
                 chunk_dim_index += 1
-            self.field_chunksize['lat'] = (latname, chunk_map[chunk_dim_index])
+            self.chunksize['lat'] = (latname, chunk_map[chunk_dim_index])
             chunk_dim_index += 1
-            self.field_chunksize['lon'] = (lonname, chunk_map[chunk_dim_index])
+            self.chunksize['lon'] = (lonname, chunk_map[chunk_dim_index])
         elif len(chunk_map) >= 4:
-            self.field_chunksize['time'] = (timename, chunk_map[0])
-            self.field_chunksize['depth'] = (depthname, chunk_map[1])
-            self.field_chunksize['lat'] = (latname, chunk_map[2])
-            self.field_chunksize['lon'] = (lonname, chunk_map[3])
+            self.chunksize['time'] = (timename, chunk_map[0])
+            self.chunksize['depth'] = (depthname, chunk_map[1])
+            self.chunksize['lat'] = (latname, chunk_map[2])
+            self.chunksize['lon'] = (lonname, chunk_map[3])
             dim_index = 4
             for dim_name in self.dimensions:
                 if dim_name not in ['time', 'depth', 'lat', 'lon']:
-                    self.field_chunksize[dim_name] = (self.dimensions[dim_name], chunk_map[dim_index])
+                    self.chunksize[dim_name] = (self.dimensions[dim_name], chunk_map[dim_index])
                     dim_index += 1
 
     def _get_initial_chunk_dictionary_by_dict_(self):
@@ -460,50 +460,50 @@ class DaskFileBuffer(NetcdfFileBuffer):
         chunk_dict = {}
         chunk_index_map = {}
         neg_offset = 0
-        if 'time' in self.field_chunksize.keys():
-            timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.field_chunksize['time'][0])
-            timevalue = self.field_chunksize['time'][1]
-            if self.field_chunksize['time'][0] not in self._static_name_maps:
-                self._static_name_maps['time'].append(self.field_chunksize['time'][0])
+        if 'time' in self.chunksize.keys():
+            timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.chunksize['time'][0])
+            timevalue = self.chunksize['time'][1]
+            if self.chunksize['time'][0] not in self._static_name_maps:
+                self._static_name_maps['time'].append(self.chunksize['time'][0])
             if timei is not None and timei >= 0 and timevalue > 1:
                 timevalue = min(timesize, timevalue)
                 chunk_dict[timename] = timevalue
                 chunk_index_map[timei-neg_offset] = timevalue
             else:
-                self.field_chunksize.pop('time')
-        if 'depth' in self.field_chunksize.keys():
-            depthi, depthname, depthsize = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.field_chunksize['depth'][0])
-            depthvalue = self.field_chunksize['depth'][1]
-            if self.field_chunksize['depth'][0] not in self._static_name_maps:
-                self._static_name_maps['depth'].append(self.field_chunksize['depth'][0])
+                self.chunksize.pop('time')
+        if 'depth' in self.chunksize.keys():
+            depthi, depthname, depthsize = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.chunksize['depth'][0])
+            depthvalue = self.chunksize['depth'][1]
+            if self.chunksize['depth'][0] not in self._static_name_maps:
+                self._static_name_maps['depth'].append(self.chunksize['depth'][0])
             if depthi is not None and depthi >= 0 and depthvalue > 1:
                 depthvalue = min(depthsize, depthvalue)
                 chunk_dict[depthname] = depthvalue
                 chunk_index_map[depthi-neg_offset] = depthvalue
             else:
-                self.field_chunksize.pop('depth')
-        if 'lat' in self.field_chunksize.keys():
-            lati, latname, latsize = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.field_chunksize['lat'][0])
-            latvalue = self.field_chunksize['lat'][1]
-            if self.field_chunksize['lat'][0] not in self._static_name_maps:
-                self._static_name_maps['lat'].append(self.field_chunksize['lat'][0])
+                self.chunksize.pop('depth')
+        if 'lat' in self.chunksize.keys():
+            lati, latname, latsize = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.chunksize['lat'][0])
+            latvalue = self.chunksize['lat'][1]
+            if self.chunksize['lat'][0] not in self._static_name_maps:
+                self._static_name_maps['lat'].append(self.chunksize['lat'][0])
             if lati is not None and lati >= 0 and latvalue > 1:
                 latvalue = min(latsize, latvalue)
                 chunk_dict[latname] = latvalue
                 chunk_index_map[lati-neg_offset] = latvalue
             else:
-                self.field_chunksize.pop('lat')
-        if 'lon' in self.field_chunksize.keys():
-            loni, lonname, lonsize = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.field_chunksize['lon'][0])
-            lonvalue = self.field_chunksize['lon'][1]
-            if self.field_chunksize['lon'][0] not in self._static_name_maps:
-                self._static_name_maps['lon'].append(self.field_chunksize['lon'][0])
+                self.chunksize.pop('lat')
+        if 'lon' in self.chunksize.keys():
+            loni, lonname, lonsize = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.chunksize['lon'][0])
+            lonvalue = self.chunksize['lon'][1]
+            if self.chunksize['lon'][0] not in self._static_name_maps:
+                self._static_name_maps['lon'].append(self.chunksize['lon'][0])
             if loni is not None and loni >= 0 and lonvalue > 1:
                 lonvalue = min(lonsize, lonvalue)
                 chunk_dict[lonname] = lonvalue
                 chunk_index_map[loni-neg_offset] = lonvalue
             else:
-                self.field_chunksize.pop('lon')
+                self.chunksize.pop('lon')
         return chunk_dict, chunk_index_map
 
     def _get_initial_chunk_dictionary(self):
@@ -526,9 +526,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
         # ==== self.dataset temporarily available ==== #
         init_chunk_dict = {}
         init_chunk_map = {}
-        if isinstance(self.field_chunksize, dict):
+        if isinstance(self.chunksize, dict):
             init_chunk_dict, init_chunk_map = self._get_initial_chunk_dictionary_by_dict_()
-        elif self.field_chunksize == 'auto':
+        elif self.chunksize == 'auto':
             av_mem = psutil.virtual_memory().available
             chunk_cap = av_mem * (1/8) * (1/3)
             if 'array.chunk-size' in da_conf.config.keys():
@@ -587,14 +587,14 @@ class DaskFileBuffer(NetcdfFileBuffer):
                     max_overlay_dims = n_overlay_dims
             self.name = max_field
             for dname in max_dim_names:
-                if isinstance(self.field_chunksize, dict):
-                    if dname in self.field_chunksize.keys():
-                        init_chunk_dict[dname] = min(self.field_chunksize[dname][1], self.dataset.dimensions[dname].size)
+                if isinstance(self.chunksize, dict):
+                    if dname in self.chunksize.keys():
+                        init_chunk_dict[dname] = min(self.chunksize[dname][1], self.dataset.dimensions[dname].size)
                         continue
                 init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname].size)
-            # ==== because in this case it has shown that the requested field_chunksize setup cannot be used, ==== #
-            # ==== replace the requested field_chunksize with this auto-derived version.                      ==== #
-            self.field_chunksize = init_chunk_dict
+            # ==== because in this case it has shown that the requested chunksize setup cannot be used, ==== #
+            # ==== replace the requested chunksize with this auto-derived version.                      ==== #
+            self.chunksize = init_chunk_dict
         finally:
             self.dataset.close()
             self.chunk_mapping = init_chunk_map
@@ -616,12 +616,12 @@ class DaskFileBuffer(NetcdfFileBuffer):
 
         if isinstance(data, da.core.Array):
             if not self.chunking_finalized:
-                if self.field_chunksize == 'auto':
+                if self.chunksize == 'auto':
                     # ==== as the chunksize is not initiated, the data is chunked automatically by Dask.  ==== #
                     # ==== the resulting chunk dictionary is stored, to be re-used later. This prevents   ==== #
                     # ==== the expensive re-calculation and PHYSICAL FILE RECHUNKING on each data access. ==== #
                     if data.shape[-2:] != data.chunksize[-2:]:
-                        data = data.rechunk(self.field_chunksize)
+                        data = data.rechunk(self.chunksize)
                     self.chunk_mapping = {}
                     chunkIndex = 0
                     startblock = 0
@@ -637,8 +637,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         data = data.rechunk(self.chunk_mapping)
                     self.chunking_finalized = True
         else:
-            da_data = da.from_array(data, chunks=self.field_chunksize)
-            if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
+            da_data = da.from_array(data, chunks=self.chunksize)
+            if self.chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
                 data = np.array(data)
             else:
                 data = da_data

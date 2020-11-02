@@ -15,7 +15,7 @@ class GridSet(object):
         grid = field.grid
         existing_grid = False
         for g in self.grids:
-            if field.field_chunksize == 'auto':
+            if field.chunksize == 'auto':
                 break
             if g == grid:
                 existing_grid = True

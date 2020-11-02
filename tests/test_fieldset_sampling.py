@@ -496,7 +496,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
     variables = {'U': 'vozocrtx', 'V': 'vomecrty', 'B': 'B'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True,
-                                    field_chunksize=chs)
+                                    chunksize=chs)
 
     fieldset.add_constant('sample_depth', 2.5)
     if chs == 'auto':
