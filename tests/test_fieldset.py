@@ -365,7 +365,6 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_sub
         assert fieldset_file.gridset.size == 2
     assert fieldset_file.U.grid != fieldset_file.B.grid
 
-test_fieldset_diffgrids_from_file_data('','auto')
 
 def test_fieldset_samegrids_from_data(tmpdir, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
