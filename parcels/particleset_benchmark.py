@@ -33,6 +33,7 @@ class ParticleSet_Benchmark(ParticleSet):
         self.total_log = TimingLog()
         self.compute_log = TimingLog()
         self.io_log = TimingLog()
+        self.mem_io_log = TimingLog()
         self.plot_log = TimingLog()
         self.nparticle_log = ParamLogging()
         self.mem_log = ParamLogging()
@@ -191,6 +192,9 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.compute_log.start_timing()
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
+                # creating new particles equals a memory-io operation
+                if isinstance(self._kernel, Kernel_Benchmark):
+                    self.mem_io_log.start_timing()
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
@@ -198,6 +202,9 @@ class ParticleSet_Benchmark(ParticleSet):
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
+                if isinstance(self._kernel, Kernel_Benchmark):
+                    self.mem_io_log.stop_timing()
+                    self.mem_io_log.accumulate_timing()
                 next_prelease += self.repeatdt * np.sign(dt)
             if not isinstance(self.kernel, Kernel_Benchmark):
                 self.compute_log.stop_timing()
@@ -206,6 +213,8 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.kernel.compute_timings.reset()
                 self.io_log.add_aux_measure(self.kernel.io_timings.sum())
                 self.kernel.io_timings.reset()
+                self.mem_io_log.add_aux_measure(self._kernel.mem_io_timings.sum())
+                self._kernel.mem_io_timings.reset()
             self.compute_log.accumulate_timing()
             self.nparticle_log.advance_iteration(len(self))
             # ==== end compute ==== #
@@ -254,6 +263,7 @@ class ParticleSet_Benchmark(ParticleSet):
 
             self.compute_log.advance_iteration()
             self.io_log.advance_iteration()
+            self.mem_io_log.advance_iteration()
             self.plot_log.advance_iteration()
             self.total_log.advance_iteration()
 
@@ -286,10 +296,15 @@ class ParticleSet_Benchmark(ParticleSet):
             compute_times = self.compute_log.get_values()
         if not isinstance(compute_times, np.ndarray):
             compute_times = np.array(compute_times)
+        mem_io_times = None
         if io_times is None or type(io_times) not in [list, dict, np.ndarray]:
             io_times = self.io_log.get_values()
+            mem_io_times = self.mem_io_log.get_values()
         if not isinstance(io_times, np.ndarray):
             io_times = np.array(io_times)
+        if mem_io_times is not None:
+            mem_io_times = np.array(mem_io_times)
+            io_times += mem_io_times
         if plot_times is None or type(plot_times) not in [list, dict, np.ndarray]:
             plot_times = self.plot_log.get_values()
         if not isinstance(plot_times, np.ndarray):
