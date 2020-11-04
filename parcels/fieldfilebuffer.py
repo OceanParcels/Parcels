@@ -188,16 +188,16 @@ class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
 
 
 class DaskFileBuffer(NetcdfFileBuffer):
-    # _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
-    #                      'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
-    #                                'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
-    #                                'Zl', 'Zu', 'level'],
-    #                      'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
-    #                      'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
-    _static_name_maps = {'time': [],
-                         'depth': [],
-                         'lat': [],
-                         'lon': []}
+    _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
+                         'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
+                                   'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
+                                   'Zl', 'Zu', 'level'],
+                         'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
+                         'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
+    # _static_name_maps = {'time': [],
+    #                      'depth': [],
+    #                      'lat': [],
+    #                      'lon': []}
     _min_dim_chunksize = 16
 
     """ Class that encapsulates and manages deferred access to file data. """
@@ -420,7 +420,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         dimension_name = parcels_dimension_name.lower()
         dim_indices = self._get_available_dims_indices_by_request()
         i = dim_indices[dimension_name]
-        if netcdf_dimension_name is not None:
+        if netcdf_dimension_name is not None and netcdf_dimension_name in self.dataset.dims.keys():
             value = self.dataset.dims[netcdf_dimension_name]
             k, dname, dvalue = i, netcdf_dimension_name, value
         elif self.dimensions is None or self.dataset is None:
@@ -560,6 +560,53 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 self.chunksize.pop('lon')
         return chunk_dict, chunk_index_map
 
+    def _failsafe_parse_(self):
+        """
+        [private function - not to be called from outside the class]
+        ['name' need to be initialised]
+        """
+        # ==== fail - open it as a normal array and deduce the dimensions from the variable-function names ==== #
+        # ==== done by parsing ALL variables in the NetCDF, and comparing their call-parameters with the   ==== #
+        # ==== name map available here.                                                                    ==== #
+        init_chunk_dict = {}
+        self.dataset = ncDataset(str(self.filename))
+        refdims = self.dataset.dimensions.keys()
+        max_field = ""
+        max_dim_names = ()
+        max_coincide_dims = 0
+        for vname in self.dataset.variables:
+            var = self.dataset.variables[vname]
+            coincide_dims = []
+            for vdname in var.dimensions:
+                if vdname in refdims:
+                    coincide_dims.append(vdname)
+            n_coincide_dims = len(coincide_dims)
+            if n_coincide_dims > max_coincide_dims:
+                max_field = vname
+                max_dim_names = tuple(coincide_dims)
+                max_coincide_dims = n_coincide_dims
+        self.name = max_field
+        for nc_dname in max_dim_names:
+            pcls_dname = None
+            for dname in self._static_name_maps.keys():
+                if nc_dname in self._static_name_maps[dname]:
+                    pcls_dname = dname
+                    break
+            nc_dimsize = None
+            pcls_dim_chunksize = None
+            if pcls_dname is not None and pcls_dname in self.dimensions:
+                pcls_dim_chunksize = self._min_dim_chunksize
+            if isinstance(self.chunksize, dict) and pcls_dname is not None:
+                nc_dimsize = self.dataset.dimensions[nc_dname].size
+                if pcls_dname in self.chunksize.keys():
+                    pcls_dim_chunksize = self.chunksize[pcls_dname][1]
+            if pcls_dname is not None and nc_dname is not None and nc_dimsize is not None and pcls_dim_chunksize is not None:
+                init_chunk_dict[nc_dname] = pcls_dim_chunksize
+
+        # ==== because in this case it has shown that the requested chunksize setup cannot be used, ==== #
+        # ==== replace the requested chunksize with this auto-derived version.                      ==== #
+        return init_chunk_dict
+
     def _get_initial_chunk_dictionary(self):
         """
         [private function - not to be called from outside the class]
@@ -594,22 +641,22 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 else:
                     logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
             loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
-            logger.info("loni, lonname, lonvalue = {}, {}, {}".format(loni, lonname, lonvalue))
+            # logger.info("loni, lonname, lonvalue = {}, {}, {}".format(loni, lonname, lonvalue))
             lati, latname, latvalue = self._is_dimension_in_dataset('lat')
-            logger.info("lati, latname, latvalue = {}, {}, {}".format(lati, latname, latvalue))
+            # logger.info("lati, latname, latvalue = {}, {}, {}".format(lati, latname, latvalue))
             if lati is not None and loni is not None and lati >= 0 and loni >= 0:
                 pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
                 init_chunk_dict[latname] = min(latvalue, pDim)
                 init_chunk_map[lati] = min(latvalue, pDim)
                 init_chunk_dict[lonname] = min(lonvalue, pDim)
                 init_chunk_map[loni] = min(lonvalue, pDim)
-            timei, timename, _ = self._is_dimension_in_dataset('time')
-            logger.info("timei, timename = {}, {}".format(timei, timename))
+            timei, timename, timevalue = self._is_dimension_in_dataset('time')
+            # logger.info("timei, timename, timevalue = {}, {}, {}".format(timei, timename, timevalue))
             if timei is not None and timei >= 0:
-                init_chunk_dict[timename] = 1
-                init_chunk_map[timei] = 1
+                init_chunk_dict[timename] = min(1, timevalue)
+                init_chunk_map[timei] = min(1, timevalue)
             depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
-            logger.info("depthi, depthname, depthvalue = {}, {}, {}".format(depthi, depthname, depthvalue))
+            # logger.info("depthi, depthname, depthvalue = {}, {}, {}".format(depthi, depthname, depthvalue))
             if depthi is not None and depthi >= 0:
                 init_chunk_dict[depthname] = max(1, depthvalue)
                 init_chunk_map[depthi] = max(1, depthvalue)
@@ -617,42 +664,25 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.dataset.close()
         # ==== check if the chunksize reading is successful. if not, load the file ONCE really into memory and ==== #
         # ==== deduce the chunking from the array dims.                                                         ==== #
-        self.autochunkingfailed = False
+        if len(init_chunk_dict) == 0:
+            logger.warning("No correct dimension mapping found between Parcels and NetCDF! Executing Dask chunking 'failsafe'...")
+            init_chunk_dict = self._failsafe_parse_()
+            self.autochunkingfailed = True
+            # print("Using the failsafe - determined: {}".format(init_chunk_dict))
+        else:
+            self.autochunkingfailed = False
         try:
             self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
+            if isinstance(self.chunksize, dict):
+                self.chunksize = init_chunk_dict
         except:
-            logger.warning_once("Chunking with init_chunk_dict = {} failed - try auto-parse ...".format(init_chunk_dict))
+            logger.warning("Chunking with init_chunk_dict = {} failed - Executing Dask chunking 'failsafe'...".format(init_chunk_dict))
+            if not self.autochunkingfailed:
+                init_chunk_dict = self._failsafe_parse_()
+            if isinstance(self.chunksize, dict):
+                self.chunksize = init_chunk_dict
             self.autochunkingfailed = True
-            # ==== fail - open it as a normal array and deduce the dimensions from the variable-function names ==== #
-            # ==== done by parsing ALL variables in the NetCDF, and comparing their call-parameters with the   ==== #
-            # ==== name map available here.                                                                    ==== #
-            init_chunk_dict = {}
-            self.dataset = ncDataset(str(self.filename))
-            refdims = self.dataset.dimensions.keys()
-            max_field = ""
-            max_dim_names = ()
-            max_overlay_dims = 0
-            for vname in self.dataset.variables:
-                var = self.dataset.variables[vname]
-                overlay_dims = []
-                for vdname in var.dimensions:
-                    if vdname in refdims:
-                        overlay_dims.append(vdname)
-                n_overlay_dims = len(overlay_dims)
-                if n_overlay_dims > max_overlay_dims:
-                    max_field = vname
-                    max_dim_names = tuple(overlay_dims)
-                    max_overlay_dims = n_overlay_dims
-            self.name = max_field
-            for dname in max_dim_names:
-                if isinstance(self.chunksize, dict):
-                    if dname in self.chunksize.keys():
-                        init_chunk_dict[dname] = min(self.chunksize[dname][1], self.dataset.dimensions[dname].size)
-                        continue
-                init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname].size)
-            # ==== because in this case it has shown that the requested chunksize setup cannot be used, ==== #
-            # ==== replace the requested chunksize with this auto-derived version.                      ==== #
-            self.chunksize = init_chunk_dict
+            # print("Using the failsafe - determined: {}".format(init_chunk_dict))
         finally:
             self.dataset.close()
             self.chunk_mapping = init_chunk_map
@@ -687,6 +717,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         self.chunk_mapping[chunkIndex] = chunkDim
                         chunkIndex += 1
                     self._chunkmap_to_chunksize()
+                    # logger.info("Dask determined the following chunking layout for field '{}' via its 'auto-chunking' function: \n\tchunksize: {}\n\tchunkmap: {}".format(self.name, self.chunksize, self.chunk_mapping))
                     if self.rechunk_callback_fields is not None:
                         self.rechunk_callback_fields()
                         self.chunking_finalized = True
