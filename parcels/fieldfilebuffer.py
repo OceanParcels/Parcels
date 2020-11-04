@@ -517,8 +517,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'time' in self.chunksize.keys():
             timei, timename, timesize = self._is_dimension_in_dataset(parcels_dimension_name='time', netcdf_dimension_name=self.chunksize['time'][0])
             timevalue = self.chunksize['time'][1]
-            if self.chunksize['time'][0] not in self._static_name_maps:
-                self._static_name_maps['time'].append(self.chunksize['time'][0])
+            # if self.chunksize['time'][0] not in self._static_name_maps:
+            #     self._static_name_maps['time'].append(self.chunksize['time'][0])
             if timei is not None and timei >= 0 and timevalue > 1:
                 timevalue = min(timesize, timevalue)
                 chunk_dict[timename] = timevalue
@@ -528,8 +528,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'depth' in self.chunksize.keys():
             depthi, depthname, depthsize = self._is_dimension_in_dataset(parcels_dimension_name='depth', netcdf_dimension_name=self.chunksize['depth'][0])
             depthvalue = self.chunksize['depth'][1]
-            if self.chunksize['depth'][0] not in self._static_name_maps:
-                self._static_name_maps['depth'].append(self.chunksize['depth'][0])
+            # if self.chunksize['depth'][0] not in self._static_name_maps:
+            #     self._static_name_maps['depth'].append(self.chunksize['depth'][0])
             if depthi is not None and depthi >= 0 and depthvalue > 1:
                 depthvalue = min(depthsize, depthvalue)
                 chunk_dict[depthname] = depthvalue
@@ -539,8 +539,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'lat' in self.chunksize.keys():
             lati, latname, latsize = self._is_dimension_in_dataset(parcels_dimension_name='lat', netcdf_dimension_name=self.chunksize['lat'][0])
             latvalue = self.chunksize['lat'][1]
-            if self.chunksize['lat'][0] not in self._static_name_maps:
-                self._static_name_maps['lat'].append(self.chunksize['lat'][0])
+            # if self.chunksize['lat'][0] not in self._static_name_maps:
+            #     self._static_name_maps['lat'].append(self.chunksize['lat'][0])
             if lati is not None and lati >= 0 and latvalue > 1:
                 latvalue = min(latsize, latvalue)
                 chunk_dict[latname] = latvalue
@@ -550,8 +550,8 @@ class DaskFileBuffer(NetcdfFileBuffer):
         if 'lon' in self.chunksize.keys():
             loni, lonname, lonsize = self._is_dimension_in_dataset(parcels_dimension_name='lon', netcdf_dimension_name=self.chunksize['lon'][0])
             lonvalue = self.chunksize['lon'][1]
-            if self.chunksize['lon'][0] not in self._static_name_maps:
-                self._static_name_maps['lon'].append(self.chunksize['lon'][0])
+            # if self.chunksize['lon'][0] not in self._static_name_maps:
+            #     self._static_name_maps['lon'].append(self.chunksize['lon'][0])
             if loni is not None and loni >= 0 and lonvalue > 1:
                 lonvalue = min(lonsize, lonvalue)
                 chunk_dict[lonname] = lonvalue
@@ -594,7 +594,9 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 else:
                     logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
             loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
+            logger.info("loni, lonname, lonvalue = {}, {}, {}".format(loni, lonname, lonvalue))
             lati, latname, latvalue = self._is_dimension_in_dataset('lat')
+            logger.info("lati, latname, latvalue = {}, {}, {}".format(lati, latname, latvalue))
             if lati is not None and loni is not None and lati >= 0 and loni >= 0:
                 pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
                 init_chunk_dict[latname] = min(latvalue, pDim)
@@ -602,10 +604,12 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 init_chunk_dict[lonname] = min(lonvalue, pDim)
                 init_chunk_map[loni] = min(lonvalue, pDim)
             timei, timename, _ = self._is_dimension_in_dataset('time')
+            logger.info("timei, timename = {}, {}".format(timei, timename))
             if timei is not None and timei >= 0:
                 init_chunk_dict[timename] = 1
                 init_chunk_map[timei] = 1
             depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
+            logger.info("depthi, depthname, depthvalue = {}, {}, {}".format(depthi, depthname, depthvalue))
             if depthi is not None and depthi >= 0:
                 init_chunk_dict[depthname] = max(1, depthvalue)
                 init_chunk_map[depthi] = max(1, depthvalue)

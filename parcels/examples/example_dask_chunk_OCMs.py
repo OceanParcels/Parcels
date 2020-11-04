@@ -276,6 +276,7 @@ def test_swash(mode, chunk_mode):
     elif chunk_mode is 'auto':
         logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
+        assert False
     elif chunk_mode == 'specific':
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
         assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
