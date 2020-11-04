@@ -205,7 +205,7 @@ def compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_nemo_3D(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '2MiB'})
+        dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_nemo_3D(chunk_mode)
@@ -230,7 +230,7 @@ def test_nemo_3D(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_pop(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '1MiB'})
+        dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_pop_1arcs(chunk_mode)
@@ -258,7 +258,7 @@ def test_pop(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_swash(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '32KiB'})
+        dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_swash(chunk_mode)
@@ -287,7 +287,7 @@ def test_swash(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_globcurrent_2D(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '32KiB'})
+        dask.config.set({'array.chunk-size': '1024KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_globcurrent(chunk_mode)
