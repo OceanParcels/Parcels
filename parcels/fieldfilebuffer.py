@@ -188,16 +188,16 @@ class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
 
 
 class DaskFileBuffer(NetcdfFileBuffer):
-    _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
-                         'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
-                                   'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
-                                   'Zl', 'Zu', 'level'],
-                         'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
-                         'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
-    # _static_name_maps = {'time': [],
-    #                      'depth': [],
-    #                      'lat': [],
-    #                      'lon': []}
+    # _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
+    #                      'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
+    #                                'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
+    #                                'Zl', 'Zu', 'level'],
+    #                      'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
+    #                      'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
+    _static_name_maps = {'time': [],
+                         'depth': [],
+                         'lat': [],
+                         'lon': []}
     _min_dim_chunksize = 16
 
     """ Class that encapsulates and manages deferred access to file data. """

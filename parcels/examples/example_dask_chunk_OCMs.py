@@ -88,7 +88,7 @@ def fieldset_from_pop_1arcs(chunk_mode):
     elif chunk_mode == 'specific':
         chs = {'lon': ('i', 8), 'lat': ('j', 8), 'depth': ('k', 3)}
     elif chunk_mode == 'failsafe':  # here: bad depth entry
-        DaskFileBuffer.add_to_dimension_name_map_global({'depth': 'wz'})
+        # DaskFileBuffer.add_to_dimension_name_map_global({'depth': 'wz'})
         chs = {'depth': ('wz', 3), 'lat': ('j', 8), 'lon': ('i', 8)}
 
     fieldset = FieldSet.from_pop(filenames, variables, dimensions, chunksize=chs, timestamps=timestamps)
@@ -139,7 +139,7 @@ def fieldset_from_ofam(chunk_mode):
                   'time': 'Time'}
 
     chs = False
-    DaskFileBuffer.add_to_dimension_name_map_global({'time': 'Time', 'depth': 'st_edges_ocean', 'lat': 'yu_ocean', 'lon': 'xu_ocean'})
+    # DaskFileBuffer.add_to_dimension_name_map_global({'time': 'Time', 'depth': 'st_edges_ocean', 'lat': 'yu_ocean', 'lon': 'xu_ocean'})
     if chunk_mode == 'auto':
         chs = 'auto'
     elif chunk_mode == 'specific':
