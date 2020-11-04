@@ -15,6 +15,7 @@ from parcels import ParticleFile
 from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
+from parcels import logger
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -218,6 +219,7 @@ def test_nemo_3D(mode, chunk_mode):
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
+        logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert field_set.gridset.size == 3  # because three different grids in 'auto' mode
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
@@ -243,9 +245,10 @@ def test_pop(mode, chunk_mode):
         assert field_set.gridset.size == 1
         assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'auto':
+        logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert field_set.gridset.size == 3  # because three different grids in 'auto' mode
-        # assert (len(field_set.U.grid.load_chunk) != 1)
-        assert (len(field_set.U.grid.load_chunk) == 1)
+        assert (len(field_set.U.grid.load_chunk) != 1)
+        # assert (len(field_set.U.grid.load_chunk) == 1)
     elif chunk_mode == 'specific':
         assert field_set.gridset.size == 1
         assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
@@ -270,7 +273,8 @@ def test_swash(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
+    elif chunk_mode is 'auto':
+        logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
@@ -282,7 +286,7 @@ def test_swash(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
 def test_globcurrent_2D(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '16KiB'})
+        dask.config.set({'array.chunk-size': '32KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_globcurrent(chunk_mode)
@@ -293,7 +297,8 @@ def test_globcurrent_2D(mode, chunk_mode):
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
+    elif chunk_mode is 'auto':
+        logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(41.0/16.0)) * int(math.ceil(81.0/16.0))))
@@ -317,7 +322,8 @@ def test_ofam_3D(mode, chunk_mode):
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode == 'auto':
+    elif chunk_mode is 'auto':
+        logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
         numblocks = [i for i in field_set.U.grid.chunk_info[1:3]]
@@ -352,8 +358,11 @@ def test_mitgcm(mode, chunk_mode, using_add_field):
     # MITgcm sample file dimensions: time=10, XG=400, YG=200
     if chunk_mode != 'specific_different':
         assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
-    if chunk_mode in [False, 'auto']:
+    if chunk_mode in [False, ]:
         assert (len(field_set.U.grid.load_chunk) == 1)
+    elif chunk_mode in ['auto', ]:
+        logger.warning("{}".format(field_set.U.grid.chunk_info))
+        assert (len(field_set.U.grid.load_chunk) != 1)
     elif 'specific' in chunk_mode:
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(400.0/50.0)) * int(math.ceil(200.0/100.0))))
     if chunk_mode == 'specific_same':

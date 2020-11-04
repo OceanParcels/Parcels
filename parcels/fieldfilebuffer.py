@@ -188,12 +188,16 @@ class DeferredNetcdfFileBuffer(NetcdfFileBuffer):
 
 
 class DaskFileBuffer(NetcdfFileBuffer):
-    _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
-                         'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
-                                   'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
-                                   'Zl', 'Zu', 'level'],
-                         'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
-                         'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
+    # _static_name_maps = {'time': ['time', 'time_count', 'time_counter', 'timer_count', 't'],
+    #                      'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy',
+    #                                'depthz', 'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1',
+    #                                'Zl', 'Zu', 'level'],
+    #                      'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
+    #                      'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG']}
+    _static_name_maps = {'time': [],
+                         'depth': [],
+                         'lat': [],
+                         'lon': []}
     _min_dim_chunksize = 16
 
     """ Class that encapsulates and manages deferred access to file data. """
@@ -271,6 +275,49 @@ class DaskFileBuffer(NetcdfFileBuffer):
             self.dataset = None
         self.chunking_finalized = False
         self.chunk_mapping = None
+
+    @classmethod
+    def add_to_dimension_name_map_global(self, name_map):
+        """
+        [externally callable]
+        This function adds entries to the name map from parcels_dim -> netcdf_dim. This is required if you want to
+        use auto-chunking on large fields whose map parameters are not defined. This function must be called before
+        entering the filebuffer object. Example:
+
+        DaskFileBuffer.add_to_dimension_name_map_global({'lat': 'nydim',
+                                                         'lon': 'nxdim',
+                                                         'time': 'ntdim',
+                                                         'depth': 'nddim'})
+        fieldset = FieldSet(..., chunksize='auto')
+        [...]
+
+        Note that not all parcels dimensions need to be present in 'name_map'.
+        """
+        assert isinstance(name_map, dict)
+        for pcls_dim_name in name_map.keys():
+            if isinstance(name_map[pcls_dim_name], list):
+                for nc_dim_name in name_map[pcls_dim_name]:
+                    self._static_name_maps[pcls_dim_name].append(nc_dim_name)
+            elif isinstance(name_map[pcls_dim_name], str):
+                self._static_name_maps[pcls_dim_name].append(name_map[pcls_dim_name])
+
+    def add_to_dimension_name_map(self, name_map):
+        """
+        [externally callable]
+        This function adds entries to the name map from parcels_dim -> netcdf_dim. This is required if you want to
+        use auto-chunking on large fields whose map parameters are not defined. This function must be called after
+        constructing an filebuffer object and before entering the filebuffer. Example:
+
+        fb = DaskFileBuffer(...)
+        fb.add_to_dimension_name_map({'lat': 'nydim', 'lon': 'nxdim', 'time': 'ntdim', 'depth': 'nddim'})
+        with fb:
+            [do_stuff}
+
+        Note that not all parcels dimensions need to be present in 'name_map'.
+        """
+        assert isinstance(name_map, dict)
+        for pcls_dim_name in name_map.keys():
+            self._static_name_maps[pcls_dim_name].append(name_map[pcls_dim_name])
 
     def _get_available_dims_indices_by_request(self):
         """
