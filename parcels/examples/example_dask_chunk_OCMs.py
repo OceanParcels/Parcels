@@ -71,7 +71,7 @@ def fieldset_from_globcurrent(chunk_mode):
                'V': {'lat': ('lat', 8), 'lon': ('lon', 8)}}
     elif chunk_mode == 'failsafe':  # chunking time but not lat
         chs = {'U': {'time': ('time', 1), 'lat': ('lat', 10), 'lon': ('lon', -1)},
-               'V': {'time': ('time', 1), 'lat': ('lat', -1), 'lon': ('lon', -1) }}
+               'V': {'time': ('time', 1), 'lat': ('lat', -1), 'lon': ('lon', -1)}}
 
     fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, chunksize=chs)
     return fieldset
