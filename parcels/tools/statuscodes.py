@@ -26,6 +26,16 @@ class ErrorCode(object):
     ErrorTimeExtrapolation = 7
 
 
+class DaskChunkingError(RuntimeError):
+    """
+    Error indicating to the user that something with setting up Dask and chunked fieldsets went wrong.
+    """
+
+    def __init__(self, src_class_type, message):
+        msg = "[{}]: {}".format(str(src_class_type), message)
+        super(DaskChunkingError, self).__init__(msg)
+
+
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling in Scipy mode"""
 
