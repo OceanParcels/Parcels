@@ -17,12 +17,13 @@ except:
 from parcels.wrapping.code_compiler import GNUCompiler
 from parcels.particleset_vectorized import ParticleSet
 # from parcels.kernel_vectorized import Kernel
-from parcels.kernel_vec_benchmark import Kernel_Benchmark, Kernel
+from parcels.kernel_vec_benchmark import Kernel_Benchmark
 # from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools.performance_logger import TimingLog, ParamLogging
+from parcels.tools import get_cache_dir, get_package_dir
 
 __all__ = ['ParticleSet_Benchmark']
 
@@ -74,18 +75,18 @@ class ParticleSet_Benchmark(ParticleSet):
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
-        if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
             # Generate and store Kernel
-            if isinstance(pyfunc, Kernel):
-                self._kernel = pyfunc
+            if isinstance(pyfunc, Kernel_Benchmark):
+                self.kernel = pyfunc
             else:
-                self._kernel = self.Kernel(pyfunc)
+                self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
             if self.ptype.uses_jit:
-                self._kernel.remove_lib()
+                self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
-                self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
-                self._kernel.load_lib()
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir()), "."], tmp_dir=get_cache_dir()))
+                self.kernel.load_lib()
 
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
@@ -189,9 +190,9 @@ class ParticleSet_Benchmark(ParticleSet):
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             # ==== compute ==== #
-            if not isinstance(self._kernel, Kernel_Benchmark):
+            if not isinstance(self.kernel, Kernel_Benchmark):
                 self.compute_log.start_timing()
-            self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 # creating new particles equals a memory-io operation
                 if isinstance(self.kernel, Kernel_Benchmark):
@@ -207,7 +208,7 @@ class ParticleSet_Benchmark(ParticleSet):
                     self.mem_io_log.stop_timing()
                     self.mem_io_log.accumulate_timing()
                 next_prelease += self.repeatdt * np.sign(dt)
-            if not isinstance(self._kernel, Kernel_Benchmark):
+            if not isinstance(self.kernel, Kernel_Benchmark):
                 self.compute_log.stop_timing()
             else:
                 self.compute_log.add_aux_measure(self.kernel.compute_timings.sum())
