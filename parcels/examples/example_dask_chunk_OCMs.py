@@ -16,7 +16,7 @@ from parcels import ParticleSet
 from parcels import ScipyParticle
 from parcels import Variable
 from parcels import logger
-from parcels.fieldfilebuffer import DaskFileBuffer
+# from parcels.fieldfilebuffer import DaskFileBuffer
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
