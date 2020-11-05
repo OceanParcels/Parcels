@@ -193,7 +193,7 @@ class ParticleSet_Benchmark(ParticleSet):
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 # creating new particles equals a memory-io operation
-                if isinstance(self._kernel, Kernel_Benchmark):
+                if isinstance(self.kernel, Kernel_Benchmark):
                     self.mem_io_log.start_timing()
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
@@ -202,7 +202,7 @@ class ParticleSet_Benchmark(ParticleSet):
                 for p in pset_new:
                     p.dt = dt
                 self.add(pset_new)
-                if isinstance(self._kernel, Kernel_Benchmark):
+                if isinstance(self.kernel, Kernel_Benchmark):
                     self.mem_io_log.stop_timing()
                     self.mem_io_log.accumulate_timing()
                 next_prelease += self.repeatdt * np.sign(dt)
@@ -213,8 +213,8 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.kernel.compute_timings.reset()
                 self.io_log.add_aux_measure(self.kernel.io_timings.sum())
                 self.kernel.io_timings.reset()
-                self.mem_io_log.add_aux_measure(self._kernel.mem_io_timings.sum())
-                self._kernel.mem_io_timings.reset()
+                self.mem_io_log.add_aux_measure(self.kernel.mem_io_timings.sum())
+                self.kernel.mem_io_timings.reset()
             self.compute_log.accumulate_timing()
             self.nparticle_log.advance_iteration(len(self))
             # ==== end compute ==== #
