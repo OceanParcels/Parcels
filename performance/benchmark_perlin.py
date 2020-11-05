@@ -54,8 +54,8 @@ perlin_persistence=0.3
 a = 1000 * 1e3
 b = 1000 * 1e3
 scalefac = 2.0
-tsteps = 244
-tscale = 1.5
+tsteps = 61
+tscale = 6
 
 # Idea for 4D: perlin3D creates a time-consistent 3D field
 # Thus, we can use skimage to create shifted/rotated/morphed versions
