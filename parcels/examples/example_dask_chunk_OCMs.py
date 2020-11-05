@@ -275,7 +275,7 @@ def test_globcurrent_2D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode is 'auto':
+    elif chunk_mode == 'auto':
         logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
@@ -342,7 +342,7 @@ def test_swash(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) == len(field_set.W.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode is 'auto':
+    elif chunk_mode == 'auto':
         logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
@@ -374,7 +374,7 @@ def test_ofam_3D(mode, chunk_mode):
     assert (len(field_set.U.grid.load_chunk) == len(field_set.V.grid.load_chunk))
     if chunk_mode is False:
         assert (len(field_set.U.grid.load_chunk) == 1)
-    elif chunk_mode is 'auto':
+    elif chunk_mode == 'auto':
         logger.warning("{}".format(field_set.U.grid.chunk_info))
         assert (len(field_set.U.grid.load_chunk) != 1)
     elif chunk_mode == 'specific':
