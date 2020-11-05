@@ -23,7 +23,7 @@ from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools import idgen
-from parcels.kernel_node_benchmark import Kernel_Benchmark, Kernel
+from parcels.kernel_node_benchmark import Kernel_Benchmark
 from parcels.tools.performance_logger import TimingLog, ParamLogging
 
 __all__ = ['ParticleSet_Benchmark']
