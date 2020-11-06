@@ -335,10 +335,11 @@ if __name__ == "__main__":
         #endtime = ostime.time()
         endtime = ostime.process_time()
 
-    size_Npart = len(pset.nparticle_log)
-    Npart = pset.nparticle_log.get_param(size_Npart-1)
     if MPI:
         mpi_comm = MPI.COMM_WORLD
+        mpi_comm.Barrier()
+        size_Npart = len(pset.nparticle_log)
+        Npart = pset.nparticle_log.get_param(size_Npart - 1)
         Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
             if size_Npart>0:
@@ -347,6 +348,8 @@ if __name__ == "__main__":
             avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
             sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
     else:
+        size_Npart = len(pset.nparticle_log)
+        Npart = pset.nparticle_log.get_param(size_Npart-1)
         if size_Npart > 0:
             sys.stdout.write("final # particles: {}\n".format( Npart ))
         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))

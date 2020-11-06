@@ -37,7 +37,8 @@ class TimingLog():
         return self._times_steps
 
     def get_value(self, index):
-        return self._times_steps[index]
+        N = len(self._times_steps)
+        return self._times_steps[min(max(index, 0), N-1)]
 
     def start_timing(self):
         if MPI:
@@ -145,7 +146,8 @@ class ParamLogging():
         return self._params
 
     def get_param(self, index):
-        return self._params[index]
+        N = len(self._params)
+        return self._params[min(max(index, 0), N-1)]
 
     def __len__(self):
         return len(self._samples)
