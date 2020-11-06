@@ -182,6 +182,9 @@ class Kernel(object):
             self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
             self.log_file = "%s.log" % basename
 
+    def __del__(self):
+        pass
+
     @property
     def _cache_key(self):
         field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
