@@ -503,8 +503,6 @@ class FieldSet(object):
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
                                            chunksize=chunksize, gridindexingtype='mitgcm', **kwargs)
-        if hasattr(fieldset, 'W'):
-            fieldset.W.set_scaling_factor(-1.)
         return fieldset
 
     @classmethod
