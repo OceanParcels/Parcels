@@ -4,11 +4,13 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, StateCode, OperationCode, ErrorCode
 from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
 # from parcels.kernel_benchmark import Kernel_Benchmark as Kernel
 from parcels.field import VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
+# from parcels import rng as random
+from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import math
 from argparse import ArgumentParser
@@ -20,9 +22,6 @@ import fnmatch
 import gc
 import os
 import time as ostime
-import matplotlib.pyplot as plt
-
-from parcels import rng as random
 
 import sys
 try:
@@ -185,11 +184,11 @@ class AgeParticle_SciPy(StommelParticleS):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time+random.uniform(.0, fieldset.life_expectancy)*math.sqrt(3.0/2.0)
+        particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy)*math.sqrt(3.0/2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
-    if particle.state == ErrorCode.Evaluate:
+    if particle.state == StateCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
 
     if particle.age > particle.life_expectancy:
@@ -246,7 +245,7 @@ if __name__=='__main__':
     #dt_minutes = 20
     #random.seed(123456)
     nowtime = datetime.datetime.now()
-    random.seed(nowtime.microsecond)
+    ParcelsRandom.seed(nowtime.microsecond)
 
     odir = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini

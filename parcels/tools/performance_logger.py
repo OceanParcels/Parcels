@@ -6,6 +6,7 @@ try:
 except:
     MPI = None
 
+
 class TimingLog():
     stime = 0
     etime = 0

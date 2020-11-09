@@ -1,20 +1,19 @@
 from parcels import FieldSet, JITParticle, ScipyParticle, AdvectionRK4_3D, AdvectionRK4, ErrorCode, ParticleFile, Variable, Field, NestedField, VectorField, timer
 from parcels import ParticleSet_Benchmark
-from parcels.kernels import seawaterdensity
+from parcels.kernels import TEOSseawaterdensity as seawaterdensity
 from argparse import ArgumentParser
 from datetime import timedelta as delta
 from datetime import  datetime
 import time as ostime
-import numpy as np
-import math
+# import numpy as np
 from glob import glob
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import fnmatch
-import warnings
-import pickle                                                      
-import matplotlib.ticker as mtick
+# import warnings
+# import pickle
+# import matplotlib.ticker as mtick
 from numpy import *
-import scipy.linalg
+# import scipy.linalg
 import math as math
 import gc
 warnings.filterwarnings("ignore")
