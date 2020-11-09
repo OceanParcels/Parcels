@@ -39,7 +39,7 @@ class ParticleSet_Benchmark(ParticleSet):
         self.mem_log = ParamLogging()
         self.process = psutil.Process(os.getpid())
 
-    #@profile
+    # @profile
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -233,7 +233,7 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.mem_io_log.add_aux_measure(self.kernel.mem_io_timings.sum())
                 self.kernel.mem_io_timings.reset()
             self.compute_log.accumulate_timing()
-            self.nparticle_log.advance_iteration(len(self))
+            self.nparticle_log.advance_iteration(self.size)
             # ==== end compute ==== #
             if abs(time-next_output) < tol:  # ==== IO ==== #
                 if output_file:
@@ -301,9 +301,9 @@ class ParticleSet_Benchmark(ParticleSet):
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
         return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
-                      delete_cfiles=delete_cfiles)
+                                delete_cfiles=delete_cfiles)
 
-    def plot_and_log(self, total_times = None, compute_times = None, io_times = None, plot_times = None, memory_used = None, nparticles = None, target_N = 1, imageFilePath = "", odir = os.getcwd()):
+    def plot_and_log(self, total_times=None, compute_times=None, io_times=None, plot_times=None, memory_used=None, nparticles=None, target_N=1, imageFilePath="", odir=os.getcwd()):
         # == do something with the log-arrays == #
         if total_times is None or type(total_times) not in [list, dict, np.ndarray]:
             total_times = self.total_log.get_values()
@@ -344,7 +344,7 @@ class ParticleSet_Benchmark(ParticleSet):
         plot_drawt = (plot_times * t_scaler).tolist()
         plot_npart = (nparticles * npart_scaler).tolist()
         plot_mem = []
-        if memory_used is not None and len(memory_used)>1:
+        if memory_used is not None and len(memory_used) > 1:
             plot_mem = (memory_used * mem_scaler).tolist()
 
         do_iot_plot = True
@@ -398,15 +398,15 @@ class ParticleSet_Benchmark(ParticleSet):
             ncores = 1
             if MPI:
                 mpi_comm = MPI.COMM_WORLD
-                ncores =  mpi_comm.Get_size()
+                ncores = mpi_comm.Get_size()
             header_string = "target_N, start_N, final_N, avg_N, ncores, avg_kt_total[s], avg_kt_compute[s], avg_kt_io[s], avg_kt_plot[s], cum_t_total[s], cum_t_compute[s], com_t_io[s], cum_t_plot[s], max_mem[MB]\n"
             f.write(header_string)
             data_string = "{}, {}, {}, {}, {}, ".format(target_N, nparticles_t0, nparticles_tN, nparticles.mean(), ncores)
-            data_string+= "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), io_times.mean(), plot_times.mean())
+            data_string += "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), io_times.mean(), plot_times.mean())
             max_mem = 0
-            if memory_used is not None and len(memory_used)>1:
+            if memory_used is not None and len(memory_used) > 1:
                 memory_used = np.floor(memory_used / (1024*1024))
                 memory_used = memory_used.astype(dtype=np.uint32)
                 max_mem = memory_used.max()
-            data_string+= "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
+            data_string += "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
             f.write(data_string)
