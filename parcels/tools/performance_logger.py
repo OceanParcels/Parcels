@@ -38,7 +38,10 @@ class TimingLog():
 
     def get_value(self, index):
         N = len(self._times_steps)
-        return self._times_steps[min(max(index, 0), N-1)]
+        result = 0
+        if N > 0:
+            result = self._times_steps[min(max(index, 0), N - 1)]
+        return result
 
     def start_timing(self):
         if MPI:
@@ -105,11 +108,11 @@ class TimingLog():
             mpi_rank = mpi_comm.Get_rank()
             if mpi_rank == 0:
                 result = np.array(self._times_steps).sum()
-                return result
             else:
-                return 0
+                result = 0
         else:
             result = np.array(self._times_steps).sum()
+        return result
 
     def reset(self):
         if self._times_steps is not None and len(self._times_steps) > 0:
@@ -147,19 +150,26 @@ class ParamLogging():
 
     def get_param(self, index):
         N = len(self._params)
-        return self._params[min(max(index, 0), N-1)]
+        result = 0
+        if N > 0:
+            result = self._params[min(max(index, 0), N-1)]
+        return result
 
     def __len__(self):
         return len(self._samples)
 
     def advance_iteration(self, param):
         if MPI:
-            mpi_comm = MPI.COMM_WORLD
-            mpi_rank = mpi_comm.Get_rank()
-            if mpi_rank == 0:
-                self._params.append(param)
-                self._samples.append(self._iter)
-                self._iter += 1
+            # mpi_comm = MPI.COMM_WORLD
+            # mpi_rank = mpi_comm.Get_rank()
+
+            self._params.append(param)
+            self._samples.append(self._iter)
+            self._iter += 1
+            # if mpi_rank == 0:
+            #     self._params.append(param)
+            #     self._samples.append(self._iter)
+            #     self._iter += 1
         else:
             self._params.append(param)
             self._samples.append(self._iter)
