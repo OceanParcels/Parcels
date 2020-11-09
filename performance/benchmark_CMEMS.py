@@ -6,9 +6,10 @@ Date: 11-02-2020
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4_3D
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
 from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
-from parcels import rng as random
 from parcels.field import VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
+# from parcels import rng as random
+from parcels import ParcelsRandom as random
 from datetime import timedelta as delta
 from datetime import datetime
 from argparse import ArgumentParser

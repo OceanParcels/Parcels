@@ -5,10 +5,12 @@ Date: 11-02-2020
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, StateCode, OperationCode, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
+from parcels.particleset_benchmark import ParticleSet_Benchmark as BenchmarkParticleSet
+from parcels.particleset import ParticleSet as DryParticleSet
 from parcels.field import Field, VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
-from parcels import rng as random
+# from parcels import rng as random
+from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import math
 from argparse import ArgumentParser
@@ -20,7 +22,7 @@ import sys
 import gc
 import os
 import time as ostime
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from parcels.tools import perlin3d
 from parcels.tools import perlin2d
 
@@ -54,8 +56,8 @@ perlin_persistence=0.3
 a = 1000 * 1e3
 b = 1000 * 1e3
 scalefac = 2.0
-tsteps = 244
-tscale = 1.5
+tsteps = 61
+tscale = 6
 
 # Idea for 4D: perlin3D creates a time-consistent 3D field
 # Thus, we can use skimage to create shifted/rotated/morphed versions
@@ -170,7 +172,7 @@ class AgeParticle_SciPy(ScipyParticle):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time+random.uniform(.0, fieldset.life_expectancy)*math.sqrt(3.0/2.0)
+        particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy)*math.sqrt(3.0/2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -199,7 +201,12 @@ if __name__=='__main__':
     parser.add_argument("-sN", "--start_n_particles", dest="start_nparticles", type=str, default="96", help="(optional) number of particles generated per release cycle (if --rt is set) (default: 96)")
     parser.add_argument("-m", "--mode", dest="compute_mode", choices=['jit','scipy'], default="jit", help="computation mode = [JIT, SciPp]")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
+    parser.add_argument("--dry", dest="dryrun", action="store_true", default=False, help="Start dry run (no benchmarking and its classes")
     args = parser.parse_args()
+
+    ParticleSet = BenchmarkParticleSet
+    if args.dryrun:
+        ParticleSet = DryParticleSet
 
     imageFileName=args.imageFileName
     periodicFlag=args.periodic
@@ -229,7 +236,7 @@ if __name__=='__main__':
     #dt_minutes = 20
     #random.seed(123456)
     nowtime = datetime.datetime.now()
-    random.seed(nowtime.microsecond)
+    ParcelsRandom.seed(nowtime.microsecond)
 
     odir = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
@@ -372,34 +379,35 @@ if __name__=='__main__':
     else:
         endtime = ostime.process_time()
 
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        # mpi_comm.Barrier()
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart-1)
-        Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
-        if mpi_comm.Get_rank() == 0:
-            if size_Npart>0:
+    if not args.dryrun:
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            # mpi_comm.Barrier()
+            size_Npart = len(pset.nparticle_log)
+            Npart = pset.nparticle_log.get_param(size_Npart-1)
+            Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
+            if mpi_comm.Get_rank() == 0:
+                if size_Npart>0:
+                    sys.stdout.write("final # particles: {}\n".format( Npart ))
+                sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
+                avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
+                sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
+        else:
+            size_Npart = len(pset.nparticle_log)
+            Npart = pset.nparticle_log.get_param(size_Npart-1)
+            if size_Npart > 0:
                 sys.stdout.write("final # particles: {}\n".format( Npart ))
-            sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
+            sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
             avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
-            sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
-    else:
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart-1)
-        if size_Npart > 0:
-            sys.stdout.write("final # particles: {}\n".format( Npart ))
-        sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
-        avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
-        sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
+            sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
 
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
-        Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
-        if mpi_comm.Get_rank() == 0:
-            pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir)
-    else:
-        pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir)
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
+            Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
+            if mpi_comm.Get_rank() == 0:
+                pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir)
+        else:
+            pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir)
 
 
