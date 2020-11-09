@@ -494,7 +494,8 @@ class FieldSet(object):
                |                                             |
                |                                             |
                |_________________V[k,j,i]____________________|
-            (For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations)
+           For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
+           Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
