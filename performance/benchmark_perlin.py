@@ -232,14 +232,19 @@ if __name__=='__main__':
     random.seed(nowtime.microsecond)
 
     odir = ""
+    compute_system = "<noname>"
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         # odir = "/scratch/{}/experiments".format(os.environ['USER'])
         odir = "/scratch/{}/experiments".format("ckehl")
+        compute_system = "GEMINI"
     elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
-        CARTESIUS_SCRATCH_USERNAME = 'ckehl'
+        CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         odir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
+        compute_system = "CARTESIUS"
     else:
+        compute_system = "MEDUSA"
         odir = "/var/scratch/experiments"
+    print("uname: {}, system: {}, output dir: {}".format(os.uname()[1], compute_system, odir))
 
     func_time = []
     mem_used_GB = []

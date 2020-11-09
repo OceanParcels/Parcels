@@ -119,7 +119,7 @@ if __name__=='__main__':
         datahead = "/data/oceanparcels/input_data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
     elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
-        CARTESIUS_SCRATCH_USERNAME = 'ckehl'
+        CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/galapagos".format(CARTESIUS_SCRATCH_USERNAME)
         odir = os.path.join(headdir, "/BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
