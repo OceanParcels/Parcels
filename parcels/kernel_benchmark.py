@@ -1,49 +1,43 @@
-import _ctypes
-import inspect
-import math  # noqa
-import random  # noqa
-import re
-import time
+# import _ctypes
+# import inspect
+# import math  # noqa
+# import random  # noqa
+# import re
+# import time
 from ast import FunctionDef
-from ast import parse
-from copy import deepcopy
+# from ast import parse
+# from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
 from ctypes import c_int
-from ctypes import c_void_p
-from hashlib import md5
-from os import path
-from os import remove
-from sys import platform
-from sys import version_info
+# from ctypes import c_void_p
+# from hashlib import md5
+# from os import path
+# from os import remove
+# from sys import platform
+# from sys import version_info
 
 import numpy as np
-import numpy.ctypeslib as npct
+# import numpy.ctypeslib as npct
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-from parcels.codegenerator import KernelGenerator
-from parcels.codegenerator import LoopGenerator
-from parcels.compiler import get_cache_dir
-from parcels.field import Field
+# from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
-from parcels.tools.statuscodes import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
 
 from parcels.kernel import Kernel
 from parcels.tools.performance_logger import TimingLog
 
 __all__ = ['Kernel_Benchmark']
-
 
 
 class Kernel_Benchmark(Kernel):
@@ -83,12 +77,12 @@ class Kernel_Benchmark(Kernel):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-        self._io_timings.start_timing()
         if len(pset) > 0 and pset.particle_data['xi'].ndim == 2 and pset.fieldset is not None:
             assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
                 'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
         if pset.fieldset is not None:
+            self._io_timings.start_timing()
             for g in pset.fieldset.gridset.grids:
                 g.cstruct = None  # This force to point newly the grids from Python to C
 
@@ -122,14 +116,16 @@ class Kernel_Benchmark(Kernel):
             self._mem_io_timings.accumulate_timing()
 
         self._compute_timings.start_timing()
-        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
+        fargs = []
+        if pset.fieldset is not None:
+            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_double(f) for f in self.const_args.values()]
         # particle_data = pset._particle_data.ctypes.data_as(c_void_p)
         particle_data = byref(pset.ctypes_struct)
         result = self._function(c_int(len(pset)), particle_data,
-                       c_double(endtime),
-                       c_double(dt),
-                       *fargs)
+                                c_double(endtime),
+                                c_double(dt),
+                                *fargs)
         self._compute_timings.stop_timing()
         self._compute_timings.accumulate_timing()
 
@@ -179,7 +175,7 @@ class Kernel_Benchmark(Kernel):
             sign_end_part = np.sign(endtime - particles.time)
 
             # Compute min/max dt for first timestep
-            #dt_pos = min(abs(p.dt), abs(endtime - p.time))
+            # dt_pos = min(abs(p.dt), abs(endtime - p.time))
             dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
@@ -277,9 +273,9 @@ class Kernel_Benchmark(Kernel):
                                decorator_list=[], lineno=1, col_offset=0)
         delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=None,
-                      funcname=funcname, funccode=self.funccode + kernel.funccode,
-                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
-                      delete_cfiles=delete_cfiles)
+                                funcname=funcname, funccode=self.funccode + kernel.funccode,
+                                py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
+                                delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
         if not isinstance(kernel, Kernel):
