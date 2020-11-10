@@ -37,6 +37,7 @@ from parcels.field import VectorField
 from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.kernels.advection import AdvectionAnalytical
+import parcels.rng as ParcelsRandom  # noqa
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
@@ -116,6 +117,7 @@ class Kernel(object):
             try:
                 user_ctx = stack[-1][0].f_globals
                 user_ctx['math'] = globals()['math']
+                user_ctx['ParcelsRandom'] = globals()['ParcelsRandom']
                 user_ctx['random'] = globals()['random']
                 user_ctx['StateCode'] = globals()['StateCode']
                 user_ctx['OperationCode'] = globals()['OperationCode']
