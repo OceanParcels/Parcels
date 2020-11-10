@@ -892,6 +892,7 @@ class Field(object):
             return val
         elif self.interp_method == 'linear_invdist_land_tracer':
             land = np.isclose(self.data[ti, yi:yi+2, xi:xi+2], 0.)
+            land |= np.isnan(self.data[ti, yi:yi+2, xi:xi+2])
             nb_land = np.sum(land)
             if nb_land == 4:
                 return 0
@@ -941,6 +942,7 @@ class Field(object):
             return (1-zeta) * f0 + zeta * f1
         elif self.interp_method == 'linear_invdist_land_tracer':
             land = np.isclose(self.data[ti, zi:zi+2, yi:yi+2, xi:xi+2], 0.)
+            land |= np.isnan(self.data[ti, zi:zi+2, yi:yi+2, xi:xi+2])
             nb_land = np.sum(land)
             if nb_land == 8:
                 return 0
