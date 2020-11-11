@@ -155,14 +155,14 @@ class Field(object):
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
-            self.data[np.isnan(self.data)] = 0.
+            lib = np if isinstance(self.data, np.ndarray) else da
+            self.data[lib.isnan(self.data)] = 0.
             if self.vmin is not None:
                 self.data[self.data < self.vmin] = 0.
             if self.vmax is not None:
                 self.data[self.data > self.vmax] = 0.
 
             if self.grid._add_last_periodic_data_timestep:
-                lib = np if isinstance(self.data, np.ndarray) else da
                 self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
 
         self._scaling_factor = None
