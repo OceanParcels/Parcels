@@ -72,7 +72,7 @@ class Field(object):
            The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
     :param chunkdims_name_map (opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
-           required only if currently incompatible OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
+           required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
 
     For usage examples see the following tutorials:
 
@@ -177,7 +177,7 @@ class Field(object):
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
-        self.field_chunksize = kwargs.pop('field_chunksize', None)
+        self.chunksize = kwargs.pop('chunksize', None)
         self.netcdf_chunkdims_name_map = kwargs.pop('chunkdims_name_map', None)
         self.grid.depth_field = kwargs.pop('depth_field', None)
 
@@ -276,7 +276,7 @@ class Field(object):
                deferred_load=False is however sometimes necessary for plotting the fields.
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
-        :param field_chunksize: size of the chunks in dask loading
+        :param chunksize: size of the chunks in dask loading
 
         For usage examples see the following tutorial:
 
@@ -375,9 +375,8 @@ class Field(object):
                                                         dimensions, indices, netcdf_engine)
             kwargs['dataFiles'] = dataFiles
 
-        field_chunksize = kwargs.get('field_chunksize', None)
-        if field_chunksize and grid.master_chunksize is None:
-            grid.master_chunksize = field_chunksize
+        chunksize = kwargs.get('chunksize', None)
+        grid.chunksize = chunksize
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
@@ -388,7 +387,7 @@ class Field(object):
         if grid.time.size <= 3 or deferred_load is False:
             deferred_load = False
 
-        if field_chunksize not in [False, None]:
+        if chunksize not in [False, None]:
             if deferred_load:
                 _field_fb_class = DeferredDaskFileBuffer
             else:
@@ -406,7 +405,7 @@ class Field(object):
             for tslice, fname in zip(grid.timeslices, data_filenames):
                 with _field_fb_class(fname, dimensions, indices, netcdf_engine,
                                      interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                     field_chunksize=field_chunksize) as filebuffer:
+                                     chunksize=chunksize) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -498,11 +497,11 @@ class Field(object):
             data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
         if self.grid.xdim == 1 and len(data.shape) < 4:
             if lib == da:
-                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use field_chunksize=None')
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
             if lib == da:
-                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use field_chunksize=None')
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
@@ -554,6 +553,8 @@ class Field(object):
 
         """
         self.grid.depth_field = field
+        if self.grid != field.grid:
+            field.grid.depth_field = field
 
     def __getitem__(self, key):
         # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
@@ -1353,7 +1354,7 @@ class Field(object):
                                           netcdf_engine=self.netcdf_engine, timestamp=timestamp,
                                           interp_method=self.interp_method,
                                           data_full_zdim=self.data_full_zdim,
-                                          field_chunksize=self.field_chunksize,
+                                          chunksize=self.chunksize,
                                           rechunk_callback_fields=self.chunk_setup,
                                           chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
@@ -1402,13 +1403,18 @@ class VectorField(object):
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
-            assert self.U.grid is self.V.grid, (
-                'Grids of U and V are not the same.')
+            assert self._check_grid_dimensions(U.grid, V.grid), (
+                'Dimensions of U and V are not the same.')
             if self.vector_type == '3D':
                 assert self.W.interp_method == 'cgrid_velocity', (
                     'Interpolation methods of U and W are not the same.')
-                assert self.W.grid is self.U.grid, (
-                    'Grids of U and W are not the same.')
+                assert self._check_grid_dimensions(U.grid, W.grid), (
+                    'Dimensions of U and W are not the same.')
+
+    @staticmethod
+    def _check_grid_dimensions(grid1, grid2):
+        return (np.allclose(grid1.lon, grid2.lon) and np.allclose(grid1.lat, grid2.lat)
+                and np.allclose(grid1.depth, grid2.depth) and np.allclose(grid1.time_full, grid2.time_full))
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
