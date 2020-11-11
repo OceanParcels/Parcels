@@ -4,7 +4,7 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4_3D
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, StateCode, OperationCode, ErrorCode
 from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.field import VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
@@ -85,7 +85,7 @@ def initialize(particle, fieldset, time):
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
-    if particle.state == ErrorCode.Evaluate:
+    if particle.state == StateCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
     if particle.age > particle.life_expectancy:
         particle.delete()
@@ -142,7 +142,7 @@ if __name__=='__main__':
         odir = headdir
         datahead = "/data/oceanparcels/input_data"
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
-    elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehl'
         headdir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
         odir = headdir
