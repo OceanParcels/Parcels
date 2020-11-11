@@ -59,6 +59,8 @@ class ParticleCollectionSOA(ParticleCollection):
             pid_orig = np.arange(lon.size)
         pid = pid_orig + pclass.lastID
 
+        self._sorted = np.all(np.diff(pid) >= 0)
+
         # -- We expect the overarching particle set to take care of the depth-is-none-so-calc-from-field case -- #
         # if depth is None:
         #     mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
@@ -295,10 +297,17 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().get_single_by_ID(id)
 
-        index = bisect_left(self._data['id'], id)
-        if index == len(self._data['id']) or self._data['id'][index] != id:
-            raise ValueError("Trying to access a particle with a non-existing"
-                             f" ID: {id}.")
+        # Use binary search if the collection is sorted, linear search otherwise
+        index = -1
+        if self._sorted:
+            index = bisect_left(self._data['id'], id)
+            if index == len(self._data['id']) or self._data['id'][index] != id:
+                raise ValueError("Trying to access a particle with a non-existing"
+                                 f" ID: {id}.")
+        else:
+            # TODO: implement linear search
+            raise NotImplementedError
+
         return self.get_single_by_index(index)
 
     def get_same(self, same_class):
@@ -357,9 +366,16 @@ class ParticleCollectionSOA(ParticleCollection):
         if type(ids) is dict:
             ids = ids.values()
 
-        # This is efficient if len(ids) << self.len
-        sorted_ids = np.sort(np.array(ids))
-        indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        # Use binary search if the collection is sorted, linear search otherwise
+        indices = np.empty(len(ids), dtype=np.int32)
+        if self._sorted:
+            # This is efficient if len(ids) << self.len
+            sorted_ids = np.sort(np.array(ids))
+            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        else:
+            # TODO: implement linear search
+            raise NotImplementedError
+
         return self.get_multi_by_indices(indices)
 
     def _recursive_ID_lookup(self, low, high, sublist):
@@ -418,6 +434,8 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().add_same(same_class)
 
+        # TODO: check if same_class is sorted, if so, determine order
+        # of concatenation.
         for d in self._data:
             self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
 
@@ -509,10 +527,18 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().delete_by_ID(id)
 
-        index = bisect_left(self._data['id'], id)
-        if index == len(self._data['id']) or self._data['id'][index] != id:
-            raise ValueError("Trying to delete a particle with a non-existing"
-                             f" ID: {id}.")
+        # Use binary search if the collection is sorted, linear search otherwise
+        index = -1
+        if self._sorted:
+            index = bisect_left(self._data['id'], id)
+            if index == len(self._data['id']) or \
+               self._data['id'][index] != id:
+                raise ValueError("Trying to delete a particle with a non-"
+                                 f"existing ID: {id}.")
+        else:
+            # TODO: implement linear search
+            raise NotImplementedError
+
         self.delete_by_index(index)
 
     def remove_single_by_index(self, index):
@@ -557,10 +583,18 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().remove_single_by_ID(id)
 
-        index = bisect_left(self._data['id'], id)
-        if index == len(self._data['id']) or self._data['id'][index] != id:
-            raise ValueError("Trying to remove a particle with a non-existing"
-                             f" ID: {id}.")
+        # Use binary search if the collection is sorted, linear search otherwise
+        index = -1
+        if self._sorted:
+            index = bisect_left(self._data['id'], id)
+            if index == len(self._data['id']) or \
+               self._data['id'][index] != id:
+                raise ValueError("Trying to remove a particle with a non-"
+                                 f"existing ID: {id}.")
+        else:
+            # TODO: implement linear search
+            raise NotImplementedError
+
         self.remove_single_by_index(index)
 
     def remove_same(self, same_class):
@@ -618,9 +652,16 @@ class ParticleCollectionSOA(ParticleCollection):
         if type(ids) is dict:
             ids = ids.values()
 
-        # This is efficient if len(ids) << self.len
-        sorted_ids = np.sort(np.array(ids))
-        indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        # Use binary search if the collection is sorted, linear search otherwise
+        indices = np.empty(len(ids), dtype=np.int32)
+        if self._sorted:
+            # This is efficient if len(ids) << self.len
+            sorted_ids = np.sort(np.array(ids))
+            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
+        else:
+            # TODO: implement linear search
+            raise NotImplementedError
+
         self.remove_multi_by_indices(indices)
 
     # ==== already user-exposed ==== #
