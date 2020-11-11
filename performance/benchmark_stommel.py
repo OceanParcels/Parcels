@@ -252,7 +252,8 @@ if __name__=='__main__':
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         # odir = "/scratch/{}/experiments".format(os.environ['USER'])
         odir = "/scratch/{}/experiments".format("ckehl")
-    elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+    # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         odir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
     else:

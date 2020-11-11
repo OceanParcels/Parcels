@@ -141,7 +141,8 @@ if __name__=='__main__':
         odir = headdir
         datahead = "/data/oceanparcels/input_data"
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
-    elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+    # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
         odir = headdir
