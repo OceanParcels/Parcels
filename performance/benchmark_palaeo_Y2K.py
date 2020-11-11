@@ -7,9 +7,9 @@ Created on Fri Oct 13 15:31:22 2017
 import itertools
 
 from parcels import (FieldSet, JITParticle, AdvectionRK4_3D,
-                     Field, ErrorCode, ParticleFile, Variable)
+                     Field, ParticleFile, Variable, StateCode, OperationCode, ErrorCode)
 # from parcels import ParticleSet
-from parcels import ParticleSet_Benchmark
+from parcels.particleset_benchmark import ParticleSet_Benchmark
 
 from argparse import ArgumentParser
 from datetime import timedelta as delta
@@ -159,7 +159,7 @@ def Sink(particle, fieldset, time):
         particle.delete()
 
 def Age(particle, fieldset, time):
-    if particle.state == ErrorCode.Evaluate:
+    if particle.state == StateCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
 
 def DeleteParticle(particle, fieldset, time):
@@ -211,7 +211,7 @@ if __name__ == "__main__":
         datahead = "/data/oceanparcels/input_data"
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
-    elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
+    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehl'
         headdir = "/scratch/shared/{}/experiments/palaeo-parcels".format(CARTESIUS_SCRATCH_USERNAME)
         odir = os.path.join(headdir, "/BENCHres")
