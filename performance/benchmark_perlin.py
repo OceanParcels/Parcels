@@ -240,7 +240,7 @@ if __name__=='__main__':
     # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
-        odir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
+        odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
         compute_system = "CARTESIUS"
     else:
         compute_system = "MEDUSA"
