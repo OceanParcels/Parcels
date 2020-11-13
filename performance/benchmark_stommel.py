@@ -253,7 +253,7 @@ if __name__=='__main__':
         odir = "/scratch/{}/experiments".format("ckehl")
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehl'
-        odir = "/scratch/shared/{}/experiments/parcels".format(CARTESIUS_SCRATCH_USERNAME)
+        odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
     else:
         odir = "/var/scratch/experiments"
 
