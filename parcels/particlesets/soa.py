@@ -3,7 +3,7 @@ import numpy as np
 from .collections import ParticleCollection
 from .iterators import BaseParticleAccessor
 from .iterators import BaseParticleCollectionIterator
-from parcels.particle import ScipyParticle, JITParticle
+from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
 from parcels.tools.loggers import logger
 from parcels.tools.statuscodes import OperationCode

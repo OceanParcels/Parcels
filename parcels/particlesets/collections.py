@@ -289,7 +289,7 @@ class Collection(ABC):
         both collections. The fact that they are of the same ParticleCollection's derivative simplifies
         parsing and concatenation.
         """
-        assert same_class is not None, "Trying to add another {}} to this one, but the other one is None - invalid operation.".format(type(self))
+        assert same_class is not None, "Trying to add another {} to this one, but the other one is None - invalid operation.".format(type(self))
         assert type(same_class) is type(self)
 
     @abstractmethod

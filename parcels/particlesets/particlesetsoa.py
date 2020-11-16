@@ -1,4 +1,4 @@
-from ctypes import Structure, POINTER
+from ctypes import Structure, POINTER  # noqa
 import time as time_module
 from datetime import date
 from datetime import datetime
@@ -7,10 +7,10 @@ from datetime import timedelta as delta
 import sys
 import numpy as np
 import xarray as xr
-from operator import attrgetter
+from operator import attrgetter  # noqa
 
 from parcels.compiler import GNUCompiler
-from parcels.field import Field
+from parcels.field import Field  # noqa
 from parcels.grid import GridCode
 from parcels.kernel import Kernel
 from parcels.kernels.advection import AdvectionRK4
@@ -27,7 +27,7 @@ except:
     MPI = None
 if MPI:
     try:
-        from sklearn.cluster import KMeans
+        from sklearn.cluster import KMeans  # noqa
     except:
         raise EnvironmentError('sklearn needs to be available if MPI is installed. '
                                'See http://oceanparcels.org/#parallel_install for more information')
@@ -307,6 +307,7 @@ class ParticleSetSOA(BaseParticleSet):
             eta = np.random.uniform(size=len(inds))
             j, i = np.unravel_index(inds, p_interior.shape)
             grid = start_field.grid
+            lon, lat = []
             if grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
                 lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
                 lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
@@ -323,6 +324,7 @@ class ParticleSetSOA(BaseParticleSet):
                     xsi*(1-eta) * grid.lat[j, i+1] +\
                     xsi*eta * grid.lat[j+1, i+1] +\
                     (1-xsi)*eta * grid.lat[j+1, i]
+            return list(lon), list(lat)
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
@@ -513,7 +515,7 @@ class ParticleSetSOA(BaseParticleSet):
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
         # Method forward
-        remove_indices(np.where(indices))
+        self.remove_indices(np.where(indices))
 
     # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
