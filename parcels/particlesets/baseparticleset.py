@@ -1,11 +1,10 @@
 import numpy as np
-import inspect
+import inspect  # noqa
 from abc import ABC
 from abc import abstractmethod
 import warnings
 
-from parcels.tools.statuscodes import OperationCode
-from .collections import ParticleCollection
+from parcels.tools.statuscodes import OperationCode  # noqa
 from parcels.field import NestedField
 from parcels.field import SummedField
 import progressbar
