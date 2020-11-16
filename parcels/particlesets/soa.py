@@ -290,10 +290,8 @@ class ParticleCollectionSOA(ParticleCollection):
         In cases where a get-by-ID would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-index.
 
-        Note that this implementation assumes that IDs of particles are strictly increasing with increasing index. So
-        a particle with a larger index will always have a larger ID as well. The assumption holds for this datastructure
-        as new particles always get a larger ID than any existing particle (IDs are not recycled) and their data are
-        appended at the end of the list (largest index). This allows for the use of binary search in the look-up.
+        This function uses binary search if we know the ID list to be sorted, and linear search otherwise. We assume
+        IDs are unique.
         """
         super().get_single_by_ID(id)
 
@@ -305,8 +303,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 raise ValueError("Trying to access a particle with a non-existing"
                                  f" ID: {id}.")
         else:
-            # TODO: implement linear search
-            raise NotImplementedError
+            index = np.where(self._data['id'] == id)[0][0]
 
         return self.get_single_by_index(index)
 
@@ -373,8 +370,7 @@ class ParticleCollectionSOA(ParticleCollection):
             sorted_ids = np.sort(np.array(ids))
             indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
         else:
-            # TODO: implement linear search
-            raise NotImplementedError
+            indices = np.where(np.in1d(self._data['id'], ids))[0]
 
         return self.get_multi_by_indices(indices)
 
@@ -434,10 +430,16 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().add_same(same_class)
 
-        # TODO: check if same_class is sorted, if so, determine order
-        # of concatenation.
-        for d in self._data:
-            self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
+        # Determine order of concatenation and update the sorted flag
+        if self._sorted and same_class._sorted \
+           and self._data['id'][0] > same_class._data['id'][-1]:
+            for d in self._data:
+                self._data[d] = np.concatenate((same_class._data[d]), self._data[d])
+        else:
+            if not (same_class._sorted and self._data['id'][-1] < same_class._data['id'][0]):
+                self._sorted = False
+            for d in self._data:
+                self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
 
     # ==== already user-exposed ==== #
     def __iadd__(self, same_class):
@@ -536,8 +538,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 raise ValueError("Trying to delete a particle with a non-"
                                  f"existing ID: {id}.")
         else:
-            # TODO: implement linear search
-            raise NotImplementedError
+            index = np.where(self._data['id'] == id)[0][0]
 
         self.delete_by_index(index)
 
@@ -592,8 +593,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 raise ValueError("Trying to remove a particle with a non-"
                                  f"existing ID: {id}.")
         else:
-            # TODO: implement linear search
-            raise NotImplementedError
+            index = np.where(self._data['id'] == id)[0][0]
 
         self.remove_single_by_index(index)
 
@@ -659,8 +659,7 @@ class ParticleCollectionSOA(ParticleCollection):
             sorted_ids = np.sort(np.array(ids))
             indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
         else:
-            # TODO: implement linear search
-            raise NotImplementedError
+            indices = np.where(np.in1d(self._data['id'], ids))[0]
 
         self.remove_multi_by_indices(indices)
 
