@@ -7,15 +7,14 @@ from ctypes import POINTER
 from ctypes import pointer
 from ctypes import Structure
 
-import psutil
 import dask.array as da
-from dask import config as da_conf
-from dask import utils as da_utils
 import numpy as np
 import xarray as xr
 from pathlib import Path
 
 import parcels.tools.interpolation_utils as i_u
+from .fieldfilebuffer import (NetcdfFileBuffer, DeferredNetcdfFileBuffer,
+                              DaskFileBuffer, DeferredDaskFileBuffer)
 from .grid import CGrid
 from .grid import Grid
 from .grid import GridCode
@@ -24,13 +23,11 @@ from parcels.tools.converters import GeographicPolar
 from parcels.tools.converters import TimeConverter
 from parcels.tools.converters import UnitConverter
 from parcels.tools.converters import unitconverters_map
-from parcels.tools.converters import convert_xarray_time_units
 from parcels.tools.statuscodes import FieldOutOfBoundError
 from parcels.tools.statuscodes import FieldOutOfBoundSurfaceError
 from parcels.tools.statuscodes import FieldSamplingError
 from parcels.tools.statuscodes import TimeExtrapolationError
 from parcels.tools.loggers import logger
-from netCDF4 import Dataset as ncDataset
 
 
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
@@ -74,8 +71,14 @@ class Field(object):
     :param time_periodic: To loop periodically over the time component of the Field. It is set to either False or the length of the period (either float in seconds or datetime.timedelta object).
            The last value of the time series can be provided (which is the same as the initial one) or not (Default: False)
            This flag overrides the allow_time_interpolation and sets it to False
-    :param chunkdims_name_map (opt.): gives a name map to the NetCDFFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
-           required only if currently incompatible OCM field is loaded and chunking is used by 'field_chunksize' (which is the default)
+    :param chunkdims_name_map (opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
+           required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
+
+    For usage examples see the following tutorials:
+
+    * `Nested Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+
+    * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
     """
 
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
@@ -152,14 +155,14 @@ class Field(object):
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
-            self.data[np.isnan(self.data)] = 0.
+            lib = np if isinstance(self.data, np.ndarray) else da
+            self.data[lib.isnan(self.data)] = 0.
             if self.vmin is not None:
                 self.data[self.data < self.vmin] = 0.
             if self.vmax is not None:
                 self.data[self.data > self.vmax] = 0.
 
             if self.grid._add_last_periodic_data_timestep:
-                lib = np if isinstance(self.data, np.ndarray) else da
                 self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
 
         self._scaling_factor = None
@@ -170,10 +173,11 @@ class Field(object):
         self.dataFiles = kwargs.pop('dataFiles', None)
         if self.grid._add_last_periodic_data_timestep and self.dataFiles is not None:
             self.dataFiles = np.append(self.dataFiles, self.dataFiles[0])
+        self._field_fb_class = kwargs.pop('FieldFileBuffer', None)
         self.netcdf_engine = kwargs.pop('netcdf_engine', 'netcdf4')
         self.loaded_time_indices = []
         self.creation_log = kwargs.pop('creation_log', '')
-        self.field_chunksize = kwargs.pop('field_chunksize', None)
+        self.chunksize = kwargs.pop('chunksize', None)
         self.netcdf_chunkdims_name_map = kwargs.pop('chunkdims_name_map', None)
         self.grid.depth_field = kwargs.pop('depth_field', None)
 
@@ -206,6 +210,38 @@ class Field(object):
                 return filename
         else:
             return filenames
+
+    @staticmethod
+    def collect_timeslices(timestamps, data_filenames, _grid_fb_class, dimensions, indices, netcdf_engine):
+        if timestamps is not None:
+            dataFiles = []
+            for findex in range(len(data_filenames)):
+                for f in [data_filenames[findex], ] * len(timestamps[findex]):
+                    dataFiles.append(f)
+            timeslices = np.array([stamp for file in timestamps for stamp in file])
+            time = timeslices
+        else:
+            timeslices = []
+            dataFiles = []
+            for fname in data_filenames:
+                with _grid_fb_class(fname, dimensions, indices, netcdf_engine=netcdf_engine) as filebuffer:
+                    ftime = filebuffer.time
+                    timeslices.append(ftime)
+                    dataFiles.append([fname] * len(ftime))
+            timeslices = np.array(timeslices)
+            time = np.concatenate(timeslices)
+            dataFiles = np.concatenate(np.array(dataFiles))
+        if time.size == 1 and time[0] is None:
+            time[0] = 0
+        time_origin = TimeConverter(time[0])
+        time = time_origin.reltime(time)
+
+        if not np.all((time[1:] - time[:-1]) > 0):
+            id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
+            raise AssertionError(
+                'Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
+                % (dataFiles[id_not_ordered], dataFiles[id_not_ordered + 1]))
+        return time, time_origin, timeslices, dataFiles
 
     @classmethod
     def from_netcdf(cls, filenames, variable, dimensions, indices=None, grid=None,
@@ -240,7 +276,11 @@ class Field(object):
                deferred_load=False is however sometimes necessary for plotting the fields.
         :param gridindexingtype: The type of gridindexing. Either 'nemo' (default) or 'mitgcm' are supported.
                See also the Grid indexing documentation on oceanparcels.org
-        :param field_chunksize: size of the chunks in dask loading
+        :param chunksize: size of the chunks in dask loading
+
+        For usage examples see the following tutorial:
+
+        * `Timestamps <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timestamps.ipynb>`_
         """
         # Ensure the timestamps array is compatible with the user-provided datafiles.
         if timestamps is not None:
@@ -291,21 +331,23 @@ class Field(object):
             else:
                 raise RuntimeError('interp_method is a dictionary but %s is not in it' % variable[0])
 
-        with NetcdfFileBuffer(lonlat_filename, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=False) as filebuffer:
-            lon, lat = filebuffer.read_lonlat
+        _grid_fb_class = NetcdfFileBuffer
+
+        with _grid_fb_class(lonlat_filename, dimensions, indices, netcdf_engine) as filebuffer:
+            lon, lat = filebuffer.lonlat
             indices = filebuffer.indices
             # Check if parcels_mesh has been explicitly set in file
             if 'parcels_mesh' in filebuffer.dataset.attrs:
                 mesh = filebuffer.dataset.attrs['parcels_mesh']
 
         if 'depth' in dimensions:
-            with NetcdfFileBuffer(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method, field_chunksize=False, lock_file=False) as filebuffer:
+            with _grid_fb_class(depth_filename, dimensions, indices, netcdf_engine, interp_method=interp_method) as filebuffer:
                 filebuffer.name = filebuffer.parse_name(variable[1])
                 if dimensions['depth'] == 'not_yet_set':
-                    depth = filebuffer.read_depth_dimensions
+                    depth = filebuffer.depth_dimensions
                     kwargs['depth_field'] = 'not_yet_set'
                 else:
-                    depth = filebuffer.read_depth
+                    depth = filebuffer.depth
                 data_full_zdim = filebuffer.data_full_zdim
         else:
             indices['depth'] = [0]
@@ -320,71 +362,21 @@ class Field(object):
         if grid is None:
             # Concatenate time variable to determine overall dimension
             # across multiple files
-            if timestamps is not None:
-                dataFiles = []
-                for findex in range(len(data_filenames)):
-                    for f in [data_filenames[findex], ] * len(timestamps[findex]):
-                        dataFiles.append(f)
-                timeslices = np.array([stamp for file in timestamps for stamp in file])
-                time = timeslices
-            else:
-                timeslices = []
-                dataFiles = []
-                for fname in data_filenames:
-                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
-                        ftime = filebuffer.time
-                        timeslices.append(ftime)
-                        dataFiles.append([fname] * len(ftime))
-                timeslices = np.array(timeslices)
-                time = np.concatenate(timeslices)
-                dataFiles = np.concatenate(np.array(dataFiles))
-            if time.size == 1 and time[0] is None:
-                time[0] = 0
-            time_origin = TimeConverter(time[0])
-            time = time_origin.reltime(time)
-
-            if not np.all((time[1:]-time[:-1]) > 0):
-                id_not_ordered = np.where(time[1:] < time[:-1])[0][0]
-                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
-                                     % (dataFiles[id_not_ordered], dataFiles[id_not_ordered+1]))
-
+            time, time_origin, timeslices, dataFiles = cls.collect_timeslices(timestamps, data_filenames,
+                                                                              _grid_fb_class, dimensions,
+                                                                              indices, netcdf_engine)
             grid = Grid.create_grid(lon, lat, depth, time, time_origin=time_origin, mesh=mesh)
             grid.timeslices = timeslices
-            if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
-                grid.master_chunksize = kwargs['field_chunksize']
             kwargs['dataFiles'] = dataFiles
         elif grid is not None and ('dataFiles' not in kwargs or kwargs['dataFiles'] is None):
             # ==== means: the field has a shared grid, but may have different data files, so we need to collect the
             # ==== correct file time series again.
-            if timestamps is not None:
-                dataFiles = []
-                for findex in range(len(data_filenames)):
-                    for f in [data_filenames[findex], ] * len(timestamps[findex]):
-                        dataFiles.append(f)
-                field_timeslices = np.array([stamp for file in timestamps for stamp in file])
-                field_time = field_timeslices
-            else:
-                field_timeslices = []
-                dataFiles = []
-                for fname in data_filenames:
-                    with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine, field_chunksize=False, lock_file=True) as filebuffer:
-                        ftime = filebuffer.time
-                        field_timeslices.append(ftime)
-                        dataFiles.append([fname] * len(ftime))
-                field_timeslices = np.array(field_timeslices)
-                field_time = np.concatenate(field_timeslices)
-                dataFiles = np.concatenate(np.array(dataFiles))
-            if field_time.size == 1 and field_time[0] is None:
-                field_time[0] = 0
-            time_origin = TimeConverter(field_time[0])
-            field_time = time_origin.reltime(field_time)
-            if not np.all((field_time[1:]-field_time[:-1]) > 0):
-                id_not_ordered = np.where(field_time[1:] < field_time[:-1])[0][0]
-                raise AssertionError('Please make sure your netCDF files are ordered in time. First pair of non-ordered files: %s, %s'
-                                     % (dataFiles[id_not_ordered], dataFiles[id_not_ordered+1]))
-            if 'field_chunksize' in kwargs.keys() and grid.master_chunksize is None:
-                grid.master_chunksize = kwargs['field_chunksize']
+            _, _, _, dataFiles = cls.collect_timeslices(timestamps, data_filenames, _grid_fb_class,
+                                                        dimensions, indices, netcdf_engine)
             kwargs['dataFiles'] = dataFiles
+
+        chunksize = kwargs.get('chunksize', None)
+        grid.chunksize = chunksize
 
         if 'time' in indices:
             logger.warning_once('time dimension in indices is not necessary anymore. It is then ignored.')
@@ -393,13 +385,27 @@ class Field(object):
             deferred_load = not kwargs['full_load']
 
         if grid.time.size <= 3 or deferred_load is False:
+            deferred_load = False
+
+        if chunksize not in [False, None]:
+            if deferred_load:
+                _field_fb_class = DeferredDaskFileBuffer
+            else:
+                _field_fb_class = DaskFileBuffer
+        elif deferred_load:
+            _field_fb_class = DeferredNetcdfFileBuffer
+        else:
+            _field_fb_class = NetcdfFileBuffer
+        kwargs['FieldFileBuffer'] = _field_fb_class
+
+        if not deferred_load:
             # Pre-allocate data before reading files into buffer
             data_list = []
             ti = 0
             for tslice, fname in zip(grid.timeslices, data_filenames):
-                with NetcdfFileBuffer(fname, dimensions, indices, netcdf_engine,
-                                      interp_method=interp_method, data_full_zdim=data_full_zdim,
-                                      field_chunksize=False) as filebuffer:
+                with _field_fb_class(fname, dimensions, indices, netcdf_engine,
+                                     interp_method=interp_method, data_full_zdim=data_full_zdim,
+                                     chunksize=chunksize) as filebuffer:
                     # If Field.from_netcdf is called directly, it may not have a 'data' dimension
                     # In that case, assume that 'name' is the data dimension
                     filebuffer.name = filebuffer.parse_name(variable[1])
@@ -491,11 +497,11 @@ class Field(object):
             data = lib.squeeze(data)  # First remove all length-1 dimensions in data, so that we can add them below
         if self.grid.xdim == 1 and len(data.shape) < 4:
             if lib == da:
-                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-1)
         if self.grid.ydim == 1 and len(data.shape) < 4:
             if lib == da:
-                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method')
+                raise NotImplementedError('Length-one dimensions with field chunking not implemented, as dask does not have an `expand_dims` method. Use chunksize=None')
             data = lib.expand_dims(data, axis=-2)
         if self.grid.tdim == 1:
             if len(data.shape) < 4:
@@ -504,11 +510,15 @@ class Field(object):
             if len(data.shape) == 4:
                 data = data.reshape(sum(((data.shape[0],), data.shape[2:]), ()))
         if len(data.shape) == 4:
-            assert (data.shape == (self.grid.tdim, self.grid.zdim,
-                                   self.grid.ydim - 2 * self.grid.meridional_halo,
-                                   self.grid.xdim - 2 * self.grid.zonal_halo)), \
-                ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
-                 'Flag transpose=True could help to reorder the data.' % self.name)
+            errormessage = ('Field %s expecting a data shape of [tdim, zdim, ydim, xdim]. '
+                            'Flag transpose=True could help to reorder the data.' % self.name)
+            assert data.shape[0] == self.grid.tdim, errormessage
+            assert data.shape[2] == self.grid.ydim - 2 * self.grid.meridional_halo, errormessage
+            assert data.shape[3] == self.grid.xdim - 2 * self.grid.zonal_halo, errormessage
+            if self.gridindexingtype == 'pop':
+                assert data.shape[1] == self.grid.zdim or data.shape[1] == self.grid.zdim-1, errormessage
+            else:
+                assert data.shape[1] == self.grid.zdim, errormessage
         else:
             assert (data.shape == (self.grid.tdim,
                                    self.grid.ydim - 2 * self.grid.meridional_halo,
@@ -523,6 +533,10 @@ class Field(object):
         """Scales the field data by some constant factor.
 
         :param factor: scaling factor
+
+        For usage examples see the following tutorial:
+
+        * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
         """
 
         if self._scaling_factor:
@@ -532,10 +546,22 @@ class Field(object):
             self.data *= factor
 
     def set_depth_from_field(self, field):
+        """Define the depth dimensions from another (time-varying) field
+
+        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_timevaryingdepthdimensions.ipynb>`_
+        for a detailed explanation on how to set up time-evolving depth dimensions
+
+        """
         self.grid.depth_field = field
+        if self.grid != field.grid:
+            field.grid.depth_field = field
 
     def __getitem__(self, key):
-        return self.eval(*key)
+        # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
+        if hasattr(key, 'set_index'):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)
+        else:
+            return self.eval(*key)
 
     def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
@@ -570,7 +596,11 @@ class Field(object):
         z = np.float32(z)
         if grid.depth[-1] > grid.depth[0]:
             if z < grid.depth[0]:
-                raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
+                # Since MOM5 is indexed at cell bottom, allow z at depth[0] - dz where dz = (depth[1] - depth[0])
+                if self.gridindexingtype == "mom5" and z > 2*grid.depth[0] - grid.depth[1]:
+                    return (-1, z / grid.depth[0])
+                else:
+                    raise FieldOutOfBoundSurfaceError(0, 0, z, field=self)
             elif z > grid.depth[-1]:
                 raise FieldOutOfBoundError(0, 0, z, field=self)
             depth_indices = grid.depth <= z
@@ -661,7 +691,7 @@ class Field(object):
                 xi = xdim - xi
         return xi, yi
 
-    def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, search2D=False):
+    def search_indices_rectilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         grid = self.grid
 
         if grid.xdim > 1 and (not grid.zonal_periodic):
@@ -741,9 +771,20 @@ class Field(object):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             raise FieldSamplingError(x, y, z, field=self)
 
+        if particle:
+            particle.xi[self.igrid] = xi
+            particle.yi[self.igrid] = yi
+            particle.zi[self.igrid] = zi
+
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices_curvilinear(self, x, y, z, xi, yi, ti=-1, time=-1, search2D=False):
+    def search_indices_curvilinear(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
+        if particle:
+            xi = particle.xi[self.igrid]
+            yi = particle.yi[self.igrid]
+        else:
+            xi = int(self.grid.xdim / 2) - 1
+            yi = int(self.grid.ydim / 2) - 1
         xsi = eta = -1
         grid = self.grid
         invA = np.array([[1, 0, 0, 0],
@@ -824,18 +865,21 @@ class Field(object):
         if not ((0 <= xsi <= 1) and (0 <= eta <= 1) and (0 <= zeta <= 1)):
             raise FieldSamplingError(x, y, z, field=self)
 
+        if particle:
+            particle.xi[self.igrid] = xi
+            particle.yi[self.igrid] = yi
+            particle.zi[self.igrid] = zi
+
         return (xsi, eta, zeta, xi, yi, zi)
 
-    def search_indices(self, x, y, z, xi, yi, ti=-1, time=-1, search2D=False):
+    def search_indices(self, x, y, z, ti=-1, time=-1, particle=None, search2D=False):
         if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
-            return self.search_indices_rectilinear(x, y, z, ti, time, search2D=search2D)
+            return self.search_indices_rectilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
         else:
-            return self.search_indices_curvilinear(x, y, z, xi, yi, ti, time, search2D=search2D)
+            return self.search_indices_curvilinear(x, y, z, ti, time, particle=particle, search2D=search2D)
 
-    def interpolator2D(self, ti, z, y, x):
-        xi = 0
-        yi = 0
-        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, xi, yi)
+    def interpolator2D(self, ti, z, y, x, particle=None):
+        (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, particle=particle)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -879,10 +923,8 @@ class Field(object):
         else:
             raise RuntimeError(self.interp_method+" is not implemented for 2D grids")
 
-    def interpolator3D(self, ti, z, y, x, time):
-        xi = int(self.grid.xdim / 2) - 1
-        yi = int(self.grid.ydim / 2) - 1
-        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, xi, yi, ti, time)
+    def interpolator3D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self.search_indices(x, y, z, ti, time, particle=particle)
         if self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
@@ -932,7 +974,10 @@ class Field(object):
                 return (1 - zeta) * f0 + zeta * f1
         elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
             if self.interp_method == 'bgrid_velocity':
-                zeta = 0.
+                if self.gridindexingtype == 'mom5':
+                    zeta = 1.
+                else:
+                    zeta = 0.
             elif self.interp_method == 'bgrid_w_velocity':
                 eta = 1.
                 xsi = 1.
@@ -941,12 +986,19 @@ class Field(object):
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
+            if self.gridindexingtype == 'pop' and zi >= self.grid.zdim-2:
+                # Since POP is indexed at cell top, allow linear interpolation of W to zero in lowest cell
+                return (1-zeta) * f0
             data = self.data[ti, zi+1, :, :]
             f1 = (1-xsi)*(1-eta) * data[yi, xi] + \
                 xsi*(1-eta) * data[yi, xi+1] + \
                 xsi*eta * data[yi+1, xi+1] + \
                 (1-xsi)*eta * data[yi+1, xi]
-            return (1-zeta) * f0 + zeta * f1
+            if self.interp_method == 'bgrid_w_velocity' and self.gridindexingtype == 'mom5' and zi == -1:
+                # Since MOM5 is indexed at cell bottom, allow linear interpolation of W to zero in uppermost cell
+                return zeta * f1
+            else:
+                return (1-zeta) * f0 + zeta * f1
         elif self.interp_method in ['cgrid_tracer', 'bgrid_tracer']:
             return self.data[ti, zi, yi+1, xi+1]
         else:
@@ -971,13 +1023,13 @@ class Field(object):
             f1 = self.data[ti+1, :]
             return f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
 
-    def spatial_interpolation(self, ti, z, y, x, time):
+    def spatial_interpolation(self, ti, z, y, x, time, particle=None):
         """Interpolate horizontal field values using a SciPy interpolator"""
 
         if self.grid.zdim == 1:
-            val = self.interpolator2D(ti, z, y, x)
+            val = self.interpolator2D(ti, z, y, x, particle=particle)
         else:
-            val = self.interpolator3D(ti, z, y, x, time)
+            val = self.interpolator3D(ti, z, y, x, time, particle=particle)
         if np.isnan(val):
             # Detect Out-of-bounds sampling and raise exception
             raise FieldOutOfBoundError(x, y, z, field=self)
@@ -1018,19 +1070,7 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
-    def depth_index(self, depth, lat, lon):
-        """Find the index in the depth array associated with a given depth"""
-        if depth > self.grid.depth[-1]:
-            raise FieldOutOfBoundError(lon, lat, depth, field=self)
-        depth_index = self.grid.depth <= depth
-        if depth_index.all():
-            # If given depth == largest field depth, use the second-last
-            # field depth (as zidx+1 needed in interpolation)
-            return len(self.grid.depth) - 2
-        else:
-            return depth_index.argmin() - 1 if depth_index.any() else 0
-
-    def eval(self, time, z, y, x, applyConversion=True):
+    def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
         We interpolate linearly in time and apply implicit unit
@@ -1040,8 +1080,8 @@ class Field(object):
         (ti, periods) = self.time_index(time)
         time -= periods*(self.grid.time_full[-1]-self.grid.time_full[0])
         if ti < self.grid.tdim-1 and time > self.grid.time[ti]:
-            f0 = self.spatial_interpolation(ti, z, y, x, time)
-            f1 = self.spatial_interpolation(ti + 1, z, y, x, time)
+            f0 = self.spatial_interpolation(ti, z, y, x, time, particle=particle)
+            f1 = self.spatial_interpolation(ti + 1, z, y, x, time, particle=particle)
             t0 = self.grid.time[ti]
             t1 = self.grid.time[ti + 1]
             value = f0 + (f1 - f0) * ((time - t0) / (t1 - t0))
@@ -1049,7 +1089,7 @@ class Field(object):
             # Skip temporal interpolation if time is outside
             # of the defined time range or if we have hit an
             # excat value in the time array.
-            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti])
+            value = self.spatial_interpolation(ti, z, y, x, self.grid.time[ti], particle=particle)
 
         if applyConversion:
             return self.units.to_target(value, x, y, z)
@@ -1182,6 +1222,9 @@ class Field(object):
         by copying a small portion of the field on one side of the domain to the other.
         Before adding a periodic halo to the Field, it has to be added to the Grid on which the Field depends
 
+        See `this tutorial <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_periodic_boundaries.ipynb>`_
+        for a detailed explanation on how to set up periodic boundaries
+
         :param zonal: Create a halo in zonal direction (boolean)
         :param meridional: Create a halo in meridional direction (boolean)
         :param halosize: size of the halo (in grid points). Default is 5 grid points
@@ -1307,13 +1350,13 @@ class Field(object):
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
-        filebuffer = NetcdfFileBuffer(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
-                                      self.netcdf_engine, timestamp=timestamp,
-                                      interp_method=self.interp_method,
-                                      data_full_zdim=self.data_full_zdim,
-                                      field_chunksize=self.field_chunksize,
-                                      rechunk_callback_fields=self.chunk_setup,
-                                      chunkdims_name_map=self.netcdf_chunkdims_name_map)
+        filebuffer = self._field_fb_class(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
+                                          netcdf_engine=self.netcdf_engine, timestamp=timestamp,
+                                          interp_method=self.interp_method,
+                                          data_full_zdim=self.data_full_zdim,
+                                          chunksize=self.chunksize,
+                                          rechunk_callback_fields=self.chunk_setup,
+                                          chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
         time_data = g.time_origin.reltime(time_data)
@@ -1360,13 +1403,18 @@ class VectorField(object):
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
                 'Interpolation methods of U and V are not the same.')
-            assert self.U.grid is self.V.grid, (
-                'Grids of U and V are not the same.')
+            assert self._check_grid_dimensions(U.grid, V.grid), (
+                'Dimensions of U and V are not the same.')
             if self.vector_type == '3D':
                 assert self.W.interp_method == 'cgrid_velocity', (
                     'Interpolation methods of U and W are not the same.')
-                assert self.W.grid is self.U.grid, (
-                    'Grids of U and W are not the same.')
+                assert self._check_grid_dimensions(U.grid, W.grid), (
+                    'Dimensions of U and W are not the same.')
+
+    @staticmethod
+    def _check_grid_dimensions(grid1, grid2):
+        return (np.allclose(grid1.lon, grid2.lon) and np.allclose(grid1.lat, grid2.lat)
+                and np.allclose(grid1.depth, grid2.depth) and np.allclose(grid1.time_full, grid2.time_full))
 
     def dist(self, lon1, lon2, lat1, lat2, mesh, lat):
         if mesh == 'spherical':
@@ -1387,11 +1435,9 @@ class VectorField(object):
         jac = dxdxsi*dydeta - dxdeta*dydxsi
         return jac
 
-    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time):
+    def spatial_c_grid_interpolation2D(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        xi = int(grid.xdim / 2) - 1
-        yi = int(grid.ydim / 2) - 1
-        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
@@ -1453,11 +1499,9 @@ class VectorField(object):
             v = v.compute()
         return (u, v)
 
-    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time):
+    def spatial_c_grid_interpolation3D_full(self, ti, z, y, x, time, particle=None):
         grid = self.U.grid
-        xi = int(grid.xdim / 2) - 1
-        yi = int(grid.ydim / 2) - 1
-        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, xi, yi, ti, time)
+        (xsi, eta, zet, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
 
         if grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
             px = np.array([grid.lon[xi], grid.lon[xi+1], grid.lon[xi+1], grid.lon[xi]])
@@ -1559,33 +1603,37 @@ class VectorField(object):
             w = w.compute()
         return (u, v, w)
 
-    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time):
+    def spatial_c_grid_interpolation3D(self, ti, z, y, x, time, particle=None):
         """
-          __ V1 __
-        |          |
-        U0         U1
-        | __ V0 __ |
+        +---+---+---+
+        |   |V1 |   |
+        +---+---+---+
+        |U0 |   |U1 |
+        +---+---+---+
+        |   |V0 |   |
+        +---+---+---+
+
         The interpolation is done in the following by
         interpolating linearly U depending on the longitude coordinate and
         interpolating linearly V depending on the latitude coordinate.
         Curvilinear grids are treated properly, since the element is projected to a rectilinear parent element.
         """
         if self.U.grid.gtype in [GridCode.RectilinearSGrid, GridCode.CurvilinearSGrid]:
-            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time)
+            (u, v, w) = self.spatial_c_grid_interpolation3D_full(ti, z, y, x, time, particle=particle)
         else:
-            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-            w = self.W.eval(time, z, y, x, False)
+            (u, v) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+            w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
             w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
-    def eval(self, time, z, y, x):
+    def eval(self, time, z, y, x, particle=None):
         if self.U.interp_method != 'cgrid_velocity':
-            u = self.U.eval(time, z, y, x, False)
-            v = self.V.eval(time, z, y, x, False)
+            u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
+            v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             u = self.U.units.to_target(u, x, y, z)
             v = self.V.units.to_target(v, x, y, z)
             if self.vector_type == '3D':
-                w = self.W.eval(time, z, y, x, False)
+                w = self.W.eval(time, z, y, x, particle=particle, applyConversion=False)
                 w = self.W.units.to_target(w, x, y, z)
                 return (u, v, w)
             else:
@@ -1598,12 +1646,12 @@ class VectorField(object):
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
                 if self.vector_type == '3D':
-                    (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time)
-                    (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time)
+                    (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time, particle=particle)
+                    (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time, particle=particle)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
                 else:
-                    (u0, v0) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time)
-                    (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time)
+                    (u0, v0) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
+                    (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time, particle=particle)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
                 if self.vector_type == '3D':
@@ -1615,12 +1663,15 @@ class VectorField(object):
                 # of the defined time range or if we have hit an
                 # exact value in the time array.
                 if self.vector_type == '3D':
-                    return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti])
+                    return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti], particle=particle)
                 else:
-                    return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti])
+                    return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        return self.eval(*key)
+        if hasattr(key, 'set_index'):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)
+        else:
+            return self.eval(*key)
 
     def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
@@ -1670,6 +1721,9 @@ class SummedField(list):
     still be queried through their list index (e.g. SummedField[1]).
     SummedField is composed of either Fields or VectorFields.
 
+    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
+    for a detailed tutorial
+
     :param name: Name of the SummedField
     :param F: List of fields. F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
     :param V: List of fields defining the meridional component of a VectorField, if F is the zonal component. (default: None)
@@ -1702,7 +1756,10 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                val = list.__getitem__(self, iField).eval(*key)
+                if hasattr(key, 'set_index'):
+                    val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
+                else:
+                    val = list.__getitem__(self, iField).eval(*key)
                 vals.append(val)
             return tuple(np.sum(vals, 0)) if isinstance(val, tuple) else np.sum(vals)
 
@@ -1724,6 +1781,9 @@ class NestedField(list):
     than `ErrorOutOfBounds` is thrown, the function is stopped. Otherwise, next field is interpolated.
     NestedField returns an `ErrorOutOfBounds` only if last field is as well out of boundaries.
     NestedField is composed of either Fields or VectorFields.
+
+    See `here <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_NestedFields.ipynb>`_
+    for a detailed tutorial
 
     :param name: Name of the NestedField
     :param F: List of fields (order matters). F can be a scalar Field, a VectorField, or the zonal component (U) of the VectorField
@@ -1756,7 +1816,10 @@ class NestedField(list):
         else:
             for iField in range(len(self)):
                 try:
-                    val = list.__getitem__(self, iField).eval(*key)
+                    if hasattr(key, 'set_index'):
+                        val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
+                    else:
+                        val = list.__getitem__(self, iField).eval(*key)
                     break
                 except (FieldOutOfBoundError, FieldSamplingError):
                     if iField == len(self)-1:
@@ -1764,503 +1827,3 @@ class NestedField(list):
                     else:
                         pass
             return val
-
-
-class NetcdfFileBuffer(object):
-    _name_maps = {'lon': ['lon', 'nav_lon', 'x', 'longitude', 'lo', 'ln', 'i', 'XC', 'XG'],
-                  'lat': ['lat', 'nav_lat', 'y', 'latitude', 'la', 'lt', 'j', 'YC', 'YG'],
-                  'depth': ['depth', 'depthu', 'depthv', 'depthw', 'depths', 'deptht', 'depthx', 'depthy', 'depthz',
-                            'z', 'z_u', 'z_v', 'z_w', 'd', 'k', 'w_dep', 'w_deps', 'Z', 'Zp1', 'Zl', 'Zu', 'level'],
-                  'time': ['time', 'time_count', 'time_counter', 'timer_count', 't']}
-    _min_dim_chunksize = 16
-
-    """ Class that encapsulates and manages deferred access to file data. """
-    def __init__(self, filename, dimensions, indices, netcdf_engine, timestamp=None,
-                 interp_method='linear', data_full_zdim=None, field_chunksize='auto', rechunk_callback_fields=None, lock_file=True, **kwargs):
-        self.filename = filename
-        self.dimensions = dimensions  # Dict with dimension keys for file data
-        self.indices = indices
-        self.dataset = None
-        self.netcdf_engine = netcdf_engine
-        self.timestamp = timestamp
-        self.ti = None
-        self.interp_method = interp_method
-        self.data_full_zdim = data_full_zdim
-        self.field_chunksize = field_chunksize
-        self.chunk_mapping = None
-        self.rechunk_callback_fields = rechunk_callback_fields
-        self.chunking_finalized = False
-        self.lock_file = lock_file
-        if "chunkdims_name_map" in kwargs.keys() and kwargs["chunkdims_name_map"] is not None and isinstance(kwargs["chunkdims_name_map"], dict):
-            for key, dim_name_arr in kwargs["chunkdims_name_map"].items():
-                for value in dim_name_arr:
-                    if value not in self._name_maps[key]:
-                        self._name_maps[key].append(value)
-
-    def __enter__(self):
-        if self.netcdf_engine == 'xarray':
-            self.dataset = self.filename
-            return self
-
-        if self.field_chunksize not in [False, None, 'auto'] and type(self.field_chunksize) not in [list, tuple, dict]:
-            raise AttributeError("'field_chunksize' is of wrong type. Parameter is expected to be a list, tuple or dict per data dimension, or be False, None or 'auto'.")
-        if isinstance(self.field_chunksize, list):
-            self.field_chunksize = tuple(self.field_chunksize)
-
-        init_chunk_dict = None
-        if self.field_chunksize not in [False, None]:
-            init_chunk_dict = self._get_initial_chunk_dictionary()
-        try:
-            # Unfortunately we need to do if-else here, cause the lock-parameter is either False or a Lock-object
-            # (which we would rather want to have being auto-managed).
-            # If 'lock' is not specified, the Lock-object is auto-created and managed bz xarray internally.
-            if self.lock_file:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict)
-            else:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-            self.dataset['decoded'] = True
-        except:
-            logger.warning_once("File %s could not be decoded properly by xarray (version %s).\n         It will be opened with no decoding. Filling values might be wrongly parsed."
-                                % (self.filename, xr.__version__))
-            if self.lock_file:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict)
-            else:
-                self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-            self.dataset['decoded'] = False
-
-        for inds in self.indices.values():
-            if type(inds) not in [list, range]:
-                raise RuntimeError('Indices for field subsetting need to be a list')
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
-
-    def close(self):
-        if self.netcdf_engine == 'xarray':
-            pass
-        else:
-            if self.dataset is not None:
-                self.dataset.close()
-                self.dataset = None
-        self.chunking_finalized = False
-        self.chunk_mapping = None
-
-    def _get_initial_chunk_dictionary(self):
-        # ==== check-opening requested dataset to access metadata                   ==== #
-        # ==== file-opening and dimension-reading does not require a decode or lock ==== #
-        self.dataset = xr.open_dataset(str(self.filename), decode_cf=False, engine=self.netcdf_engine, chunks={}, lock=False)
-        self.dataset['decoded'] = False
-        # ==== self.dataset temporarily available ==== #
-        init_chunk_dict = {}
-        if isinstance(self.field_chunksize, dict):
-            # init_chunk_dict = self.field_chunksize
-            loni, lonname, _ = self._is_dimension_in_dataset('lon')
-            lati, latname, _ = self._is_dimension_in_dataset('lat')
-            depthi, depthname, _ = self._is_dimension_in_dataset('depth')
-            timei, timename, _ = self._is_dimension_in_dataset('time')
-            for name in self.field_chunksize.keys():
-                if name in [lonname, latname, depthname, timename]:
-                    init_chunk_dict[name] = self.field_chunksize[name]
-        elif isinstance(self.field_chunksize, tuple):  # and (len(self.dimensions) == len(self.field_chunksize)):
-            tmp_chs = [0, ] * len(self.field_chunksize)
-            chunk_index = len(self.field_chunksize)-1
-
-            loni, lonname, _ = self._is_dimension_in_dataset('lon')
-            if loni >= 0 and chunk_index >= 0:
-                init_chunk_dict[lonname] = self.field_chunksize[chunk_index]
-                tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-            else:
-                logger.warning_once(self._netcdf_DimNotFound_warning_message('lon'))
-            chunk_index -= 1
-
-            lati, latname, _ = self._is_dimension_in_dataset('lat')
-            if lati >= 0 and chunk_index >= 0:
-                init_chunk_dict[latname] = self.field_chunksize[chunk_index]
-                tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-            else:
-                logger.warning_once(self._netcdf_DimNotFound_warning_message('lat'))
-            chunk_index -= 1
-
-            depthi, depthname, _ = self._is_dimension_in_dataset('depth')
-            if depthi >= 0 and chunk_index >= 0:
-                if self._is_dimension_available('depth'):
-                    init_chunk_dict[depthname] = self.field_chunksize[chunk_index]
-                    tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-            else:
-                logger.warning_once(self._netcdf_DimNotFound_warning_message('depth'))
-            chunk_index -= 1
-
-            timei, timename, _ = self._is_dimension_in_dataset('time')
-            if timei >= 0 and chunk_index >= 0:
-                if self._is_dimension_available('time'):
-                    init_chunk_dict[timename] = self.field_chunksize[chunk_index]
-                    tmp_chs[chunk_index] = self.field_chunksize[chunk_index]
-            else:
-                logger.warning_once(self._netcdf_DimNotFound_warning_message('time'))
-            chunk_index -= 1
-
-            # ==== re-arrange the tupe and correct for empty dimensions ==== #
-            for chunk_index in range(len(self.field_chunksize)-1, -1, -1):
-                if tmp_chs[chunk_index] < 1:
-                    tmp_chs.pop(chunk_index)
-            self.field_chunksize = tuple(tmp_chs)
-        elif self.field_chunksize == 'auto':
-            av_mem = psutil.virtual_memory().available
-            chunk_cap = av_mem * (1/8) * (1/3)
-            if 'array.chunk-size' in da_conf.config.keys():
-                chunk_cap = da_utils.parse_bytes(da_conf.config.get('array.chunk-size'))
-            else:
-                predefined_cap = da_conf.get('array.chunk-size')
-                if predefined_cap is not None:
-                    chunk_cap = da_utils.parse_bytes(predefined_cap)
-                else:
-                    logger.info_once("Unable to locate chunking hints from dask, thus estimating the max. chunk size heuristically. Please consider defining the 'chunk-size' for 'array' in your local dask configuration file (see http://oceanparcels.org/faq.html#field_chunking_config and https://docs.dask.org).")
-            loni, lonname, lonvalue = self._is_dimension_in_dataset('lon')
-            lati, latname, latvalue = self._is_dimension_in_dataset('lat')
-            if lati >= 0 and loni >= 0:
-                pDim = int(math.floor(math.sqrt(chunk_cap/np.dtype(np.float64).itemsize)))
-                init_chunk_dict[latname] = min(latvalue, pDim)
-                init_chunk_dict[lonname] = min(lonvalue, pDim)
-            timei, timename, _ = self._is_dimension_in_dataset('time')
-            if timei >= 0:
-                init_chunk_dict[timename] = 1
-            depthi, depthname, depthvalue = self._is_dimension_in_dataset('depth')
-            if depthi >= 0:
-                init_chunk_dict[depthname] = max(1, depthvalue)
-        # ==== closing check-opened requested dataset ==== #
-        self.dataset.close()
-        # ==== check if the chunksize reading is successful. if not, load the file ONCE really into memory and ==== #
-        # ==== deduce the chunking from the array dims.                                                         ==== #
-        try:
-            if len(init_chunk_dict) < 3:
-                raise AttributeError("Too few known chunk dimension arguments.")
-            self.dataset = xr.open_dataset(str(self.filename), decode_cf=True, engine=self.netcdf_engine, chunks=init_chunk_dict, lock=False)
-        except:
-            # ==== fail - open it as a normal array and deduce the dimensions from the read field ==== #
-            init_chunk_dict = {}
-            self.dataset = ncDataset(str(self.filename))
-            refdims = self.dataset.dimensions.keys()
-            max_field = ""
-            max_dim_names = ()
-            max_overlay_dims = 0
-            for vname in self.dataset.variables:
-                var = self.dataset.variables[vname]
-                overlay_dims = []
-                for vdname in var.dimensions:
-                    if vdname in refdims:
-                        overlay_dims.append(vdname)
-                n_overlay_dims = len(overlay_dims)
-                if n_overlay_dims > max_overlay_dims:
-                    max_field = vname
-                    max_dim_names = tuple(overlay_dims)
-                    max_overlay_dims = n_overlay_dims
-            self.name = max_field
-            for dname in max_dim_names:
-                if isinstance(self.field_chunksize, dict):
-                    if dname in self.field_chunksize.keys():
-                        init_chunk_dict[dname] = min(self.field_chunksize[dname], self.dataset.dimensions[dname].size)
-                        continue
-                init_chunk_dict[dname] = min(self._min_dim_chunksize, self.dataset.dimensions[dname].size)
-            # ==== because in this case it has shown that the requested field_chunksize setup cannot be used, ==== #
-            # ==== replace the requested field_chunksize with this auto-derived version.                      ==== #
-            self.field_chunksize = init_chunk_dict
-        finally:
-            self.dataset.close()
-        self.dataset = None
-        # ==== self.dataset not available ==== #
-        return init_chunk_dict
-
-    def _is_dimension_available(self, dimension_name):
-        if self.dimensions is None or self.dataset is None:
-            return False
-        return dimension_name in self.dimensions
-
-    def _is_dimension_in_dataset(self, dimension_name):
-        k, dname, dvalue = (-1, '', 0)
-        if self.dimensions is None or self.dataset is None:
-            return k, dname, dvalue
-        dimension_name = dimension_name.lower()
-        for i, name in enumerate(self._name_maps[dimension_name]):
-            if name in self.dataset.dims:
-                value = self.dataset.dims[name]
-                k, dname, dvalue = i, name, value
-                break
-        return k, dname, dvalue
-
-    def _is_dimension_in_chunksize_request(self, dimension_name):
-        k, dname, dvalue = (-1, '', 0)
-        if self.dimensions is None or self.dataset is None:
-            return k, dname, dvalue
-        dimension_name = dimension_name.lower()
-        for i, name in enumerate(self._name_maps[dimension_name]):
-            if name in self.field_chunksize:
-                value = self.field_chunksize[name]
-                k, dname, dvalue = i, name, value
-                break
-        return k, dname, dvalue
-
-    def _netcdf_DimNotFound_warning_message(self, dimension_name):
-        display_name = dimension_name if (dimension_name not in self.dimensions) else self.dimensions[dimension_name]
-        return "Did not find {} in NetCDF dims. Please specifiy field_chunksize as dictionary for NetCDF dimension names, e.g.\n field_chunksize={{ '{}': <number>, ... }}.".format(display_name, display_name)
-
-    def _chunksize_to_chunkmap(self):
-        if self.field_chunksize in [False, 'auto', None]:
-            return
-        self.chunk_mapping = {}
-        if isinstance(self.field_chunksize, tuple):
-            for i in range(len(self.field_chunksize)):
-                self.chunk_mapping[i] = self.field_chunksize[i]
-        else:
-            timei, timename, timevalue = self._is_dimension_in_chunksize_request('time')
-            dtimei, dtimename, dtimevalue = self._is_dimension_in_dataset('time')
-            depthi, depthname, depthvalue = self._is_dimension_in_chunksize_request('depth')
-            ddepthi, ddepthname, ddepthvalue = self._is_dimension_in_dataset('depth')
-            lati, latname, latvalue = self._is_dimension_in_chunksize_request('lat')
-            loni, lonname, lonvalue = self._is_dimension_in_chunksize_request('lon')
-            dim_index = 0
-            if len(self.field_chunksize) == 2:
-                self.chunk_mapping[dim_index] = latvalue
-                dim_index += 1
-                self.chunk_mapping[dim_index] = lonvalue
-                dim_index += 1
-            elif len(self.field_chunksize) >= 3:
-                if timei >= 0 and timevalue > 1 and dtimei >= 0 and dtimevalue > 1 and self._is_dimension_available('time'):
-                    self.chunk_mapping[dim_index] = 1  # still need to make sure that we only load 1 time step at a time
-                    dim_index += 1
-                if depthi >= 0 and depthvalue > 1 and ddepthi >= 0 and ddepthvalue > 1 and self._is_dimension_available('depth'):
-                    self.chunk_mapping[dim_index] = depthvalue
-                    dim_index += 1
-                self.chunk_mapping[dim_index] = latvalue
-                dim_index += 1
-                self.chunk_mapping[dim_index] = lonvalue
-                dim_index += 1
-
-    def _chunkmap_to_chunksize(self):
-        if self.field_chunksize in [False, None]:
-            return
-        self.field_chunksize = {}
-        chunk_map = self.chunk_mapping
-        timei, _, timevalue = self._is_dimension_in_dataset('time')
-        depthi, _, depthvalue = self._is_dimension_in_dataset('depth')
-        if len(chunk_map) == 2:
-            self.field_chunksize[self.dimensions['lat']] = chunk_map[0]
-            self.field_chunksize[self.dimensions['lon']] = chunk_map[1]
-        elif len(chunk_map) == 3:
-            chunk_dim_index = 0
-            if depthi >= 0 and depthvalue > 1 and self._is_dimension_available('depth'):
-                self.field_chunksize[self.dimensions['depth']] = chunk_map[chunk_dim_index]
-                chunk_dim_index += 1
-            elif timei >= 0 and timevalue > 1 and self._is_dimension_available('time'):
-                self.field_chunksize[self.dimensions['time']] = chunk_map[chunk_dim_index]
-                chunk_dim_index += 1
-            self.field_chunksize[self.dimensions['lat']] = chunk_map[chunk_dim_index]
-            chunk_dim_index += 1
-            self.field_chunksize[self.dimensions['lon']] = chunk_map[chunk_dim_index]
-        elif len(chunk_map) >= 4:
-            self.field_chunksize[self.dimensions['time']] = chunk_map[0]
-            self.field_chunksize[self.dimensions['depth']] = chunk_map[1]
-            self.field_chunksize[self.dimensions['lat']] = chunk_map[2]
-            self.field_chunksize[self.dimensions['lon']] = chunk_map[3]
-            dim_index = 4
-            for dim_name in self.dimensions:
-                if dim_name not in ['time', 'depth', 'lat', 'lon']:
-                    self.field_chunksize[self.dimensions[dim_name]] = chunk_map[dim_index]
-                    dim_index += 1
-
-    def parse_name(self, name):
-        if isinstance(name, list):
-            for nm in name:
-                if hasattr(self.dataset, nm):
-                    name = nm
-                    break
-        if isinstance(name, list):
-            raise IOError('None of variables in list found in file')
-        return name
-
-    @property
-    def read_lonlat(self):
-        lon = self.dataset[self.dimensions['lon']]
-        lat = self.dataset[self.dimensions['lat']]
-        xdim = lon.size if len(lon.shape) == 1 else lon.shape[-1]
-        ydim = lat.size if len(lat.shape) == 1 else lat.shape[-2]
-        self.indices['lon'] = self.indices['lon'] if 'lon' in self.indices else range(xdim)
-        self.indices['lat'] = self.indices['lat'] if 'lat' in self.indices else range(ydim)
-        if len(lon.shape) == 1:
-            lon_subset = np.array(lon[self.indices['lon']])
-            lat_subset = np.array(lat[self.indices['lat']])
-        elif len(lon.shape) == 2:
-            lon_subset = np.array(lon[self.indices['lat'], self.indices['lon']])
-            lat_subset = np.array(lat[self.indices['lat'], self.indices['lon']])
-        elif len(lon.shape) == 3:  # some lon, lat have a time dimension 1
-            lon_subset = np.array(lon[0, self.indices['lat'], self.indices['lon']])
-            lat_subset = np.array(lat[0, self.indices['lat'], self.indices['lon']])
-        elif len(lon.shape) == 4:  # some lon, lat have a time and depth dimension 1
-            lon_subset = np.array(lon[0, 0, self.indices['lat'], self.indices['lon']])
-            lat_subset = np.array(lat[0, 0, self.indices['lat'], self.indices['lon']])
-        if len(lon.shape) > 1:  # Tests if lon, lat are rectilinear but were stored in arrays
-            rectilinear = True
-            # test if all columns and rows are the same for lon and lat (in which case grid is rectilinear)
-            for xi in range(1, lon_subset.shape[0]):
-                if not np.allclose(lon_subset[0, :], lon_subset[xi, :]):
-                    rectilinear = False
-                    break
-            if rectilinear:
-                for yi in range(1, lat_subset.shape[1]):
-                    if not np.allclose(lat_subset[:, 0], lat_subset[:, yi]):
-                        rectilinear = False
-                        break
-            if rectilinear:
-                lon_subset = lon_subset[0, :]
-                lat_subset = lat_subset[:, 0]
-        return lon_subset, lat_subset
-
-    @property
-    def read_depth(self):
-        if 'depth' in self.dimensions:
-            depth = self.dataset[self.dimensions['depth']]
-            depthsize = depth.size if len(depth.shape) == 1 else depth.shape[-3]
-            self.data_full_zdim = depthsize
-            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            if len(depth.shape) == 1:
-                return np.array(depth[self.indices['depth']])
-            elif len(depth.shape) == 3:
-                return np.array(depth[self.indices['depth'], self.indices['lat'], self.indices['lon']])
-            elif len(depth.shape) == 4:
-                return np.array(depth[:, self.indices['depth'], self.indices['lat'], self.indices['lon']])
-        else:
-            self.indices['depth'] = [0]
-            return np.zeros(1)
-
-    @property
-    def read_depth_dimensions(self):
-        if 'depth' in self.dimensions:
-            data = self.dataset[self.name]
-            depthsize = data.shape[-3]
-            self.data_full_zdim = depthsize
-            self.indices['depth'] = self.indices['depth'] if 'depth' in self.indices else range(depthsize)
-            return np.empty((0, len(self.indices['depth']), len(self.indices['lat']), len(self.indices['lon'])))
-
-    @property
-    def data(self):
-        return self.data_access()
-
-    def data_access(self):
-        if self.chunk_mapping is None and self.field_chunksize not in ['auto', False, None]:
-            self.chunk_mapping = {}
-            if(isinstance(self.field_chunksize, tuple)):
-                j = 0
-                for i in range(len(self.field_chunksize)):
-                    if self.field_chunksize[i] <= 1:
-                        continue
-                    self.chunk_mapping[j] = self.field_chunksize[i]
-                    j += 1
-                self.field_chunksize = tuple([self.chunk_mapping[i] for i in range(len(self.chunk_mapping))])
-            else:
-                self._chunksize_to_chunkmap()
-        data = self.dataset[self.name]
-        libcheck = data.data if isinstance(data, xr.DataArray) else data
-        lib = np if isinstance(libcheck, np.ndarray) else da
-        libcheck = None
-
-        ti = range(data.shape[0]) if self.ti is None else self.ti
-        if len(data.shape) == 2:
-            data = data[self.indices['lat'], self.indices['lon']]
-        elif len(data.shape) == 3:
-            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[0] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                # Add a bottom level of zeros for B-grid if missing in the data.
-                # The last level is unused by B-grid interpolator (U, V, tracer) but must be there
-                # to match Parcels data shape. for W, last level must be 0 for impermeability
-                for dim in ['depth', 'lat', 'lon']:
-                    if not isinstance(self.indices[dim], (list, range)):
-                        raise NotImplementedError("For B grids, indices must be provided as a range")
-                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-                d0 = self.indices['depth'][0]
-                d1 = self.indices['depth'][-1]+1
-                lat0 = self.indices['lat'][0]
-                lat1 = self.indices['lat'][-1]+1
-                lon0 = self.indices['lon'][0]
-                lon1 = self.indices['lon'][-1]+1
-                data = lib.concatenate((data[d0:d1-1, lat0:lat1, lon0:lon1],
-                                       da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            elif len(self.indices['depth']) > 1:
-                data = data[self.indices['depth'], self.indices['lat'], self.indices['lon']]
-            else:
-                data = data[ti, self.indices['lat'], self.indices['lon']]
-        else:
-            if self.indices['depth'][-1] == self.data_full_zdim-1 and data.shape[1] == self.data_full_zdim-1 and self.interp_method in ['bgrid_velocity', 'bgrid_w_velocity', 'bgrid_tracer']:
-                for dim in ['depth', 'lat', 'lon']:
-                    if not isinstance(self.indices[dim], (list, range)):
-                        raise NotImplementedError("For B grids, indices must be provided as a range")
-                        # this is because da.concatenate needs data which are indexed using slices, not a range of indices
-                d0 = self.indices['depth'][0]
-                d1 = self.indices['depth'][-1]+1
-                lat0 = self.indices['lat'][0]
-                lat1 = self.indices['lat'][-1]+1
-                lon0 = self.indices['lon'][0]
-                lon1 = self.indices['lon'][-1]+1
-                if(type(ti) in [list, range]):
-                    t0 = ti[0]
-                    t1 = ti[-1]+1
-                    data = lib.concatenate((data[t0:t1, d0:d1-1, lat0:lat1, lon0:lon1],
-                                           da.zeros((t1-t0, 1, lat1-lat0, lon1-lon0))), axis=1)
-                else:
-                    data = lib.concatenate((data[ti, d0:d1-1, lat0:lat1, lon0:lon1],
-                                           da.zeros((1, lat1-lat0, lon1-lon0))), axis=0)
-            else:
-                data = data[ti, self.indices['depth'], self.indices['lat'], self.indices['lon']]
-
-        if isinstance(data, xr.DataArray):
-            data = data.data
-        if self.field_chunksize is False:
-            data = np.array(data)
-            self.chunking_finalized = True
-        else:
-            if isinstance(data, da.core.Array):
-                if not self.chunking_finalized:
-                    if self.field_chunksize == 'auto':
-                        if data.shape[-2:] != data.chunksize[-2:]:
-                            data = data.rechunk(self.field_chunksize)
-                        self.chunk_mapping = {}
-                        chunkIndex = 0
-                        startblock = 0
-                        for chunkDim in data.chunksize[startblock:]:
-                            self.chunk_mapping[chunkIndex] = chunkDim
-                            chunkIndex += 1
-                        self._chunkmap_to_chunksize()
-                        if self.rechunk_callback_fields is not None:
-                            self.rechunk_callback_fields()
-                            self.chunking_finalized = True
-                    else:
-                        # ==== I think this can be "pass" too ==== #
-                        data = data.rechunk(self.chunk_mapping)
-                        self.chunking_finalized = True
-            else:
-                da_data = da.from_array(data, chunks=self.field_chunksize)
-                if self.field_chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
-                    data = np.array(data)
-                else:
-                    data = da_data
-                if not self.chunking_finalized and self.rechunk_callback_fields is not None:
-                    self.rechunk_callback_fields()
-                    self.chunking_finalized = True
-
-        return data
-
-    @property
-    def time(self):
-        return self.time_access()
-
-    def time_access(self):
-        if self.timestamp is not None:
-            return self.timestamp
-
-        if 'time' not in self.dimensions:
-            return np.array([None])
-
-        time_da = self.dataset[self.dimensions['time']]
-        convert_xarray_time_units(time_da, self.dimensions['time'])
-        time = np.array([time_da[self.dimensions['time']]]) if len(time_da.shape) == 0 else np.array(time_da[self.dimensions['time']])
-        if isinstance(time[0], datetime.datetime):
-            raise NotImplementedError('Parcels currently only parses dates ranging from 1678 AD to 2262 AD, which are stored by xarray as np.datetime64. If you need a wider date range, please open an Issue on the parcels github page.')
-        return time

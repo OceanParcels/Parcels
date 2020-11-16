@@ -178,7 +178,7 @@ def test_fieldset_from_file_subsets(indslon, indslat, tmpdir, filename='test_sub
     fieldsetfull.write(filepath)
     indices = {'lon': indslon, 'lat': indslat}
     indices_back = indices.copy()
-    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices)
+    fieldsetsub = FieldSet.from_parcels(filepath, indices=indices, chunksize=None)
     assert indices == indices_back
     assert np.allclose(fieldsetsub.U.lon, fieldsetfull.U.grid.lon[indices['lon']])
     assert np.allclose(fieldsetsub.U.lat, fieldsetfull.U.grid.lat[indices['lat']])
@@ -253,7 +253,28 @@ def test_add_duplicate_field(dupobject):
     assert error_thrown
 
 
-def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
+@pytest.mark.parametrize('fieldtype', ['normal', 'vector'])
+def test_add_field_after_pset(fieldtype):
+    data, dimensions = generate_fieldset(100, 100)
+    fieldset = FieldSet.from_data(data, dimensions)
+    pset = ParticleSet(fieldset, ScipyParticle, lon=0, lat=0)  # noqa ; to trigger fieldset.check_complete
+    field1 = Field('field1', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
+    field2 = Field('field2', fieldset.U.data, lon=fieldset.U.lon, lat=fieldset.U.lat)
+    vfield = VectorField('vfield', field1, field2)
+    error_thrown = False
+    try:
+        if fieldtype == 'normal':
+            fieldset.add_field(field1)
+        elif fieldtype == 'vector':
+            fieldset.add_vector_field(vfield)
+    except RuntimeError:
+        error_thrown = True
+
+    assert error_thrown
+
+
+@pytest.mark.parametrize('chunksize', ['auto', None])
+def test_fieldset_samegrids_from_file(tmpdir, chunksize, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath1 = tmpdir.join(filename+'_1')
@@ -267,13 +288,15 @@ def test_fieldset_samegrids_from_file(tmpdir, filename='test_subsets'):
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
-    chs = 'auto'
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize)
 
-    assert fieldset.gridset.size == 1
-    assert fieldset.U.grid == fieldset.V.grid
-    assert fieldset.U.grid.master_chunksize == fieldset.V.grid.master_chunksize
-    assert fieldset.U.field_chunksize == fieldset.V.field_chunksize
+    if chunksize == 'auto':
+        assert fieldset.gridset.size == 2
+        assert fieldset.U.grid != fieldset.V.grid
+    else:
+        assert fieldset.gridset.size == 1
+        assert fieldset.U.grid == fieldset.V.grid
+        assert fieldset.U.chunksize == fieldset.V.chunksize
 
 
 @pytest.mark.parametrize('gridtype', ['A', 'C'])
@@ -290,7 +313,8 @@ def test_fieldset_dimlength1_cgrid(gridtype):
     assert success
 
 
-def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
+@pytest.mark.parametrize('chunksize', ['auto', None])
+def test_fieldset_diffgrids_from_file(tmpdir, chunksize, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath1 = tmpdir.join(filename+'_1')
@@ -308,14 +332,14 @@ def test_fieldset_diffgrids_from_file(tmpdir, filename='test_subsets'):
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
-    chs = 'auto'
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize)
     assert fieldset.gridset.size == 2
     assert fieldset.U.grid != fieldset.V.grid
 
 
-def test_fieldset_diffgrids_from_file_data(tmpdir, filename='test_subsets'):
+@pytest.mark.parametrize('chunksize', ['auto', None])
+def test_fieldset_diffgrids_from_file_data(tmpdir, chunksize, filename='test_subsets'):
     """ Test for subsetting fieldset from file using indices dict. """
     data, dimensions = generate_fieldset(100, 100)
     filepath = tmpdir.join(filename)
@@ -331,12 +355,14 @@ def test_fieldset_diffgrids_from_file_data(tmpdir, filename='test_subsets'):
     files = {'U': ufiles, 'V': vfiles}
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
-    chs = 'auto'
-    fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, field_chunksize=chs)
+    fieldset_file = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True, chunksize=chunksize)
 
     fieldset_file.add_field(field_data, "B")
     assert len(fieldset_file.get_fields()) == 3
-    assert fieldset_file.gridset.size == 2
+    if chunksize == 'auto':
+        assert fieldset_file.gridset.size == 3
+    else:
+        assert fieldset_file.gridset.size == 2
     assert fieldset_file.U.grid != fieldset_file.B.grid
 
 
@@ -395,7 +421,9 @@ def test_fieldset_write_curvilinear(tmpdir):
     newfile = tmpdir.join('curv_field')
     fieldset.write(newfile)
 
-    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'}, dimensions={'lon': 'nav_lon', 'lat': 'nav_lat'})
+    fieldset2 = FieldSet.from_netcdf(filenames=newfile+'dx.nc', variables={'dx': 'dx'},
+                                     dimensions={'time': 'time_counter', 'depth': 'depthdx',
+                                                 'lon': 'nav_lon', 'lat': 'nav_lat'})
     assert fieldset2.dx.creation_log == 'from_netcdf'
 
     for var in ['lon', 'lat', 'data']:
@@ -462,12 +490,42 @@ def test_vector_fields(mode, swapUV):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_add_second_vector_field(mode):
+    lon = np.linspace(0., 10., 12, dtype=np.float32)
+    lat = np.linspace(0., 10., 10, dtype=np.float32)
+    U = np.ones((10, 12), dtype=np.float32)
+    V = np.zeros((10, 12), dtype=np.float32)
+    data = {'U': U, 'V': V}
+    dimensions = {'U': {'lat': lat, 'lon': lon},
+                  'V': {'lat': lat, 'lon': lon}}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
+
+    data2 = {'U2': U, 'V2': V}
+    dimensions2 = {'lon': [ln + 0.1 for ln in lon], 'lat': [lt - 0.1 for lt in lat]}
+    fieldset2 = FieldSet.from_data(data2, dimensions2, mesh='flat')
+
+    UV2 = VectorField('UV2', fieldset2.U2, fieldset2.V2)
+    fieldset.add_vector_field(UV2)
+
+    def SampleUV2(particle, fieldset, time):
+        u, v = fieldset.UV2[time, particle.depth, particle.lat, particle.lon]
+        particle.lon += u * particle.dt
+        particle.lat += v * particle.dt
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=0.5, lat=0.5)
+    pset.execute(AdvectionRK4+pset.Kernel(SampleUV2), dt=1, runtime=1)
+
+    assert abs(pset.lon[0] - 2.5) < 1e-9
+    assert abs(pset.lat[0] - .5) < 1e-9
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('field_chunksize', [False, 'auto', (1, 32, 32)])
+@pytest.mark.parametrize('chunksize', [False, 'auto', {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('with_GC', [False, True])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
-def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, with_GC):
-    if field_chunksize == 'auto':
+def test_from_netcdf_memory_containment(mode, time_periodic, chunksize, with_GC):
+    if chunksize == 'auto':
         dask.config.set({'array.chunk-size': '2MiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
@@ -508,7 +566,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, wi
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=field_chunksize)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, allow_time_extrapolation=True if time_periodic in [False, None] else False, chunksize=chunksize)
     perflog = PerformanceLog()
     postProcessFuncs = [perflog.advance, ]
     if with_GC:
@@ -523,16 +581,16 @@ def test_from_netcdf_memory_containment(mode, time_periodic, field_chunksize, wi
     mem_steps_np = np.array(perflog.memory_steps)
     if with_GC:
         assert np.allclose(mem_steps_np[8:], perflog.memory_steps[-1], rtol=0.01)
-    if (field_chunksize is not False or with_GC) and mode != 'scipy':
+    if (chunksize is not False or with_GC) and mode != 'scipy':
         assert np.alltrue((mem_steps_np-mem_0) < 4712832)   # represents 4 x [U|V] * sizeof(field data)
     assert not mem_exhausted
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
-@pytest.mark.parametrize('field_chunksize', [False, 'auto', {'x': 32, 'y': 32}, {'time_counter': 1, 'x': 32, 'y': 32}, (32, 32), (1, 32, 32)])
+@pytest.mark.parametrize('chunksize', [False, 'auto', {'lat': ('y', 32), 'lon': ('x', 32)}, {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('deferLoad', [True, False])
-def test_from_netcdf_field_chunking(mode, time_periodic, field_chunksize, deferLoad):
+def test_from_netcdf_chunking(mode, time_periodic, chunksize, deferLoad):
     fnameU = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsU.nc')
     fnameV = path.join(path.dirname(__file__), 'test_data', 'perlinfieldsV.nc')
     ufiles = [fnameU, ] * 4
@@ -543,7 +601,7 @@ def test_from_netcdf_field_chunking(mode, time_periodic, field_chunksize, deferL
     variables = {'U': 'vozocrtx', 'V': 'vomecrty'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
 
-    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, field_chunksize=field_chunksize)
+    fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, time_periodic=time_periodic, deferred_load=deferLoad, allow_time_extrapolation=True if time_periodic in [False, None] else False, chunksize=chunksize)
     pset = ParticleSet.from_line(fieldset, size=1, pclass=ptype[mode],
                                  start=(0.5, 0.5), finish=(0.5, 0.5))
     pset.execute(AdvectionRK4, dt=1, runtime=1)
@@ -676,7 +734,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     dims0['depth'] = np.arange(0, zdim, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
+    fieldset = FieldSet.from_parcels(filepath, chunksize={'time': ('time_counter', 1), 'depth': ('depthu', 1), 'lat': ('y', 2), 'lon': ('x', 2)})
 
     # testing for combination of deferred-loaded and numpy Fields
     with pytest.raises(ValueError):
@@ -719,7 +777,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     dims0['depth'] = np.arange(0, 4, 1)
     fieldset_out = FieldSet.from_data(data0, dims0)
     fieldset_out.write(filepath)
-    fieldset = FieldSet.from_parcels(filepath, field_chunksize=(1, 2, 2))
+    fieldset = FieldSet.from_parcels(filepath, chunksize={'time': ('time_counter', 1), 'depth': ('depthu', 1), 'lat': ('y', 2), 'lon': ('x', 2)})
 
     def SampleField(particle, fieldset, time):
         particle.u_kernel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
