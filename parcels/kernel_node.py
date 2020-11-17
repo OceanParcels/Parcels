@@ -284,6 +284,16 @@ class Kernel(BaseKernel):
                     break
             node = node.next
 
+    def remove_deleted(self, pset, output_file, endtime):
+        """Utility to remove all particles that signalled deletion"""
+        indices = pset.get_deleted_item_indices()
+        if len(indices) > 0:
+            pdata = [pset[i].data for i in indices]
+            if len(pdata) > 0 and output_file is not None:
+                output_file.write(pdata, endtime, deleted_only=True)
+            pset.remove_deleted_items_by_indices(indices)
+        return pset
+
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
         node = pset.begin()
@@ -293,17 +303,6 @@ class Kernel(BaseKernel):
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
-
-        # ==== this one really should be a member function of the ParticleSet, with the outfile as parameter ==== #
-        def remove_deleted(pset):
-            """Utility to remove all particles that signalled deletion"""
-            indices = pset.get_deleted_item_indices()
-            if len(indices) > 0:
-                pdata = [pset[i].data for i in indices]
-                if len(pdata) > 0 and output_file is not None:
-                    output_file.write(pdata, endtime, deleted_only=True)
-                pset.remove_deleted_items_by_indices(indices)
-            return pset
 
         if recovery is None:
             recovery = {}
@@ -323,7 +322,7 @@ class Kernel(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        remove_deleted(pset)
+        self.remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
 
         # Identify particles that threw errors
         # error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
@@ -336,6 +335,8 @@ class Kernel(BaseKernel):
                     return
                 if p.state == ErrorCode.Repeat:
                     p.reset_state()
+                elif p.state == ErrorCode.Delete:
+                    pass
                 elif p.state in recovery_map:
                     recovery_kernel = recovery_map[p.state]
                     p.state = ErrorCode.Success
@@ -347,7 +348,7 @@ class Kernel(BaseKernel):
                     p.delete()
 
             # Remove all particles that signalled deletion
-            remove_deleted(pset)
+            self.remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
