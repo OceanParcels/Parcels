@@ -181,6 +181,7 @@ class ParticleSet_Benchmark(ParticleSet):
 
         tol = 1e-12
 
+        walltime_start = None
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
@@ -318,7 +319,7 @@ class ParticleSet_Benchmark(ParticleSet):
         return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
-    def plot_and_log(self, total_times = None, compute_times = None, io_times = None, plot_times = None, memory_used = None, nparticles = None, target_N = 1, imageFilePath = "", odir = os.getcwd()):
+    def plot_and_log(self, total_times = None, compute_times = None, io_times = None, plot_times = None, memory_used = None, nparticles = None, target_N = 1, imageFilePath = "", odir = os.getcwd(), xlim_range=None, ylim_range=None):
         # == do something with the log-arrays == #
         if total_times is None or type(total_times) not in [list, dict, np.ndarray]:
             total_times = self.total_log.get_values()
@@ -392,8 +393,10 @@ class ParticleSet_Benchmark(ParticleSet):
             ax.plot(x, plot_mem, '.-', label="memory_used (cumulative) [1 GB]")
         if do_npart_plot:
             ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
-        plt.xlim([0, 730])
-        plt.ylim([0, 120])
+        if xlim_range is not None:
+            plt.xlim(list(xlim_range))  # [0, 730]
+        if ylim_range is not None:
+            plt.ylim(list(ylim_range))  # [0, 120]
         plt.legend()
         ax.set_xlabel('iteration')
         plt.savefig(os.path.join(odir, imageFilePath), dpi=600, format='png')
