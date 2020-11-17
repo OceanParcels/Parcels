@@ -130,6 +130,7 @@ class Kernel_Benchmark(Kernel):
         for f in self.fieldset.get_fields():
             if type(f) in [VectorField, NestedField, SummedField]:
                 continue
+
             self._io_timings.start_timing()
             loaded_data = f.data
             self._io_timings.stop_timing()
@@ -227,4 +228,12 @@ class Kernel_Benchmark(Kernel):
         self._io_timings.advance_iteration()
         self._mem_io_log.advance_iteration()
         self._compute_timings.advance_iteration()
+
+    def remove_deleted(self, pset, output_file, endtime):
+        """Utility to remove all particles that signalled deletion"""
+        self._mem_io_log.start_timing()
+        super(Kernel_Benchmark, self).remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
+        self._mem_io_log.stop_timing()
+        self._mem_io_log.accumulate_timing()
+        self._mem_io_log.advance_iteration()
 
