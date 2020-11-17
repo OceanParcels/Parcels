@@ -185,7 +185,9 @@ class AgeParticle_SciPy(StommelParticleS):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time+random.uniform(.0, fieldset.life_expectancy)*math.sqrt(3.0/2.0)
+        # particle.life_expectancy = time+random.uniform(.0, fieldset.life_expectancy)*math.sqrt(3.0/2.0)
+        # particle.life_expectancy = time + random.uniform(.0, fieldset.life_expectancy) * (3.0 / 2.0)
+        particle.life_expectancy = time + random.uniform(.0, fieldset.life_expectancy) * (3.0 / 2.0)**2.0
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -475,7 +477,7 @@ if __name__=='__main__':
         Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
         Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
-            pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir)
+            pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 120])
     else:
         pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir)
 
