@@ -344,7 +344,8 @@ class Kernel(BaseKernel):
                     if(p.isComputed()):
                         p.reset_state()
                 else:
-                    logger.warning_once('Deleting particle because of bug in #749 and #737')
+                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    # logger.warning('Deleting particle because of bug in #749 and #737 - particle state: {}'.format(ErrorCode.toString(p.state)))
                     p.delete()
 
             # Remove all particles that signalled deletion
