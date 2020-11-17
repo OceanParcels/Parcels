@@ -18,6 +18,20 @@ class ErrorCode(object):
     ErrorThroughSurface = 61
     ErrorTimeExtrapolation = 7
 
+    @classmethod
+    def toString(cls, code):
+        names = {cls.Success: 'Success',
+                 cls.Evaluate: 'Evaluate',
+                 cls.Repeat: 'Repeat',
+                 cls.Delete: 'Delete',
+                 cls.StopExecution: 'Stop',
+                 cls.Error: 'Error',
+                 cls.ErrorInterpolation: 'InterpolationError',
+                 cls.ErrorOutOfBounds: 'OutOfBoundsError',
+                 cls.ErrorThroughSurface: 'ThroughSurfaceError',
+                 cls.ErrorTimeExtrapolation: 'TimeExtrapolationError'}
+        return names[code]
+
 
 class FieldSamplingError(RuntimeError):
     """Utility error class to propagate erroneous field sampling in Scipy mode"""
