@@ -349,7 +349,6 @@ class Kernel(BaseKernel):
                 if p.state == ErrorCode.Repeat:
                     p.reset_state()
                 elif p.state == ErrorCode.Delete:
-                    # p.delete()
                     pass
                 elif p.state in recovery_map:
                     recovery_kernel = recovery_map[p.state]

@@ -159,6 +159,9 @@ class BaseKernel(object):
             kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, BaseKernel)
 
+    def remove_deleted(self, pset, output_file, endtime):
+        pass
+
     def execute_jit(self, pset, endtime, dt):
         pass
 
