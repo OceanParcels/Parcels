@@ -171,6 +171,7 @@ class ParticleSet_Benchmark(ParticleSet):
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
 
         tol = 1e-12
+        walltime_start = None
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:

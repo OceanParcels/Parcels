@@ -310,14 +310,6 @@ class Kernel(BaseKernel):
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
 
-        # def remove_deleted(pset):
-        #     """Utility to remove all particles that signalled deletion"""
-        #     indices = [i for i, p in enumerate(pset.particles)
-        #                if p.state in [ErrorCode.Delete]]
-        #     if len(indices) > 0 and output_file is not None:
-        #         output_file.write(pset[indices], endtime, deleted_only=True)
-        #     pset.remove(indices)
-
         if recovery is None:
             recovery = {}
         elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
