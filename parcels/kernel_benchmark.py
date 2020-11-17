@@ -266,6 +266,14 @@ class Kernel_Benchmark(Kernel):
         self._mem_io_timings.advance_iteration()
         self._compute_timings.advance_iteration()
 
+    def remove_deleted(self, pset, output_file, endtime):
+        """Utility to remove all particles that signalled deletion"""
+        self._mem_io_timings.start_timing()
+        super(Kernel_Benchmark, self).remove_deleted(pset=pset, output_file=output_file, endtime=endtime)
+        self._mem_io_timings.stop_timing()
+        self._mem_io_timings.accumulate_timing()
+        self._mem_io_timings.advance_iteration()
+
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
         func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
