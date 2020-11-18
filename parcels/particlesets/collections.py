@@ -539,11 +539,11 @@ class Collection(ABC):
         shall rather use a removal-via-object-reference strategy.
         """
         assert indices is not None, "Trying to remove particles by their collection indices, but the index list is None - invalid operation."
-        assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
-        if type(indices) is not dict:
-            assert indices[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
-        else:
-            assert indices.values()[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+        assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
+        # if type(indices) is not dict:
+        #     assert indices[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+        # else:
+        #     assert indices.values()[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
 
     @abstractmethod
     def remove_multi_by_IDs(self, ids):

@@ -378,10 +378,14 @@ class Kernel(object):
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
-            indices = pset.collection._data['state'] == OperationCode.Delete
-            if np.count_nonzero(indices) > 0 and output_file is not None:
-                output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove_booleanvector(indices)
+            # Indices marked for deletion.
+            bool_indices = np.array([
+                p.state == OperationCode.Delete for p in pset])
+            indices = np.where(bool_indices)[0]
+            if len(indices) > 0 and output_file is not None:
+                output_file.write(pset, endtime, deleted_only=bool_indices)
+            pset.remove_indices(indices)
+            return len(indices)
 
         if recovery is None:
             recovery = {}
@@ -405,28 +409,35 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        # NOTE: this relies on the SOA implementation, it does not
-        # generalize. This needs to be reworked.
-        error_particles = np.isin(pset.collection._data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
-        while np.any(error_particles):
+        while True:
+            n_error = 0  # Number of particles with a different code.
             # Apply recovery kernel
-            for p in np.where(error_particles)[0]:
-                particles = pset.collection.get_single_by_index(p)
-                if particles.state == OperationCode.StopExecution:
-                    return
-                if particles.state == OperationCode.Repeat:
-                    particles.set_state(StateCode.Evaluate)
-                elif particles.state in recovery_map:
-                    recovery_kernel = recovery_map[particles.state]
-                    particles.set_state(StateCode.Success)
-                    recovery_kernel(particles, self.fieldset, particles.time)
-                    if particles.state == StateCode.Success:
-                        particles.set_state(StateCode.Evaluate)
-                else:
-                    logger.warning_once('Deleting particle because of bug in #749 and #737')
-                    particles.delete()
+            # Effectively loop over all particles that don't have sucess of
+            # evaluate codes.
+            for particle in pset:
+                if particle.state in [StateCode.Evaluate, StateCode.Success]:
+                    continue
 
-            # Remove all particles that signalled deletion
+                if particle.state == OperationCode.StopExecution:
+                    return
+                if particle.state == OperationCode.Repeat:
+                    particle.set_state(StateCode.Evaluate)
+                elif particle.state in recovery_map:
+                    recovery_kernel = recovery_map[particle.state]
+                    particle.set_state(StateCode.Success)
+                    recovery_kernel(particle, self.fieldset, particle.time)
+                    if particle.state == StateCode.Success:
+                        particle.set_state(StateCode.Evaluate)
+                else:
+                    logger.warning_once(
+                        'Deleting particle because of bug in #749 and #737')
+                    particle.delete()
+                n_error += 1
+
+            # With no error particles we don't need to continue execution.
+            if n_error == 0:
+                break
+
             remove_deleted(pset)
 
             # Execute core loop again to continue interrupted particles
@@ -434,8 +445,6 @@ class Kernel(object):
                 self.execute_jit(pset, endtime, dt)
             else:
                 self.execute_python(pset, endtime, dt)
-
-            error_particles = np.isin(pset.collection._data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
