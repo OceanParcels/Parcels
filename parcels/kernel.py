@@ -283,8 +283,6 @@ class Kernel(object):
         else:
             analytical = False
 
-        particles = pset.data_accessor()
-
         # back up variables in case of OperationCode.Repeat
         p_var_back = {}
 
@@ -294,90 +292,86 @@ class Kernel(object):
                     continue
                 f.data = np.array(f.data)
 
-        for p in range(pset.size):
-            particles.set_index(p)
-
+        for p in pset:
             # Don't execute particles that aren't started yet
-            sign_end_part = np.sign(endtime - particles.time)
+            sign_end_part = np.sign(endtime - p.time)
             # Compute min/max dt for first timestep
-            dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+            dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
-                if abs(particles.time) >= abs(endtime):
-                    particles.set_state(StateCode.Success)
+                if abs(p.time) >= abs(endtime):
+                    p.set_state(StateCode.Success)
                 continue
 
-            while particles.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
+            while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
 
-                for var in pset.ptype.variables:
-                    p_var_back[var.name] = getattr(particles, var.name)
+                for var in pset.collection.ptype.variables:
+                    p_var_back[var.name] = getattr(p, var.name)
                 try:
                     pdt_prekernels = sign_dt * dt_pos
-                    particles.dt = pdt_prekernels
-                    state_prev = particles.state
-                    res = self.pyfunc(particles, pset.fieldset, particles.time)
+                    p.dt = pdt_prekernels
+                    state_prev = p.state
+                    res = self.pyfunc(p, pset.fieldset, p.time)
                     if res is None:
                         res = StateCode.Success
 
-                    if res is StateCode.Success and particles.state != state_prev:
-                        res = particles.state
+                    if res is StateCode.Success and p.state != state_prev:
+                        res = p.state
 
-                    if not analytical and res == StateCode.Success and not np.isclose(particles.dt, pdt_prekernels):
+                    if not analytical and res == StateCode.Success and not np.isclose(p.dt, pdt_prekernels):
                         res = OperationCode.Repeat
 
                 except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
-                    particles.exception = fse_xy
+                    p.exception = fse_xy
                 except FieldOutOfBoundSurfaceError as fse_z:
                     res = ErrorCode.ErrorThroughSurface
-                    particles.exception = fse_z
+                    p.exception = fse_z
                 except TimeExtrapolationError as fse_t:
                     res = ErrorCode.ErrorTimeExtrapolation
-                    particles.exception = fse_t
+                    p.exception = fse_t
 
                 except Exception as e:
                     res = ErrorCode.Error
-                    particles.exception = e
+                    p.exception = e
 
                 # Handle particle time and time loop
                 if res in [StateCode.Success, OperationCode.Delete]:
                     # Update time and repeat
-                    particles.time += particles.dt
-                    particles.update_next_dt()
+                    p.time += p.dt
+                    p.update_next_dt()
                     if analytical:
-                        particles.dt = np.inf
-                    dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+                        p.dt = np.inf
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
-                    sign_end_part = np.sign(endtime - particles.time)
+                    sign_end_part = np.sign(endtime - p.time)
                     if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
                         res = StateCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
-                    particles.set_state(res)
+                    p.set_state(res)
                     if np.isclose(dt, 0):
                         break
                 else:
-                    particles.set_state(res)
+                    p.set_state(res)
                     # Try again without time update
-                    for var in pset.ptype.variables:
+                    for var in pset.collection.ptype.variables:
                         if var.name not in ['dt', 'state']:
-                            setattr(particles, var.name, p_var_back[var.name])
-                    dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+                            setattr(p, var.name, p_var_back[var.name])
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
-                    sign_end_part = np.sign(endtime - particles.time)
+                    sign_end_part = np.sign(endtime - p.time)
                     if sign_end_part != sign_dt:
                         dt_pos = 0
                     break
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        particles = pset.data_accessor()
-        for p in range(pset.size):
-            particles.set_index(p)
-            particles.set_state(StateCode.Evaluate)
+        for p in pset:
+            p.set_state(StateCode.Evaluate)
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -411,11 +405,13 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
+        # NOTE: this relies on the SOA implementation, it does not
+        # generalize. This needs to be reworked.
+        error_particles = np.isin(pset.collection._data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
         while np.any(error_particles):
             # Apply recovery kernel
             for p in np.where(error_particles)[0]:
-                particles.set_index(p)
+                particles = pset.collection.get_single_by_index(p)
                 if particles.state == OperationCode.StopExecution:
                     return
                 if particles.state == OperationCode.Repeat:
@@ -439,7 +435,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
+            error_particles = np.isin(pset.collection._data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
