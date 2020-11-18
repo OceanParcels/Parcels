@@ -1,3 +1,4 @@
+import numpy as np
 from abc import ABC
 from abc import abstractmethod
 import warnings
@@ -63,12 +64,11 @@ class BaseParticleAccessor(ABC):
         # == OBJECTION CK: Also here - make a guarded forward ...  == #
         # == RESPONSE RB: The response I provided below I think is == #
         # == particularly applicable here.                         == #
-        # if next_dt is None:
-        #     if not np.isnan(self._next_dt):
-        #         self.dt, self._next_dt = self._next_dt, np.nan
-        # else:
-        #     self._next_dt = next_dt
-        pass
+        if next_dt is None:
+            if not np.isnan(self._next_dt):
+                self.dt, self._next_dt = self._next_dt, np.nan
+        else:
+            self._next_dt = next_dt
 
     def delete(self):
         # == OBJECTION CK: the actual operation, which is the particle's state, shall be done by the particle. So, == #
@@ -79,8 +79,7 @@ class BaseParticleAccessor(ABC):
         # == functions can be defined. So it makes sense, I think, to implement any function that requires more    == #
         # == logic than just setting a property on the Accessor level. The state-thing is not really a good        == #
         # == example, although the delete-alias may be useful over just treating it as a property.                 == #
-        # self.state = OperationCode.Delete
-        pass
+        self.state = OperationCode.Delete
 
     def set_state(self, state):
         # Convert into a "proper" property?
@@ -97,8 +96,7 @@ class BaseParticleAccessor(ABC):
         # == logic than just setting a property on the Accessor level. The state-thing is not really a good        == #
         # == example, although the delete-alias may be useful over just treating it as a property.                 == #
 
-        # self.state = state
-        pass
+        self.state = state
 
     @abstractmethod
     def __getattr__(self, name):
