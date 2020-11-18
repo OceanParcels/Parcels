@@ -515,7 +515,7 @@ class ParticleSetSOA(BaseParticleSet):
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
         # Method forward
-        self.remove_indices(np.where(indices))
+        self.remove_indices(np.where(indices)[0])
 
     # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
@@ -740,7 +740,7 @@ def search_kernel(particle, fieldset, time):
 
         k = Kernel(
             self.fieldset,
-            self.ptype,
+            self._collection.ptype,
             funcname="search_kernel",
             funcvars=["particle", "fieldset", "time", "x"],
             funccode=f_str,
@@ -748,7 +748,7 @@ def search_kernel(particle, fieldset, time):
         self.execute(pyfunc=k, runtime=0)
 
         if isinstance(particle_val, str):
-            particle_val = self.collection._data[particle_val]
+            particle_val = self._collection._data[particle_val]
         else:
             particle_val = particle_val if particle_val else np.ones(self.size)
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
