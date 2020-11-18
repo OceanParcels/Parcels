@@ -799,7 +799,7 @@ class ParticleCollectionSOA(ParticleCollection):
         'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
         """
         class CParticles(Structure):
-            _variable_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
+            _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
 
         def flatten_dense_data_array(v):
             data_flat = self._data[v.name].view()
