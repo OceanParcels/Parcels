@@ -436,7 +436,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        pd = self.particle_data
+        pd = self.collection._data
 
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only is not False):
@@ -559,7 +559,7 @@ class ParticleSetSOA(BaseParticleSet):
             else:
                 self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
-            if self.ptype.uses_jit:
+            if self.collection.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
@@ -591,13 +591,13 @@ class ParticleSetSOA(BaseParticleSet):
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
         mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
-        if np.any(np.isnan(self.particle_data['time'])):
-            self.particle_data['time'][np.isnan(self.particle_data['time'])] = mintime if dt >= 0 else maxtime
+        if np.any(np.isnan(self.collection._data['time'])):
+            self.collection._data['time'][np.isnan(self.collection._data['time'])] = mintime if dt >= 0 else maxtime
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
-        _starttime = self.particle_data['time'].min() if dt >= 0 else self.particle_data['time'].max()
+        _starttime = self.collection._data['time'].min() if dt >= 0 else self.collection._data['time'].max()
         if self.repeatdt is not None and self.repeat_starttime is None:
             self.repeat_starttime = _starttime
         if runtime is not None:
@@ -615,7 +615,7 @@ class ParticleSetSOA(BaseParticleSet):
                                 "The kernels will be executed once, without incrementing time")
             execute_once = True
 
-        self.particle_data['dt'][:] = dt
+        self.collection._data['dt'][:] = dt
 
         # First write output_file, because particles could have been added
         if output_file:
@@ -748,7 +748,7 @@ def search_kernel(particle, fieldset, time):
         self.execute(pyfunc=k, runtime=0)
 
         if isinstance(particle_val, str):
-            particle_val = self.particle_data[particle_val]
+            particle_val = self.collection._data[particle_val]
         else:
             particle_val = particle_val if particle_val else np.ones(self.size)
         density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
@@ -778,7 +778,7 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return Kernel(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
+        return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
     # ==== already user-exposed ==== #

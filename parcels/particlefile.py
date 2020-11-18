@@ -72,7 +72,7 @@ class ParticleFile(object):
             self.lonlatdepth_dtype = self.particleset.lonlatdepth_dtype
             self.var_names = []
             self.var_names_once = []
-            for v in self.particleset.ptype.variables:
+            for v in self.particleset.collection.ptype.variables:
                 if v.to_write == 'once':
                     self.var_names_once += [v.name]
                 elif v.to_write is True:
