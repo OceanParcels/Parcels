@@ -2,12 +2,21 @@ import numpy as np
 import inspect  # noqa
 from abc import ABC
 from abc import abstractmethod
+from datetime import datetime
+from datetime import timedelta as delta
+import time as time_module
 import warnings
 
-from parcels.tools.statuscodes import OperationCode  # noqa
+import progressbar
+
+from parcels.tools.statuscodes import OperationCode  #noqa
+from parcels.tools.statuscodes import StateCode
+from parcels.compiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
-import progressbar
+from parcels.kernels.advection import AdvectionRK4
+from parcels.kernel import Kernel
+from parcels.tools.loggers import logger
 
 
 class NDCluster(ABC):
@@ -169,40 +178,6 @@ class BaseParticleSet(NDCluster):
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
-    @abstractmethod
-    def execute(self, pyfunc, endtime, runtime, dt, moviedt, recovery,
-                output_file, movie_background_field, verbose_progress,
-                postIterationCallbacks, callbackdt):
-        """Execute a given kernel function over the particle set for
-        multiple timesteps. Optionally also provide sub-timestepping
-        for particle output.
-
-        :param pyfunc: Kernel function to execute. This can be the name of a
-                       defined Python function or a :class:`parcels.kernel.Kernel` object.
-                       Kernels can be concatenated using the + operator
-        :param endtime: End time for the timestepping loop.
-                        It is either a datetime object or a positive double.
-        :param runtime: Length of the timestepping loop. Use instead of endtime.
-                        It is either a timedelta object or a positive double.
-        :param dt: Timestep interval to be passed to the kernel.
-                   It is either a timedelta object or a double.
-                   Use a negative value for a backward-in-time simulation.
-        :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
-                         the update frequency of animation.
-                         It is either a timedelta object or a positive double.
-                         None value means no animation.
-        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
-        :param recovery: Dictionary with additional `:mod:parcels.tools.error`
-                         recovery kernels to allow custom recovery behaviour in case of
-                         kernel errors.
-        :param movie_background_field: field plotted as background in the movie if moviedt is set.
-                                       'vector' shows the velocity as a vector field.
-        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
-        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
-        """
-        pass
-
     @classmethod
     @abstractmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -271,3 +246,257 @@ class BaseParticleSet(NDCluster):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         pass
+
+    def _set_particle_vector(self, name, value, indices=None):
+        """Set attributes of all particles to new values.
+
+        This is a fallback implementation, it might be slow.
+
+        :param name: Name of the attribute (str).
+        :param value: New value to set the attribute of the particles to.
+        :param indices: (Optional) only set the particles with these indices.
+                        Its length should be equal to the length of 'values'.
+                        If None, all particles are set.
+        """
+
+        if indices is None:
+            bool_indices = np.full(len(self), True)
+        else:
+            bool_indices = np.full(len(self), False)
+            bool_indices[indices] = True
+        for i, p in enumerate(self):
+            if bool_indices[i]:
+                setattr(p, name, value)
+
+    def _get_particle_vector(self, name, indices=None):
+        """Set attributes of all particles to new values.
+
+        This is a fallback implementation, it might be slow.
+
+        :param name: Name of the attribute (str).
+        :param indices: (Optional) only set the particles with these indices.
+                        Its length should be equal to the length of 'values'.
+                        If None, all particles are set.
+        :return: The values of the particle attributes.
+        """
+        if indices is None:
+            bool_indices = np.full(len(self), True)
+        else:
+            bool_indices = np.full(len(self), False)
+            bool_indices[indices] = True
+
+        return np.array([getattr(p, name) for i, p in enumerate(self)
+                         if bool_indices[i]])
+
+    @property
+    def error_particles(self):
+        """Get an iterator over all particles that are in an error state.
+
+        This is a fallback implementation, it might be slow.
+
+        :return: Collection iterator over error particles.
+        """
+        error_indices = [
+            i for i, p in enumerate(self)
+            if p.state not in [StateCode.Success, StateCode.Evaluate]]
+        return self.collection.get_multi_by_indices(indices=error_indices)
+
+    def _impute_release_times(self, default):
+        """Set attribute 'time' to default if encountering NaN values.
+
+        This is a fallback implementation, it might be slow.
+
+        :param default: Default release time.
+        :return: Minimum and maximum release times.
+        """
+        max_rt = None
+        min_rt = None
+        for p in self:
+            if np.isnan(p.time):
+                p.time = default
+            if max_rt is None or max_rt < p.time:
+                max_rt = p.time
+            if min_rt is None or min_rt > p.time:
+                min_rt = p.time
+        return (min_rt, max_rt)
+
+    # ==== already user-exposed ==== #
+    def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
+                moviedt=None, recovery=None, output_file=None, movie_background_field=None,
+                verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
+        """Execute a given kernel function over the particle set for
+        multiple timesteps. Optionally also provide sub-timestepping
+        for particle output.
+
+        :param pyfunc: Kernel function to execute. This can be the name of a
+                       defined Python function or a :class:`parcels.kernel.Kernel` object.
+                       Kernels can be concatenated using the + operator
+        :param endtime: End time for the timestepping loop.
+                        It is either a datetime object or a positive double.
+        :param runtime: Length of the timestepping loop. Use instead of endtime.
+                        It is either a timedelta object or a positive double.
+        :param dt: Timestep interval to be passed to the kernel.
+                   It is either a timedelta object or a double.
+                   Use a negative value for a backward-in-time simulation.
+        :param moviedt:  Interval for inner sub-timestepping (leap), which dictates
+                         the update frequency of animation.
+                         It is either a timedelta object or a positive double.
+                         None value means no animation.
+        :param output_file: :mod:`parcels.particlefile.ParticleFile` object for particle output
+        :param recovery: Dictionary with additional `:mod:parcels.tools.error`
+                         recovery kernels to allow custom recovery behaviour in case of
+                         kernel errors.
+        :param movie_background_field: field plotted as background in the movie if moviedt is set.
+                                       'vector' shows the velocity as a vector field.
+        :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
+        """
+        # ==== TODO: when all the restructuring is done, it should be possible to move this to the base class ==== #
+
+        # check if pyfunc has changed since last compile. If so, recompile
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+            # Generate and store Kernel
+            if isinstance(pyfunc, Kernel):
+                self.kernel = pyfunc
+            else:
+                self.kernel = self.Kernel(pyfunc)
+            # Prepare JIT kernel execution
+            if self.collection.ptype.uses_jit:
+                self.kernel.remove_lib()
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection._lonlatdepth_dtype else None
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
+                self.kernel.load_lib()
+
+        # Convert all time variables to seconds
+        if isinstance(endtime, delta):
+            raise RuntimeError('endtime must be either a datetime or a double')
+        if isinstance(endtime, datetime):
+            endtime = np.datetime64(endtime)
+        if isinstance(endtime, np.datetime64):
+            if self.time_origin.calendar is None:
+                raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')
+            endtime = self.time_origin.reltime(endtime)
+        if isinstance(runtime, delta):
+            runtime = runtime.total_seconds()
+        if isinstance(dt, delta):
+            dt = dt.total_seconds()
+        outputdt = output_file.outputdt if output_file else np.infty
+        if isinstance(outputdt, delta):
+            outputdt = outputdt.total_seconds()
+        if isinstance(moviedt, delta):
+            moviedt = moviedt.total_seconds()
+        if isinstance(callbackdt, delta):
+            callbackdt = callbackdt.total_seconds()
+
+        assert runtime is None or runtime >= 0, 'runtime must be positive'
+        assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
+        assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
+
+        if runtime is not None and endtime is not None:
+            raise RuntimeError('Only one of (endtime, runtime) can be specified')
+
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+
+        default_release_time = mintime if dt >= 0 else maxtime
+        min_rt, max_rt = self._impute_release_times(default_release_time)
+
+        # Derive _starttime and endtime from arguments or fieldset defaults
+        _starttime = min_rt if dt >= 0 else max_rt
+        if self.repeatdt is not None and self.repeat_starttime is None:
+            self.repeat_starttime = _starttime
+        if runtime is not None:
+            endtime = _starttime + runtime * np.sign(dt)
+        elif endtime is None:
+            mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
+            endtime = maxtime if dt >= 0 else mintime
+
+        execute_once = False
+        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
+            dt = 0
+            runtime = 0
+            endtime = _starttime
+            logger.warning_once("dt or runtime are zero, or endtime is equal to Particle.time. "
+                                "The kernels will be executed once, without incrementing time")
+            execute_once = True
+
+        self._set_particle_vector('dt', dt)
+
+        # First write output_file, because particles could have been added
+        if output_file:
+            output_file.write(self, _starttime)
+        if moviedt:
+            self.show(field=movie_background_field, show_time=_starttime, animation=True)
+
+        if moviedt is None:
+            moviedt = np.infty
+        if callbackdt is None:
+            interupt_dts = [np.infty, moviedt, outputdt]
+            if self.repeatdt is not None:
+                interupt_dts.append(self.repeatdt)
+            callbackdt = np.min(np.array(interupt_dts))
+        time = _starttime
+        if self.repeatdt:
+            next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
+        else:
+            next_prelease = np.infty if dt > 0 else - np.infty
+        next_output = time + outputdt if dt > 0 else time - outputdt
+        next_movie = time + moviedt if dt > 0 else time - moviedt
+        next_callback = time + callbackdt if dt > 0 else time - callbackdt
+        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
+
+        tol = 1e-12
+        if verbose_progress is None:
+            walltime_start = time_module.time()
+        if verbose_progress:
+            pbar = self.__create_progressbar(_starttime, endtime)
+        while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
+            if verbose_progress is None and time_module.time() - walltime_start > 10:
+                # Showing progressbar if runtime > 10 seconds
+                if output_file:
+                    logger.info('Temporary output files are stored in %s.' % output_file.tempwritedir_base)
+                    logger.info('You can use "parcels_convert_npydir_to_netcdf %s" to convert these '
+                                'to a NetCDF file during the run.' % output_file.tempwritedir_base)
+                pbar = self.__create_progressbar(_starttime, endtime)
+                verbose_progress = True
+            if dt > 0:
+                time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            else:
+                time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
+                                execute_once=execute_once)
+            if abs(time-next_prelease) < tol:
+                pset_new = self.__class__(
+                    fieldset=self.fieldset, time=time, lon=self.repeatlon,
+                    lat=self.repeatlat, depth=self.repeatdepth,
+                    pclass=self.repeatpclass,
+                    lonlatdepth_dtype=self.collection._lonlatdepth_dtype,
+                    partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
+                for p in pset_new:
+                    p.dt = dt
+                self.add(pset_new)
+                next_prelease += self.repeatdt * np.sign(dt)
+            if abs(time-next_output) < tol:
+                if output_file:
+                    output_file.write(self, time)
+                next_output += outputdt * np.sign(dt)
+            if abs(time-next_movie) < tol:
+                self.show(field=movie_background_field, show_time=time, animation=True)
+                next_movie += moviedt * np.sign(dt)
+            # ==== insert post-process here to also allow for memory clean-up via external func ==== #
+            if abs(time-next_callback) < tol:
+                if postIterationCallbacks is not None:
+                    for extFunc in postIterationCallbacks:
+                        extFunc()
+                next_callback += callbackdt * np.sign(dt)
+            if time != endtime:
+                next_input = self.fieldset.computeTimeChunk(time, dt)
+            if dt == 0:
+                break
+            if verbose_progress:
+                pbar.update(abs(time - _starttime))
+
+        if output_file:
+            output_file.write(self, time)
+        if verbose_progress:
+            pbar.finish()
