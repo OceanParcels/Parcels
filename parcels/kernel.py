@@ -234,8 +234,8 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2 and pset.fieldset is not None:
-            assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
+        if len(pset) > 0 and pset.collection._data['xi'].ndim == 2 and pset.fieldset is not None:
+            assert pset.fieldset.gridset.size == pset.collection._data['xi'].shape[1], \
                 'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
         if pset.fieldset is not None:
@@ -378,7 +378,7 @@ class Kernel(object):
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
-            indices = pset.particle_data['state'] == OperationCode.Delete
+            indices = pset.collection._data['state'] == OperationCode.Delete
             if np.count_nonzero(indices) > 0 and output_file is not None:
                 output_file.write(pset, endtime, deleted_only=indices)
             pset.remove_booleanvector(indices)
