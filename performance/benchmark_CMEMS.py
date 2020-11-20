@@ -81,7 +81,7 @@ def periodicBC(particle, fieldSet, time):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time + random.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0/2.0)
+        particle.life_expectancy = time + random.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -156,6 +156,7 @@ if __name__=='__main__':
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
 
     Nparticle = int(float(eval(args.nparticles)))
+    target_N = Nparticle
     start_N_particles = int(float(eval(args.start_nparticles)))
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -204,16 +205,23 @@ if __name__=='__main__':
                 simStart = f.grid.time_full[0]
             break
 
+    addParticleN = 1
+    # np_scaler = math.sqrt(3.0/2.0)
+    np_scaler = (3.0 / 2.0)**2.0       # **
+    # np_scaler = 3.0 / 2.0
+    # cycle_scaler = math.sqrt(3.0/2.0)
+    cycle_scaler = (3.0 / 2.0)**2.0    # **
+    # cycle_scaler = 3.0 / 2.0
     if agingParticles:
         if not repeatdtFlag:
-            Nparticle = int(Nparticle * math.sqrt(3.0/2.0))
+            Nparticle = int(Nparticle * np_scaler)
         fieldset.add_constant('life_expectancy', delta(days=time_in_days).total_seconds())
     if repeatdtFlag:
         addParticleN = Nparticle/2.0
-        refresh_cycle = (delta(days=time_in_days).total_seconds() / (addParticleN/start_N_particles)) / math.sqrt(3/2)
+        refresh_cycle = (delta(days=time_in_days).total_seconds() / (addParticleN/start_N_particles)) / cycle_scaler
+        if agingParticles:
+            refresh_cycle /= cycle_scaler
         repeatRateMinutes = int(refresh_cycle/60.0) if repeatRateMinutes == 720 else repeatRateMinutes
-
-    target_N = Nparticle
 
     if backwardSimulation:
         # ==== backward simulation ==== #
