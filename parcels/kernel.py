@@ -425,7 +425,7 @@ class Kernel(object):
                     return
                 if particles.state == OperationCode.Repeat:
                     particles.set_state(StateCode.Evaluate)
-                elif p.state == OperationCode.Delete:
+                elif particles.state == OperationCode.Delete:
                     pass
                 elif particles.state in recovery_map:
                     recovery_kernel = recovery_map[particles.state]
