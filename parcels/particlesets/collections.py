@@ -122,31 +122,35 @@ class Collection(ABC):
         if other is None:
             return
         if type(other) is type(self):
-            self.get_same(other)
+            return self.get_same(other)
         elif isinstance(other, ParticleCollection):
-            self.get_collection(other)
+            return self.get_collection(other)
         elif type(other) in [list, dict, np.ndarray]:
             # multi-get routines - hard to discern at this point
             if type(other) is not dict:
-                if type(other[0]) in [int, np.int32]:
-                    self.get_multi_by_indices(other)
+                if len(other) == 0:
+                    return None
+                elif type(other[0]) in [int, np.int32, np.intp]:
+                    return self.get_multi_by_indices(other)
                 elif type(other[0]) in [np.int64, np.uint64]:
-                    self.get_multi_by_IDs(other)
+                    return self.get_multi_by_IDs(other)
                 else:
-                    self.get_multi_by_PyCollection_Particles(other)
+                    return self.get_multi_by_PyCollection_Particles(other)
             else:
-                if other.values()[0] in [int, np.int32]:
-                    self.get_multi_by_indices(other)
-                elif other.values()[0] in [np.int64, np.uint64]:
-                    self.get_multi_by_IDs(other)
+                if len(list(other.values())) == 0:
+                    return None
+                if type(list(other.values())[0]) in [int, np.int32, np.intp]:
+                    return self.get_multi_by_indices(other)
+                elif type(list(other.values())[0]) in [np.int64, np.uint64]:
+                    return self.get_multi_by_IDs(other)
                 else:
-                    self.get_multi_by_PyCollection_Particles(other)
-        elif type(other) in [int, np.int32]:
-            self.get_single_by_index(other)
+                    return self.get_multi_by_PyCollection_Particles(other)
+        elif type(other) in [int, np.int32, np.intp]:
+            return self.get_single_by_index(other)
         elif type(other) in [np.int64, np.uint64]:
-            self.get_single_by_ID(other)
+            return self.get_single_by_ID(other)
         else:
-            self.get_single_by_object(other)
+            return self.get_single_by_object(other)
 
     @abstractmethod
     def get_single_by_index(self, index):
@@ -158,7 +162,7 @@ class Collection(ABC):
         In cases where a get-by-index would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-ID.
         """
-        assert type(index) in [int, np.int32], "Trying to get a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], "Trying to get a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
 
     @abstractmethod
     def get_single_by_object(self, particle_obj):
@@ -226,9 +230,9 @@ class Collection(ABC):
         assert indices is not None, "Trying to get particles by their collection indices, but the index list is None - invalid operation."
         assert type(indices) in [list, dict, np.ndarray], "Trying to get particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(indices) is not dict:
-            assert indices[0] in [int, np.int32], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         else:
-            assert indices.values()[0] in [int, np.int32], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], "Trying to get particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
 
     @abstractmethod
     def get_multi_by_IDs(self, ids):
@@ -240,9 +244,9 @@ class Collection(ABC):
         assert ids is not None, "Trying to get particles by their IDs, but the ID list is None - invalid operation."
         assert type(ids) in [list, dict, np.ndarray], "Trying to get particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(ids) is not dict:
-            assert ids[0] in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+            assert len(ids) == 0 or type(ids[0]) in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         else:
-            assert ids.values()[0] in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+            assert len(list(ids.values())) == 0 or type(list(ids.values())[0]) in [np.int64, np.uint64], "Trying to get particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
 
     def __add__(self, other):
         """
@@ -374,7 +378,7 @@ class Collection(ABC):
         """
         if key is None:
             return
-        if type(key) in [int, np.int32]:
+        if type(key) in [int, np.int32, np.intp]:
             self.delete_by_index(key)
         elif type(key) in [np.int64, np.uint64]:
             self.delete_by_ID(key)
@@ -388,7 +392,7 @@ class Collection(ABC):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        assert type(index) in [int, np.int32], "Trying to delete a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], "Trying to delete a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
 
     @abstractmethod
     def delete_by_ID(self, id):
@@ -437,20 +441,24 @@ class Collection(ABC):
         elif type(other) in [list, dict, np.ndarray]:
             # multi-removal routines - hard to discern at this point
             if type(other) is not dict:
-                if type(other[0]) in [int, np.int32]:
+                if len(other) == 0:
+                    return
+                elif type(other[0]) in [int, np.int32, np.intp]:
                     self.remove_multi_by_indices(other)
                 elif type(other[0]) in [np.int64, np.uint64]:
                     self.remove_multi_by_IDs(other)
                 else:
                     self.remove_multi_by_PyCollection_Particles(other)
             else:
-                if other.values()[0] in [int, np.int32]:
+                if len(list(other.values())) == 0:
+                    return
+                elif type(list(other.values())[0]) in [int, np.int32, np.intp]:
                     self.remove_multi_by_indices(other)
-                elif other.values()[0] in [np.int64, np.uint64]:
+                elif type(list(other.values())[0]) in [np.int64, np.uint64]:
                     self.remove_multi_by_IDs(other)
                 else:
                     self.remove_multi_by_PyCollection_Particles(other)
-        elif type(other) in [int, np.int32]:
+        elif type(other) in [int, np.int32, np.intp]:
             self.remove_single_by_index(other)
         elif type(other) in [np.int64, np.uint64]:
             self.remove_single_by_ID(other)
@@ -468,7 +476,7 @@ class Collection(ABC):
         In cases where a removal-by-index would result in a performance malus, it is highly-advisable to use a different
         removal functions, e.g. remove-by-object or remove-by-ID.
         """
-        assert type(index) in [int, np.int32], "Trying to remove a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], "Trying to remove a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
 
     @abstractmethod
     def remove_single_by_object(self, particle_obj):
@@ -539,11 +547,11 @@ class Collection(ABC):
         shall rather use a removal-via-object-reference strategy.
         """
         assert indices is not None, "Trying to remove particles by their collection indices, but the index list is None - invalid operation."
-        assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
+        assert type(indices) in [list, dict, np.ndarray], "Trying to remove particles by their indices, but the index container is not a valid Python-collection - invalid operation."
         if type(indices) is not dict:
-            assert indices[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         else:
-            assert indices.values()[0] in [int, np.int32], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], "Trying to remove particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
 
     @abstractmethod
     def remove_multi_by_IDs(self, ids):
@@ -555,9 +563,9 @@ class Collection(ABC):
         assert ids is not None, "Trying to remove particles by their IDs, but the ID list is None - invalid operation."
         assert type(ids) in [list, dict, np.ndarray], "Trying to remove particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(ids) is not dict:
-            assert ids[0] in [np.int64, np.uint64], "Trying to remove particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+            assert len(ids) == 0 or type(ids[0]) in [np.int64, np.uint64], "Trying to remove particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         else:
-            assert ids.values()[0] in [np.int64, np.uint64], "Trying to remove particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+            assert len(list(ids.values())) == 0 or type(list(ids.values())[0]) in [np.int64, np.uint64], "Trying to remove particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
 
     @abstractmethod
     def __isub__(self, other):
@@ -573,16 +581,9 @@ class Collection(ABC):
 
     def pop(self, other):
         """
-        This function pushes a Particle (as object or via its accessor) to the end of a collection ('end' definition
-        depends on the specific collection itself). For collections with an inherent indexing order (e.g. ordered lists,
-        sets, trees), the function just includes the object at its pre-defined position (i.e. not necessarily at the
-        end). For the collections, the function mapping equates to:
+        This function pops a Particle (as object or via its accessor) from a collection.
 
-        int32 push(particle_obj) -> add_single(particle_obj); return -1;
-
-        This function further returns the index, at which position the Particle has been inserted. By definition,
-        the index is positive, thus: a return of '-1' indicates push failure, NOT the last position in the collection.
-        Furthermore, collections that do not work on an index-preserving manner also return '-1'.
+        This function removes the particle and then returns it.
 
         Comment/Annotation:
         Functions for popping multiple objects are more specialised than just a for-each loop of single-item pop,
@@ -592,22 +593,26 @@ class Collection(ABC):
         """
         if other is None:
             return
-        if type(other) in [int, np.int32]:
-            self.pop_single_by_index(other)
+        if type(other) in [int, np.int32, np.intp]:
+            return self.pop_single_by_index(other)
         elif type(other) in [np.int64, np.uint64]:
-            self.pop_single_by_ID(other)
+            return self.pop_single_by_ID(other)
         elif type(other) in [list, dict, np.ndarray]:
             # multi-removal routines - hard to discern at this point
             if type(other) is not dict:
-                if type(other[0]) in [int, np.int32]:
-                    self.pop_multi_by_indices(other)
+                if len(other) == 0:
+                    return None
+                elif type(other[0]) in [int, np.int32, np.intp]:
+                    return self.pop_multi_by_indices(other)
                 elif type(other[0]) in [np.int64, np.uint64]:
-                    self.pop_multi_by_IDs(other)
+                    return self.pop_multi_by_IDs(other)
             else:
-                if other.values()[0] in [int, np.int32]:
-                    self.pop_multi_by_indices(other)
-                elif other.values()[0] in [np.int64, np.uint64]:
-                    self.pop_multi_by_IDs(other)
+                if len(list(other.values())) == 0:
+                    return None
+                elif type(list(other.values())[0]) in [int, np.int32, np.intp]:
+                    return self.pop_multi_by_indices(other)
+                elif type(list(other.values())[0]) in [np.int64, np.uint64]:
+                    return self.pop_multi_by_IDs(other)
 
     @abstractmethod
     def pop_single_by_index(self, index):
@@ -618,7 +623,7 @@ class Collection(ABC):
         If index is out of bounds, throws and OutOfRangeException.
         If Particle cannot be retrieved, returns None.
         """
-        assert type(index) in [int, np.int32], "Trying to pop a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
+        assert type(index) in [int, np.int32, np.intp], "Trying to pop a particle by index, but index {} is not a 32-bit integer - invalid operation.".format(index)
         return None
 
     @abstractmethod
@@ -643,9 +648,9 @@ class Collection(ABC):
         assert indices is not None, "Trying to pop particles by their collection indices, but the index list is None - invalid operation."
         assert type(indices) in [list, dict, np.ndarray], "Trying to pop particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(indices) is not dict:
-            assert indices[0] in [int, np.int32], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(indices) == 0 or type(indices[0]) in [int, np.int32, np.intp], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         else:
-            assert indices.values()[0] in [int, np.int32], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
+            assert len(list(indices.values())) == 0 or type(list(indices.values())[0]) in [int, np.int32, np.intp], "Trying to pop particles by their index, but the index type in the Python collection is not a 32-bit integer - invalid operation."
         return None
 
     @abstractmethod
@@ -657,9 +662,9 @@ class Collection(ABC):
         assert ids is not None, "Trying to pop particles by their IDs, but the ID list is None - invalid operation."
         assert type(ids) in [list, dict, np.ndarray], "Trying to pop particles by their IDs, but the ID container is not a valid Python-collection - invalid operation."
         if type(ids) is not dict:
-            assert ids[0] in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+            assert len(ids) == 0 or type(ids[0]) in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         else:
-            assert ids.values()[0] in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
+            assert len(list(ids.values())) == 0 or type(list(ids.values())[0]) in [np.int64, np.uint64], "Trying to pop particles by their IDs, but the ID type in the Python collection is not a 64-bit (signed or unsigned) integer - invalid operation."
         return None
 
     @abstractmethod
