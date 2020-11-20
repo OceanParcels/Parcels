@@ -345,7 +345,7 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().get_multi_by_indices(indices)
         if type(indices) is dict:
-            indices = indices.values()
+            indices = list(indices.values())
         return ParticleCollectionIteratorSOA(self, subset=indices)
 
     def get_multi_by_IDs(self, ids):
@@ -361,7 +361,10 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().get_multi_by_IDs(ids)
         if type(ids) is dict:
-            ids = ids.values()
+            ids = list(ids.values())
+
+        if len(ids) == 0:
+            return None
 
         # Use binary search if the collection is sorted, linear search otherwise
         indices = np.empty(len(ids), dtype=np.int32)
@@ -638,6 +641,8 @@ class ParticleCollectionSOA(ParticleCollection):
         shall rather use a removal-via-object-reference strategy.
         """
         super().remove_multi_by_indices(indices)
+        if type(indices) is dict:
+            ids = list(indices.values())
 
         for d in self._data:
             self._data[d] = np.delete(self._data[d], indices, axis=0)
@@ -650,7 +655,10 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().remove_multi_by_IDs(ids)
         if type(ids) is dict:
-            ids = ids.values()
+            ids = list(ids.values())
+
+        if len(ids) == 0:
+            return
 
         # Use binary search if the collection is sorted, linear search otherwise
         indices = np.empty(len(ids), dtype=np.int32)
@@ -799,6 +807,7 @@ class ParticleCollectionSOA(ParticleCollection):
         'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
         """
         class CParticles(Structure):
+            # TODO adapt naming of _fields_ in CParticles (code generator) into _variables_
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
 
         def flatten_dense_data_array(v):
@@ -886,7 +895,7 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
         # super().__init__(pcoll)  # Do not actually need this
 
         if subset is not None:
-            if type(subset[0]) not in [int, np.int32]:
+            if type(subset[0]) not in [int, np.int32, np.intp]:
                 raise TypeError("Iteration over a subset of particles in the"
                                 " particleset requires a list or numpy array"
                                 " of indices (of type int or np.int32).")

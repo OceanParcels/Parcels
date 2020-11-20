@@ -502,6 +502,8 @@ class ParticleSetSOA(BaseParticleSet):
         """Method to add particles to the ParticleSet"""
         # Method forward to new implementation
         # Note that this is implemented as an incremental add!
+        if isinstance(particles, BaseParticleSet):
+            particles = particles.collection
         self._collection += particles
         return self
 
