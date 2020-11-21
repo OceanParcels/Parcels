@@ -80,7 +80,8 @@ def periodicBC(particle, fieldSet, time):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time + random.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0 / 2.0)
+        np_scaler = math.sqrt(3.0 / 2.0)
+        particle.life_expectancy = time + random.uniform(.0, (fieldset.life_expectancy-time) * 2.0 / np_scaler)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -93,8 +94,8 @@ def DeleteParticle(particle, fieldset, time):
     particle.delete()
 
 def RenewParticle(particle, fieldset, time):
-    particle.lat = np.random.rand() * 360.0 -180.0
-    particle.lon = np.random.rand() * 170.0 -80.0
+    particle.lat = random.random() * 360.0 -180.0
+    particle.lon = random.random() * 170.0 -80.0
 
 def perIterGC():
     gc.collect()
@@ -157,6 +158,9 @@ if __name__=='__main__':
 
     Nparticle = int(float(eval(args.nparticles)))
     target_N = Nparticle
+    addParticleN = 1
+    np_scaler = 3.0 / 2.0
+    cycle_scaler = 3.0 / 2.0
     start_N_particles = int(float(eval(args.start_nparticles)))
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -205,13 +209,6 @@ if __name__=='__main__':
                 simStart = f.grid.time_full[0]
             break
 
-    addParticleN = 1
-    # np_scaler = math.sqrt(3.0/2.0)
-    np_scaler = (3.0 / 2.0)**2.0       # **
-    # np_scaler = 3.0 / 2.0
-    # cycle_scaler = math.sqrt(3.0/2.0)
-    cycle_scaler = (3.0 / 2.0)**2.0    # **
-    # cycle_scaler = 3.0 / 2.0
     if agingParticles:
         if not repeatdtFlag:
             Nparticle = int(Nparticle * np_scaler)
