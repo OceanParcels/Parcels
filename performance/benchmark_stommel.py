@@ -184,7 +184,7 @@ class AgeParticle_SciPy(StommelParticleS):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
+        particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0/2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -233,12 +233,12 @@ if __name__=='__main__':
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
             if agingParticles and not repeatdtFlag:
-                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * math.sqrt(3.0/2.0))))
+                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
             else:
                 sys.stdout.write("N: {}\n".format(Nparticle))
     else:
         if agingParticles and not repeatdtFlag:
-            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * math.sqrt(3.0/2.0))))
+            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
         else:
             sys.stdout.write("N: {}\n".format(Nparticle))
 

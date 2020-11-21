@@ -9,7 +9,7 @@ from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.field import VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
 # from parcels import rng as random
-from parcels import ParcelsRandom as random
+from parcels import ParcelsRandom
 from datetime import timedelta as delta
 from datetime import datetime
 from argparse import ArgumentParser
@@ -81,7 +81,8 @@ def periodicBC(particle, fieldSet, time):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time + random.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
+        particle.life_expectancy = time + ParcelsRandom.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0 / 2.0)
+        # particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -162,18 +163,18 @@ if __name__=='__main__':
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
             if agingParticles and not repeatdtFlag:
-                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * math.sqrt(3.0/2.0))))
+                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * (3.0 / 2.0)**2.0)))
             else:
                 sys.stdout.write("N: {}\n".format(Nparticle))
     else:
         if agingParticles and not repeatdtFlag:
-            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * math.sqrt(3.0/2.0))))
+            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * (3.0 / 2.0)**2.0)))
         else:
             sys.stdout.write("N: {}\n".format(Nparticle))
 
     dt_minutes = 60
     nowtime = datetime.now()
-    random.seed(nowtime.microsecond)
+    ParcelsRandom.seed(nowtime.microsecond)
 
     func_time = []
     mem_used_GB = []

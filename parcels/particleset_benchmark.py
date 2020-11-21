@@ -250,9 +250,13 @@ class ParticleSet_Benchmark(ParticleSet):
                 next_movie += moviedt * np.sign(dt)
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:
+                # ==== assuming post-processing functions largely use memory than hard computation ... ==== #
+                self.mem_io_log.start_timing()
                 if postIterationCallbacks is not None:
                     for extFunc in postIterationCallbacks:
                         extFunc()
+                self.mem_io_log.stop_timing()
+                self.mem_io_log.accumulate_timing()
                 next_callback += callbackdt * np.sign(dt)
             if time != endtime:  # ==== IO ==== #
                 self.io_log.start_timing()
@@ -294,6 +298,14 @@ class ParticleSet_Benchmark(ParticleSet):
             pbar.finish()
             self.plot_log.stop_timing()
             self.plot_log.accumulate_timing()
+
+        self.nparticle_log.advance_iteration(self.size)
+        self.compute_log.advance_iteration()
+        self.io_log.advance_iteration()
+        self.mem_log.advance_iteration(self.process.memory_info().rss)
+        self.mem_io_log.advance_iteration()
+        self.plot_log.advance_iteration()
+        self.total_log.advance_iteration()
 
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel_benchmark.Kernel` object

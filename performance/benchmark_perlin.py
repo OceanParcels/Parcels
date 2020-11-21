@@ -172,7 +172,10 @@ class AgeParticle_SciPy(ScipyParticle):
 
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
-        particle.life_expectancy = time + ParcelsRandom.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0 / 2.0)
+        np_scaler = math.sqrt(3.0 / 2.0)
+        particle.life_expectancy = time + ParcelsRandom.uniform(.0, (fieldset.life_expectancy-time) * 2.0 / np_scaler)
+        # particle.life_expectancy = time + ParcelsRandom.uniform(.0, (fieldset.life_expectancy-time)*math.sqrt(3.0 / 2.0))
+        # particle.life_expectancy = time + ParcelsRandom.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0 / 2.0)
         # particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
         particle.initialized_dynamic = 1
 
@@ -220,17 +223,25 @@ if __name__=='__main__':
     with_GC = args.useGC
     Nparticle = int(float(eval(args.nparticles)))
     target_N = Nparticle
+    addParticleN = 1
+    # np_scaler = math.sqrt(3.0/2.0)
+    # np_scaler = (3.0 / 2.0)**2.0       # **
+    np_scaler = 3.0 / 2.0
+    # cycle_scaler = math.sqrt(3.0/2.0)
+    # cycle_scaler = (3.0 / 2.0)**2.0    # **
+    # cycle_scaler = 3.0 / 2.0
+    cycle_scaler = 7.0 / 4.0
     start_N_particles = int(float(eval(args.start_nparticles)))
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
             if agingParticles and not repeatdtFlag:
-                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * np_scaler)))
             else:
                 sys.stdout.write("N: {}\n".format(Nparticle))
     else:
         if agingParticles and not repeatdtFlag:
-            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * np_scaler)))
         else:
             sys.stdout.write("N: {}\n".format(Nparticle))
 
@@ -282,13 +293,6 @@ if __name__=='__main__':
                 simStart = f.grid.time_full[0]
             break
 
-    addParticleN = 1
-    # np_scaler = math.sqrt(3.0/2.0)
-    np_scaler = (3.0 / 2.0)**2.0       # **
-    # np_scaler = 3.0 / 2.0
-    # cycle_scaler = math.sqrt(3.0/2.0)
-    cycle_scaler = (3.0 / 2.0)**2.0    # **
-    # cycle_scaler = 3.0 / 2.0
     if agingParticles:
         if not repeatdtFlag:
             Nparticle = int(Nparticle * np_scaler)
