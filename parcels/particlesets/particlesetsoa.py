@@ -190,7 +190,7 @@ class ParticleSetSOA(BaseParticleSet):
         if self.repeatdt:
             # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
             self.repeatpid = pid_orig
-            self.partitions = self.collection.pu_indicators()
+            self.partitions = self.collection.pu_indicators
 
         self.kernel = None
 
