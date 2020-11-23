@@ -1,6 +1,7 @@
 import numpy as np
 from abc import ABC
 from abc import abstractmethod
+from parcels.tools.statuscodes import OperationCode
 import warnings
 
 
