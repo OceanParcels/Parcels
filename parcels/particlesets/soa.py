@@ -435,11 +435,14 @@ class ParticleCollectionSOA(ParticleCollection):
 
         # Determine order of concatenation and update the sorted flag
         if self._sorted and same_class._sorted \
-           and self._data['id'][0] > same_class._data['id'][-1]:
+           and (len(self._data['id'] == 0) or len(same_class._data['id']) == 0
+                or self._data['id'][0] > same_class._data['id'][-1]):
             for d in self._data:
                 self._data[d] = np.concatenate((same_class._data[d]), self._data[d])
         else:
-            if not (same_class._sorted and self._data['id'][-1] < same_class._data['id'][0]):
+            if not (same_class._sorted and (len(self._data['id'] == 0)
+               or len(same_class._data['id']) == 0
+               or self._data['id'][-1] < same_class._data['id'][0])):
                 self._sorted = False
             for d in self._data:
                 self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
