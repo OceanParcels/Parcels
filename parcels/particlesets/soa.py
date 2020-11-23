@@ -560,6 +560,8 @@ class ParticleCollectionSOA(ParticleCollection):
         for d in self._data:
             self._data[d] = np.delete(self._data[d], index, axis=0)
 
+        self._ncount -= 1
+
     def remove_single_by_object(self, particle_obj):
         """
         This function removes a (particle) object from the collection based on its actual object. For collections that
@@ -642,10 +644,12 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().remove_multi_by_indices(indices)
         if type(indices) is dict:
-            ids = list(indices.values())
+            indices = list(indices.values())
 
         for d in self._data:
             self._data[d] = np.delete(self._data[d], indices, axis=0)
+
+        self._ncount -= len(indices)
 
     def remove_multi_by_IDs(self, ids):
         """
