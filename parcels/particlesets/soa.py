@@ -445,14 +445,14 @@ class ParticleCollectionSOA(ParticleCollection):
            and self._data['id'][0] > same_class._data['id'][-1]:
             for d in self._data:
                 self._data[d] = np.concatenate((same_class._data[d], self._data[d]))
-                self._ncount += same_class.ncount
+            self._ncount += same_class.ncount
         else:
             if not (same_class._sorted 
                     and self._data['id'][-1] < same_class._data['id'][0]):
                 self._sorted = False
             for d in self._data:
                 self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
-                self._ncount += same_class.ncount
+            self._ncount += same_class.ncount
 
     # ==== already user-exposed ==== #
     def __iadd__(self, same_class):
