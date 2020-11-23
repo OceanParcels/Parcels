@@ -511,7 +511,10 @@ class ParticleSetSOA(BaseParticleSet):
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
         # Method forward to new implementation
-        self._collection.remove_multi_by_indices(indices)
+        if type(indices) in [int, np.int32, np.intp]:
+            self._collection.remove_single_by_index(indices)
+        else:
+            self._collection.remove_multi_by_indices(indices)
 
     # ==== to be removed later ==== #
     def remove_booleanvector(self, indices):
