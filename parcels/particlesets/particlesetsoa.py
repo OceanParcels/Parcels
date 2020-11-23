@@ -563,7 +563,7 @@ class ParticleSetSOA(BaseParticleSet):
             # Prepare JIT kernel execution
             if self.collection.ptype.uses_jit:
                 self.kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection._lonlatdepth_dtype == np.float64 else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 
@@ -665,7 +665,8 @@ class ParticleSetSOA(BaseParticleSet):
             if abs(time-next_prelease) < tol:
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
-                                       pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
+                                       pclass=self.repeatpclass,
+                                       lonlatdepth_dtype=self.collection._lonlatdepth_dtype,
                                        partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
