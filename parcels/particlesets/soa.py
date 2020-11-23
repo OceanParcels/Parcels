@@ -465,6 +465,7 @@ class ParticleCollectionSOA(ParticleCollection):
         This operation is equal to an in-place addition of (an) element(s).
         """
         self.add_same(same_class)
+        return self
 
     def insert(self, obj, index=None):
         """
@@ -706,6 +707,7 @@ class ParticleCollectionSOA(ParticleCollection):
             raise TypeError("Trying to do an incremental removal of an"
                             f" element of type {type(other)}, which is"
                             " not supported.")
+        return self
 
     def pop_single_by_index(self, index):
         """
