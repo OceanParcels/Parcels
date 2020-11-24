@@ -1506,10 +1506,10 @@ class VectorField(object):
                 U2 = self.U.data[ti, yi - 1, xi - 1] * c4
                 U3 = self.U.data[ti, yi - 1, xi] * c2
 
-                V0 = self.V.data[ti, yi - 1, xi] * c1
+                V0 = self.V.data[ti, yi, xi - 1] * c3
                 V1 = self.V.data[ti, yi, xi] * c3
                 V2 = self.V.data[ti, yi - 1, xi - 1] * c1
-                V3 = self.V.data[ti, yi, xi - 1] * c3
+                V3 = self.V.data[ti, yi - 1, xi] * c1
             elif self.gridindexingtype == 'mitgcm':
                 # TODO need to use actual grid size instead of c1, c2, c3, c4 etc
                 U0 = self.U.data[ti, yi + 1, xi] * c4
@@ -1522,14 +1522,14 @@ class VectorField(object):
                 V2 = self.V.data[ti, yi, xi] * c1
                 V3 = self.V.data[ti, yi, xi + 1] * c3
 
-            Tu = ((1 - xsi) * (1 - eta) * self.U.data[ti, yi, xi]
-                  + xsi * (1 - eta) * self.U.data[ti, yi, xi + 1]
-                  + xsi * eta * self.U.data[ti, yi + 1, xi + 1]
-                  + (1 - xsi) * eta * self.U.data[ti, yi + 1, xi])
-            Tv = ((1 - xsi) * (1 - eta) * self.V.data[ti, yi, xi]
-                  + xsi * (1 - eta) * self.V.data[ti, yi, xi + 1]
-                  + xsi * eta * self.V.data[ti, yi + 1, xi + 1]
-                  + (1 - xsi) * eta * self.V.data[ti, yi + 1, xi])
+            Tu = ((1 - xsi) * (1 - eta) * U2
+                  - xsi * (1 - eta) * U3
+                  + xsi * eta * U1
+                  - (1 - xsi) * eta * U0)
+            Tv = ((1 - xsi) * (1 - eta) * V2
+                  - xsi * (1 - eta) * V3
+                  + xsi * eta * V1
+                  - (1 - xsi) * eta * V0)
 
             alpha = U2 - U0 + U1 - U3
             beta = V2 - V3 + V1 - V0
