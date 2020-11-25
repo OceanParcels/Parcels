@@ -375,7 +375,7 @@ class BaseParticleSet(NDCluster):
             # Prepare JIT kernel execution
             if self.collection.ptype.uses_jit:
                 self.kernel.remove_lib()
-                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection._lonlatdepth_dtype else None
+                cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 self.kernel.load_lib()
 
