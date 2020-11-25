@@ -302,12 +302,12 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __getattr__(self, name):
         # Comment CK: this either a member function of the accessor or the collection - not the PSet itself
-        # if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
-        #     return self.__dict__['particle_data'][name]
-        # elif name in self.__dict__:
-        #     return self.__dict__[name]
-        # else:
-        #     return False
+        if name in self._collection._data:
+            return getattr(self._collection, name)
+        elif name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            return False
         pass
 
     # ==== already user-exposed ==== #
