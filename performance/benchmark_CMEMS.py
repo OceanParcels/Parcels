@@ -50,9 +50,9 @@ def create_CMEMS_fieldset(datahead, periodic_wrap):
     # chs = False
     chs = 'auto'
     if periodic_wrap:
-        return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, time_periodic=delta(days=1))
+        return FieldSet.from_netcdf(files, variables, dimensions, chunksize=chs, time_periodic=delta(days=1))
     else:
-        return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, allow_time_extrapolation=True)
+        return FieldSet.from_netcdf(files, variables, dimensions, chunksize=chs, allow_time_extrapolation=True)
 
 
 class AgeParticle_JIT(JITParticle):
