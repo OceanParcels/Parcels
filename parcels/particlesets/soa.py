@@ -300,8 +300,7 @@ class ParticleCollectionSOA(ParticleCollection):
         if self._sorted:
             index = bisect_left(self._data['id'], id)
             if index == len(self._data['id']) or self._data['id'][index] != id:
-                raise ValueError("Trying to access a particle with a non-existing"
-                                 f" ID: {id}.")
+                raise ValueError("Trying to access a particle with a non-existing ID: {id}.")
         else:
             index = np.where(self._data['id'] == id)[0][0]
 
@@ -433,12 +432,13 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().add_same(same_class)
 
-        if len(same_class._data['id']) == 0:
+        if same_class.ncount == 0:
             return
 
-        if len(self._data['id']) == 0:
+        if self._ncount == 0:
             self._data = same_class._data
             self._ncount = same_class.ncount
+            return
 
         # Determine order of concatenation and update the sorted flag
         if self._sorted and same_class._sorted \
@@ -447,7 +447,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 self._data[d] = np.concatenate((same_class._data[d], self._data[d]))
             self._ncount += same_class.ncount
         else:
-            if not (same_class._sorted 
+            if not (same_class._sorted
                     and self._data['id'][-1] < same_class._data['id'][0]):
                 self._sorted = False
             for d in self._data:
