@@ -63,6 +63,19 @@ class BaseParticleSet(NDCluster):
         """
         return iter(self._collection)
 
+    def __getattr__(self, name):
+        """
+        Access a single property of all particles.
+
+        :param name: name of the property
+        """
+        if name in self._collection._data:
+            return getattr(self._collection, name)
+        elif name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            return False
+
     @staticmethod
     def lonlatdepth_dtype_from_field_interp_method(field):
         if type(field) in [SummedField, NestedField]:
