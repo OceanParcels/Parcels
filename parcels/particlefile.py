@@ -69,7 +69,7 @@ class ParticleFile(object):
             self.particleset = particleset
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
             self.time_origin = self.particleset.time_origin
-            self.lonlatdepth_dtype = self.particleset.lonlatdepth_dtype
+            self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
             self.var_names = []
             self.var_names_once = []
             for v in self.particleset.collection.ptype.variables:
