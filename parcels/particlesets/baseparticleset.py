@@ -1,5 +1,4 @@
 import numpy as np
-import inspect  # noqa
 from abc import ABC
 from abc import abstractmethod
 from datetime import datetime
@@ -9,7 +8,6 @@ import warnings
 
 import progressbar
 
-from parcels.tools.statuscodes import OperationCode  #noqa
 from parcels.tools.statuscodes import StateCode
 from parcels.compiler import GNUCompiler
 from parcels.field import NestedField

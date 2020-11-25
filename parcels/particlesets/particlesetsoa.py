@@ -1,5 +1,3 @@
-from ctypes import Structure, POINTER  # noqa
-import time as time_module
 from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
@@ -7,13 +5,9 @@ from datetime import timedelta as delta
 import sys
 import numpy as np
 import xarray as xr
-from operator import attrgetter  # noqa
 
-from parcels.compiler import GNUCompiler
-from parcels.field import Field  # noqa
 from parcels.grid import GridCode
 from parcels.kernel import Kernel
-from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import StateCode
@@ -286,7 +280,7 @@ class ParticleSetSOA(BaseParticleSet):
             return self.collection.data[name][indices]
 
     def _impute_release_times(self, default):
-#         np.nan_to_num(self._collection._data['time'], nan=default)
+        # np.nan_to_num(self._collection._data['time'], nan=default)
         self._collection._data['time'][
             np.isnan(self._collection._data['time'])] = default
         return (np.min(self._collection._data['time']),
