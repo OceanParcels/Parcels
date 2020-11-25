@@ -363,8 +363,6 @@ class BaseParticleSet(NDCluster):
         :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
         :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
-        # ==== TODO: when all the restructuring is done, it should be possible to move this to the base class ==== #
-
         # check if pyfunc has changed since last compile. If so, recompile
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
             # Generate and store Kernel
