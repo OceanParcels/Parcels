@@ -256,19 +256,20 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __getattr__(self, name):
         # Comment CK: this either a member function of the accessor or the collection - not the PSet itself
-        if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
-            return self.__dict__['particle_data'][name]
-        elif name in self.__dict__:
-            return self.__dict__[name]
-        else:
-            return False
+        # if 'particle_data' in self.__dict__ and name in self.__dict__['particle_data']:
+        #     return self.__dict__['particle_data'][name]
+        # elif name in self.__dict__:
+        #     return self.__dict__[name]
+        # else:
+        #     return False
+        pass
 
     # ==== already user-exposed ==== #
     def __getitem__(self, index):
         # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
         # Comment RB: The collection should provide this function indeed. Until we made a (more) definitive decision on how we want
         #             this to be interfaced, forward this to the collection.
-        return self._collection[index]
+        return self._collection.get_single_by_index(index)
 
     def cstruct(self):
         """
@@ -308,7 +309,7 @@ class ParticleSetSOA(BaseParticleSet):
             eta = np.random.uniform(size=len(inds))
             j, i = np.unravel_index(inds, p_interior.shape)
             grid = start_field.grid
-            lon, lat = []
+            lon, lat = ([], [])
             if grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
                 lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
                 lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
@@ -347,7 +348,7 @@ class ParticleSetSOA(BaseParticleSet):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-        lon, lat = cls.monte_carlo_sample(start_field, mode)
+        lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
