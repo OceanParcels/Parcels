@@ -846,12 +846,12 @@ class ParticleCollection(Collection):
         return self._ptype
 
     @property
-    def latlondepth_dtype(self):
+    def lonlatdepth_dtype(self):
         """
-        'latlondepth_dtype' stores the numeric data type that is used to represent the lon, lat and depth of a particle.
+        'lonlatdepth_dtype' stores the numeric data type that is used to represent the lon, lat and depth of a particle.
         This can be either 'float32' (default) or 'float64'
         """
-        return self._latlondepth_dtype
+        return self._lonlatdepth_dtype
 
     @property
     def data(self):

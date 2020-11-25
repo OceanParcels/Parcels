@@ -481,7 +481,7 @@ class BaseParticleSet(NDCluster):
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,
                     pclass=self.repeatpclass,
-                    lonlatdepth_dtype=self.collection._lonlatdepth_dtype,
+                    lonlatdepth_dtype=self.collection.lonlatdepth_dtype,
                     partitions=False, pid_orig=self.repeatpid, **self.repeatkwargs)
                 for p in pset_new:
                     p.dt = dt
