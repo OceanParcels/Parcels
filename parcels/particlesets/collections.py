@@ -878,6 +878,23 @@ class ParticleCollection(Collection):
         pass
 
     @abstractmethod
+    def __getattr__(self, name):
+        """
+        Access a single property of all particles. 
+        NOTE: This is a fallback implementation, and it is NOT efficient.
+        Specific datastructures may implement a more efficient variant.
+
+        :param name: name of the property
+        """
+        for v in self.ptype.variables:
+            if v.name == name:
+                return np.array([getattr(p, name) for p in self], dtype=v.dtype)
+        if name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            return False
+
+    @abstractmethod
     def toDictionary(self):     # formerly: ParticleSet.to_dict()
         """
         Convert all Particle data from one time step to a python dictionary.

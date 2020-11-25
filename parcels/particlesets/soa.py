@@ -256,6 +256,8 @@ class ParticleCollectionSOA(ParticleCollection):
     def __getattr__(self, name):
         """
         Access a single property of all particles.
+
+        :param name: name of the property
         """
         if '_data' in self.__dict__ and name in self.__dict__['_data']:
             return self.__dict__['_data'][name]

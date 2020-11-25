@@ -293,16 +293,6 @@ class ParticleSetSOA(BaseParticleSet):
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=error_indices)
 
-    def __getattr__(self, name):
-        # Comment CK: this either a member function of the accessor or the collection - not the PSet itself
-        if name in self._collection._data:
-            return getattr(self._collection, name)
-        elif name in self.__dict__:
-            return self.__dict__[name]
-        else:
-            return False
-        pass
-
     # ==== already user-exposed ==== #
     def __getitem__(self, index):
         # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
