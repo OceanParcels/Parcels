@@ -415,6 +415,7 @@ class Kernel(object):
             # Apply recovery kernel
             # Effectively loop over all particles that don't have sucess of
             # evaluate codes.
+            n_error = 0
             for particle in error_pset:
                 if particle.state == OperationCode.StopExecution:
                     return
@@ -430,8 +431,8 @@ class Kernel(object):
                     logger.warning_once(
                         'Deleting particle because of bug in #749 and #737')
                     particle.delete()
+                n_error += 1
 
-            n_error = len(error_pset)
             if n_error > 0:
                 remove_deleted(pset)
                 # Execute core loop again to continue interrupted particles

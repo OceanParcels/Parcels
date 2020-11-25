@@ -285,15 +285,17 @@ class ParticleSetSOA(BaseParticleSet):
             return self.collection.data[name][indices]
 
     def _impute_release_times(self, default):
-        np.nan_to_num(self._collection._data['time'], nan=default)
+#         np.nan_to_num(self._collection._data['time'], nan=default)
+        self._collection._data['time'][
+            np.isnan(self._collection._data['time'])] = default
         return (np.min(self._collection._data['time']),
                 np.max(self._collection._data['time']))
 
     @property
     def error_particles(self):
-        error_indices = np.isin(
+        error_indices = np.where(np.isin(
             self.collection._data['state'],
-            [StateCode.Success, StateCode.Evaluate], invert=True)
+            [StateCode.Success, StateCode.Evaluate], invert=True))[0]
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=error_indices)
 
