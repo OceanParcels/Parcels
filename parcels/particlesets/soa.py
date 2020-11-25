@@ -918,7 +918,7 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
         # super().__init__(pcoll)  # Do not actually need this
 
         if subset is not None:
-            if type(subset[0]) not in [int, np.int32, np.intp]:
+            if len(subset) > 0 and type(subset[0]) not in [int, np.int32, np.intp]:
                 raise TypeError("Iteration over a subset of particles in the"
                                 " particleset requires a list or numpy array"
                                 " of indices (of type int or np.int32).")
@@ -937,9 +937,12 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
         self._reverse = reverse
         self._pcoll = pcoll
         self._index = 0
-        self._head = ParticleAccessorSOA(pcoll, self._indices[0])
-        self._tail = ParticleAccessorSOA(pcoll,
-                                         self._indices[self.max_len - 1])
+        self._head = None
+        self._tail = None
+        if len(self._indices) > 0:
+            self._head = ParticleAccessorSOA(pcoll, self._indices[0])
+            self._tail = ParticleAccessorSOA(pcoll,
+                                             self._indices[self.max_len - 1])
         self.p = self._head
 
     def __next__(self):
