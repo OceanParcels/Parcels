@@ -253,6 +253,17 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         return self.get_single_by_index(index)
 
+    def __getattr__(self, name):
+        """
+        Access a single property of all particles.
+        """
+        if '_data' in self.__dict__ and name in self.__dict__['_data']:
+            return self.__dict__['_data'][name]
+        elif name in self.__dict__:
+            return self.__dict__[name]
+        else:
+            return False
+
     def get_single_by_index(self, index):
         """
         This function gets a (particle) object from the collection based on its index within the collection. For
