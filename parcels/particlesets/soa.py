@@ -300,7 +300,7 @@ class ParticleCollectionSOA(ParticleCollection):
         if self._sorted:
             index = bisect_left(self._data['id'], id)
             if index == len(self._data['id']) or self._data['id'][index] != id:
-                raise ValueError("Trying to access a particle with a non-existing ID: {id}.")
+                raise ValueError(f"Trying to access a particle with a non-existing ID: {id}.")
         else:
             index = np.where(self._data['id'] == id)[0][0]
 
@@ -549,8 +549,7 @@ class ParticleCollectionSOA(ParticleCollection):
             index = bisect_left(self._data['id'], id)
             if index == len(self._data['id']) or \
                self._data['id'][index] != id:
-                raise ValueError("Trying to delete a particle with a non-"
-                                 f"existing ID: {id}.")
+                raise ValueError(f"Trying to delete a particle with a non-existing ID: {id}.")
         else:
             index = np.where(self._data['id'] == id)[0][0]
 
@@ -606,8 +605,7 @@ class ParticleCollectionSOA(ParticleCollection):
             index = bisect_left(self._data['id'], id)
             if index == len(self._data['id']) or \
                self._data['id'][index] != id:
-                raise ValueError("Trying to remove a particle with a non-"
-                                 f"existing ID: {id}.")
+                raise ValueError(f"Trying to remove a particle with a non-existing ID: {id}.")
         else:
             index = np.where(self._data['id'] == id)[0][0]
 
@@ -704,9 +702,7 @@ class ParticleCollectionSOA(ParticleCollection):
               or isinstance(other, ScipyParticle)):
             self.remove_single_by_object(other)
         else:
-            raise TypeError("Trying to do an incremental removal of an"
-                            f" element of type {type(other)}, which is"
-                            " not supported.")
+            raise TypeError(f"Trying to do an incremental removal of an element of type {type(other)}, which is not supported.")
         return self
 
     def pop_single_by_index(self, index):
@@ -951,5 +947,4 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'
-        str = f"{dir_str} iteration at index {self._index} of {self.max_len}."
-        return str
+        return f"{dir_str} iteration at index {self._index} of {self.max_len}."
