@@ -880,7 +880,7 @@ class ParticleCollection(Collection):
     @abstractmethod
     def __getattr__(self, name):
         """
-        Access a single property of all particles. 
+        Access a single property of all particles.
         NOTE: This is a fallback implementation, and it is NOT efficient.
         Specific datastructures may implement a more efficient variant.
 
