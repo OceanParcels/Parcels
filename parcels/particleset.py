@@ -178,8 +178,8 @@ class ParticleSet(object):
 
         for kwvar in kwargs:
             kwargs[kwvar] = convert_to_array(kwargs[kwvar])
-            assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+            assert lon.size == kwargs[kwvar].shape[0], (
+                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwargs[kwvar])
 
         offset = np.max(pid) if len(pid) > 0 else -1
         if MPI:
@@ -248,6 +248,10 @@ class ParticleSet(object):
             if v.name in ['xi', 'yi', 'zi', 'ti']:
                 ngrid = fieldset.gridset.size if fieldset is not None else 1
                 self.particle_data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
+            elif v.name == 'control_traj':
+                self.particle_data[v.name] = np.empty(kwargs['control_traj'].shape, dtype=v.dtype)
+            elif v.name == 'control_time':
+                self.particle_data[v.name] = np.empty(kwargs['control_time'].shape, dtype=v.dtype)
             else:
                 self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
 
@@ -697,7 +701,7 @@ class ParticleSet(object):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
-        mintime, maxtime = self.fieldset.gridset.dimrange('time_full') if self.fieldset is not None else (0, 1)
+        mintime, maxtime = self.fieldset.gridset.dimrange('time_full')
         if np.any(np.isnan(self.particle_data['time'])):
             self.particle_data['time'][np.isnan(self.particle_data['time'])] = mintime if dt >= 0 else maxtime
 
@@ -894,16 +898,3 @@ def search_kernel(particle, fieldset, time):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
         return ParticleFile(*args, particleset=self, **kwargs)
-
-    def set_variable_write_status(self, var, write_status):
-        """Method to set the write status of a Variable
-        :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
-        """
-        var_changed = False
-        for v in self.ptype.variables:
-            if v.name == var:
-                v.to_write = write_status
-                var_changed = True
-        if not var_changed:
-            raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
