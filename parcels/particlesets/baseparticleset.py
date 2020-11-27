@@ -324,31 +324,6 @@ class BaseParticleSet(NDCluster):
                 min_rt = p.time
         return (min_rt, max_rt)
 
-    @abstractmethod
-    def particle_field_check(self):
-        """Check if the particles are consistent with the number of fields.
-
-        This is a fallback implementation, it might be slow.
-        """
-        if len(self) == 0 or self.fieldset is None:
-            return
-
-        n_fields = self.fieldset.gridset.size
-        # Get the dtype of xi
-        for var in self.collection.ptype.variables:
-            if var.name == "xi":
-                xi_type = var.dtype
-        for p in self:
-            # If xi is a single value assert one field.
-            if isinstance(p.xi, xi_type):
-                assert n_fields == 1
-            # Else assert that the length is equal to the number of fields.
-            else:
-                assert (len(p.xi) == n_fields,
-                        'FieldSet has different number of grids than '
-                        'Particle.xi. Have you added Fields after creating '
-                        'the ParticleSet?')
-
     # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,

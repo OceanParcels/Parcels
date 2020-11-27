@@ -235,9 +235,6 @@ class Kernel(object):
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
 
-        # Check if the number of fields is consistent with the particles.
-        pset.particle_field_check()
-
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 g.cstruct = None  # This force to point newly the grids from Python to C
