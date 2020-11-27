@@ -250,36 +250,38 @@ class ParticleSetSOA(BaseParticleSet):
         # else:
         #     raise ValueError("Latitude and longitude required for generating ParticleSet")
 
-    def _set_particle_vector(self, name, value, indices=None):
+    def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
 
         :param name: Name of the attribute (str).
         :param value: New value to set the attribute of the particles to.
-        :param indices: (Optional) only set the particles with these indices.
-                        Its length should be equal to the length of 'values'.
-                        If None, all particles are set.
         """
+        self.collection._data[name][:] = value
 
-        if indices is None:
-            self.collection._data[name][:] = value
-        else:
-            self.collection._data[name][indices] = value
+#         if indices is None:
+#         else:
+#             self.collection._data[name][indices] = value
 
-    def _get_particle_vector(self, name, indices=None):
-        """Set attributes of all particles to new values.
-
-        :param name: Name of the attribute (str).
-        :param indices: (Optional) only set the particles with these indices.
-                        Its length should be equal to the length of 'values'.
-                        If None, all particles are set.
-        :return: The values of the particle attributes.
-        """
-        if indices is None:
-            return self.collection._data[name]
-        else:
-            return self.collection.data[name][indices]
+#     def _get_particle_vector(self, name, indices=None):
+#         """Set attributes of all particles to new values.
+# 
+#         :param name: Name of the attribute (str).
+#         :param indices: (Optional) only set the particles with these indices.
+#                         Its length should be equal to the length of 'values'.
+#                         If None, all particles are set.
+#         :return: The values of the particle attributes.
+#         """
+#         if indices is None:
+#             return self.collection._data[name]
+#         else:
+#             return self.collection.data[name][indices]
 
     def _impute_release_times(self, default):
+        """Set attribute 'time' to default if encountering NaN values.
+
+        :param default: Default release time.
+        :return: Minimum and maximum release times.
+        """
         # np.nan_to_num(self._collection._data['time'], nan=default)
         self._collection._data['time'][
             np.isnan(self._collection._data['time'])] = default
@@ -288,11 +290,24 @@ class ParticleSetSOA(BaseParticleSet):
 
     @property
     def error_particles(self):
+        """Get an iterator over all particles that are in an error state.
+
+        :return: Collection iterator over error particles.
+        """
         error_indices = np.where(np.isin(
             self.collection._data['state'],
             [StateCode.Success, StateCode.Evaluate], invert=True))[0]
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=error_indices)
+
+    def particle_field_check(self):
+        """Check if the particles are consistent with the number of fields.
+        """
+        xi = self._collection._data['xi']
+        if (len(self) > 0 and xi.ndim == 2
+                and self.fieldset is not None):
+            assert self.fieldset.gridset.size == xi.shape[1], \
+                'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
     # ==== already user-exposed ==== #
     def __getitem__(self, index):

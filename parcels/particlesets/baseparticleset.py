@@ -258,48 +258,40 @@ class BaseParticleSet(NDCluster):
         object from the ParticleSet"""
         pass
 
-    def _set_particle_vector(self, name, value, indices=None):
+    @abstractmethod
+    def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
 
         This is a fallback implementation, it might be slow.
 
         :param name: Name of the attribute (str).
         :param value: New value to set the attribute of the particles to.
-        :param indices: (Optional) only set the particles with these indices.
-                        Its length should be equal to the length of 'values'.
-                        If None, all particles are set.
         """
+        for p in self:
+            setattr(p, name, value)
 
-        if indices is None:
-            bool_indices = np.full(len(self), True)
-        else:
-            bool_indices = np.full(len(self), False)
-            bool_indices[indices] = True
-        for i, p in enumerate(self):
-            if bool_indices[i]:
-                setattr(p, name, value)
-
-    def _get_particle_vector(self, name, indices=None):
-        """Set attributes of all particles to new values.
-
-        This is a fallback implementation, it might be slow.
-
-        :param name: Name of the attribute (str).
-        :param indices: (Optional) only set the particles with these indices.
-                        Its length should be equal to the length of 'values'.
-                        If None, all particles are set.
-        :return: The values of the particle attributes.
-        """
-        if indices is None:
-            bool_indices = np.full(len(self), True)
-        else:
-            bool_indices = np.full(len(self), False)
-            bool_indices[indices] = True
-
-        return np.array([getattr(p, name) for i, p in enumerate(self)
-                         if bool_indices[i]])
+#     def _get_particle_vector(self, name, indices=None):
+#         """Set attributes of all particles to new values.
+#
+#         This is a fallback implementation, it might be slow.
+#
+#         :param name: Name of the attribute (str).
+#         :param indices: (Optional) only set the particles with these indices.
+#                         Its length should be equal to the length of 'values'.
+#                         If None, all particles are set.
+#         :return: The values of the particle attributes.
+#         """
+#         if indices is None:
+#             bool_indices = np.full(len(self), True)
+#         else:
+#             bool_indices = np.full(len(self), False)
+#             bool_indices[indices] = True
+#
+#         return np.array([getattr(p, name) for i, p in enumerate(self)
+#                          if bool_indices[i]])
 
     @property
+    @abstractmethod
     def error_particles(self):
         """Get an iterator over all particles that are in an error state.
 
@@ -312,6 +304,7 @@ class BaseParticleSet(NDCluster):
             if p.state not in [StateCode.Success, StateCode.Evaluate]]
         return self.collection.get_multi_by_indices(indices=error_indices)
 
+    @abstractmethod
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
 
@@ -330,6 +323,31 @@ class BaseParticleSet(NDCluster):
             if min_rt is None or min_rt > p.time:
                 min_rt = p.time
         return (min_rt, max_rt)
+
+    @abstractmethod
+    def particle_field_check(self):
+        """Check if the particles are consistent with the number of fields.
+
+        This is a fallback implementation, it might be slow.
+        """
+        if len(self) == 0 or self.fieldset is None:
+            return
+
+        n_fields = self.fieldset.gridset.size
+        # Get the dtype of xi
+        for var in self.collection.ptype.variables:
+            if var.name == "xi":
+                xi_type = var.dtype
+        for p in self:
+            # If xi is a single value assert one field.
+            if isinstance(p.xi, xi_type):
+                assert n_fields == 1
+            # Else assert that the length is equal to the number of fields.
+            else:
+                assert (len(p.xi) == n_fields,
+                        'FieldSet has different number of grids than '
+                        'Particle.xi. Have you added Fields after creating '
+                        'the ParticleSet?')
 
     # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
