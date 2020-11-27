@@ -263,7 +263,7 @@ class ParticleSetSOA(BaseParticleSet):
 
 #     def _get_particle_vector(self, name, indices=None):
 #         """Set attributes of all particles to new values.
-# 
+
 #         :param name: Name of the attribute (str).
 #         :param indices: (Optional) only set the particles with these indices.
 #                         Its length should be equal to the length of 'values'.

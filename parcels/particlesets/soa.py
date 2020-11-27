@@ -109,7 +109,7 @@ class ParticleCollectionSOA(ParticleCollection):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                if partitions is not False:
+                if self._pu_indicators is not False:
                     if self._pu_indicators is None:
                         if mpi_rank == 0:
                             coords = np.vstack((lon, lat)).transpose()
