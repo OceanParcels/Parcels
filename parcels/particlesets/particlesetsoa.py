@@ -300,15 +300,6 @@ class ParticleSetSOA(BaseParticleSet):
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=error_indices)
 
-    def particle_field_check(self):
-        """Check if the particles are consistent with the number of fields.
-        """
-        xi = self._collection._data['xi']
-        if (len(self) > 0 and xi.ndim == 2
-                and self.fieldset is not None):
-            assert self.fieldset.gridset.size == xi.shape[1], \
-                'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
-
     # ==== already user-exposed ==== #
     def __getitem__(self, index):
         # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
