@@ -278,13 +278,15 @@ class ParticleSet_Benchmark(ParticleSet):
             self.plot_log.stop_timing()
             self.plot_log.accumulate_timing()
 
-        self.nparticle_log.advance_iteration(self.size)
-        self.compute_log.advance_iteration()
-        self.io_log.advance_iteration()
-        self.mem_log.advance_iteration(self.process.memory_info().rss)
-        self.mem_io_log.advance_iteration()
-        self.plot_log.advance_iteration()
-        self.total_log.advance_iteration()
+        # ==== Those lines include the timing for file I/O of the set.    ==== #
+        # ==== Disabled as it doesn't have anything to do with advection. ==== #
+        # self.nparticle_log.advance_iteration(self.size)
+        # self.compute_log.advance_iteration()
+        # self.io_log.advance_iteration()
+        # self.mem_log.advance_iteration(self.process.memory_info().rss)
+        # self.mem_io_log.advance_iteration()
+        # self.plot_log.advance_iteration()
+        # self.total_log.advance_iteration()
 
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel_benchmark.Kernel` object
