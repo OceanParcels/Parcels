@@ -35,9 +35,10 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     # np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+    # & np.less(pd['time'], time + np.abs(pd['dt'] / 2), where=np.isfinite(pd['time']))
     """
     return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & np.less(pd['time'], time + np.abs(pd['dt'] / 2), where=np.isfinite(pd['time']))
+            & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
@@ -117,7 +118,7 @@ class ParticleSetSOA(BaseParticleSet):
             'lon, lat, depth don''t all have the same lenghts')
 
         if time is None:
-            raise ValueError("Particle Set is created with time=None - Invalid!")
+            raise RuntimeError("Particle Set is created with 'time=None' - time-parameter invalid.")
 
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
@@ -209,8 +210,9 @@ class ParticleSetSOA(BaseParticleSet):
         # self.ptype = pclass.getPType()
 
         if self.repeatdt:
-            # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
-            self.repeatpid = pid_orig
+            if not hasattr(self, 'repeatpid'):
+                # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
+                self.repeatpid = pid_orig[self._collection.pu_indicators]
             # self.partitions = self.collection.pu_indicators
 
         self.kernel = None
@@ -311,7 +313,14 @@ class ParticleSetSOA(BaseParticleSet):
             self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
         return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
 
-    def index_subset(self, indices):
+    def data_indices(self, variable_name, compare_values, not_in=False):
+        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
+        return np.where(np.isin(self._collection.data[variable_name], compare_values, invert=not_in))[0]
+
+    def indices(self, boolean_array_or_statement):
+        return np.where(boolean_array_or_statement)[0]
+
+    def indexed_subset(self, indices):
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=indices)
 
@@ -321,11 +330,9 @@ class ParticleSetSOA(BaseParticleSet):
 
         :return: Collection iterator over error particles.
         """
-        indices = np.where(np.isin(
-            self.collection._data['state'],
-            [OperationCode.Delete]))[0]
-        return ParticleCollectionIteratorSOA(self._collection,
-                                             subset=indices)
+        indices = self.data_indices('state', [OperationCode.Delete, ])
+        #np.where(np.isin(self._collection.data['state'], [OperationCode.Delete]))[0]
+        return ParticleCollectionIteratorSOA(self._collection, subset=indices)
 
     @property
     def error_particles(self):
@@ -333,16 +340,14 @@ class ParticleSetSOA(BaseParticleSet):
 
         :return: Collection iterator over error particles.
         """
-        error_indices = np.where(np.isin(
-            self.collection._data['state'],
-            [StateCode.Success, StateCode.Evaluate], invert=True))[0]
-        return ParticleCollectionIteratorSOA(self._collection,
-                                             subset=error_indices)
+        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], not_in=True)
+        # np.where(np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate], invert=True))[0]
+        return ParticleCollectionIteratorSOA(self._collection, subset=error_indices)
 
     @property
     def num_error_particles(self):
         return np.sum(np.isin(
-            self.collection._data['state'],
+            self._collection.data['state'],
             [StateCode.Success, StateCode.Evaluate], invert=True))
 
     # ==== already user-exposed ==== #
