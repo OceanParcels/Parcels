@@ -493,13 +493,17 @@ class BaseParticleSet(NDCluster):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+        # ====== TEST OUTPUT ====== #
             if a:
                 raise ValueError("s: {} e: {} t:{}".format(_starttime, endtime, time))
+        # ==== END TEST OUTPUT ==== #
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
                                 execute_once=execute_once)
             if abs(time-next_prelease) < tol:
+        # ====== TEST OUTPUT ====== #
                 if b:
                     raise ValueError("class: {}".format(self.__class__))
+        # ==== END TEST OUTPUT ==== #
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,

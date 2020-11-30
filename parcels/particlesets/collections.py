@@ -889,6 +889,7 @@ class ParticleCollection(Collection):
         for v in self.ptype.variables:
             if v.name == name:
                 return np.array([getattr(p, name) for p in self], dtype=v.dtype)
+        # == TODO: TO BE TESTED IF THAT CAN BE AVOIDED == #
         # if name in self.__dict__:
         #     return self.__dict__[name]
         # else:

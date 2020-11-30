@@ -210,7 +210,8 @@ class ParticleSetSOA(BaseParticleSet):
         # self.ptype = pclass.getPType()
 
         if self.repeatdt:
-            if not hasattr(self, 'repeatpid'):
+            # if not hasattr(self, 'repeatpid'):
+            if 1:
                 # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
                 self.repeatpid = pid_orig[self._collection.pu_indicators]
             # self.partitions = self.collection.pu_indicators
@@ -290,7 +291,7 @@ class ParticleSetSOA(BaseParticleSet):
 
 #     def _get_particle_vector(self, name, indices=None):
 #         """Set attributes of all particles to new values.
-# 
+#
 #         :param name: Name of the attribute (str).
 #         :param indices: (Optional) only set the particles with these indices.
 #                         Its length should be equal to the length of 'values'.

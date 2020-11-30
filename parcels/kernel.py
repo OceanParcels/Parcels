@@ -460,10 +460,14 @@ class Kernel(object):
 
         def remove_deleted(pset):
             """Utility to remove all particles that signalled deletion"""
-            indices = pset.collection._data['state'] == OperationCode.Delete
-            if np.count_nonzero(indices) > 0 and output_file is not None:
-                output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove_booleanvector(indices)
+            # Indices marked for deletion.
+            bool_indices = np.array([
+                p.state == OperationCode.Delete for p in pset])
+            indices = np.where(bool_indices)[0]
+            if len(indices) > 0 and output_file is not None:
+                output_file.write(pset, endtime, deleted_only=bool_indices)
+            pset.remove_indices(indices)
+            return len(indices)
 
         if recovery is None:
             recovery = {}

@@ -110,6 +110,8 @@ class ParticleCollectionSOA(ParticleCollection):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
+                # == TODO: check if working == #
+                # if self._pu_indicators is not False:
                 if partitions is not False:
                     if self._pu_indicators is None:
                         if mpi_rank == 0:
@@ -205,9 +207,11 @@ class ParticleCollectionSOA(ParticleCollection):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.ncount):
+                        # ==== TEST OUTPUT - TODO: REMOVE ==== #
                         logger.info("variable: {}".format(v))
                         logger.info("time-type: {} values: {}".format(type(time), time))
                         logger.info("lon-type: {} values: {}".format(type(lon), lon))
+                        # ==== END TEST OUTPUT ==== #
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
@@ -256,9 +260,6 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         return self.get_single_by_index(index)
 
-    # CK: I object - this actually breaks variable protection. It allows stuff like 'collection._attribute' by default
-    #     if we need to forward a specific collection attribute, we should make a proper getter. This also
-    #     conflicts with already existing getters.
     def __getattr__(self, name):
         """
         Access a single property of all particles.
