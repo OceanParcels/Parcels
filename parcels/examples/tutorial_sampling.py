@@ -47,7 +47,7 @@ plt.figure()
 ax = plt.axes()
 T_contour = ax.contourf(T_data.x.values, T_data.y.values, T_data.T.values[0, 0], cmap=plt.cm.inferno)
 ax.scatter(lon, lat, c='w')
-plt.colorbar(T_contour, label='T [$^{\circ} C$]')
+plt.colorbar(T_contour, label='T [$^{\\circ} C$]')
 plt.show()
 
 
@@ -130,7 +130,7 @@ ax.plot(Particle_data.lon.transpose(), Particle_data.lat.transpose(), c='k', zor
 T_scatter = ax.scatter(Particle_data.lon, Particle_data.lat, c=Particle_data.temperature,
                        cmap=plt.cm.inferno, norm=mpl.colors.Normalize(vmin=0., vmax=20.),
                        edgecolor='k', zorder=2)
-plt.colorbar(T_scatter, label='T [$^{\circ} C$]')
+plt.colorbar(T_scatter, label='T [$^{\\circ} C$]')
 plt.show()
 
 
@@ -177,7 +177,7 @@ T_scatter = ax.scatter(Particle_data.lon, Particle_data.lat,
                        c=np.tile(Particle_data.temperature, (Particle_data.lon.shape[1], 1)).T,
                        cmap=plt.cm.inferno, norm=mpl.colors.Normalize(vmin=0., vmax=1.),
                        edgecolor='k', zorder=2)
-plt.colorbar(T_scatter, label='Initial T [$^{\circ} C$]')
+plt.colorbar(T_scatter, label='Initial T [$^{\\circ} C$]')
 plt.show()
 
 
@@ -253,5 +253,5 @@ ax.plot(Release0.lon.transpose(), Release0.lat.transpose(), c='k', zorder=1)
 T_scatter = ax.scatter(Release0.lon, Release0.lat, c=Release0.temperature,
                        cmap=plt.cm.inferno, norm=mpl.colors.Normalize(vmin=0., vmax=20.),
                        edgecolor='k', zorder=2)
-plt.colorbar(T_scatter, label='T [$^{\circ} C$]')
+plt.colorbar(T_scatter, label='T [$^{\\circ} C$]')
 plt.show()

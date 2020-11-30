@@ -538,7 +538,7 @@ class ParticleSetSOA(BaseParticleSet):
             else:
                 if deleted_only is not False:
                     # to_write = deleted_only
-                    if type(deleted_only) not in[list, np.ndarray] and deleted_only in [True, 1]:
+                    if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         # particles_to_write = self.deleted_particles
                         indices_to_write = np.where(np.isin(self.collection._data['state'],
                                                             [OperationCode.Delete]))[0]
