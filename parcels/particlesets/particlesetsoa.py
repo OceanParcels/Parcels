@@ -37,7 +37,7 @@ def _to_write_particles(pd, time):
     # np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
     """
     return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & np.less(pd['time'], time + np.abs(pd['dt']), where=np.isfinite(pd['time']))
+            & np.less(pd['time'], time + np.abs(pd['dt'] / 2), where=np.isfinite(pd['time']))
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
@@ -554,7 +554,7 @@ class ParticleSetSOA(BaseParticleSet):
                 if len(pfile.var_names_once) > 0:
                     # first_write = (_to_write_particles(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
                     # _to_write_particles(pd, time) &
-                    first_write = (_is_particle_started_yet(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
+                    first_write = (_to_write_particles(pd, time) & _is_particle_started_yet(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
                         data_dict_once['id'] = np.array(pd['id'][first_write]).astype(dtype=np.int64)
                         for var in pfile.var_names_once:

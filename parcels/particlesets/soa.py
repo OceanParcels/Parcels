@@ -208,7 +208,7 @@ class ParticleCollectionSOA(ParticleCollection):
                         logger.info("variable: {}".format(v))
                         logger.info("time-type: {} values: {}".format(type(time), time))
                         logger.info("lon-type: {} values: {}".format(type(lon), lon))
-                        if np.isnan(time[i]):
+                        if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
                         self._data[v.name][i] = v.initial[
