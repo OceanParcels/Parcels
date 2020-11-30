@@ -91,6 +91,7 @@ class ParticleCollectionSOA(ParticleCollection):
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
+        # if partition is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
             self._pu_indicators = convert_to_flat_array(partitions)
 
@@ -99,7 +100,7 @@ class ParticleCollectionSOA(ParticleCollection):
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 
-        offset = np.max(pid) if len(pid) > 0 else -1
+        offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -204,9 +205,11 @@ class ParticleCollectionSOA(ParticleCollection):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.ncount):
+                        logger.info("variable: {}".format(v))
+                        logger.info("time-type: {} values: {}".format(type(time), time))
+                        logger.info("lon-type: {} values: {}".format(type(lon), lon))
                         if np.isnan(time[i]):
-                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
-                                               'Add a "time=" to ParticleSet construction')
+                            raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
                         self._data[v.name][i] = v.initial[
                             time[i], depth[i], lat[i], lon[i]
@@ -253,18 +256,26 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         return self.get_single_by_index(index)
 
+    # CK: I object - this actually breaks variable protection. It allows stuff like 'collection._attribute' by default
+    #     if we need to forward a specific collection attribute, we should make a proper getter. This also
+    #     conflicts with already existing getters.
     def __getattr__(self, name):
         """
         Access a single property of all particles.
 
         :param name: name of the property
         """
-        if '_data' in self.__dict__ and name in self.__dict__['_data']:
-            return self.__dict__['_data'][name]
-        elif name in self.__dict__:
-            return self.__dict__[name]
-        else:
-            return False
+        # if '_data' in self.__dict__ and name in self.__dict__['_data']:
+        #     return self.__dict__['_data'][name]
+        # elif name in self.__dict__:
+        #     return self.__dict__[name]
+        # else:
+        #     return False
+        for v in self.ptype.variables:
+            if v.name == name and name in self._data:
+                return self._data[name]
+        return False
+        # return super(ParticleCollectionSOA, self).__getattr__(name)
 
     def get_single_by_index(self, index):
         """
@@ -895,6 +906,7 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         """
         super().__init__(pcoll)
         self._index = index
+        self._next_dt = None
 
     def __getattr__(self, name):
         return self.pcoll._data[name][self._index]
@@ -905,6 +917,19 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         else:
             # avoid recursion
             self.pcoll._data[name][self._index] = value
+
+    def update_next_dt(self, next_dt=None):
+        # == OBJECTION CK: Also here - make a guarded forward ...  == #
+        # == RESPONSE RB: The response I provided below I think is == #
+        # == particularly applicable here.                         == #
+        if next_dt is None:
+            # if not np.isnan(self._next_dt):
+            if self._next_dt is not None:
+                # self.dt, self._next_dt = self._next_dt, np.nan
+                self.pcoll._data['dt'][self._index] = self._next_dt
+                self._next_dt = None
+        else:
+            self._next_dt = next_dt
 
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)

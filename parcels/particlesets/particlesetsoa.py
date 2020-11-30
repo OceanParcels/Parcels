@@ -40,6 +40,15 @@ def _to_write_particles(pd, time):
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
+def _is_particle_started_yet(pd, time):
+    """We don't want to write a particle that is not started yet.
+    Particle will be written if:
+      * particle.time is equal to time argument of pfile.write()
+      * particle.time is before time (in case particle was deleted between previous export and current one)
+    """
+    return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
+    # return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
+
 
 def convert_to_array(var):
     # Convert lists and single integers/floats to one-dimensional numpy arrays
@@ -106,6 +115,9 @@ class ParticleSetSOA(BaseParticleSet):
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
+        if time is None:
+            raise ValueError("Particle Set is created with time=None - Invalid!")
+
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
@@ -148,7 +160,18 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
-        self._collection = ParticleCollectionSOA(pclass, lon, lat, depth, time, lonlatdepth_dtype, partitions, pid_orig, ngrids, **kwargs)
+        self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, partitions=partitions, pid_orig=pid_orig, ngrid=ngrids, **kwargs)
+
+
+        if self.repeatdt:
+            if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
+                raise ('All Particle.time should be the same when repeatdt is not None')
+            self.repeat_starttime = self._collection.data['time'][0]
+            self.repeatlon = self._collection.data['lon']
+            self.repeatlat = self._collection.data['lat']
+            self.repeatdepth = self._collection.data['depth']
+            for kwvar in kwargs:
+                self.repeatkwargs[kwvar] = self._collection.data[kwvar]
 
         # offset = np.max(pid) if len(pid) > 0 else -1
         # if MPI:
@@ -187,7 +210,7 @@ class ParticleSetSOA(BaseParticleSet):
         if self.repeatdt:
             # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
             self.repeatpid = pid_orig
-            self.partitions = self.collection.pu_indicators
+            # self.partitions = self.collection.pu_indicators
 
         self.kernel = None
 
@@ -283,10 +306,9 @@ class ParticleSetSOA(BaseParticleSet):
         :return: Minimum and maximum release times.
         """
         # np.nan_to_num(self._collection._data['time'], nan=default)
-        self._collection._data['time'][
-            np.isnan(self._collection._data['time'])] = default
-        return (np.min(self._collection._data['time']),
-                np.max(self._collection._data['time']))
+        if np.any(np.isnan(self._collection.data['time'])):
+            self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
+        return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
 
     @property
     def error_particles(self):
@@ -299,6 +321,12 @@ class ParticleSetSOA(BaseParticleSet):
             [StateCode.Success, StateCode.Evaluate], invert=True))[0]
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=error_indices)
+
+    @property
+    def num_error_particles(self):
+        return np.sum(np.isin(
+            self.collection._data['state'],
+            [StateCode.Success, StateCode.Evaluate], invert=True))
 
     # ==== already user-exposed ==== #
     def __getitem__(self, index):
@@ -473,7 +501,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         time = time.total_seconds() if isinstance(time, delta) else time
 
-        pd = self.collection._data
+        pd = self._collection.data
 
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only is not False):
@@ -490,16 +518,18 @@ class ParticleSetSOA(BaseParticleSet):
                     pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
-                             & np.less(1e-3, np.abs(time - pd['time']), where=np.isfinite(pd['time'])))
+                             & np.greater(np.abs(time - pd['time'], 1e-3), where=np.isfinite(pd['time'])))
                 if np.count_nonzero(pset_errs) > 0:
-                    logger.warning_once(
-                        'time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
+                    logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
 
+                # ==== this function should probably move back somewhere into the particle-file instead of the to_dict ==== #
                 if time not in pfile.time_written:
                     pfile.time_written.append(time)
 
                 if len(pfile.var_names_once) > 0:
-                    first_write = (_to_write_particles(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
+                    # first_write = (_to_write_particles(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
+                    first_write = (_to_write_particles(pd, time) & _is_particle_started_yet(pd, time)
+                                   & np.isin(pd['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
                         data_dict_once['id'] = np.array(pd['id'][first_write]).astype(dtype=np.int64)
                         for var in pfile.var_names_once:

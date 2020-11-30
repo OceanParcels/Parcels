@@ -403,18 +403,20 @@ class Kernel(object):
         remove_deleted(pset)
 
         # Identify particles that threw errors
-        n_error = -1
-        while n_error != 0:
+        n_error = pset.num_error_particles
+        while n_error > 0:
             error_pset = pset.error_particles
             # Apply recovery kernel
             # Effectively loop over all particles that don't have sucess of
             # evaluate codes.
-            n_error = 0
+            # n_error = 0
             for particle in error_pset:
                 if particle.state == OperationCode.StopExecution:
                     return
                 if particle.state == OperationCode.Repeat:
                     particle.set_state(StateCode.Evaluate)
+                elif particle.state == OperationCode.Delete:
+                    pass
                 elif particle.state in recovery_map:
                     recovery_kernel = recovery_map[particle.state]
                     particle.set_state(StateCode.Success)
@@ -425,15 +427,18 @@ class Kernel(object):
                     logger.warning_once(
                         'Deleting particle because of bug in #749 and #737')
                     particle.delete()
-                n_error += 1
+            #     n_error += 1
 
-            if n_error > 0:
+            # if n_error > 0:
+            if 1:
                 remove_deleted(pset)
                 # Execute core loop again to continue interrupted particles
                 if self.ptype.uses_jit:
                     self.execute_jit(pset, endtime, dt)
                 else:
                     self.execute_python(pset, endtime, dt)
+
+            n_error = pset.num_error_particles
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname

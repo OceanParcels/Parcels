@@ -43,9 +43,27 @@ class NDCluster(ABC):
 class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
     _collection = None
+    kernel = None
+    fieldset = None
+    time_origin = None
+    repeat_starttime = None
+    repeatlon = None
+    repeatlat = None
+    repeatdepth = None
+    repeatpclass = None
+    repeatkwargs = None
 
-    def __init__(self):
+    def __init__(self, fieldset=None, pclass=None, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self._collection = None
+        self.repeat_starttime = None
+        self.repeatlon = None
+        self.repeatlat = None
+        self.repeatdepth = None
+        self.repeatpclass = None
+        self.repeatkwargs = None
+        self.kernel = None
+        self.fieldset = None
+        self.time_origin = None
 
     def data_accessor(self):
         """Returns an Accessor for the particles in this ParticleSet.
@@ -304,6 +322,10 @@ class BaseParticleSet(NDCluster):
             if p.state not in [StateCode.Success, StateCode.Evaluate]]
         return self.collection.get_multi_by_indices(indices=error_indices)
 
+    @property
+    def num_error_particles(self):
+        return len([True if p.state not in [StateCode.Success, StateCode.Evaluate] else None for p in self])
+
     @abstractmethod
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
@@ -313,6 +335,7 @@ class BaseParticleSet(NDCluster):
         :param default: Default release time.
         :return: Minimum and maximum release times.
         """
+        raise RuntimeError("Executing the wrong impute!")
         max_rt = None
         min_rt = None
         for p in self:
@@ -322,7 +345,7 @@ class BaseParticleSet(NDCluster):
                 max_rt = p.time
             if min_rt is None or min_rt > p.time:
                 min_rt = p.time
-        return (min_rt, max_rt)
+        return min_rt, max_rt
 
     # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
@@ -402,6 +425,8 @@ class BaseParticleSet(NDCluster):
 
         default_release_time = mintime if dt >= 0 else maxtime
         min_rt, max_rt = self._impute_release_times(default_release_time)
+        # if mintime != min_rt or maxtime != max_rt:
+        #     raise ValueError("minrt: {} - mintime: {}; maxrt: {} - maxtime: {}; default: {}".format(min_rt, mintime, max_rt, maxtime, default_release_time))
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         _starttime = min_rt if dt >= 0 else max_rt
@@ -452,6 +477,10 @@ class BaseParticleSet(NDCluster):
             walltime_start = time_module.time()
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
+
+        a = False
+        b = False
+
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
@@ -465,9 +494,13 @@ class BaseParticleSet(NDCluster):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            if a:
+                raise ValueError("s: {} e: {} t:{}".format(_starttime, endtime, time))
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
                                 execute_once=execute_once)
             if abs(time-next_prelease) < tol:
+                if b:
+                    raise ValueError("class: {}".format(self.__class__))
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,

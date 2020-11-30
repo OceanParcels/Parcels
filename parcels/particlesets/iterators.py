@@ -61,6 +61,7 @@ class BaseParticleAccessor(ABC):
         )
         self._index = index
 
+    @abstractmethod
     def update_next_dt(self, next_dt=None):
         # == OBJECTION CK: Also here - make a guarded forward ...  == #
         # == RESPONSE RB: The response I provided below I think is == #
