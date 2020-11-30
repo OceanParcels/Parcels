@@ -168,7 +168,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         if self.repeatdt:
             if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
-                raise ('All Particle.time should be the same when repeatdt is not None')
+                raise ValueError('All Particle.time should be the same when repeatdt is not None')
             self.repeat_starttime = self._collection.data['time'][0]
             self.repeatlon = self._collection.data['lon']
             self.repeatlat = self._collection.data['lat']
