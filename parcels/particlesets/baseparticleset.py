@@ -335,7 +335,6 @@ class BaseParticleSet(NDCluster):
         :param default: Default release time.
         :return: Minimum and maximum release times.
         """
-        raise RuntimeError("Executing the wrong impute!")
         max_rt = None
         min_rt = None
         for p in self:

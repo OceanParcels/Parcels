@@ -366,7 +366,91 @@ class Kernel(object):
                         dt_pos = 0
                     break
 
+    def remove_deleted(self, pset, output_file, endtime):
+        """Utility to remove all particles that signalled deletion"""
+        # Indices marked for deletion.
+        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
+        if len(indices) > 0:
+            logger.info("Deleted {} particles.".format(len(indices)))
+        # bool_indices = np.array([p.state == OperationCode.Delete for p in pset])
+        # indices = np.where(bool_indices)[0]
+        if len(indices) > 0 and output_file is not None:
+            output_file.write(pset, endtime, deleted_only=indices)
+            #output_file.write(pset, endtime, deleted_only=bool_indices)
+            pset.remove_indices(indices)
+        # return len(indices)
+
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
+        """Execute this Kernel over a ParticleSet for several timesteps"""
+        for p in pset:
+            p.set_state(StateCode.Evaluate)
+
+        if abs(dt) < 1e-6 and not execute_once:
+            logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
+
+        if recovery is None:
+            recovery = {}
+        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
+            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
+        recovery_map = recovery_base_map.copy()
+        recovery_map.update(recovery)
+
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
+                    g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
+
+        # Execute the kernel over the particle set
+        if self.ptype.uses_jit:
+            self.execute_jit(pset, endtime, dt)
+        else:
+            self.execute_python(pset, endtime, dt)
+
+        # Remove all particles that signalled deletion
+        self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+
+        # Identify particles that threw errors
+        #error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
+        n_error = pset.num_error_particles
+        logger.info("Time: {} - initial kernel eval. # error particles: {}".format(endtime, n_error))
+
+        # while np.any(error_particles):
+        while n_error >0:
+            error_pset = pset.error_particles
+            # Apply recovery kernel
+            # for p in np.where(error_particles)[0]:
+            for p in pset:
+                # particles.set_index(p)
+                if p.state == OperationCode.StopExecution:
+                    return
+                if p.state == OperationCode.Repeat:
+                    p.set_state(StateCode.Evaluate)
+                elif p.state == OperationCode.Delete:
+                    pass
+                elif p.state in recovery_map:
+                    recovery_kernel = recovery_map[p.state]
+                    p.set_state(StateCode.Success)
+                    recovery_kernel(p, self.fieldset, p.time)
+                    if p.state == StateCode.Success:
+                        p.set_state(StateCode.Evaluate)
+                else:
+                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    # logger.warning('Deleting particle because of bug in #749 and #737 - particle state: {}'.format(ErrorCode.toString(particles.state)))
+                    p.delete()
+
+            # Remove all particles that signalled deletion
+            self.remove_deleted(pset, output_file=output_file, endtime=endtime)
+
+            # Execute core loop again to continue interrupted particles
+            if self.ptype.uses_jit:
+                self.execute_jit(pset, endtime, dt)
+            else:
+                self.execute_python(pset, endtime, dt)
+
+            # error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
+            n_error = pset.num_error_particles
+
+    def execute_alt(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
         for p in pset:
             p.set_state(StateCode.Evaluate)

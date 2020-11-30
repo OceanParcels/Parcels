@@ -33,10 +33,11 @@ __all__ = ['ParticleSet']
 
 def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
-    Particle will be written if particle.time is between time-dt/2 and time+dt/2
+    Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
+    # np.greater(time + np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
     """
-    return (np.less_equal(time - np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
-            & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+            & np.less(pd['time'], time + np.abs(pd['dt']), where=np.isfinite(pd['time']))
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
@@ -310,6 +311,22 @@ class ParticleSetSOA(BaseParticleSet):
             self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
         return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
 
+    def index_subset(self, indices):
+        return ParticleCollectionIteratorSOA(self._collection,
+                                             subset=indices)
+
+    @property
+    def deleted_particles(self):
+        """Get an iterator over all particles that are in an error state.
+
+        :return: Collection iterator over error particles.
+        """
+        indices = np.where(np.isin(
+            self.collection._data['state'],
+            [OperationCode.Delete]))[0]
+        return ParticleCollectionIteratorSOA(self._collection,
+                                             subset=indices)
+
     @property
     def error_particles(self):
         """Get an iterator over all particles that are in an error state.
@@ -503,22 +520,30 @@ class ParticleSetSOA(BaseParticleSet):
 
         pd = self._collection.data
 
+        indices_to_write = []
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only is not False):
             if pd['id'].size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
                 if deleted_only is not False:
-                    to_write = deleted_only
+                    # to_write = deleted_only
+                    if type(deleted_only) not in[list, np.ndarray] and deleted_only in [True, 1]:
+                        # particles_to_write = self.deleted_particles
+                        indices_to_write = np.where(np.isin( self.collection._data['state'],
+                                                             [OperationCode.Delete]))[0]
+                    elif type(deleted_only) in [list, np.ndarray]:
+                        # particles_to_write = self.index_subset(deleted_only)
+                        indices_to_write = deleted_only
                 else:
-                    to_write = _to_write_particles(pd, time)
-                if np.any(to_write) > 0:
+                    indices_to_write = _to_write_particles(pd, time)
+                if np.any(indices_to_write) > 0:
                     for var in pfile.var_names:
-                        data_dict[var] = pd[var][to_write]
+                        data_dict[var] = pd[var][indices_to_write]
                     pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
-                pset_errs = (to_write & (pd['state'] != OperationCode.Delete)
-                             & np.greater(np.abs(time - pd['time'], 1e-3), where=np.isfinite(pd['time'])))
+                pset_errs = ((pd['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - pd['time'][indices_to_write]), 1e-3, where=np.isfinite(pd['time'][indices_to_write])))
+                #pset_errs = (indices_to_write & (pd['state'] != OperationCode.Delete) & np.greater(np.abs(time - pd['time']), 1e-3, where=np.isfinite(pd['time'])))
                 if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
 
@@ -528,13 +553,13 @@ class ParticleSetSOA(BaseParticleSet):
 
                 if len(pfile.var_names_once) > 0:
                     # first_write = (_to_write_particles(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
-                    first_write = (_to_write_particles(pd, time) & _is_particle_started_yet(pd, time)
-                                   & np.isin(pd['id'], pfile.written_once, invert=True))
+                    # _to_write_particles(pd, time) &
+                    first_write = (_is_particle_started_yet(pd, time) & np.isin(pd['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
                         data_dict_once['id'] = np.array(pd['id'][first_write]).astype(dtype=np.int64)
                         for var in pfile.var_names_once:
                             data_dict_once[var] = pd[var][first_write]
-                        pfile.written_once.extend(pd['id'][first_write])
+                        pfile.written_once.extend(np.array(pd['id'][first_write]).astype(dtype=np.int64).tolist())
 
             if deleted_only is False:
                 pfile.lasttime_written = time
