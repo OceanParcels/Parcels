@@ -89,7 +89,7 @@ class BaseParticleSet(NDCluster):
         """
         if name in self._collection._data:
             return getattr(self._collection, name)
-        elif name in self.__dict__:
+        elif name in self.__dict__ and name[0] != '_':
             return self.__dict__[name]
         else:
             return False
@@ -477,8 +477,10 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
 
-        a = False
-        b = False
+        # ====== TEST OUTPUT ====== #
+        # a = False
+        # b = False
+        # ==== END TEST OUTPUT ==== #
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
@@ -493,17 +495,17 @@ class BaseParticleSet(NDCluster):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-        # ====== TEST OUTPUT ====== #
-            if a:
-                raise ValueError("s: {} e: {} t:{}".format(_starttime, endtime, time))
-        # ==== END TEST OUTPUT ==== #
+            # ====== TEST OUTPUT ====== #
+            # if a:
+            #     raise ValueError("s: {} e: {} t:{}".format(_starttime, endtime, time))
+            # ==== END TEST OUTPUT ==== #
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
                                 execute_once=execute_once)
             if abs(time-next_prelease) < tol:
-        # ====== TEST OUTPUT ====== #
-                if b:
-                    raise ValueError("class: {}".format(self.__class__))
-        # ==== END TEST OUTPUT ==== #
+                # ====== TEST OUTPUT ====== #
+                # if b:
+                #     raise ValueError("class: {}".format(self.__class__))
+                # ==== END TEST OUTPUT ==== #
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,

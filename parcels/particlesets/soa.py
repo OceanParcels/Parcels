@@ -110,8 +110,6 @@ class ParticleCollectionSOA(ParticleCollection):
                 raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
 
             if mpi_size > 1:
-                # == TODO: check if working == #
-                # if self._pu_indicators is not False:
                 if partitions is not False:
                     if self._pu_indicators is None:
                         if mpi_rank == 0:
@@ -207,10 +205,10 @@ class ParticleCollectionSOA(ParticleCollection):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.ncount):
-                        # ==== TEST OUTPUT - TODO: REMOVE ==== #
-                        logger.info("variable: {}".format(v))
-                        logger.info("time-type: {} values: {}".format(type(time), time))
-                        logger.info("lon-type: {} values: {}".format(type(lon), lon))
+                        # ==== TEST OUTPUT ==== #
+                        # logger.info("variable: {}".format(v))
+                        # logger.info("time-type: {} values: {}".format(type(time), time))
+                        # logger.info("lon-type: {} values: {}".format(type(lon), lon))
                         # ==== END TEST OUTPUT ==== #
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
@@ -910,14 +908,16 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         self._next_dt = None
 
     def __getattr__(self, name):
-        return self.pcoll._data[name][self._index]
+        if name in ['_index', '_next_dt']:
+            return object.__getattribute__(self, name)
+        return self.pcoll.data[name][self._index]
 
     def __setattr__(self, name, value):
-        if name in ['pcoll', '_index']:
+        if name in ['pcoll', '_index', '_next_dt']:
             object.__setattr__(self, name, value)
         else:
             # avoid recursion
-            self.pcoll._data[name][self._index] = value
+            self.pcoll.data[name][self._index] = value
 
     def update_next_dt(self, next_dt=None):
         # == OBJECTION CK: Also here - make a guarded forward ...  == #

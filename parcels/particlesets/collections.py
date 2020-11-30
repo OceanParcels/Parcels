@@ -890,11 +890,11 @@ class ParticleCollection(Collection):
             if v.name == name:
                 return np.array([getattr(p, name) for p in self], dtype=v.dtype)
         # == TODO: TO BE TESTED IF THAT CAN BE AVOIDED == #
-        # if name in self.__dict__:
-        #     return self.__dict__[name]
-        # else:
-        #     return False
-        return False
+        if name in self.__dict__ and name[0] != '_':
+            return self.__dict__[name]
+        else:
+            return False
+        # return False
 
     @abstractmethod
     def toDictionary(self):     # formerly: ParticleSet.to_dict()

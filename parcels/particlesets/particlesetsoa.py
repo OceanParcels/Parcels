@@ -42,6 +42,7 @@ def _to_write_particles(pd, time):
             & (np.isfinite(pd['id']))
             & (np.isfinite(pd['time'])))
 
+
 def _is_particle_started_yet(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if:
@@ -117,8 +118,9 @@ class ParticleSetSOA(BaseParticleSet):
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        if time is None:
-            raise RuntimeError("Particle Set is created with 'time=None' - time-parameter invalid.")
+        # ==== TODO: checking it here creates errors, but I think this really shall be checked here === #
+        # if time is None:
+        #     raise RuntimeError("Particle Set is created with 'time=None' - time-parameter invalid.")
 
         time = convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
@@ -163,7 +165,6 @@ class ParticleSetSOA(BaseParticleSet):
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
         self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, partitions=partitions, pid_orig=pid_orig, ngrid=ngrids, **kwargs)
-
 
         if self.repeatdt:
             if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
@@ -211,9 +212,12 @@ class ParticleSetSOA(BaseParticleSet):
 
         if self.repeatdt:
             # if not hasattr(self, 'repeatpid'):
-            if 1:
+            if MPI and self._collection.pu_indicators is not None:
+                mpi_comm = MPI.COMM_WORLD
+                mpi_rank = mpi_comm.Get_rank()
                 # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
-                self.repeatpid = pid_orig[self._collection.pu_indicators]
+                # self._pu_indicators == mpi_rank
+                self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
             # self.partitions = self.collection.pu_indicators
 
         self.kernel = None
@@ -332,7 +336,7 @@ class ParticleSetSOA(BaseParticleSet):
         :return: Collection iterator over error particles.
         """
         indices = self.data_indices('state', [OperationCode.Delete, ])
-        #np.where(np.isin(self._collection.data['state'], [OperationCode.Delete]))[0]
+        # np.where(np.isin(self._collection.data['state'], [OperationCode.Delete]))[0]
         return ParticleCollectionIteratorSOA(self._collection, subset=indices)
 
     @property
@@ -536,8 +540,8 @@ class ParticleSetSOA(BaseParticleSet):
                     # to_write = deleted_only
                     if type(deleted_only) not in[list, np.ndarray] and deleted_only in [True, 1]:
                         # particles_to_write = self.deleted_particles
-                        indices_to_write = np.where(np.isin( self.collection._data['state'],
-                                                             [OperationCode.Delete]))[0]
+                        indices_to_write = np.where(np.isin(self.collection._data['state'],
+                                                            [OperationCode.Delete]))[0]
                     elif type(deleted_only) in [list, np.ndarray]:
                         # particles_to_write = self.index_subset(deleted_only)
                         indices_to_write = deleted_only
@@ -549,7 +553,7 @@ class ParticleSetSOA(BaseParticleSet):
                     pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
 
                 pset_errs = ((pd['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - pd['time'][indices_to_write]), 1e-3, where=np.isfinite(pd['time'][indices_to_write])))
-                #pset_errs = (indices_to_write & (pd['state'] != OperationCode.Delete) & np.greater(np.abs(time - pd['time']), 1e-3, where=np.isfinite(pd['time'])))
+                # pset_errs = (indices_to_write & (pd['state'] != OperationCode.Delete) & np.greater(np.abs(time - pd['time']), 1e-3, where=np.isfinite(pd['time'])))
                 if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, pd['time'][pset_errs]))
 
