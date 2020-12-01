@@ -9,29 +9,6 @@ import parcels.rng as ParcelsRandom
 __all__ = ['DiffusionUniformKh', 'AdvectionDiffusionM1', 'AdvectionDiffusionEM', ]
 
 
-def DiffusionUniformKh(particle, fieldset, time):
-    """Kernel for simple 2D diffusion where diffusivity (Kh) is assumed uniform.
-    Assumes that fieldset has constants Kh_zonal and Kh_meridional.
-
-    This kernel assumes diffusivity gradients are zero and is
-    therefore more efficient. Since the perturbation due to diffusion 
-    is in this case isotropic independent, this kernel contains no 
-    advection and can be used in combination with a seperate advection kernel.
-
-    The Wiener increment `dW` is normally distributed with zero
-    mean and a standard deviation of sqrt(dt).
-    """
-    # Wiener increment with zero mean and std of sqrt(dt)
-    dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-    dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
-
-    bx = math.sqrt(2 * fieldset.Kh_zonal)
-    by = math.sqrt(2 * fieldset.Kh_meridional)
-
-    particle.lon += bx * dWx
-    particle.lat += by * dWy
-
-
 def AdvectionDiffusionM1(particle, fieldset, time):
     """Kernel for 2D advection-diffusion, solved using the Milstein scheme
     at first order (M1).
@@ -104,3 +81,26 @@ def AdvectionDiffusionEM(particle, fieldset, time):
     # Particle positions are updated only after evaluating all terms.
     particle.lon += ax * particle.dt + bx * dWx
     particle.lat += ay * particle.dt + by * dWy
+
+
+def DiffusionUniformKh(particle, fieldset, time):
+    """Kernel for simple 2D diffusion where diffusivity (Kh) is assumed uniform.
+    
+    Assumes that fieldset has constants `Kh_zonal` and `Kh_meridional`. This kernel 
+    assumes diffusivity gradients are zero and is therefore more efficient. Since 
+    the perturbation due to diffusion is in this case isotropic independent, this 
+    kernel contains no advection and can be used in combination with a seperate 
+    advection kernel.
+
+    The Wiener increment `dW` is normally distributed with zero
+    mean and a standard deviation of sqrt(dt).
+    """
+    # Wiener increment with zero mean and std of sqrt(dt)
+    dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+    dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
+
+    bx = math.sqrt(2 * fieldset.Kh_zonal)
+    by = math.sqrt(2 * fieldset.Kh_meridional)
+
+    particle.lon += bx * dWx
+    particle.lat += by * dWy

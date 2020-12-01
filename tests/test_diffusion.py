@@ -1,7 +1,6 @@
 from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, JITParticle,
-                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
-                     AdvectionDiffusionEM, AdvectionRK4DiffusionEM, ScipyParticle,
-                     Variable)
+                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM, 
+                     ScipyParticle, Variable)
 from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import numpy as np
