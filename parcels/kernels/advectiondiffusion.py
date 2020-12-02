@@ -15,13 +15,13 @@ def AdvectionDiffusionM1(particle, fieldset, time):
 
     Assumes that fieldset has fields `Kh_zonal` and `Kh_meridional`
     and variable `fieldset.dres`, setting the resolution for the central
-    difference gradient approximation. This should be (of the order of) the 
+    difference gradient approximation. This should be (of the order of) the
     local gridsize.
 
-    This Milstein scheme is of strong and weak order 1, which is higher than the 
-    Euler-Maruyama scheme. It experiences less spurious diffusivity by 
+    This Milstein scheme is of strong and weak order 1, which is higher than the
+    Euler-Maruyama scheme. It experiences less spurious diffusivity by
     including extra correction terms that are computationally cheap.
-    
+
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
@@ -54,11 +54,11 @@ def AdvectionDiffusionEM(particle, fieldset, time):
 
     Assumes that fieldset has fields `Kh_zonal` and `Kh_meridional`
     and variable `fieldset.dres`, setting the resolution for the central
-    difference gradient approximation. This should be (of the order of) the 
+    difference gradient approximation. This should be (of the order of) the
     local gridsize.
-    
+
     The Euler-Maruyama scheme is of strong order 0.5 and weak order 1.
-    
+
     The Wiener increment `dW` is normally distributed with zero
     mean and a standard deviation of sqrt(dt).
     """
@@ -85,11 +85,11 @@ def AdvectionDiffusionEM(particle, fieldset, time):
 
 def DiffusionUniformKh(particle, fieldset, time):
     """Kernel for simple 2D diffusion where diffusivity (Kh) is assumed uniform.
-    
-    Assumes that fieldset has constants `Kh_zonal` and `Kh_meridional`. This kernel 
-    assumes diffusivity gradients are zero and is therefore more efficient. Since 
-    the perturbation due to diffusion is in this case isotropic independent, this 
-    kernel contains no advection and can be used in combination with a seperate 
+
+    Assumes that fieldset has constants `Kh_zonal` and `Kh_meridional`. This kernel
+    assumes diffusivity gradients are zero and is therefore more efficient. Since
+    the perturbation due to diffusion is in this case isotropic independent, this
+    kernel contains no advection and can be used in combination with a seperate
     advection kernel.
 
     The Wiener increment `dW` is normally distributed with zero
