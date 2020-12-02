@@ -79,6 +79,7 @@ class Kernel(object):
         self.delete_cfiles = delete_cfiles
         self._cleanup_files = None
         self._cleanup_lib = None
+        self.c_include = c_include
 
         # Derive meta information from pyfunc, if not given
         self.funcname = funcname or pyfunc.__name__
@@ -450,6 +451,7 @@ class Kernel(object):
         return Kernel(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
+                      c_include=self.c_include + kernel.c_include,
                       delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):
