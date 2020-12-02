@@ -1,7 +1,6 @@
 from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode, StateCode,
                      AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
-                     AdvectionAnalytical, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
-                     AdvectionDiffusionEM, AdvectionRK4DiffusionEM)
+                     AdvectionAnalytical, AdvectionDiffusionM1, AdvectionDiffusionEM)
 import numpy as np
 import pytest
 import math
@@ -12,9 +11,7 @@ from datetime import timedelta as delta
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
           'AdvDiffEM': AdvectionDiffusionEM,
-          'AdvDiffM1': AdvectionDiffusionM1,
-          'AdvRK4DiffEM': AdvectionRK4DiffusionEM,
-          'AdvRK4DiffM1': AdvectionRK4DiffusionM1}
+          'AdvDiffM1': AdvectionDiffusionM1,}
 
 # Some constants
 f = 1.e-4
@@ -276,8 +273,6 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('EE', 1e-2, False),
     ('AdvDiffEM', 1e-2, True),
     ('AdvDiffM1', 1e-2, True),
-    ('AdvRK4DiffEM', 1e-5, True),
-    ('AdvRK4DiffM1', 1e-5, True),
     ('RK4', 1e-5, False),
     ('RK45', 1e-5, False)])
 def test_stationary_eddy(fieldset_stationary, mode, method, rtol, diffField, npart=1):
@@ -365,8 +360,6 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('EE', 1e-2, False),
     ('AdvDiffEM', 1e-2, True),
     ('AdvDiffM1', 1e-2, True),
-    ('AdvRK4DiffEM', 1e-5, True),
-    ('AdvRK4DiffM1', 1e-5, True),
     ('RK4', 1e-5, False),
     ('RK45', 1e-5, False)])
 def test_moving_eddy(fieldset_moving, mode, method, rtol, diffField, npart=1):
@@ -417,8 +410,6 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     ('EE', 1e-2, False),
     ('AdvDiffEM', 1e-2, True),
     ('AdvDiffM1', 1e-2, True),
-    ('AdvRK4DiffEM', 1e-5, True),
-    ('AdvRK4DiffM1', 1e-5, True),
     ('RK4', 1e-5, False),
     ('RK45', 1e-5, False)])
 def test_decaying_eddy(fieldset_decaying, mode, method, rtol, diffField, npart=1):
