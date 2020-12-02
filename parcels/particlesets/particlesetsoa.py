@@ -156,10 +156,10 @@ class ParticleSetSOA(BaseParticleSet):
                 raise('Repeatdt should be > 0')
             if time[0] and not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
-            self.repeat_starttime = time[0]
-            self.repeatlon = lon
-            self.repeatlat = lat
-            self.repeatdepth = depth
+            # self.repeat_starttime = time[0]
+            # self.repeatlon = lon
+            # self.repeatlat = lat
+            # self.repeatdepth = depth
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
@@ -167,9 +167,12 @@ class ParticleSetSOA(BaseParticleSet):
         self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, partitions=partitions, pid_orig=pid_orig, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
-            if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
-                raise ValueError('All Particle.time should be the same when repeatdt is not None')
-            self.repeat_starttime = self._collection.data['time'][0]
+            if len(time) == 1 and time[0] is None:
+                self.repeat_starttime = time[0]
+            else:
+                if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
+                    raise ValueError('All Particle.time should be the same when repeatdt is not None')
+                self.repeat_starttime = self._collection.data['time'][0]
             self.repeatlon = self._collection.data['lon']
             self.repeatlat = self._collection.data['lat']
             self.repeatdepth = self._collection.data['depth']
