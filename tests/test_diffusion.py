@@ -1,5 +1,5 @@
 from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, JITParticle,
-                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM, 
+                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM,
                      ScipyParticle, Variable)
 from parcels import ParcelsRandom
 from datetime import timedelta as delta
@@ -27,12 +27,9 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
-    vec = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, 2)
-    grid = RectilinearZGrid(lon=vec, lat=vec, mesh=mesh)
-
     fieldset.add_constant("Kh_zonal", kh_zonal)
     fieldset.add_constant("Kh_meridional", kh_meridional)
-    
+
     npart = 1000
     runtime = delta(days=1)
 
