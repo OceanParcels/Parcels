@@ -86,9 +86,14 @@ def AdvectionDiffusionEM(particle, fieldset, time):
 def DiffusionUniformKh(particle, fieldset, time):
     """Kernel for simple 2D diffusion where diffusivity (Kh) is assumed uniform.
 
-    Assumes that fieldset has constants `Kh_zonal` and `Kh_meridional`. This kernel
-    assumes diffusivity gradients are zero and is therefore more efficient. Since
-    the perturbation due to diffusion is in this case isotropic independent, this
+    Assumes that fieldset has constant fields `Kh_zonal` and `Kh_meridional`.
+    These can be added via e.g.
+        fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
+        fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
+    where mesh is either 'flat' or 'spherical'
+
+    This kernel assumes diffusivity gradients are zero and is therefore more efficient.
+    Since the perturbation due to diffusion is in this case isotropic independent, this
     kernel contains no advection and can be used in combination with a seperate
     advection kernel.
 
@@ -99,8 +104,8 @@ def DiffusionUniformKh(particle, fieldset, time):
     dWx = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
     dWy = ParcelsRandom.normalvariate(0, math.sqrt(math.fabs(particle.dt)))
 
-    bx = math.sqrt(2 * fieldset.Kh_zonal)
-    by = math.sqrt(2 * fieldset.Kh_meridional)
+    bx = math.sqrt(2 * fieldset.Kh_zonal[particle])
+    by = math.sqrt(2 * fieldset.Kh_meridional[particle])
 
     particle.lon += bx * dWx
     particle.lat += by * dWy

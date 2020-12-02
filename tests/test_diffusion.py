@@ -27,8 +27,8 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
-    fieldset.add_constant("Kh_zonal", kh_zonal)
-    fieldset.add_constant("Kh_meridional", kh_meridional)
+    fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
+    fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
 
     npart = 1000
     runtime = delta(days=1)
