@@ -10,8 +10,7 @@ from datetime import timedelta as delta
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
-          'AdvDiffEM': AdvectionDiffusionEM,
-          'AdvDiffM1': AdvectionDiffusionM1,}
+          'AdvDiffEM': AdvectionDiffusionEM, 'AdvDiffM1': AdvectionDiffusionM1}
 
 # Some constants
 f = 1.e-4
