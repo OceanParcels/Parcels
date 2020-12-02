@@ -167,7 +167,7 @@ class ParticleSetSOA(BaseParticleSet):
         self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, partitions=partitions, pid_orig=pid_orig, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
-            if len(time) == 1 and time[0] is None:
+            if len(time) > 0 and time[0] is None:
                 self.repeat_starttime = time[0]
             else:
                 if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
