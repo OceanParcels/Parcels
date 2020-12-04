@@ -4,7 +4,6 @@ from abc import abstractmethod
 from datetime import datetime
 from datetime import timedelta as delta
 import time as time_module
-import warnings
 
 import progressbar
 
@@ -21,25 +20,6 @@ class NDCluster(ABC):
     """Interface."""
 
 
-# == Ammendment CK: The based ParticleSet probably itself does NOT need to be a specific subclass of ParticleCollection.
-# ==                Possibly, the constraint can be resolved by either (a) make the collection just a member variable of
-# ==                the particle set or (b) requiring a collection as 'unused' constraint of the constructor, so that
-# ==                the BaseParticleSet-derived class needs to provide its collection [type] as parameter for the
-# ==                super-class constructor call.
-# == i.e.
-# == class BaseParticleSetNDCluster):
-# ==     def __init__(self, collection_type): # this is NOT an abstract method then
-# ==         assert inspect.isclass(collection_type, ParticleCollection)
-# == Response RB: Yes, I think I agree with option (a). This disentangles the inheritance-structure quite a bit. It
-# ==              would mean that collections and particlesets form their own separate hierarchies (so no ParticleSet
-# ==              is a subclass of a collection), bounded together by a "has-a"-relation, meaning that a ParticleSet
-# ==              always 'carries' an instance of a (Particle)Collection. However, this has an impact on the data-access:
-# ==              Currently you call e.g. `p = pset.data_accessor().set_index(3)`, in the old inheritance-idea this would
-# ==              have become something like `p = pset.get_by_index(3)`, but with this suggestion that would change to
-# ==              `p = pset.collection.get_by_index(3)`.
-# == Conclusion CK+RB: for now decided to follow option (a) member variable; to be seen how many function-forwards are
-# ==                   required to 'make this bird fly' ...
-# == END AMMENDMENT
 class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
     _collection = None
@@ -65,16 +45,6 @@ class BaseParticleSet(NDCluster):
         self.fieldset = None
         self.time_origin = None
 
-    def data_accessor(self):
-        """Returns an Accessor for the particles in this ParticleSet.
-        Deprecated - the accessor must not be manipulated directly.
-        """
-        warnings.warn(
-            "This method of accessing particle data is deprecated",
-            DeprecationWarning,
-            stacklevel=2
-        )
-
     def __iter__(self):
         """Allows for more intuitive iteration over a particleset, while
         in reality iterating over the particles in the collection.
@@ -87,9 +57,10 @@ class BaseParticleSet(NDCluster):
 
         :param name: name of the property
         """
-        if name in self._collection._data:
-            return getattr(self._collection, name)
-        elif name in self.__dict__ and name[0] != '_':
+        for v in self._collection.ptype.variables:
+            if v.name == name:
+                return getattr(self._collection, name)
+        if name in self.__dict__ and name[0] != '_':
             return self.__dict__[name]
         else:
             return False
@@ -288,26 +259,6 @@ class BaseParticleSet(NDCluster):
         for p in self:
             setattr(p, name, value)
 
-#     def _get_particle_vector(self, name, indices=None):
-#         """Set attributes of all particles to new values.
-#
-#         This is a fallback implementation, it might be slow.
-#
-#         :param name: Name of the attribute (str).
-#         :param indices: (Optional) only set the particles with these indices.
-#                         Its length should be equal to the length of 'values'.
-#                         If None, all particles are set.
-#         :return: The values of the particle attributes.
-#         """
-#         if indices is None:
-#             bool_indices = np.full(len(self), True)
-#         else:
-#             bool_indices = np.full(len(self), False)
-#             bool_indices[indices] = True
-#
-#         return np.array([getattr(p, name) for i, p in enumerate(self)
-#                          if bool_indices[i]])
-
     @property
     @abstractmethod
     def error_particles(self):
@@ -324,6 +275,7 @@ class BaseParticleSet(NDCluster):
 
     @property
     def num_error_particles(self):
+        """Get the number of particles that are in an error state."""
         return len([True if p.state not in [StateCode.Success, StateCode.Evaluate] else None for p in self])
 
     @abstractmethod
@@ -346,7 +298,6 @@ class BaseParticleSet(NDCluster):
                 min_rt = p.time
         return min_rt, max_rt
 
-    # ==== already user-exposed ==== #
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -424,8 +375,6 @@ class BaseParticleSet(NDCluster):
 
         default_release_time = mintime if dt >= 0 else maxtime
         min_rt, max_rt = self._impute_release_times(default_release_time)
-        # if mintime != min_rt or maxtime != max_rt:
-        #     raise ValueError("minrt: {} - mintime: {}; maxrt: {} - maxtime: {}; default: {}".format(min_rt, mintime, max_rt, maxtime, default_release_time))
 
         # Derive _starttime and endtime from arguments or fieldset defaults
         _starttime = min_rt if dt >= 0 else max_rt
@@ -477,11 +426,6 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
 
-        # ====== TEST OUTPUT ====== #
-        # a = False
-        # b = False
-        # ==== END TEST OUTPUT ==== #
-
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
@@ -495,17 +439,9 @@ class BaseParticleSet(NDCluster):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            # ====== TEST OUTPUT ====== #
-            # if a:
-            #     raise ValueError("s: {} e: {} t:{}".format(_starttime, endtime, time))
-            # ==== END TEST OUTPUT ==== #
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
                                 execute_once=execute_once)
             if abs(time-next_prelease) < tol:
-                # ====== TEST OUTPUT ====== #
-                # if b:
-                #     raise ValueError("class: {}".format(self.__class__))
-                # ==== END TEST OUTPUT ==== #
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
                     lat=self.repeatlat, depth=self.repeatdepth,
