@@ -163,6 +163,17 @@ class FieldSet(object):
             self.gridset.add_grid(field)
             field.fieldset = self
 
+    def add_constant_field(self, name, value, mesh='flat'):
+        """Wrapper function to add a Field that is constant in space,
+           useful e.g. when using constant horizontal diffusivity
+
+        :param name: Name of the :class:`parcels.field.Field` object to be added
+        :param value: Value of the constant field (stored as 32-bit float)
+        :param units: Optional UnitConverter object, to convert units
+                      (e.g. for Horizontal diffusivity from m2/s to degree2/s)
+        """
+        self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
+
     def add_vector_field(self, vfield):
         """Add a :class:`parcels.field.VectorField` object to the FieldSet
 
