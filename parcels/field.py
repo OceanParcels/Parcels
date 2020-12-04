@@ -1501,42 +1501,59 @@ class VectorField(object):
         elif self.U.interp_method == 'cgrid_velocity_incompressible':
             if self.gridindexingtype == 'nemo':
                 # TODO need to use actual grid size instead of c1, c2, c3, c4 etc
-                U0 = self.U.data[ti, yi, xi - 1] * c4
-                U1 = self.U.data[ti, yi, xi] * c2
-                U2 = self.U.data[ti, yi - 1, xi - 1] * c4
-                U3 = self.U.data[ti, yi - 1, xi] * c2
+                U0 = self.U.data[ti, yi+1, xi] * c4
+                U1 = self.U.data[ti, yi+1, xi+1] * c2
+                U2 = self.U.data[ti, yi, xi] * c4
+                U3 = self.U.data[ti, yi, xi+1] * c2
 
-                V0 = self.V.data[ti, yi, xi - 1] * c3
-                V1 = self.V.data[ti, yi, xi] * c3
-                V2 = self.V.data[ti, yi - 1, xi - 1] * c1
-                V3 = self.V.data[ti, yi - 1, xi] * c1
+                V0 = self.V.data[ti, yi, xi+1] * c1
+                V1 = self.V.data[ti, yi+1, xi+1] * c3
+                V2 = self.V.data[ti, yi, xi] * c1
+                V3 = self.V.data[ti, yi+1, xi] * c3
+                
+                Tu = (x-xi-1) * (y-yi-1) * U2
+                    + (x-xi) * (y-yi) * U1
+                    - (x-xi) * (y-yi-1) * U3
+                    - (x-xi-1) * (y-yi) * U0
+                    
+                Tv = (x-xi-1) * (y-yi-1) * V2
+                    + (x-xi) * (y-yi) * V1
+                    - (x-xi) * (y-yi-1) * V0
+                    - (x-xi-1) * (y-yi) * V3
+                    
+                #correction + TO BE CHECKED transports are divided by dxdy to get velocities in m/s ?
+                alpha = U2 - U3 + U1 - U0
+                beta = V2 - V0 + V1 - V3              
+                u = (Tu - (0.5 * (x-xi-2) * (x-xi-1) * beta)) / (c1 * c2)
+                v = (Tv - (0.5 * (y-yi-2) * (y-yi-1) * alpha)) / (c1 * c2)
+                    
             elif self.gridindexingtype == 'mitgcm':
                 # TODO need to use actual grid size instead of c1, c2, c3, c4 etc
-                U0 = self.U.data[ti, yi + 1, xi] * c4
-                U1 = self.U.data[ti, yi + 1, xi + 1] * c2
-                U2 = self.U.data[ti, yi, xi] * c4
-                U3 = self.U.data[ti, yi, xi + 1] * c2
+                U0 = self.U.data[ti, yi, xi] * c4
+                U1 = self.U.data[ti, yi, xi + 1] * c2
+                U2 = self.U.data[ti, yi+1, xi] * c4
+                U3 = self.U.data[ti, yi+1, xi + 1] * c2
 
-                V0 = self.V.data[ti, yi + 1, xi] * c1
-                V1 = self.V.data[ti, yi + 1, xi + 1] * c3
-                V2 = self.V.data[ti, yi, xi] * c1
-                V3 = self.V.data[ti, yi, xi + 1] * c3
-
-            Tu = ((1 - xsi) * (1 - eta) * U2
-                  - xsi * (1 - eta) * U3
-                  + xsi * eta * U1
-                  - (1 - xsi) * eta * U0)
-            Tv = ((1 - xsi) * (1 - eta) * V2
-                  - xsi * (1 - eta) * V3
-                  + xsi * eta * V1
-                  - (1 - xsi) * eta * V0)
-
-            alpha = U2 - U0 + U1 - U3
-            beta = V2 - V3 + V1 - V0
-
-            # TODO px/jac below is probably not the correct conversion
-            u = (Tu - 0.5 * xsi * (1 - xsi) * beta) * px[0] / jac
-            v = (Tv - 0.5 * eta * (1 - eta) * alpha) * py[0] / jac
+                V0 = self.V.data[ti, yi, xi] * c1
+                V1 = self.V.data[ti, yi + 1, xi] * c3
+                V2 = self.V.data[ti, yi, xi+1] * c1
+                V3 = self.V.data[ti, yi+1, xi + 1] * c3
+                
+                Tu = (x-xi-1) * (y-yi-1) * U0
+                    + (x-xi) * (y-yi) * U3
+                    - (x-xi) * (y-yi-1) * U1
+                    - (x-xi-1) * (y-yi) * U2
+                    
+                Tv = (x-xi-1) * (y-yi-1) * V0
+                    + (x-xi) * (y-yi) * V3
+                    - (x-xi) * (y-yi-1) * V2
+                    - (x-xi-1) * (y-yi) * V1
+                    
+                #correction + TO BE CHECKED transports are divided by dxdy to get velocities in m/s ?
+                alpha = U0 - U1 + U3 - U2
+                beta = V0 - V2 + V3 - V1  
+                u = (Tu - (0.5 * (x-xi) * (x-xi-1) * beta)) / (c1 * c2)
+                v = (Tv - (0.5 * (y-yi) * (y-yi-1) * alpha)) / (c1 * c2)
 
         if isinstance(u, da.core.Array):
             u = u.compute()
