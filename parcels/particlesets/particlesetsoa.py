@@ -28,7 +28,7 @@ if MPI:
         raise EnvironmentError('sklearn needs to be available if MPI is installed. '
                                'See http://oceanparcels.org/#parallel_install for more information')
 
-__all__ = ['ParticleSet']
+__all__ = ['ParticleSet', 'ParticleSetSOA']
 
 
 def _to_write_particles(pd, time):
@@ -731,4 +731,7 @@ def search_kernel(particle, fieldset, time):
         self._collection.set_variable_write_status(var, write_status)
 
 
+# ParticleSet is an alias for ParticleSetSOA, i.e. the default
+# implementation for storing particles is the Structure of Arrays
+# approach.
 ParticleSet = ParticleSetSOA
