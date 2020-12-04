@@ -1,8 +1,6 @@
-import numpy as np
 from abc import ABC
 from abc import abstractmethod
 from parcels.tools.statuscodes import OperationCode
-import warnings
 
 
 class BaseParticleCollectionIterator(ABC):
@@ -19,19 +17,30 @@ class BaseParticleCollectionIterator(ABC):
 
     @abstractmethod
     def __next__(self):
-        """Returns the next value from ParticleSet object's lists."""
+        """Returns a ParticleAccessor for the next particle in the
+        ParticleSet.
+        """
         pass
 
     @property
     def head(self):
+        """Returns a ParticleAccessor for the first particle in the
+        ParticleSet.
+        """
         return self._head
 
     @property
     def tail(self):
+        """Returns a ParticleAccessor for the last particle in the
+        ParticleSet.
+        """
         return self._tail
 
     @property
     def current(self):
+        """Returns a ParticleAccessor for the particle that the iteration
+        is currently at.
+        """
         return self._current
 
     @abstractmethod
@@ -50,54 +59,18 @@ class BaseParticleAccessor(ABC):
         """
         self.pcoll = pcoll
 
-    def set_index(self, index):
-        # Accessor objects should not be mutable. This functionaility
-        # will be removed.
-        warnings.warn(
-            "The Accessor cannot switch to representing a different particle"
-            " after its creation.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        self._index = index
-
     @abstractmethod
     def update_next_dt(self, next_dt=None):
-        # == OBJECTION CK: Also here - make a guarded forward ...  == #
-        # == RESPONSE RB: The response I provided below I think is == #
-        # == particularly applicable here.                         == #
-        if next_dt is None:
-            if not np.isnan(self._next_dt):
-                self.dt, self._next_dt = self._next_dt, np.nan
-        else:
-            self._next_dt = next_dt
+        pass
 
     def delete(self):
-        # == OBJECTION CK: the actual operation, which is the particle's state, shall be done by the particle. So, == #
-        # == this function should just forward the delete-call to the particle in question.                        == #
-        # == RESPONSE RB: There might be a problem with that in some cases. As we discussed, the ParticleAccessor  == #
-        # == basically acts like a shell around the particle (data), providing uniform access regardless of the    == #
-        # == underlying datastructure. The SOA approach, for example, does not use a particle class on which       == #
-        # == functions can be defined. So it makes sense, I think, to implement any function that requires more    == #
-        # == logic than just setting a property on the Accessor level. The state-thing is not really a good        == #
-        # == example, although the delete-alias may be useful over just treating it as a property.                 == #
+        """Signal the underlying particle for deletion."""
         self.state = OperationCode.Delete
 
     def set_state(self, state):
-        # Convert into a "proper" property?
-        # Why is this even separate? It sets the state of the particle,
-        # so should be handled by the __setattr__ function, right?
-        # Seems to be coppied directly from ScipyParticle.
-
-        # == OBJECTION CK: the actual operation, which is the particle's state, shall be done by the particle. So, == #
-        # == this function should just forward the delete-call to the particle in question.                        == #
-        # == RESPONSE RB: There might be a problem with that in some cases. As we discussed, the ParticleAccessor  == #
-        # == basically acts like a shell around the particle (data), providing uniform access regardless of the    == #
-        # == underlying datastructure. The SOA approach, for example, does not use a particle class on which       == #
-        # == functions can be defined. So it makes sense, I think, to implement any function that requires more    == #
-        # == logic than just setting a property on the Accessor level. The state-thing is not really a good        == #
-        # == example, although the delete-alias may be useful over just treating it as a property.                 == #
-
+        """Syntactic sugar for changing the state of the underlying
+        particle.
+        """
         self.state = state
 
     @abstractmethod
