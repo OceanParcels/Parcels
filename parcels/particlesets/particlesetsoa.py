@@ -12,8 +12,8 @@ from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import StateCode
 from .baseparticleset import BaseParticleSet
-from .soa import ParticleCollectionSOA
-from .soa import ParticleCollectionIteratorSOA
+from .collectionsoa import ParticleCollectionSOA
+from .collectionsoa import ParticleCollectionIteratorSOA
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.statuscodes import OperationCode
 from parcels.tools.loggers import logger

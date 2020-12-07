@@ -920,13 +920,8 @@ class ParticleAccessorSOA(BaseParticleAccessor):
             self.pcoll.data[name][self._index] = value
 
     def update_next_dt(self, next_dt=None):
-        # == OBJECTION CK: Also here - make a guarded forward ...  == #
-        # == RESPONSE RB: The response I provided below I think is == #
-        # == particularly applicable here.                         == #
         if next_dt is None:
-            # if not np.isnan(self._next_dt):
             if self._next_dt is not None:
-                # self.dt, self._next_dt = self._next_dt, np.nan
                 self.pcoll._data['dt'][self._index] = self._next_dt
                 self._next_dt = None
         else:
@@ -974,6 +969,9 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
         self.p = self._head
 
     def __next__(self):
+        """Returns a ParticleAccessor for the next particle in the
+        ParticleSet.
+        """
         if self._index < self.max_len:
             self.p = ParticleAccessorSOA(self._pcoll,
                                          self._indices[self._index])
