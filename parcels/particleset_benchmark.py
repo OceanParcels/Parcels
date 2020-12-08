@@ -224,8 +224,11 @@ class ParticleSet_Benchmark(ParticleSet):
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 # creating new particles equals a memory-io operation
-                if isinstance(self.kernel, Kernel_Benchmark):
-                    self.mem_io_log.start_timing()
+                if not isinstance(self.kernel, Kernel_Benchmark):
+                    self.compute_log.stop_timing()
+                    self.compute_log.accumulate_timing()
+
+                self.mem_io_log.start_timing()
                 pset_new = ParticleSet(fieldset=self.fieldset, time=time, lon=self.repeatlon,
                                        lat=self.repeatlat, depth=self.repeatdepth,
                                        pclass=self.repeatpclass, lonlatdepth_dtype=self.lonlatdepth_dtype,
@@ -238,13 +241,15 @@ class ParticleSet_Benchmark(ParticleSet):
                 # for p in pset_new:
                 #     p.dt = dt
                 self.add(pset_new)
-                if isinstance(self.kernel, Kernel_Benchmark):
-                    self.mem_io_log.stop_timing()
-                    self.mem_io_log.accumulate_timing()
+                self.mem_io_log.stop_timing()
+                self.mem_io_log.accumulate_timing()
                 next_prelease += self.repeatdt * np.sign(dt)
-            if not isinstance(self.kernel, Kernel_Benchmark):
-                self.compute_log.stop_timing()
             else:
+                if not isinstance(self.kernel, Kernel_Benchmark):
+                    self.compute_log.stop_timing()
+                else:
+                    pass
+            if isinstance(self.kernel, Kernel_Benchmark):
                 self.compute_log.add_aux_measure(self.kernel.compute_timings.sum())
                 self.kernel.compute_timings.reset()
                 self.io_log.add_aux_measure(self.kernel.io_timings.sum())
@@ -412,7 +417,7 @@ class ParticleSet_Benchmark(ParticleSet):
             ax.plot(x, plot_drawt, 'o-', label="draw-time spent [100ms]")
         if (memory_used is not None) and do_mem_plot:
             ax.plot(x, plot_mem, '.-', label="memory_used (cumulative) [1 GB]")
-        if (memory_used is not None) and do_mem_plot_async:
+        if (memory_used_async is not None) and do_mem_plot_async:
             ax.plot(x, plot_mem_async, 'x-', label="memory_used [async] (cum.) [1GB]")
         if do_npart_plot:
             ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
