@@ -254,7 +254,7 @@ if __name__ == "__main__":
         dirread_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_mesh = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/domain/')
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
-        CARTESIUS_SCRATCH_USERNAME = 'ckehl'
+        CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/deep_migration_behaviour".format(CARTESIUS_SCRATCH_USERNAME)
         odir = os.path.join(headdir, "/BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
