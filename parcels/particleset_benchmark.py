@@ -378,6 +378,7 @@ class ParticleSet_Benchmark(ParticleSet):
         if not isinstance(nparticles, np.ndarray):
             nparticles = np.array(nparticles, dtype=np.int32)
 
+        memory_used_async = None
         if USE_ASYNC_MEMLOG:
             memory_used_async = np.array(self.async_mem_log.get_params(), dtype=np.int64)
 
@@ -393,6 +394,7 @@ class ParticleSet_Benchmark(ParticleSet):
         if memory_used is not None and len(memory_used) > 1:
             plot_mem = (memory_used * mem_scaler).tolist()
 
+        plot_mem_async = None
         if USE_ASYNC_MEMLOG:
             plot_mem_async = (memory_used_async * mem_scaler).tolist()
 
@@ -425,8 +427,9 @@ class ParticleSet_Benchmark(ParticleSet):
             ax.plot(x, plot_drawt, 'o-', label="draw-time spent [100ms]")
         if (memory_used is not None) and do_mem_plot:
             ax.plot(x, plot_mem, '.-', label="memory_used (cumulative) [1 GB]")
-        if (memory_used_async is not None) and do_mem_plot_async:
-            ax.plot(x, plot_mem_async, 'x-', label="memory_used [async] (cum.) [1GB]")
+        if USE_ASYNC_MEMLOG:
+            if (memory_used_async is not None) and do_mem_plot_async:
+                ax.plot(x, plot_mem_async, 'x-', label="memory_used [async] (cum.) [1GB]")
         if do_npart_plot:
             ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
         if xlim_range is not None:
