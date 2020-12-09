@@ -52,8 +52,11 @@ def _is_particle_started_yet(pd, time):
     return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
 
 
-def convert_to_flat_array(var):
-    # Convert lists and single integers/floats to one-dimensional numpy arrays
+def _convert_to_flat_array(var):
+    """Convert lists and single integers/floats to one-dimensional numpy arrays
+
+    :param var: list or numeric to convert to a one-dimensional numpy array
+    """
     if isinstance(var, np.ndarray):
         return var.flatten()
     elif isinstance(var, (int, float, np.float32, np.int32)):
@@ -64,60 +67,31 @@ def convert_to_flat_array(var):
 
 class ParticleCollectionSOA(ParticleCollection):
 
-    # ==== already user-exposed ==== #
-    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, partitions=None, pid_orig=None, ngrid=1, **kwargs):
+    def __init__(self, pclass, lon, lat, depth, time, lonlatdepth_dtype, pid_orig, partitions=None, ngrid=1, **kwargs):
         """
         :param ngrid: number of grids in the fieldset of the overarching ParticleSet - required for initialising the
         field references of the ctypes-link of particles that are allocated
         """
 
         super(ParticleCollection, self).__init__()
-        # partitions = kwargs.pop('partitions', None)
 
-        # lon = np.empty(shape=0) if lon is None else convert_to_flat_array(lon)  # input reformatting - particleset-task
-        # lat = np.empty(shape=0) if lat is None else convert_to_flat_array(lat)  # input reformatting - particleset-task
-        if isinstance(pid_orig, (type(None), type(False))):
-            pid_orig = np.arange(lon.size)
+        assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
         pid = pid_orig + pclass.lastID
 
         self._sorted = np.all(np.diff(pid) >= 0)
 
-        # -- We expect the overarching particle set to take care of the depth-is-none-so-calc-from-field case -- #
-        # if depth is None:
-        #     mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
-        #     depth = np.ones(lon.size) * mindepth
-        # else:
-        #     depth = convert_to_array(depth)
         assert depth is not None, "particle's initial depth is None - incompatible with the collection. Invalid state."
-        # depth = convert_to_flat_array(depth)  # input reformatting - particleset-task
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
-
-        # time = convert_to_flat_array(time)  # input reformatting - particleset-task
-        # time = np.repeat(time, lon.size) if time.size == 1 else time  # input reformatting - particleset-task
-
-        # -- Time field correction to be done in overarching particle set -- #
-        # def _convert_to_reltime(time):
-        #     if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
-        #         return True
-        #     return False
-
-        # if time.size > 0 and type(time[0]) in [datetime, date]:
-        #     time = np.array([np.datetime64(t) for t in time])
-        # self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
-        # if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
-        #     raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        # time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
 
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
-        # if partition is false, the partitions are already initialised
+        # If partitions is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
-            self._pu_indicators = convert_to_flat_array(partitions)
+            self._pu_indicators = _convert_to_flat_array(partitions)
 
         for kwvar in kwargs:
-            # kwargs[kwvar] = convert_to_flat_array(kwargs[kwvar])  # input reformatting - particleset-task
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 
@@ -151,22 +125,6 @@ class ParticleCollectionSOA(ParticleCollection):
                         kwargs[kwvar] = kwargs[kwvar][self._pu_indicators == mpi_rank]
                 offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
 
-        # -- Repeat-dt structure (and thus possibly also flat-array conversion) to be done by the particle set -- #
-        # -- Makes sense that the overarching particle set reformats the input to what is necessary.           -- #
-        # self.repeatdt = repeatdt.total_seconds() if isinstance(repeatdt, delta) else repeatdt
-        # if self.repeatdt:
-        #     if self.repeatdt <= 0:
-        #         raise('Repeatdt should be > 0')
-        #     if time[0] and not np.allclose(time, time[0]):
-        #         raise ('All Particle.time should be the same when repeatdt is not None')
-        #     self.repeat_starttime = time[0]
-        #     self.repeatlon = lon
-        #     self.repeatlat = lat
-        #     self.repeatpid = pid - pclass.lastID
-        #     self.repeatdepth = depth
-        #     self.repeatpclass = pclass
-        #     self.partitions = partitions
-        #     self.repeatkwargs = kwargs
         pclass.setLastID(offset+1)
 
         if lonlatdepth_dtype is None:
@@ -179,10 +137,6 @@ class ParticleCollectionSOA(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = pclass.getPType()
-        # -- Kernel is a particle set-class thingy -- #
-        # self.kernel = None
-
-        # store particle data as an array per variable (structure of arrays approach)
         self._data = {}
         initialised = set()
 
@@ -226,11 +180,6 @@ class ParticleCollectionSOA(ParticleCollection):
 
                 if isinstance(v.initial, Field):
                     for i in range(self.ncount):
-                        # ==== TEST OUTPUT ==== #
-                        # logger.info("variable: {}".format(v))
-                        # logger.info("time-type: {} values: {}".format(type(time), time))
-                        # logger.info("lon-type: {} values: {}".format(type(lon), lon))
-                        # ==== END TEST OUTPUT ==== #
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
                         v.initial.fieldset.computeTimeChunk(time[i], 0)
@@ -247,21 +196,18 @@ class ParticleCollectionSOA(ParticleCollection):
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
 
-    # ==== already user-exposed ==== #
     def __del__(self):
         """
         Collection - Destructor
         """
         super().__del__()
 
-    # ==== already user-exposed ==== #
     def __iter__(self):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
         """
         return ParticleCollectionIteratorSOA(self)
 
-    # ==== already user-exposed ==== #
     def __reversed__(self):
         """Returns an Iterator that allows for backwards iteration over
         the elements in the ParticleCollection (e.g.
@@ -269,7 +215,6 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         return ParticleCollectionIteratorSOA(self, True)
 
-    # ==== already user-exposed ==== #
     def __getitem__(self, index):
         """
         Access a particle in this collection using the fastest access
@@ -285,17 +230,10 @@ class ParticleCollectionSOA(ParticleCollection):
 
         :param name: name of the property
         """
-        # if '_data' in self.__dict__ and name in self.__dict__['_data']:
-        #     return self.__dict__['_data'][name]
-        # elif name in self.__dict__:
-        #     return self.__dict__[name]
-        # else:
-        #     return False
         for v in self.ptype.variables:
             if v.name == name and name in self._data:
                 return self._data[name]
         return False
-        # return super(ParticleCollectionSOA, self).__getattr__(name)
 
     def get_single_by_index(self, index):
         """
@@ -318,12 +256,14 @@ class ParticleCollectionSOA(ParticleCollection):
         results in a significant performance malus.
         In cases where a get-by-object would result in a performance malus, it is highly-advisable to use a different
         get function, e.g. get-by-index or get-by-ID.
+
+        In this specific implementation, we cannot look for the object
+        directly, so we will look for one of its properties (the ID) that
+        has the nice property of being stored in an ordered list (if the
+        collection is sorted)
         """
         super().get_single_by_object(particle_obj)
 
-        # We cannot look for the object directly, so we will look for one of
-        # its properties that has the nice property of being stored in an
-        # ordered list
         return self.get_single_by_ID(particle_obj.id)
 
     def get_single_by_ID(self, id):
@@ -398,9 +338,10 @@ class ParticleCollectionSOA(ParticleCollection):
         by-objects or get-by-indices scheme.
 
         Note that this implementation assumes that IDs of particles are strictly increasing with increasing index. So
-        a particle with a larger index will always have a larger ID as well. The assumption holds for this datastructure
-        as new particles always get a larger ID than any existing particle (IDs are not recycled) and their data are
-        appended at the end of the list (largest index). This allows for the use of binary search in the look-up.
+        a particle with a larger index will always have a larger ID as well. The assumption often holds for this
+        datastructure as new particles always get a larger ID than any existing particle (IDs are not recycled)
+        and their data are appended at the end of the list (largest index). This allows for the use of binary search
+        in the look-up. The collection maintains a `sorted` flag to indicate whether this assumption holds.
         """
         super().get_multi_by_IDs(ids)
         if type(ids) is dict:
@@ -421,16 +362,19 @@ class ParticleCollectionSOA(ParticleCollection):
         return self.get_multi_by_indices(indices)
 
     def _recursive_ID_lookup(self, low, high, sublist):
-        # Identify the middle element of the sublist and perform a binary
-        # search on it.
-        # NOTE: This implementation has not been tested yet
+        """Identify the middle element of the sublist and perform binary
+        search on it.
+
+        :param low: Lowerbound on the indices to search for IDs.
+        :param high: Upperbound on the indices to search for IDs.
+        :param sublist: (Sub)list of IDs to look for.
+        """
         median = floor(len(sublist) / 2)
         index = bisect_left(self._data['id'][low:high], sublist[median])
         if len(sublist) == 1:
             # edge case
             if index == len(self._data['id']) or \
                self._data['id'][index] != sublist[median]:
-                # Should a ValueError be raised here as well?
                 return np.array([])
             return np.array([index])
 
@@ -498,7 +442,6 @@ class ParticleCollectionSOA(ParticleCollection):
                 self._data[d] = np.concatenate((self._data[d], same_class._data[d]))
             self._ncount += same_class.ncount
 
-    # ==== already user-exposed ==== #
     def __iadd__(self, same_class):
         """
         Performs an incremental addition of the equi-structured ParticleCollections, such to allow
@@ -553,7 +496,6 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         raise NotImplementedError
 
-    # ==== already user-exposed ==== #
     def __delitem__(self, key):
         """
         This is the high-performance method to delete a specific object from this collection.
@@ -728,7 +670,6 @@ class ParticleCollectionSOA(ParticleCollection):
 
         self.remove_multi_by_indices(indices)
 
-    # ==== already user-exposed ==== #
     def __isub__(self, other):
         """
         This method performs an incremental removal of the equi-structured ParticleCollections, such to allow
@@ -815,7 +756,6 @@ class ParticleCollectionSOA(ParticleCollection):
 
         The function shall return the merged ParticleCollection.
         """
-        # super().merge(same_class)
         raise NotImplementedError
 
     def split(self, indices=None):
@@ -837,10 +777,8 @@ class ParticleCollectionSOA(ParticleCollection):
         The function shall return the newly created or extended Particle collection, i.e. either the collection that
         results from a collection split or this very collection, containing the newly-split particles.
         """
-        # super().split(indices)
         raise NotImplementedError
 
-    # ==== already user-exposed ==== #
     def __sizeof__(self):
         """
         This function returns the size in actual bytes required in memory to hold the collection. Ideally and simply,
@@ -850,7 +788,6 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         raise NotImplementedError
 
-    # ==== already user-exposed ==== #
     def clear(self):
         """
         This function physically removes all elements of the collection, yielding an empty collection as result of the
@@ -964,6 +901,16 @@ class ParticleCollectionSOA(ParticleCollection):
 
 
 class ParticleAccessorSOA(BaseParticleAccessor):
+    """Wrapper that provides access to particle data in the collection,
+    as if interacting with the particle itself.
+
+    :param pcoll: ParticleCollection that the represented particle
+                  belongs to.
+    :param index: The index at which the data for the represented
+                  particle is stored in the corresponding data arrays
+                  of the ParticleCollecion.
+    """
+
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
@@ -973,15 +920,26 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         self._next_dt = None
 
     def __getattr__(self, name):
+        """Get the value of an attribute of the particle.
+
+        :param name: Name of the requested particle attribute.
+        :return: The value of the particle attribute in the underlying
+                 collection data array.
+        """
         if name in ['_index', '_next_dt']:
             return object.__getattribute__(self, name)
         return self.pcoll.data[name][self._index]
 
     def __setattr__(self, name, value):
+        """Set the value of an attribute of the particle.
+
+        :param name: Name of the particle attribute.
+        :param value: Value that will be assigned to the particle
+                      attribute in the underlying collection data array.
+        """
         if name in ['pcoll', '_index', '_next_dt']:
             object.__setattr__(self, name, value)
         else:
-            # avoid recursion
             self.pcoll.data[name][self._index] = value
 
     def update_next_dt(self, next_dt=None):
@@ -1002,8 +960,17 @@ class ParticleAccessorSOA(BaseParticleAccessor):
 
 
 class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
+    """Iterator for looping over the particles in the ParticleCollection.
+
+    :param pcoll: ParticleCollection that stores the particles.
+    :param reverse: Flag to indicate reverse iteration (i.e. starting at
+                    the largest index, instead of the smallest).
+    :param subset: Subset of indices to iterate over, this allows the
+                   creation of an iterator that represents part of the
+                   collection.
+    """
+
     def __init__(self, pcoll, reverse=False, subset=None):
-        # super().__init__(pcoll)  # Do not actually need this
 
         if subset is not None:
             if len(subset) > 0 and type(subset[0]) not in [int, np.int32, np.intp]:

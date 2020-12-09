@@ -889,15 +889,13 @@ class ParticleCollection(Collection):
         for v in self.ptype.variables:
             if v.name == name:
                 return np.array([getattr(p, name) for p in self], dtype=v.dtype)
-        # == TODO: TO BE TESTED IF THAT CAN BE AVOIDED == #
         if name in self.__dict__ and name[0] != '_':
             return self.__dict__[name]
         else:
             return False
-        # return False
 
     @abstractmethod
-    def toDictionary(self):     # formerly: ParticleSet.to_dict()
+    def toDictionary(self):
         """
         Convert all Particle data from one time step to a python dictionary.
         :param pfile: ParticleFile object requesting the conversion
