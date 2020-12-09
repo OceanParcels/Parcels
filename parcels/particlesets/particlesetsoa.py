@@ -20,12 +20,6 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
-if MPI:
-    try:
-        from sklearn.cluster import KMeans  # noqa
-    except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-                               'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSet', 'ParticleSetSOA']
 
@@ -42,7 +36,10 @@ def _convert_to_array(var):
         return np.array(var)
 
 
-def convert_to_reltime(time):
+def _convert_to_reltime(time):
+    """Check to determine if the value of the time parameter needs to be
+    converted to a relative value (relative to the time_origin).
+    """
     if isinstance(time, np.datetime64) or (hasattr(time, 'calendar') and time.calendar in _get_cftime_calendars()):
         return True
     return False
@@ -65,13 +62,13 @@ class ParticleSetSOA(BaseParticleSet):
     :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
            It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
            and np.float64 if the interpolation method is 'cgrid_velocity'
+    :param pid_orig: Optional list of (offsets for) the particle IDs
     :param partitions: List of cores on which to distribute the particles for MPI runs. Default: None, in which case particles
            are distributed automatically on the processors
 
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    # ==== already user-exposed ==== #
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
         self.fieldset = fieldset
@@ -82,26 +79,21 @@ class ParticleSetSOA(BaseParticleSet):
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
 
-        lon = np.empty(shape=0) if lon is None else convert_to_array(lon)
-        lat = np.empty(shape=0) if lat is None else convert_to_array(lat)
+        lon = np.empty(shape=0) if lon is None else _convert_to_array(lon)
+        lat = np.empty(shape=0) if lat is None else _convert_to_array(lat)
 
         if isinstance(pid_orig, (type(None), type(False))):
             pid_orig = np.arange(lon.size)
-        # pid = pid_orig + pclass.lastID
 
         if depth is None:
             mindepth = self.fieldset.gridset.dimrange('depth')[0] if self.fieldset is not None else 0
             depth = np.ones(lon.size) * mindepth
         else:
-            depth = convert_to_array(depth)
+            depth = _convert_to_array(depth)
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        # ==== TODO: checking it here creates errors, but I think this really shall be checked here === #
-        # if time is None:
-        #     raise RuntimeError("Particle Set is created with 'time=None' - time-parameter invalid.")
-
-        time = convert_to_array(time)
+        time = _convert_to_array(time)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         if time.size > 0 and type(time[0]) in [datetime, date]:
@@ -109,7 +101,7 @@ class ParticleSetSOA(BaseParticleSet):
         self.time_origin = fieldset.time_origin if self.fieldset is not None else 0
         if time.size > 0 and isinstance(time[0], np.timedelta64) and not self.time_origin:
             raise NotImplementedError('If fieldset.time_origin is not a date, time of a particle must be a double')
-        time = np.array([self.time_origin.reltime(t) if convert_to_reltime(t) else t for t in time])
+        time = np.array([self.time_origin.reltime(t) if _convert_to_reltime(t) else t for t in time])
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) don''t have the same lengths.')
 
@@ -121,11 +113,8 @@ class ParticleSetSOA(BaseParticleSet):
         assert lonlatdepth_dtype in [np.float32, np.float64], \
             'lon lat depth precision should be set to either np.float32 or np.float64'
 
-        # if partitions is not None and partitions is not False:
-        #     partitions = convert_to_array(partitions)
-
         for kwvar in kwargs:
-            kwargs[kwvar] = convert_to_array(kwargs[kwvar])
+            kwargs[kwvar] = _convert_to_array(kwargs[kwvar])
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
 
@@ -135,15 +124,11 @@ class ParticleSetSOA(BaseParticleSet):
                 raise('Repeatdt should be > 0')
             if time[0] and not np.allclose(time, time[0]):
                 raise ('All Particle.time should be the same when repeatdt is not None')
-            # self.repeat_starttime = time[0]
-            # self.repeatlon = lon
-            # self.repeatlat = lat
-            # self.repeatdepth = depth
             self.repeatpclass = pclass
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
-        self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, partitions=partitions, pid_orig=pid_orig, ngrid=ngrids, **kwargs)
+        self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -158,110 +143,13 @@ class ParticleSetSOA(BaseParticleSet):
             for kwvar in kwargs:
                 self.repeatkwargs[kwvar] = self._collection.data[kwvar]
 
-        # offset = np.max(pid) if len(pid) > 0 else -1
-        # if MPI:
-        #     mpi_comm = MPI.COMM_WORLD
-        #     mpi_rank = mpi_comm.Get_rank()
-        #     mpi_size = mpi_comm.Get_size()
-
-        #     if lon.size < mpi_size and mpi_size > 1:
-        #         raise RuntimeError('Cannot initialise with fewer particles than MPI processors')
-
-        #     if mpi_size > 1:
-        #         if partitions is not False:
-        #             if partitions is None:
-        #                 if mpi_rank == 0:
-        #                     coords = np.vstack((lon, lat)).transpose()
-        #                     kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
-        #                     partitions = kmeans.labels_
-        #                 else:
-        #                     partitions = None
-        #                 partitions = mpi_comm.bcast(partitions, root=0)
-        #             elif np.max(partitions) >= mpi_size:
-        #                 raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
-        #             lon = lon[partitions == mpi_rank]
-        #             lat = lat[partitions == mpi_rank]
-        #             time = time[partitions == mpi_rank]
-        #             depth = depth[partitions == mpi_rank]
-        #             pid = pid[partitions == mpi_rank]
-        #             for kwvar in kwargs:
-        #                 kwargs[kwvar] = kwargs[kwvar][partitions == mpi_rank]
-        #         offset = MPI.COMM_WORLD.allreduce(offset, op=MPI.MAX)
-
-        # pclass.setLastID(offset+1)
-        # pclass.set_lonlatdepth_dtype(self.lonlatdepth_dtype)
-        # self.ptype = pclass.getPType()
-
         if self.repeatdt:
-            # if not hasattr(self, 'repeatpid'):
             if MPI and self._collection.pu_indicators is not None:
                 mpi_comm = MPI.COMM_WORLD
                 mpi_rank = mpi_comm.Get_rank()
-                # self.repeatpid = pid - pclass.lastID  # was computed with pid+pclass.lastID, thus pid=pid_init=pd_orig
-                # self._pu_indicators == mpi_rank
                 self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
-            # self.partitions = self.collection.pu_indicators
 
         self.kernel = None
-
-        # store particle data as an array per variable (structure of arrays approach)
-        # self.particle_data = {}
-        # initialised = set()
-        # for v in self.ptype.variables:
-        #     if v.name in ['xi', 'yi', 'zi', 'ti']:
-        #         ngrid = fieldset.gridset.size if fieldset is not None else 1
-        #         self.particle_data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
-        #     else:
-        #         self.particle_data[v.name] = np.empty(len(lon), dtype=v.dtype)
-
-        # if lon is not None and lat is not None:
-        #     # Initialise from lists of lon/lat coordinates
-        #     assert self.size == len(lon) and self.size == len(lat), (
-        #         'Size of ParticleSet does not match length of lon and lat.')
-
-        #     # mimic the variables that get initialised in the constructor
-        #     self.particle_data['lat'][:] = lat
-        #     self.particle_data['lon'][:] = lon
-        #     self.particle_data['depth'][:] = depth
-        #     self.particle_data['time'][:] = time
-        #     self.particle_data['id'][:] = pid
-        #     self.particle_data['fileid'][:] = -1
-
-        #     # special case for exceptions which can only be handled from scipy
-        #     self.particle_data['exception'] = np.empty(self.size, dtype=object)
-
-        #     initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
-
-        #     # any fields that were provided on the command line
-        #     for kwvar, kwval in kwargs.items():
-        #         if not hasattr(pclass, kwvar):
-        #             raise RuntimeError('Particle class does not have Variable %s' % kwvar)
-        #         self.particle_data[kwvar][:] = kwval
-        #         initialised.add(kwvar)
-
-        #     # initialise the rest to their default values
-        #     for v in self.ptype.variables:
-        #         if v.name in initialised:
-        #             continue
-
-        #         if isinstance(v.initial, Field):
-        #             for i in range(self.size):
-        #                 if np.isnan(time[i]):
-        #                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
-        #                                        'Add a "time=" to ParticleSet construction')
-        #                 v.initial.fieldset.computeTimeChunk(time[i], 0)
-        #                 self.particle_data[v.name][i] = v.initial[
-        #                     time[i], depth[i], lat[i], lon[i]
-        #                 ]
-        #                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
-        #         elif isinstance(v.initial, attrgetter):
-        #             self.particle_data[v.name][:] = v.initial(self)
-        #         else:
-        #             self.particle_data[v.name][:] = v.initial
-
-        #         initialised.add(v.name)
-        # else:
-        #     raise ValueError("Latitude and longitude required for generating ParticleSet")
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -271,55 +159,33 @@ class ParticleSetSOA(BaseParticleSet):
         """
         self.collection._data[name][:] = value
 
-#         if indices is None:
-#         else:
-#             self.collection._data[name][indices] = value
-
-#     def _get_particle_vector(self, name, indices=None):
-#         """Set attributes of all particles to new values.
-#
-#         :param name: Name of the attribute (str).
-#         :param indices: (Optional) only set the particles with these indices.
-#                         Its length should be equal to the length of 'values'.
-#                         If None, all particles are set.
-#         :return: The values of the particle attributes.
-#         """
-#         if indices is None:
-#             return self.collection._data[name]
-#         else:
-#             return self.collection.data[name][indices]
-
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
 
         :param default: Default release time.
         :return: Minimum and maximum release times.
         """
-        # np.nan_to_num(self._collection._data['time'], nan=default)
         if np.any(np.isnan(self._collection.data['time'])):
             self._collection.data['time'][np.isnan(self._collection.data['time'])] = default
         return np.min(self._collection.data['time']), np.max(self._collection.data['time'])
 
-    def data_indices(self, variable_name, compare_values, not_in=False):
-        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
-        return np.where(np.isin(self._collection.data[variable_name], compare_values, invert=not_in))[0]
+    def data_indices(self, variable_name, compare_values, invert=False):
+        """Get the indices of all particles where the value of
+        `variable_name` equals (one of) `compare_values`.
 
-    def indices(self, boolean_array_or_statement):
-        return np.where(boolean_array_or_statement)[0]
+        :param variable_name: Name of the variable to check.
+        :param compare_values: Value or list of values to compare to.
+        :param invert: Whether to invert the selection. I.e., when True,
+                       return all indices that do not equal (one of)
+                       `compare_values`.
+        :return: Numpy array of indices that satisfy the test.
+        """
+        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
+        return np.where(np.isin(self._collection.data[variable_name], compare_values, invert=invert))[0]
 
     def indexed_subset(self, indices):
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=indices)
-
-    @property
-    def deleted_particles(self):
-        """Get an iterator over all particles that are in an error state.
-
-        :return: Collection iterator over error particles.
-        """
-        indices = self.data_indices('state', [OperationCode.Delete, ])
-        # np.where(np.isin(self._collection.data['state'], [OperationCode.Delete]))[0]
-        return ParticleCollectionIteratorSOA(self._collection, subset=indices)
 
     @property
     def error_particles(self):
@@ -327,21 +193,21 @@ class ParticleSetSOA(BaseParticleSet):
 
         :return: Collection iterator over error particles.
         """
-        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], not_in=True)
-        # np.where(np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate], invert=True))[0]
+        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
         return ParticleCollectionIteratorSOA(self._collection, subset=error_indices)
 
     @property
     def num_error_particles(self):
+        """Get the number of particles that are in an error state.
+
+        :return: The number of error particles.
+        """
         return np.sum(np.isin(
             self._collection.data['state'],
             [StateCode.Success, StateCode.Evaluate], invert=True))
 
-    # ==== already user-exposed ==== #
     def __getitem__(self, index):
-        # Comment CK: that what we have the iterator or accessor over the collection for -> definitely not a top-level PSet function
-        # Comment RB: The collection should provide this function indeed. Until we made a (more) definitive decision on how we want
-        #             this to be interfaced, forward this to the collection.
+        """Get a single particle by index"""
         return self._collection.get_single_by_index(index)
 
     def cstruct(self):
@@ -403,7 +269,6 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
-    # ==== already user-exposed ==== #
     @classmethod
     def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
@@ -426,7 +291,6 @@ class ParticleSetSOA(BaseParticleSet):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
-    # ==== already user-exposed ==== #
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
@@ -508,55 +372,57 @@ class ParticleSetSOA(BaseParticleSet):
         return self._collection.toDictionary(pfile=pfile, time=time,
                                              deleted_only=deleted_only)
 
-    # ==== already user-exposed ==== #
     @property
     def size(self):
         # ==== to change at some point - len and size are different things ==== #
         return len(self._collection)
 
-    # ==== already user-exposed ==== #
     def __repr__(self):
         return "\n".join([str(p) for p in self])
 
-    # ==== already user-exposed ==== #
     def __len__(self):
         return len(self._collection)
 
-    # ==== already user-exposed ==== #
     def __sizeof__(self):
         return sys.getsizeof(self._collection)
 
-    # ==== already user-exposed ==== #
     def __iadd__(self, particles):
+        """Add particles to the ParticleSet. Note that this is an
+        incremental add, the particles will be added to the ParticleSet
+        on which this function is called.
+
+        :param particles: Another ParticleSet containing particles to add
+                          to this one.
+        :return: The current ParticleSet
+        """
         self.add(particles)
         return self
 
-    # ==== already user-exposed ==== #
     def add(self, particles):
-        """Method to add particles to the ParticleSet"""
-        # Method forward to new implementation
-        # Note that this is implemented as an incremental add!
+        """Add particles to the ParticleSet. Note that this is an
+        incremental add, the particles will be added to the ParticleSet
+        on which this function is called.
+
+        :param particles: Another ParticleSet containing particles to add
+                          to this one.
+        :return: The current ParticleSet
+        """
         if isinstance(particles, BaseParticleSet):
             particles = particles.collection
         self._collection += particles
         return self
 
-    # ==== to be removed later ==== #
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
-        # Method forward to new implementation
         if type(indices) in [int, np.int32, np.intp]:
             self._collection.remove_single_by_index(indices)
         else:
             self._collection.remove_multi_by_indices(indices)
 
-    # ==== to be removed later ==== #
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
-        # Method forward
         self.remove_indices(np.where(indices)[0])
 
-    # ==== already user-exposed ==== #
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
              land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
         """Method to 'show' a Parcels ParticleSet
@@ -576,7 +442,6 @@ class ParticleSetSOA(BaseParticleSet):
         plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
                       projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
-    # ==== already user-exposed ==== #
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
@@ -633,7 +498,6 @@ def search_kernel(particle, fieldset, time):
 
         return density
 
-    # ==== already user-exposed ==== #
     def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
         """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
         based on `fieldset` and `ptype` of the ParticleSet
@@ -643,7 +507,6 @@ def search_kernel(particle, fieldset, time):
         return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
-    # ==== already user-exposed ==== #
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
@@ -653,10 +516,9 @@ def search_kernel(particle, fieldset, time):
         """
         Method to set the write status of a Variable
         :param var: Name of the variable (string)
-        :param status: Write status of the variable (True, False or 'once')
+        :param write_status: Write status of the variable (True, False or
+                             'once')
         """
-        # Method forward (for now)
-        # Method forward (shall stay) - CK
         self._collection.set_variable_write_status(var, write_status)
 
 
