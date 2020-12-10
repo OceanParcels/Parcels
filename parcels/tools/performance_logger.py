@@ -186,7 +186,7 @@ class Asynchronous_ParamLogging():
     _measure_func = None
     _measure_start_value = None  # for differential measurements
     _measure_partial_values = []
-    _measure_interval = 0.1  # 100 ms
+    _measure_interval = 0.25  # 250 ms
     _event = None
     _thread = None
     differential_measurement = False
@@ -198,6 +198,7 @@ class Asynchronous_ParamLogging():
         self._iter = 0
         self._measure_func = None
         self._measure_start_value = None
+        self._measure_interval = 0.25  # 250 ms
         self._event = None
         self._thread = None
         self.differential_measurement = False
