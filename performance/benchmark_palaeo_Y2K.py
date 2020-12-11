@@ -212,7 +212,7 @@ if __name__ == "__main__":
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
-        CARTESIUS_SCRATCH_USERNAME = 'ckehl'
+        CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/palaeo-parcels".format(CARTESIUS_SCRATCH_USERNAME)
         odir = os.path.join(headdir, "/BENCHres")
         dirread_pal = os.path.join(headdir,'NEMOdata')

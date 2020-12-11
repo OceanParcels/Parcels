@@ -494,7 +494,8 @@ class FieldSet(object):
                |                                             |
                |                                             |
                |_________________V[k,j,i]____________________|
-            (For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations)
+           For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
+           Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -503,8 +504,6 @@ class FieldSet(object):
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
                                            chunksize=chunksize, gridindexingtype='mitgcm', **kwargs)
-        if hasattr(fieldset, 'W'):
-            fieldset.W.set_scaling_factor(-1.)
         return fieldset
 
     @classmethod
