@@ -26,26 +26,32 @@ def fieldset_fixture(xdim=40, ydim=100):
 @pytest.mark.parametrize('pt', ['soa'])
 def test_pset_iteration_forward(fieldset, pt, npart=10):
     pset = psettype[pt](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
-    assert np.all(np.diff(np.array([p.id for p in pset])) > 0)
+    assert np.all(np.isclose(np.array([p.id for p in pset]), range(npart+pset[0].id)))
 
 
 @pytest.mark.parametrize('pt', ['soa'])
 def test_pset_iteration_backward(fieldset, pt, npart=10):
     pset = psettype[pt](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
-    assert np.all(np.diff(np.array([p.id for p in reversed(pset)])) < 0)
+    assert np.all(np.isclose(np.array([p.id for p in reversed(pset)]), pset[0].id+np.arange(npart-1, -1, -1)))
+
+
+@pytest.mark.parametrize('pt', ['soa'])
+def test_pset_get(fieldset, pt, npart=10):
+    pset = psettype[pt](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
+    assert np.all(np.isclose([pset.collection.get(i).lon for i in range(npart)], np.linspace(0, 1, npart)))
 
 
 @pytest.mark.parametrize('pt', ['soa'])
 def test_pset_get_single_by_index(fieldset, pt, npart=10):
     pset = psettype[pt](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
-    assert np.all(np.diff([pset._collection.get_single_by_index(i).lon for i in range(npart)]))
+    assert np.all(np.isclose([pset.collection.get_single_by_index(i).lon for i in range(npart)], np.linspace(0, 1, npart)))
 
 
 @pytest.mark.parametrize('pt', ['soa'])
 def test_pset_get_single_by_ID(fieldset, pt, npart=10):
     pset = psettype[pt](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
-    ids = pset._collection._data['id']
-    assert np.all(np.diff([pset._collection.get_single_by_ID(np.int64(i)).lon for i in ids]))
+    ids = pset.collection._data['id']
+    assert np.all(np.isclose([pset.collection.get_single_by_ID(np.int64(i)).lon for i in ids], np.linspace(0, 1, npart)))
 
 
 @pytest.mark.parametrize('pt', ['soa'])
