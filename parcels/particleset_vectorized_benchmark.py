@@ -326,7 +326,7 @@ class ParticleSet_Benchmark(ParticleSet):
             self.plot_log.advance_iteration()
             self.total_log.advance_iteration()
 
-        if output_file:
+        if output_file is not None:
             self.io_log.start_timing()
             output_file.write(self, time)
             self.io_log.stop_timing()
