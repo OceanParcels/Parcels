@@ -208,6 +208,7 @@ class ParticleSet_Benchmark(ParticleSet):
         if verbose_progress:
             pbar = self._create_progressbar_(_starttime, endtime)
 
+        mem_used_start = 0
         if USE_ASYNC_MEMLOG:
             self.async_mem_log.measure_func = measure_mem
             mem_used_start = measure_mem()
@@ -325,7 +326,7 @@ class ParticleSet_Benchmark(ParticleSet):
             self.plot_log.advance_iteration()
             self.total_log.advance_iteration()
 
-        if output_file:
+        if output_file is not None:
             self.io_log.start_timing()
             output_file.write(self, time)
             self.io_log.stop_timing()
