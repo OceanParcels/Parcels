@@ -432,10 +432,10 @@ class ParticleSet_Benchmark(ParticleSet):
         if do_drawt_plot:
             ax.plot(x, plot_drawt, 'o-', label="draw-time spent [100ms]")
         if (memory_used is not None) and do_mem_plot:
-            ax.plot(x, plot_mem, '.-', label="memory_used (cumulative) [1 GB]")
+            ax.plot(x, plot_mem, '--', label="memory_used (cumulative) [1 GB]")
         if USE_ASYNC_MEMLOG:
             if (memory_used_async is not None) and do_mem_plot_async:
-                ax.plot(x, plot_mem_async, 'x-', label="memory_used [async] (cum.) [1GB]")
+                ax.plot(x, plot_mem_async, ':', label="memory_used [async] (cum.) [1GB]")
         if do_npart_plot:
             ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
         if xlim_range is not None:
