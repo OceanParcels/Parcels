@@ -32,6 +32,8 @@ from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchrono
 
 from resource import getrusage, RUSAGE_SELF
 
+from resource import getrusage, RUSAGE_SELF
+
 __all__ = ['ParticleSet_Benchmark']
 
 def measure_mem():
@@ -55,7 +57,7 @@ def measure_mem_usage():
         return rsc.ru_maxrss*1024
     return rsc.ru_maxrss
 
-USE_ASYNC_MEMLOG = True
+USE_ASYNC_MEMLOG = False
 USE_RUSE_SYNC_MEMLOG = False  # can be faulty
 
 class ParticleSet_Benchmark(ParticleSet):
@@ -361,7 +363,7 @@ class ParticleSet_Benchmark(ParticleSet):
                 mem_B_used_total = measure_mem_rss()
             self.mem_log.advance_iteration(mem_B_used_total)
             if USE_ASYNC_MEMLOG:
-                self.async_mem_log.stop_partial_measurement()
+                self.async_mem_log.stop_partial_measurement()  # does 'advance_iteration' internally
 
             self.compute_log.advance_iteration()
             self.io_log.advance_iteration()
