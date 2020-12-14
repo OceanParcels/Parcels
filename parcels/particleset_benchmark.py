@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import timedelta as delta
 import psutil
 import os
+from platform import system as system_name
 import matplotlib.pyplot as plt
 import sys
 
@@ -28,11 +29,27 @@ __all__ = ['ParticleSet_Benchmark']
 
 def measure_mem():
     process = psutil.Process(os.getpid())
-    return process.memory_info().rss
+    pmem = process.memory_info()
+    pmem_total = pmem.shared + pmem.text + pmem.data + pmem.lib
+    # print("psutil - res-set: {}; res-shr: {} res-text: {}, res-data: {}, res-lib: {}; res-total: {}".format(pmem.rss, pmem.shared, pmem.text, pmem.data, pmem.lib, pmem_total))
+    return pmem_total
 
-def measure_mem_linux():
+def measure_mem_rss():
+    process = psutil.Process(os.getpid())
+    pmem = process.memory_info()
+    pmem_total = pmem.shared + pmem.text + pmem.data + pmem.lib
+    # print("psutil - res-set: {}; res-shr: {} res-text: {}, res-data: {}, res-lib: {}; res-total: {}".format(pmem.rss, pmem.shared, pmem.text, pmem.data, pmem.lib, pmem_total))
+    return pmem.rss
+
+def measure_mem_usage():
     rsc = getrusage(RUSAGE_SELF)
-    return rsc.ru_maxrss*1024
+    print("RUSAGE - Max. RES set-size: {}; shr. mem size: {}; ushr. mem size: {}".format(rsc.ru_maxrss, rsc.ru_ixrss, rsc.ru_idrss))
+    if system_name() == "Linux":
+        return rsc.ru_maxrss*1024
+    return rsc.ru_maxrss
+
+USE_ASYNC_MEMLOG = True
+USE_RUSE_SYNC_MEMLOG = False  # can be faulty
 
 class ParticleSet_Benchmark(ParticleSet):
 
@@ -49,7 +66,10 @@ class ParticleSet_Benchmark(ParticleSet):
         self.async_mem_log = Asynchronous_ParamLogging()
         self.process = psutil.Process(os.getpid())
 
-    #@profile
+    def set_async_memlog_interval(self, interval):
+        self.async_mem_log.measure_interval = interval
+
+    # @profile
     def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
@@ -186,14 +206,15 @@ class ParticleSet_Benchmark(ParticleSet):
         if verbose_progress:
             pbar = self._create_progressbar_(_starttime, endtime)
 
-        self.async_mem_log.measure_interval = 0.05
-        self.async_mem_log.measure_func = measure_mem
-        mem_used_start = measure_mem()
+        if USE_ASYNC_MEMLOG:
+            self.async_mem_log.measure_func = measure_mem
+            mem_used_start = measure_mem()
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             self.total_log.start_timing()
-            self.async_mem_log.measure_start_value = mem_used_start
-            self.async_mem_log.start_partial_measurement()
+            if USE_ASYNC_MEMLOG:
+                self.async_mem_log.measure_start_value = mem_used_start
+                self.async_mem_log.start_partial_measurement()
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
                 if output_file:
@@ -257,6 +278,7 @@ class ParticleSet_Benchmark(ParticleSet):
                 next_movie += moviedt * np.sign(dt)
             # ==== insert post-process here to also allow for memory clean-up via external func ==== #
             if abs(time-next_callback) < tol:
+                # ==== assuming post-processing functions largely use memory than hard computation ... ==== #
                 self.mem_io_log.start_timing()
                 if postIterationCallbacks is not None:
                     for extFunc in postIterationCallbacks:
@@ -285,9 +307,15 @@ class ParticleSet_Benchmark(ParticleSet):
             #     mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
             # else:
             #     mem_B_used_total = self.process.memory_info().rss
-            mem_B_used_total = measure_mem_linux()
+            # mem_B_used_total = self.process.memory_info().rss
+            mem_B_used_total = 0
+            if USE_RUSE_SYNC_MEMLOG:
+                mem_B_used_total = measure_mem_usage()
+            else:
+                mem_B_used_total = measure_mem_rss()
             self.mem_log.advance_iteration(mem_B_used_total)
-            self.async_mem_log.stop_partial_measurement()  # does 'advance_iteration' internally
+            if USE_ASYNC_MEMLOG:
+                self.async_mem_log.stop_partial_measurement()  # does 'advance_iteration' internally
 
             self.compute_log.advance_iteration()
             self.io_log.advance_iteration()
@@ -322,7 +350,7 @@ class ParticleSet_Benchmark(ParticleSet):
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
         return Kernel_Benchmark(self.fieldset, self.ptype, pyfunc=pyfunc, c_include=c_include,
-                      delete_cfiles=delete_cfiles)
+                                delete_cfiles=delete_cfiles)
 
     def plot_and_log(self, total_times = None, compute_times = None, io_times = None, plot_times = None, memory_used = None, nparticles = None, target_N = 1, imageFilePath = "", odir = os.getcwd(), xlim_range=None, ylim_range=None):
         # == do something with the log-arrays == #
@@ -356,7 +384,9 @@ class ParticleSet_Benchmark(ParticleSet):
         if not isinstance(nparticles, np.ndarray):
             nparticles = np.array(nparticles, dtype=np.int32)
 
-        memory_used_async = np.array(self.async_mem_log.get_params(), dtype=np.int64)
+        memory_used_async = None
+        if USE_ASYNC_MEMLOG:
+            memory_used_async = np.array(self.async_mem_log.get_params(), dtype=np.int64)
 
         t_scaler = 1. * 10./1.0
         npart_scaler = 1.0 / 1000.0
@@ -367,9 +397,12 @@ class ParticleSet_Benchmark(ParticleSet):
         plot_drawt = (plot_times * t_scaler).tolist()
         plot_npart = (nparticles * npart_scaler).tolist()
         plot_mem = []
-        if memory_used is not None and len(memory_used)>1:
+        if memory_used is not None and len(memory_used) > 1:
             plot_mem = (memory_used * mem_scaler).tolist()
-        plot_mem_async = (memory_used_async * mem_scaler).tolist()
+
+        plot_mem_async = None
+        if USE_ASYNC_MEMLOG:
+            plot_mem_async = (memory_used_async * mem_scaler).tolist()
 
         do_iot_plot = True
         do_drawt_plot = False
@@ -400,8 +433,9 @@ class ParticleSet_Benchmark(ParticleSet):
             ax.plot(x, plot_drawt, 'o-', label="draw-time spent [100ms]")
         if (memory_used is not None) and do_mem_plot:
             ax.plot(x, plot_mem, '.-', label="memory_used (cumulative) [1 GB]")
-        if (memory_used_async is not None) and do_mem_plot_async:
-            ax.plot(x, plot_mem_async, 'x-', label="memory_used [async] (cum.) [1GB]")
+        if USE_ASYNC_MEMLOG:
+            if (memory_used_async is not None) and do_mem_plot_async:
+                ax.plot(x, plot_mem_async, 'x-', label="memory_used [async] (cum.) [1GB]")
         if do_npart_plot:
             ax.plot(x, plot_npart, '-', label="sim. particles [# 1000]")
         if xlim_range is not None:
@@ -427,21 +461,22 @@ class ParticleSet_Benchmark(ParticleSet):
             ncores = 1
             if MPI:
                 mpi_comm = MPI.COMM_WORLD
-                ncores =  mpi_comm.Get_size()
+                ncores = mpi_comm.Get_size()
             header_string = "target_N, start_N, final_N, avg_N, ncores, avg_kt_total[s], avg_kt_compute[s], avg_kt_io[s], avg_kt_plot[s], cum_t_total[s], cum_t_compute[s], com_t_io[s], cum_t_plot[s], max_mem[MB]\n"
             f.write(header_string)
             data_string = "{}, {}, {}, {}, {}, ".format(target_N, nparticles_t0, nparticles_tN, nparticles.mean(), ncores)
-            data_string+= "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), io_times.mean(), plot_times.mean())
-            max_mem = 0
+            data_string += "{:2.10f}, {:2.10f}, {:2.10f}, {:2.10f}, ".format(total_times.mean(), compute_times.mean(), io_times.mean(), plot_times.mean())
+            max_mem_sync = 0
             if memory_used is not None and len(memory_used) > 1:
                 memory_used = np.floor(memory_used / (1024*1024))
                 memory_used = memory_used.astype(dtype=np.uint32)
-                max_mem = memory_used.max()
+                max_mem_sync = memory_used.max()
             max_mem_async = 0
-            if memory_used_async is not None and len(memory_used_async) > 1:
-                memory_used_async = np.floor(memory_used_async / (1024*1024))
-                memory_used_async = memory_used_async.astype(dtype=np.int64)
-                max_mem_async = memory_used_async.max()
-            max_mem = max(max_mem, max_mem_async)
-            data_string+= "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
+            if USE_ASYNC_MEMLOG:
+                if memory_used_async is not None and len(memory_used_async) > 1:
+                    memory_used_async = np.floor(memory_used_async / (1024*1024))
+                    memory_used_async = memory_used_async.astype(dtype=np.int64)
+                    max_mem_async = memory_used_async.max()
+            max_mem = max(max_mem_sync, max_mem_async)
+            data_string += "{:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}, {}".format(total_times.sum(), compute_times.sum(), io_times.sum(), plot_times.sum(), max_mem)
             f.write(data_string)
