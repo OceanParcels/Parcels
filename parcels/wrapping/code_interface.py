@@ -29,6 +29,8 @@ class LibraryRegisterC:
             del entry
 
     def load(self, libname, src_dir=get_package_dir()):
+        if libname is None or (libname in self._data.keys() and self._data[libname].is_loaded()):
+            return
         if libname not in self._data.keys():
             cppargs = []
             ccompiler = GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
@@ -42,6 +44,18 @@ class LibraryRegisterC:
         if libname in self._data.keys():
             self._data[libname].unload_library()
         #    del self._data[libname]
+
+    def is_created(self, libname):
+        return libname in self._data.keys()
+
+    def is_registered(self, libname):
+        return self._data[libname].is_registered()
+
+    def is_loaded(self, libname):
+        return self._data[libname].is_loaded()
+
+    def is_compiled(self, libname):
+        return self._data[libname].is_compiled()
 
     def __getitem__(self, item):
         return self.get(item)
@@ -107,6 +121,9 @@ class InterfaceC:
 
     def is_loaded(self):
         return self.loaded
+
+    def is_registered(self):
+        return self.register_count > 0
 
     def compile_library(self):
         """ Writes kernel code to file and compiles it."""

@@ -43,55 +43,64 @@ class RealList(SortedList):
     def add(self, val):
         assert type(val) == self.dtype
         if isinstance(val, Node):
-            n = self.__len__()
-            index = self.bisect_right(val)
-            if index < n:
-                next_node = self.__getitem__(index)
-            else:
-                next_node = None
-            if index > 0:
-                prev_node = self.__getitem__(index-1)
-            else:
-                prev_node = None
-            if next_node is not None:
-                next_node.set_prev(val)
-                val.set_next(next_node)
-            if prev_node is not None:
-                prev_node.set_next(val)
-                val.set_prev(prev_node)
-            super().add(val)
+            self._add_by_node(val)
         elif isinstance(val, int) or type(val) in [int32, uint32, int64, uint64]:
-            n = self.__len__()
-            index = self.bisect_right(val)
-            if index < n:
-                next_node = self.__getitem__(index)
-            else:
-                next_node = None
-            if index > 0:
-                prev_node = self.__getitem__(index-1)
-            else:
-                prev_node = None
-            new_node = self.dtype(prev=prev_node, next=next_node, id=val)
-            super().add(new_node)
+            self._add_by_id(val)
         else:
-            new_node = self.dtype(data=val)
-            super().add(new_node)
-            n = self.__len__()
-            index = self.index(new_node)
-            if index < (n-2):
-                next_node = self.__getitem__(index+1)
-            else:
-                next_node = None
-            if index > 0:
-                prev_node = self.__getitem__(index-1)
-            else:
-                prev_node = None
-            if next_node is not None:
-                next_node.set_prev(new_node)
-                new_node.set_next(next_node)
-            if prev_node is not None:
-                prev_node.set_next(new_node)
-                new_node.set_prev(prev_node)
+            self._add_by_pdata(val)
+
+    def _add_by_node(self, val):
+        n = self.__len__()
+        index = self.bisect_right(val)
+        if index < n:
+            next_node = self.__getitem__(index)
+        else:
+            next_node = None
+        if index > 0:
+            prev_node = self.__getitem__(index - 1)
+        else:
+            prev_node = None
+        if next_node is not None:
+            next_node.set_prev(val)
+            val.set_next(next_node)
+        if prev_node is not None:
+            prev_node.set_next(val)
+            val.set_prev(prev_node)
+        super().add(val)
+
+    def _add_by_id(self, val):
+        n = self.__len__()
+        index = self.bisect_right(val)
+        if index < n:
+            next_node = self.__getitem__(index)
+        else:
+            next_node = None
+        if index > 0:
+            prev_node = self.__getitem__(index - 1)
+        else:
+            prev_node = None
+        new_node = self.dtype(prev=prev_node, next=next_node, id=val)
+        super().add(new_node)
+
+    def _add_by_pdata(self, val):
+        new_node = self.dtype(data=val)
+        super().add(new_node)
+        n = self.__len__()
+        index = self.index(new_node)
+        if index < (n - 2):
+            next_node = self.__getitem__(index + 1)
+        else:
+            next_node = None
+        if index > 0:
+            prev_node = self.__getitem__(index - 1)
+        else:
+            prev_node = None
+        if next_node is not None:
+            next_node.set_prev(new_node)
+            new_node.set_next(next_node)
+        if prev_node is not None:
+            prev_node.set_next(new_node)
+            new_node.set_prev(prev_node)
 
     def append(self, val):
         self.add(val)
