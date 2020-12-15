@@ -144,7 +144,6 @@ node_c_interface = None
 c_funcs = None
 
 
-
 class NodeJIT(Node, ctypes.Structure):
     _fields_ = [('_c_prev_p', ctypes.c_void_p),
                 ('_c_next_p', ctypes.c_void_p),
@@ -260,11 +259,13 @@ class NodeJIT(Node, ctypes.Structure):
                 if self.next is not None:
                     self.prev.set_next(self.next)
                 else:
+                    # self.reset_next_ptr_c(self.prev)
                     self.prev.reset_next()
             if self.next is not None:
                 if self.prev is not None:
                     self.next.set_prev(self.prev)
                 else:
+                    # self.reset_prev_ptr_c(self.next)
                     self.next.reset_prev()
             self.reset_prev_ptr_c(self)
             self.reset_next_ptr_c(self)
@@ -309,6 +310,15 @@ class NodeJIT(Node, ctypes.Structure):
     #     self.reset_prev_ptr_c = c_func_dict['reset_prev_ptr']
     #     self.reset_next_ptr_c = c_func_dict['reset_next_ptr']
     #     self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
+
+    def link_c_functions(self, c_func_dict):
+        self.init_node_c = c_func_dict['init_node']
+        self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
+        self.set_next_ptr_c = c_func_dict['set_next_ptr']
+        self.set_data_ptr_c = c_func_dict['set_data_ptr']
+        self.reset_prev_ptr_c = c_func_dict['reset_prev_ptr']
+        self.reset_next_ptr_c = c_func_dict['reset_next_ptr']
+        self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
 
     def set_data(self, data):
         super().set_data(data)
