@@ -75,6 +75,7 @@ class GNU_parameters(Compiler_parameters):
             libdirs = []
         if libs is None:
             libs = []
+        libs.append("m")
 
         Iflags = []
         if isinstance(incdirs, list):
@@ -90,10 +91,17 @@ class GNU_parameters(Compiler_parameters):
                 lflags.append("-l" + lib)
 
         cc_env = os.getenv('CC')
-        self._compiler = "mpicc" if MPI else "gcc" if cc_env is None else cc_env
+        mpicc = None
+        if MPI:
+            mpicc_env = os.getenv('MPICC')
+            mpicc = mpicc_env
+            mpicc = "mpicc" if mpicc is None and os._exists("mpicc") else None
+            mpicc = "mpiCC" if mpicc is None and os._exists("mpiCC") else None
+            os.system("%s --version" % (mpicc))
+        self._compiler = mpicc if MPI and mpicc is not None else cc_env if cc_env is not None else "gcc"
         opt_flags = ['-g', '-O3']
         arch_flag = ['-m64' if calcsize("P") == 8 else '-m32']
-        self._cppargs = ['-Wall', '-fPIC']
+        self._cppargs = ['-Wall', '-fPIC', '-std=gnu11']
         self._cppargs += Iflags
         self._cppargs += opt_flags + cppargs + arch_flag
         self._ldargs = ['-shared']
