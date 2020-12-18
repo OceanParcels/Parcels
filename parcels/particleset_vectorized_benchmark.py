@@ -23,6 +23,8 @@ from parcels.kernel_vec_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
+from parcels.tools.performance_logger import TimingLog, ParamLogging
+from parcels.tools import get_cache_dir, get_package_dir
 from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
 from parcels.tools import get_cache_dir, get_package_dir
 
