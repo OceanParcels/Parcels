@@ -3,12 +3,14 @@ from abc import ABC
 from abc import abstractmethod
 from datetime import datetime
 from datetime import timedelta as delta
+from os import path
 import time as time_module
 
 import progressbar
 
 from parcels.tools.statuscodes import StateCode
-from parcels.compiler import GNUCompiler
+from parcels.tools.global_statics import get_package_dir
+from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernels.advection import AdvectionRK4
@@ -340,7 +342,7 @@ class BaseParticleSet(NDCluster):
             if self.collection.ptype.uses_jit:
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
-                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
+                self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
         # Convert all time variables to seconds
