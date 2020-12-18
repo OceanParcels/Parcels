@@ -4,7 +4,6 @@ import random
 import shutil
 import string
 from glob import glob
-from parcels.tools import logger
 
 import netCDF4
 import numpy as np
@@ -256,7 +255,6 @@ class ParticleFile(object):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        logger.info("Time step: {}".format(time_steps))
         data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
@@ -271,10 +269,8 @@ class ParticleFile(object):
                                    '"parcels_convert_npydir_to_netcdf %s" to convert these to '
                                    'a NetCDF file yourself.\nTo avoid this error, make sure you '
                                    'close() your ParticleFile at the end of your script.' % self.tempwritedir)
-            # logger.info(npyfile)
             id_ind = np.array(data_dict["id"], dtype=np.int64)
             t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
-            # logger.info("index: {}; time index: {}".format(id_ind, t_ind))
             t_ind_used[t_ind] = 1
             data[id_ind, t_ind] = data_dict[var]
             time_index[id_ind] = time_index[id_ind] + 1
