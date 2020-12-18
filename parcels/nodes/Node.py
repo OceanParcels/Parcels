@@ -128,8 +128,19 @@ class Node(object):
     def set_data(self, data):
         self.data = data
 
+    def reset_data(self):
+        self.data = None
 
+    def reset_prev(self):
+        self.prev = None
+
+    def reset_next(self):
+        self.prev = None
+
+# global node_c_interface
 node_c_interface = None
+# global c_funcs
+c_funcs = None
 
 
 class NodeJIT(Node, ctypes.Structure):
@@ -148,30 +159,39 @@ class NodeJIT(Node, ctypes.Structure):
 
     def __init__(self, prev=None, next=None, id=None, data=None):
         super().__init__(prev=prev, next=next, id=id, data=data)
-        c_lib_register.load("node", src_dir=os.path.dirname(os.path.abspath(__file__)))
+        if not c_lib_register.is_created("node") or not c_lib_register.is_compiled("node") or not c_lib_register.is_loaded("node"):
+            c_lib_register.load("node", src_dir=os.path.dirname(os.path.abspath(__file__)))
         c_lib_register.register("node")
         self.registered = True
-        node_c_interface = c_lib_register.get("node")  # ["node"]
+        global node_c_interface
+        if node_c_interface is None:
+            node_c_interface = c_lib_register.get("node")  # ["node"]
 
-        func_params = []
-        func_params.append({"name": 'init_node', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'set_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'set_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'set_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_void_p]})
-        func_params.append({"name": 'set_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_int]})
-        func_params.append({"name": 'get_pu_affinity', "return": ctypes.c_int, "arguments": [ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'reset_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'reset_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'reset_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
-        func_params.append({"name": 'reset_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
-        c_funcs = node_c_interface.load_functions(func_params)
-        self.init_node_c = c_funcs['init_node']
-        self.set_prev_ptr_c = c_funcs['set_prev_ptr']
-        self.set_next_ptr_c = c_funcs['set_next_ptr']
-        self.set_data_ptr_c = c_funcs['set_data_ptr']
-        self.reset_prev_ptr_c = c_funcs['reset_prev_ptr']
-        self.reset_next_ptr_c = c_funcs['reset_next_ptr']
-        self.reset_data_ptr_c = c_funcs['reset_data_ptr']
+        func_params = NodeJIT_func_params()
+        # func_params = []
+        # func_params.append({"name": 'init_node', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'set_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'set_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'set_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_void_p]})
+        # func_params.append({"name": 'set_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_int]})
+        # func_params.append({"name": 'get_pu_affinity', "return": ctypes.c_int, "arguments": [ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'reset_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'reset_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'reset_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
+        # func_params.append({"name": 'reset_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]})
+
+        # -- Question: do we REALLY need to look them up all the time ? We count store that library link and just re-use it for each particle -- #
+        global c_funcs
+        if c_funcs is None:
+            c_funcs = node_c_interface.load_functions(func_params)
+        self.link_c_functions(c_funcs)
+        # self.init_node_c = c_funcs['init_node']
+        # self.set_prev_ptr_c = c_funcs['set_prev_ptr']
+        # self.set_next_ptr_c = c_funcs['set_next_ptr']
+        # self.set_data_ptr_c = c_funcs['set_data_ptr']
+        # self.reset_prev_ptr_c = c_funcs['reset_prev_ptr']
+        # self.reset_next_ptr_c = c_funcs['reset_next_ptr']
+        # self.reset_data_ptr_c = c_funcs['reset_data_ptr']
 
         self.init_node_c(self)
 
@@ -239,12 +259,14 @@ class NodeJIT(Node, ctypes.Structure):
                 if self.next is not None:
                     self.prev.set_next(self.next)
                 else:
-                    self.reset_next_ptr_c(self.prev)
+                    # self.reset_next_ptr_c(self.prev)
+                    self.prev.reset_next()
             if self.next is not None:
                 if self.prev is not None:
                     self.next.set_prev(self.prev)
                 else:
-                    self.reset_prev_ptr_c(self.next)
+                    # self.reset_prev_ptr_c(self.next)
+                    self.next.reset_prev()
             self.reset_prev_ptr_c(self)
             self.reset_next_ptr_c(self)
             self.reset_data_ptr_c(self)
@@ -280,6 +302,15 @@ class NodeJIT(Node, ctypes.Structure):
     def __ge__(self, other):
         return super().__ge__(other)
 
+    def link_c_functions(self, c_func_dict):
+        self.init_node_c = c_func_dict['init_node']
+        self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
+        self.set_next_ptr_c = c_func_dict['set_next_ptr']
+        self.set_data_ptr_c = c_func_dict['set_data_ptr']
+        self.reset_prev_ptr_c = c_func_dict['reset_prev_ptr']
+        self.reset_next_ptr_c = c_func_dict['reset_next_ptr']
+        self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
+
     def set_data(self, data):
         super().set_data(data)
         if self.registered:
@@ -294,6 +325,21 @@ class NodeJIT(Node, ctypes.Structure):
         super().set_next(next)
         if self.registered:
             self.update_next()
+
+    def reset_data(self):
+        super().reset_data()
+        if self.registered:
+            self.reset_data_ptr_c(self)
+
+    def reset_prev(self):
+        super().reset_prev()
+        if self.registered:
+            self.reset_prev_ptr_c(self)
+
+    def reset_next(self):
+        super().reset_next()
+        if self.registered:
+            self.reset_next_ptr_c(self)
 
     def update_prev(self):
         if self.prev is not None and isinstance(self.prev, NodeJIT):
@@ -321,6 +367,20 @@ class NodeJIT(Node, ctypes.Structure):
                 self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
         else:
             self.reset_data_ptr_c(self)
+
+
+def NodeJIT_func_params():  #node_c_func_params =
+    return [{"name": 'init_node', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
+            {"name": 'set_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]},
+            {"name": 'set_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]},
+            {"name": 'set_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.POINTER(NodeJIT)]},
+            {"name": 'set_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_void_p]},
+            {"name": 'set_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT), ctypes.c_int]},
+            {"name": 'get_pu_affinity', "return": ctypes.c_int, "arguments": [ctypes.POINTER(NodeJIT)]},
+            {"name": 'reset_prev_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
+            {"name": 'reset_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
+            {"name": 'reset_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
+            {"name": 'reset_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]}]
 
 
 
