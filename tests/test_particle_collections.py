@@ -26,7 +26,7 @@ def fieldset_fixture(xdim=40, ydim=100):
 @pytest.mark.parametrize('pt', ['soa'])
 def test_pset_iteration_forward(fieldset, pt, npart=10):
     pset = psettype[pt](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
-    assert np.all(np.isclose(np.array([p.id for p in pset]), range(npart+pset[0].id)))
+    assert np.all(np.isclose(np.array([p.id for p in pset]), range(npart)+pset[0].id))
 
 
 @pytest.mark.parametrize('pt', ['soa'])
