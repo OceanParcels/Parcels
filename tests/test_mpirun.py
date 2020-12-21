@@ -19,7 +19,7 @@ def test_mpi_run(tmpdir):
         outputNoMPI = tmpdir.join('StommelNoMPI.nc')
 
         system('mpirun -np 2 python %s -p 4 -o %s -r %d' % (stommel_file, outputMPI, repeatdt))
-        system('python %s -p 8 -o %s -r %d' % (stommel_file, outputNoMPI, repeatdt))
+        system('python %s -p 4 -o %s -r %d' % (stommel_file, outputNoMPI, repeatdt))
 
         ncfile1 = Dataset(outputMPI, 'r', 'NETCDF4')
         ncfile2 = Dataset(outputNoMPI, 'r', 'NETCDF4')
