@@ -79,7 +79,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
 
     def unload_lib(self):
         # Unload the currently loaded dynamic linked library to be secure
-        if self._lib is not None and self._loaded:
+        if self._lib is not None and self._loaded and _ctypes is not None:
             _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
             del self._lib
             self._lib = None
@@ -92,7 +92,7 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
     def remove_lib(self):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
-        if path.isfile(self.lib_file):
+        if self._lib is not None and self._loaded and _ctypes is not None and path.isfile(self.lib_file):
             [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
 
     def compile(self, compiler=None):

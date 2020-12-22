@@ -177,7 +177,7 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
 
-    assert np.allclose(pset.particle_data['v_once'] - time - pset.particle_data['age']*10, 0, atol=1e-5)
+    assert np.allclose(pset.v_once - time - pset.age*10, 0, atol=1e-5)
     ncfile = close_and_compare_netcdffiles(filepath, ofile)
     vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
     assert (vfile.shape == (npart, ))
@@ -214,7 +214,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     samplevar = ncfile.variables['sample_var'][:]
     if type == 'repeatdt':
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
-        assert np.allclose(pset.particle_data['sample_var'], np.arange(maxvar, -1, -repeatdt))
+        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
     elif type == 'timearr':
         assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
     # test whether samplevar[:, k] = k

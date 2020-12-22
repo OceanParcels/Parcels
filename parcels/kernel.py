@@ -235,9 +235,6 @@ class Kernel(object):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-        if len(pset) > 0 and pset.particle_data['xi'].ndim == 2 and pset.fieldset is not None:
-            assert pset.fieldset.gridset.size == pset.particle_data['xi'].shape[1], \
-                'FieldSet has different number of grids than Particle.xi. Have you added Fields after creating the ParticleSet?'
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
@@ -284,8 +281,6 @@ class Kernel(object):
         else:
             analytical = False
 
-        particles = pset.data_accessor()
-
         # back up variables in case of OperationCode.Repeat
         p_var_back = {}
 
@@ -295,100 +290,116 @@ class Kernel(object):
                     continue
                 f.data = np.array(f.data)
 
-        for p in range(pset.size):
-            particles.set_index(p)
-
+        for p in pset:
             # Don't execute particles that aren't started yet
-            sign_end_part = np.sign(endtime - particles.time)
+            sign_end_part = np.sign(endtime - p.time)
             # Compute min/max dt for first timestep
-            dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+            dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
-                if abs(particles.time) >= abs(endtime):
-                    particles.set_state(StateCode.Success)
+                if abs(p.time) >= abs(endtime):
+                    p.set_state(StateCode.Success)
                 continue
 
-            while particles.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
+            while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
 
-                for var in pset.ptype.variables:
-                    p_var_back[var.name] = getattr(particles, var.name)
+                for var in pset.collection.ptype.variables:
+                    p_var_back[var.name] = getattr(p, var.name)
                 try:
                     pdt_prekernels = sign_dt * dt_pos
-                    particles.dt = pdt_prekernels
-                    state_prev = particles.state
-                    res = self.pyfunc(particles, pset.fieldset, particles.time)
+                    p.dt = pdt_prekernels
+                    state_prev = p.state
+                    res = self.pyfunc(p, pset.fieldset, p.time)
                     if res is None:
                         res = StateCode.Success
 
-                    if res is StateCode.Success and particles.state != state_prev:
-                        res = particles.state
+                    if res is StateCode.Success and p.state != state_prev:
+                        res = p.state
 
-                    if not analytical and res == StateCode.Success and not np.isclose(particles.dt, pdt_prekernels):
+                    if not analytical and res == StateCode.Success and not np.isclose(p.dt, pdt_prekernels):
                         res = OperationCode.Repeat
 
                 except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
-                    particles.exception = fse_xy
+                    p.exception = fse_xy
                 except FieldOutOfBoundSurfaceError as fse_z:
                     res = ErrorCode.ErrorThroughSurface
-                    particles.exception = fse_z
+                    p.exception = fse_z
                 except TimeExtrapolationError as fse_t:
                     res = ErrorCode.ErrorTimeExtrapolation
-                    particles.exception = fse_t
+                    p.exception = fse_t
 
                 except Exception as e:
                     res = ErrorCode.Error
-                    particles.exception = e
+                    p.exception = e
 
                 # Handle particle time and time loop
                 if res in [StateCode.Success, OperationCode.Delete]:
                     # Update time and repeat
-                    particles.time += particles.dt
-                    particles.update_next_dt()
+                    p.time += p.dt
+                    p.update_next_dt()
                     if analytical:
-                        particles.dt = np.inf
-                    dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+                        p.dt = np.inf
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
-                    sign_end_part = np.sign(endtime - particles.time)
+                    sign_end_part = np.sign(endtime - p.time)
                     if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
                         res = StateCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
-                    particles.set_state(res)
+                    p.set_state(res)
                     if np.isclose(dt, 0):
                         break
                 else:
-                    particles.set_state(res)
+                    p.set_state(res)
                     # Try again without time update
-                    for var in pset.ptype.variables:
+                    for var in pset.collection.ptype.variables:
                         if var.name not in ['dt', 'state']:
-                            setattr(particles, var.name, p_var_back[var.name])
-                    dt_pos = min(abs(particles.dt), abs(endtime - particles.time))
+                            setattr(p, var.name, p_var_back[var.name])
+                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
 
-                    sign_end_part = np.sign(endtime - particles.time)
+                    sign_end_part = np.sign(endtime - p.time)
                     if sign_end_part != sign_dt:
                         dt_pos = 0
                     break
 
+    def remove_deleted(self, pset, output_file, endtime):
+        """
+        Utility to remove all particles that signalled deletion.
+
+        This version is generally applicable to all structures and collections
+        """
+        # Indices marked for deletion.
+        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
+        if len(indices) > 0:
+            logger.info("Deleted {} particles.".format(len(indices)))
+        if len(indices) > 0 and output_file is not None:
+            output_file.write(pset, endtime, deleted_only=indices)
+            pset.remove_indices(indices)
+
+    def remove_deleted_soa(self, pset, output_file, endtime):
+        """
+        Utility to remove all particles that signalled deletion
+
+        This deletion function is targetted to index-addressable, random-access array-collections.
+        """
+        # Indices marked for deletion.
+        bool_indices = np.array([p.state == OperationCode.Delete for p in pset])
+        indices = np.where(bool_indices)[0]
+        if len(indices) > 0 and output_file is not None:
+            output_file.write(pset, endtime, deleted_only=bool_indices)
+        pset.remove_indices(indices)
+
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        particles = pset.data_accessor()
-        for p in range(pset.size):
-            particles.set_index(p)
-            particles.set_state(StateCode.Evaluate)
+        for p in pset:
+            p.set_state(StateCode.Evaluate)
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
-
-        def remove_deleted(pset):
-            """Utility to remove all particles that signalled deletion"""
-            indices = pset.particle_data['state'] == OperationCode.Delete
-            if np.count_nonzero(indices) > 0 and output_file is not None:
-                output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove_booleanvector(indices)
 
         if recovery is None:
             recovery = {}
@@ -409,30 +420,40 @@ class Kernel(object):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        remove_deleted(pset)
+        if type(pset).__name__ in ['ParticleSetSOA', ]:
+            self.remove_deleted_soa(pset, output_file=output_file, endtime=endtime)
+        else:
+            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
 
         # Identify particles that threw errors
-        error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
-        while np.any(error_particles):
+        n_error = pset.num_error_particles
+
+        # while np.any(error_particles):
+        while n_error > 0:
+            error_pset = pset.error_particles
             # Apply recovery kernel
-            for p in np.where(error_particles)[0]:
-                particles.set_index(p)
-                if particles.state == OperationCode.StopExecution:
+            for p in error_pset:
+                if p.state == OperationCode.StopExecution:
                     return
-                if particles.state == OperationCode.Repeat:
-                    particles.set_state(StateCode.Evaluate)
-                elif particles.state in recovery_map:
-                    recovery_kernel = recovery_map[particles.state]
-                    particles.set_state(StateCode.Success)
-                    recovery_kernel(particles, self.fieldset, particles.time)
-                    if particles.state == StateCode.Success:
-                        particles.set_state(StateCode.Evaluate)
+                if p.state == OperationCode.Repeat:
+                    p.set_state(StateCode.Evaluate)
+                elif p.state == OperationCode.Delete:
+                    pass
+                elif p.state in recovery_map:
+                    recovery_kernel = recovery_map[p.state]
+                    p.set_state(StateCode.Success)
+                    recovery_kernel(p, self.fieldset, p.time)
+                    if p.state == StateCode.Success:
+                        p.set_state(StateCode.Evaluate)
                 else:
-                    logger.warning_once('Deleting particle because of bug in #749 and #737')
-                    particles.delete()
+                    logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
+                    p.delete()
 
             # Remove all particles that signalled deletion
-            remove_deleted(pset)
+            if type(pset).__name__ in ['ParticleSetSOA', ]:
+                self.remove_deleted_soa(pset, output_file=output_file, endtime=endtime)
+            else:
+                self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
@@ -440,7 +461,7 @@ class Kernel(object):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = np.isin(pset.particle_data['state'], [StateCode.Success, StateCode.Evaluate], invert=True)
+            n_error = pset.num_error_particles
 
     def merge(self, kernel):
         funcname = self.funcname + kernel.funcname
