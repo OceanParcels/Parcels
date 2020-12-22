@@ -213,7 +213,7 @@ def test_pset_stop_simulation(fieldset, mode):
             return OperationCode.StopExecution
 
     pset.execute(Delete, dt=1, runtime=21)
-    assert pset.time == 4
+    assert pset[0].time == 4
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
@@ -314,8 +314,8 @@ def test_pset_remove_index(fieldset, mode, npart=100):
     lat = np.linspace(1, 0, npart)
     pset = ParticleSet(fieldset, lon=lon, lat=lat, pclass=ptype[mode], lonlatdepth_dtype=np.float64)
     for ilon, ilat in zip(lon[::-1], lat[::-1]):
-        assert(pset.lon[-1] == ilon)
-        assert(pset.lat[-1] == ilat)
+        assert(pset[-1].lon == ilon)
+        assert(pset[-1].lat == ilat)
         pset.remove_indices(-1)
     assert(pset.size == 0)
 

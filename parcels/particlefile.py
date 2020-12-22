@@ -69,10 +69,10 @@ class ParticleFile(object):
             self.particleset = particleset
             self.parcels_mesh = self.particleset.fieldset.gridset.grids[0].mesh
             self.time_origin = self.particleset.time_origin
-            self.lonlatdepth_dtype = self.particleset.lonlatdepth_dtype
+            self.lonlatdepth_dtype = self.particleset.collection.lonlatdepth_dtype
             self.var_names = []
             self.var_names_once = []
-            for v in self.particleset.ptype.variables:
+            for v in self.particleset.collection.ptype.variables:
                 if v.to_write == 'once':
                     self.var_names_once += [v.name]
                 elif v.to_write is True:
@@ -255,7 +255,6 @@ class ParticleFile(object):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-
         data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
