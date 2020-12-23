@@ -982,7 +982,7 @@ class FieldSet(object):
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         logger.warning_once("Fieldset.advancetime() is deprecated.\n \
-                             Parcels deals automatically with loading only 3 time steps simustaneously\
+                             Parcels deals automatically with loading only 2 time steps simultaneously\
                              such that the total allocated memory remains limited.")
 
         advance = 0
@@ -1044,7 +1044,7 @@ class FieldSet(object):
                 else:
                     zd = g.zdim
                 data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                f.loaded_time_indices = range(3)
+                f.loaded_time_indices = range(2)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
@@ -1120,7 +1120,7 @@ class FieldSet(object):
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][0] = None
                                 f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
-                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(2),)+block][2])
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == 2:
@@ -1131,7 +1131,7 @@ class FieldSet(object):
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][2] = None
                                 f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),)+block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)

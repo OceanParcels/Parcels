@@ -350,6 +350,7 @@ def test_swash(mode, chunk_mode):
         assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
         assert (len(field_set.W.grid.load_chunk) == (1 * int(math.ceil(7.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
 
+test_swash('jit', 'auto')
 
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
