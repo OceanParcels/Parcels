@@ -15,7 +15,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 def expr_kernel(name, pset, expr):
     pycode = """def %s(particle, fieldset, time):
     particle.p = %s""" % (name, expr)
-    return Kernel(pset.fieldset, pset.ptype, pyfunc=None,
+    return Kernel(pset.fieldset, pset.collection.ptype, pyfunc=None,
                   funccode=pycode, funcname=name,
                   funcvars=['particle'])
 

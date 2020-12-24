@@ -33,6 +33,14 @@ from parcels.tools.loggers import logger
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 
 
+def _isParticle(key):
+    # TODO: ideally, we'd like to use isinstance(key, BaseParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet.
+    if hasattr(key, '_next_dt'):
+        return True
+    else:
+        return False
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -557,8 +565,7 @@ class Field(object):
             field.grid.depth_field = field
 
     def __getitem__(self, key):
-        # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
-        if hasattr(key, 'set_index'):
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
@@ -1669,7 +1676,7 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        if hasattr(key, 'set_index'):
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
@@ -1757,7 +1764,7 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                if hasattr(key, 'set_index'):
+                if _isParticle(key):
                     val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                 else:
                     val = list.__getitem__(self, iField).eval(*key)
@@ -1817,7 +1824,7 @@ class NestedField(list):
         else:
             for iField in range(len(self)):
                 try:
-                    if hasattr(key, 'set_index'):
+                    if _isParticle(key):
                         val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                     else:
                         val = list.__getitem__(self, iField).eval(*key)
