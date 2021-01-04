@@ -1362,7 +1362,6 @@ class Field(object):
                                           interp_method=self.interp_method,
                                           data_full_zdim=self.data_full_zdim,
                                           chunksize=self.chunksize,
-                                          rechunk_callback_fields=self.chunk_setup,
                                           chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
