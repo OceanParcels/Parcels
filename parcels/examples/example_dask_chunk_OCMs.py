@@ -318,7 +318,7 @@ def test_pop(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) != 1)
         assert (len(field_set.V.grid.load_chunk) != 1)
         assert (len(field_set.W.grid.load_chunk) != 1)
-        assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/8.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
+        assert (len(field_set.U.grid.load_chunk) == (int(math.ceil(21.0/3.0)) * int(math.ceil(60.0/8.0)) * int(math.ceil(60.0/8.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
