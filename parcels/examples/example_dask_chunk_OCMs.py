@@ -216,7 +216,7 @@ def compute_swash_particle_advection(field_set, mode, lonp, latp, depthp):
 
 def compute_ofam_particle_advection(field_set, mode, lonp, latp, depthp):
     pset = ParticleSet(field_set, pclass=ptype[mode], lon=lonp, lat=latp, depth=depthp)
-    pfile = ParticleFile("ofam_particles_chunk", pset, outputdt=delta(minutes=10))
+    pfile = ParticleFile("ofam_particles_chunk", pset, outputdt=delta(days=1))
     pset.execute(AdvectionRK4, runtime=delta(days=10), dt=delta(minutes=5), output_file=pfile)
     return pset
 
