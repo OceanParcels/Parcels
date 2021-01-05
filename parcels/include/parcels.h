@@ -282,10 +282,9 @@ static inline StatusCode spatial_interpolation_nearest3D(double xsi, double eta,
 }
 
 /* Longitude gradient routine for 2D grid */
-static inline StatusCode spatial_gradient_lon2D(double xsi, double eta,
-                                                        float data[2][2], float *value)
+static inline StatusCode spatial_gradient_lon2D(double xsi, double eta, float data[2][2], double dx, float *value)
 {
-  *value = data[1][1] - data[1][0];  // TODO implement for varying eta
+  *value = (data[1][1] - data[1][0]) / dx;  // TODO implement for varying eta
   return SUCCESS;
 }
 
@@ -298,10 +297,9 @@ static inline StatusCode spatial_gradient_lon3D(double xsi, double eta, double z
 }
 
 /* Latitude gradient routine for 2D grid */
-static inline StatusCode spatial_gradient_lat2D(double xsi, double eta,
-                                                        float data[2][2], float *value)
+static inline StatusCode spatial_gradient_lat2D(double xsi, double eta, float data[2][2], double dy, float *value)
 {
-  *value = data[1][1] - data[0][1];  // TODO implement for varying xsi
+  *value = (data[1][1] - data[0][1]) / dy;  // TODO implement for varying xsi
   return SUCCESS;
 }
 
@@ -575,9 +573,17 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
   } while (0)
 
   if (derivative == LON){
-    INTERP(spatial_gradient_lon2D, spatial_gradient_lon3D);
+    float dx = grid->lon[xi[igrid]+1] - grid->lon[xi[igrid]];
+    for (int i = 0; i < tii; i++) {
+      status = spatial_gradient_lon2D(xsi, eta, data2D[i], dx, &val[i]);
+      CHECKSTATUS(status);
+    }
   } else if (derivative == LAT){
-    INTERP(spatial_gradient_lat2D, spatial_gradient_lat3D);
+    float dy = grid->lat[yi[igrid]+1] - grid->lat[yi[igrid]];
+    for (int i = 0; i < tii; i++) {
+      status = spatial_gradient_lat2D(xsi, eta, data2D[i], dy, &val[i]);
+      CHECKSTATUS(status);
+    }
   } else if ((interp_method == LINEAR) || (interp_method == CGRID_VELOCITY) ||
       (interp_method == BGRID_VELOCITY) || (interp_method == BGRID_W_VELOCITY)) {
     // adjust the normalised coordinate for flux-based interpolation methods
