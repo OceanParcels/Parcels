@@ -255,7 +255,7 @@ def test_nemo_3D(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
 def test_globcurrent_2D(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '32KiB'})
+        dask.config.set({'array.chunk-size': '16KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_globcurrent(chunk_mode)
@@ -325,7 +325,7 @@ def test_pop(mode, chunk_mode):
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific', 'failsafe'])
 def test_swash(mode, chunk_mode):
     if chunk_mode in ['auto', ]:
-        dask.config.set({'array.chunk-size': '64KiB'})
+        dask.config.set({'array.chunk-size': '32KiB'})
     else:
         dask.config.set({'array.chunk-size': '128MiB'})
     field_set = fieldset_from_swash(chunk_mode)
@@ -350,7 +350,6 @@ def test_swash(mode, chunk_mode):
         assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(6.0 / 6.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
         assert (len(field_set.W.grid.load_chunk) == (1 * int(math.ceil(7.0 / 7.0)) * int(math.ceil(21.0 / 4.0)) * int(math.ceil(51.0 / 4.0))))
 
-test_swash('jit', 'auto')
 
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific'])
