@@ -888,9 +888,17 @@ class Field(object):
     def interpolator2D(self, ti, z, y, x, particle=None, derivative=None):
         (xsi, eta, _, xi, yi, _) = self.search_indices(x, y, z, particle=particle)
         if derivative in ['x', 'lon']:  # TODO implement curvilinear grid etc
-            return self.data[ti, yi, xi+1] - self.data[ti, yi, xi]
+            if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+                dx = self.grid.lon[xi+1] - self.grid.lon[xi]
+            else:
+                raise NotImplementedError('Curvilinear grid derivatives not yet implemented')
+            return (self.data[ti, yi, xi+1] - self.data[ti, yi, xi]) / dx
         elif derivative in ['y', 'lat']:
-            return self.data[ti, yi+1, xi] - self.data[ti, yi, xi]
+            if self.grid.gtype in [GridCode.RectilinearSGrid, GridCode.RectilinearZGrid]:
+                dy = self.grid.lat[yi+1] - self.grid.lat[yi]
+            else:
+                raise NotImplementedError('Curvilinear grid derivatives not yet implemented')
+            return (self.data[ti, yi+1, xi] - self.data[ti, yi, xi]) / dy
         elif self.interp_method == 'nearest':
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
