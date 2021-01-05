@@ -385,6 +385,7 @@ def test_ofam_3D(mode, chunk_mode):
     assert(abs(pset[0].lon - 173) < 1)
     assert(abs(pset[0].lat - 11) < 1)
 
+test_ofam_3D('jit', 'specific')
 
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('chunk_mode', [False, 'auto', 'specific_same', 'specific_different'])

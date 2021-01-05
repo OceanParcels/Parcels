@@ -1345,7 +1345,6 @@ class Field(object):
             self.time = self.grid.time
 
     def computeTimeChunk(self, data, tindex):
-        print(self.name, tindex)
         g = self.grid
         timestamp = self.timestamps
         if timestamp is not None:
