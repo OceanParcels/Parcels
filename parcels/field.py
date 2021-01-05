@@ -1327,11 +1327,9 @@ class Field(object):
         if tindex == 0:
             data = lib.concatenate([data_to_concat, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
-            data = lib.concatenate([data[:tindex, :], data_to_concat, data[tindex+1:, :]], axis=0)
-        elif tindex == 2:
             data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
         else:
-            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1, 2]")
+            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
 
     def advancetime(self, field_new, advanceForward):
