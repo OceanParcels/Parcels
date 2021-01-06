@@ -574,8 +574,6 @@ class DaskFileBuffer(NetcdfFileBuffer):
                 else:
                     if not self.autochunkingfailed:
                         data = data.rechunk(self.chunk_mapping)
-                    if self.rechunk_callback_fields is not None:
-                        self.rechunk_callback_fields()
                     self.chunking_finalized = True
         else:
             da_data = da.from_array(data, chunks=self.chunksize)
