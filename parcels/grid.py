@@ -233,6 +233,26 @@ class Grid(object):
                 nextTime_loc = self.time[0] + periods*(self.time_full[-1]-self.time_full[0])
         return nextTime_loc
 
+    @property
+    def chunk_not_loaded(self):
+        return 0
+
+    @property
+    def chunk_loading_requested(self):
+        return 1
+
+    @property
+    def chunk_loaded_touched_in_JIT(self):
+        return 2
+
+    @property
+    def chunk_loaded_not_touched(self):
+        return 3
+
+    @property
+    def chunk_loaded(self):
+        return [2, 3]
+
 
 class RectilinearGrid(Grid):
     """Rectilinear Grid
