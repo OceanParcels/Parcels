@@ -1119,6 +1119,7 @@ class FieldSet(object):
                                 f.data[2, :] = None
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
+                g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
                 g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
                 if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
                     if signdt >= 0:
