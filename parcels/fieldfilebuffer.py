@@ -208,6 +208,7 @@ class DaskFileBuffer(NetcdfFileBuffer):
         self.chunksize = kwargs.pop('chunksize', 'auto')
         self.lock_file = kwargs.pop('lock_file', True)
         self.chunk_mapping = None
+        self.rechunk_callback_fields = kwargs.pop('rechunk_callback_fields', None)
         self.chunking_finalized = False
         self.autochunkingfailed = False
         super(DaskFileBuffer, self).__init__(*args, **kwargs)
@@ -694,18 +695,22 @@ class DaskFileBuffer(NetcdfFileBuffer):
                         self.chunk_mapping[chunkIndex] = chunkDim
                         chunkIndex += 1
                     self._chunkmap_to_chunksize()
-                    self.chunking_finalized = True
+                    if self.rechunk_callback_fields is not None:
+                        self.rechunk_callback_fields()
+                        self.chunking_finalized = True
                 else:
+                    self.chunking_finalized = True
                     if not self.autochunkingfailed:
                         data = data.rechunk(self.chunk_mapping)
-                    self.chunking_finalized = True
         else:
             da_data = da.from_array(data, chunks=self.chunksize)
             if self.chunksize == 'auto' and da_data.shape[-2:] == da_data.chunksize[-2:]:
                 data = np.array(data)
             else:
                 data = da_data
-            self.chunking_finalized = True
+            if not self.chunking_finalized and self.rechunk_callback_fields is not None:
+                self.rechunk_callback_fields()
+                self.chunking_finalized = True
 
         return data
 
