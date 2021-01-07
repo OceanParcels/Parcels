@@ -1165,7 +1165,7 @@ class Field(object):
             else:
                 self.data_chunks[0, :] = None
             self.c_data_chunks[0] = None
-            self.grid.load_chunk[0] = g.chunk_loaded_touched_in_JIT
+            self.grid.load_chunk[0] = g.chunk_loaded_touched
             self.data_chunks[0] = np.array(self.data)
 
     @property
