@@ -248,7 +248,7 @@ def test_nemo_3D(mode, chunk_mode):
         assert (len(field_set.U.grid.load_chunk) != 1)
         assert (len(field_set.U.grid.load_chunk) == (1 * int(math.ceil(75.0/25.0)) * int(math.ceil(201.0/201.0)) * int(math.ceil(151.0/151.0))))
         assert (len(field_set.V.grid.load_chunk) != 1)
-        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(75.0/1.0)) * int(math.ceil(201.0/8.0)) * int(math.ceil(151.0/8.0))))
+        assert (len(field_set.V.grid.load_chunk) == (1 * int(math.ceil(75.0/75.0)) * int(math.ceil(201.0/8.0)) * int(math.ceil(151.0/8.0))))
 
 
 @pytest.mark.parametrize('mode', ['jit'])
