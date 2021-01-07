@@ -253,7 +253,7 @@ class Kernel(object):
 
             for g in pset.fieldset.gridset.grids:
                 g.load_chunk = np.where(g.load_chunk == g.chunk_loading_requested,
-                                        g.chunk_loaded_touched_in_JIT, g.load_chunk)
+                                        g.chunk_loaded_touched, g.load_chunk)
                 if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
                     if not g.load_chunk.flags.c_contiguous:
                         g.load_chunk = g.load_chunk.copy()
@@ -412,8 +412,8 @@ class Kernel(object):
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
                 if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched_in_JIT,
-                                            g.chunk_loaded_not_touched, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+                                            g.chunk_deprecated, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:

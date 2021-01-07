@@ -1070,9 +1070,9 @@ class FieldSet(object):
                 if not f.chunk_set:
                     f.chunk_setup()
                 if len(g.load_chunk) > g.chunk_not_loaded:
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched_in_JIT,
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
                                             g.chunk_loading_requested, g.load_chunk)
-                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_not_touched,
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
                                             g.chunk_not_loaded, g.load_chunk)
 
             elif g.update_status == 'updated':
@@ -1121,14 +1121,14 @@ class FieldSet(object):
                                 f.data[2, :] = None
                         f.data[1:, :] = f.data[:2, :]
                         f.data[0, :] = data
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched_in_JIT,
+                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
                                         g.chunk_loading_requested, g.load_chunk)
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_not_touched,
+                g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
                                         g.chunk_not_loaded, g.load_chunk)
                 if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == g.chunk_loaded_touched_in_JIT:
+                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
                                 if f.data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
@@ -1139,7 +1139,7 @@ class FieldSet(object):
                                 f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
                     else:
                         for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == g.chunk_loaded_touched_in_JIT:
+                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
                                 if f.data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel

@@ -242,11 +242,11 @@ class Grid(object):
         return 1
 
     @property
-    def chunk_loaded_touched_in_JIT(self):
+    def chunk_loaded_touched(self):
         return 2
 
     @property
-    def chunk_loaded_not_touched(self):
+    def chunk_deprecated(self):
         return 3
 
     @property
