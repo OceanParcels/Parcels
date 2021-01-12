@@ -1146,17 +1146,14 @@ class Field(object):
     def chunk_data(self):
         if not self.chunk_set:
             self.chunk_setup()
-        # self.grid.load_chunk code:
-        # 0: not loaded
-        # 1: was asked to load by kernel in JIT
-        # 2: is loaded and was touched last C call
-        # 3: is loaded
+        g = self.grid
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
-                if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
+                if g.load_chunk[block_id] == g.chunk_loading_requested \
+                        or g.load_chunk[block_id] in g.chunk_loaded and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
-                elif self.grid.load_chunk[block_id] == 0:
+                elif g.load_chunk[block_id] == g.chunk_not_loaded:
                     if isinstance(self.data_chunks, list):
                         self.data_chunks[block_id] = None
                     else:
@@ -1168,7 +1165,7 @@ class Field(object):
             else:
                 self.data_chunks[0, :] = None
             self.c_data_chunks[0] = None
-            self.grid.load_chunk[0] = 2
+            self.grid.load_chunk[0] = g.chunk_loaded_touched
             self.data_chunks[0] = np.array(self.data)
 
     @property
@@ -1189,9 +1186,9 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         for i in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[i] == 1:
+            if self.grid.load_chunk[i] == self.grid.chunk_loading_requested:
                 raise ValueError('data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1')
-            if self.grid.load_chunk[i] > 1:
+            if self.grid.load_chunk[i] in self.grid.chunk_loaded:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
@@ -1355,12 +1352,13 @@ class Field(object):
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
+        rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
                                           netcdf_engine=self.netcdf_engine, timestamp=timestamp,
                                           interp_method=self.interp_method,
                                           data_full_zdim=self.data_full_zdim,
                                           chunksize=self.chunksize,
-                                          rechunk_callback_fields=self.chunk_setup,
+                                          rechunk_callback_fields=rechunk_callback_fields,
                                           chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
