@@ -97,16 +97,17 @@ class Kernel_Benchmark(Kernel):
                 g.lon = g.lon.copy()
             if not g.lat.flags.c_contiguous:
                 g.lat = g.lat.copy()
+
+        fargs = []
+        if self.field_args is not None:
+            # ==== major runtime expense in this function, for plain advection ==== #
+            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
+        if self.const_args is not None:
+            fargs += [c_double(f) for f in self.const_args.values()]
         self._mem_io_log.stop_timing()
         self._mem_io_log.accumulate_timing()
 
         self._compute_timings.start_timing()
-        fargs = []
-        if self.field_args is not None:
-            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
-        if self.const_args is not None:
-            fargs += [c_double(f) for f in self.const_args.values()]
-
         # particle_data = pset._particle_data.ctypes.data_as(c_void_p)
         node_data = pset.begin()
         if len(fargs) > 0:
