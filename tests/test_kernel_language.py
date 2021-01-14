@@ -1,6 +1,7 @@
 import random as py_random
-#from parcels import random as parcels_random => this doesn't work, and we should not 'ghost' up which random module is used; the module shoudl really get a different name
-from parcels import rng as parcels_random
+from parcels import random as parcels_random
+# from parcels.rng import parcels_random as pa_random
+# from parcels import random as parcels_random => this doesn't work, and we should not 'ghost' up which random module is used; the module shoudl really get a different name
 import numpy as np
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode
 from parcels.particleset_vectorized import ParticleSet

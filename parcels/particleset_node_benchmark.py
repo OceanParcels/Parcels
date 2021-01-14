@@ -19,13 +19,14 @@ except:
 from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels.particleset_node import ParticleSet
 # from parcels.kernel_vectorized import Kernel
+from parcels.kernel_node_benchmark import Kernel_Benchmark
+# from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
-from parcels.tools import idgen
-from parcels.kernel_node_benchmark import Kernel_Benchmark
 from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
+from parcels.tools import idgen
 
 from resource import getrusage, RUSAGE_SELF
 
@@ -52,7 +53,7 @@ def measure_mem_usage():
         return rsc.ru_maxrss*1024
     return rsc.ru_maxrss
 
-USE_ASYNC_MEMLOG = True
+USE_ASYNC_MEMLOG = False
 USE_RUSE_SYNC_MEMLOG = False  # can be faulty
 
 class ParticleSet_Benchmark(ParticleSet):
@@ -101,11 +102,8 @@ class ParticleSet_Benchmark(ParticleSet):
         :param movie_background_field: field plotted as background in the movie if moviedt is set.
                                        'vector' shows the velocity as a vector field.
         :param verbose_progress: Boolean for providing a progress bar for the kernel execution loop.
-        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each
-                                        iteration (post-process, non-Kernel)
-        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval
-                            to (latestly) interrupt the running kernel and invoke post-iteration
-                            callbacks from 'postIterationCallbacks'.
+        :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
+        :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
@@ -150,6 +148,20 @@ class ParticleSet_Benchmark(ParticleSet):
         assert outputdt is None or outputdt >= 0, 'outputdt must be positive'
         assert moviedt is None or moviedt >= 0, 'moviedt must be positive'
 
+        # ==== Set particle.time defaults based on sign of dt, if not set at ParticleSet construction => moved below (l. xyz)
+        # piter = 0
+        # while piter < len(self._nodes):
+        #     pdata = self._nodes[piter].data
+        # #node = self.begin()
+        # #while node is not None:
+        # #    pdata = node.data
+        #     if np.isnan(pdata.time):
+        #         mintime, maxtime = self._fieldset.gridset.dimrange('time_full')
+        #         pdata.time = mintime if dt >= 0 else maxtime
+        # #    node.set_data(pdata)
+        #     self._nodes[piter].set_data(pdata)
+        #     piter += 1
+
         # Derive _starttime and endtime from arguments or fieldset defaults
         if runtime is not None and endtime is not None:
             raise RuntimeError('Only one of (endtime, runtime) can be specified')
@@ -163,6 +175,9 @@ class ParticleSet_Benchmark(ParticleSet):
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
 
+        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
+        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
+
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
@@ -174,6 +189,8 @@ class ParticleSet_Benchmark(ParticleSet):
             execute_once = True
 
         # ==== Initialise particle timestepping
+        # for p in self:
+        #     p.dt = dt
         piter = 0
         while piter < len(self._nodes):
             pdata = self._nodes[piter].data
@@ -270,7 +287,10 @@ class ParticleSet_Benchmark(ParticleSet):
                         lat = self.rparam.get_latitude(add_iter)
                         pdepth = self.rparam.get_depth_value(add_iter)
                         ptime = time
-                        pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
+                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                        # pid = np.iinfo(np.uint64).max if pid is None else pid
+                        # pindex = idgen.total_length
+                        # pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                         pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
                         pdata.dt = dt
                         self.add(self._nclass(id=pid, data=pdata))
@@ -292,6 +312,7 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.mem_io_log.add_aux_measure(self._kernel.mem_io_timings.sum())
                 self._kernel.mem_io_timings.reset()
             self.compute_log.accumulate_timing()
+            # logger.info("Pset length: {}".format(len(self)))
             self.nparticle_log.advance_iteration(len(self))
             # ==== end compute ==== #
             if abs(time-next_output) < tol:  # ==== IO ==== #
@@ -332,6 +353,7 @@ class ParticleSet_Benchmark(ParticleSet):
             self.total_log.stop_timing()
             self.total_log.accumulate_timing()
             mem_B_used_total = 0
+            # mem_B_used_total = psutil.Process(os.getpid()).rss
             # if MPI:
             #     mpi_comm = MPI.COMM_WORLD
             #     mem_B_used = self.process.memory_info().rss
