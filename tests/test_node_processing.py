@@ -5,9 +5,9 @@ from parcels.particlefile_node import ParticleFile
 from parcels.kernel_node import Kernel
 from parcels.nodes.Node import Node, NodeJIT
 from parcels.tools import idgen
-from parcels.tools import logger
 from parcels.tools import get_cache_dir
 from os import path
+# from parcels.tools import logger
 import numpy as np
 import pytest
 
@@ -145,11 +145,12 @@ def run_test_pset_add_explicit(fset, mode, npart=100):
         pdata = ptype[mode](lon[i], lat[i], pid=id, fieldset=fset, index=index)
         ndata = nclass(id=id, data=pdata)
         pset.add(ndata)
-
+    # assert(pset.size >= npart)
+    # print("# particles: {}".format(pset.size))
+    # logger.info("# particles: {}".format(pset.size))
     for tstep in range(3):
         pfile.write(pset, tstep)
     pfile.close()
-    logger.info("# particles: {}".format(pset.size))
     assert (pset.size > 0)
     assert (pset.size <= 2* npart)
     # ==== of course this is not working as the order in pset.data and lon is not the same ==== #
@@ -176,7 +177,7 @@ def run_test_pset_node_execute(fset, mode, npart=10000):
         pset.add(ndata)
     pset.execute(AdvectionRK4, runtime=0., dt=(360.0 * 24.0 * 10.0), output_file=pfile)
     pfile.close()
-    logger.info("# particles: {}".format(pset.size))
+    # logger.info("# particles: {}".format(pset.size))
     assert (pset.size > 0)
     assert (pset.size <= 2* npart)
 
@@ -188,3 +189,4 @@ if __name__ == '__main__':
     run_test_pset_node_execute(fset, 'jit')
     run_test_pset_node_execute(fset, 'scipy')
     # idgen.close()
+    # del idgen

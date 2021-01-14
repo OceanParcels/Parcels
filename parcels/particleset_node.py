@@ -9,15 +9,19 @@ from scipy.spatial import distance
 import itertools
 import xarray as xr
 import progressbar
+# import math  # noga
+# import random  # noga
 
 from parcels.nodes.LinkedList import *
 from parcels.nodes.Node import Node, NodeJIT
 from parcels.tools import idgen
 
 from parcels.tools import get_cache_dir, get_package_dir
+# from parcels.tools import cleanup_remove_files, cleanup_unload_lib, get_cache_dir, get_package_dir
 # from parcels.wrapping.code_compiler import GNUCompiler
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
+# from parcels import Grid, Field, GridSet, FieldSet
 from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
@@ -62,7 +66,8 @@ class RepeatParameters(object):
         if depth is None:
             depth = []
         self._depth = depth
-        self._maxID = pid_orig
+        self._maxID = pid_orig # pid - pclass.lastID
+        # assert type(self._lon)==type(self._lat)==type(self._depth)
         if isinstance(self._lon, list):
             self._n_pts = len(self._lon)
         elif isinstance(self._lon, np.ndarray):
@@ -227,9 +232,11 @@ class ParticleSet(object):
                             kmeans = KMeans(n_clusters=mpi_size, random_state=0).fit(coords)
                             _partitions = kmeans.labels_
                             _pu_centers = kmeans.cluster_centers_
+                        #mpi_comm.Barrier()
                         _partitions = mpi_comm.bcast(_partitions, root=0)
                         _pu_centers = mpi_comm.bcast(_pu_centers, root=0)
                         self._pu_centers = _pu_centers
+                    # elif np.max(_partitions) >= mpi_size or self._pu_centers.shape[0] >= mpi_size:
                     elif np.max(_partitions >= mpi_rank) or self._pu_centers.shape[0] >= mpi_size:
                         raise RuntimeError('Particle partitions must vary between 0 and the number of mpi procs')
                     lon = lon[_partitions == mpi_rank]
@@ -555,6 +562,9 @@ class ParticleSet(object):
     def get_particle(self, index):
         return self.get(index).data
 
+    # def retrieve_item(self, key):
+    #    return self.get(key)
+
     def __getitem__(self, key):
         if key >= 0 and key < len(self._nodes):
             return self._nodes[key]
@@ -601,6 +611,7 @@ class ParticleSet(object):
                 self.add_entity(item)
         elif isinstance(data_array, ParticleSet):
             for i in range(len(data_array)):
+                # self.add_entity(data_array[i])
                 self.add_entity(data_array.pop(i))
         elif isinstance(data_array, np.ndarray):
             if data_array.dtype == self._ptype:
@@ -640,42 +651,49 @@ class ParticleSet(object):
         # Comment: by current workflow, pset modification is only done on the front node, thus
         # the distance determination and assigment is also done on the front node
         _add_to_pu = True
+        # if MPI:
         if MPI and MPI.COMM_WORLD.Get_size() > 1 and not pu_checked:
             if self._pu_centers is not None and isinstance(self._pu_centers, np.ndarray):
                 mpi_comm = MPI.COMM_WORLD
                 mpi_rank = mpi_comm.Get_rank()
-                # mpi_size = mpi_comm.Get_size()
+                mpi_size = mpi_comm.Get_size()
                 min_dist = np.finfo(self._lonlatdepth_dtype).max
                 min_pu = 0
-                # if mpi_size > 1 and mpi_rank == 0:
-                #     ppos = pdata
-                #     if isinstance(pdata, self._nclass):
-                #         ppos = pdata.data
-                #     spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
-                #     n_clusters = self._pu_centers.shape[0]
-                #     for i in range(n_clusters):
-                #         diff = self._pu_centers[i, :] - spdata
-                #         dist = np.dot(diff, diff)
-                #         if dist < min_dist:
-                #             min_dist = dist
-                #             min_pu = i
-                #     # TODO NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
-                # min_pu = mpi_comm.bcast(min_pu, root=0)
-                ppos = pdata
-                if isinstance(pdata, self._nclass):
-                    ppos = pdata.data
-                spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
-                n_clusters = self._pu_centers.shape[0]
-                for i in range(n_clusters):
-                    diff = self._pu_centers[i, :] - spdata
-                    dist = np.dot(diff, diff)
-                    if dist < min_dist:
-                        min_dist = dist
-                        min_pu = i
+                if mpi_size > 1 and mpi_rank == 0:
+                    ppos = pdata
+                    if isinstance(pdata, self._nclass):
+                        ppos = pdata.data
+                    spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
+                    n_clusters = self._pu_centers.shape[0]
+                    for i in range(n_clusters):
+                        diff = self._pu_centers[i, :] - spdata
+                        dist = np.dot(diff, diff)
+                        if dist < min_dist:
+                            min_dist = dist
+                            min_pu = i
+                # NOW: move the related center by: (center-spdata) * 1/(cluster_size+1)
+                min_pu = mpi_comm.bcast(min_pu, root=0)
                 if mpi_rank == min_pu:
                     _add_to_pu = True
                 else:
                     _add_to_pu = False
+                # ==== old non-numpy code ==== #
+                # ppos = pdata
+                # if isinstance(pdata, self._nclass):
+                #     ppos = pdata.data
+                # spdata = np.array([ppos.lat, ppos.lon], dtype=self._lonlatdepth_dtype)
+                # n_clusters = self._pu_centers.shape[0]
+                # for i in range(n_clusters):
+                #     diff = self._pu_centers[i, :] - spdata
+                #     dist = np.dot(diff, diff)
+                #     if dist < min_dist:
+                #         min_dist = dist
+                #         min_pu = i
+                # if mpi_rank == min_pu:
+                #     _add_to_pu = True
+                # else:
+                #     _add_to_pu = False
+                # # TODO: still need to propagate the new information
         if _add_to_pu:
             index = -1
             pid = np.iinfo(np.uint64).max
@@ -836,6 +854,7 @@ class ParticleSet(object):
             if self._ptype.uses_jit:
                 self._kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
+                # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs))
                 # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
                 self._kernel.compile(compiler=GNUCompiler_MS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], tmp_dir=get_cache_dir()))
                 self._kernel.load_lib()
@@ -894,6 +913,9 @@ class ParticleSet(object):
             endtime = _starttime + runtime * np.sign(dt)
         elif endtime is None:
             endtime = maxtime if dt >= 0 else mintime
+
+        # print("Fieldset min-max: {} to {}".format(mintime, maxtime))
+        # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
         if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
@@ -985,7 +1007,10 @@ class ParticleSet(object):
                         lat = self.rparam.get_latitude(add_iter)
                         pdepth = self.rparam.get_depth_value(add_iter)
                         ptime = time
-                        pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
+                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                        # pid = np.iinfo(np.uint64).max if pid is None else pid
+                        # pindex = idgen.total_length
+                        # pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                         pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
                         pdata.dt = dt
                         self.add(self._nclass(id=pid, data=pdata))
