@@ -340,7 +340,8 @@ class Kernel(object):
                 if res in [StateCode.Success, OperationCode.Delete]:
                     # Update time and repeat
                     p.time += p.dt
-                    p.update_next_dt()
+                    # p.update_next_dt()
+                    p.dt=dt
                     if analytical:
                         p.dt = np.inf
                     dt_pos = min(abs(p.dt), abs(endtime - p.time))
