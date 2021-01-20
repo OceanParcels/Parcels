@@ -77,7 +77,7 @@ def RenewParticle(particle, fieldset, time):
 def perIterGC():
     gc.collect()
 
-def perlin_fieldset_from_numpy(periodic_wrap=False):
+def perlin_fieldset_from_numpy(periodic_wrap=False, write_out=False):
     """Simulate a current from structured random noise (i.e. Perlin noise).
     we use the external package 'perlin-numpy' as field generator, see:
     https://github.com/pvigier/perlin-numpy
@@ -85,6 +85,8 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
     Perlin noise was introduced in the literature here:
     Perlin, Ken (July 1985). "An Image Synthesizer". SIGGRAPH Comput. Graph. 19 (97–8930), p. 287–296.
     doi:10.1145/325165.325247, https://dl.acm.org/doi/10.1145/325334.325247
+
+    :param write_out: False if no write-out; else the fieldset path+basename
     """
     img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
 
@@ -116,10 +118,14 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
 
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
+    fieldset = None
     if periodic_wrap:
-        return FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=1))
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=1))
     else:
-        return FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, allow_time_extrapolation=True)
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, allow_time_extrapolation=True)
+    if write_out:
+        fieldset.write(filename=write_out)
+    return fieldset
 
 
 def perlin_fieldset_from_xarray(periodic_wrap=False):
@@ -269,7 +275,10 @@ if __name__=='__main__':
     if use_xarray:
         fieldset = perlin_fieldset_from_xarray(periodic_wrap=periodicFlag)
     else:
-        fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag)
+        field_fpath = False
+        if args.write_out:
+            field_fpath = os.path.join(odir,"perlin")
+        fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag, write_out=field_fpath)
 
     if args.compute_mode is 'scipy':
         Nparticle = 2**10
@@ -384,6 +393,7 @@ if __name__=='__main__':
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12), moviedt=delta(hours=6), movie_background_field=fieldset.U)
         else:
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
@@ -391,6 +401,9 @@ if __name__=='__main__':
             endtime = ostime.process_time()
     else:
         endtime = ostime.process_time()
+
+    if args.write_out:
+        output_file.close()
 
     if not args.dryrun:
         if MPI:
