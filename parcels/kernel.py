@@ -297,10 +297,10 @@ class Kernel(object):
             # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
             if abs(endtime - p.time) < abs(p.dt):
                 dt_pos = abs(endtime - p.time)
-                reset_dt = p.dt
+                reset_dt = True
             else:
                 dt_pos = abs(p.dt)
-                reset_dt = 0
+                reset_dt = False
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
@@ -346,7 +346,7 @@ class Kernel(object):
                     # Update time and repeat
                     p.time += p.dt
                     if reset_dt and p.dt == pdt_prekernels:
-                        p.dt = reset_dt
+                        p.dt = dt
                     p.update_next_dt()
                     if analytical:
                         p.dt = np.inf

@@ -1017,11 +1017,11 @@ class LoopGenerator(object):
         dt_pos = c.Assign("__dt", "fmin(fabs(particles->dt[pnum]), fabs(endtime - particles->time[pnum]))")  # original
 
         dt_pos_init = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
-                            c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "particles->time[pnum]")]),
+                            c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "1")]),
                             c.Block([c.Assign("__dt", "fabs(particles->dt[pnum])"), c.Assign("reset_dt", "0")]))
 
-        reset_dt = c.If("(reset_dt != 0) & is_equal_dbl(__pdt_prekernels, particles->dt[pnum])",
-                          c.Block([c.Assign("particles->dt[pnum]","reset_dt")]))
+        reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles->dt[pnum])",
+                          c.Block([c.Assign("particles->dt[pnum]","dt")]))
 
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles->dt[pnum]", "__pdt_prekernels")
