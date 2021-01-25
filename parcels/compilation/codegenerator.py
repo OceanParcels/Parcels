@@ -1014,9 +1014,7 @@ class LoopGenerator(object):
         update_state = c.Assign("particles->state[pnum]", "res")
         update_pdt = c.If("_next_dt_set == 1",
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[pnum]", "_next_dt")]))
-        dt_pos = c.Assign("__dt", "fmin(fabs(particles->dt[pnum]), fabs(endtime - particles->time[pnum]))")  # original
-
-        dt_pos_init = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
+        dt_pos = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
                             c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "1")]),
                             c.Block([c.Assign("__dt", "fabs(particles->dt[pnum])"), c.Assign("reset_dt", "0")]))
 
@@ -1065,7 +1063,7 @@ class LoopGenerator(object):
 
         time_loop = c.While("(particles->state[pnum] == EVALUATE || particles->state[pnum] == REPEAT) || is_zero_dbl(particles->dt[pnum])", c.Block(body))
         part_loop = c.For("pnum = 0", "pnum < num_particles", "++pnum",
-                          c.Block([sign_end_part, reset_res_state, dt_pos_init, notstarted_continue, time_loop]))
+                          c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
                          c.Value("double", "__pdt_prekernels"),

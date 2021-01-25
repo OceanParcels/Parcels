@@ -350,7 +350,12 @@ class Kernel(object):
                     p.update_next_dt()
                     if analytical:
                         p.dt = np.inf
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if abs(endtime - p.time) < abs(p.dt):
+                        dt_pos = abs(endtime - p.time)
+                        reset_dt = True
+                    else:
+                        dt_pos = abs(p.dt)
+                        reset_dt = False
 
                     sign_end_part = np.sign(endtime - p.time)
                     if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
@@ -367,7 +372,12 @@ class Kernel(object):
                     for var in pset.collection.ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if abs(endtime - p.time) < abs(p.dt):
+                        dt_pos = abs(endtime - p.time)
+                        reset_dt = True
+                    else:
+                        dt_pos = abs(p.dt)
+                        reset_dt = False
 
                     sign_end_part = np.sign(endtime - p.time)
                     if sign_end_part != sign_dt:
@@ -439,6 +449,7 @@ class Kernel(object):
 
         # while np.any(error_particles):
         while n_error > 0:
+            print(n_error)
             error_pset = pset.error_particles
             # Apply recovery kernel
             for p in error_pset:
