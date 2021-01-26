@@ -55,17 +55,17 @@ class TimeConverter(object):
             if isinstance(time, (list, np.ndarray)):
                 try:
                     return np.array([(t - self.time_origin).total_seconds() for t in time])
-                except np.core._exceptions.UFuncTypeError:
-                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from "
-                                     f"a {self.calendar} calendar.\n"
-                                     f"Provide 'time' as a {type(self.time_origin)} object?")
+                except ValueError:
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
+                                     "Provide 'time' as a %s object?"
+                                     % (type(time), self.calendar, type(self.time_origin)))
             else:
                 try:
                     return (time - self.time_origin).total_seconds()
                 except ValueError:
-                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from "
-                                     f"a {self.calendar} calendar.\n"
-                                     f"Provide 'time' as a {type(self.time_origin)} object?")
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
+                                     "Provide 'time' as a %s object?"
+                                     % (type(time), self.calendar, type(self.time_origin)))
         elif self.calendar is None:
             return time - self.time_origin
         else:
