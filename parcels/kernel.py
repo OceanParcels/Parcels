@@ -388,7 +388,7 @@ class Kernel(object):
         This deletion function is targetted to index-addressable, random-access array-collections.
         """
         # Indices marked for deletion.
-        bool_indices = np.array([p.state == OperationCode.Delete for p in pset])
+        bool_indices = pset.collection.state == OperationCode.Delete
         indices = np.where(bool_indices)[0]
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=bool_indices)
@@ -396,8 +396,7 @@ class Kernel(object):
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        for p in pset:
-            p.set_state(StateCode.Evaluate)
+        pset.collection.state[:] = StateCode.Evaluate
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
