@@ -1,3 +1,4 @@
+# flake8: noqa: E999
 import inspect
 from datetime import timedelta as delta
 from math import cos
@@ -56,14 +57,14 @@ class TimeConverter(object):
                 try:
                     return np.array([(t - self.time_origin).total_seconds() for t in time])
                 except ValueError:
-                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n" \
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
                                      "Provide 'time' as a %s object?"
                                      % (type(time), self.calendar, type(self.time_origin)))
             else:
                 try:
                     return (time - self.time_origin).total_seconds()
                 except ValueError:
-                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n" \
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
                                      "Provide 'time' as a %s object?"
                                      % (type(time), self.calendar, type(self.time_origin)))
         elif self.calendar is None:
