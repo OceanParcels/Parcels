@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timedelta as delta
 from os import path
 import time as time_module
+import cftime
 
 import progressbar
 
@@ -350,6 +351,8 @@ class BaseParticleSet(NDCluster):
             raise RuntimeError('endtime must be either a datetime or a double')
         if isinstance(endtime, datetime):
             endtime = np.datetime64(endtime)
+        elif isinstance(endtime, cftime.datetime):
+            endtime = self.time_origin.reltime(endtime)
         if isinstance(endtime, np.datetime64):
             if self.time_origin.calendar is None:
                 raise NotImplementedError('If fieldset.time_origin is not a date, execution endtime must be a double')

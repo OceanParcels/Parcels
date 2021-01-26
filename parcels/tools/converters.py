@@ -53,9 +53,19 @@ class TimeConverter(object):
             return (time - self.time_origin) / np.timedelta64(1, 's')
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
-                return np.array([(t - self.time_origin).total_seconds() for t in time])
+                try:
+                    return np.array([(t - self.time_origin).total_seconds() for t in time])
+                except np.core._exceptions.UFuncTypeError:
+                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from "
+                                     f"a {self.calendar} calendar.\n"
+                                     f"Provide 'time' as a {type(self.time_origin)} object?")
             else:
-                return (time - self.time_origin).total_seconds()
+                try:
+                    return (time - self.time_origin).total_seconds()
+                except ValueError:
+                    raise ValueError(f"Cannot subtract 'time' (a {type(time)} object) from "
+                                     f"a {self.calendar} calendar.\n"
+                                     f"Provide 'time' as a {type(self.time_origin)} object?")
         elif self.calendar is None:
             return time - self.time_origin
         else:
