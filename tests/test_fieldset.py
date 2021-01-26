@@ -521,10 +521,13 @@ def test_add_second_vector_field(mode):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
+@pytest.mark.parametrize('dt', [-3600, 3600])
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
 @pytest.mark.parametrize('with_GC', [False, True])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows memory leaks (#787)")
-def test_from_netcdf_memory_containment(mode, time_periodic, chunksize, with_GC):
+def test_from_netcdf_memory_containment(mode, time_periodic, dt, chunksize, with_GC):
+    if time_periodic and dt < 0:
+        return True  # time_periodic does not work in backward-time mode
     if chunksize == 'auto':
         dask.config.set({'array.chunk-size': '2MiB'})
     else:
@@ -575,7 +578,7 @@ def test_from_netcdf_memory_containment(mode, time_periodic, chunksize, with_GC)
     mem_0 = process.memory_info().rss
     mem_exhausted = False
     try:
-        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=delta(hours=1), runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+        pset.execute(pset.Kernel(AdvectionRK4)+periodicBoundaryConditions, dt=dt, runtime=delta(days=7), postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
     except MemoryError:
         mem_exhausted = True
     mem_steps_np = np.array(perflog.memory_steps)
@@ -768,7 +771,7 @@ def test_fieldset_defer_loading_function(zdim, scale_fac, tmpdir, filename='test
     assert np.allclose(fieldset.U.data, scale_fac*(zdim-1.)/zdim)
 
 
-@pytest.mark.parametrize('time2', [2, 7])
+@pytest.mark.parametrize('time2', [1, 7])
 def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
     data0, dims0 = generate_fieldset(3, 3, 4, 10)
@@ -789,7 +792,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
     pset = ParticleSet(fieldset, pclass=SampleParticle, time=[0, time2],
                        lon=[0.5, 0.5], lat=[0.5, 0.5], depth=[0.5, 0.5])
 
-    if time2 > 2:
+    if time2 > 1:
         failed = False
         try:
             pset.execute(SampleField, dt=0.)
@@ -905,3 +908,30 @@ def test_fieldset_from_data_gridtypes(xdim=20, ydim=10, zdim=4):
     pset.execute(AdvectionRK4, runtime=1, dt=.5)
     assert np.allclose(plon, pset.lon)
     assert np.allclose(plat, pset.lat)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('direction', [1, -1])
+@pytest.mark.parametrize('time_extrapolation', [True, False])
+def test_deferredload_simplefield(mode, direction, time_extrapolation, tmpdir, tdim=10):
+    filename = tmpdir.join("simplefield_deferredload.nc")
+    data = np.zeros((tdim, 2, 2))
+    for ti in range(tdim):
+        data[ti, :, :] = ti if direction == 1 else tdim-ti-1
+    ds = xr.Dataset({"U": (("t", "y", "x"), data), "V": (("t", "y", "x"), data)},
+                    coords={"x": [0, 1], "y": [0, 1], "t": np.arange(tdim)})
+    ds.to_netcdf(filename)
+
+    fieldset = FieldSet.from_netcdf(filename, {'U': 'U', 'V': 'V'}, {'lon': 'x', 'lat': 'y', 'time': 't'},
+                                    deferred_load=True, mesh='flat', allow_time_extrapolation=time_extrapolation)
+
+    class SamplingParticle(ptype[mode]):
+        p = Variable('p')
+    pset = ParticleSet(fieldset, SamplingParticle, lon=0.5, lat=0.5)
+
+    def SampleU(particle, fieldset, time):
+        particle.p = fieldset.U[particle]
+
+    runtime = tdim*2 if time_extrapolation else None
+    pset.execute(SampleU, dt=direction, runtime=runtime)
+    assert pset.p == tdim-1 if time_extrapolation else tdim-2

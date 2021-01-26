@@ -163,6 +163,17 @@ class FieldSet(object):
             self.gridset.add_grid(field)
             field.fieldset = self
 
+    def add_constant_field(self, name, value, mesh='flat'):
+        """Wrapper function to add a Field that is constant in space,
+           useful e.g. when using constant horizontal diffusivity
+
+        :param name: Name of the :class:`parcels.field.Field` object to be added
+        :param value: Value of the constant field (stored as 32-bit float)
+        :param units: Optional UnitConverter object, to convert units
+                      (e.g. for Horizontal diffusivity from m2/s to degree2/s)
+        """
+        self.add_field(Field(name, value, lon=0, lat=0, mesh=mesh))
+
     def add_vector_field(self, vfield):
         """Add a :class:`parcels.field.VectorField` object to the FieldSet
 
@@ -494,7 +505,8 @@ class FieldSet(object):
                |                                             |
                |                                             |
                |_________________V[k,j,i]____________________|
-            (For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations)
+           For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
+           Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
         if 'creation_log' not in kwargs.keys():
             kwargs['creation_log'] = 'from_mitgcm'
@@ -503,8 +515,6 @@ class FieldSet(object):
         fieldset = cls.from_c_grid_dataset(filenames, variables, dimensions, mesh=mesh, indices=indices, time_periodic=time_periodic,
                                            allow_time_extrapolation=allow_time_extrapolation, tracer_interp_method=tracer_interp_method,
                                            chunksize=chunksize, gridindexingtype='mitgcm', **kwargs)
-        if hasattr(fieldset, 'W'):
-            fieldset.W.set_scaling_factor(-1.)
         return fieldset
 
     @classmethod
@@ -983,7 +993,7 @@ class FieldSet(object):
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         logger.warning_once("Fieldset.advancetime() is deprecated.\n \
-                             Parcels deals automatically with loading only 3 time steps simustaneously\
+                             Parcels deals automatically with loading only 2 time steps simultaneously\
                              such that the total allocated memory remains limited.")
 
         advance = 0
@@ -1045,7 +1055,7 @@ class FieldSet(object):
                 else:
                     zd = g.zdim
                 data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                f.loaded_time_indices = range(3)
+                f.loaded_time_indices = range(2)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
@@ -1059,9 +1069,11 @@ class FieldSet(object):
                 f.data = f.reshape(data)
                 if not f.chunk_set:
                     f.chunk_setup()
-                if len(g.load_chunk) > 0:
-                    g.load_chunk = np.where(g.load_chunk == 2, 1, g.load_chunk)
-                    g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                if len(g.load_chunk) > g.chunk_not_loaded:
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+                                            g.chunk_loading_requested, g.load_chunk)
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
+                                            g.chunk_not_loaded, g.load_chunk)
 
             elif g.update_status == 'updated':
                 lib = np if isinstance(f.data, np.ndarray) else da
@@ -1071,68 +1083,69 @@ class FieldSet(object):
                     zd = g.zdim
                 data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
-                    f.loaded_time_indices = [2]
+                    f.loaded_time_indices = [1]
                     if f.filebuffers[0] is not None:
                         f.filebuffers[0].close()
                         f.filebuffers[0] = None
-                    f.filebuffers[:2] = f.filebuffers[1:]
-                    data = f.computeTimeChunk(data, 2)
+                    f.filebuffers[0] = f.filebuffers[1]
+                    data = f.computeTimeChunk(data, 1)
                 else:
                     f.loaded_time_indices = [0]
-                    if f.filebuffers[2] is not None:
-                        f.filebuffers[2].close()
-                        f.filebuffers[2] = None
-                    f.filebuffers[1:] = f.filebuffers[:2]
+                    if f.filebuffers[1] is not None:
+                        f.filebuffers[1].close()
+                        f.filebuffers[1] = None
+                    f.filebuffers[1] = f.filebuffers[0]
                     data = f.computeTimeChunk(data, 0)
                 data = f.rescale_and_set_minmax(data)
                 if signdt >= 0:
-                    data = f.reshape(data)[2:, :]
+                    data = f.reshape(data)[1, :]
                     if lib is da:
-                        f.data = lib.concatenate([f.data[1:, :], data], axis=0)
+                        f.data = lib.stack([f.data[1, :], data], axis=0)
                     else:
                         if not isinstance(f.data, DeferredArray):
                             if isinstance(f.data, list):
                                 del f.data[0, :]
                             else:
                                 f.data[0, :] = None
-                        f.data[:2, :] = f.data[1:, :]
-                        f.data[2, :] = data
+                        f.data[0, :] = f.data[1, :]
+                        f.data[1, :] = data
                 else:
-                    data = f.reshape(data)[0:1, :]
+                    data = f.reshape(data)[0, :]
                     if lib is da:
-                        f.data = lib.concatenate([data, f.data[:2, :]], axis=0)
+                        f.data = lib.stack([data, f.data[0, :]], axis=0)
                     else:
                         if not isinstance(f.data, DeferredArray):
                             if isinstance(f.data, list):
-                                del f.data[2, :]
+                                del f.data[1, :]
                             else:
-                                f.data[2, :] = None
-                        f.data[1:, :] = f.data[:2, :]
+                                f.data[1, :] = None
+                        f.data[1, :] = f.data[0, :]
                         f.data[0, :] = data
-                g.load_chunk = np.where(g.load_chunk == 3, 0, g.load_chunk)
+                g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+                                        g.chunk_loading_requested, g.load_chunk)
+                g.load_chunk = np.where(g.load_chunk == g.chunk_deprecated,
+                                        g.chunk_not_loaded, g.load_chunk)
                 if isinstance(f.data, da.core.Array) and len(g.load_chunk) > 0:
                     if signdt >= 0:
                         for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == 2:
+                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
                                 if f.data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][0] = None
-                                f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
-                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                                f.data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),)+block][1])
                     else:
                         for block_id in range(len(g.load_chunk)):
-                            if g.load_chunk[block_id] == 2:
+                            if g.load_chunk[block_id] == g.chunk_loaded_touched:
                                 if f.data_chunks[block_id] is None:
                                     # file chunks were never loaded.
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
-                                f.data_chunks[block_id][2] = None
-                                f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
+                                f.data_chunks[block_id][1] = None
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),)+block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)

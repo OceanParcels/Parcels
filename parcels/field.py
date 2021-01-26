@@ -33,6 +33,14 @@ from parcels.tools.loggers import logger
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 
 
+def _isParticle(key):
+    # TODO: ideally, we'd like to use isinstance(key, BaseParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet.
+    if hasattr(key, '_next_dt'):
+        return True
+    else:
+        return False
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -155,14 +163,14 @@ class Field(object):
 
             # Hack around the fact that NaN and ridiculously large values
             # propagate in SciPy's interpolators
-            self.data[np.isnan(self.data)] = 0.
+            lib = np if isinstance(self.data, np.ndarray) else da
+            self.data[lib.isnan(self.data)] = 0.
             if self.vmin is not None:
                 self.data[self.data < self.vmin] = 0.
             if self.vmax is not None:
                 self.data[self.data > self.vmax] = 0.
 
             if self.grid._add_last_periodic_data_timestep:
-                lib = np if isinstance(self.data, np.ndarray) else da
                 self.data = lib.concatenate((self.data, self.data[:1, :]), axis=0)
 
         self._scaling_factor = None
@@ -192,7 +200,7 @@ class Field(object):
         self.c_data_chunks = []
         self.nchunks = []
         self.chunk_set = False
-        self.filebuffers = [None] * 3
+        self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
 
@@ -384,7 +392,7 @@ class Field(object):
         if 'full_load' in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs['full_load']
 
-        if grid.time.size <= 3 or deferred_load is False:
+        if grid.time.size <= 2 or deferred_load is False:
             deferred_load = False
 
         if chunksize not in [False, None]:
@@ -557,8 +565,7 @@ class Field(object):
             field.grid.depth_field = field
 
     def __getitem__(self, key):
-        # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
-        if hasattr(key, 'set_index'):
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
@@ -1139,17 +1146,14 @@ class Field(object):
     def chunk_data(self):
         if not self.chunk_set:
             self.chunk_setup()
-        # self.grid.load_chunk code:
-        # 0: not loaded
-        # 1: was asked to load by kernel in JIT
-        # 2: is loaded and was touched last C call
-        # 3: is loaded
+        g = self.grid
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
-                if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
+                if g.load_chunk[block_id] == g.chunk_loading_requested \
+                        or g.load_chunk[block_id] in g.chunk_loaded and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
-                elif self.grid.load_chunk[block_id] == 0:
+                elif g.load_chunk[block_id] == g.chunk_not_loaded:
                     if isinstance(self.data_chunks, list):
                         self.data_chunks[block_id] = None
                     else:
@@ -1161,7 +1165,7 @@ class Field(object):
             else:
                 self.data_chunks[0, :] = None
             self.c_data_chunks[0] = None
-            self.grid.load_chunk[0] = 2
+            self.grid.load_chunk[0] = g.chunk_loaded_touched
             self.data_chunks[0] = np.array(self.data)
 
     @property
@@ -1182,9 +1186,9 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         for i in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[i] == 1:
+            if self.grid.load_chunk[i] == self.grid.chunk_loading_requested:
                 raise ValueError('data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1')
-            if self.grid.load_chunk[i] > 1:
+            if self.grid.load_chunk[i] in self.grid.chunk_loaded:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
@@ -1320,11 +1324,9 @@ class Field(object):
         if tindex == 0:
             data = lib.concatenate([data_to_concat, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
-            data = lib.concatenate([data[:tindex, :], data_to_concat, data[tindex+1:, :]], axis=0)
-        elif tindex == 2:
             data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
         else:
-            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1, 2]")
+            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
 
     def advancetime(self, field_new, advanceForward):
@@ -1350,12 +1352,13 @@ class Field(object):
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
+        rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
                                           netcdf_engine=self.netcdf_engine, timestamp=timestamp,
                                           interp_method=self.interp_method,
                                           data_full_zdim=self.data_full_zdim,
                                           chunksize=self.chunksize,
-                                          rechunk_callback_fields=self.chunk_setup,
+                                          rechunk_callback_fields=rechunk_callback_fields,
                                           chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
@@ -1668,7 +1671,7 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        if hasattr(key, 'set_index'):
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
@@ -1756,7 +1759,7 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                if hasattr(key, 'set_index'):
+                if _isParticle(key):
                     val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                 else:
                     val = list.__getitem__(self, iField).eval(*key)
@@ -1816,7 +1819,7 @@ class NestedField(list):
         else:
             for iField in range(len(self)):
                 try:
-                    if hasattr(key, 'set_index'):
+                    if _isParticle(key):
                         val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                     else:
                         val = list.__getitem__(self, iField).eval(*key)

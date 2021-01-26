@@ -557,7 +557,7 @@ class KernelGenerator(ast.NodeVisitor):
                     else:
                         node.ccode = rhs
             except:
-                raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
+                raise RuntimeError("Error in converting Kernel to C. See https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_parcels_structure.ipynb#3.-Kernel-execution for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
