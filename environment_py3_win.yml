@@ -26,3 +26,4 @@ dependencies:
   - ipykernel<5.0
   - pytest
   - nbval
+  - pykdtree
