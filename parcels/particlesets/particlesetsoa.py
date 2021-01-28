@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 
 from parcels.grid import GridCode
+from parcels.grid import CurvilinearGrid
 from parcels.kernel import Kernel
 from parcels.particle import JITParticle
 from parcels.particlefile import ParticleFile
@@ -20,6 +21,11 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
+# == comment CK: prevents us from adding KDTree as 'mandatory' dependency == #
+try:
+    from pykdtree.kdtree import KDTree
+except:
+    KDTree = None
 
 __all__ = ['ParticleSet', 'ParticleSetSOA']
 
@@ -186,6 +192,36 @@ class ParticleSetSOA(BaseParticleSet):
     def indexed_subset(self, indices):
         return ParticleCollectionIteratorSOA(self._collection,
                                              subset=indices)
+
+    def populate_indices(self):
+        """Pre-populate guesses of particle xi/yi indices using a kdtree.
+
+        This is only intended for curvilinear grids, where the initial index search
+        may be quite expensive.
+        """
+
+        if self.fieldset is None:
+            # we need to be attached to a fieldset to have a valid
+            # gridset to search for indices
+            return
+
+        if KDTree is None:
+            return
+        else:
+            for i, grid in enumerate(self.fieldset.gridset.grids):
+                if not isinstance(grid, CurvilinearGrid):
+                    continue
+
+                tree_data = np.stack((grid.lon.flat, grid.lat.flat), axis=-1)
+                tree = KDTree(tree_data)
+                # stack all the particle positions for a single query
+                pts = np.stack((self._collection.data['lon'], self._collection.data['lat']), axis=-1)
+                # query datatype needs to match tree datatype
+                _, idx = tree.query(pts.astype(tree_data.dtype))
+                yi, xi = np.unravel_index(idx, grid.lon.shape)
+
+                self._collection.data['xi'][:, i] = xi
+                self._collection.data['yi'][:, i] = yi
 
     @property
     def error_particles(self):
