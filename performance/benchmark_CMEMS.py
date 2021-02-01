@@ -50,7 +50,7 @@ def create_CMEMS_fieldset(datahead, periodic_wrap):
     # chs = False
     chs = 'auto'
     if periodic_wrap:
-        return FieldSet.from_netcdf(files, variables, dimensions, chunksize=chs, time_periodic=delta(days=1))
+        return FieldSet.from_netcdf(files, variables, dimensions, chunksize=chs, time_periodic=delta(days=31))
     else:
         return FieldSet.from_netcdf(files, variables, dimensions, chunksize=chs, allow_time_extrapolation=True)
 
@@ -317,6 +317,9 @@ if __name__=='__main__':
     else:
         #endtime = ostime.time()
         endtime = ostime.process_time()
+
+    if args.write_out:
+        output_file.close()
 
     size_Npart = len(pset.nparticle_log)
     Npart = pset.nparticle_log.get_param(size_Npart-1)

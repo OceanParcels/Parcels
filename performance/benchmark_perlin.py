@@ -53,11 +53,15 @@ perlinres=(1,32,8)
 shapescale=(4,8,8)
 #shapescale=(8,6,6) # formerly
 perlin_persistence=0.3
-a = 1000 * 1e3
-b = 1000 * 1e3
-scalefac = 2.0
+img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
+sx = img_shape[0]/1000.0
+sy = img_shape[1]/1000.0
+a = (10.0 * img_shape[0])
+b = (10.0 * img_shape[1])
 tsteps = 61
 tscale = 6
+scalefac = (40.0 / (1000.0/60.0))  # 40 km/h
+scalefac /= 1000.0
 
 # Idea for 4D: perlin3D creates a time-consistent 3D field
 # Thus, we can use skimage to create shifted/rotated/morphed versions
@@ -88,16 +92,15 @@ def perlin_fieldset_from_numpy(periodic_wrap=False, write_out=False):
 
     :param write_out: False if no write-out; else the fieldset path+basename
     """
-    img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(-a*0.5, a*0.5, img_shape[0], dtype=np.float32)
-    # sys.stdout.write("lon field: {}\n".format(lon.size))
+    sys.stdout.write("lon field: {}\n".format(lon.size))
     lat = np.linspace(-b*0.5, b*0.5, img_shape[1], dtype=np.float32)
-    # sys.stdout.write("lat field: {}\n".format(lat.size))
+    sys.stdout.write("lat field: {}\n".format(lat.size))
     totime = tsteps*tscale*24.0*60.0*60.0
     time = np.linspace(0., totime, tsteps, dtype=np.float64)
-    # sys.stdout.write("time field: {}\n".format(time.size))
+    sys.stdout.write("time field: {}\n".format(time.size))
 
     # Define arrays U (zonal), V (meridional)
     U = perlin2d.generate_fractal_noise_temporal2d(img_shape, tsteps, (perlinres[1], perlinres[2]), noctaves, perlin_persistence, max_shift=((-1, 2), (-1, 2)))
@@ -115,6 +118,9 @@ def perlin_fieldset_from_numpy(periodic_wrap=False, write_out=False):
     # V = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
     # V = np.transpose(V, (0,2,1))
     # sys.stdout.write("V field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(V.shape, time.shape[0], lat.shape[0], lon.shape[0]))
+
+    U *= scalefac
+    V *= scalefac
 
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
@@ -267,6 +273,14 @@ if __name__=='__main__':
     else:
         odir = "/var/scratch/experiments"
 
+    if os.path.sep in imageFileName:
+        head_dir = os.path.dirname(imageFileName)
+        if head_dir[0] == os.path.sep:
+            odir = head_dir
+        else:
+            odir = os.path.join(odir, head_dir)
+            imageFileName = os.path.split(imageFileName)[1]
+
     func_time = []
     mem_used_GB = []
 
@@ -353,6 +367,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
