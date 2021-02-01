@@ -49,7 +49,7 @@ def create_CMEMS_fieldset(datahead, periodic_wrap):
     # chs = False
     chs = 'auto'
     if periodic_wrap:
-        return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, time_periodic=delta(days=1))
+        return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, time_periodic=delta(days=31))
     else:
         return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, allow_time_extrapolation=True)
 
@@ -130,6 +130,29 @@ if __name__=='__main__':
     agingParticles = args.aging
     with_GC = args.useGC
 
+    Nparticle = int(float(eval(args.nparticles)))
+    target_N = Nparticle
+    addParticleN = 1
+    np_scaler = 3.0 / 2.0
+    cycle_scaler = 3.0 / 2.0
+    start_N_particles = int(float(eval(args.start_nparticles)))
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        if mpi_comm.Get_rank() == 0:
+            if agingParticles and not repeatdtFlag:
+                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+            else:
+                sys.stdout.write("N: {}\n".format(Nparticle))
+    else:
+        if agingParticles and not repeatdtFlag:
+            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+        else:
+            sys.stdout.write("N: {}\n".format(Nparticle))
+
+    dt_minutes = 60
+    nowtime = datetime.now()
+    random.seed(nowtime.microsecond)
+
     headdir = ""
     odir = ""
     dirread_pal = ""
@@ -156,28 +179,13 @@ if __name__=='__main__':
         datahead = "/data"
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
 
-    Nparticle = int(float(eval(args.nparticles)))
-    target_N = Nparticle
-    addParticleN = 1
-    np_scaler = 3.0 / 2.0
-    cycle_scaler = 3.0 / 2.0
-    start_N_particles = int(float(eval(args.start_nparticles)))
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        if mpi_comm.Get_rank() == 0:
-            if agingParticles and not repeatdtFlag:
-                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
-            else:
-                sys.stdout.write("N: {}\n".format(Nparticle))
-    else:
-        if agingParticles and not repeatdtFlag:
-            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+    if os.path.sep in imageFileName:
+        head_dir = os.path.dirname(imageFileName)
+        if head_dir[0] == os.path.sep:
+            odir = head_dir
         else:
-            sys.stdout.write("N: {}\n".format(Nparticle))
-
-    dt_minutes = 60
-    nowtime = datetime.now()
-    random.seed(nowtime.microsecond)
+            odir = os.path.join(odir, head_dir)
+            imageFileName = os.path.split(imageFileName)[1]
 
     func_time = []
     mem_used_GB = []
@@ -261,6 +269,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
@@ -313,6 +323,9 @@ if __name__=='__main__':
     else:
         #endtime = ostime.time()
         endtime = ostime.process_time()
+
+    if args.write_out:
+        output_file.close()
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD

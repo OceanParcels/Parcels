@@ -4,13 +4,12 @@ Date: 11-02-2020
 """
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
-from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, StateCode, OperationCode, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as BenchmarkParticleSet
+from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
+from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
 from parcels.particleset import ParticleSet as DryParticleSet
 from parcels.field import Field, VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
-# from parcels import rng as random
-from parcels import ParcelsRandom
+from parcels import rng as random
 from datetime import timedelta as delta
 import math
 from argparse import ArgumentParser
@@ -152,14 +151,14 @@ class AgeParticle_SciPy(ScipyParticle):
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
         np_scaler = math.sqrt(3.0 / 2.0)
-        particle.life_expectancy = time + ParcelsRandom.uniform(.0, (fieldset.life_expectancy-time) * 2.0 / np_scaler)
+        particle.life_expectancy = time + random.uniform(.0, (fieldset.life_expectancy-time) * 2.0 / np_scaler)
         # particle.life_expectancy = time + ParcelsRandom.uniform(.0, (fieldset.life_expectancy-time)*math.sqrt(3.0 / 2.0))
         # particle.life_expectancy = time + ParcelsRandom.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0 / 2.0)
         # particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
-    if particle.state == StateCode.Evaluate:
+    if particle.state == ErrorCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
     if particle.age > particle.life_expectancy:
         particle.delete()
@@ -184,12 +183,7 @@ if __name__=='__main__':
     parser.add_argument("-sN", "--start_n_particles", dest="start_nparticles", type=str, default="96", help="(optional) number of particles generated per release cycle (if --rt is set) (default: 96)")
     parser.add_argument("-m", "--mode", dest="compute_mode", choices=['jit','scipy'], default="jit", help="computation mode = [JIT, SciPp]")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
-    parser.add_argument("--dry", dest="dryrun", action="store_true", default=False, help="Start dry run (no benchmarking and its classes")
     args = parser.parse_args()
-
-    ParticleSet = BenchmarkParticleSet
-    if args.dryrun:
-        ParticleSet = DryParticleSet
 
     imageFileName=args.imageFileName
     periodicFlag=args.periodic
@@ -228,7 +222,7 @@ if __name__=='__main__':
     #dt_minutes = 20
     #random.seed(123456)
     nowtime = datetime.datetime.now()
-    ParcelsRandom.seed(nowtime.microsecond)
+    random.seed(nowtime.microsecond)
 
     odir = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini

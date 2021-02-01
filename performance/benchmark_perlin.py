@@ -50,12 +50,16 @@ noctaves=3
 perlinres=(1,32,8)
 shapescale=(4,8,8)
 #shapescale=(8,6,6) # formerly
-perlin_persistence=0.3
-a = 1000 * 1e3
-b = 1000 * 1e3
-scalefac = 2.0
+perlin_persistence=0.6
+img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
+sx = img_shape[0]/1000.0
+sy = img_shape[1]/1000.0
+a = (10.0 * img_shape[0])
+b = (10.0 * img_shape[1])
 tsteps = 61
 tscale = 6
+scalefac = (40.0 / (1000.0/60.0))  # 40 km/h
+scalefac /= 1000.0
 
 # Idea for 4D: perlin3D creates a time-consistent 3D field
 # Thus, we can use skimage to create shifted/rotated/morphed versions
@@ -75,7 +79,7 @@ def RenewParticle(particle, fieldset, time):
 def perIterGC():
     gc.collect()
 
-def perlin_fieldset_from_numpy(periodic_wrap=False):
+def perlin_fieldset_from_numpy(periodic_wrap=False, write_out=False):
     """Simulate a current from structured random noise (i.e. Perlin noise).
     we use the external package 'perlin-numpy' as field generator, see:
     https://github.com/pvigier/perlin-numpy
@@ -84,7 +88,6 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
     Perlin, Ken (July 1985). "An Image Synthesizer". SIGGRAPH Comput. Graph. 19 (97–8930), p. 287–296.
     doi:10.1145/325165.325247, https://dl.acm.org/doi/10.1145/325334.325247
     """
-    img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
 
     # Coordinates of the test fieldset (on A-grid in deg)
     lon = np.linspace(-a*0.5, a*0.5, img_shape[0], dtype=np.float32)
@@ -112,12 +115,19 @@ def perlin_fieldset_from_numpy(periodic_wrap=False):
     # V = np.transpose(V, (0,2,1))
     # sys.stdout.write("V field shape: {} - [tdim][ydim][xdim]=[{}][{}][{}]\n".format(V.shape, time.shape[0], lat.shape[0], lon.shape[0]))
 
+    U *= scalefac
+    V *= scalefac
+
     data = {'U': U, 'V': V}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
+    fieldset = None
     if periodic_wrap:
-        return FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=1))
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=366))
     else:
-        return FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, allow_time_extrapolation=True)
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, allow_time_extrapolation=True)
+    if write_out:
+        fieldset.write(filename=write_out)
+    return fieldset
 
 
 def perlin_fieldset_from_xarray(periodic_wrap=False):
@@ -143,7 +153,6 @@ def perlin_fieldset_from_xarray(periodic_wrap=False):
     U = np.transpose(U, (0,2,1))
     V = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
     V = np.transpose(V, (0,2,1))
-    #P = perlin3d.generate_fractal_noise_3d(img_shape, perlinres, noctaves, perlin_persistence) * scalefac
 
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     dims = ('time', 'lat', 'lon')
@@ -260,6 +269,14 @@ if __name__=='__main__':
         odir = "/var/scratch/experiments"
     print("uname: {}, system: {}, output dir: {}".format(os.uname()[1], compute_system, odir))
 
+    if os.path.sep in imageFileName:
+        head_dir = os.path.dirname(imageFileName)
+        if head_dir[0] == os.path.sep:
+            odir = head_dir
+        else:
+            odir = os.path.join(odir, head_dir)
+            imageFileName = os.path.split(imageFileName)[1]
+
     func_time = []
     mem_used_GB = []
 
@@ -268,7 +285,10 @@ if __name__=='__main__':
     if use_xarray:
         fieldset = perlin_fieldset_from_xarray(periodic_wrap=periodicFlag)
     else:
-        fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag)
+        field_fpath = False
+        if args.write_out:
+            field_fpath = os.path.join(odir,"perlin")
+        fieldset = perlin_fieldset_from_numpy(periodic_wrap=periodicFlag, write_out=field_fpath)
 
     if args.compute_mode is 'scipy':
         Nparticle = 2**10
@@ -343,6 +363,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
@@ -390,6 +412,9 @@ if __name__=='__main__':
             endtime = ostime.process_time()
     else:
         endtime = ostime.process_time()
+
+    if args.write_out:
+        output_file.close()
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
