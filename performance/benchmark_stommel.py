@@ -257,7 +257,7 @@ if __name__=='__main__':
     nowtime = datetime.datetime.now()
     random.seed(nowtime.microsecond)
 
-    branch = "benchmarking"
+    branch = "engineer"
     computer_env = "local/unspecified"
     scenario = "stommel"
     odir = ""

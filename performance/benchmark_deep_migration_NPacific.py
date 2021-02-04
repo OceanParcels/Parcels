@@ -240,7 +240,7 @@ if __name__ == "__main__":
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
 
-    branch = "benchmarking"
+    branch = "engineer"
     computer_env = "local/unspecified"
     scenario = "deep_migration"
     headdir = ""
