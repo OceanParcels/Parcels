@@ -106,6 +106,9 @@ if __name__=='__main__':
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
 
+    branch = "benchmarking"
+    computer_env = "local/unspecified"
+    scenario = "galapagos_backwards"
     headdir = ""
     odir = ""
     datahead = ""
@@ -118,6 +121,7 @@ if __name__=='__main__':
         odir = os.path.join(headdir,"BENCHres")
         datahead = "/data/oceanparcels/input_data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
+        computer_env = "Gemini"
     # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
@@ -125,6 +129,7 @@ if __name__=='__main__':
         odir = os.path.join(headdir, "/BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
+        computer_env = "Cartesius"
     else:
         headdir = "/var/scratch/galapagos"
         odir = os.path.join(headdir, "BENCHres")
@@ -140,6 +145,8 @@ if __name__=='__main__':
     galapagos_extent = [-91.8, -89, -1.4, 0.7]
     startlon, startlat = np.meshgrid(np.arange(galapagos_extent[0], galapagos_extent[1], 0.2),
                                      np.arange(galapagos_extent[2], galapagos_extent[3], 0.2))
+
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, startlon.shape[0], sys.argv[1:]))
 
     pset = ParticleSet_Benchmark(fieldset=fieldset, pclass=GalapagosParticle, lon=startlon, lat=startlat, time=fU.grid.time[-1], repeatdt=delta(days=7))
     """ Kernal + Execution"""

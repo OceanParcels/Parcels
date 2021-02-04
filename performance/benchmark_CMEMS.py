@@ -153,6 +153,9 @@ if __name__=='__main__':
     nowtime = datetime.now()
     random.seed(nowtime.microsecond)
 
+    branch = "benchmarking"
+    computer_env = "local/unspecified"
+    scenario = "CMEMS"
     headdir = ""
     odir = ""
     dirread_pal = ""
@@ -165,6 +168,7 @@ if __name__=='__main__':
         odir = headdir
         datahead = "/data/oceanparcels/input_data"
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        computer_env = "Gemini"
     # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
@@ -172,12 +176,14 @@ if __name__=='__main__':
         odir = headdir
         datahead = "/projects/0/topios/hydrodynamic_data"
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        computer_env = "Cartesius"
     else:
         headdir = "/var/scratch/experiments"
         odir = headdir
         dirread_pal = headdir
         datahead = "/data"
         dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
 
     if os.path.sep in imageFileName:
         head_dir = os.path.dirname(imageFileName)

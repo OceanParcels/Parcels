@@ -253,21 +253,22 @@ if __name__=='__main__':
     nowtime = datetime.datetime.now()
     random.seed(nowtime.microsecond)
 
+    branch = "benchmarking"
+    computer_env = "local/unspecified"
+    scenario = "perlin"
     odir = ""
-    compute_system = "<noname>"
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         # odir = "/scratch/{}/experiments".format(os.environ['USER'])
         odir = "/scratch/{}/experiments".format("ckehl")
-        compute_system = "GEMINI"
+        computer_env = "Gemini"
     # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
-        compute_system = "CARTESIUS"
+        computer_env = "Cartesius"
     else:
-        compute_system = "MEDUSA"
         odir = "/var/scratch/experiments"
-    print("uname: {}, system: {}, output dir: {}".format(os.uname()[1], compute_system, odir))
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
 
     if os.path.sep in imageFileName:
         head_dir = os.path.dirname(imageFileName)
