@@ -153,7 +153,7 @@ if __name__=='__main__':
     nowtime = datetime.now()
     random.seed(nowtime.microsecond)
 
-    branch = "benchmarking"
+    branch = "LoA"
     computer_env = "local/unspecified"
     scenario = "CMEMS"
     headdir = ""

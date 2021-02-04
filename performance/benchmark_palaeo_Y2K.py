@@ -263,7 +263,7 @@ if __name__ == "__main__":
     time_in_years = int(time_in_days/366.0)
     with_GC = args.useGC
 
-    branch = "benchmarking"
+    branch = "LoA"
     computer_env = "local/unspecified"
     scenario = "palaeo-parcels"
     headdir = ""
