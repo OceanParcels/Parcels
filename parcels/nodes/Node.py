@@ -302,15 +302,6 @@ class NodeJIT(Node, ctypes.Structure):
     # def __ge__(self, other):
     #     return super().__ge__(other)
 
-    # def link_c_functions(self, c_func_dict):
-    #     self.init_node_c = c_func_dict['init_node']
-    #     self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
-    #     self.set_next_ptr_c = c_func_dict['set_next_ptr']
-    #     self.set_data_ptr_c = c_func_dict['set_data_ptr']
-    #     self.reset_prev_ptr_c = c_func_dict['reset_prev_ptr']
-    #     self.reset_next_ptr_c = c_func_dict['reset_next_ptr']
-    #     self.reset_data_ptr_c = c_func_dict['reset_data_ptr']
-
     def link_c_functions(self, c_func_dict):
         self.init_node_c = c_func_dict['init_node']
         self.set_prev_ptr_c = c_func_dict['set_prev_ptr']
