@@ -214,7 +214,7 @@ if __name__ == "__main__":
 
     idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
 
-    branch = "benchmarking"
+    branch = "nodes"
     computer_env = "local/unspecified"
     scenario = "palaeo-parcels"
     headdir = ""
