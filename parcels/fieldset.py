@@ -374,7 +374,9 @@ class FieldSet(object):
                     possibly_samegrid = True
                     if procchunk != varchunksize:
                         for dim in varchunksize:
-                            if varchunksize[dim][1] != procchunk[dim][1]:
+                            if dim not in procchunk:
+                                possibly_samegrid &= False
+                            elif varchunksize[dim][1] != procchunk[dim][1]:
                                 possibly_samegrid &= False
                     if not possibly_samegrid:
                         break
