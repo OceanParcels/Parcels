@@ -339,6 +339,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
