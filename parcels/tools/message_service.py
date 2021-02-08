@@ -34,7 +34,9 @@ def mpi_execute_requested_messages(exec_class, request_tag=0, response_tag=1):
 
         request_package = test_result[1]
         # logger.info("ID serv. - recv.: {} - (srv. rank: {}; snd. rank: {}; pkg. rank: {}".format(request_package["func_name"], mpi_rank, msg_status.Get_source(), request_package["src_rank"]))
+        # logger.info("package received: {}".format(request_package))
         assert isinstance(request_package, dict)
+        # dst = int(request_package["src_rank"])
 
         # logger.info("Package: {}".format(request_package))
         func_name = request_package["func_name"]

@@ -181,6 +181,19 @@ def initials(particle, fieldset, time):
         particle.depth0 = particle.depth
 
 
+class DinoParticle(JITParticle):
+    temp = Variable('temp', dtype=np.float32, initial=np.nan)
+    age = Variable('age', dtype=np.float32, initial=0.)
+    salin = Variable('salin', dtype=np.float32, initial=np.nan)
+    lon0 = Variable('lon0', dtype=np.float32, initial=0.)
+    lat0 = Variable('lat0', dtype=np.float32, initial=0.)
+    depth0 = Variable('depth0',dtype=np.float32, initial=0.)
+    PP = Variable('PP',dtype=np.float32, initial=np.nan)
+    NO3 = Variable('NO3',dtype=np.float32, initial=np.nan)
+    ICE = Variable('ICE',dtype=np.float32, initial=np.nan)
+    ICEPRES = Variable('ICEPRES',dtype=np.float32, initial=np.nan)
+    CO2 = Variable('CO2',dtype=np.float32, initial=np.nan)
+
 if __name__ == "__main__":
     parser = ArgumentParser(description="Example of particle advection using in-memory stommel test case")
     parser.add_argument("-i", "--imageFileName", dest="imageFileName", type=str, default="mpiChunking_plot_MPI.png", help="image file name of the plot")
@@ -201,6 +214,9 @@ if __name__ == "__main__":
 
     idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
 
+    branch = "nodes"
+    computer_env = "local/unspecified"
+    scenario = "palaeo-parcels"
     headdir = ""
     odir = ""
     dirread_pal = ""
@@ -215,6 +231,7 @@ if __name__ == "__main__":
         datahead = "/data/oceanparcels/input_data"
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
+        computer_env = "Gemini"
     # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
@@ -224,6 +241,7 @@ if __name__ == "__main__":
         datahead = "/projects/0/topios/hydrodynamic_data"
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA_BGC/ORCA0083-N006/')
+        computer_env = "Cartesius"
     else:
         headdir = "/var/scratch/nooteboom"
         odir = os.path.join(headdir, "BENCHres")
@@ -260,6 +278,8 @@ if __name__ == "__main__":
         depths = np.append(depths, np.zeros(len(lonsz), dtype=np.float32))
         time = np.append(time, np.full(len(lonsz),times[i]))
 
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lons.shape[0], sys.argv[1:]))
+
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -291,19 +311,6 @@ if __name__ == "__main__":
     # ==== Set min/max depths in the fieldset ==== #
     fs_depths = fieldset.U.depth
     idgen.setDepthLimits(np.min(fs_depths), np.max(fs_depths))
-
-    class DinoParticle(JITParticle):
-        temp = Variable('temp', dtype=np.float32, initial=np.nan)
-        age = Variable('age', dtype=np.float32, initial=0.)
-        salin = Variable('salin', dtype=np.float32, initial=np.nan)
-        lon0 = Variable('lon0', dtype=np.float32, initial=0.)
-        lat0 = Variable('lat0', dtype=np.float32, initial=0.)
-        depth0 = Variable('depth0',dtype=np.float32, initial=0.) 
-        PP = Variable('PP',dtype=np.float32, initial=np.nan)
-        NO3 = Variable('NO3',dtype=np.float32, initial=np.nan)
-        ICE = Variable('ICE',dtype=np.float32, initial=np.nan)
-        ICEPRES = Variable('ICEPRES',dtype=np.float32, initial=np.nan)
-        CO2 = Variable('CO2',dtype=np.float32, initial=np.nan)
 
     pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
 

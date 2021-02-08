@@ -539,8 +539,16 @@ class GenerateID_Service(BaseIdGenerator):
             else:
                 self._serverrank = mpi_size-1
                 if mpi_rank == self._serverrank:
+                    # self._service_process = Process(target=executor, name="IdService", args=(service_bundle, base_generator_obj), daemon=True)
+                    # self._service_process.start()
+                    # print("Starting ID service process")
+                    # logger.info("Starting ID service process")
                     self._service_process = Thread(target=executor, name="IdService", args=(base_generator_obj, self._request_tag, self._response_tag), daemon=True)
+                    # self._service_process.daemon = True
                     self._service_process.start()
+                    # executor(base_generator_obj, self._request_tag, self._response_tag)
+                # mpi_comm.Barrier()
+                # logger.info("worker - MPI rank: {} pid: {}".format(mpi_rank, getpid()))
                 self._subscribe_()
         else:
             self._use_subprocess = False

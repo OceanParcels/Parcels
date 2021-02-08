@@ -3,57 +3,145 @@ Author: Dr. Christian Kehl
 Date: 11-02-2020
 """
 
-from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4_3D
+from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, ErrorCode
 from parcels.particleset_node_benchmark import ParticleSet_Benchmark as ParticleSetN
 from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark as ParticleSetV
-from parcels import rng as random
-from parcels.field import VectorField, NestedField, SummedField
-from parcels.tools import idgen
+from parcels.field import Field, VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
+from parcels import rng as random
 from datetime import timedelta as delta
-from datetime import datetime
-from argparse import ArgumentParser
-import numpy as np
-import fnmatch
-# import dask as da
-# import dask.array as daArray
-from glob import glob
-import time as ostime
 import math
-import matplotlib.pyplot as plt
+from argparse import ArgumentParser
+import datetime
+import numpy as np
+import xarray as xr
+import fnmatch
 import sys
-import os
-import psutil
 import gc
+import os
+import time as ostime
+# import matplotlib.pyplot as plt
+from parcels.tools import perlin3d
+from parcels.tools import perlin2d
+
 try:
     from mpi4py import MPI
 except:
     MPI = None
-
 with_GC = False
 
-import warnings
-import xarray as xr
-warnings.simplefilter("ignore", category=xr.SerializationWarning)
-
+pset = None
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 global_t_0 = 0
-odir = ""
+Nparticle = int(math.pow(2,10)) # equals to Nparticle = 1024
+#Nparticle = int(math.pow(2,11)) # equals to Nparticle = 2048
+#Nparticle = int(math.pow(2,12)) # equals to Nparticle = 4096
+#Nparticle = int(math.pow(2,13)) # equals to Nparticle = 8192
+#Nparticle = int(math.pow(2,14)) # equals to Nparticle = 16384
+#Nparticle = int(math.pow(2,15)) # equals to Nparticle = 32768
+#Nparticle = int(math.pow(2,16)) # equals to Nparticle = 65536
+#Nparticle = int(math.pow(2,17)) # equals to Nparticle = 131072
+#Nparticle = int(math.pow(2,18)) # equals to Nparticle = 262144
+#Nparticle = int(math.pow(2,19)) # equals to Nparticle = 524288
+
+#a = 1000 * 1e3
+#b = 1000 * 1e3
+#scalefac = 2.0
+#tsteps = 61
+#tscale = 6
+
+a = 10 * 1e3 # [a in km -> 10e3]  # is going to be overwritten
+b = 10 * 1e3 # [b in km -> 10e3]  # is going to be overwritten
+tsteps = 61 # in steps
+tstepsize = 12.0 # unitary
+tscale = 12.0*60.0*60.0 # in seconds
+# time[days] = (tsteps * tstepsize) * tscale
+# jet_rotation_speed = 14.0*24.0*60.0*60.0 # assume 1 rotation every 2 weeks
+sx = 1718.9
+sy = 3200.0
+# scalefac = 2.0 * 6.0 # scaling the advection speeds to 12 m/s
+scalefac = (40.0 / (1000.0/60.0))  # 40 km/h
+scalefac /= 1000.0
+
+# we need to modify the kernel.execute / pset.execute so that it returns from the JIT
+# in a given time WITHOUT writing to disk via outfie => introduce a pyloop_dt
+
+def DeleteParticle(particle, fieldset, time):
+    particle.delete()
+
+def RenewParticle(particle, fieldset, time):
+    particle.lat = np.random.rand() * a
+    particle.lon = np.random.rand() * (-b) + (b/2.0)
+
+def perIterGC():
+    gc.collect()
+
+def bickleyjet_from_numpy(xdim=540, ydim=320, periodic_wrap=False, write_out=False):
+    """Bickley Jet Field as implemented in Hadjighasem et al 2017, 10.1063/1.4982720"""
+    U0 = 0.06266
+    r0 = sx
+    L = r0 / 3.599435028  # 1770.
+    k1 = 2 * 1 / r0
+    k2 = 2 * 2 / r0
+    k3 = 2 * 3 / r0
+    eps1 = 0.075
+    eps2 = 0.4
+    eps3 = 0.3
+    c3 = 0.461 * U0
+    c2 = 0.205 * U0
+    c1 = c3 + ((np.sqrt(5)-1)/2.) * (k2/k1) * (c2 - c3)
+
+    global a, b
+    a, b = np.pi*r0, sy  # domain size
+    lon = np.linspace(0, a, xdim, dtype=np.float32)
+    lonrange = lon.max()-lon.min()
+    sys.stdout.write("lon field: {}\n".format(lon.size))
+    lat = np.linspace(-b*0.5, b*0.5, ydim, dtype=np.float32)
+    latrange = lat.max() - lat.min()
+    sys.stdout.write("lat field: {}\n".format(lat.size))
+    totime = (tsteps * tstepsize) * tscale
+    times = np.linspace(0., totime, tsteps, dtype=np.float64)
+    sys.stdout.write("time field: {}\n".format(times.size))
+    dx, dy = lon[2]-lon[1], lat[2]-lat[1]
+
+    U = np.zeros((times.size, lat.size, lon.size), dtype=np.float32)
+    V = np.zeros((times.size, lat.size, lon.size), dtype=np.float32)
+
+    for t in range(len(times)):
+        time_f = times[t]
+        f1 = eps1 * np.exp(-1j * k1 * c1 * time_f)
+        f2 = eps2 * np.exp(-1j * k2 * c2 * time_f)
+        f3 = eps3 * np.exp(-1j * k3 * c3 * time_f)
+        for j in range(lat.size):
+            for i in range(lon.size):
+                x1 = lon[i]-dx/2.0
+                x2 = lat[j]-dy/2.0
+                F1 = f1 * np.exp(1j * k1 * x1)
+                F2 = f2 * np.exp(1j * k2 * x1)
+                F3 = f3 * np.exp(1j * k3 * x1)
+                G = np.real(np.sum([F1, F2, F3]))
+                G_x = np.real(np.sum([1j * k1 * F1, 1j * k2 * F2, 1j * k3 * F3]))
+                U[t, j, i] = U0 / (np.cosh(x2/L)**2) + 2 * U0 * np.sinh(x2/L) / (np.cosh(x2/L)**3) * G
+                V[t, j, i] = U0 * L * (1./np.cosh(x2/L))**2 * G_x
+
+    U *= scalefac
+    # U = np.transpose(U, (0, 2, 1))
+    V *= scalefac
+    # V = np.transpose(V, (0, 2, 1))
 
 
-def create_CMEMS_fieldset(datahead, periodic_wrap):
-    ddir = os.path.join(datahead, "CMEMS/GLOBAL_REANALYSIS_PHY_001_030/")
-    files = sorted(glob(ddir+"mercatorglorys12v1_gl12_mean_201607*.nc"))
-    variables = {'U': 'uo', 'V': 'vo'}
-    dimensions = {'lon': 'longitude', 'lat': 'latitude', 'time': 'time'}
-    # chs = False
-    chs = 'auto'
+    data = {'U': U, 'V': V}
+    dimensions = {'time': times, 'lon': lon, 'lat': lat}
+    fieldset = None
     if periodic_wrap:
-        return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, time_periodic=delta(days=31))
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=1))
     else:
-        return FieldSet.from_netcdf(files, variables, dimensions, field_chunksize=chs, allow_time_extrapolation=True)
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, allow_time_extrapolation=True)
+    if write_out:
+        fieldset.write(filename=write_out)
+    return fieldset
 
 
 class AgeParticle_JIT(JITParticle):
@@ -66,24 +154,13 @@ class AgeParticle_SciPy(ScipyParticle):
     life_expectancy = Variable('life_expectancy', dtype=np.float64, initial=np.finfo(np.float64).max)
     initialized_dynamic = Variable('initialized_dynamic', dtype=np.int32, initial=0)
 
-age_ptype = {'scipy': AgeParticle_SciPy, 'jit': AgeParticle_JIT}
-
-def periodicBC(particle, fieldSet, time):
-    if particle.lon > 180.0:
-        particle.lon -= 360.0
-    if particle.lon < -180.0:
-        particle.lon += 360.0
-    particle.lat = min(particle.lat, 90.0)
-    particle.lat = max(particle.lat, -80.0)
-    # if particle.lat > 90.0:
-    #     particle.lat -= 160.0
-    # if particle.lat < -80.0:
-    #     particle.lat += 160.0
-
 def initialize(particle, fieldset, time):
     if particle.initialized_dynamic < 1:
         np_scaler = math.sqrt(3.0 / 2.0)
         particle.life_expectancy = time + random.uniform(.0, (fieldset.life_expectancy-time) * 2.0 / np_scaler)
+        # particle.life_expectancy = time + ParcelsRandom.uniform(.0, (fieldset.life_expectancy-time)*math.sqrt(3.0 / 2.0))
+        # particle.life_expectancy = time + ParcelsRandom.uniform(.0, fieldset.life_expectancy) * math.sqrt(3.0 / 2.0)
+        # particle.life_expectancy = time+ParcelsRandom.uniform(.0, fieldset.life_expectancy) * ((3.0/2.0)**2.0)
         particle.initialized_dynamic = 1
 
 def Age(particle, fieldset, time):
@@ -92,15 +169,7 @@ def Age(particle, fieldset, time):
     if particle.age > particle.life_expectancy:
         particle.delete()
 
-def DeleteParticle(particle, fieldset, time):
-    particle.delete()
-
-def RenewParticle(particle, fieldset, time):
-    particle.lat = random.random() * 360.0 -180.0
-    particle.lon = random.random() * 170.0 -80.0
-
-def perIterGC():
-    gc.collect()
+age_ptype = {'scipy': AgeParticle_SciPy, 'jit': AgeParticle_JIT}
 
 if __name__=='__main__':
     parser = ArgumentParser(description="Example of particle advection using in-memory stommel test case")
@@ -135,63 +204,51 @@ if __name__=='__main__':
     use_xarray = args.use_xarray
     agingParticles = args.aging
     with_GC = args.useGC
-
     Nparticle = int(float(eval(args.nparticles)))
     target_N = Nparticle
     addParticleN = 1
+    # np_scaler = math.sqrt(3.0/2.0)
+    # np_scaler = (3.0 / 2.0)**2.0       # **
     np_scaler = 3.0 / 2.0
-    cycle_scaler = 3.0 / 2.0
+    # cycle_scaler = math.sqrt(3.0/2.0)
+    # cycle_scaler = (3.0 / 2.0)**2.0    # **
+    # cycle_scaler = 3.0 / 2.0
+    cycle_scaler = 7.0 / 4.0
     start_N_particles = int(float(eval(args.start_nparticles)))
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         if mpi_comm.Get_rank() == 0:
             if agingParticles and not repeatdtFlag:
-                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+                sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * np_scaler)))
             else:
                 sys.stdout.write("N: {}\n".format(Nparticle))
     else:
         if agingParticles and not repeatdtFlag:
-            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * ((3.0 / 2.0)**2.0))))
+            sys.stdout.write("N: {} ( {} )\n".format(Nparticle, int(Nparticle * np_scaler)))
         else:
             sys.stdout.write("N: {}\n".format(Nparticle))
 
     dt_minutes = 60
-    nowtime = datetime.now()
+    #dt_minutes = 20
+    #random.seed(123456)
+    nowtime = datetime.datetime.now()
     random.seed(nowtime.microsecond)
 
     branch = "nodes"
     computer_env = "local/unspecified"
-    scenario = "CMEMS"
-    headdir = ""
+    scenario = "bickleyjet"
     odir = ""
-    dirread_pal = ""
-    datahead = ""
-    dirread_top = ""
-    dirread_top_bgc = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
-        # headdir = "/scratch/{}/experiments/palaeo-parcels".format(os.environ['USER'])
-        headdir = "/scratch/{}/experiments".format("ckehl")
-        odir = headdir
-        datahead = "/data/oceanparcels/input_data"
-        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        # odir = "/scratch/{}/experiments".format(os.environ['USER'])
+        odir = "/scratch/{}/experiments".format("ckehl")
         computer_env = "Gemini"
-    # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
-        headdir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = headdir
-        datahead = "/projects/0/topios/hydrodynamic_data"
-        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
         computer_env = "Cartesius"
     else:
-        headdir = "/var/scratch/experiments"
-        odir = headdir
-        dirread_pal = headdir
-        datahead = "/data"
-        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        odir = "/var/scratch/experiments"
     print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
-
-    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
 
     if os.path.sep in imageFileName:
         head_dir = os.path.dirname(imageFileName)
@@ -204,8 +261,15 @@ if __name__=='__main__':
     func_time = []
     mem_used_GB = []
 
-    np.random.seed(nowtime.microsecond)
-    fieldset = create_CMEMS_fieldset(datahead, periodic_wrap=periodicFlag)
+    np.random.seed(0)
+    fieldset = None
+    if use_xarray:
+        fieldset = bickleyjet_from_numpy(periodic_wrap=periodicFlag)
+    else:
+        field_fpath = False
+        if args.write_out:
+            field_fpath = os.path.join(odir,"bickleyjet")
+        fieldset = bickleyjet_from_numpy(periodic_wrap=periodicFlag, write_out=field_fpath)
 
     if args.compute_mode is 'scipy':
         Nparticle = 2**10
@@ -214,10 +278,8 @@ if __name__=='__main__':
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         if mpi_rank==0:
-            #global_t_0 = MPI.Wtime()
             global_t_0 = ostime.process_time()
     else:
-        #global_t_0 = ostime.time()
         global_t_0 = ostime.process_time()
 
     simStart = None
@@ -246,45 +308,42 @@ if __name__=='__main__':
         # ==== backward simulation ==== #
         if agingParticles:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * (-b) + (b/2.0), time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(addParticleN), 1) * a, lat=np.random.rand(int(addParticleN), 1) * (-b) + (b/2.0), time=simStart)
                 pset.add(psetA)
             else:
-                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * (-b) + (b/2.0), time=simStart)
         else:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * (-b) + (b/2.0), time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(addParticleN), 1) * a, lat=np.random.rand(int(addParticleN), 1) * (-b) + (b/2.0), time=simStart)
                 pset.add(psetA)
             else:
-                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * (-b) + (b/2.0), time=simStart)
     else:
         # ==== forward simulation ==== #
         if agingParticles:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * (-b) + (b/2.0), time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(addParticleN), 1) * a, lat=np.random.rand(int(addParticleN), 1) * (-b) + (b/2.0), time=simStart)
                 pset.add(psetA)
             else:
-                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * (-b) + (b/2.0), time=simStart)
         else:
             if repeatdtFlag:
-                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * a, lat=np.random.rand(start_N_particles, 1) * (-b) + (b/2.0), time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
+                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(addParticleN), 1) * a, lat=np.random.rand(int(addParticleN), 1) * (-b) + (b/2.0), time=simStart)
                 pset.add(psetA)
             else:
-                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
-
+                pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * a, lat=np.random.rand(Nparticle, 1) * (-b) + (b/2.0), time=simStart)
 
     output_file = None
-    out_fname = "benchmark_CMEMS"
+    out_fname = "benchmark_bickleyjet"
     if args.write_out:
         if MPI and (MPI.COMM_WORLD.Get_size()>1):
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
-        if periodicFlag:
-            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
@@ -304,13 +363,10 @@ if __name__=='__main__':
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
         if mpi_rank==0:
-            #starttime = MPI.Wtime()
             starttime = ostime.process_time()
     else:
-        #starttime = ostime.time()
         starttime = ostime.process_time()
     kernels = pset.Kernel(AdvectionRK4,delete_cfiles=True)
-    kernels += pset.Kernel(periodicBC, delete_cfiles=True)
     if agingParticles:
         kernels += pset.Kernel(initialize, delete_cfiles=True)
         kernels += pset.Kernel(Age, delete_cfiles=True)
@@ -328,6 +384,7 @@ if __name__=='__main__':
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12), moviedt=delta(hours=6), movie_background_field=fieldset.U)
         else:
             pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(minutes=dt_minutes), output_file=output_file, recovery={ErrorCode.ErrorOutOfBounds: delete_func}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12))
+
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
@@ -339,47 +396,35 @@ if __name__=='__main__':
     if args.write_out:
         output_file.close()
 
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        mpi_comm.Barrier()
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart - 1)
-        Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
-        if mpi_comm.Get_rank() == 0:
-            if size_Npart>0:
+    if not args.dryrun:
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            # mpi_comm.Barrier()
+            size_Npart = len(pset.nparticle_log)
+            Npart = pset.nparticle_log.get_param(size_Npart-1)
+            Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
+            if mpi_comm.Get_rank() == 0:
+                if size_Npart>0:
+                    sys.stdout.write("final # particles: {}\n".format( Npart ))
+                sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
+                avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
+                sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
+        else:
+            size_Npart = len(pset.nparticle_log)
+            Npart = pset.nparticle_log.get_param(size_Npart-1)
+            if size_Npart > 0:
                 sys.stdout.write("final # particles: {}\n".format( Npart ))
-            sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime-starttime))
+            sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
             avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
-            sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
-    else:
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart-1)
-        if size_Npart > 0:
-            sys.stdout.write("final # particles: {}\n".format( Npart ))
-        sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
-        avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
-        sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
+            sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
 
-    # if args.write_out:
-    #     output_file.close()
-    #     if args.visualize:
-    #         if MPI:
-    #             mpi_comm = MPI.COMM_WORLD
-    #             if mpi_comm.Get_rank() == 0:
-    #                 plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"), tracerfield=fieldset.U)
-    #         else:
-    #             plotTrajectoriesFile_loadedField(os.path.join(odir, out_fname+".nc"),tracerfield=fieldset.U)
+        if MPI:
+            mpi_comm = MPI.COMM_WORLD
+            Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
+            Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
+            if mpi_comm.Get_rank() == 0:
+                pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
+        else:
+            pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
 
-    if MPI:
-        mpi_comm = MPI.COMM_WORLD
-        # mpi_comm.Barrier()
-        Nparticles = mpi_comm.reduce(np.array(pset.nparticle_log.get_params()), op=MPI.SUM, root=0)
-        Nmem = mpi_comm.reduce(np.array(pset.mem_log.get_params()), op=MPI.SUM, root=0)
-        if mpi_comm.Get_rank() == 0:
-            pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
-    else:
-        pset.plot_and_log(target_N=target_N, imageFilePath=imageFileName, odir=odir, xlim_range=[0, 730], ylim_range=[0, 150])
-    # idgen.close()
-    # del idgen
-    # print('Execution finished')
-    exit(0)
+

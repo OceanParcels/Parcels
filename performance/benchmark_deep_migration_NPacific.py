@@ -246,6 +246,9 @@ if __name__ == "__main__":
 
     idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
 
+    branch = "nodes"
+    computer_env = "local/unspecified"
+    scenario = "deep_migration"
     headdir = ""
     odir = ""
     datahead = ""
@@ -260,6 +263,7 @@ if __name__ == "__main__":
         dirread = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_mesh = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/domain/')
+        computer_env = "Gemini"
     # elif fnmatch.fnmatchcase(os.uname()[1], "int?.*"):  # Cartesius
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
@@ -269,6 +273,7 @@ if __name__ == "__main__":
         dirread = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_bgc = os.path.join(datahead, 'NEMO-MEDUSA_BGC/ORCA0083-N006/means/')
         dirread_mesh = os.path.join(datahead, 'NEMO-MEDUSA_BGC/ORCA0083-N006/domain/')
+        computer_env = "Cartesius"
     else:
         headdir = "/var/scratch/dlobelle"
         odir = os.path.join(headdir, "BENCHres")
@@ -276,6 +281,7 @@ if __name__ == "__main__":
         dirread = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_mesh = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/domain/')
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lon_release.shape[0], sys.argv[1:]))
 
     # ==== CARTESIUS ==== #
     # dirread = '/projects/0/topios/hydrodynamic_data/NEMO-MEDUSA/ORCA0083-N006/means/'

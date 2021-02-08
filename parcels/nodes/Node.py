@@ -1,5 +1,6 @@
 import ctypes
 import sys
+import os
 from parcels.tools import idgen
 from parcels.wrapping import *
 from numpy import int32, int64, uint32, uint64
@@ -208,7 +209,6 @@ class NodeJIT(Node, ctypes.Structure):
         if self.data is not None:   # and isinstance(ctypes.c_void_p):
             # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
             try:
-                # self.set_data_ptr_c(self, ctypes.cast(ctypes.byref(self.data.cdata()), ctypes.c_void_p))
                 self.set_data_ptr_c(self, self.data.cdata())
             except AttributeError:
                 self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
@@ -299,8 +299,8 @@ class NodeJIT(Node, ctypes.Structure):
     def __gt__(self, other):
         return super().__gt__(other)
 
-    def __ge__(self, other):
-        return super().__ge__(other)
+    # def __ge__(self, other):
+    #     return super().__ge__(other)
 
     def link_c_functions(self, c_func_dict):
         self.init_node_c = c_func_dict['init_node']
@@ -361,7 +361,6 @@ class NodeJIT(Node, ctypes.Structure):
         if self.data is not None:   # and isinstance(ctypes.c_void_p):
             # self._c_data_p = ctypes.cast(self.data, ctypes.c_void_p)
             try:
-                # self.set_data_ptr_c(self, ctypes.cast(ctypes.byref(self.data.cdata()), ctypes.c_void_p))
                 self.set_data_ptr_c(self, self.data.cdata())
             except AttributeError:
                 self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))

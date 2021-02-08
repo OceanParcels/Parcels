@@ -19,6 +19,7 @@ from parcels.tools import idgen
 from parcels.tools import get_cache_dir, get_package_dir
 # from parcels.tools import cleanup_remove_files, cleanup_unload_lib, get_cache_dir, get_package_dir
 # from parcels.wrapping.code_compiler import GNUCompiler
+# from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels import ScipyParticle, JITParticle
 from parcels.particlefile_node import ParticleFile
 # from parcels import Grid, Field, GridSet, FieldSet
@@ -1007,9 +1008,9 @@ class ParticleSet(object):
                         lat = self.rparam.get_latitude(add_iter)
                         pdepth = self.rparam.get_depth_value(add_iter)
                         ptime = time
-                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                        # pid = np.iinfo(np.uint64).max if pid is None else pid
                         # pindex = idgen.total_length
+                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                        # pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
                         # pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                         pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
                         pdata.dt = dt

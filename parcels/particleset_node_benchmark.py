@@ -19,14 +19,18 @@ except:
 from parcels.wrapping.code_compiler import GNUCompiler_MS
 from parcels.particleset_node import ParticleSet
 # from parcels.kernel_vectorized import Kernel
-from parcels.kernel_node_benchmark import Kernel_Benchmark
+# from parcels.kernel_node_benchmark import Kernel_Benchmark
 # from parcels.kernel_benchmark import Kernel_Benchmark
 from parcels.kernels.advection import AdvectionRK4
 from parcels.particle import JITParticle
 from parcels.tools.loggers import logger
 from parcels.tools import get_cache_dir, get_package_dir
-from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
 from parcels.tools import idgen
+from parcels.kernel_node_benchmark import Kernel_Benchmark
+# from parcels.kernel_node_benchmark import Kernel
+from parcels.tools.performance_logger import TimingLog, ParamLogging, Asynchronous_ParamLogging
+
+from resource import getrusage, RUSAGE_SELF
 
 from resource import getrusage, RUSAGE_SELF
 
@@ -287,9 +291,9 @@ class ParticleSet_Benchmark(ParticleSet):
                         lat = self.rparam.get_latitude(add_iter)
                         pdepth = self.rparam.get_depth_value(add_iter)
                         ptime = time
-                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                        # pid = np.iinfo(np.uint64).max if pid is None else pid
                         # pindex = idgen.total_length
+                        pid = idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                        # pid = np.iinfo(np.uint64).max if gen_id is None else gen_id
                         # pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime, index=pindex)
                         pdata = self._pclass(lon=lon, lat=lat, pid=pid, fieldset=self._fieldset, depth=pdepth, time=ptime)
                         pdata.dt = dt
@@ -352,15 +356,6 @@ class ParticleSet_Benchmark(ParticleSet):
                 self.plot_log.accumulate_timing()
             self.total_log.stop_timing()
             self.total_log.accumulate_timing()
-            mem_B_used_total = 0
-            # mem_B_used_total = psutil.Process(os.getpid()).rss
-            # if MPI:
-            #     mpi_comm = MPI.COMM_WORLD
-            #     mem_B_used = self.process.memory_info().rss
-            #     mem_B_used_total = mpi_comm.reduce(mem_B_used, op=MPI.SUM, root=0)
-            # else:
-            #     mem_B_used_total = self.process.memory_info().rss
-            #mem_B_used_total = self.process.memory_info().rss
             mem_B_used_total = 0
             if USE_RUSE_SYNC_MEMLOG:
                 mem_B_used_total = measure_mem_usage()

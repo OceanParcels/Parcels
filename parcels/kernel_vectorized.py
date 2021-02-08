@@ -1,8 +1,8 @@
 import inspect
 import math  # noga
 import random  # noga
-import time  # noga
 import re
+import time  # noga
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
