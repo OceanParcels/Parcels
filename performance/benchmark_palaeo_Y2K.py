@@ -41,6 +41,9 @@ odir = ""
 
 
 def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, mesh_mask='/scratch/ckehl/experiments/palaeo-parcels/NEMOdata/domain/coordinates.nc'):
+    bfile_array = bfile
+    if not isinstance(bfile_array, list):
+        bfile_array = [bfile, ]
     filenames = { 'U': {'lon': mesh_mask,
                         'lat': mesh_mask,
                         'depth': [ufiles[0]],
@@ -105,12 +108,24 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
                   'ICE': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'ICEPRES': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'} } #,
-    bfiles = {'lon': mesh_mask, 'lat': mesh_mask, 'data': [bfile, ]}
+    bfiles = {'lon': mesh_mask, 'lat': mesh_mask, 'data': bfile_array}
     bvariables = ('B', 'Bathymetry')
     bdimensions = {'lon': 'glamf', 'lat': 'gphif'}
     bchs = False
 
     chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 200, 'x': 200}
+    nchs = {
+        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 75), 'time': ('time_counter', 1)},
+        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 75), 'time': ('time_counter', 1)},
+        'W':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthw', 75), 'time': ('time_counter', 1)},
+        'T':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 75), 'time': ('time_counter', 1)},
+        'S':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 75), 'time': ('time_counter', 1)},
+        'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 75), 'time': ('time_counter', 1)},
+        'PP':      {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 75), 'time': ('time_counter', 1)},
+        'ICE':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
+        'ICEPRES': {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
+        'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 75), 'time': ('time_counter', 1)},
+    }
     #
     #chs = (1, 75, 200, 200)
     #
@@ -118,9 +133,13 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     #chs = 'auto'
 
     if mesh_mask: # and isinstance(bfile, list) and len(bfile) > 0:
-        # fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize='auto')
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
-        Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+        try:
+            # fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize='auto')
+            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+            Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+        except (SyntaxError,):
+            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
+            Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', chunksize=bchs)
         fieldset.add_field(Bfield, 'B')
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
@@ -130,8 +149,11 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         filenames.pop('B')
         variables.pop('B')
         dimensions.pop('B')
-        # fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs)
-        fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+        try:
+            # fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs)
+            fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+        except (SyntaxError, ):
+            fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
         fieldset.W.vmax = 10
@@ -178,6 +200,19 @@ def initials(particle, fieldset, time):
         particle.lat0 = particle.lat
         particle.depth0 = particle.depth
 
+class DinoParticle(JITParticle):
+    temp = Variable('temp', dtype=np.float32, initial=np.nan)
+    age = Variable('age', dtype=np.float32, initial=0.)
+    salin = Variable('salin', dtype=np.float32, initial=np.nan)
+    lon0 = Variable('lon0', dtype=np.float32, initial=0.)
+    lat0 = Variable('lat0', dtype=np.float32, initial=0.)
+    depth0 = Variable('depth0',dtype=np.float32, initial=0.)
+    PP = Variable('PP',dtype=np.float32, initial=np.nan)
+    NO3 = Variable('NO3',dtype=np.float32, initial=np.nan)
+    ICE = Variable('ICE',dtype=np.float32, initial=np.nan)
+    ICEPRES = Variable('ICEPRES',dtype=np.float32, initial=np.nan)
+    CO2 = Variable('CO2',dtype=np.float32, initial=np.nan)
+
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Example of particle advection using in-memory stommel test case")
@@ -185,6 +220,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--periodic", dest="periodic", action='store_true', default=False, help="enable/disable periodic wrapping (else: extrapolation)")
     parser.add_argument("-sp", "--sinking_speed", dest="sp", type=float, default=11.0, help="set the simulation sinking speed in [m/day] (default: 11.0)")
     parser.add_argument("-dd", "--dwelling_depth", dest="dd", type=float, default=10.0, help="set the dwelling depth (i.e. ocean surface depth) in [m] (default: 10.0)")
+    parser.add_argument("-w", "--writeout", dest="write_out", action='store_true', default=False, help="write data in outfile")
     # parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=int, default=365, help="runtime in days (default: 365)")
     parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=str, default="1*365", help="runtime in days (default: 1*365)")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
@@ -197,6 +233,9 @@ if __name__ == "__main__":
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
 
+    branch = "soa_benchmark"
+    computer_env = "local/unspecified"
+    scenario = "palaeo-parcels"
     headdir = ""
     odir = ""
     dirread_pal = ""
@@ -211,14 +250,16 @@ if __name__ == "__main__":
         datahead = "/data/oceanparcels/input_data"
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
+        computer_env = "Gemini"
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/palaeo-parcels".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = os.path.join(headdir, "/BENCHres")
+        odir = os.path.join(headdir, "BENCHres")
         dirread_pal = os.path.join(headdir,'NEMOdata')
         datahead = "/projects/0/topios/hydrodynamic_data"
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA_BGC/ORCA0083-N006/')
+        computer_env = "Cartesius"
     else:
         headdir = "/var/scratch/nooteboom"
         odir = os.path.join(headdir, "BENCHres")
@@ -226,6 +267,8 @@ if __name__ == "__main__":
         datahead = "/data"
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
+
+    print("running {} on {} (uname: {}) - branch '{}' - headdir: {}; odir: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, headdir, odir, sys.argv[1:]))
 
 
     # dirread_pal = '/projects/0/palaeo-parcels/NEMOdata/'
@@ -283,18 +326,7 @@ if __name__ == "__main__":
     fieldset.add_constant('maxage', 300000.*86400)
     fieldset.add_constant('surface', 2.5)
 
-    class DinoParticle(JITParticle):
-        temp = Variable('temp', dtype=np.float32, initial=np.nan)
-        age = Variable('age', dtype=np.float32, initial=0.)
-        salin = Variable('salin', dtype=np.float32, initial=np.nan)
-        lon0 = Variable('lon0', dtype=np.float32, initial=0.)
-        lat0 = Variable('lat0', dtype=np.float32, initial=0.)
-        depth0 = Variable('depth0',dtype=np.float32, initial=0.) 
-        PP = Variable('PP',dtype=np.float32, initial=np.nan)
-        NO3 = Variable('NO3',dtype=np.float32, initial=np.nan)
-        ICE = Variable('ICE',dtype=np.float32, initial=np.nan)
-        ICEPRES = Variable('ICEPRES',dtype=np.float32, initial=np.nan)
-        CO2 = Variable('CO2',dtype=np.float32, initial=np.nan)
+    print("|lon| = {}; |lat| = {}; |depth| = {}, |times| = {}".format(lonsz.shape[0], latsz.shape[0], dep.shape[0], times.shape[0]))
 
     pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
 
@@ -302,7 +334,10 @@ if __name__ == "__main__":
     postProcessFuncs = []
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    pfile = pset.ParticleFile(os.path.join(dirwrite, outfile), convert_at_end=True, write_ondelete=True)
+    output_fpath = None
+    if args.write_out:
+        output_fpath = os.path.join(dirwrite, outfile)
+    pfile = pset.ParticleFile(output_fpath, convert_at_end=True, write_ondelete=True)
     kernels = pset.Kernel(initials) + Sink + Age  + pset.Kernel(AdvectionRK4_3D) + Age
 
     starttime = 0
@@ -333,6 +368,9 @@ if __name__ == "__main__":
     else:
         #endtime = ostime.time()
         endtime = ostime.process_time()
+
+    if args.write_out:
+        pfile.close()
 
     size_Npart = len(pset.nparticle_log)
     Npart = pset.nparticle_log.get_param(size_Npart-1)

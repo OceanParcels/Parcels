@@ -49,10 +49,10 @@ Nparticle = int(math.pow(2,10)) # equals to Nparticle = 1024
 
 noctaves=3
 #noctaves=4 # formerly
-perlinres=(1,32,8)
-shapescale=(4,8,8)
+perlinres=(1,24,12)  # (1,32,8)
+shapescale=(4,4,4)  # (4,8,8)
 #shapescale=(8,6,6) # formerly
-perlin_persistence=0.3
+perlin_persistence=0.6
 img_shape = (int(math.pow(2,noctaves))*perlinres[1]*shapescale[1], int(math.pow(2,noctaves))*perlinres[2]*shapescale[2])
 sx = img_shape[0]/1000.0
 sy = img_shape[1]/1000.0
@@ -126,7 +126,7 @@ def perlin_fieldset_from_numpy(periodic_wrap=False, write_out=False):
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
     fieldset = None
     if periodic_wrap:
-        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=1))
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, time_periodic=delta(days=366))
     else:
         fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=False, allow_time_extrapolation=True)
     if write_out:
@@ -168,7 +168,7 @@ def perlin_fieldset_from_xarray(periodic_wrap=False):
     variables = {'U': 'Uxr', 'V': 'Vxr'}
     dimensions = {'time': 'time', 'lat': 'lat', 'lon': 'lon'}
     if periodic_wrap:
-        return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat', time_periodic=delta(days=1))
+        return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat', time_periodic=delta(days=366))
     else:
         return FieldSet.from_xarray_dataset(ds, variables, dimensions, mesh='flat', allow_time_extrapolation=True)
 
@@ -263,15 +263,21 @@ if __name__=='__main__':
     nowtime = datetime.datetime.now()
     ParcelsRandom.seed(nowtime.microsecond)
 
+    branch = "soa_benchmark"
+    computer_env = "local/unspecified"
+    scenario = "perlin"
     odir = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         # odir = "/scratch/{}/experiments".format(os.environ['USER'])
         odir = "/scratch/{}/experiments".format("ckehl")
+        computer_env = "Gemini"
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
+        computer_env = "Cartesius"
     else:
         odir = "/var/scratch/experiments"
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
 
     if os.path.sep in imageFileName:
         head_dir = os.path.dirname(imageFileName)

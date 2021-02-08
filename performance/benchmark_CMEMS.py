@@ -131,31 +131,6 @@ if __name__=='__main__':
     agingParticles = args.aging
     with_GC = args.useGC
 
-    headdir = ""
-    odir = ""
-    dirread_pal = ""
-    datahead = ""
-    dirread_top = ""
-    dirread_top_bgc = ""
-    if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
-        # headdir = "/scratch/{}/experiments/palaeo-parcels".format(os.environ['USER'])
-        headdir = "/scratch/{}/experiments".format("ckehl")
-        odir = headdir
-        datahead = "/data/oceanparcels/input_data"
-        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
-    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
-        CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
-        headdir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = headdir
-        datahead = "/projects/0/topios/hydrodynamic_data"
-        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
-    else:
-        headdir = "/var/scratch/experiments"
-        odir = headdir
-        dirread_pal = headdir
-        datahead = "/data"
-        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
-
     Nparticle = int(float(eval(args.nparticles)))
     target_N = Nparticle
     start_N_particles = int(float(eval(args.start_nparticles)))
@@ -175,6 +150,45 @@ if __name__=='__main__':
     dt_minutes = 60
     nowtime = datetime.now()
     ParcelsRandom.seed(nowtime.microsecond)
+
+    branch = "soa_benchmark"
+    computer_env = "local/unspecified"
+    scenario = "CMEMS"
+    headdir = ""
+    odir = ""
+    dirread_pal = ""
+    datahead = ""
+    dirread_top = ""
+    dirread_top_bgc = ""
+    if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
+        # headdir = "/scratch/{}/experiments/palaeo-parcels".format(os.environ['USER'])
+        headdir = "/scratch/{}/experiments".format("ckehl")
+        odir = headdir
+        datahead = "/data/oceanparcels/input_data"
+        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        computer_env = "Gemini"
+    elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
+        CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
+        headdir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
+        odir = headdir
+        datahead = "/projects/0/topios/hydrodynamic_data"
+        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+        computer_env = "Cartesius"
+    else:
+        headdir = "/var/scratch/experiments"
+        odir = headdir
+        dirread_pal = headdir
+        datahead = "/data"
+        dirread_top = os.path.join(datahead, 'CMEMS/GLOBAL_REANALYSIS_PHY_001_030/')
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
+
+    if os.path.sep in imageFileName:
+        head_dir = os.path.dirname(imageFileName)
+        if head_dir[0] == os.path.sep:
+            odir = head_dir
+        else:
+            odir = os.path.join(odir, head_dir)
+            imageFileName = os.path.split(imageFileName)[1]
 
     func_time = []
     mem_used_GB = []
@@ -265,6 +279,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"

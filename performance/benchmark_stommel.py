@@ -5,7 +5,8 @@ Date: 11-02-2020
 
 from parcels import AdvectionEE, AdvectionRK45, AdvectionRK4
 from parcels import FieldSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, StateCode, OperationCode, ErrorCode
-from parcels.particleset_benchmark import ParticleSet_Benchmark as ParticleSet
+from parcels.particleset_benchmark import ParticleSet_Benchmark as BenchmarkParticleSet
+from parcels.particleset import ParticleSet as DryParticleSet
 # from parcels.kernel_benchmark import Kernel_Benchmark as Kernel
 from parcels.field import VectorField, NestedField, SummedField
 # from parcels import plotTrajectoriesFile_loadedField
@@ -61,7 +62,7 @@ def RenewParticle(particle, fieldset, time):
 def perIterGC():
     gc.collect()
 
-def stommel_fieldset_from_numpy(xdim=200, ydim=200, periodic_wrap=False):
+def stommel_fieldset_from_numpy(xdim=200, ydim=200, periodic_wrap=False, write_out=False):
     """Simulate a periodic current along a western boundary, with significantly
     larger velocities along the western edge than the rest of the region
 
@@ -104,10 +105,14 @@ def stommel_fieldset_from_numpy(xdim=200, ydim=200, periodic_wrap=False):
 
     data = {'U': U, 'V': V, 'P': P}
     dimensions = {'time': time, 'lon': lon, 'lat': lat}
+    fieldset = None
     if periodic_wrap:
-        return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True, time_periodic=delta(days=1))
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True, time_periodic=delta(days=366))
     else:
-        return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True, allow_time_extrapolation=True)
+        fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True, allow_time_extrapolation=True)
+    if write_out:
+        fieldset.write(filename=write_out)
+    return fieldset
 
 
 def stommel_fieldset_from_xarray(xdim=200, ydim=200, periodic_wrap=False):
@@ -159,7 +164,7 @@ def stommel_fieldset_from_xarray(xdim=200, ydim=200, periodic_wrap=False):
     pvariables = {'U': 'Uxr', 'V': 'Vxr', 'P': 'Pxr'}
     pdimensions = {'time': 'time', 'lat': 'lat', 'lon': 'lon'}
     if periodic_wrap:
-        return FieldSet.from_xarray_dataset(ds, pvariables, pdimensions, mesh='flat', time_periodic=delta(days=1))
+        return FieldSet.from_xarray_dataset(ds, pvariables, pdimensions, mesh='flat', time_periodic=delta(days=366))
     else:
         return FieldSet.from_xarray_dataset(ds, pvariables, pdimensions, mesh='flat', allow_time_extrapolation=True)
 
@@ -217,6 +222,10 @@ if __name__=='__main__':
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
     args = parser.parse_args()
 
+    ParticleSet = BenchmarkParticleSet
+    if args.dryrun:
+        ParticleSet = DryParticleSet
+
     imageFileName=args.imageFileName
     periodicFlag=args.periodic
     backwardSimulation = args.backwards
@@ -248,15 +257,21 @@ if __name__=='__main__':
     nowtime = datetime.datetime.now()
     ParcelsRandom.seed(nowtime.microsecond)
 
+    branch = "soa_benchmark"
+    computer_env = "local/unspecified"
+    scenario = "stommel"
     odir = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         # odir = "/scratch/{}/experiments".format(os.environ['USER'])
         odir = "/scratch/{}/experiments".format("ckehl")
+        computer_env = "Gemini"
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
+        computer_env = "Cartesius"
     else:
         odir = "/var/scratch/experiments"
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
 
     func_time = []
     mem_used_GB = []
@@ -266,7 +281,10 @@ if __name__=='__main__':
     if use_xarray:
         fieldset = stommel_fieldset_from_xarray(200, 200, periodic_wrap=periodicFlag)
     else:
-        fieldset = stommel_fieldset_from_numpy(200, 200, periodic_wrap=periodicFlag)
+        field_fpath = False
+        if args.write_out:
+            field_fpath = os.path.join(odir,"stommel")
+        fieldset = stommel_fieldset_from_numpy(200, 200, periodic_wrap=periodicFlag, write_out=field_fpath)
 
     if args.compute_mode is 'scipy':
         Nparticle = 2**10
@@ -365,6 +383,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
@@ -418,6 +438,9 @@ if __name__=='__main__':
     else:
         #endtime = ostime.time()
         endtime = ostime.process_time()
+
+    if args.write_out:
+        output_file.close()
 
     # if MPI:
     #     mpi_comm = MPI.COMM_WORLD

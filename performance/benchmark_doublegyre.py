@@ -230,15 +230,21 @@ if __name__=='__main__':
     nowtime = datetime.datetime.now()
     ParcelsRandom.seed(nowtime.microsecond)
 
+    branch = "soa_benchmark"
+    computer_env = "local/unspecified"
+    scenario = "doublegyre"
     odir = ""
     if os.uname()[1] in ['science-bs35', 'science-bs36']:  # Gemini
         # odir = "/scratch/{}/experiments".format(os.environ['USER'])
         odir = "/scratch/{}/experiments".format("ckehl")
+        computer_env = "Gemini"
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         odir = "/scratch/shared/{}/experiments".format(CARTESIUS_SCRATCH_USERNAME)
+        computer_env = "Cartesius"
     else:
         odir = "/var/scratch/experiments"
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, target_N, sys.argv[1:]))
 
     if os.path.sep in imageFileName:
         head_dir = os.path.dirname(imageFileName)
@@ -335,6 +341,8 @@ if __name__=='__main__':
             out_fname += "_MPI"
         else:
             out_fname += "_noMPI"
+        if periodicFlag:
+            out_fname += "_p"
         out_fname += "_n"+str(Nparticle)
         if backwardSimulation:
             out_fname += "_bwd"
