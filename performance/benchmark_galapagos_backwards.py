@@ -126,7 +126,7 @@ if __name__=='__main__':
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/galapagos".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = os.path.join(headdir, "/BENCHres")
+        odir = os.path.join(headdir, "BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         computer_env = "Cartesius"
