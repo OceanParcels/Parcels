@@ -3,19 +3,18 @@ from parcels import ParticleSet_Benchmark
 from parcels.kernels import seawaterdensity
 from argparse import ArgumentParser
 from datetime import timedelta as delta
-from datetime import  datetime
+# from datetime import  datetime
 import time as ostime
-import numpy as np
+import os
+import sys
 import math
+import numpy as np
+import scipy.linalg
+# from numpy import *
 from glob import glob
-import matplotlib.pyplot as plt
 import fnmatch
 import warnings
-import pickle                                                      
-import matplotlib.ticker as mtick
-from numpy import *
-import scipy.linalg
-import math as math
+import pickle
 import gc
 warnings.filterwarnings("ignore")
 
