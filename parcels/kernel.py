@@ -295,6 +295,7 @@ class Kernel(object):
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
             # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
+            reset_dt = False
             if abs(endtime - p.time) < abs(p.dt):
                 dt_pos = abs(endtime - p.time)
                 reset_dt = True
