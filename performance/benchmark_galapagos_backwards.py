@@ -33,7 +33,7 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
                  'V': {'lon': meshfile, 'lat': meshfile, 'data': vfiles}}
     nemo_variables = {'U': 'uo', 'V': 'vo'}
     nemo_dimensions = {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}
-    period = delta(days=366*10) if periodic_wrap else False  # 10 years period
+    period = delta(days=366*11) if periodic_wrap else False  # 10 years period
     extrapolation = False if periodic_wrap else True
     # ==== Because the stokes data is a different grid, we actually need to define the chunking ==== #
     # fieldset_nemo = FieldSet.from_nemo(nemofiles, nemovariables, nemodimensions, field_chunksize='auto')
