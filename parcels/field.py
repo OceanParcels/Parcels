@@ -200,7 +200,7 @@ class Field(object):
         self.c_data_chunks = []
         self.nchunks = []
         self.chunk_set = False
-        self.filebuffers = [None] * 3
+        self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
 
@@ -392,7 +392,7 @@ class Field(object):
         if 'full_load' in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs['full_load']
 
-        if grid.time.size <= 3 or deferred_load is False:
+        if grid.time.size <= 2 or deferred_load is False:
             deferred_load = False
 
         if chunksize not in [False, None]:
@@ -1324,11 +1324,9 @@ class Field(object):
         if tindex == 0:
             data = lib.concatenate([data_to_concat, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
-            data = lib.concatenate([data[:tindex, :], data_to_concat, data[tindex+1:, :]], axis=0)
-        elif tindex == 2:
             data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
         else:
-            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1, 2]")
+            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
 
     def advancetime(self, field_new, advanceForward):

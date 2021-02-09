@@ -498,13 +498,15 @@ class FieldSet(object):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
            All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
            gridindexing is set to 'mitgcm' for grids that have the shape
-                _________________V[k,j+1,i]__________________
-               |                                             |
-               |                                             |
-               U[k,j,i]     W[k-1:k,j,i], T[k,j,i]           U[k,j,i+1]
-               |                                             |
-               |                                             |
-               |_________________V[k,j,i]____________________|
+
+           +-----------------------------+-----------------------------+-----------------------------+
+           |                             |         V[k,j+1,i]          |                             |
+           +-----------------------------+-----------------------------+-----------------------------+
+           |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
+           +-----------------------------+-----------------------------+-----------------------------+
+           |                             |         V[k,j,i]            +                             |
+           +-----------------------------+-----------------------------+-----------------------------+
+
            For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
            Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
@@ -702,11 +704,15 @@ class FieldSet(object):
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
-               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
-               |                                         |
-               |      W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]      |
-               |                                         |
-               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+
+               +-------------------------------+-------------------------------+-------------------------------+
+               |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
+               +-------------------------------+-------------------------------+-------------------------------+
+               |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
+               +-------------------------------+-------------------------------+-------------------------------+
+               |U[k,j,i],V[k,j,i]              |                               +U[k,j,i+1],V[k,j,i+1]          |
+               +-------------------------------+-------------------------------+-------------------------------+
+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
                In 3D: U and V nodes are at the midlle of the cell vertical edges,
@@ -993,7 +999,7 @@ class FieldSet(object):
         :param fieldset_new: FieldSet snapshot with which the oldest time has to be replaced"""
 
         logger.warning_once("Fieldset.advancetime() is deprecated.\n \
-                             Parcels deals automatically with loading only 3 time steps simustaneously\
+                             Parcels deals automatically with loading only 2 time steps simultaneously\
                              such that the total allocated memory remains limited.")
 
         advance = 0
@@ -1055,7 +1061,7 @@ class FieldSet(object):
                 else:
                     zd = g.zdim
                 data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
-                f.loaded_time_indices = range(3)
+                f.loaded_time_indices = range(2)
                 for tind in f.loaded_time_indices:
                     for fb in f.filebuffers:
                         if fb is not None:
@@ -1083,43 +1089,43 @@ class FieldSet(object):
                     zd = g.zdim
                 data = lib.empty((g.tdim, zd, g.ydim-2*g.meridional_halo, g.xdim-2*g.zonal_halo), dtype=np.float32)
                 if signdt >= 0:
-                    f.loaded_time_indices = [2]
+                    f.loaded_time_indices = [1]
                     if f.filebuffers[0] is not None:
                         f.filebuffers[0].close()
                         f.filebuffers[0] = None
-                    f.filebuffers[:2] = f.filebuffers[1:]
-                    data = f.computeTimeChunk(data, 2)
+                    f.filebuffers[0] = f.filebuffers[1]
+                    data = f.computeTimeChunk(data, 1)
                 else:
                     f.loaded_time_indices = [0]
-                    if f.filebuffers[2] is not None:
-                        f.filebuffers[2].close()
-                        f.filebuffers[2] = None
-                    f.filebuffers[1:] = f.filebuffers[:2]
+                    if f.filebuffers[1] is not None:
+                        f.filebuffers[1].close()
+                        f.filebuffers[1] = None
+                    f.filebuffers[1] = f.filebuffers[0]
                     data = f.computeTimeChunk(data, 0)
                 data = f.rescale_and_set_minmax(data)
                 if signdt >= 0:
-                    data = f.reshape(data)[2:, :]
+                    data = f.reshape(data)[1, :]
                     if lib is da:
-                        f.data = lib.concatenate([f.data[1:, :], data], axis=0)
+                        f.data = lib.stack([f.data[1, :], data], axis=0)
                     else:
                         if not isinstance(f.data, DeferredArray):
                             if isinstance(f.data, list):
                                 del f.data[0, :]
                             else:
                                 f.data[0, :] = None
-                        f.data[:2, :] = f.data[1:, :]
-                        f.data[2, :] = data
+                        f.data[0, :] = f.data[1, :]
+                        f.data[1, :] = data
                 else:
-                    data = f.reshape(data)[0:1, :]
+                    data = f.reshape(data)[0, :]
                     if lib is da:
-                        f.data = lib.concatenate([data, f.data[:2, :]], axis=0)
+                        f.data = lib.stack([data, f.data[0, :]], axis=0)
                     else:
                         if not isinstance(f.data, DeferredArray):
                             if isinstance(f.data, list):
-                                del f.data[2, :]
+                                del f.data[1, :]
                             else:
-                                f.data[2, :] = None
-                        f.data[1:, :] = f.data[:2, :]
+                                f.data[1, :] = None
+                        f.data[1, :] = f.data[0, :]
                         f.data[0, :] = data
                 g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
                                         g.chunk_loading_requested, g.load_chunk)
@@ -1135,8 +1141,7 @@ class FieldSet(object):
                                     break
                                 block = f.get_block(block_id)
                                 f.data_chunks[block_id][0] = None
-                                f.data_chunks[block_id][:2] = f.data_chunks[block_id][1:]
-                                f.data_chunks[block_id][2] = np.array(f.data.blocks[(slice(3),)+block][2])
+                                f.data_chunks[block_id][1] = np.array(f.data.blocks[(slice(2),)+block][1])
                     else:
                         for block_id in range(len(g.load_chunk)):
                             if g.load_chunk[block_id] == g.chunk_loaded_touched:
@@ -1145,9 +1150,8 @@ class FieldSet(object):
                                     # happens when field not called by kernel, but shares a grid with another field called by kernel
                                     break
                                 block = f.get_block(block_id)
-                                f.data_chunks[block_id][2] = None
-                                f.data_chunks[block_id][1:] = f.data_chunks[block_id][:2]
-                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(3),)+block][0])
+                                f.data_chunks[block_id][1] = None
+                                f.data_chunks[block_id][0] = np.array(f.data.blocks[(slice(2),)+block][0])
         # do user-defined computations on fieldset data
         if self.compute_on_defer:
             self.compute_on_defer(self)
