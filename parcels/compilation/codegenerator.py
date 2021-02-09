@@ -999,7 +999,7 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(pname, "particles")),
-                c.Value("double", "endtime"), c.Value("double", "dt"), c.Value("double", "reset_dt")]
+                c.Value("double", "endtime"), c.Value("double", "dt")]  # , c.Value("double", "reset_dt")
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():
@@ -1066,6 +1066,7 @@ class LoopGenerator(object):
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
+                         c.Value("double", "reset_dt"), 
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])
