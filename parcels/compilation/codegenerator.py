@@ -999,7 +999,7 @@ class LoopGenerator(object):
         # Generate outer loop for repeated kernel invocation
         args = [c.Value("int", "num_particles"),
                 c.Pointer(c.Value(pname, "particles")),
-                c.Value("double", "endtime"), c.Value("double", "dt")]  # , c.Value("double", "reset_dt")
+                c.Value("double", "endtime"), c.Value("double", "dt")]
         for field, _ in field_args.items():
             args += [c.Pointer(c.Value("CField", "%s" % field))]
         for const, _ in const_args.items():

@@ -302,10 +302,6 @@ class Kernel(object):
             else:
                 dt_pos = abs(p.dt)
                 reset_dt = False
-            # value = abs(endtime - p.time) - abs(p.dt)  # that's is your if-statement, giving -x for reset, 0 for both equal, and +x for no-reset
-            # alpha = int(1) - int(math.ceil(value))  # step-function with 0 for all values <= 0, and 1 for all values > 0; hence, we take the int-inverse here
-            # dt_pos = alpha * abs(endtime - p.time) + (1 - alpha) * abs(p.dt)
-            # reset_dt = bool(alpha)
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
@@ -383,10 +379,6 @@ class Kernel(object):
                     else:
                         dt_pos = abs(p.dt)
                         reset_dt = False
-                    # value = abs(endtime - p.time) - abs(p.dt)  # that's is your if-statement, giving -x for reset, 0 for both equal, and +x for no-reset
-                    # alpha = int(1) - int(math.ceil(value))  # step-function with 0 for all values <= 0, and 1 for all values > 0; hence, we take the int-inverse here
-                    # dt_pos = alpha * abs(endtime - p.time) + (1 - alpha) * abs(p.dt)
-                    # reset_dt = bool(alpha)
 
                     sign_end_part = np.sign(endtime - p.time)
                     if sign_end_part != sign_dt:
