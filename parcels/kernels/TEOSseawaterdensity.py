@@ -6,6 +6,7 @@ __all__ = ['PolyTEOS10_bsq']
 
 
 def PolyTEOS10_bsq(particle, fieldset, time):
+    '''
     # calculates density based on the polyTEOS10-bsq algorithm from Appendix A.2 of
     # https://www.sciencedirect.com/science/article/pii/S1463500315000566
     # requires fieldset.abs_salinity and fieldset.cons_temperature Fields in the fieldset
@@ -19,6 +20,7 @@ def PolyTEOS10_bsq(particle, fieldset, time):
     #   Accurate and computationally efficient algorithms for potential
     #   temperature and density of seawater.  Journal of Atmospheric and
     #   Oceanic Technology, 20, 730-741.
+    '''
 
     Z = - particle.depth  # note: use negative depths!
     SA = fieldset.abs_salinity[time, particle.depth, particle.lat, particle.lon]
