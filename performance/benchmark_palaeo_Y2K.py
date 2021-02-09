@@ -41,7 +41,7 @@ global_t_0 = 0
 odir = ""
 
 
-def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, mesh_mask='/scratch/ckehl/experiments/palaeo-parcels/NEMOdata/domain/coordinates.nc'):
+def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, mesh_mask='/scratch/ckehl/experiments/palaeo-parcels/NEMOdata/domain/coordinates.nc', periodicFlag=False):
     filenames = { 'U': {'lon': mesh_mask,
                         'lat': mesh_mask,
                         'depth': [ufiles[0]],
@@ -111,17 +111,40 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     bdimensions = {'lon': 'glamf', 'lat': 'gphif'}
     bchs = False
 
-    chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 200, 'x': 200}
+    chs = {'time_counter': 1, 'depthu': 25, 'depthv': 25, 'depthw': 25, 'deptht': 25, 'y': 32, 'x': 64}
     #
     #chs = (1, 75, 200, 200)
     #
     #dask.config.set({'array.chunk-size': '6MiB'})
     #chs = 'auto'
+    nchs = {
+        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},  # ufiles
+        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},  # vfiles
+        'W':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},  # wfiles
+        'T':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
+        'S':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
+        'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
+        'PP':      {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
+        'ICE':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},  # ifiles
+        'ICEPRES': {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},  # ifiles
+        'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
+    }
 
     if mesh_mask: # and isinstance(bfile, list) and len(bfile) > 0:
-        # fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize='auto')
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
-        Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+        if not periodicFlag:
+            try:
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', chunksize=bchs)
+        else:
+            try:
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, time_periodic=delta(days=366), field_chunksize=chs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, time_periodic=delta(days=366), interp_method='cgrid_tracer', field_chunksize=bchs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, time_periodic=delta(days=366), chunksize=nchs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, time_periodic=delta(days=366), interp_method='cgrid_tracer', chunksize=bchs)
         fieldset.add_field(Bfield, 'B')
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
@@ -131,8 +154,16 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         filenames.pop('B')
         variables.pop('B')
         dimensions.pop('B')
-        # fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs)
-        fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+        if not periodicFlag:
+            try:
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
+        else:
+            try:
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, time_periodic=delta(days=366), field_chunksize=chs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, time_periodic=delta(days=366), chunksize=nchs)
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
         fieldset.W.vmax = 10
@@ -209,6 +240,7 @@ if __name__ == "__main__":
     imageFileName=args.imageFileName
     periodicFlag=args.periodic
     time_in_days = int(float(eval(args.time_in_days)))
+    time_in_years = int(time_in_days/366.0)
     with_GC = args.useGC
 
     branch = "benchmarking"
@@ -250,7 +282,12 @@ if __name__ == "__main__":
 
     # dirread_pal = '/projects/0/palaeo-parcels/NEMOdata/'
 
-    outfile = 'grid_dd' + str(int(dd)) + '_sp' + str(int(sp))
+    outfile = 'grid_dd' + str(int(dd))
+    outfile += '_sp' + str(int(sp))
+    if periodicFlag:
+        outfile += '_p'
+    if time_in_years != 1:
+        outfile += '_' + str(time_in_years) + 'y'
     dirwrite = os.path.join(odir, "sp%d_dd%d" % (int(sp),int(dd)))
     if not os.path.exists(dirwrite):
         os.mkdir(dirwrite)
@@ -298,7 +335,7 @@ if __name__ == "__main__":
     ifiles = sorted(glob(dirread_top + 'means/ORCA0083-N06_2000????d05I.nc'))
     bfile = dirread_top + 'domain/bathymetry_ORCA12_V3.3.nc'
 
-    fieldset = set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, os.path.join(dirread_pal, "domain/coordinates.nc"))
+    fieldset = set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, os.path.join(dirread_pal, "domain/coordinates.nc"), periodicFlag=periodicFlag)
     fieldset.add_periodic_halo(zonal=True) 
     fieldset.add_constant('dwellingdepth', np.float(dd))
     fieldset.add_constant('sinkspeed', sp/86400.)
