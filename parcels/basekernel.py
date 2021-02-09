@@ -154,11 +154,15 @@ class BaseKernel(object):
                     raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
 
     def check_kernel_signature_on_version(self):
+        """
+        returns numkernelargs
+        """
         if self._pyfunc is not None:
             if version_info[0] < 3:
                 numkernelargs = len(inspect.getargspec(self._pyfunc).args)
             else:
                 numkernelargs = len(inspect.getfullargspec(self._pyfunc).args)
+            return numkernelargs
 
     def remove_lib(self):
         # Unload the currently loaded dynamic linked library to be secure
@@ -196,8 +200,8 @@ class BaseKernel(object):
             cache_name = self._cache_key  # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir() if mpi_rank == 0 else None
             dyn_dir = mpi_comm.bcast(dyn_dir, root=0)
-            ## basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-            # basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None
+            # basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None  # very early version
+            # basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None  # early version
             basename = cache_name if mpi_rank == 0 else None
             basename = mpi_comm.bcast(basename, root=0)
             basename = basename + "_%d" % mpi_rank
@@ -211,7 +215,7 @@ class BaseKernel(object):
         src_file_or_files = None
         if type(basename) in (list, dict, tuple, ndarray):
             src_file_or_files = ["", ] * len(basename)
-            for i, src_file in  enumerate(basename):
+            for i, src_file in enumerate(basename):
                 src_file_or_files[i] = "%s.c" % path.join(dyn_dir, src_file)
         else:
             src_file_or_files = "%s.c" % path.join(dyn_dir, basename)
@@ -266,7 +270,6 @@ class BaseKernel(object):
         if not isinstance(kernel, BaseKernel):
             kernel = BaseKernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, BaseKernel)
-
 
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles=True):
