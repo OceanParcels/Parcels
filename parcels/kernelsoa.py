@@ -289,6 +289,12 @@ class KernelSOA(BaseKernel):
                         dt_pos = 0
                     break
 
+    def __del__(self):
+        # Clean-up the in-memory dynamic linked libraries.
+        # This is not really necessary, as these programs are not that large, but with the new random
+        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
+        super(KernelSOA, self).__del__()
+
     def remove_deleted(self, pset, output_file, endtime):
         """
         Utility to remove all particles that signalled deletion.
