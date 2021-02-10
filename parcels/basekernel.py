@@ -289,7 +289,7 @@ class BaseKernel(object):
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
         if path.isfile(lib_file):  # and delete_cfiles
             [remove(s) for s in [lib_file, ] if path.exists(s)]
-        if delete_cfiles and len(all_files_array)>0:
+        if delete_cfiles and len(all_files_array) > 0:
             [remove(s) for s in all_files_array if path.exists(s)]
 
     @staticmethod
