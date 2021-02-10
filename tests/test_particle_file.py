@@ -267,6 +267,7 @@ def test_error_duplicate_outputdir(fieldset, tmpdir):
 
     pfile1.delete_tempwritedir()
 
+
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_reset_dt(fieldset, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
