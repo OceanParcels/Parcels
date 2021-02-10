@@ -62,36 +62,10 @@ class KernelSOA(BaseKernel):
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
-
-        self.fieldset = fieldset
-        self.ptype = ptype
-        self._lib = None
-        self.delete_cfiles = delete_cfiles
-        self._cleanup_files = None
-        self._cleanup_lib = None
-        self.c_include = c_include
+        super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
         # Derive meta information from pyfunc, if not given
-        self.funcname = funcname or pyfunc.__name__
-        if pyfunc is AdvectionRK4_3D:
-            warning = False
-            if isinstance(fieldset.W, Field) and fieldset.W.creation_log != 'from_nemo' and \
-               fieldset.W._scaling_factor is not None and fieldset.W._scaling_factor > 0:
-                warning = True
-            if type(fieldset.W) in [SummedField, NestedField]:
-                for f in fieldset.W:
-                    if f.creation_log != 'from_nemo' and f._scaling_factor is not None and f._scaling_factor > 0:
-                        warning = True
-            if warning:
-                logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
-                                    '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
-        elif pyfunc is AdvectionAnalytical:
-            if ptype.uses_jit:
-                raise NotImplementedError('Analytical Advection only works in Scipy mode')
-            if fieldset.U.interp_method != 'cgrid_velocity':
-                raise NotImplementedError('Analytical Advection only works with C-grids')
-            if fieldset.U.grid.gtype not in [GridCode.CurvilinearZGrid, GridCode.RectilinearZGrid]:
-                raise NotImplementedError('Analytical Advection only works with Z-grids in the vertical')
+        self.check_fieldsets_in_kernels()
 
         if funcvars is not None:
             self.funcvars = funcvars
@@ -101,7 +75,7 @@ class KernelSOA(BaseKernel):
             self.funcvars = None
         self.funccode = funccode or inspect.getsource(pyfunc.__code__)
         # Parse AST if it is not provided explicitly
-        self.py_ast = py_ast or parse(fix_indentation(self.funccode)).body[0]
+        self.py_ast = py_ast or parse(BaseKernel.fix_indentation(self.funccode)).body[0]
         if pyfunc is None:
             # Extract user context by inspecting the call stack
             stack = inspect.stack()
@@ -126,10 +100,7 @@ class KernelSOA(BaseKernel):
         else:
             self.pyfunc = pyfunc
 
-        if version_info[0] < 3:
-            numkernelargs = len(inspect.getargspec(self.pyfunc).args)
-        else:
-            numkernelargs = len(inspect.getfullargspec(self.pyfunc).args)
+        numkernelargs = self.check_kernel_signature_on_version()
 
         assert numkernelargs == 3, \
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
@@ -159,18 +130,12 @@ class KernelSOA(BaseKernel):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-                basename = mpi_comm.bcast(basename, root=0)
-                basename = basename + "_%d" % mpi_rank
-            else:
-                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
 
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-            self.log_file = "%s.log" % basename
+            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
+            if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
+                self.dyn_srcs = src_file_or_files
+            else:
+                self.src_file = src_file_or_files
 
     @property
     def _cache_key(self):
