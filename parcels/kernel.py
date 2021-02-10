@@ -294,8 +294,14 @@ class Kernel(object):
         for p in pset:
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
-            # Compute min/max dt for first timestep
-            dt_pos = min(abs(p.dt), abs(endtime - p.time))
+            # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
+            reset_dt = False
+            if abs(endtime - p.time) < abs(p.dt):
+                dt_pos = abs(endtime - p.time)
+                reset_dt = True
+            else:
+                dt_pos = abs(p.dt)
+                reset_dt = False
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
@@ -340,10 +346,17 @@ class Kernel(object):
                 if res in [StateCode.Success, OperationCode.Delete]:
                     # Update time and repeat
                     p.time += p.dt
+                    if reset_dt and p.dt == pdt_prekernels:
+                        p.dt = dt
                     p.update_next_dt()
                     if analytical:
                         p.dt = np.inf
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if abs(endtime - p.time) < abs(p.dt):
+                        dt_pos = abs(endtime - p.time)
+                        reset_dt = True
+                    else:
+                        dt_pos = abs(p.dt)
+                        reset_dt = False
 
                     sign_end_part = np.sign(endtime - p.time)
                     if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
@@ -360,7 +373,12 @@ class Kernel(object):
                     for var in pset.collection.ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if abs(endtime - p.time) < abs(p.dt):
+                        dt_pos = abs(endtime - p.time)
+                        reset_dt = True
+                    else:
+                        dt_pos = abs(p.dt)
+                        reset_dt = False
 
                     sign_end_part = np.sign(endtime - p.time)
                     if sign_end_part != sign_dt:
