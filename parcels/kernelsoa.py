@@ -1,24 +1,15 @@
-import _ctypes
 import inspect
 import math  # noqa
 import random  # noqa
-import re
-import time
-from ast import FunctionDef
+# import time  # noga
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
 from ctypes import c_int
-from hashlib import md5
 from os import path
-from os import remove
-from sys import platform
-from sys import version_info
-from weakref import finalize
 
 import numpy as np
-import numpy.ctypeslib as npct
 try:
     from mpi4py import MPI
 except:
@@ -27,17 +18,12 @@ except:
 from parcels.basekernel import BaseKernel
 from parcels.compilation.codegenerator import KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
-from parcels.tools.global_statics import get_cache_dir
-from parcels.field import Field
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.grid import GridCode
-from parcels.kernels.advection import AdvectionRK4_3D
-from parcels.kernels.advection import AdvectionAnalytical
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
@@ -196,6 +182,7 @@ class KernelSOA(BaseKernel):
                 f.data = np.array(f.data)
 
         for p in pset:
+            pdt_prekernels = .0
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
             # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
