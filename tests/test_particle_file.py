@@ -266,3 +266,18 @@ def test_error_duplicate_outputdir(fieldset, tmpdir):
     assert error_thrown
 
     pfile1.delete_tempwritedir()
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_reset_dt(fieldset, mode, tmpdir):
+    # Assert that p.dt gets reset when a write_time is not a multiple of dt
+    # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
+    filepath = tmpdir.join("pfile_reset_dt.nc")
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    ofile = pset.ParticleFile(name=filepath, outputdt=0.05)
+    pset.execute(pset.Kernel(Update_lon), endtime=0.1, dt=0.02, output_file=ofile)
+
+    assert np.allclose(pset.lon, .6)
