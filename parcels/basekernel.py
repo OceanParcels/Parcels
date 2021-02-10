@@ -60,7 +60,7 @@ class BaseKernel(object):
         self.delete_cfiles = delete_cfiles
         self._cleanup_files = None
         self._cleanup_lib = None
-        # self._c_include = c_include
+        self._c_include = c_include
 
         # Derive meta information from pyfunc, if not given
         self._pyfunc = None
@@ -108,6 +108,10 @@ class BaseKernel(object):
     @property
     def fieldset(self):
         return self._fieldset
+
+    @property
+    def c_include(self):
+        return self._c_include
 
     @property
     def _cache_key(self):
@@ -259,6 +263,7 @@ class BaseKernel(object):
         return kclass(self.fieldset, self.ptype, pyfunc=None,
                       funcname=funcname, funccode=self.funccode + kernel.funccode,
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
+                      c_include=self._c_include + kernel.c_include,
                       delete_cfiles=delete_cfiles)
 
     def __add__(self, kernel):

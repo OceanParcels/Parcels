@@ -295,6 +295,16 @@ class KernelSOA(BaseKernel):
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
         super(KernelSOA, self).__del__()
 
+    def __add__(self, kernel):
+        if not isinstance(kernel, KernelSOA):
+            kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        return self.merge(kernel, KernelSOA)
+
+    def __radd__(self, kernel):
+        if not isinstance(kernel, KernelSOA):
+            kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        return kernel.merge(self, KernelSOA)
+
     def remove_deleted(self, pset, output_file, endtime):
         """
         Utility to remove all particles that signalled deletion.
@@ -403,13 +413,3 @@ class KernelSOA(BaseKernel):
                       py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
                       c_include=self.c_include + kernel.c_include,
                       delete_cfiles=delete_cfiles)
-
-    def __add__(self, kernel):
-        if not isinstance(kernel, Kernel):
-            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel)
-
-    def __radd__(self, kernel):
-        if not isinstance(kernel, Kernel):
-            kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self)
