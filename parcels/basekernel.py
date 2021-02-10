@@ -175,19 +175,24 @@ class BaseKernel(object):
         return numkernelargs
 
     def remove_lib(self):
-        # Unload the currently loaded dynamic linked library to be secure
+        # (async) unload the currently loaded dynamic linked library to be secure
         if self._cleanup_files is not None:
             self._cleanup_files.detach()
         if self._cleanup_lib is not None:
             self._cleanup_lib.detach()
 
-        if self._lib is not None:
-            try:
-                _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            except (OSError, ):
-                logger.warning_once("compiled library already freed.")
-            del self._lib
-            self._lib = None
+        BaseKernel.cleanup_unload_lib(self._lib)
+        del self._lib
+        self._lib = None
+
+        all_files_array = []
+        if self.src_file is None:
+            [all_files_array.append(fpath) for fpath in self.dyn_srcs]
+        else:
+            all_files_array.append(self.src_file)
+        all_files_array.append(self.log_file)
+
+        BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
@@ -197,10 +202,6 @@ class BaseKernel(object):
                 self.dyn_srcs = src_file_or_files
             else:
                 self.src_file = src_file_or_files
-
-        # if self.lib_file is not None and path.isfile(self.lib_file):
-        #     [remove(s) for s in [self.lib_file, ]]
-        #     [remove(s) for s in [self.dyn_srcs, self.log_file, ] if self.delete_cfiles]
 
     def get_kernel_compile_files(self):
         """
@@ -241,7 +242,6 @@ class BaseKernel(object):
         all_files_array = []
         if self.src_file is None:
             for dyn_src in self.dyn_srcs:
-
                 with open(dyn_src, 'w') as f:
                     f.write(self.ccode)
                 all_files_array.append(dyn_src)
@@ -286,10 +286,11 @@ class BaseKernel(object):
         return kernel.merge(self, BaseKernel)
 
     @staticmethod
-    def cleanup_remove_files(lib_file, all_files_array, delete_cfiles=True):
+    def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
         if path.isfile(lib_file):  # and delete_cfiles
-            [remove(s) for s in [lib_file, ]]
-            [remove(s) for s in all_files_array if delete_cfiles]
+            [remove(s) for s in [lib_file, ] if path.exists(s)]
+        if delete_cfiles and len(all_files_array)>0:
+            [remove(s) for s in all_files_array if path.exists(s)]
 
     @staticmethod
     def cleanup_unload_lib(lib):
@@ -297,7 +298,10 @@ class BaseKernel(object):
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
         if lib is not None:
-            _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
+            try:
+                _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
+            except (OSError, ):
+                logger.warning_once("compiled library already freed.")
 
     def remove_deleted(self, pset, output_file, endtime):
         """

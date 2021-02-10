@@ -109,11 +109,11 @@ class KernelSOA(BaseKernel):
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
-            if path.isfile(c_include):
-                with open(c_include, 'r') as f:
+            if path.isfile(self._c_include):
+                with open(self._c_include, 'r') as f:
                     c_include_str = f.read()
             else:
-                c_include_str = c_include
+                c_include_str = self._c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
 
@@ -279,7 +279,7 @@ class KernelSOA(BaseKernel):
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
+        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
         super(KernelSOA, self).__del__()
 
     def __add__(self, kernel):
