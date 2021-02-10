@@ -401,15 +401,3 @@ class KernelSOA(BaseKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
-
-    def merge(self, kernel):
-        funcname = self.funcname + kernel.funcname
-        func_ast = FunctionDef(name=funcname, args=self.py_ast.args,
-                               body=self.py_ast.body + kernel.py_ast.body,
-                               decorator_list=[], lineno=1, col_offset=0)
-        delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
-        return Kernel(self.fieldset, self.ptype, pyfunc=None,
-                      funcname=funcname, funccode=self.funccode + kernel.funccode,
-                      py_ast=func_ast, funcvars=self.funcvars + kernel.funcvars,
-                      c_include=self.c_include + kernel.c_include,
-                      delete_cfiles=delete_cfiles)
