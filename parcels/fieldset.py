@@ -498,13 +498,15 @@ class FieldSet(object):
         """Initialises FieldSet object from NetCDF files of MITgcm fields.
            All parameters and keywords are exactly the same as for FieldSet.from_nemo(), except that
            gridindexing is set to 'mitgcm' for grids that have the shape
-                _________________V[k,j+1,i]__________________
-               |                                             |
-               |                                             |
-               U[k,j,i]     W[k-1:k,j,i], T[k,j,i]           U[k,j,i+1]
-               |                                             |
-               |                                             |
-               |_________________V[k,j,i]____________________|
+
+           +-----------------------------+-----------------------------+-----------------------------+
+           |                             |         V[k,j+1,i]          |                             |
+           +-----------------------------+-----------------------------+-----------------------------+
+           |U[k,j,i]                     |    W[k-1:k,j,i], T[k,j,i]   |U[k,j,i+1]                   |
+           +-----------------------------+-----------------------------+-----------------------------+
+           |                             |         V[k,j,i]            +                             |
+           +-----------------------------+-----------------------------+-----------------------------+
+
            For indexing details: https://mitgcm.readthedocs.io/en/latest/algorithm/algorithm.html#spatial-discretization-of-the-dynamical-equations
            Note that vertical velocity (W) is assumed postive in the positive z direction (which is upward in MITgcm)
         """
@@ -702,11 +704,15 @@ class FieldSet(object):
                lat, depth, time, data) to dimensions in the netCF file(s).
                Note that dimensions can also be a dictionary of dictionaries if
                dimension names are different for each variable.
-               U[k,j+1,i],V[k,j+1,i] ____________________U[k,j+1,i+1],V[k,j+1,i+1]
-               |                                         |
-               |      W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]      |
-               |                                         |
-               U[k,j,i],V[k,j,i] ________________________U[k,j,i+1],V[k,j,i+1]
+
+               +-------------------------------+-------------------------------+-------------------------------+
+               |U[k,j+1,i],V[k,j+1,i]          |                               |U[k,j+1,i+1],V[k,j+1,i+1]      |
+               +-------------------------------+-------------------------------+-------------------------------+
+               |                               |W[k-1:k+1,j+1,i+1],T[k,j+1,i+1]|                               |
+               +-------------------------------+-------------------------------+-------------------------------+
+               |U[k,j,i],V[k,j,i]              |                               +U[k,j,i+1],V[k,j,i+1]          |
+               +-------------------------------+-------------------------------+-------------------------------+
+
                In 2D: U and V nodes are on the cell vertices and interpolated bilinearly as a A-grid.
                       T node is at the cell centre and interpolated constant per cell as a C-grid.
                In 3D: U and V nodes are at the midlle of the cell vertical edges,
