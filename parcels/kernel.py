@@ -449,7 +449,6 @@ class Kernel(object):
 
         # while np.any(error_particles):
         while n_error > 0:
-            print(n_error)
             error_pset = pset.error_particles
             # Apply recovery kernel
             for p in error_pset:
