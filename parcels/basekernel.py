@@ -189,7 +189,6 @@ class BaseKernel(object):
             del self._lib
             self._lib = None
 
-
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if self._ptype.uses_jit:
