@@ -107,6 +107,10 @@ class BaseKernel(object):
         return self._ptype
 
     @property
+    def pyfunc(self):
+        return self._pyfunc
+
+    @property
     def fieldset(self):
         return self._fieldset
 
@@ -132,13 +136,13 @@ class BaseKernel(object):
             lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
         return "\n".join(lines)
 
-    def check_fieldsets_in_kernels(self):
+    def check_fieldsets_in_kernels(self, pyfunc):
         """
         function checks the integrity of the fieldset with the kernels.
         This function is to be called from the derived class when setting up the 'pyfunc'.
         """
         if self.fieldset is not None:
-            if self._pyfunc is AdvectionRK4_3D:
+            if pyfunc is AdvectionRK4_3D:
                 warning = False
                 if isinstance(self._fieldset.W, Field) and self._fieldset.W.creation_log != 'from_nemo' and \
                    self._fieldset.W._scaling_factor is not None and self._fieldset.W._scaling_factor > 0:
@@ -150,7 +154,7 @@ class BaseKernel(object):
                 if warning:
                     logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
                                         '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
-            elif self._pyfunc is AdvectionAnalytical:
+            elif pyfunc is AdvectionAnalytical:
                 if self._ptype.uses_jit:
                     raise NotImplementedError('Analytical Advection only works in Scipy mode')
                 if self._fieldset.U.interp_method != 'cgrid_velocity':
@@ -162,24 +166,29 @@ class BaseKernel(object):
         """
         returns numkernelargs
         """
+        numkernelargs = 0
         if self._pyfunc is not None:
             if version_info[0] < 3:
                 numkernelargs = len(inspect.getargspec(self._pyfunc).args)
             else:
                 numkernelargs = len(inspect.getfullargspec(self._pyfunc).args)
-            return numkernelargs
+        return numkernelargs
 
     def remove_lib(self):
         # Unload the currently loaded dynamic linked library to be secure
-        if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            del self._lib
-            self._lib = None
-
         if self._cleanup_files is not None:
             self._cleanup_files.detach()
         if self._cleanup_lib is not None:
             self._cleanup_lib.detach()
+
+        if self._lib is not None:
+            try:
+                _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
+            except (OSError, ):
+                logger.warning_once("compiled library already freed.")
+            del self._lib
+            self._lib = None
+
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.

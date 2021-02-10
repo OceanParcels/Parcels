@@ -51,7 +51,7 @@ class KernelSOA(BaseKernel):
         super(KernelSOA, self).__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
         # Derive meta information from pyfunc, if not given
-        self.check_fieldsets_in_kernels()
+        self.check_fieldsets_in_kernels(pyfunc)
 
         if funcvars is not None:
             self.funcvars = funcvars
@@ -82,9 +82,9 @@ class KernelSOA(BaseKernel):
             py_mod = parse("")
             py_mod.body = [self.py_ast]
             exec(compile(py_mod, "<ast>", "exec"), user_ctx)
-            self.pyfunc = user_ctx[self.funcname]
+            self._pyfunc = user_ctx[self.funcname]
         else:
-            self.pyfunc = pyfunc
+            self._pyfunc = pyfunc
 
         numkernelargs = self.check_kernel_signature_on_version()
 
@@ -164,7 +164,7 @@ class KernelSOA(BaseKernel):
         """Performs the core update loop via Python"""
         sign_dt = np.sign(dt)
 
-        if 'AdvectionAnalytical' in self.pyfunc.__name__:
+        if 'AdvectionAnalytical' in self._pyfunc.__name__:
             analytical = True
             if not np.isinf(dt):
                 logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
@@ -209,7 +209,7 @@ class KernelSOA(BaseKernel):
                     pdt_prekernels = sign_dt * dt_pos
                     p.dt = pdt_prekernels
                     state_prev = p.state
-                    res = self.pyfunc(p, pset.fieldset, p.time)
+                    res = self._pyfunc(p, pset.fieldset, p.time)
                     if res is None:
                         res = StateCode.Success
 
