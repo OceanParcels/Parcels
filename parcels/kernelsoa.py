@@ -305,7 +305,7 @@ class KernelSOA(BaseKernel):
             kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, KernelSOA)
 
-    def remove_deleted_soa(self, pset, output_file, endtime):
+    def remove_deleted(self, pset, output_file, endtime):
         """
         Utility to remove all particles that signalled deletion
 
@@ -345,10 +345,7 @@ class KernelSOA(BaseKernel):
             self.execute_python(pset, endtime, dt)
 
         # Remove all particles that signalled deletion
-        if type(pset).__name__ in ['ParticleSetSOA', ]:
-            self.remove_deleted_soa(pset, output_file=output_file, endtime=endtime)
-        else:
-            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+        self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
 
         # Identify particles that threw errors
         n_error = pset.num_error_particles
@@ -375,10 +372,7 @@ class KernelSOA(BaseKernel):
                     p.delete()
 
             # Remove all particles that signalled deletion
-            if type(pset).__name__ in ['ParticleSetSOA', ]:
-                self.remove_deleted_soa(pset, output_file=output_file, endtime=endtime)
-            else:
-                self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
+            self.remove_deleted(pset, output_file=output_file, endtime=endtime)   # Generalizable version!
 
             # Execute core loop again to continue interrupted particles
             if self.ptype.uses_jit:
