@@ -137,57 +137,6 @@ class KernelSOA(BaseKernel):
             else:
                 self.src_file = src_file_or_files
 
-    @property
-    def _cache_key(self):
-        field_keys = "-".join(["%s:%s" % (name, field.units.__class__.__name__)
-                               for name, field in self.field_args.items()])
-        key = self.name + self.ptype._cache_key + field_keys + ('TIME:%f' % time.time())
-        return md5(key.encode('utf-8')).hexdigest()
-
-    def remove_lib(self):
-        # Unload the currently loaded dynamic linked library to be secure
-        if self._lib is not None:
-            _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-            del self._lib
-            self._lib = None
-
-        # deactivate the cleanup finalizers for the current set of files
-        if self._cleanup_files is not None:
-            self._cleanup_files.detach()
-
-        if self._cleanup_lib is not None:
-            self._cleanup_lib.detach()
-
-        # If file already exists, pull new names. This is necessary on a Windows machine, because
-        # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
-        if path.isfile(self.lib_file):
-            [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
-            if MPI:
-                mpi_comm = MPI.COMM_WORLD
-                mpi_rank = mpi_comm.Get_rank()
-                basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None
-                basename = mpi_comm.bcast(basename, root=0)
-                basename = basename + "_%d" % mpi_rank
-            else:
-                basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
-
-            self.src_file = "%s.c" % basename
-            self.lib_file = "%s.%s" % (basename, 'dll' if platform == 'win32' else 'so')
-            self.log_file = "%s.log" % basename
-
-    def compile(self, compiler):
-        """ Writes kernel code to file and compiles it."""
-        with open(self.src_file, 'w') as f:
-            f.write(self.ccode)
-        compiler.compile(self.src_file, self.lib_file, self.log_file)
-        logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
-        self._cleanup_files = finalize(self, cleanup_remove_files, self.delete_cfiles, self.src_file, self.lib_file, self.log_file)
-
-    def load_lib(self):
-        self._lib = npct.load_library(self.lib_file, '.')
-        self._function = self._lib.particle_loop
-        self._cleanup_lib = finalize(self, cleanup_unload_lib, self._lib)
-
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
 
@@ -458,16 +407,3 @@ class KernelSOA(BaseKernel):
         if not isinstance(kernel, Kernel):
             kernel = Kernel(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self)
-
-
-def cleanup_remove_files(delete_cfiles, src_file, lib_file, log_file):
-    if path.isfile(lib_file) and delete_cfiles:
-        [remove(s) for s in [src_file, lib_file, log_file]]
-
-
-def cleanup_unload_lib(lib):
-    # Clean-up the in-memory dynamic linked libraries.
-    # This is not really necessary, as these programs are not that large, but with the new random
-    # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-    if lib is not None:
-        _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
