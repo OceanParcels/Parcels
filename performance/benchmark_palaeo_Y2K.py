@@ -111,7 +111,8 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     bdimensions = {'lon': 'glamf', 'lat': 'gphif'}
     bchs = False
 
-    chs = {'time_counter': 1, 'depthu': 25, 'depthv': 25, 'depthw': 25, 'deptht': 25, 'y': 32, 'x': 64}
+    # ==== depth-split need to be 75 so all (2D- and 3D) fields are chunked the same way
+    chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 64, 'x': 128}
     #
     #chs = (1, 75, 200, 200)
     #
@@ -301,7 +302,8 @@ if __name__ == "__main__":
     assert ~(np.isnan(latsz)).any(), 'locations should not contain any NaN values'
     dep = dd * np.ones(latsz.shape)
 
-    times = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
+    # times = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
+    times = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0, time_in_days, 3)])
     time = np.empty(shape=(0))
     depths = np.empty(shape=(0))
     lons = np.empty(shape=(0))
