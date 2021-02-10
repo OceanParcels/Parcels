@@ -305,20 +305,6 @@ class KernelSOA(BaseKernel):
             kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
         return kernel.merge(self, KernelSOA)
 
-    def remove_deleted(self, pset, output_file, endtime):
-        """
-        Utility to remove all particles that signalled deletion.
-
-        This version is generally applicable to all structures and collections
-        """
-        # Indices marked for deletion.
-        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        if len(indices) > 0:
-            logger.info("Deleted {} particles.".format(len(indices)))
-        if len(indices) > 0 and output_file is not None:
-            output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove_indices(indices)
-
     def remove_deleted_soa(self, pset, output_file, endtime):
         """
         Utility to remove all particles that signalled deletion

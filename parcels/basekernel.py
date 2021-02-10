@@ -28,6 +28,7 @@ from parcels.field import SummedField
 from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.kernels.advection import AdvectionAnalytical
+from parcels.tools.statuscodes import OperationCode  # , StateCode, ErrorCode
 
 __all__ = ['BaseKernel']
 
@@ -291,7 +292,18 @@ class BaseKernel(object):
             _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
 
     def remove_deleted(self, pset, output_file, endtime):
-        pass
+        """
+        Utility to remove all particles that signalled deletion.
+
+        This version is generally applicable to all structures and collections
+        """
+        # Indices marked for deletion.
+        indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
+        if len(indices) > 0:
+            logger.info("Deleted {} particles.".format(len(indices)))
+        if len(indices) > 0 and output_file is not None:
+            output_file.write(pset, endtime, deleted_only=indices)
+            pset.remove_indices(indices)
 
     def execute_jit(self, pset, endtime, dt):
         pass
