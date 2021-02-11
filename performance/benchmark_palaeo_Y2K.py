@@ -252,6 +252,7 @@ if __name__ == "__main__":
     # parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=int, default=365, help="runtime in days (default: 365)")
     parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=str, default="1*365", help="runtime in days (default: 1*365)")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
+    parser.add_argument("-pr", "--profiling", dest="profiling", action='store_true', default=False, help="tells that the profiling of the script is activates")
     args = parser.parse_args()
 
     sp = args.sp # The sinkspeed m/day
@@ -307,6 +308,16 @@ if __name__ == "__main__":
         outfile += '_p'
     if time_in_years != 1:
         outfile += '_' + str(time_in_years) + 'y'
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        mpi_size = mpi_comm.Get_size()
+        outfile += '_n' + str(mpi_size)
+    if args.profiling:
+        outfile += '_prof'
+    if with_GC:
+        outfile += '_wGC'
+    else:
+        outfile += '_woGC'
     dirwrite = os.path.join(odir, "sp%d_dd%d" % (int(sp),int(dd)))
     if not os.path.exists(dirwrite):
         os.mkdir(dirwrite)
