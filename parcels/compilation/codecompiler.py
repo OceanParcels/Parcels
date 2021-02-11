@@ -290,7 +290,7 @@ class GNUCompiler_SS(CCompiler_SS):
         lib_pathfile = os.path.basename(obj)
         lib_pathdir = os.path.dirname(obj)
         dbg_msg = "[GNUCompiler_SS.compile()]: (obj_in: {}), (lib_pathfile: {}), (lib_pathdir: {})".format(obj, lib_pathfile, lib_pathdir)
-        logger(dbg_msg)
+        logger.info(dbg_msg)
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
         super(GNUCompiler_SS, self).compile(src, obj, log)
