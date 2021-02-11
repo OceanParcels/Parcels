@@ -112,7 +112,18 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     bchs = False
 
     # ==== depth-split need to be 75 so all (2D- and 3D) fields are chunked the same way
-    chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 64, 'x': 128}
+    # chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 64, 'x': 128}
+    chs = {'U': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 64, 'x': 128, 'time_counter': 1},
+           'V': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 64, 'x': 128, 'time_counter': 1},
+           'W': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 64, 'x': 128, 'time_counter': 1},
+           'T':       {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # tfiles
+           'S':       {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # tfiles
+           'NO3':     {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # pfiles
+           'PP':      {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # dfiles
+           'ICE':     {'x': 128, 'y': 64, 'time_counter': 1},  # ifiles
+           'ICEPRES': {'x': 128, 'y': 64, 'time_counter': 1},  # ifiles
+           'CO2':     {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # dfiles
+           }
     #
     #chs = (1, 75, 200, 200)
     #
