@@ -260,6 +260,7 @@ class CCompiler_SS(CCompiler):
         output += "('libdirs': {}), ".format(self._libdirs)
         output += "('libs': {}), ".format(self._libs)
         output += "('tmp_dir': {}), ".format(self._tmp_dir)
+        return output
 
     def compile(self, src, obj, log):
         dbg_msg = "[CCompiler_SS.compile()]: ('src': {}), ('obj': {}), ('log': {})".format(src, obj, log)
