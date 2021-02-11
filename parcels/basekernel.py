@@ -224,7 +224,7 @@ class BaseKernel(object):
             cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir()
             # basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
-            basename = path.join(get_cache_dir(), "%s_0" % cache_name)
+            basename = "%s_0" % cache_name
         lib_path = "lib" + basename
         src_file_or_files = None
         if type(basename) in (list, dict, tuple, ndarray):
