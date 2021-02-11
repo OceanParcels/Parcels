@@ -112,21 +112,21 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     bchs = False
 
     # ==== depth-split need to be 75 so all (2D- and 3D) fields are chunked the same way
-    # chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 64, 'x': 128}
-    chs = {'U': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 64, 'x': 128, 'time_counter': 1},
-           'V': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 64, 'x': 128, 'time_counter': 1},
-           'W': {'depthu': 75, 'depthv': 75, 'depthw': 75, 'y': 64, 'x': 128, 'time_counter': 1},
-           'T':       {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # tfiles
-           'S':       {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # tfiles
-           'NO3':     {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # pfiles
-           'PP':      {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # dfiles
-           'ICE':     {'x': 128, 'y': 64, 'time_counter': 1},  # ifiles
-           'ICEPRES': {'x': 128, 'y': 64, 'time_counter': 1},  # ifiles
-           'CO2':     {'x': 128, 'y': 64, 'deptht': 75, 'time_counter': 1},  # dfiles
-           }
-    #
+    chs = {'time_counter': 1, 'depthu': 80, 'depthv': 80, 'depthw': 80, 'deptht': 80, 'y': 200, 'x': 200}
+    # chs = {'U': {'depthu': 80, 'depthv': 80, 'depthw': 80, 'deptht': 80, 'y': 64, 'x': 128, 'time_counter': 1},
+    #        'V': {'depthu': 80, 'depthv': 80, 'depthw': 80, 'deptht': 80, 'y': 64, 'x': 128, 'time_counter': 1},
+    #        'W': {'depthu': 80, 'depthv': 80, 'depthw': 80, 'deptht': 80, 'y': 64, 'x': 128, 'time_counter': 1},
+    #        'T':   {'x': 128, 'y': 64, 'deptht': 80, 'time_counter': 1},  # tfiles
+    #        'S':   {'x': 128, 'y': 64, 'deptht': 80, 'time_counter': 1},  # tfiles
+    #        'NO3': {'x': 128, 'y': 64, 'deptht': 80, 'time_counter': 1},  # pfiles
+    #        'PP':  {'x': 128, 'y': 64, 'deptht': 80, 'time_counter': 1},  # dfiles
+    #        'ICE':     False,  # ifiles
+    #        'ICEPRES': False,  # ifiles
+    #        'CO2': {'x': 128, 'y': 64, 'deptht': 80, 'time_counter': 1},  # dfiles
+    #        }
+
     #chs = (1, 75, 200, 200)
-    #
+
     #dask.config.set({'array.chunk-size': '6MiB'})
     #chs = 'auto'
     nchs = {
@@ -146,6 +146,13 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         if not periodicFlag:
             try:
                 fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+                # Tfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+                # Sfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+                # NO3field = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+                # PPfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+                # ICEfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+                # ICEPRESfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+                # CO2field = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
                 Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
             except (SyntaxError, ):
                 fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
