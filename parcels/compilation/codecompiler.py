@@ -1,6 +1,7 @@
 import os
 import subprocess
 from struct import calcsize
+from parcels.tools.loggers import logger
 
 try:
     from mpi4py import MPI
@@ -262,7 +263,6 @@ class CCompiler_SS(CCompiler):
 
     def compile(self, src, obj, log):
         dbg_msg = "[CCompiler_SS.compile()]: ('src': {}), ('obj': {}), ('log': {})".format(src, obj, log)
-        from parcels import logger
         logger.info((str(self)))
         logger.info(dbg_msg)
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
