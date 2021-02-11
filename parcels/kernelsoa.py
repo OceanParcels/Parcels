@@ -1,7 +1,6 @@
 import inspect
 import math  # noqa
 import random  # noqa
-# import time  # noga
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
@@ -337,7 +336,6 @@ class KernelSOA(BaseKernel):
         # Identify particles that threw errors
         n_error = pset.num_error_particles
 
-        # while np.any(error_particles):
         while n_error > 0:
             error_pset = pset.error_particles
             # Apply recovery kernel

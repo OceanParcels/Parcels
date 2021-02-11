@@ -245,7 +245,6 @@ class BaseKernel(object):
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
-        # self._lib = npct.load_library(self.lib_file, get_cache_dir())
         self._function = self._lib.particle_loop
         self._cleanup_lib = finalize(self, BaseKernel.cleanup_unload_lib, self._lib)
 
