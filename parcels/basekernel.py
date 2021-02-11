@@ -24,11 +24,10 @@ from parcels.tools.global_statics import get_cache_dir
 from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
-# from parcels.field import VectorField
 from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.kernels.advection import AdvectionAnalytical
-from parcels.tools.statuscodes import OperationCode  # , StateCode, ErrorCode
+from parcels.tools.statuscodes import OperationCode
 
 __all__ = ['BaseKernel']
 
@@ -89,12 +88,6 @@ class BaseKernel(object):
         # Clean-up the in-memory dynamic linked libraries.
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.
-        # if self._lib is not None:
-        #     _ctypes.FreeLibrary(self._lib._handle) if platform == 'win32' else _ctypes.dlclose(self._lib._handle)
-        #     del self._lib
-        #     self._lib = None
-        #     if path.isfile(self.lib_file) and self.delete_cfiles:
-        #         [remove(s) for s in [self.src_file, self.lib_file, self.log_file]]
         self.remove_lib()
         self._fieldset = None
         self.field_args = None
@@ -210,20 +203,15 @@ class BaseKernel(object):
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
-            # cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
             cache_name = self._cache_key  # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir() if mpi_rank == 0 else None
             dyn_dir = mpi_comm.bcast(dyn_dir, root=0)
-            # basename = path.join(get_cache_dir(), self._cache_key) if mpi_rank == 0 else None  # very early version
-            # basename = path.join(get_cache_dir(), cache_name) if mpi_rank == 0 else None  # early version
             basename = cache_name if mpi_rank == 0 else None
             basename = mpi_comm.bcast(basename, root=0)
             basename = basename + "_%d" % mpi_rank
         else:
-            # cache_name = "lib"+self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
             cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir()
-            # basename = path.join(get_cache_dir(), "%s_0" % self._cache_key)
             basename = "%s_0" % cache_name
         lib_path = "lib" + basename
         src_file_or_files = None
@@ -253,7 +241,6 @@ class BaseKernel(object):
             compiler.compile(self.src_file, self.lib_file, self.log_file)
         logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
         all_files_array.append(self.log_file)
-        # self._cleanup_files = finalize(self, cleanup_remove_files, self.delete_cfiles, self.src_file, self.lib_file, self.log_file)
         self._cleanup_files = finalize(self, BaseKernel.cleanup_remove_files, self.lib_file, all_files_array, self.delete_cfiles)
 
     def load_lib(self):
