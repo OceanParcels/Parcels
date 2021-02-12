@@ -222,7 +222,8 @@ class FieldSet(object):
             g.check_zonal_periodic()
             if len(g.time) == 1:
                 continue
-            assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), 'time origins of different grids must be have the same type'
+            emsg = "time origins of different grids must be have the same type - this grid: {} (type: {}) vs. compare-grid: {} (type: {})".format(self.time_origin, type(self.time_origin.time_origin), g.time_origin, type(g.time_origin.time_origin))
+            assert isinstance(g.time_origin.time_origin, type(self.time_origin.time_origin)), emsg
             g.time = g.time + self.time_origin.reltime(g.time_origin)
             if g.defer_load:
                 g.time_full = g.time_full + self.time_origin.reltime(g.time_origin)
