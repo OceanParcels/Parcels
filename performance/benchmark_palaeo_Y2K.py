@@ -333,8 +333,7 @@ if __name__ == "__main__":
 
     # timesz = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
     timesz = np.array([datetime(2000, 12, 31) - delta(days=x) for x in range(0, time_in_days, 3)])
-    # timesz = np.array([datetime(2000, 1, 5) + delta(days=x) for x in range(0,time_in_days,3)])
-    # timesz = np.flip(times)
+    # timesz = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0, time_in_days, 3)])
     times = np.empty(shape=(0))
     depths = np.empty(shape=(0))
     lons = np.empty(shape=(0))
@@ -343,7 +342,7 @@ if __name__ == "__main__":
         lons = np.append(lons,lonsz)
         lats = np.append(lats, latsz)
         depths = np.append(depths, np.zeros(len(lonsz), dtype=np.float32))
-        time = np.append(times, np.full(len(lonsz),timesz[i]))
+        times = np.append(times, np.full(len(lonsz),timesz[i]))
 
     print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lons.shape[0], sys.argv[1:]))
 
