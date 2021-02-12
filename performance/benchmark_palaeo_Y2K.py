@@ -108,7 +108,7 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
                   'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'} } #,
     bfiles = {'lon': mesh_mask, 'lat': mesh_mask, 'data': [bfile, ]}
     bvariables = ('B', 'Bathymetry')
-    bdimensions = {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}
+    bdimensions = {'lon': 'glamf', 'lat': 'gphif', 'time': 'time'}
     bchs = False
 
     # ==== depth-split need to be 75 so all (2D- and 3D) fields are chunked the same way
