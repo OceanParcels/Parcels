@@ -1,37 +1,16 @@
 """Module controlling the writing of ParticleSets to NetCDF file"""
 import os
-import random
-import shutil
-import string
 from glob import glob
-
-import netCDF4
 import numpy as np
 
 try:
     from mpi4py import MPI
 except:
     MPI = None
-try:
-    from parcels._version import version as parcels_version
-except:
-    raise EnvironmentError('Parcels version can not be retrieved. Have you run ''python setup.py install''?')
-try:
-    from os import getuid
-except:
-    # Windows does not have getuid(), so define to simply return 'tmp'
-    def getuid():
-        return 'tmp'
+
 from parcels.baseparticlefile import BaseParticleFile
 
 __all__ = ['ParticleFileSOA']
-
-
-def _set_calendar(origin_calendar):
-    if origin_calendar == 'np_datetime64':
-        return 'standard'
-    else:
-        return origin_calendar
 
 
 class ParticleFileSOA(BaseParticleFile):
