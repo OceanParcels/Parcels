@@ -331,17 +331,19 @@ if __name__ == "__main__":
     assert ~(np.isnan(latsz)).any(), 'locations should not contain any NaN values'
     dep = dd * np.ones(latsz.shape)
 
-    # times = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
-    times = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0, time_in_days, 3)])
-    time = np.empty(shape=(0))
+    # timesz = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
+    timesz = np.array([datetime(2000, 12, 31) - delta(days=x) for x in range(0, time_in_days, 3)])
+    # timesz = np.array([datetime(2000, 1, 5) + delta(days=x) for x in range(0,time_in_days,3)])
+    # timesz = np.flip(times)
+    times = np.empty(shape=(0))
     depths = np.empty(shape=(0))
     lons = np.empty(shape=(0))
     lats = np.empty(shape=(0))
-    for i in range(len(times)):
+    for i in range(len(timesz)):
         lons = np.append(lons,lonsz)
         lats = np.append(lats, latsz)
         depths = np.append(depths, np.zeros(len(lonsz), dtype=np.float32))
-        time = np.append(time, np.full(len(lonsz),times[i]))
+        time = np.append(times, np.full(len(lonsz),timesz[i]))
 
     print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lons.shape[0], sys.argv[1:]))
 
@@ -373,7 +375,7 @@ if __name__ == "__main__":
     fieldset.add_constant('maxage', 300000.*86400)
     fieldset.add_constant('surface', 2.5)
 
-    pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
+    pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = times)
 
     """ Kernal + Execution"""
     postProcessFuncs = []
