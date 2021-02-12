@@ -160,10 +160,10 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         else:
             try:
                 fieldset = FieldSet.from_nemo(filenames, variables, dimensions, time_periodic=delta(days=366), field_chunksize=chs)
-                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, time_periodic=delta(days=366), interp_method='cgrid_tracer', field_chunksize=bchs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, time_periodic=1, interp_method='cgrid_tracer', field_chunksize=bchs)
             except (SyntaxError, ):
                 fieldset = FieldSet.from_nemo(filenames, variables, dimensions, time_periodic=delta(days=366), chunksize=nchs)
-                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, time_periodic=delta(days=366), interp_method='cgrid_tracer', chunksize=bchs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, time_periodic=1, interp_method='cgrid_tracer', chunksize=bchs)
         fieldset.add_field(Bfield, 'B')
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
