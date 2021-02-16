@@ -86,8 +86,6 @@ class BaseParticleFile(ABC):
 
             self.file_list = []
             self.time_written = []
-            # ==== distinction between ID-based and index-based write done in derived class ==== #
-            # self.maxid_written = -1
 
         if tempwritedir is None:
             tempwritedir = os.path.join(os.path.dirname(str(self.name)), "out-%s"
