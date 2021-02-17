@@ -1014,8 +1014,12 @@ class LoopGenerator(object):
         update_state = c.Assign("particles->state[pnum]", "res")
         update_pdt = c.If("_next_dt_set == 1",
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[pnum]", "_next_dt")]))
+        dt_pos = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
+                      c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "1")]),
+                      c.Block([c.Assign("__dt", "fabs(particles->dt[pnum])"), c.Assign("reset_dt", "0")]))
 
-        dt_pos = c.Assign("__dt", "fmin(fabs(particles->dt[pnum]), fabs(endtime - particles->time[pnum]))")                   # original
+        reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles->dt[pnum])",
+                        c.Block([c.Assign("particles->dt[pnum]", "dt")]))
 
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles->dt[pnum]", "__pdt_prekernels")
@@ -1039,6 +1043,7 @@ class LoopGenerator(object):
         body += [c.If("(res==SUCCESS) && (particles->state[pnum] != state_prev)", c.Assign("res", "particles->state[pnum]"))]
         body += [check_pdt]
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles->time[pnum] += particles->dt[pnum]"),
+                                                                  reset_dt,
                                                                   update_pdt,
                                                                   dt_pos,
                                                                   sign_end_part,
@@ -1061,6 +1066,7 @@ class LoopGenerator(object):
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
+                         c.Value("double", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])
