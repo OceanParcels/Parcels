@@ -4,7 +4,7 @@ from timeit import timeit
 from numba.core.decorators import njit
 import numpy as np
 
-from parcels.interaction.geo_utils import fast_3d_distance
+from parcels.interaction.geo_utils import relative_3d_distance
 from parcels.interaction.base_neighbor import BaseNeighborSearchGeo3D
 
 
@@ -12,9 +12,12 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
     '''Neighbor search using a hashtable (similar to octtrees).'''
     name = "hash"
 
-    def __init__(self, values, max_dist, depth_factor=1):
-        super(HashNeighborSearch, self).__init__(values, max_dist)
-        self.depth_factor = depth_factor
+    def __init__(self, values, interaction_distance, interaction_depth,
+                 max_depth=100000):
+        super(HashNeighborSearch, self).__init__(
+            values, interaction_distance, interaction_depth)
+
+        self.max_depth = max_depth
         self.init_structure()
         self.rebuild_tree()
 
@@ -22,7 +25,7 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         hash_id = self._particle_hashes[particle_id]
         coor = self._values[:, particle_id]
         neighbor_blocks = geo_hash_to_neighbors(
-            hash_id, coor, self._bits, self.max_dist)
+            hash_id, coor, self._bits, self.inter_arc_dist)
         all_neighbor_points = []
         for block in neighbor_blocks:
             try:
@@ -32,10 +35,11 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
 
         true_neigh = []
         for neigh in all_neighbor_points:
-            distance = fast_3d_distance(
+            distance = relative_3d_distance(
                 *self._values[:, neigh], *self._values[:, particle_id],
-                depth_factor=self.depth_factor)
-            if distance < self.max_dist:
+                interaction_distance=self.interaction_distance,
+                interaction_depth=self.interaction_depth)
+            if distance < 1:
                 true_neigh.append(neigh)
         return true_neigh, len(all_neighbor_points)
 
@@ -76,12 +80,12 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         depth = values[2, :]
 
         lat_sign = (lat > 0).astype(int)
-        i_lat = np.floor(np.abs(lat)/self.max_dist).astype(int)
-        i_depth = np.floor(self.depth_factor*depth/self.max_dist).astype(int)
-        circ_small = 2*np.pi*np.cos((i_lat+1)*self.max_dist)
-        n_long = np.floor(circ_small/self.max_dist).astype(int)
+        i_lat = np.floor(np.abs(lat)/self.inter_degree_dist).astype(int)
+        i_depth = np.floor(depth/self.interaction_depth).astype(int)
+        circ_small = 2*np.pi*np.cos((i_lat+1)*self.inter_arc_dist)
+        n_long = np.floor(circ_small/self.inter_arc_dist).astype(int)
         n_long[n_long < 1] = 1
-        d_long = 2*np.pi/n_long
+        d_long = 360/n_long
         i_long = np.floor(long/d_long).astype(int)
         point_hash = i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, self._bits)
         return point_hash
@@ -95,10 +99,15 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
             self._hash_idx[idx_array] = np.arange(len(idx_array))
 
     def init_structure(self):
-        epsilon = 1e-8
-        n_lines_lat = int(ceil(np.pi/self.max_dist+epsilon))
-        n_lines_long = int(ceil(2*np.pi/self.max_dist+epsilon))
-        n_lines_depth = int(ceil(self.depth_factor/self.max_dist + epsilon))
+        epsilon = 1e-12
+        R_earth = 6371000
+
+        self.inter_arc_dist = self.interaction_distance/R_earth
+        self.inter_degree_dist = 180*self.inter_arc_dist/np.pi
+        n_lines_lat = int(ceil(np.pi/self.inter_arc_dist+epsilon))
+        n_lines_long = int(ceil(2*np.pi/self.inter_arc_dist+epsilon))
+        n_lines_depth = int(ceil(
+            self.max_depth/self.interaction_depth + epsilon))
         n_bits_lat = ceil(np.log(n_lines_lat)/np.log(2))
         n_bits_long = ceil(np.log(n_lines_long)/np.log(2))
         n_bits_depth = ceil(np.log(n_lines_depth)/np.log(2))
@@ -120,13 +129,13 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         assert np.all(self.values_to_hashes(self._values) == self._particle_hashes)
 
     @classmethod
-    def benchmark(cls, max_n_particles=1000, density=1, depth_factor=50,
+    def benchmark(cls, max_n_particles=1000, density=1, interaction_depth=100,
                   update_frac=0.01):
         '''Perform benchmarks to figure out scaling with particles.'''
         np.random.seed(213874)
 
-        def bench_init(values, max_dist, *args, **kwargs):
-            return cls(values, max_dist, *args, **kwargs)
+        def bench_init(values, *args, **kwargs):
+            return cls(values, *args, **kwargs)
 
         def bench_search(neigh_search, n_sample):
             for particle_id in np.random.randint(neigh_search._values.shape[1],
@@ -149,16 +158,18 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         n_init = 100
         while n_particles < max_n_particles:
             n_update = int(n_particles*update_frac)
-            max_dist = (density*cls.area*cls.max_depth*depth_factor/n_particles)**(1/3)
+            inter_dist = (density*cls.area*cls.max_depth /
+                          (n_particles*interaction_depth))**(1/3)
+            kwargs = {"interaction_distance": inter_dist,
+                      "interaction_depth": interaction_depth}
             n_sample = min(5000, 10*n_particles)
             n_sample_update = int(n_sample/10)
             if n_particles > 5000:
                 n_init = 10
             positions = cls.create_positions(n_particles)
-            dt_init = timeit(lambda: bench_init(positions, max_dist,
-                                                depth_factor=depth_factor),
+            dt_init = timeit(lambda: bench_init(positions, **kwargs),
                              number=n_init)/n_init
-            neigh_search = bench_init(positions, max_dist, depth_factor=depth_factor)
+            neigh_search = bench_init(positions, **kwargs)
             dt_search = timeit(lambda: bench_search(neigh_search, n_sample),
                                number=1)/n_sample
             dt_update = timeit(lambda: bench_update(neigh_search, n_update),
@@ -167,7 +178,7 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
             all_dt_search.append(dt_search)
             all_n_particles.append(n_particles)
             all_dt_update.append(dt_update)
-            all_max_dist.append(max_dist)
+            all_max_dist.append(inter_dist)
             n_particles *= 2
         return {
             "name": cls.name,
@@ -212,6 +223,7 @@ def hash_split(hash_ids):
     unq_idx = np.split(sort_idx, np.cumsum(unq_count))
     return dict(zip(unq_items, unq_idx))
 
+
 @njit
 def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
     '''Convert longitude and lattitude id's to hash'''
@@ -222,7 +234,7 @@ def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
     return point_hash
 
 
-def geo_hash_to_neighbors(hash_id, coor, bits, max_dist):
+def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
     '''Compute the hashes of all neighboring cells.'''
     lat_sign = hash_id & 0x1
     i_lat = (hash_id >> 1) & ((1 << bits[0])-1)
@@ -247,8 +259,8 @@ def geo_hash_to_neighbors(hash_id, coor, bits, max_dist):
             new_lat_sign = (1-lat_sign)
 
         min_lat = new_i_lat + 1
-        circ_small = 2*np.pi*np.cos(min_lat*max_dist)
-        n_new_long = int(max(1, np.floor(circ_small/max_dist)))
+        circ_small = 2*np.pi*np.cos(min_lat*inter_arc_dist)
+        n_new_long = int(max(1, np.floor(circ_small/inter_arc_dist)))
         d_long = 2*np.pi/n_new_long
         if n_new_long <= 3:
             for new_i_long in range(n_new_long):
