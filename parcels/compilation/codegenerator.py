@@ -426,9 +426,6 @@ class KernelGenerator(ast.NodeVisitor):
         # Untangle Pythonic tuple-assignment statements
         py_ast = TupleSplitter().visit(py_ast)
 
-        # Store the docstring so that it can be removed in visit_Str (#753)
-        self.docstr = ast.get_docstring(py_ast)
-
         # Generate C-code for all nodes in the Python AST
         self.visit(py_ast)
         self.ccode = py_ast.ccode
@@ -456,6 +453,16 @@ class KernelGenerator(ast.NodeVisitor):
             self.ccode.body.insert(0, c.Value("float", ", ".join(transformer.tmp_vars)))
 
         return self.ccode
+
+    @staticmethod
+    def _check_FieldSamplingArguments(ccode):
+        if ccode == 'particles':
+            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        elif ccode[-1] == 'particles':
+            args = ccode[:-1]
+        else:
+            args = ccode
+        return args
 
     def visit_FunctionDef(self, node):
         # Generate "ccode" attribute by traversing the Python AST
@@ -550,7 +557,7 @@ class KernelGenerator(ast.NodeVisitor):
                     else:
                         node.ccode = rhs
             except:
-                raise RuntimeError("Error in converting Kernel to C. See http://oceanparcels.org/#writing-parcels-kernels for hints and tips")
+                raise RuntimeError("Error in converting Kernel to C. See https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_parcels_structure.ipynb#3.-Kernel-execution for hints and tips")
 
     def visit_Name(self, node):
         """Catches any mention of intrinsic variable names, such as
@@ -780,12 +787,12 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_FieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
-
-        ccode_eval = node.field.obj.ccode_eval(node.var, *node.args.ccode)
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
         stmts = [c.Assign("err", ccode_eval)]
 
         if node.convert:
-            ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+            ccode_conv = node.field.obj.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
             stmts += [conv_stat]
 
@@ -794,18 +801,19 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_VectorFieldEvalNode(self, node):
         self.visit(node.field)
         self.visit(node.args)
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
                                                node.field.obj.U, node.field.obj.V, node.field.obj.W,
-                                               *node.args.ccode)
+                                               *args)
         if node.field.obj.U.interp_method != 'cgrid_velocity':
-            ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
-            ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
+            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
             statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                           c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
         else:
             statements = []
         if node.field.obj.vector_type == '3D':
-            ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
+            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
         node.ccode = c.Block([c.Assign("err", ccode_eval),
@@ -815,9 +823,10 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld, var in zip(node.fields.obj, node.var):
-            ccode_eval = fld.ccode_eval(var, *node.args.ccode)
-            ccode_conv = fld.ccode_convert(*node.args.ccode)
+            ccode_eval = fld.ccode_eval(var, *args)
+            ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
             cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
         node.ccode = c.Block(cstat)
@@ -826,19 +835,20 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
             ccode_eval = fld.ccode_eval(var, var2, var3,
                                         fld.U, fld.V, fld.W,
-                                        *node.args.ccode)
+                                        *args)
             if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
-                ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
                               c.Statement("%s *= %s" % (var2, ccode_conv2))]
             else:
                 statements = []
             if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
         cstat += [c.Statement("CHECKSTATUS(err)")]
@@ -848,9 +858,10 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, *node.args.ccode)
-            ccode_conv = fld.ccode_convert(*node.args.ccode)
+            ccode_eval = fld.ccode_eval(node.var, *args)
+            ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
             cstat += [c.Assign("err", ccode_eval),
                       conv_stat,
@@ -862,19 +873,20 @@ class KernelGenerator(ast.NodeVisitor):
         self.visit(node.fields)
         self.visit(node.args)
         cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
         for fld in node.fields.obj:
             ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
                                         fld.U, fld.V, fld.W,
-                                        *node.args.ccode)
+                                        *args)
             if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
-                ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
                               c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
             else:
                 statements = []
             if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval),
                       c.Block(statements),
@@ -909,15 +921,10 @@ class KernelGenerator(ast.NodeVisitor):
         node.ccode = c.Statement('printf("%s\\n", %s)' % (stat, vars))
 
     def visit_Str(self, node):
-
-        def _isdocstr(node):
-            # Check if node is docstr. Comparison only on text, not whitespace etc
-            return [c for c in node.s if c.isalpha()] == [c for c in self.docstr if c.isalpha()]
-
-        if self.docstr is not None and _isdocstr(node):
-            node.ccode = ''
-        else:
+        if node.s == 'parcels_customed_Cfunc_pointer_args':
             node.ccode = node.s
+        else:
+            node.ccode = ''
 
 
 class LoopGenerator(object):
@@ -1007,8 +1014,12 @@ class LoopGenerator(object):
         update_state = c.Assign("particles->state[pnum]", "res")
         update_pdt = c.If("_next_dt_set == 1",
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[pnum]", "_next_dt")]))
+        dt_pos = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
+                      c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "1")]),
+                      c.Block([c.Assign("__dt", "fabs(particles->dt[pnum])"), c.Assign("reset_dt", "0")]))
 
-        dt_pos = c.Assign("__dt", "fmin(fabs(particles->dt[pnum]), fabs(endtime - particles->time[pnum]))")                   # original
+        reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles->dt[pnum])",
+                        c.Block([c.Assign("particles->dt[pnum]", "dt")]))
 
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles->dt[pnum]", "__pdt_prekernels")
@@ -1032,6 +1043,7 @@ class LoopGenerator(object):
         body += [c.If("(res==SUCCESS) && (particles->state[pnum] != state_prev)", c.Assign("res", "particles->state[pnum]"))]
         body += [check_pdt]
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles->time[pnum] += particles->dt[pnum]"),
+                                                                  reset_dt,
                                                                   update_pdt,
                                                                   dt_pos,
                                                                   sign_end_part,
@@ -1054,6 +1066,7 @@ class LoopGenerator(object):
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "pnum, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
+                         c.Value("double", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])

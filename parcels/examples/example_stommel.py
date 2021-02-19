@@ -71,8 +71,14 @@ def UpdateP(particle, fieldset, time):
     particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
 
 
+def AgeP(particle, fieldset, time):
+    particle.age += particle.dt
+    if particle.age > fieldset.maxage:
+        particle.delete()
+
+
 def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, grid_type='A',
-                    outfile="StommelParticle.nc", repeatdt=None, write_fields=True):
+                    outfile="StommelParticle.nc", repeatdt=None, maxage=None, write_fields=True):
     timer.fieldset = timer.Timer('FieldSet', parent=timer.stommel)
     fieldset = stommel_fieldset(grid_type=grid_type)
     if write_fields:
@@ -88,6 +94,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     class MyParticle(ParticleClass):
         p = Variable('p', dtype=np.float32, initial=0.)
         p_start = Variable('p_start', dtype=np.float32, initial=fieldset.P)
+        age = Variable('age', dtype=np.float32, initial=0.)
 
     pset = ParticleSet.from_line(fieldset, size=npart, pclass=MyParticle, repeatdt=repeatdt,
                                  start=(10e3, 5000e3), finish=(100e3, 5000e3), time=0)
@@ -99,10 +106,12 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     runtime = delta(days=600)
     dt = delta(hours=1)
     outputdt = delta(days=5)
+    maxage = runtime.total_seconds() if maxage is None else maxage
+    fieldset.add_constant('maxage', maxage)
     print("Stommel: Advecting %d particles for %s" % (npart, runtime))
     timer.psetinit.stop()
     timer.psetrun = timer.Timer('Pset_run', parent=timer.pset)
-    pset.execute(method + pset.Kernel(UpdateP), runtime=runtime, dt=dt,
+    pset.execute(method + pset.Kernel(UpdateP) + pset.Kernel(AgeP), runtime=runtime, dt=dt,
                  moviedt=None, output_file=pset.ParticleFile(name=outfile, outputdt=outputdt))
 
     if verbose:
@@ -149,12 +158,14 @@ Example of particle advection in the steady-state solution of the Stommel equati
                    help='Name of output file')
     p.add_argument('-r', '--repeatdt', default=None, type=int,
                    help='repeatdt of the ParticleSet')
+    p.add_argument('-a', '--maxage', default=None, type=int,
+                   help='max age of the particles (after which particles are deleted)')
     args = p.parse_args()
 
     timer.args.stop()
     timer.stommel = timer.Timer('Stommel', parent=timer.root)
     stommel_example(args.particles, mode=args.mode, verbose=args.verbose, method=method[args.method],
-                    outfile=args.outfile, repeatdt=args.repeatdt)
+                    outfile=args.outfile, repeatdt=args.repeatdt, maxage=args.maxage)
     timer.stommel.stop()
     timer.root.stop()
     timer.root.print_tree()

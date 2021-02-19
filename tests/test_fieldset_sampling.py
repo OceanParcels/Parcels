@@ -43,7 +43,7 @@ def k_sample_uv_noconvert_fixture():
 
 def k_sample_p():
     def SampleP(particle, fieldset, time):
-        particle.p = fieldset.P[time, particle.depth, particle.lat, particle.lon]
+        particle.p = fieldset.P[particle]
     return SampleP
 
 
@@ -469,7 +469,7 @@ def test_sampling_out_of_bounds_time(mode, allow_time_extrapolation, k_sample_p,
 
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('npart', [1, 10])
-@pytest.mark.parametrize('chs', [False, 'auto', (10, 10)])
+@pytest.mark.parametrize('chs', [False, 'auto', {'lat': ('y', 10), 'lon': ('x', 10)}])
 def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs, filename='test_subsets'):
     xdim, ydim = 100, 200
     filepath = tmpdir.join(filename)
@@ -496,10 +496,13 @@ def test_sampling_multigrids_non_vectorfield_from_file(mode, npart, tmpdir, chs,
     variables = {'U': 'vozocrtx', 'V': 'vomecrty', 'B': 'B'}
     dimensions = {'lon': 'nav_lon', 'lat': 'nav_lat'}
     fieldset = FieldSet.from_netcdf(files, variables, dimensions, timestamps=timestamps, allow_time_extrapolation=True,
-                                    field_chunksize=chs)
+                                    chunksize=chs)
 
     fieldset.add_constant('sample_depth', 2.5)
-    assert fieldset.U.grid is fieldset.V.grid
+    if chs == 'auto':
+        assert fieldset.U.grid != fieldset.V.grid
+    else:
+        assert fieldset.U.grid is fieldset.V.grid
     assert fieldset.U.grid is not fieldset.B.grid
 
     class TestParticle(ptype[mode]):
@@ -603,17 +606,16 @@ def test_multiple_grid_addlater_error():
               lat=np.linspace(0., 1., ydim, dtype=np.float32))
     fieldset = FieldSet(U, V)
 
-    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])
+    pset = ParticleSet(fieldset, pclass=pclass('jit'), lon=[0.8], lat=[0.9])  # noqa ; to trigger fieldset.check_complete
 
     P = Field('P', np.zeros((ydim*10, xdim*10), dtype=np.float32),
               lon=np.linspace(0., 1., xdim*10, dtype=np.float32),
               lat=np.linspace(0., 1., ydim*10, dtype=np.float32))
-    fieldset.add_field(P)
 
     fail = False
     try:
-        pset.execute(AdvectionRK4, runtime=10, dt=1)
-    except:
+        fieldset.add_field(P)
+    except RuntimeError:
         fail = True
     assert fail
 

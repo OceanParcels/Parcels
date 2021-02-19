@@ -2,6 +2,7 @@ from datetime import datetime
 from datetime import timedelta as delta
 
 import numpy as np
+import copy
 
 from parcels.field import Field
 from parcels.field import VectorField
@@ -42,7 +43,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
 
     if field is None:
         spherical = True if particles.fieldset.U.grid.mesh == 'spherical' else False
-        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection)
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection, cartopy_features=kwargs.pop('cartopy_features', []))
         if plt is None:
             return  # creating axes was not possible
         ax.set_title('Particles' + parsetimestr(particles.fieldset.U.grid.time_origin, show_time))
@@ -75,7 +76,7 @@ def plotparticles(particles, with_particles=True, show_time=None, field=None, do
         depth_level = kwargs.pop('depth_level', 0)
         plt, fig, ax, cartopy = plotfield(field=field, animation=animation, show_time=show_time, domain=domain,
                                           projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=None,
-                                          titlestr='Particles and ', depth_level=depth_level)
+                                          titlestr='Particles and ', depth_level=depth_level, **kwargs)
         if plt is None:
             return  # creating axes was not possible
 
@@ -128,7 +129,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         logger.warning('Field.show() does not always correctly determine the domain for curvilinear grids. '
                        'Use plotting with caution and perhaps use domain argument as in the NEMO 3D tutorial')
 
-    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection)
+    plt, fig, ax, cartopy = create_parcelsfig_axis(spherical, land, projection=projection, cartopy_features=kwargs.pop('cartopy_features', []))
     if plt is None:
         return None, None, None, None  # creating axes was not possible
 
@@ -180,6 +181,9 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         speed = np.where(spd > 0, np.sqrt(spd), 0)
         vmin = speed.min() if vmin is None else vmin
         vmax = speed.max() if vmax is None else vmax
+        ncar_cmap = copy.copy(plt.cm.gist_ncar)
+        ncar_cmap.set_over('k')
+        ncar_cmap.set_under('w')
         if isinstance(field[0].grid, CurvilinearGrid):
             x, y = plotlon[0], plotlat[0]
         else:
@@ -187,12 +191,15 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
         u = np.where(speed > 0., data[0]/speed, 0)
         v = np.where(speed > 0., data[1]/speed, 0)
         if cartopy:
-            cs = ax.quiver(np.asarray(x), np.asarray(y), np.asarray(u), np.asarray(v), speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
+            cs = ax.quiver(np.asarray(x), np.asarray(y), np.asarray(u), np.asarray(v), speed, cmap=ncar_cmap, clim=[vmin, vmax], scale=50, transform=cartopy.crs.PlateCarree())
         else:
-            cs = ax.quiver(x, y, u, v, speed, cmap=plt.cm.gist_ncar, clim=[vmin, vmax], scale=50)
+            cs = ax.quiver(x, y, u, v, speed, cmap=ncar_cmap, clim=[vmin, vmax], scale=50)
     else:
         vmin = data[0].min() if vmin is None else vmin
         vmax = data[0].max() if vmax is None else vmax
+        pc_cmap = copy.copy(plt.cm.get_cmap('viridis'))
+        pc_cmap.set_over('k')
+        pc_cmap.set_under('w')
         assert len(data[0].shape) == 2
         if field[0].interp_method == 'cgrid_tracer':
             d = data[0][1:, 1:]
@@ -212,17 +219,15 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
             d = np.where(data[0][1:, 1:] == 0, 0, d)
             d = np.where(data[0][:-1, 1:] == 0, 0, d)
         if cartopy:
-            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, transform=cartopy.crs.PlateCarree())
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, cmap=pc_cmap, transform=cartopy.crs.PlateCarree())
         else:
-            cs = ax.pcolormesh(plotlon[0], plotlat[0], d)
+            cs = ax.pcolormesh(plotlon[0], plotlat[0], d, cmap=pc_cmap)
 
     if cartopy is None:
         ax.set_xlim(np.nanmin(plotlon[0]), np.nanmax(plotlon[0]))
         ax.set_ylim(np.nanmin(plotlat[0]), np.nanmax(plotlat[0]))
     elif domain is not None:
         ax.set_extent([np.nanmin(plotlon[0]), np.nanmax(plotlon[0]), np.nanmin(plotlat[0]), np.nanmax(plotlat[0])], crs=cartopy.crs.PlateCarree())
-    cs.cmap.set_over('k')
-    cs.cmap.set_under('w')
     cs.set_clim(vmin, vmax)
 
     cartopy_colorbar(cs, plt, fig, ax)
@@ -258,7 +263,7 @@ def plotfield(field, show_time=None, domain=None, depth_level=0, projection=None
     return plt, fig, ax, cartopy
 
 
-def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0):
+def create_parcelsfig_axis(spherical, land=True, projection=None, central_longitude=0, cartopy_features=[]):
     try:
         import matplotlib.pyplot as plt
     except:
@@ -278,14 +283,22 @@ def create_parcelsfig_axis(spherical, land=True, projection=None, central_longit
         projection = cartopy.crs.PlateCarree(central_longitude) if projection is None else projection
         fig, ax = plt.subplots(1, 1, subplot_kw={'projection': projection})
         try:  # gridlines not supported for all projections
-            gl = ax.gridlines(crs=projection, draw_labels=True)
-            gl.xlabels_top, gl.ylabels_right = (False, False)
+            if isinstance(projection, cartopy.crs.PlateCarree) and central_longitude != 0:
+                gl = ax.gridlines(crs=cartopy.crs.PlateCarree(), draw_labels=True)  # central_lon=0 necessary for correct xlabels
+            else:
+                gl = ax.gridlines(crs=projection, draw_labels=True)
+            gl.top_labels, gl.right_labels = (False, False)
             gl.xformatter = cartopy.mpl.gridliner.LONGITUDE_FORMATTER
             gl.yformatter = cartopy.mpl.gridliner.LATITUDE_FORMATTER
         except:
             pass
 
-        if land:
+        for feature in cartopy_features:
+            ax.add_feature(feature)
+
+        if isinstance(land, str):
+            ax.coastlines(land)
+        elif land:
             ax.coastlines()
     else:
         cartopy = None

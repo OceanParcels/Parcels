@@ -1,4 +1,4 @@
-from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, ErrorCode)
+from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, Variable, AdvectionRK4, AdvectionRK4_3D, ErrorCode, UnitConverter)
 from parcels import RectilinearZGrid, RectilinearSGrid, CurvilinearZGrid
 import numpy as np
 import xarray as xr
@@ -76,6 +76,10 @@ def test_multi_structured_grids(mode):
     pset = ParticleSet.from_list(field_set, MyParticle, lon=[3001], lat=[5001], repeatdt=1)
 
     pset.execute(AdvectionRK4 + pset.Kernel(sampleTemp), runtime=3, dt=1)
+
+    # check if particle xi and yi are different for the two grids
+    assert np.all([pset.xi[i, 0] != pset.xi[i, 1] for i in range(3)])
+    assert np.all([pset.yi[i, 0] != pset.yi[i, 1] for i in range(3)])
 
     # advect without updating temperature to test particle deletion
     pset.remove_indices(np.array([1]))
@@ -605,7 +609,7 @@ def test_popgrid(mode, vert_discretisation, deferred_load):
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
-def test_mitgridindexing(mode, gridindexingtype):
+def test_cgrid_indexing(mode, gridindexingtype):
     xdim, ydim = 151, 201
     a = b = 20000  # domain size
     lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
@@ -657,7 +661,7 @@ def test_mitgridindexing(mode, gridindexingtype):
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('gridindexingtype', ['mitgcm', 'nemo'])
 @pytest.mark.parametrize('withtime', [False, True])
-def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
+def test_cgrid_indexing_3D(mode, gridindexingtype, withtime):
     xdim = zdim = 201
     ydim = 2
     a = c = 20000  # domain size
@@ -675,10 +679,12 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
         dimensions = {"lon": lon, "lat": lat, "depth": depth}
         dsize = (depth.size, lat.size, lon.size)
 
-    index_signs = {'nemo': -1, 'mitgcm': 1}
-    isign = index_signs[gridindexingtype]
+    hindex_signs = {'nemo': -1, 'mitgcm': 1}
+    hsign = hindex_signs[gridindexingtype]
 
     def calc_r_phi(ln, dp):
+        # r = np.sqrt(ln ** 2 + dp ** 2)
+        # phi = np.arcsin(dp/r) if r > 0 else 0
         return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
 
     def calculate_UVWR(lat, lon, depth, dx, dz, omega):
@@ -695,7 +701,7 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
                         R[:, k, j, i] = r
                     else:
                         R[k, j, i] = r
-                    r, phi = calc_r_phi(lon[i] + isign * dx / 2, depth[k])
+                    r, phi = calc_r_phi(lon[i] + hsign * dx / 2, depth[k])
                     if withtime:
                         W[:, k, j, i] = -omega * r * np.sin(phi)
                     else:
@@ -726,3 +732,180 @@ def test_mitgridindexing_3D(mode, gridindexingtype, withtime):
     pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
                  runtime=delta(hours=14), dt=delta(minutes=5))
     assert np.allclose(pset.radius, pset.radius_start, atol=10)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
+@pytest.mark.parametrize('withtime', [False, True])
+def test_bgrid_indexing_3D(mode, gridindexingtype, withtime):
+    xdim = zdim = 201
+    ydim = 2
+    a = c = 20000  # domain size
+    b = 2
+    lon = np.linspace(-a / 2, a / 2, xdim, dtype=np.float32)
+    lat = np.linspace(-b / 2, b / 2, ydim, dtype=np.float32)
+    depth = np.linspace(-c / 2, c / 2, zdim, dtype=np.float32)
+    dx, dz = lon[1] - lon[0], depth[1] - depth[0]
+    omega = 2 * np.pi / delta(days=1).total_seconds()
+    if withtime:
+        time = np.linspace(0, 24*60*60, 10)
+        dimensions = {"lon": lon, "lat": lat, "depth": depth, "time": time}
+        dsize = (time.size, depth.size, lat.size, lon.size)
+    else:
+        dimensions = {"lon": lon, "lat": lat, "depth": depth}
+        dsize = (depth.size, lat.size, lon.size)
+
+    vindex_signs = {'pop': 1, 'mom5': -1}
+    vsign = vindex_signs[gridindexingtype]
+
+    def calc_r_phi(ln, dp):
+        return np.sqrt(ln ** 2 + dp ** 2), np.arctan2(ln, dp)
+
+    def calculate_UVWR(lat, lon, depth, dx, dz, omega):
+        U = np.zeros(dsize, dtype=np.float32)
+        V = np.zeros(dsize, dtype=np.float32)
+        W = np.zeros(dsize, dtype=np.float32)
+        R = np.zeros(dsize, dtype=np.float32)
+
+        for i in range(lon.size):
+            for j in range(lat.size):
+                for k in range(depth.size):
+                    r, phi = calc_r_phi(lon[i], depth[k])
+                    if withtime:
+                        R[:, k, j, i] = r
+                    else:
+                        R[k, j, i] = r
+                    r, phi = calc_r_phi(lon[i] - dx / 2, depth[k])
+                    if withtime:
+                        W[:, k, j, i] = -omega * r * np.sin(phi)
+                    else:
+                        W[k, j, i] = -omega * r * np.sin(phi)
+                    # Since Parcels loads as dimensions only the depth of W-points
+                    # and lon/lat of UV-points, W-points are similarly interpolated
+                    # in MOM5 and POP. Indexing is shifted for UV-points.
+                    r, phi = calc_r_phi(lon[i], depth[k] + vsign * dz / 2)
+                    if withtime:
+                        U[:, k, j, i] = omega * r * np.cos(phi)
+                    else:
+                        U[k, j, i] = omega * r * np.cos(phi)
+        return U, V, W, R
+
+    U, V, W, R = calculate_UVWR(lat, lon, depth, dx, dz, omega)
+    data = {"U": U, "V": V, "W": W, "R": R}
+    fieldset = FieldSet.from_data(data, dimensions, mesh="flat", gridindexingtype=gridindexingtype)
+    fieldset.U.interp_method = "bgrid_velocity"
+    fieldset.V.interp_method = "bgrid_velocity"
+    fieldset.W.interp_method = "bgrid_w_velocity"
+
+    def UpdateR(particle, fieldset, time):
+        particle.radius = fieldset.R[time, particle.depth, particle.lat, particle.lon]
+
+    class MyParticle(ptype[mode]):
+        radius = Variable('radius', dtype=np.float32, initial=0.)
+        radius_start = Variable('radius_start', dtype=np.float32, initial=fieldset.R)
+
+    pset = ParticleSet(fieldset, pclass=MyParticle, depth=-9.995e3, lon=0, lat=0, time=0)
+
+    pset.execute(pset.Kernel(UpdateR) + AdvectionRK4_3D,
+                 runtime=delta(hours=14), dt=delta(minutes=5))
+    assert np.allclose(pset.radius, pset.radius_start, atol=10)
+
+
+@pytest.mark.parametrize('gridindexingtype', ['pop', 'mom5'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('extrapolation', [True, False])
+def test_bgrid_interpolation(gridindexingtype, mode, extrapolation):
+    xi, yi = 3, 2
+    if extrapolation:
+        zi = 0 if gridindexingtype == 'mom5' else -1
+    else:
+        zi = 2
+    if gridindexingtype == 'mom5':
+        ufile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_u.nc')
+        vfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_v.nc')
+        wfile = path.join(path.join(path.dirname(__file__), 'test_data'), 'access-om2-01_wt.nc')
+
+        filenames = {"U": {"lon": ufile, "lat": ufile, "depth": wfile, "data": ufile},
+                     "V": {"lon": ufile, "lat": ufile, "depth": wfile, "data": vfile},
+                     "W": {"lon": ufile, "lat": ufile, "depth": wfile, "data": wfile}}
+
+        variables = {"U": "u", "V": "v", "W": "wt"}
+
+        dimensions = {"U": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
+                      "V": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"},
+                      "W": {"lon": "xu_ocean", "lat": "yu_ocean", "depth": "sw_ocean", "time": "time"}}
+
+        fieldset = FieldSet.from_mom5(filenames, variables, dimensions)
+        ds_u = xr.open_dataset(ufile)
+        ds_v = xr.open_dataset(vfile)
+        ds_w = xr.open_dataset(wfile)
+        u = ds_u.u.isel(time=0, st_ocean=zi, yu_ocean=yi, xu_ocean=xi)
+        v = ds_v.v.isel(time=0, st_ocean=zi, yu_ocean=yi, xu_ocean=xi)
+        w = ds_w.wt.isel(time=0, sw_ocean=zi, yt_ocean=yi, xt_ocean=xi)
+
+    elif gridindexingtype == 'pop':
+        datafname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popdata.nc')
+        coordfname = path.join(path.join(path.dirname(__file__), 'test_data'), 'popcoordinates.nc')
+        filenames = {"U": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
+                     "V": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname},
+                     "W": {"lon": coordfname, "lat": coordfname, "depth": coordfname, "data": datafname}}
+
+        variables = {'U': 'UVEL', 'V': 'VVEL', 'W': 'WVEL'}
+        dimensions = {'lon': 'U_LON_2D', 'lat': 'U_LAT_2D', 'depth': 'w_dep'}
+
+        fieldset = FieldSet.from_pop(filenames, variables, dimensions)
+        dsc = xr.open_dataset(coordfname)
+        dsd = xr.open_dataset(datafname)
+        u = dsd.UVEL.isel(k=zi, j=yi, i=xi)
+        v = dsd.VVEL.isel(k=zi, j=yi, i=xi)
+        w = dsd.WVEL.isel(k=zi, j=yi, i=xi)
+
+    fieldset.U.units = UnitConverter()
+    fieldset.V.units = UnitConverter()
+
+    def VelocityInterpolator(particle, fieldset, time):
+        particle.Uvel = fieldset.U[time, particle.depth, particle.lat, particle.lon]
+        particle.Vvel = fieldset.V[time, particle.depth, particle.lat, particle.lon]
+        particle.Wvel = fieldset.W[time, particle.depth, particle.lat, particle.lon]
+
+    class myParticle(ptype[mode]):
+        Uvel = Variable("Uvel", dtype=np.float32, initial=0.0)
+        Vvel = Variable("Vvel", dtype=np.float32, initial=0.0)
+        Wvel = Variable("Wvel", dtype=np.float32, initial=0.0)
+
+    for pointtype in ["U", "V", "W"]:
+        if gridindexingtype == "pop":
+            if pointtype in ["U", "V"]:
+                lons = dsc.U_LON_2D[yi, xi].values
+                lats = dsc.U_LAT_2D[yi, xi].values
+                deps = dsc.depth_t[zi]
+            elif pointtype == "W":
+                lons = dsc.T_LON_2D[yi, xi].values
+                lats = dsc.T_LAT_2D[yi, xi].values
+                deps = dsc.w_dep[zi]
+            if extrapolation:
+                deps = 5499.
+        elif gridindexingtype == "mom5":
+            if pointtype in ["U", "V"]:
+                lons = u.xu_ocean.data.reshape(1)
+                lats = u.yu_ocean.data.reshape(1)
+                deps = u.st_ocean.data.reshape(1)
+            elif pointtype == "W":
+                lons = w.xt_ocean.data.reshape(1)
+                lats = w.yt_ocean.data.reshape(1)
+                deps = w.sw_ocean.data.reshape(1)
+            if extrapolation:
+                deps = 0
+
+        pset = ParticleSet.from_list(fieldset=fieldset, pclass=myParticle, lon=lons, lat=lats, depth=deps)
+        pset.execute(VelocityInterpolator, dt=0)
+
+        convfactor = 0.01 if gridindexingtype == "pop" else 1.
+        if pointtype in ["U", "V"]:
+            assert np.allclose(pset.Uvel[0], u*convfactor)
+            assert np.allclose(pset.Vvel[0], v*convfactor)
+        elif pointtype == "W":
+            if extrapolation:
+                assert np.allclose(pset.Wvel[0], 0, atol=1e-9)
+            else:
+                assert np.allclose(pset.Wvel[0], -w*convfactor)

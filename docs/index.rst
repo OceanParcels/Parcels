@@ -7,14 +7,15 @@
 Parcels documentation
 ===================================
 
-Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function. 
+Welcome to the documentation of parcels. This page provides detailed documentation for each method, class and function.
+The documentation corresponds to the latest conda release, for newer documentation see the docstrings in the code.
 
 See http://www.oceanparcels.org for general information on the Parcels project, including how to install and use.
 
 parcels.particleset module
 --------------------------
 
-.. automodule:: parcels.particleset
+.. automodule:: parcels.particlesets.particlesetsoa
     :members:
     :show-inheritance:
 
@@ -61,21 +62,38 @@ parcels.kernels.advection module
     :show-inheritance:
 
 parcels.kernels.advectiondiffusion module
---------------------------------
+-----------------------------------------
+
 
 .. automodule:: parcels.kernels.advectiondiffusion
     :members:
     :show-inheritance:
 
-parcels.codegenerator module
-----------------------------
+parcels.kernels.EOSseawaterproperties module
+--------------------------------------------
+
+
+.. automodule:: parcels.kernels.EOSseawaterproperties
+    :members:
+    :show-inheritance:
+
+parcels.kernels.TEOSseawaterdensity module
+------------------------------------------
+
+
+.. automodule:: parcels.kernels.TEOSseawaterdensity
+    :members:
+    :show-inheritance:
+
+parcels.compilation.codegenerator module
+----------------------------------------
 
 .. automodule:: parcels.codegenerator
     :members:
     :show-inheritance:
 
-parcels.compiler module
------------------------
+parcels.compilation.compiler module
+-----------------------------------
 
 .. automodule:: parcels.compiler
     :members:
@@ -102,8 +120,36 @@ parcels.rng module
     :members:
     :undoc-members:
 
+parcels.particlesets.baseparticleset module
+-------------------------------------------
+
+.. automodule:: parcels.particlesets.baseparticleset
+    :members:
+    :show-inheritance:
+
+parcels.particlesets.collections module
+---------------------------------------
+
+.. automodule:: parcels.particlesets.collections
+    :members:
+    :show-inheritance:
+
+parcels.particlesets.collectionsoa module
+-----------------------------------------
+
+.. automodule:: parcels.particlesets.collectionsoa
+    :members:
+    :show-inheritance:
+
+parcels.particlesets.iterators module
+-------------------------------------
+
+.. automodule:: parcels.particlesets.iterators
+    :members:
+    :show-inheritance:
+
 parcels.tools.statuscodes module
---------------------------
+--------------------------------
 
 .. automodule:: parcels.tools.statuscodes
     :members:

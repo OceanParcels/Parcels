@@ -15,7 +15,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 def expr_kernel(name, pset, expr):
     pycode = """def %s(particle, fieldset, time):
     particle.p = %s""" % (name, expr)
-    return Kernel(pset.fieldset, pset.ptype, pyfunc=None,
+    return Kernel(pset.fieldset, pset.collection.ptype, pyfunc=None,
                   funccode=pycode, funcname=name,
                   funcvars=['particle'])
 
@@ -292,6 +292,25 @@ def test_random_float(mode, rngfunc, rngargs, npart=10):
                          '%s.%s(%s)' % (rnglib, rngfunc, ', '.join([str(a) for a in rngargs])))
     pset.execute(kernel, endtime=1., dt=1.)
     assert np.allclose(pset.p, series, atol=1e-9)
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('concat', [False, True])
+def test_random_kernel_concat(fieldset, mode, concat):
+    class TestParticle(ptype[mode]):
+        p = Variable('p', dtype=np.float32)
+
+    pset = ParticleSet(fieldset, pclass=TestParticle, lon=0, lat=0)
+
+    def RandomKernel(particle, fieldset, time):
+        particle.p += ParcelsRandom.uniform(0, 1)
+
+    def AddOne(particle, fieldset, time):
+        particle.p += 1.
+
+    kernels = pset.Kernel(RandomKernel)+pset.Kernel(AddOne) if concat else RandomKernel
+    pset.execute(kernels, dt=0)
+    assert pset.p > 1 if concat else pset.p < 1
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])

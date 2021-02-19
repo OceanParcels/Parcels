@@ -17,7 +17,7 @@ except:
 
 def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
                          tracerlon='x', tracerlat='y', recordedvar=None, movie_forward=True,
-                         bins=20, show_plt=True):
+                         bins=20, show_plt=True, central_longitude=0):
     """Quick and simple plotting of Parcels trajectories
 
     :param filename: Name of Parcels-generated NetCDF file with particle positions
@@ -33,6 +33,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
     :param movie_forward: Boolean whether to show movie in forward or backward mode (default True)
     :param bins: Number of bins to use in `hist2d` mode. See also https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist2d.html
     :param show_plt: Boolean whether plot should directly be show (for py.test)
+    :param central_longitude: Degrees East at which to center the plot
     """
 
     environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
@@ -58,7 +59,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         titlestr = ' and ' + tracerfield
     else:
         spherical = False if mode == '3d' or mesh == 'flat' else True
-        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical)
+        plt, fig, ax, cartopy = create_parcelsfig_axis(spherical=spherical, central_longitude=central_longitude)
         if plt is None:
             return  # creating axes was not possible
         titlestr = ''
@@ -88,7 +89,7 @@ def plotTrajectoriesFile(filename, mode='2d', tracerfile=None, tracerfield='P',
         cartopy_colorbar(cs, plt, fig, ax)
         ax.set_title('Particle histogram')
     elif mode in ('movie2d', 'movie2d_notebook'):
-        ax.set_xlim(np.nanmin(lon), np.nanmax(lon))
+        ax.set_xlim(np.nanmin((lon+central_longitude+180) % 360 - 180), np.nanmax((lon+central_longitude+180) % 360 - 180))
         ax.set_ylim(np.nanmin(lat), np.nanmax(lat))
         plottimes = np.unique(time)
         if not movie_forward:

@@ -1,7 +1,6 @@
 from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, JITParticle,
-                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionRK4DiffusionM1,
-                     AdvectionDiffusionEM, AdvectionRK4DiffusionEM, ScipyParticle,
-                     Variable)
+                     DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM,
+                     ScipyParticle, Variable)
 from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import numpy as np
@@ -28,11 +27,8 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
-    vec = np.linspace(-1e5*mesh_conversion, 1e5*mesh_conversion, 2)
-    grid = RectilinearZGrid(lon=vec, lat=vec, mesh=mesh)
-
-    fieldset.add_field(Field('Kh_zonal', kh_zonal*np.ones((2, 2)), grid=grid))
-    fieldset.add_field(Field('Kh_meridional', kh_meridional*np.ones((2, 2)), grid=grid))
+    fieldset.add_constant_field("Kh_zonal", kh_zonal, mesh=mesh)
+    fieldset.add_constant_field("Kh_meridional", kh_meridional, mesh=mesh)
 
     npart = 1000
     runtime = delta(days=1)
@@ -59,9 +55,7 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('kernel', [AdvectionDiffusionM1,
-                                    AdvectionRK4DiffusionM1,
-                                    AdvectionDiffusionEM,
-                                    AdvectionRK4DiffusionEM])
+                                    AdvectionDiffusionEM])
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=100):
     """Test advection-diffusion kernels on a non-uniform diffusivity field
     with a linear gradient in one direction"""
@@ -75,7 +69,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
     grid = RectilinearZGrid(lon=fieldset.U.lon, lat=fieldset.U.lat, mesh=mesh)
     fieldset.add_field(Field('Kh_zonal', Kh, grid=grid))
     fieldset.add_field(Field('Kh_meridional', Kh, grid=grid))
-    fieldset.add_constant('dres', 0.0005)
+    fieldset.add_constant('dres', fieldset.U.lon[1]-fieldset.U.lon[0])
 
     npart = 100
     runtime = delta(days=1)

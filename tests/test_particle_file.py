@@ -7,6 +7,7 @@ import pytest
 import os
 from netCDF4 import Dataset
 import cftime
+import random as py_random
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 
@@ -176,7 +177,7 @@ def test_variable_written_once(fieldset, mode, tmpdir, npart):
     ofile = pset.ParticleFile(name=filepath, outputdt=0.1)
     pset.execute(pset.Kernel(Update_v), endtime=1, dt=0.1, output_file=ofile)
 
-    assert np.allclose(pset.particle_data['v_once'] - time - pset.particle_data['age']*10, 0, atol=1e-5)
+    assert np.allclose(pset.v_once - time - pset.age*10, 0, atol=1e-5)
     ncfile = close_and_compare_netcdffiles(filepath, ofile)
     vfile = np.ma.filled(ncfile.variables['v_once'][:], np.nan)
     assert (vfile.shape == (npart, ))
@@ -213,7 +214,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     samplevar = ncfile.variables['sample_var'][:]
     if type == 'repeatdt':
         assert samplevar.shape == (runtime // repeatdt+1, min(maxvar+1, runtime)+1)
-        assert np.allclose(pset.particle_data['sample_var'], np.arange(maxvar, -1, -repeatdt))
+        assert np.allclose(pset.sample_var, np.arange(maxvar, -1, -repeatdt))
     elif type == 'timearr':
         assert samplevar.shape == (runtime, min(maxvar + 1, runtime) + 1)
     # test whether samplevar[:, k] = k
@@ -231,7 +232,7 @@ def test_write_timebackward(fieldset, mode, tmpdir):
     def Update_lon(particle, fieldset, time):
         particle.lon -= 0.1 * particle.dt
 
-    pset = ParticleSet(fieldset, pclass=JITParticle, lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
                        time=[1, 2, 3])
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
@@ -246,3 +247,38 @@ def test_set_calendar():
         date = getattr(cftime, cf_datetime)(1990, 1, 1)
         assert _set_calendar(date.calendar) == date.calendar
     assert _set_calendar('np_datetime64') == 'standard'
+
+
+def test_error_duplicate_outputdir(fieldset, tmpdir):
+    outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
+    pset1 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+    pset2 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+
+    py_random.seed(1234)
+    pfile1 = pset1.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
+
+    py_random.seed(1234)
+    error_thrown = False
+    try:
+        pset2.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
+    except IOError:
+        error_thrown = True
+    assert error_thrown
+
+    pfile1.delete_tempwritedir()
+
+
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_reset_dt(fieldset, mode, tmpdir):
+    # Assert that p.dt gets reset when a write_time is not a multiple of dt
+    # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
+    filepath = tmpdir.join("pfile_reset_dt.nc")
+
+    def Update_lon(particle, fieldset, time):
+        particle.lon += 0.1
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    ofile = pset.ParticleFile(name=filepath, outputdt=0.05)
+    pset.execute(pset.Kernel(Update_lon), endtime=0.1, dt=0.02, output_file=ofile)
+
+    assert np.allclose(pset.lon, .6)
