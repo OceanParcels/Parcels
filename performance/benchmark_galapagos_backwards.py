@@ -35,7 +35,7 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
                  'V': {'lon': meshfile, 'lat': meshfile, 'data': vfiles}}
     nemo_variables = {'U': 'uo', 'V': 'vo'}
     nemo_dimensions = {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}
-    period = delta(days=366) if periodic_wrap else False
+    period = delta(days=366*11) if periodic_wrap else False  # 10 years period
     extrapolation = False if periodic_wrap else True
     # ==== Because the stokes data is a different grid, we actually need to define the chunking ==== #
     # fieldset_nemo = FieldSet.from_nemo(nemofiles, nemovariables, nemodimensions, field_chunksize='auto')
@@ -47,7 +47,8 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
         stokes_variables = {'U': 'uuss', 'V': 'vuss'}
         stokes_dimensions = {'lat': 'latitude', 'lon': 'longitude', 'time': 'time'}
         stokes_chs = {'time': 1, 'latitude': 16, 'longitude': 32}
-        fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, field_chunksize=stokes_chs, time_periodic=period, allow_time_extrapolation=extrapolation)
+        stokes_period = delta(days=366+2*31) if periodic_wrap else False  # 14 month period
+        fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, field_chunksize=stokes_chs, time_periodic=stokes_period, allow_time_extrapolation=extrapolation)
         fieldset_stokes.add_periodic_halo(zonal=True, meridional=False, halosize=5)
 
         fieldset = FieldSet(U=fieldset_nemo.U+fieldset_stokes.U, V=fieldset_nemo.V+fieldset_stokes.V)
@@ -136,7 +137,7 @@ if __name__=='__main__':
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/galapagos".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = os.path.join(headdir, "/BENCHres")
+        odir = os.path.join(headdir, "BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         computer_env = "Cartesius"

@@ -5,20 +5,18 @@ from parcels.tools import idgen
 from parcels.kernels import seawaterdensity
 from argparse import ArgumentParser
 from datetime import timedelta as delta
-from datetime import  datetime
+# from datetime import  datetime
 import time as ostime
-import numpy as np
+import os
+import sys
 import math
+import numpy as np
+import scipy.linalg
+# from numpy import *
 from glob import glob
-import matplotlib.pyplot as plt
 import fnmatch
 import warnings
-import psutil
 import pickle
-import matplotlib.ticker as mtick
-from numpy import *
-import scipy.linalg
-import math as math
 import gc
 warnings.filterwarnings("ignore")
 
@@ -268,11 +266,11 @@ if __name__ == "__main__":
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/deep_migration_behaviour".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = os.path.join(headdir, "/BENCHres")
+        odir = os.path.join(headdir, "BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
         dirread = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/means/')
         dirread_bgc = os.path.join(datahead, 'NEMO-MEDUSA_BGC/ORCA0083-N006/means/')
-        dirread_mesh = os.path.join(datahead, 'NEMO-MEDUSA_BGC/ORCA0083-N006/domain/')
+        dirread_mesh = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/domain/')
         computer_env = "Cartesius"
     else:
         headdir = "/var/scratch/dlobelle"
