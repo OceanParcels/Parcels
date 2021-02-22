@@ -167,7 +167,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
             initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
 
-            for v in self.ptype.variables:
+            for v in self._ptype.variables:
                 if v.name in initialised:
                     continue
 
@@ -214,13 +214,17 @@ class ParticleCollectionAOS(ParticleCollection):
     def __getattr__(self, name):
         """
         Access a single property of all particles.
+        CAUTION: this function is not(!) in-place and is quite slow
 
         :param name: name of the property
         """
-        for v in self.ptype.variables:
-            if v.name == name and name in self._data:
-                return self._data[name]
-        return False
+        if name not in self._ptype.variables:
+            return None
+        result = np.zeros(self._ncount, dtype=self._ptype.variables[name].dtype)
+        for index in range(self._ncount):
+            if hasattr(self._data[index], name):
+                result[index] = getattr(self._data[index], name)
+        return result
 
     @property
     def data_c(self):
@@ -284,15 +288,8 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().get_single_by_ID(id)
 
-        # Use binary search if the collection is sorted, linear search otherwise
-        index = -1
-        if self._sorted:
-            index = bisect_left(self._data['id'], id)
-            if index == len(self._data['id']) or self._data['id'][index] != id:
-                raise ValueError("Trying to access a particle with a non-existing ID: %s." % id)
-        else:
-            index = np.where(self._data['id'] == id)[0][0]
-
+        ids = np.array([p.id for p in self._data])
+        index = np.where(ids == id)[0][0]
         return self.get_single_by_index(index)
 
     def get_same(self, same_class):
@@ -301,7 +298,15 @@ class ParticleCollectionAOS(ParticleCollection):
         structured ParticleCollection.
         """
         super().get_same(same_class)
-        raise NotImplementedError
+        results = []
+        for item in same_class:
+            index = np.where(self._data == item)[0]  # this will require implementing and equals(...) function check between Particle and BaseParticleAccessor
+            if index.size != 0:
+                index = index[0]
+                results.append(self._data[index])
+        if len(results) == 0:
+            results = None
+        return results
 
     def get_collection(self, pcollection):
         """
@@ -310,7 +315,19 @@ class ParticleCollectionAOS(ParticleCollection):
         intermediary format.
         """
         super().get_collection(pcollection)
-        raise NotImplementedError
+        if self._ncount <= 0:
+            return None
+        ngrids = len(getattr(self._data[0], 'xi'))
+        results = []
+        for item in pcollection:
+            pdata_item = self._pclass(lon = item.lon, lat = item.lat, pid = item.pid, ngrids = ngrids, depth = item.depth, time = item.time)
+            index = np.where(self._data == pdata_item)[0]  # this will require implementing and equals(...) function check between Particle and BaseParticleAccessor
+            if index.size != 0:
+                index = index[0]
+                results.append(self._data[index])
+        if len(results) == 0:
+            results = None
+        return results
 
     def get_multi_by_PyCollection_Particles(self, pycollectionp):
         """
@@ -323,7 +340,12 @@ class ParticleCollectionAOS(ParticleCollection):
         by indices or IDs.
         """
         super().get_multi_by_PyCollection_Particles(pycollectionp)
-        raise NotImplementedError
+        np_collection_p = np.array(pycollectionp, dtype=self._pclass)
+        indices = np.where(self._data == np_collection_p)
+        result = self._data[indices]
+        if result.shape[0] <= 0:
+            result = None
+        return result
 
     def get_multi_by_indices(self, indices):
         """
@@ -334,7 +356,7 @@ class ParticleCollectionAOS(ParticleCollection):
         super().get_multi_by_indices(indices)
         if type(indices) is dict:
             indices = list(indices.values())
-        return ParticleCollectionIteratorAOS(self, subset=indices)
+        return self._data[indices]
 
     def get_multi_by_IDs(self, ids):
         """
@@ -355,51 +377,14 @@ class ParticleCollectionAOS(ParticleCollection):
         if len(ids) == 0:
             return None
 
-        # Use binary search if the collection is sorted, linear search otherwise
-        indices = np.empty(len(ids), dtype=np.int32)
-        if self._sorted:
-            # This is efficient if len(ids) << self.len
-            sorted_ids = np.sort(np.array(ids))
-            indices = self._recursive_ID_lookup(0, len(self._data['id']), sorted_ids)
-        else:
-            indices = np.where(np.in1d(self._data['id'], ids))[0]
-
+        data_ids = np.array([p.id for p in self._data])
+        indices = np.where(data_ids == ids)
+        items_found = [search_result.size!=0 for search_result in indices]
+        if False in items_found:
+            logger.warn("Failed to located a requested Particle")
+        if indices.size <= 0:
+            result = None
         return self.get_multi_by_indices(indices)
-
-    def _recursive_ID_lookup(self, low, high, sublist):
-        """Identify the middle element of the sublist and perform binary
-        search on it.
-
-        :param low: Lowerbound on the indices to search for IDs.
-        :param high: Upperbound on the indices to search for IDs.
-        :param sublist: (Sub)list of IDs to look for.
-        """
-        median = floor(len(sublist) / 2)
-        index = bisect_left(self._data['id'][low:high], sublist[median])
-        if len(sublist) == 1:
-            # edge case
-            if index == len(self._data['id']) or \
-               self._data['id'][index] != sublist[median]:
-                return np.array([])
-            return np.array([index])
-
-        # The edge-cases have to be handled slightly differently
-        if index == len(self._data['id']):
-            # Continue with the same bounds, but drop the median.
-            return self._recursive_ID_lookup(low, high, np.delete(sublist, median))
-        elif self._data['id'][index] != sublist[median]:
-            # We can split, because we received the index that the median
-            # ID would have been inserted in, but we do not return the
-            # index and keep it in our search space.
-            left = self._recursive_ID_lookup(low, index, sublist[:median])
-            right = self._recursive_ID_lookup(index, high, sublist[median + 1:])
-            return np.concatenate((left, right))
-
-        # Otherwise, we located the median, so we include it in our
-        # result, and split the search space on it, without including it.
-        left = self._recursive_ID_lookup(low, index, sublist[:median])
-        right = self._recursive_ID_lookup(index + 1, high, sublist[median + 1:])
-        return np.concatenate((left, np.array(index), right))
 
     def add_collection(self, pcollection):
         """
