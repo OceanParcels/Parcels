@@ -143,7 +143,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._data = np.empty(lon.size, dtype=pclass)
         initialised = set()
 
-        if self.ptype.uses_jit:
+        if self._ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
             self._data_c = np.empty(lon.size, dtype=self._ptype.dtype)
 
@@ -391,16 +391,49 @@ class ParticleCollectionAOS(ParticleCollection):
         Adds another, differently structured ParticleCollection to this collection. This is done by, for example,
         appending/adding the items of the other collection to this collection.
         """
+        # ==== first approach - still need to incorporate the MPI re-centering ==== #
         super().add_collection(pcollection)
-        raise NotImplementedError
+        ngrids = 0
+        if self._ncount > 0:
+            ngrids = len(getattr(self._data[0], 'xi'))
+        elif len(pcollection) > 0:
+            pd0 = pcollection[0]
+            ngrids = len(pd0['xi'])
+        pd_cdata = None
+        if self._ptype.uses_jit:
+            pd_cdata = np.array(len(pcollection), dtype=self._ptype.dtype)
+        results = []
+        for item_index, item in enumerate(pcollection):
+            pdata_item = self._pclass(lon = item.lon, lat = item.lat, pid = item.pid, ngrids = ngrids, depth = item.depth, time = item.time, cptr=pd_cdata[item_index])
+            results.append(pdata_item)
+        self._data = np.concatenate([self._data, np.array(results, dtype=self._pclass)])
+        if self._ptype.uses_jit:
+            self._data_c = np.concatenate([self._data_c, pd_cdata])
+            # Update C-pointer on particles
+            for p, pdata in zip(self._data, self._data_c):
+                p._cptr = pdata
+        self._ncount = self._data.shape[0]
+        return results
 
     def add_single(self, particle_obj):
         """
         Adding a single Particle to the collection - either as a 'Particle; object in parcels itself, or
         via its ParticleAccessor.
         """
+        # ==== first approach - still need to incorporate the MPI re-centering ==== #
         super().add_single(particle_obj)
-        raise NotImplementedError
+        assert isinstance(particle_obj, ScipyParticle)
+        self._data = np.concatenate([self._data, particle_obj])
+        self._ncount = self._data.shape[0]
+        if self._ptype.uses_jit:
+            tmp_addr = self._data_c
+            self._data_c = np.array(self._ncount, dtype=self._ptype.dtype)
+            self._data_c[0:-2] = tmp_addr[:]
+            particle_obj._cptr = self._data_c[-1]
+
+    # ========================================================================== #
+    # BREAKPOINT: 22-02-2021                                                     #
+    # ========================================================================== #
 
     def add_same(self, same_class):
         """
