@@ -186,7 +186,7 @@ class ScipyParticle(_Particle):
     state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
-    def __init__(self, lon, lat, pid, fieldset, depth=0., time=0., cptr=None):
+    def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
 
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
@@ -199,11 +199,16 @@ class ScipyParticle(_Particle):
         type(self).dt.initial = None
         type(self).next_dt.initial = np.nan
 
+        numgrids = ngrids
+        if numgrids is None and fieldset is not None:
+            numgrids = fieldset.gridset.size
+        assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+
         for index in ['xi', 'yi', 'zi', 'ti']:
             if index != 'ti':
-                setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+                setattr(self, index, np.zeros(numgrids, dtype=np.int32))
             else:
-                setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+                setattr(self, index, -1*np.ones(numgrids, dtype=np.int32))
 
         super(ScipyParticle, self).__init__()
 
