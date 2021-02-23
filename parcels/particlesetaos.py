@@ -11,7 +11,7 @@ import numpy as np
 # from parcels.kernel import Kernel
 from parcels.particle import JITParticle
 # from parcels.particlefile import ParticleFile
-# from parcels.tools.statuscodes import StateCode
+from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.collectionaos import ParticleCollectionAOS
 
@@ -159,3 +159,46 @@ class ParticleSetAOS(BaseParticleSet):
                 self.repeatpid = pid_orig[self._collection.pu_indicators == mpi_rank]
 
         self.kernel = None
+
+    def delete(self, key):
+        """
+        This is the generic super-method to indicate obejct deletion of a specific object from this collection.
+
+        Comment/Annotation:
+        Functions for deleting multiple objects are more specialised than just a for-each loop of single-item deletion,
+        because certain data structures can delete multiple objects in-bulk faster with specialised function than making a
+        roundtrip per-item delete operation. Because of the sheer size of those containers and the resulting
+        performance demands, we need to make use of those specialised 'del' functions, where available.
+        """
+        if key is None:
+            return
+        if type(key) in [int, np.int32, np.intp]:
+            self.delete_by_index(key)
+        elif type(key) in [np.int64, np.uint64]:
+            self.delete_by_ID(key)
+
+    def delete_by_index(self, index):
+        """
+        This method deletes a particle from the  the collection based on its index. It does not return the deleted item.
+        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+        is handled by 'recovery' dictionary during simulation execution.
+        """
+        super().delete_by_index(index)
+        self._collection[index].state = OperationCode.Delete
+
+    def delete_by_ID(self, id):
+        """
+        This method deletes a particle from the  the collection based on its ID. It does not return the deleted item.
+        Semantically, the function appears similar to the 'remove' operation. That said, the function in OceanParcels -
+        instead of directly deleting the particle - just raises the 'deleted' status flag for the indexed particle.
+        In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
+        is handled by 'recovery' dictionary during simulation execution.
+        """
+        super().delete_by_ID(id)
+        p = self._collection.get_single_by_ID(id)
+        p.state = OperationCode.Delete
+        # ==== Back-Up if the by-ref setting doesn't work ==== #
+        # index = self._collection.get_index_by_ID(id)
+        # self.delete_by_index(index)
