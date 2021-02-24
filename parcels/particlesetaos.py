@@ -2,15 +2,17 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
 
-# import sys
+import sys
 import numpy as np
-# import xarray as xr
+import xarray as xr
 
-# from parcels.grid import GridCode
+from parcels.grid import GridCode
 # from parcels.grid import CurvilinearGrid
-# from parcels.kernel import Kernel
+from parcels.field import NestedField
+from parcels.field import SummedField
+from parcels.kernelaos import KernelAOS
 from parcels.particle import JITParticle
-# from parcels.particlefile import ParticleFile
+from parcels.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.collectionaos import ParticleCollectionAOS
@@ -185,7 +187,6 @@ class ParticleSetAOS(BaseParticleSet):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        super().delete_by_index(index)
         self._collection[index].state = OperationCode.Delete
 
     def delete_by_ID(self, id):
@@ -196,9 +197,368 @@ class ParticleSetAOS(BaseParticleSet):
         In result, the particle still remains in the collection. The functional interpretation of the 'deleted' status
         is handled by 'recovery' dictionary during simulation execution.
         """
-        super().delete_by_ID(id)
         p = self._collection.get_single_by_ID(id)
         p.state = OperationCode.Delete
         # ==== Back-Up if the by-ref setting doesn't work ==== #
         # index = self._collection.get_index_by_ID(id)
         # self.delete_by_index(index)
+
+    @property
+    def particle_data(self):
+        return self._particle_data
+
+    @classmethod
+    def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+        """Initialise the ParticleSet from lists of lon and lat
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param lon: List of initial longitude values for particles
+        :param lat: List of initial latitude values for particles
+        :param depth: Optional list of initial depth values for particles. Default is 0m
+        :param time: Optional list of start time values for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
+       """
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
+
+    @classmethod
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+        """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
+        Note that this method uses simple numpy.linspace calls and does not take into account
+        great circles, so may not be a exact on a globe
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start: Starting point for initialisation of particles on a straight line.
+        :param finish: End point for initialisation of particles on a straight line.
+        :param size: Initial size of particle set
+        :param depth: Optional list of initial depth values for particles. Default is 0m
+        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        """
+
+        lon = np.linspace(start[0], finish[0], size)
+        lat = np.linspace(start[1], finish[1], size)
+        if type(depth) in [int, float]:
+            depth = [depth] * size
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype)
+
+    @classmethod
+    def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
+        """
+        Converts a starting field into a monte-carlo sample of lons and lats.
+
+        :param start_field: :mod:`parcels.fieldset.Field` object for initialising particles stochastically (horizontally)  according to the presented density field.
+
+        returns list(lon), list(lat)
+        """
+        if mode == 'monte_carlo':
+            data = start_field.data if isinstance(start_field.data, np.ndarray) else np.array(start_field.data)
+            if start_field.interp_method == 'cgrid_tracer':
+                p_interior = np.squeeze(data[0, 1:, 1:])
+            else:  # if A-grid
+                d = data
+                p_interior = (d[0, :-1, :-1] + d[0, 1:, :-1] + d[0, :-1, 1:] + d[0, 1:, 1:])/4.
+                p_interior = np.where(d[0, :-1, :-1] == 0, 0, p_interior)
+                p_interior = np.where(d[0, 1:, :-1] == 0, 0, p_interior)
+                p_interior = np.where(d[0, 1:, 1:] == 0, 0, p_interior)
+                p_interior = np.where(d[0, :-1, 1:] == 0, 0, p_interior)
+            p = np.reshape(p_interior, (1, p_interior.size))
+            inds = np.random.choice(p_interior.size, size, replace=True, p=p[0] / np.sum(p))
+            xsi = np.random.uniform(size=len(inds))
+            eta = np.random.uniform(size=len(inds))
+            j, i = np.unravel_index(inds, p_interior.shape)
+            grid = start_field.grid
+            lon, lat = ([], [])
+            if grid.gtype in [GridCode.RectilinearZGrid, GridCode.RectilinearSGrid]:
+                lon = grid.lon[i] + xsi * (grid.lon[i + 1] - grid.lon[i])
+                lat = grid.lat[j] + eta * (grid.lat[j + 1] - grid.lat[j])
+            else:
+                lons = np.array([grid.lon[j, i], grid.lon[j, i+1], grid.lon[j+1, i+1], grid.lon[j+1, i]])
+                if grid.mesh == 'spherical':
+                    lons[1:] = np.where(lons[1:] - lons[0] > 180, lons[1:]-360, lons[1:])
+                    lons[1:] = np.where(-lons[1:] + lons[0] > 180, lons[1:]+360, lons[1:])
+                lon = (1-xsi)*(1-eta) * lons[0] +\
+                    xsi*(1-eta) * lons[1] +\
+                    xsi*eta * lons[2] +\
+                    (1-xsi)*eta * lons[3]
+                lat = (1-xsi)*(1-eta) * grid.lat[j, i] +\
+                    xsi*(1-eta) * grid.lat[j, i+1] +\
+                    xsi*eta * grid.lat[j+1, i+1] +\
+                    (1-xsi)*eta * grid.lat[j+1, i]
+            return list(lon), list(lat)
+        else:
+            raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
+
+    @classmethod
+    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+        """Initialise the ParticleSet randomly drawn according to distribution from a field
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param start_field: Field for initialising particles stochastically (horizontally)  according to the presented density field.
+        :param size: Initial size of particle set
+        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
+        :param depth: Optional list of initial depth values for particles. Default is 0m
+        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        """
+        lon, lat = cls.monte_carlo_sample(start_field, size, mode)
+
+        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
+                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
+
+
+    @classmethod
+    def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
+        """Initialise the ParticleSet from a netcdf ParticleFile.
+        This creates a new ParticleSet based on the last locations and time of all particles
+        in the netcdf ParticleFile. Particle IDs are preserved if restart=True
+
+        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
+        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
+                 object that defines custom particle
+        :param filename: Name of the particlefile from which to read initial conditions
+        :param restart: Boolean to signal if pset is used for a restart (default is True).
+               In that case, Particle IDs are preserved.
+        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
+        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
+               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
+               and np.float64 if the interpolation method is 'cgrid_velocity'
+        """
+
+        if repeatdt is not None:
+            logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
+                           'setting a new repeatdt will start particles from the _new_ particle '
+                           'locations.' % filename)
+
+        pfile = xr.open_dataset(str(filename), decode_cf=True)
+        pfile_vars = [v for v in pfile.data_vars]
+
+        vars = {}
+        to_write = {}
+        for v in pclass.getPType().variables:
+            if v.name in pfile_vars:
+                vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+                    and v.to_write:
+                raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
+            to_write[v.name] = v.to_write
+        vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
+        vars['id'] = np.ma.filled(pfile.variables['trajectory'], np.nan)
+
+        if isinstance(vars['time'][0, 0], np.timedelta64):
+            vars['time'] = np.array([t/np.timedelta64(1, 's') for t in vars['time']])
+
+        if restarttime is None:
+            restarttime = np.nanmax(vars['time'])
+        elif callable(restarttime):
+            restarttime = restarttime(vars['time'])
+        else:
+            restarttime = restarttime
+
+        inds = np.where(vars['time'] == restarttime)
+        for v in vars:
+            if to_write[v] is True:
+                vars[v] = vars[v][inds]
+            elif to_write[v] == 'once':
+                vars[v] = vars[v][inds[0]]
+            if v not in ['lon', 'lat', 'depth', 'time', 'id']:
+                kwargs[v] = vars[v]
+
+        if restart:
+            pclass.setLastID(0)  # reset to zero offset
+        else:
+            vars['id'] = None
+
+        return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
+                   depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
+                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
+
+    def to_dict(self, pfile, time, deleted_only=False):
+        """
+        Convert all Particle data from one time step to a python dictionary.
+        :param pfile: ParticleFile object requesting the conversion
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        returns two dictionaries: one for all variables to be written each outputdt,
+         and one for all variables to be written once
+        """
+        return self._collection.toDictionary(pfile=pfile, time=time,
+                                             deleted_only=deleted_only)
+
+    @staticmethod
+    def lonlatdepth_dtype_from_field_interp_method(field):
+        if type(field) in [SummedField, NestedField]:
+            for f in field:
+                if f.interp_method == 'cgrid_velocity':
+                    return np.float64
+        else:
+            if field.interp_method == 'cgrid_velocity':
+                return np.float64
+        return np.float32
+
+    @property
+    def size(self):
+        # ==== to change at some point - len and size are different things ==== #
+        return len(self._collection)
+
+    def __repr__(self):
+        return "\n".join([str(p) for p in self])
+
+    def __len__(self):
+        return len(self._collection)
+
+    def __sizeof__(self):
+        return sys.getsizeof(self._collection)
+
+    def __iadd__(self, particles):
+        """Add particles to the ParticleSet. Note that this is an
+        incremental add, the particles will be added to the ParticleSet
+        on which this function is called.
+
+        :param particles: Another ParticleSet containing particles to add
+                          to this one.
+        :return: The current ParticleSet
+        """
+        self.add(particles)
+        return self
+
+    def add(self, particles):
+        """Add particles to the ParticleSet. Note that this is an
+        incremental add, the particles will be added to the ParticleSet
+        on which this function is called.
+
+        :param particles: Another ParticleSet containing particles to add
+                          to this one.
+        :return: The current ParticleSet
+        """
+        if isinstance(particles, BaseParticleSet):
+            particles = particles.collection
+        self._collection += particles
+        return self
+
+    def remove_indices(self, indices):
+        """Method to remove particles from the ParticleSet, based on their `indices`"""
+        if type(indices) in [int, np.int32, np.intp]:
+            self._collection.remove_single_by_index(indices)
+        else:
+            self._collection.remove_multi_by_indices(indices)
+
+    def remove_booleanvector(self, indices):
+        """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        # indices = np.where(indices)[0]
+        indices = np.nonzero(indices)[0]
+        self.remove_indices(indices)
+
+    # TODO: move to BaseParticleSet
+    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
+             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
+        """Method to 'show' a Parcels ParticleSet
+
+        :param with_particles: Boolean whether to show particles
+        :param show_time: Time at which to show the ParticleSet
+        :param field: Field to plot under particles (either None, a Field object, or 'vector')
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
+        :param projection: type of cartopy projection to use (default PlateCarree)
+        :param land: Boolean whether to show land. This is ignored for flat meshes
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        :param savefile: Name of a file to save the plot to
+        :param animation: Boolean whether result is a single plot, or an animation
+        """
+        from parcels.plotting import plotparticles
+        plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
+
+    def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
+        """Method to calculate the density of particles in a ParticleSet from their locations,
+        through a 2D histogram.
+
+        :param field: Optional :mod:`parcels.field.Field` object to calculate the histogram
+                      on. Default is `fieldset.U`
+        :param particle_val: Optional numpy-array of values to weigh each particle with,
+                             or string name of particle variable to use weigh particles with.
+                             Default is None, resulting in a value of 1 for each particle
+        :param relative: Boolean to control whether the density is scaled by the total
+                         weight of all particles. Default is False
+        :param area_scale: Boolean to control whether the density is scaled by the area
+                           (in m^2) of each grid cell. Default is False
+        """
+
+        field_name = field_name if field_name else "U"
+        field = getattr(self.fieldset, field_name)
+
+        f_str = """
+def search_kernel(particle, fieldset, time):
+    x = fieldset.{}[time, particle.depth, particle.lat, particle.lon]
+        """.format(field_name)
+
+        k = KernelAOS(
+            self.fieldset,
+            self._collection.ptype,
+            funcname="search_kernel",
+            funcvars=["particle", "fieldset", "time", "x"],
+            funccode=f_str,
+        )
+        self.execute(pyfunc=k, runtime=0)
+
+        if isinstance(particle_val, str):
+            particle_val = [getattr(p, particle_val) for p in self._collection]
+        else:
+            particle_val = particle_val if particle_val else np.ones(self.size)
+        density = np.zeros((field.grid.lat.size, field.grid.lon.size), dtype=np.float32)
+
+        for i, p in enumerate(self):
+            try:  # breaks if either p.xi, p.yi, p.zi, p.ti do not exist (in scipy) or field not in fieldset
+                if p.ti[field.igrid] < 0:  # xi, yi, zi, ti, not initialised
+                    raise('error')
+                xi = p.xi[field.igrid]
+                yi = p.yi[field.igrid]
+            except:
+                _, _, _, xi, yi, _ = field.search_indices(p.lon, p.lat, p.depth, 0, 0, search2D=True)
+            density[yi, xi] += particle_val[i]
+
+        if relative:
+            density /= np.sum(particle_val)
+
+        if area_scale:
+            density /= field.cell_areas()
+
+        return density
+
+    def Kernel(self, pyfunc, c_include="", delete_cfiles=True):
+        """Wrapper method to convert a `pyfunc` into a :class:`parcels.kernel.Kernel` object
+        based on `fieldset` and `ptype` of the ParticleSet
+
+        :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
+        """
+        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
+                      delete_cfiles=delete_cfiles)
+
+    def ParticleFile(self, *args, **kwargs):
+        """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
+        object from the ParticleSet"""
+        return ParticleFileAOS(*args, particleset=self, **kwargs)
+
+    def set_variable_write_status(self, var, write_status):
+        """
+        Method to set the write status of a Variable
+        :param var: Name of the variable (string)
+        :param write_status: Write status of the variable (True, False or
+                             'once')
+        """
+        self._collection.set_variable_write_status(var, write_status)
