@@ -39,19 +39,21 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     """
-    return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-            & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
-            & (np.isfinite(pd['id']))
-            & (np.isfinite(pd['time'])))
+    # return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
+    #         & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
+    #         & (np.isfinite(pd['id']))
+    #         & (np.isfinite(pd['time'])))
+    return [p for p in pd if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
 
 
-def _is_particle_started_yet(pd, time):
+def _is_particle_started_yet(particle, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if:
       * particle.time is equal to time argument of pfile.write()
       * particle.time is before time (in case particle was deleted between previous export and current one)
     """
-    return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
+    # return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
+    return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
 
 
 def _convert_to_flat_array(var):
@@ -931,7 +933,6 @@ class ParticleCollectionAOS(ParticleCollection):
         This function depends on the specific collection in question and thus needs to be specified in specific
         derivative classes.
         """
-
         data_dict = {}
         data_dict_once = {}
 
@@ -940,39 +941,43 @@ class ParticleCollectionAOS(ParticleCollection):
         indices_to_write = []
         if pfile.lasttime_written != time and \
            (pfile.write_ondelete is False or deleted_only is not False):
-            if self._data['id'].size == 0:
+            if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
+                # self.max_index_written = -1
                 if deleted_only is not False:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                        indices_to_write = np.where(np.isin(self._data['state'],
-                                                            [OperationCode.Delete]))[0]
+                        data_states = [p.state for p in self._data]
+                        indices_to_write = np.where(np.isin(data_states, [OperationCode.Delete]))[0]
                     elif type(deleted_only) in [list, np.ndarray]:
                         indices_to_write = deleted_only
                 else:
                     indices_to_write = _to_write_particles(self._data, time)
                 if np.any(indices_to_write) > 0:
-                    for var in pfile.var_names:
-                        data_dict[var] = self._data[var][indices_to_write]
-                    pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
+                    for var in self.var_names:
+                        if type(getattr(self._data[0], var)) in [np.uint64, np.int64, np.uint32]:
+                            data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
+                        else:
+                            data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
+                    pfile.maxid_written = np.maximum(self.maxid_written, np.max(data_dict['id']))
 
-                pset_errs = ((self._data['state'][indices_to_write] != OperationCode.Delete) & np.greater(np.abs(time - self._data['time'][indices_to_write]), 1e-3, where=np.isfinite(self._data['time'][indices_to_write])))
-                if np.count_nonzero(pset_errs) > 0:
-                    logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, self._data['time'][pset_errs]))
+                pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and np.isfinite(p.time) and abs(time-p.time) > 1e-3]
+                for p in pset_errs:
+                    logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
 
-                # ==== this function should probably move back somewhere into the particle-file instead of the to_dict ==== #
-                if time not in pfile.time_written:
+                if time not in self.time_written:
                     pfile.time_written.append(time)
 
-                if len(pfile.var_names_once) > 0:
-                    first_write = (_to_write_particles(self._data, time) & _is_particle_started_yet(self._data, time) & np.isin(self._data['id'], pfile.written_once, invert=True))
+                if len(self.var_names_once) > 0:
+                    # indices_to_write = _to_write_particles(self._data, time)
+                    first_write = [p for p in self._data[indices_to_write] if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
                     if np.any(first_write):
-                        data_dict_once['id'] = np.array(self._data['id'][first_write]).astype(dtype=np.int64)
-                        for var in pfile.var_names_once:
-                            data_dict_once[var] = self._data[var][first_write]
-                        pfile.written_once.extend(np.array(self._data['id'][first_write]).astype(dtype=np.int64).tolist())
+                        data_dict_once['id'] = np.array([np.int64(p.id) for p in first_write])
+                        for var in self.var_names_once:
+                            data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                        pfile.written_once.extend(data_dict_once['id'].tolist())
 
-            if deleted_only is False:
+            if not deleted_only:
                 pfile.lasttime_written = time
 
         return data_dict, data_dict_once
