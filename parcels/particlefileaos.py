@@ -44,8 +44,7 @@ class ParticleFileAOS(BaseParticleFile):
         """
         returns the reserved dimension names not to be written just once.
         """
-        # TODO
-        pass
+        return ['time', 'lat', 'lon', 'depth', 'id']
 
     def _create_trajectory_records(self, coords):
         super(ParticleFileAOS, self)._create_trajectory_records(coords=coords)
@@ -55,10 +54,12 @@ class ParticleFileAOS(BaseParticleFile):
         returns the main attributes of the pset_info.npy file.
 
         Attention:
-        For ParticleSet struc
+        For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-        # TODO
-        pass
+        attributes = ['name', 'var_names', 'var_names_once', 'time_origin', 'lonlatdepth_dtype',
+                      'file_list', 'file_list_once', 'maxid_written', 'time_written', 'parcels_mesh',
+                      'metadata']
+        return attributes
 
     def read_from_npy(self, file_list, time_steps, var):
         """
@@ -71,7 +72,29 @@ class ParticleFileAOS(BaseParticleFile):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        pass
+        data = np.nan * np.zeros((self.maxid_written+1, time_steps))
+        time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
+        t_ind_used = np.zeros(time_steps, dtype=np.int64)
+
+        # loop over all files
+        for npyfile in file_list:
+            try:
+                data_dict = np.load(npyfile, allow_pickle=True).item()
+            except NameError:
+                raise RuntimeError('Cannot combine npy files into netcdf file because your ParticleFile is '
+                                   'still open on interpreter shutdown.\nYou can use '
+                                   '"parcels_convert_npydir_to_netcdf %s" to convert these to '
+                                   'a NetCDF file yourself.\nTo avoid this error, make sure you '
+                                   'close() your ParticleFile at the end of your script.' % self.tempwritedir)
+            id_ind = np.array(data_dict["id"], dtype=np.int64)
+            t_ind = time_index[id_ind] if 'once' not in file_list[0] else 0
+            t_ind_used[t_ind] = 1
+            data[id_ind, t_ind] = data_dict[var]
+            time_index[id_ind] = time_index[id_ind] + 1
+
+        # remove rows and columns that are completely filled with nan values
+        tmp = data[time_index > 0, :]
+        return tmp[:, t_ind_used == 1]
 
     def export(self):
         """
@@ -80,4 +103,44 @@ class ParticleFileAOS(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-        pass
+        if MPI:
+            # The export can only start when all threads are done.
+            MPI.COMM_WORLD.Barrier()
+            if MPI.COMM_WORLD.Get_rank() > 0:
+                return  # export only on threat 0
+
+        # Retrieve all temporary writing directories and sort them in numerical order
+        temp_names = sorted(glob(os.path.join("%s" % self.tempwritedir_base, "*")),
+                            key=lambda x: int(os.path.basename(x)))
+
+        if len(temp_names) == 0:
+            raise RuntimeError("No npy files found in %s" % self.tempwritedir_base)
+
+        global_maxid_written = -1
+        global_time_written = []
+        global_file_list = []
+        if len(self.var_names_once) > 0:
+            global_file_list_once = []
+        for tempwritedir in temp_names:
+            if os.path.exists(tempwritedir):
+                pset_info_local = np.load(os.path.join(tempwritedir, 'pset_info.npy'), allow_pickle=True).item()
+                global_maxid_written = np.max([global_maxid_written, pset_info_local['maxid_written']])
+                global_time_written += pset_info_local['time_written']
+                global_file_list += pset_info_local['file_list']
+                if len(self.var_names_once) > 0:
+                    global_file_list_once += pset_info_local['file_list_once']
+        self.maxid_written = global_maxid_written
+        self.time_written = np.unique(global_time_written)
+
+        for var in self.var_names:
+            data = self.read_from_npy(global_file_list, len(self.time_written), var)
+            if var == self.var_names[0]:
+                self.open_netcdf_file(data.shape)
+            varout = 'z' if var == 'depth' else var
+            getattr(self, varout)[:, :] = data
+
+        if len(self.var_names_once) > 0:
+            for var in self.var_names_once:
+                getattr(self, var)[:] = self.read_from_npy(global_file_list_once, 1, var)
+
+        self.close_netcdf_file()

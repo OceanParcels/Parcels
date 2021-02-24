@@ -270,6 +270,8 @@ class BaseParticleFile(ABC):
         """
         pset_info = {}
         attrs_to_dump = self.get_pset_info_attributes()
+        if attrs_to_dump is None:
+            return
         for a in attrs_to_dump:
             if hasattr(self, a):
                 pset_info[a] = getattr(self, a)

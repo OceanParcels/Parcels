@@ -321,7 +321,6 @@ class ParticleSetAOS(BaseParticleSet):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
-
     @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
@@ -339,7 +338,6 @@ class ParticleSetAOS(BaseParticleSet):
                It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
-
         if repeatdt is not None:
             logger.warning('Note that the `repeatdt` argument is not retained from %s, and that '
                            'setting a new repeatdt will start particles from the _new_ particle '
@@ -546,8 +544,7 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
-                      delete_cfiles=delete_cfiles)
+        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
