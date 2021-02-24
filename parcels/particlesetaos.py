@@ -205,7 +205,11 @@ class ParticleSetAOS(BaseParticleSet):
 
     @property
     def particle_data(self):
-        return self._particle_data
+        return self._collection.particle_data
+
+    @property
+    def cstruct(self):
+        return self._collection.cstruct()
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
