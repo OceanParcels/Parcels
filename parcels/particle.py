@@ -226,6 +226,15 @@ class ScipyParticle(_Particle):
     def set_state(self, state):
         self.state = state
 
+    def succeeded(self):
+        self.state = StateCode.Success
+
+    def isComputed(self):
+        return self.state == StateCode.Success
+
+    def reset_state(self):
+        self.state = StateCode.Evaluate
+
     @classmethod
     def set_lonlatdepth_dtype(cls, dtype):
         cls.lon.dtype = dtype

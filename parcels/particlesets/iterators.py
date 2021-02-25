@@ -1,6 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
-from parcels.tools.statuscodes import OperationCode
+from parcels.tools.statuscodes import OperationCode, StateCode
 
 
 class BaseParticleCollectionIterator(ABC):
@@ -72,6 +72,15 @@ class BaseParticleAccessor(ABC):
         particle.
         """
         self.state = state
+
+    def succeeded(self):
+        self.state = StateCode.Success
+
+    def isComputed(self):
+        return self.state == StateCode.Success
+
+    def reset_state(self):
+        self.state = StateCode.Evaluate
 
     @abstractmethod
     def __getattr__(self, name):
