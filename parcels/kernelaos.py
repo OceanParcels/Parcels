@@ -95,7 +95,7 @@ class KernelAOS(BaseKernel):
         # ======== THIS NEEDS TO BE REFACTORED BASED ON THE TYPE OF PARTICLE BEING USED ======== #
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            kernelgen = KernelGenerator(ptype, self.fieldset)
+            kernelgen = KernelGenerator(self.fieldset, ptype)
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
@@ -106,7 +106,7 @@ class KernelAOS(BaseKernel):
                         if sF_name != 'not_defined':
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
-            loopgen = ParticleObjectLoopGenerator(ptype, fieldset)
+            loopgen = ParticleObjectLoopGenerator(self.fieldset, ptype)
             if path.isfile(c_include):
                 with open(c_include, 'r') as f:
                     c_include_str = f.read()
@@ -183,8 +183,15 @@ class KernelAOS(BaseKernel):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
-        # TODO
         sign_dt = np.sign(dt)
+
+        if 'AdvectionAnalytical' in self._pyfunc.__name__:
+            analytical = True
+            if not np.isinf(dt):
+                logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
+            dt = np.inf
+        else:
+            analytical = False
 
         # back up variables in case of ErrorCode.Repeat
         p_var_back = {}
@@ -194,21 +201,28 @@ class KernelAOS(BaseKernel):
                 continue
             f.data = np.array(f.data)
 
-        for p in pset.particles:
+        for p in pset:
             ptype = p.getPType()
+            pdt_prekernels = .0
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
-
-            dt_pos = min(abs(p.dt), abs(endtime - p.time))
+            # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
+            reset_dt = False
+            if abs(endtime - p.time) < abs(p.dt):
+                dt_pos = abs(endtime - p.time)
+                reset_dt = True
+            else:
+                dt_pos = abs(p.dt)
+                reset_dt = False
 
             # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
             # as they fulfil the condition here on entering at the final calculation here. ==== #
             if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
                 if abs(p.time) >= abs(endtime):
-                    p.state = ErrorCode.Success
+                    p.set_state(StateCode.Success)
                 continue
 
-            while p.state in [ErrorCode.Evaluate, ErrorCode.Repeat] or np.isclose(dt, 0):
+            while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
 
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
@@ -218,13 +232,13 @@ class KernelAOS(BaseKernel):
                     state_prev = p.state
                     res = self.pyfunc(p, pset.fieldset, p.time)
                     if res is None:
-                        res = ErrorCode.Success
+                        res = StateCode.Success
 
-                    if res is ErrorCode.Success and p.state != state_prev:
+                    if res is StateCode.Success and p.state != state_prev:
                         res = p.state
 
-                    if res == ErrorCode.Success and not np.isclose(p.dt, pdt_prekernels):
-                        res = ErrorCode.Repeat
+                    if not analytical and res == StateCode.Success and not np.isclose(p.dt, pdt_prekernels):
+                        res = OperationCode.Repeat
 
                 except FieldOutOfBoundError as fse_xy:
                     res = ErrorCode.ErrorOutOfBounds
@@ -240,28 +254,42 @@ class KernelAOS(BaseKernel):
                     p.exception = e
 
                 # Handle particle time and time loop
-                if res in [ErrorCode.Success, ErrorCode.Delete]:
+                if res in [StateCode.Success, OperationCode.Delete]:
                     # Update time and repeat
                     p.time += p.dt
+                    if reset_dt and p.dt == pdt_prekernels:
+                        p.dt = dt
                     p.update_next_dt()
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if analytical:
+                        p.dt = np.inf
+                    if abs(endtime - p.time) < abs(p.dt):
+                        dt_pos = abs(endtime - p.time)
+                        reset_dt = True
+                    else:
+                        dt_pos = abs(p.dt)
+                        reset_dt = False
 
                     sign_end_part = np.sign(endtime - p.time)
-                    if res != ErrorCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
-                        res = ErrorCode.Evaluate
+                    if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                        res = StateCode.Evaluate
                     if sign_end_part != sign_dt:
                         dt_pos = 0
 
-                    p.state = res
+                    p.set_state(res)
                     if np.isclose(dt, 0):
                         break
                 else:
-                    p.state = res
+                    p.set_state(res)
                     # Try again without time update
                     for var in ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
-                    dt_pos = min(abs(p.dt), abs(endtime - p.time))
+                    if abs(endtime - p.time) < abs(p.dt):
+                        dt_pos = abs(endtime - p.time)
+                        reset_dt = True
+                    else:
+                        dt_pos = abs(p.dt)
+                        reset_dt = False
 
                     sign_end_part = np.sign(endtime - p.time)
                     if sign_end_part != sign_dt:
@@ -277,7 +305,6 @@ class KernelAOS(BaseKernel):
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        # TODO
         for p in pset.particles:
             p.reset_state()
 
@@ -291,9 +318,11 @@ class KernelAOS(BaseKernel):
         recovery_map = recovery_base_map.copy()
         recovery_map.update(recovery)
 
-        for g in pset.fieldset.gridset.grids:
-            if len(g.load_chunk) > 0:  # not the case if a field in not called in the kernel
-                g.load_chunk = np.where(g.load_chunk == 2, 3, g.load_chunk)
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
+                    g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
+                                            g.chunk_deprecated, g.load_chunk)
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
@@ -305,26 +334,28 @@ class KernelAOS(BaseKernel):
         self.remove_deleted(pset, output_file=output_file, endtime=endtime)
 
         # Identify particles that threw errors
-        error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
+        error_particles = [p for p in pset.particles if p.state not in [StateCode.Success, StateCode.Evaluate]]
 
         while len(error_particles) > 0:
             # Apply recovery kernel
             for p in error_particles:
-                if p.state == ErrorCode.StopExecution:
+                if p.state == OperationCode.StopExecution:
                     return
-                if p.state == ErrorCode.Repeat:
-                    p.reset_state()
-                elif p.state == ErrorCode.Delete:
+                if p.state == OperationCode.Repeat:
+                    # p.reset_state()
+                    p.set_state(StateCode.Evaluate)
+                elif p.state == OperationCode.Delete:
                     pass
                 elif p.state in recovery_map:
                     recovery_kernel = recovery_map[p.state]
-                    p.state = ErrorCode.Success
+                    # p.state = StateCode.Success
+                    p.set_state(StateCode.Success)
                     recovery_kernel(p, self.fieldset, p.time)
-                    if(p.isComputed()):
-                        p.reset_state()
+                    if p.state == StateCode.Success:  # (p.isComputed()):
+                        # p.reset_state()
+                        p.set_state(StateCode.Evaluate)
                 else:
                     logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
-                    # logger.warning('Deleting particle because of bug in #749 and #737 - particle state: {}'.format(ErrorCode.toString(p.state)))
                     p.delete()
 
             # Remove all particles that signalled deletion
@@ -336,4 +367,4 @@ class KernelAOS(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = [p for p in pset.particles if p.state not in [ErrorCode.Success, ErrorCode.Evaluate]]
+            error_particles = [p for p in pset.particles if p.state not in [StateCode.Success, StateCode.Evaluate]]
