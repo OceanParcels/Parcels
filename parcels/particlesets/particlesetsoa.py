@@ -27,7 +27,7 @@ try:
 except:
     KDTree = None
 
-__all__ = ['ParticleSet', 'ParticleSetSOA']
+__all__ = ['ParticleSetSOA']
 
 
 def _convert_to_array(var):
@@ -556,4 +556,3 @@ def search_kernel(particle, fieldset, time):
                              'once')
         """
         self._collection.set_variable_write_status(var, write_status)
-
