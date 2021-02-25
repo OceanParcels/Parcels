@@ -17,6 +17,7 @@ from .collectionsoa import ParticleCollectionSOA
 from .collectionsoa import ParticleCollectionIteratorSOA
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
+from parcels.interaction.hash import HashNeighborSearch
 try:
     from mpi4py import MPI
 except:
@@ -75,7 +76,7 @@ class ParticleSetSOA(BaseParticleSet):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, interaction_distance=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
         self.fieldset = fieldset
         if self.fieldset is None:
@@ -135,6 +136,20 @@ class ParticleSetSOA(BaseParticleSet):
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
         self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
+        interaction_xy = None
+        interaction_z = None
+        self._dirty_neighbor = True
+        if interaction_distance is not None:
+            try:
+                if len(interaction_distance) == 2:
+                    interaction_xy, interaction_z = interaction_distance
+                else:
+                    interaction_xy = interaction_distance[0]
+                    interaction_z = interaction_distance[0]
+            except TypeError:
+                interaction_xy = interaction_distance
+                interaction_z = interaction_distance
+            self._neighbor_tree = HashNeighborSearch(interaction_xy, interaction_z)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -408,6 +423,28 @@ class ParticleSetSOA(BaseParticleSet):
         return self._collection.toDictionary(pfile=pfile, time=time,
                                              deleted_only=deleted_only)
 
+    def compute_neighbor_tree(self):
+        values = np.vstack((
+            self._collection.data['lat'],
+            self._collection.data['long'],
+            self._collection.data['depth']
+        ))
+        if self._dirty_neighbor:
+            self._neighbor_tree.rebuild(values)
+            self._dirty_neighbor = False
+        else:
+            self._neighbor_tree.update_values(values)
+
+    def neighbors_by_index(self, particle_idx):
+        neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
+        neighbor_ids = self._collection.data['id'][neighbor_idx]
+        return neighbor_ids
+
+    def neighbors_by_coor(self, coor):
+        neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
+        neighbor_ids = self._collection.data['id'][neighbor_idx]
+        return neighbor_ids
+
     @property
     def size(self):
         # ==== to change at some point - len and size are different things ==== #
@@ -446,10 +483,12 @@ class ParticleSetSOA(BaseParticleSet):
         if isinstance(particles, BaseParticleSet):
             particles = particles.collection
         self._collection += particles
+        self._dirty_neighbor = True
         return self
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
+        self._dirty_neighbor = True
         if type(indices) in [int, np.int32, np.intp]:
             self._collection.remove_single_by_index(indices)
         else:
@@ -457,6 +496,7 @@ class ParticleSetSOA(BaseParticleSet):
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
     def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,

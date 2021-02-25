@@ -12,27 +12,57 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
     '''Neighbor search using a hashtable (similar to octtrees).'''
     name = "hash"
 
-    def __init__(self, values, interaction_distance, interaction_depth,
+    def __init__(self, interaction_distance, interaction_depth, values=None,
                  max_depth=100000):
+        '''Initialize the neighbor data structure.
+
+        :param interaction_distance: maximum horizontal distance of interaction.
+        :param interaction_depth: maximum depth of interaction.
+        :param values: lat, long, depth values for particles.
+        :param max_depth: maximum depth of the ocean.
+        '''
         super(HashNeighborSearch, self).__init__(
-            values, interaction_distance, interaction_depth)
+            interaction_distance, interaction_depth, values)
 
         self.max_depth = max_depth
         self.init_structure()
-        self.rebuild_tree()
+        if values is not None:
+            self.rebuild_tree(values)
 
-    def find_neighbors(self, particle_id):
-        hash_id = self._particle_hashes[particle_id]
-        coor = self._values[:, particle_id]
+    def find_neighbors_by_coor(self, coor):
+        '''Get the neighbors around a certain location.
+
+        :param coor: Numpy array with (lat, long, depth).
+        :returns List of particle indices.
+        '''
+        hash_id = self.values_to_hashes(coor.reshape((3, 1)))
+        return self._find_neighbors(hash_id, coor)
+
+    def find_neighbors_by_idx(self, particle_idx):
+        '''Get the neighbors around a certain particle
+
+        :param particle_idx: index of the particle during tree building.
+        :returns List of particle indices
+        '''
+        hash_id = self._particle_hashes[particle_idx]
+        coor = self._values[:, particle_idx]
+        return self._find_neighbors(hash_id, coor)
+
+    def _find_neighbors(self, hash_id, coor):
+        '''Get neighbors from hash_id and location.'''
+        # Get the neighboring cells.
         neighbor_blocks = geo_hash_to_neighbors(
             hash_id, coor, self._bits, self.inter_arc_dist)
         all_neighbor_points = []
+
+        # Get the particles from the neighboring cells.
         for block in neighbor_blocks:
             try:
                 all_neighbor_points.extend(self._hashtable[block])
             except KeyError:
                 pass
 
+        # Loop over neighbor candidates and check their actual distance.
         true_neigh = []
         for neigh in all_neighbor_points:
             distance = relative_3d_distance(
@@ -44,13 +74,24 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         return true_neigh, len(all_neighbor_points)
 
     def update_values(self, new_values):
+        '''Update the locations of (some) of the particles.
+
+        Particles that stay in the same location are computationally cheap.
+        The order and number of the particles is assumed to remain the same.
+
+        :param new_values: new (lat, long, depth) values for particles.
+        '''
         old_hashes = self._particle_hashes
         new_hashes = self.values_to_hashes(new_values)
+
+        # See which particles have crossed cell boundaries.
         move_idx = np.where(old_hashes != new_hashes)[0]
         if len(move_idx) == 0:
             return
         remove_split = hash_split(old_hashes[move_idx])
         add_split = hash_split(new_hashes[move_idx])
+
+        # Remove particles from the hash table.
         for cur_hash, remove_idx in remove_split.items():
             if len(remove_idx) == len(self._hashtable[cur_hash]):
                 del self._hashtable[cur_hash]
@@ -61,6 +102,7 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
                 self._hash_idx[self._hashtable[cur_hash]] = np.arange(
                     len(self._hashtable[cur_hash]))
 
+        # Add particles to the hash table.
         for cur_hash, add_idx in add_split.items():
             if cur_hash not in self._hashtable:
                 self._hashtable[cur_hash] = move_idx[add_idx]
@@ -75,30 +117,57 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         self._particle_hashes = new_hashes
 
     def values_to_hashes(self, values):
+        '''Convert coordinates to cell ids.
+
+        :param values: positions of particles to convert.
+        :returns array of cell ids.
+        '''
         lat = values[0, :]
         long = values[1, :]
         depth = values[2, :]
 
+        # Southern or Nothern hemisphere.
         lat_sign = (lat > 0).astype(int)
+
+        # Find the lattitude part of the cell id.
         i_lat = np.floor(np.abs(lat)/self.inter_degree_dist).astype(int)
         i_depth = np.floor(depth/self.interaction_depth).astype(int)
+
+        # Get the arc length of the smaller circle around the earth.
         circ_small = 2*np.pi*np.cos((i_lat+1)*self.inter_arc_dist)
         n_long = np.floor(circ_small/self.inter_arc_dist).astype(int)
         n_long[n_long < 1] = 1
         d_long = 360/n_long
+
+        # Get the longitude part of the cell id.
         i_long = np.floor(long/d_long).astype(int)
+
+        # Merge the 4 parts of the cell into one id.
         point_hash = i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, self._bits)
         return point_hash
 
-    def rebuild_tree(self):
-        point_hash = self.values_to_hashes(self._values)
-        self._hashtable = hash_split(point_hash)
-        self._particle_hashes = point_hash
+    def rebuild(self, values=None):
+        '''Recreate the tree with new values.
+
+        :param values: positions of the particles.
+        '''
+        if values is None:
+            values = self._values
+        self._values = values
+
+        # Compute the hash values
+        self._particle_hashes = self.values_to_hashes(self._values)
+
+        # Create the hashtable.
+        self._hashtable = hash_split(self._particle_hashes)
+
+        # Keep track of the position of a particle index within a cell.
         self._hash_idx = np.empty_like(self._particle_hashes, dtype=int)
         for idx_array in self._hashtable.values():
             self._hash_idx[idx_array] = np.arange(len(idx_array))
 
     def init_structure(self):
+        '''Initialize the basic tree properties without building'''
         epsilon = 1e-12
         R_earth = 6371000
 
@@ -114,6 +183,7 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         self._bits = np.array([n_bits_lat, n_bits_long, n_bits_depth])
 
     def consistency_check(self):
+        '''See if all values are in their proper place.'''
         for idx in range(self._values.shape[1]):
             cur_hash = self._particle_hashes[idx]
             hash_idx = self._hash_idx[idx]
@@ -189,25 +259,6 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
             "max_dist": np.array(all_max_dist),
         }
 
-#     def build_tree(self):
-#         '''Create the hashtable and related structures.'''
-#         lat = self._values[0, :]
-#         long = self._values[1, :]
-#         depth = self._values[2, :]
-#
-#         lat_sign = (lat > 0).astype(int)
-#         i_lat = np.floor(np.abs(lat)/self.max_dist).astype(int)
-#         i_depth = np.floor(self.depth_factor*depth/self.max_dist).astype(int)
-#         circ_small = 2*np.pi*np.cos((i_lat+1)*self.max_dist)
-#         n_long = np.floor(circ_small/self.max_dist).astype(int)
-#         n_long[n_long < 1] = 1
-#         d_long = 2*np.pi/n_long
-#         i_long = np.floor(long/d_long).astype(int)
-#         point_hash = i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, self._bits)
-# 
-#         self._hashtable = hash_split(point_hash)
-#         self._particle_hashes = point_hash
-
 
 def hash_split(hash_ids):
     '''Create a hashtable.
@@ -230,7 +281,8 @@ def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
     point_hash = lat_sign
     point_hash = np.bitwise_or(point_hash, np.left_shift(i_lat, 1))
     point_hash = np.bitwise_or(point_hash, np.left_shift(i_long, 1+bits[0]))
-    point_hash = np.bitwise_or(point_hash, np.left_shift(i_depth, 1+bits[0]+bits[1]))
+    point_hash = np.bitwise_or(point_hash,
+                               np.left_shift(i_depth, 1+bits[0]+bits[1]))
     return point_hash
 
 
@@ -250,7 +302,7 @@ def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
                 i_3d_to_hash(i_lat, i_long, new_depth, lat_sign, bits))
         return hashes
     neighbors = []
-    # Lower row, middle row, upper row
+    # Loop over lower row, middle row, upper row
     for i_d_lat in [-1, 0, 1]:
         new_lat_sign = lat_sign
         new_i_lat = i_lat + i_d_lat
@@ -264,14 +316,10 @@ def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
         d_long = 2*np.pi/n_new_long
         if n_new_long <= 3:
             for new_i_long in range(n_new_long):
-#                 new_hash = i_3d_to_hash(new_i_lat, new_i_long,
-#                                               new_lat_sign, bits)
                 neighbors.extend(all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
         else:
             start_i_long = int(np.floor(coor[1]/d_long))
             for d_long in [-1, 0, 1]:
                 new_i_long = (start_i_long+d_long+n_new_long) % n_new_long
-#                 new_hash = i_lat_long_to_hash(new_i_lat, new_i_long,
-#                                               new_lat_sign, bits)
                 neighbors.extend(all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
     return neighbors
