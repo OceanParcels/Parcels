@@ -305,7 +305,7 @@ class KernelAOS(BaseKernel):
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        for p in pset.particles:
+        for p in pset:
             p.reset_state()
 
         if abs(dt) < 1e-6 and not execute_once:
@@ -334,7 +334,7 @@ class KernelAOS(BaseKernel):
         self.remove_deleted(pset, output_file=output_file, endtime=endtime)
 
         # Identify particles that threw errors
-        error_particles = [p for p in pset.particles if p.state not in [StateCode.Success, StateCode.Evaluate]]
+        error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]
 
         while len(error_particles) > 0:
             # Apply recovery kernel
@@ -367,4 +367,4 @@ class KernelAOS(BaseKernel):
             else:
                 self.execute_python(pset, endtime, dt)
 
-            error_particles = [p for p in pset.particles if p.state not in [StateCode.Success, StateCode.Evaluate]]
+            error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]

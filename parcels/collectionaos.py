@@ -142,21 +142,21 @@ class ParticleCollectionAOS(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = pclass.getPType()
-        self._data = np.empty(lon.size, dtype=pclass)
+        self._data = np.empty(lon.shape[0], dtype=pclass)
         initialised = set()
 
         if self._ptype.uses_jit:
             # Allocate underlying data for C-allocated particles
-            self._data_c = np.empty(lon.size, dtype=self._ptype.dtype)
+            self._data_c = np.empty(lon.shape[0], dtype=self._ptype.dtype)
 
-        self._ncount = self._data['lon'].shape[0]
+        self._ncount = self._data.shape[0]
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
             assert self.ncount == len(lon) and self.ncount == len(lat), (
                 'Size of ParticleSet does not match length of lon and lat.')
 
-            for i in self.ncount:
+            for i in range(self.ncount):
                 self._data[i] = pclass(lon[i], lat[i], pid[i], ngrids=ngrid, depth=depth[i], cptr=self.cptr(i), time=time[i])
                 # Set other Variables if provided
                 for kwvar in kwargs:
@@ -913,14 +913,6 @@ class ParticleCollectionAOS(ParticleCollection):
         cstruct = self._data_c.ctypes.data_as(c_void_p)
         return cstruct
 
-    # ========================================================================== #
-    # BREAKPOINT: 23-02-2021                                                     #
-    # ========================================================================== #
-
-    # ==== ==== ==== #
-    # still TODO     #
-    # ==== ==== ==== #
-
     def toDictionary(self, pfile, time, deleted_only=False):
         """
         Convert all Particle data from one time step to a python dictionary.
@@ -981,10 +973,6 @@ class ParticleCollectionAOS(ParticleCollection):
                 pfile.lasttime_written = time
 
         return data_dict, data_dict_once
-
-    # ==== ==== ==== #
-    # END still TODO #
-    # ==== ==== ==== #
 
     def toArray(self):
         """

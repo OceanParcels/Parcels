@@ -66,6 +66,16 @@ class ParticleType(object):
         self.uses_jit = issubclass(pclass, JITParticle)
         # Pick Variable objects out of __dict__.
         self.variables = [v for v in pclass.__dict__.values() if isinstance(v, Variable)]
+        # ==== FIX #999: add shadow-variables for indices here to keep SoA happy ==== #
+        # vnames = [v.name for v in self.variables]
+        # if 'xi' not in vnames:
+        #     self.variables.append(Variable('xi', dtype=np.int32, to_write=False))
+        # if 'yi' not in vnames:
+        #     self.variables.append(Variable('yi', dtype=np.int32, to_write=False))
+        # if 'zi' not in vnames:
+        #     self.variables.append(Variable('zi', dtype=np.int32, to_write=False))
+        # if 'ti' not in vnames:
+        #     self.variables.append(Variable('ti', dtype=np.int32, to_write=False, initial=-1))
         for cls in pclass.__bases__:
             if issubclass(cls, ScipyParticle):
                 # Add inherited particle variables
@@ -134,7 +144,8 @@ class _Particle(object):
                 if time is None:
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
-                v.initial.fieldset.computeTimeChunk(time, 0)
+                if v.initial.grid.ti < 0:
+                    v.initial.fieldset.computeTimeChunk(time, 0)  # may it be that this is just plain-stupid ? it will recompute the damn time chunk for every single particle ...
                 initial = v.initial[time, depth, lat, lon]
                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
@@ -179,10 +190,10 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    xi = Variable('xi', dtype=np.int32, to_write=False)
-    yi = Variable('yi', dtype=np.int32, to_write=False)
-    zi = Variable('zi', dtype=np.int32, to_write=False)
-    ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)
+    xi = Variable('xi', dtype=np.dtype(c_void_p), to_write=False)  # np.int32
+    yi = Variable('yi', dtype=np.dtype(c_void_p), to_write=False)  # np.int32
+    zi = Variable('zi', dtype=np.dtype(c_void_p), to_write=False)  # np.int32
+    ti = Variable('ti', dtype=np.dtype(c_void_p), to_write=False, initial=-1)  # np.int32
     id = Variable('id', dtype=np.int64)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -322,9 +333,20 @@ class JITParticle(ScipyParticle):
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
-        for index in ['xi', 'yi', 'zi', 'ti']:
-            setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))
-            setattr(self, 'c'+index, getattr(self, index+'p').value)
+        fieldset = kwargs.get('fieldset', None)
+        ngrids = kwargs.get('ngrids', None)
+        numgrids = ngrids
+        if numgrids is None and fieldset is not None:
+            numgrids = fieldset.gridset.size
+        assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+        if numgrids is not None:
+            for index in ['xi', 'yi', 'zi', 'ti']:
+                if index != 'ti':
+                    setattr(self, index, np.zeros((fieldset.gridset.size), dtype=np.int32))
+                else:
+                    setattr(self, index, -1*np.ones((fieldset.gridset.size), dtype=np.int32))
+                setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))  # without direct (!) prior recast, throws error that the dtype (here: int32) has no ctypes-property
+                setattr(self, 'c'+index, getattr(self, index+'p').value)
 
     def __del__(self):
         super(JITParticle, self).__del__()

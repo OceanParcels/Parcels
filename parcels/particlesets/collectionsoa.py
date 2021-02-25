@@ -142,6 +142,7 @@ class ParticleCollectionSOA(ParticleCollection):
 
         for v in self.ptype.variables:
             if v.name in ['xi', 'yi', 'zi', 'ti']:
+                logger.info("'%s' found as variable." % (v.name, ))
                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
             else:
                 self._data[v.name] = np.empty(len(lon), dtype=v.dtype)

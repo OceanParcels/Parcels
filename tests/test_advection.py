@@ -1,14 +1,18 @@
-from parcels import (FieldSet, Field, ParticleSet, ScipyParticle, JITParticle, ErrorCode, StateCode,
+from parcels import (FieldSet, Field, ScipyParticle, JITParticle, ErrorCode, StateCode,
                      AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
                      AdvectionAnalytical, AdvectionDiffusionM1, AdvectionDiffusionEM)
+from parcels import ParticleSet
+from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
+from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
 import pytest
 import math
 from netCDF4 import Dataset
 from datetime import timedelta as delta
 
-
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
           'AdvDiffEM': AdvectionDiffusionEM, 'AdvDiffM1': AdvectionDiffusionM1}
 
@@ -204,11 +208,12 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('u', [-0.3, np.array(0.2)])
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
 @pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
-def test_length1dimensions(mode, u, v, w):
+def test_length1dimensions(pset_mode, mode, u, v, w):
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
     (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
@@ -235,7 +240,8 @@ def test_length1dimensions(mode, u, v, w):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     x0, y0, z0 = 2, 8, -4
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    # pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     kernel = AdvectionRK4 if w is None else AdvectionRK4_3D
     pset.execute(kernel, runtime=4)
 

@@ -16,6 +16,7 @@ from parcels.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.collectionaos import ParticleCollectionAOS
+from parcels.collectionaos import ParticleCollectionIteratorAOS
 
 # from .collectionsoa import ParticleCollectionSOA
 # from .collectionsoa import ParticleCollectionIteratorSOA
@@ -203,13 +204,90 @@ class ParticleSetAOS(BaseParticleSet):
         # index = self._collection.get_index_by_ID(id)
         # self.delete_by_index(index)
 
+    def _set_particle_vector(self, name, value):
+        """Set attributes of all particles to new values.
+
+        :param name: Name of the attribute (str).
+        :param value: New value to set the attribute of the particles to.
+        """
+        # self.collection._data[name][:] = value
+        [setattr(p, name, value) for p in self._collection]
+
+    def _impute_release_times(self, default):
+        """Set attribute 'time' to default if encountering NaN values.
+
+        :param default: Default release time.
+        :return: Minimum and maximum release times.
+        """
+        null_ptimes_p = [p for p in self._collection if np.isnan(p.time)]
+        if len(null_ptimes_p) > 0:
+            for p in null_ptimes_p:
+                p.time = default
+        ptimes = np.array([p.time for p in self._collection], dtype=np.float64)
+        return np.min(ptimes), np.max(ptimes)
+
+    def data_indices(self, variable_name, compare_values, invert=False):
+        """Get the indices of all particles where the value of
+        `variable_name` equals (one of) `compare_values`.
+
+        :param variable_name: Name of the variable to check.
+        :param compare_values: Value or list of values to compare to.
+        :param invert: Whether to invert the selection. I.e., when True,
+                       return all indices that do not equal (one of)
+                       `compare_values`.
+        :return: Numpy array of indices that satisfy the test.
+        """
+        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict,
+                                                                                      np.ndarray] else compare_values
+        result = []
+        if not invert:
+            result = [i for i, p in enumerate(self._collection) if getattr(p, variable_name) in compare_values]
+        else:
+            result = [i for i, p in enumerate(self._collection) if getattr(p, variable_name) not in compare_values]
+        return np.array(result)
+
+    def indexed_subset(self, indices):
+        return ParticleCollectionIteratorAOS(self._collection, subset=indices)
+
+    def populate_indices(self):
+        """Pre-populate guesses of particle xi/yi indices using a kdtree.
+
+        This is only intended for curvilinear grids, where the initial index search
+        may be quite expensive.
+        """
+        raise NotImplementedError()
+
     @property
     def particle_data(self):
         return self._collection.particle_data
 
     @property
+    def error_particles(self):
+        """Get an iterator over all particles that are in an error state.
+
+        :return: Collection iterator over error particles.
+        """
+        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
+        return ParticleCollectionIteratorAOS(self._collection, subset=error_indices)
+
+    @property
+    def num_error_particles(self):
+        """Get the number of particles that are in an error state.
+
+        :return: The number of error particles.
+        """
+        return np.sum([True for p in self._collection if p.state not in [StateCode.Success, StateCode.Evaluate]])
+
+    def __getitem__(self, index):
+        """Get a single particle by index"""
+        return self._collection.get_single_by_index(index)
+
     def cstruct(self):
         return self._collection.cstruct()
+
+    @property
+    def ctypes_struct(self):
+        return self.cstruct()
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -427,6 +505,9 @@ class ParticleSetAOS(BaseParticleSet):
     def __sizeof__(self):
         return sys.getsizeof(self._collection)
 
+    def __iter__(self):
+        return ParticleCollectionIteratorAOS(self._collection)
+
     def __iadd__(self, particles):
         """Add particles to the ParticleSet. Note that this is an
         incremental add, the particles will be added to the ParticleSet
@@ -465,26 +546,6 @@ class ParticleSetAOS(BaseParticleSet):
         # indices = np.where(indices)[0]
         indices = np.nonzero(indices)[0]
         self.remove_indices(indices)
-
-    # TODO: move to BaseParticleSet
-    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
-        """Method to 'show' a Parcels ParticleSet
-
-        :param with_particles: Boolean whether to show particles
-        :param show_time: Time at which to show the ParticleSet
-        :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-        :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land. This is ignored for flat meshes
-        :param vmin: minimum colour scale (only in single-plot mode)
-        :param vmax: maximum colour scale (only in single-plot mode)
-        :param savefile: Name of a file to save the plot to
-        :param animation: Boolean whether result is a single plot, or an animation
-        """
-        from parcels.plotting import plotparticles
-        plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
-                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
 
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,

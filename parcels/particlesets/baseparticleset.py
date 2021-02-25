@@ -204,22 +204,6 @@ class BaseParticleSet(NDCluster):
         """
         pass
 
-    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
-        """Method to 'show' a Parcels ParticleSet
-
-        :param with_particles: Boolean whether to show particles
-        :param show_time: Time at which to show the ParticleSet
-        :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-        :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land. This is ignored for flat meshes
-        :param vmin: minimum colour scale (only in single-plot mode)
-        :param vmax: maximum colour scale (only in single-plot mode)
-        :param savefile: Name of a file to save the plot to
-        :param animation: Boolean whether result is a single plot, or an animation
-        """
-
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
         through a 2D histogram.
@@ -481,3 +465,22 @@ class BaseParticleSet(NDCluster):
             output_file.write(self, time)
         if verbose_progress:
             pbar.finish()
+
+    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
+             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
+        """Method to 'show' a Parcels ParticleSet
+
+        :param with_particles: Boolean whether to show particles
+        :param show_time: Time at which to show the ParticleSet
+        :param field: Field to plot under particles (either None, a Field object, or 'vector')
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
+        :param projection: type of cartopy projection to use (default PlateCarree)
+        :param land: Boolean whether to show land. This is ignored for flat meshes
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        :param savefile: Name of a file to save the plot to
+        :param animation: Boolean whether result is a single plot, or an animation
+        """
+        from parcels.plotting import plotparticles
+        plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
