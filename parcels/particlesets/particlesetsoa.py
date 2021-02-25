@@ -557,8 +557,3 @@ def search_kernel(particle, fieldset, time):
         """
         self._collection.set_variable_write_status(var, write_status)
 
-
-# ParticleSet is an alias for ParticleSetSOA, i.e. the default
-# implementation for storing particles is the Structure of Arrays
-# approach.
-ParticleSet = ParticleSetSOA
