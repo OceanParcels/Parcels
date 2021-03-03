@@ -334,7 +334,7 @@ class KernelAOS(BaseKernel):
         logger.info("KernelAOS::remove_deleted - {} indices collect.".format(len(indices)))
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove_indices(indices)
+        pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
@@ -404,12 +404,13 @@ class KernelAOS(BaseKernel):
                 else:
                     logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
                     p.delete()
+                    raise NotImplementedError
                 logger.info("KernelAOS - while-loop - new pstate of P({}): {}".format(p.id, p.state))
 
             # Remove all particles that signalled deletion
-            logger.info("KernelAOS::execute() - removing deleted particles in clean-up loop {} ...".format(cleanup_iter))
+            logger.info("KernelAOS::execute() - # particles {} - removing deleted particles in clean-up loop {} ...".format(len(pset), cleanup_iter))
             self.remove_deleted(pset, output_file=output_file, endtime=endtime)
-            logger.info("KernelAOS::execute() - deleted particles in clean-up loop {} removed.".format(cleanup_iter))
+            logger.info("KernelAOS::execute() - # particles {} - deleted particles in clean-up loop {} removed.".format(len(pset), cleanup_iter))
 
             # Execute core loop again to continue interrupted particles
             logger.info("KernelAOS::execute() - executing kernel function in clean-up loop {} ...".format(cleanup_iter))

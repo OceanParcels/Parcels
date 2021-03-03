@@ -315,7 +315,7 @@ class BaseKernel(object):
             logger.info("Deleted {} particles.".format(len(indices)))
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
-            pset.remove_indices(indices)
+        pset.remove_indices(indices)
 
     def execute_jit(self, pset, endtime, dt):
         pass
