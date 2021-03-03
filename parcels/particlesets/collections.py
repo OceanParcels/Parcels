@@ -13,6 +13,8 @@ github relation: #913 (particleset_class_hierarchy)
 
 class Collection(ABC):
     _ncount = -1
+    _iterator = None
+    _riterator = None
 
     @abstractmethod
     def __init__(self):
@@ -53,6 +55,7 @@ class Collection(ABC):
         """
         pass
 
+    @abstractmethod
     def iterator(self):
         """
         This function is an explicit object-return of a forward-iterator over this collection. If this iterator is
@@ -60,7 +63,8 @@ class Collection(ABC):
 
         This function is an explicit forward to the Collection::__iter__() member function.
         """
-        return self.__iter__()
+        # return iter(self)
+        pass
 
     @abstractmethod
     def __reversed__(self):
@@ -82,6 +86,7 @@ class Collection(ABC):
         """
         pass
 
+    @abstractmethod
     def reverse_iterator(self):
         """
         This function is an explicit object-return of a backward-iterator over this collection. If this iterator is
@@ -89,7 +94,7 @@ class Collection(ABC):
 
         This function is an explicit forward to the Collection::__reversed__() member function.
         """
-        return self.__reversed__()
+        pass
 
     @abstractmethod
     def __getitem__(self, item):

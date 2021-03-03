@@ -9,6 +9,7 @@ import pytest
 import math
 from netCDF4 import Dataset
 from datetime import timedelta as delta
+from parcels import logger
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
@@ -214,6 +215,9 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
 @pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
 def test_length1dimensions(pset_mode, mode, u, v, w):
+    # if pset_mode == 'aos' and mode == 'scipy':
+    #     return False
+    logger.info("mode: {} pset_mode {}".format(mode, pset_mode))
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
     (depth, zdim) = (np.linspace(-5, 5, 11), 11) if (isinstance(w, np.ndarray) and w is not None) else (3, 1)
@@ -242,13 +246,19 @@ def test_length1dimensions(pset_mode, mode, u, v, w):
     x0, y0, z0 = 2, 8, -4
     # pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
-    kernel = AdvectionRK4 if w is None else AdvectionRK4_3D
+    pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
+    kernel = pset.Kernel(pfunc, delete_cfiles=False)
     pset.execute(kernel, runtime=4)
 
-    assert np.abs(pset.lon - x0 - 4 * u) < 1e-6
-    assert np.abs(pset.lat - y0 - 4 * v) < 1e-6
+    logger.info("Asserting results ...")
+    assert (len(pset.lon) == len([p.lon for p in pset]))
+    # assert np.abs(pset.lon - x0 - 4 * u) < 1e-6
+    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()  # np.abs(pset.lon - x0 - 4 * u) < 1e-6
+    # assert np.abs(pset.lat - y0 - 4 * v) < 1e-6
+    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()  # np.abs(pset.lat - y0 - 4 * v) < 1e-6
     if w:
-        assert np.abs(pset.depth - z0 - 4 * w) < 1e-6
+        # assert np.abs(pset.depth - z0 - 4 * w) < 1e-6
+        assert ((np.array([p.depth - y0 for p in pset]) - 4 * w) < 1e-6).all()  # np.abs(pset.depth - z0 - 4 * w) < 1e-6
 
 
 def truth_stationary(x_0, y_0, t):

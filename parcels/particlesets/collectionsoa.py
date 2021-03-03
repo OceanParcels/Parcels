@@ -8,7 +8,7 @@ import numpy as np
 
 from .collections import ParticleCollection
 from .iterators import BaseParticleAccessor
-from .iterators import BaseParticleCollectionIterator
+from .iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
 from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
 from parcels.tools.loggers import logger
@@ -140,14 +140,18 @@ class ParticleCollectionSOA(ParticleCollection):
         self._data = {}
         initialised = set()
 
+        # self._ncount = self._data['lon'].shape[0]
+        self._ncount = len(lon)
+
+        # for vname in ['xi', 'yi', 'zi', 'ti']:
+        #     self._data[vname] = np.empty((self._ncount, ngrid), dtype=np.int32)
+
         for v in self.ptype.variables:
             if v.name in ['xi', 'yi', 'zi', 'ti']:
-                logger.info("'%s' found as variable." % (v.name, ))
                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
+                # pass
             else:
-                self._data[v.name] = np.empty(len(lon), dtype=v.dtype)
-
-        self._ncount = self._data['lon'].shape[0]
+                self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
 
         if lon is not None and lat is not None:
             # Initialise from lists of lon/lat coordinates
@@ -196,6 +200,8 @@ class ParticleCollectionSOA(ParticleCollection):
                 initialised.add(v.name)
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
+        self._iterator = None
+        self._riterator = None
 
     def __del__(self):
         """
@@ -203,18 +209,34 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         super().__del__()
 
+    def iterator(self):
+        logger.info("Entering ParticleCollectionSOA.iterator():: creating new iterator")
+        self._iterator = ParticleCollectionIteratorSOA(self)
+        return self._iterator
+
     def __iter__(self):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
         """
-        return ParticleCollectionIteratorSOA(self)
+        logger.info("Entering ParticleCollectionSOA.__iter__()")
+        # if self._iterator is None:
+        #     self._iterator = iter( ParticleCollectionIteratorAOS(self) )
+        # return self._iterator
+        return self.iterator()
+
+    def reverse_iterator(self):
+        logger.info("Entering ParticleCollectionSOA.reverse_iterator():: creating new iterator")
+        self._riterator = ParticleCollectionIteratorSOA(self, True)
+        return self._riterator
 
     def __reversed__(self):
         """Returns an Iterator that allows for backwards iteration over
         the elements in the ParticleCollection (e.g.
         `for p in reversed(pset):`).
         """
-        return ParticleCollectionIteratorSOA(self, True)
+        logger.info("Entering ParticleCollectionSOA.__reversed__()")
+        # return self._riterator
+        return self.reverse_iterator()
 
     def __getitem__(self, index):
         """
@@ -800,16 +822,19 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
         """
+        # predefined = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('ti', np.int32)]
         class CParticles(Structure):
             # TODO adapt naming of _fields_ in CParticles (code generator) into _variables_
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
+            # _fields_ += [(v[0], POINTER(np.ctypeslib.as_ctypes_type(v[1]))) for v in predefined]
 
-        def flatten_dense_data_array(v):
-            data_flat = self._data[v.name].view()
+        def flatten_dense_data_array(vname):
+            data_flat = self._data[vname].view()
             data_flat.shape = -1
             return np.ctypeslib.as_ctypes(data_flat)
 
-        cdata = [flatten_dense_data_array(v) for v in self._ptype.variables]
+        cdata = [flatten_dense_data_array(v.name) for v in self._ptype.variables]
+        # cdata += [flatten_dense_data_array(v[0]) for v in predefined]
         cstruct = CParticles(*cdata)
         return cstruct
 
@@ -911,12 +936,14 @@ class ParticleAccessorSOA(BaseParticleAccessor):
                   particle is stored in the corresponding data arrays
                   of the ParticleCollecion.
     """
+    _index = 0
+    _next_dt = None
 
     def __init__(self, pcoll, index):
         """Initializes the ParticleAccessor to provide access to one
         specific particle.
         """
-        super().__init__(pcoll)
+        super(ParticleAccessorSOA, self).__init__(pcoll)
         self._index = index
         self._next_dt = None
 
@@ -927,9 +954,13 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         :return: The value of the particle attribute in the underlying
                  collection data array.
         """
-        if name in ['_index', '_next_dt']:
-            return object.__getattribute__(self, name)
-        return self.pcoll.data[name][self._index]
+        if name in BaseParticleAccessor.__dict__.keys():
+            result = super(ParticleAccessorSOA, self).__getattr__(name)
+        elif name in type(self).__dict__.keys():
+            result = object.__getattribute__(self, name)
+        else:
+            result = self._pcoll.data[name][self._index]
+        return result
 
     def __setattr__(self, name, value):
         """Set the value of an attribute of the particle.
@@ -938,15 +969,17 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         :param value: Value that will be assigned to the particle
                       attribute in the underlying collection data array.
         """
-        if name in ['pcoll', '_index', '_next_dt']:
+        if name in BaseParticleAccessor.__dict__.keys():
+            super(ParticleAccessorSOA, self).__setattr__(name, value)
+        elif name in type(self).__dict__.keys():
             object.__setattr__(self, name, value)
         else:
-            self.pcoll.data[name][self._index] = value
+            self._pcoll.data[name][self._index] = value
 
     def update_next_dt(self, next_dt=None):
         if next_dt is None:
             if self._next_dt is not None:
-                self.pcoll._data['dt'][self._index] = self._next_dt
+                self._pcoll._data['dt'][self._index] = self._next_dt
                 self._next_dt = None
         else:
             self._next_dt = next_dt
@@ -954,10 +987,19 @@ class ParticleAccessorSOA(BaseParticleAccessor):
     def __repr__(self):
         time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
-        for var in self.pcoll.ptype.variables:
+        for var in self._pcoll.ptype.variables:
             if var.to_write is not False and var.name not in ['id', 'lon', 'lat', 'depth', 'time']:
                 str += "%s=%f, " % (var.name, getattr(self, var.name))
         return str + "time=%s)" % time_string
+
+
+class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
+
+    def __init__(self, pcoll, reverse=False, subset=None):
+        super(ParticleCollectionIterableSOA, self).__init__(pcoll, reverse, subset)
+
+    def __iter__(self):
+        return ParticleCollectionIteratorSOA(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
 
 
 class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
@@ -1013,6 +1055,9 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
 
         # End of Iteration
         raise StopIteration
+
+    # def __iter__(self):
+    #     return super(ParticleCollectionIteratorSOA, self).__iter__()
 
     @property
     def current(self):

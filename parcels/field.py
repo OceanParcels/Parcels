@@ -88,7 +88,6 @@ class Field(object):
 
     * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
     """
-
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo', **kwargs):
@@ -563,12 +562,6 @@ class Field(object):
         self.grid.depth_field = field
         if self.grid != field.grid:
             field.grid.depth_field = field
-
-    def __getitem__(self, key):
-        if _isParticle(key):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)
-        else:
-            return self.eval(*key)
 
     def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
@@ -1077,6 +1070,13 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
+    def __getitem__(self, key):
+        # if _isParticle(key) and len(key)<=1 and 'Object' not in type(key).__name__:
+        if _isParticle(key):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)  # this is moronic if Particle is actually a used class ...
+        else:
+            return self.eval(*key)
+
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
@@ -1103,14 +1103,17 @@ class Field(object):
         else:
             return value
 
-    def ccode_eval(self, var, t, z, y, x):
+    def ccode_eval_array(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
-            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
-        # ==== TODO needs to be adapted to the particleset at hand ... ==== #
+        ccode_str = "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
+                    % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        return ccode_str
+
+    def ccode_eval_object(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        # return "temporal_interpolation(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s)" \
-        #     % (x, y, z, t, self.ccode_name, var, self.interp_method.upper())
+        ccode_str = "temporal_interpolation_pstruct(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s, %s)" \
+                    % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        return ccode_str
 
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
@@ -1675,37 +1678,49 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
+        # if _isParticle(key) and len(key)<=1 and 'Object' not in type(key).__name__:
         if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
 
-    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
+    def ccode_eval_array(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
+        logger.info_once("VectorField.pset_type: {}".format('array'))
+        ccode_str = ""
         if self.vector_type == '3D':
-            return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
-                   "&%s, &%s, &%s, %s, %s)" \
-                   % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
+                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                        "&%s, &%s, &%s, %s, %s)" \
+                        % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
         else:
-            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
-                   " &%s, &%s, %s, %s)" \
-                   % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
-        # ==== TODO needs to be adapted to the particleset at hand ... ==== #
+            ccode_str = "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name) + \
+                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                        " &%s, &%s, %s, %s)" \
+                        % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+        return ccode_str
+
+    def ccode_eval_object(self, *args, **kwargs):
+        # logger.info("Field.ccode_eval_obj::args = {}; kwargs = {}".format(args, kwargs))
+        return self._ccode_eval_object_(*args, **kwargs)
+
+    def _ccode_eval_object_(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        # if self.vector_type == '3D':
-        #     return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-        #            % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-        #            "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s)" \
-        #            % (varU, varV, varW, U.interp_method.upper())
-        # else:
-        #     return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-        #            % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-        #            "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s)" \
-        #            % (varU, varV, U.interp_method.upper())
+        logger.info_once("VectorField.pset_type: {}".format('object'))
+        ccode_str = ""
+        if self.vector_type == '3D':
+            ccode_str = "temporal_interpolationUVW_pstruct(%s, %s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
+                        "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s, %s)" \
+                        % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
+        else:
+            ccode_str = "temporal_interpolationUV_pstruct(%s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name) + \
+                        "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s, %s)" \
+                        % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+        return ccode_str
 
 
 class DeferredArray():
@@ -1775,7 +1790,7 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                if _isParticle(key):
+                if _isParticle(key) and 'Object' not in type(key).__name__:
                     val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                 else:
                     val = list.__getitem__(self, iField).eval(*key)

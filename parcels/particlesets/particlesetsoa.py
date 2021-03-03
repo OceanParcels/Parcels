@@ -9,12 +9,13 @@ import xarray as xr
 from parcels.grid import GridCode
 from parcels.grid import CurvilinearGrid
 from parcels.kernel import Kernel
-from parcels.particle import JITParticle
+from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
 from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import StateCode
 from .baseparticleset import BaseParticleSet
 from .collectionsoa import ParticleCollectionSOA
-from .collectionsoa import ParticleCollectionIteratorSOA
+from .collectionsoa import ParticleCollectionIteratorSOA  # noqa
+from .collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
 try:
@@ -77,6 +78,37 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
+
+        # ==== first: create a new subclass of the pclass that includes the required variables ==== #
+        # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
+        def ArrayClass_init(self, *args, **kwargs):
+            fieldset = kwargs.get('fieldset', None)
+            ngrids = kwargs.get('ngrids', None)
+            if type(self).ngrids.initial < 0:
+                numgrids = ngrids
+                if numgrids is None and fieldset is not None:
+                    numgrids = fieldset.gridset.size
+                assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                type(self).ngrids.initial = numgrids
+            self.ngrids = type(self).ngrids.initial
+            if self.ngrids >= 0:
+                for index in ['xi', 'yi', 'zi', 'ti']:
+                    if index != 'ti':
+                        setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
+                    else:
+                        setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
+            super(type(self), self).__init__(*args, **kwargs)
+
+        array_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
+                             "xi": Variable('xi', dtype=np.int32, to_write=False),
+                             "yi": Variable('yi', dtype=np.int32, to_write=False),
+                             "zi": Variable('zi', dtype=np.int32, to_write=False),
+                             "ti": Variable('ti', dtype=np.int32, to_write=False, initial=-1),
+                             "__init__": ArrayClass_init}
+        array_class = type("Array"+pclass.__name__, (pclass, ), array_class_vdict)
+        # ==== dynamic re-classing completed ==== #
+        pclass = array_class
+
         self.fieldset = fieldset
         if self.fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. "
@@ -157,6 +189,9 @@ class ParticleSetSOA(BaseParticleSet):
 
         self.kernel = None
 
+    def __del__(self):
+        super(ParticleSetSOA, self).__del__()
+
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
 
@@ -190,8 +225,7 @@ class ParticleSetSOA(BaseParticleSet):
         return np.where(np.isin(self._collection.data[variable_name], compare_values, invert=invert))[0]
 
     def indexed_subset(self, indices):
-        return ParticleCollectionIteratorSOA(self._collection,
-                                             subset=indices)
+        return ParticleCollectionIterableSOA(self._collection, subset=indices)
 
     def populate_indices(self):
         """Pre-populate guesses of particle xi/yi indices using a kdtree.
@@ -230,7 +264,7 @@ class ParticleSetSOA(BaseParticleSet):
         :return: Collection iterator over error particles.
         """
         error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
-        return ParticleCollectionIteratorSOA(self._collection, subset=error_indices)
+        return ParticleCollectionIterableSOA(self._collection, subset=error_indices)
 
     @property
     def num_error_particles(self):
@@ -433,6 +467,12 @@ class ParticleSetSOA(BaseParticleSet):
         """
         self.add(particles)
         return self
+
+    def __iter__(self):
+        return super(ParticleSetSOA, self).__iter__()
+
+    def iterator(self):
+        return super(ParticleSetSOA, self).iterator()
 
     def add(self, particles):
         """Add particles to the ParticleSet. Note that this is an

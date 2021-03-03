@@ -954,7 +954,6 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
   }
 }
 
-
 static inline StatusCode temporal_interpolation(type_coord x, type_coord y, type_coord z, double time, CField *f,
                                                int *xi, int *yi, int *zi, int *ti,
                                                float *value, int interp_method, int gridindexingtype)
@@ -968,6 +967,17 @@ static inline StatusCode temporal_interpolation(type_coord x, type_coord y, type
     printf("Only RECTILINEAR_Z_GRID, RECTILINEAR_S_GRID, CURVILINEAR_Z_GRID and CURVILINEAR_S_GRID grids are currently implemented\n");
     return ERROR;
   }
+}
+
+static inline StatusCode temporal_interpolation_pstruct(type_coord x, type_coord y, type_coord z, double time, CField *f,
+                                                        void *vxi, void *vyi, void *vzi, void *vti,
+                                                        float *value, int interp_method, int gridindexingtype)
+{
+  int *xi = (int *) vxi;
+  int *yi = (int *) vyi;
+  int *zi = (int *) vzi;
+  int *ti = (int *) vti;
+  return temporal_interpolation(x, y, z, time, f, xi, yi, zi, ti, value, interp_method, gridindexingtype);
 }
 
 static inline StatusCode temporal_interpolationUV(type_coord x, type_coord y, type_coord z, double time,
@@ -989,6 +999,35 @@ static inline StatusCode temporal_interpolationUV(type_coord x, type_coord y, ty
   }
 }
 
+static inline StatusCode temporal_interpolationUV_pstruct(type_coord x, type_coord y, type_coord z, double time,
+                                                          CField *U, CField *V,
+                                                          void *vxi, void *vyi, void *vzi, void *vti,
+                                                          float *valueU, float *valueV, int interp_method, int gridindexingtype)
+{
+  int *xi = (int *) vxi;
+  int *yi = (int *) vyi;
+  int *zi = (int *) vzi;
+  int *ti = (int *) vti;
+  return temporal_interpolationUV(x, y, z, time, U, V, xi, yi, zi, ti, valueU, valueV, interp_method, gridindexingtype);
+
+  //StatusCode err;
+  //if (interp_method == CGRID_VELOCITY){
+  //  CGrid *_grid = U->grid;
+  //  GridCode gcode = _grid->gtype;
+  //  int *xi = (int *) vxi;
+  //  int *yi = (int *) vyi;
+  //  int *zi = (int *) vzi;
+  //  int *ti = (int *) vti;
+  //  status = temporal_interpolationUV_c_grid(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV, gridindexingtype); CHECKSTATUS(err);
+  //  return SUCCESS;
+  //}
+  //else{
+  //  status = temporal_interpolation_pstruct(x, y, z, time, U, vxi, vyi, vzi, vti, valueU, interp_method, gridindexingtype); CHECKSTATUS(err);
+  //  status = temporal_interpolation_pstruct(x, y, z, time, V, vxi, vyi, vzi, vti, valueV, interp_method, gridindexingtype); CHECKSTATUS(err);
+  //  return SUCCESS;
+  //}
+}
+
 static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, type_coord z, double time,
                                                   CField *U, CField *V, CField *W,
                                                   int *xi, int *yi, int *zi, int *ti,
@@ -1008,6 +1047,37 @@ static inline StatusCode temporal_interpolationUVW(type_coord x, type_coord y, t
     interp_method = BGRID_W_VELOCITY;
   status = temporal_interpolation(x, y, z, time, W, xi, yi, zi, ti, valueW, interp_method, gridindexingtype); CHECKSTATUS(status);
   return SUCCESS;
+}
+
+static inline StatusCode temporal_interpolationUVW_pstruct(type_coord x, type_coord y, type_coord z, double time,
+                                                  CField *U, CField *V, CField *W,
+                                                  void *vxi, void *vyi, void *vzi, void *vti,
+                                                  float *valueU, float *valueV, float *valueW, int interp_method, int gridindexingtype)
+{
+  int *xi = (int *) vxi;
+  int *yi = (int *) vyi;
+  int *zi = (int *) vzi;
+  int *ti = (int *) vti;
+  return temporal_interpolationUVW(x, y, z, time, U, V, W, xi, yi, zi, ti, valueU, valueV, valueW, interp_method, gridindexingtype);
+
+  //StatusCode status;
+  //if (interp_method == CGRID_VELOCITY){
+  //  CGrid *_grid = U->grid;
+  //  GridCode gcode = _grid->gtype;
+  //  if (gcode == RECTILINEAR_S_GRID || gcode == CURVILINEAR_S_GRID){
+  //    int *xi = (int *) vxi;
+  //    int *yi = (int *) vyi;
+  //    int *zi = (int *) vzi;
+  //    int *ti = (int *) vti;
+  //    status = temporal_interpolationUVW_c_grid(x, y, z, time, U, V, W, gcode, xi, yi, zi, ti, valueU, valueV, valueW, gridindexingtype); CHECKSTATUS(status);
+  //    return SUCCESS;
+  //  }
+  //}
+  //status = temporal_interpolationUV_pstruct(x, y, z, time, U, V, vxi, vyi, vzi, vti, valueU, valueV, interp_method, gridindexingtype); CHECKSTATUS(status);
+  //if (interp_method == BGRID_VELOCITY)
+  //  interp_method = BGRID_W_VELOCITY;
+  //status = temporal_interpolation_pstruct(x, y, z, time, W, vxi, vyi, vzi, vti, valueW, interp_method, gridindexingtype); CHECKSTATUS(status);
+  //return SUCCESS;
 }
 
 

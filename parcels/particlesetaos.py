@@ -5,13 +5,14 @@ from datetime import timedelta as delta
 import sys
 import numpy as np
 import xarray as xr
+from ctypes import c_void_p
 
 from parcels.grid import GridCode
 # from parcels.grid import CurvilinearGrid
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernelaos import KernelAOS
-from parcels.particle import JITParticle
+from parcels.particle import Variable, ScipyParticle, JITParticle # noqa
 from parcels.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particlesets.baseparticleset import BaseParticleSet
@@ -83,6 +84,126 @@ class ParticleSetAOS(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetAOS, self).__init__()
+
+        # ==== first: create a new subclass of the pclass that includes the required variables ==== #
+        # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
+        def ObjectScipyClass_init(self, *args, **kwargs):
+            fieldset = kwargs.get('fieldset', None)
+            ngrids = kwargs.get('ngrids', None)
+            if type(self).ngrids.initial < 0:
+                numgrids = ngrids
+                if numgrids is None and fieldset is not None:
+                    numgrids = fieldset.gridset.size
+                assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                type(self).ngrids.initial = numgrids
+            self.ngrids = type(self).ngrids.initial
+            if self.ngrids >= 0:
+                for index in ['xi', 'yi', 'zi', 'ti']:
+                    if index != 'ti':
+                        setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
+                    else:
+                        setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
+            super(type(self), self).__init__(*args, **kwargs)
+
+        def ObjectJITClass_init(self, *args, **kwargs):
+            super(type(self), self).__init__(*args, **kwargs)  # needs to go first cause it initialises the space for all other variables
+            fieldset = kwargs.get('fieldset', None)
+            ngrids = kwargs.get('ngrids', None)
+            if type(self).ngrids.initial < 0:
+                numgrids = ngrids
+                if numgrids is None and fieldset is not None:
+                    numgrids = fieldset.gridset.size
+                assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                type(self).ngrids.initial = numgrids
+            self.ngrids = type(self).ngrids.initial
+            if self.ngrids >= 0:
+                for index in ['xi', 'yi', 'zi', 'ti']:
+                    if index != 'ti':
+                        setattr(self, index, np.zeros((self.ngrids), dtype=np.int32))
+                    else:
+                        setattr(self, index, -1*np.ones((self.ngrids), dtype=np.int32))
+                    setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))  # without direct (!) prior recast, throws error that the dtype (here: int32) has no ctypes-property
+                    setattr(self, 'c'+index, getattr(self, index+'p').value)
+
+        def ObjectClass_del_forward(self):
+            super(type(self), self).__del__()
+
+        def ObjectClass_repr_forward(self):
+            return super(type(self), self).__repr__()
+
+        def ObjectClass_eq_forward(self, other):
+            return super(type(self), self).__eq__(other)
+
+        def ObjectClass_ne_forward(self, other):
+            return super(type(self), self).__ne__(other)
+
+        def ObjectClass_lt_forward(self, other):
+            return super(type(self), self).__lt__(other)
+
+        def ObjectClass_le_forward(self, other):
+            return super(type(self), self).__le__(other)
+
+        def ObjectClass_gt_forward(self, other):
+            return super(type(self), self).__gt__(other)
+
+        def ObjectClass_ge_forward(self, other):
+            return super(type(self), self).__ge__(other)
+
+        def ObjectClass_sizeof_forward(self):
+            return super(type(self), self).__sizeof__()
+
+        object_scipy_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
+                                    "xi": np.ndarray((1,)),
+                                    "yi": np.ndarray((1,)),
+                                    "zi": np.ndarray((1,)),
+                                    "ti": np.ndarray((1,)),
+                                    "__init__": ObjectScipyClass_init,
+                                    "__del__": ObjectClass_del_forward,
+                                    "__repr__": ObjectClass_repr_forward,
+                                    "__eq__": ObjectClass_eq_forward,
+                                    "__ne__": ObjectClass_ne_forward,
+                                    "__lt__": ObjectClass_lt_forward,
+                                    "__le__": ObjectClass_le_forward,
+                                    "__gt__": ObjectClass_gt_forward,
+                                    "__ge__": ObjectClass_ge_forward,
+                                    "__sizeof__": ObjectClass_sizeof_forward
+                                    }
+
+        object_jit_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
+                                  "_cptr": None,
+                                  "xi": np.ndarray((1,), dtype=np.int32),
+                                  "yi": np.ndarray((1,), dtype=np.int32),
+                                  "zi": np.ndarray((1,), dtype=np.int32),
+                                  "ti": np.ndarray((1,), dtype=np.int32),
+                                  "xip": c_void_p,
+                                  "yip": c_void_p,
+                                  "zip": c_void_p,
+                                  "tip": c_void_p,
+                                  "cxi": Variable('cxi', dtype=np.dtype(c_void_p), to_write=False),
+                                  "cyi": Variable('cyi', dtype=np.dtype(c_void_p), to_write=False),
+                                  "czi": Variable('czi', dtype=np.dtype(c_void_p), to_write=False),
+                                  "cti": Variable('cti', dtype=np.dtype(c_void_p), to_write=False),
+                                  "__init__": ObjectJITClass_init,
+                                  "__del__": ObjectClass_del_forward,
+                                  "__repr__": ObjectClass_repr_forward,
+                                  "__eq__": ObjectClass_eq_forward,
+                                  "__ne__": ObjectClass_ne_forward,
+                                  "__lt__": ObjectClass_lt_forward,
+                                  "__le__": ObjectClass_le_forward,
+                                  "__gt__": ObjectClass_gt_forward,
+                                  "__ge__": ObjectClass_ge_forward,
+                                  "__sizeof__": ObjectClass_sizeof_forward
+                                  }
+        object_class = None
+        if issubclass(pclass, JITParticle):
+            object_class = type("Object" + pclass.__name__, (pclass, ), object_jit_class_vdict)
+        elif issubclass(pclass, ScipyParticle):
+            object_class = type("Object" + pclass.__name__, (pclass,), object_scipy_class_vdict)
+        if object_class is None:
+            raise TypeError("ParticleSetAOS: Given Particle base class is invalid - derive from either ScipyParticle or JITParticle.")
+        # ==== dynamic re-classing completed ==== #
+        pclass = object_class
+
         self.fieldset = fieldset
         if self.fieldset is None:
             logger.warning_once("No FieldSet provided in ParticleSet generation. "
@@ -163,6 +284,9 @@ class ParticleSetAOS(BaseParticleSet):
 
         self.kernel = None
 
+    def __del__(self):
+        super(ParticleSetAOS, self).__del__()
+
     def delete(self, key):
         """
         This is the generic super-method to indicate obejct deletion of a specific object from this collection.
@@ -211,7 +335,7 @@ class ParticleSetAOS(BaseParticleSet):
         :param value: New value to set the attribute of the particles to.
         """
         # self.collection._data[name][:] = value
-        [setattr(p, name, value) for p in self._collection]
+        [setattr(p, name, value) for p in self._collection.data]
 
     def _impute_release_times(self, default):
         """Set attribute 'time' to default if encountering NaN values.
@@ -219,11 +343,11 @@ class ParticleSetAOS(BaseParticleSet):
         :param default: Default release time.
         :return: Minimum and maximum release times.
         """
-        null_ptimes_p = [p for p in self._collection if np.isnan(p.time)]
+        null_ptimes_p = [p for p in self._collection.data if np.isnan(p.time)]
         if len(null_ptimes_p) > 0:
             for p in null_ptimes_p:
                 p.time = default
-        ptimes = np.array([p.time for p in self._collection], dtype=np.float64)
+        ptimes = np.array([p.time for p in self._collection.data], dtype=np.float64)
         return np.min(ptimes), np.max(ptimes)
 
     def data_indices(self, variable_name, compare_values, invert=False):
@@ -241,13 +365,13 @@ class ParticleSetAOS(BaseParticleSet):
                                                                                       np.ndarray] else compare_values
         result = []
         if not invert:
-            result = [i for i, p in enumerate(self._collection) if getattr(p, variable_name) in compare_values]
+            result = [i for i, p in enumerate(self._collection.data) if getattr(p, variable_name) in compare_values]
         else:
-            result = [i for i, p in enumerate(self._collection) if getattr(p, variable_name) not in compare_values]
+            result = [i for i, p in enumerate(self._collection.data) if getattr(p, variable_name) not in compare_values]
         return np.array(result)
 
     def indexed_subset(self, indices):
-        return ParticleCollectionIteratorAOS(self._collection, subset=indices)
+        return self._collection.data[indices]
 
     def populate_indices(self):
         """Pre-populate guesses of particle xi/yi indices using a kdtree.
@@ -278,9 +402,44 @@ class ParticleSetAOS(BaseParticleSet):
         """
         return np.sum([True for p in self._collection if p.state not in [StateCode.Success, StateCode.Evaluate]])
 
+    def __iter__(self):
+        logger.info("Entering ParticleSetAOS.__iter__()")
+        return super(ParticleSetAOS, self).__iter__()
+
+    def iterator(self):
+        return super(ParticleSetAOS, self).iterator()
+
     def __getitem__(self, index):
         """Get a single particle by index"""
         return self._collection.get_single_by_index(index)
+
+    def __getattr__(self, name):
+        """
+        Access a single property of all particles.
+
+        :param name: name of the property
+        """
+        for v in self._collection.ptype.variables:
+            if v.name == name:
+                return getattr(self._collection, name)
+        if name in self.__dict__ and name[0] != '_':
+            return self.__dict__[name]
+        else:
+            return False
+
+    @property
+    def size(self):
+        # ==== to change at some point - len and size are different things ==== #
+        return len(self._collection)
+
+    def __repr__(self):
+        return "\n".join([str(p) for p in self])
+
+    def __len__(self):
+        return len(self._collection)
+
+    def __sizeof__(self):
+        return sys.getsizeof(self._collection)
 
     def cstruct(self):
         return self._collection.cstruct()
@@ -288,6 +447,21 @@ class ParticleSetAOS(BaseParticleSet):
     @property
     def ctypes_struct(self):
         return self.cstruct()
+
+    @property
+    def ptype(self):
+        return self._collection.ptype
+
+    @staticmethod
+    def lonlatdepth_dtype_from_field_interp_method(field):
+        if type(field) in [SummedField, NestedField]:
+            for f in field:
+                if f.interp_method == 'cgrid_velocity':
+                    return np.float64
+        else:
+            if field.interp_method == 'cgrid_velocity':
+                return np.float64
+        return np.float32
 
     @classmethod
     def from_list(cls, fieldset, pclass, lon, lat, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
@@ -479,34 +653,6 @@ class ParticleSetAOS(BaseParticleSet):
         """
         return self._collection.toDictionary(pfile=pfile, time=time,
                                              deleted_only=deleted_only)
-
-    @staticmethod
-    def lonlatdepth_dtype_from_field_interp_method(field):
-        if type(field) in [SummedField, NestedField]:
-            for f in field:
-                if f.interp_method == 'cgrid_velocity':
-                    return np.float64
-        else:
-            if field.interp_method == 'cgrid_velocity':
-                return np.float64
-        return np.float32
-
-    @property
-    def size(self):
-        # ==== to change at some point - len and size are different things ==== #
-        return len(self._collection)
-
-    def __repr__(self):
-        return "\n".join([str(p) for p in self])
-
-    def __len__(self):
-        return len(self._collection)
-
-    def __sizeof__(self):
-        return sys.getsizeof(self._collection)
-
-    def __iter__(self):
-        return ParticleCollectionIteratorAOS(self._collection)
 
     def __iadd__(self, particles):
         """Add particles to the ParticleSet. Note that this is an

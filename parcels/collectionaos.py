@@ -7,8 +7,9 @@ from ctypes import c_void_p
 import numpy as np
 
 from parcels.particlesets.collections import ParticleCollection
-# from parcels.particlesets.iterators import BaseParticleAccessor
+from parcels.particlesets.iterators import BaseParticleAccessor
 from parcels.particlesets.iterators import BaseParticleCollectionIterator
+from parcels.particlesets.iterators import BaseParticleCollectionIterable
 from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
 from parcels.tools.loggers import logger
@@ -141,7 +142,8 @@ class ParticleCollectionAOS(ParticleCollection):
         pclass.set_lonlatdepth_dtype(self._lonlatdepth_dtype)
         self._pclass = pclass
 
-        self._ptype = pclass.getPType()
+        self._ptype = self._pclass.getPType()
+        # logger.info("ParticleCollectionAOS.ptype.dtype = {}".format(self._ptype.dtype))
         self._data = np.empty(lon.shape[0], dtype=pclass)
         initialised = set()
 
@@ -165,7 +167,8 @@ class ParticleCollectionAOS(ParticleCollection):
                     if not hasattr(self._data[i], kwvar):
                         raise RuntimeError('Particle class does not have Variable %s' % kwvar)
                     setattr(self._data[i], kwvar, kwargs[kwvar][i])
-                    initialised.add(kwvar)
+                    if kwvar not in initialised:
+                        initialised.add(kwvar)
 
             initialised |= {'lat', 'lon', 'depth', 'time', 'id'}
 
@@ -182,8 +185,13 @@ class ParticleCollectionAOS(ParticleCollection):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
                         setattr(self._data[i], v.name, init_field[time[i], depth[i], lat[i], lon[i]])
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
+
+                if v not in initialised:
+                    initialised.add(v)
         else:
             raise ValueError("Latitude and longitude required for generating ParticleSet")
+        self._iterator = None
+        self._riterator = None
 
     def __del__(self):
         """
@@ -191,18 +199,34 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().__del__()
 
+    def iterator(self):
+        logger.info("Entering ParticleCollectionAOS.iterator():: creating new iterator")
+        # self._iterator = iter(ParticleCollectionIteratorAOS(self))
+        self._iterator = ParticleCollectionIteratorAOS(self)
+        return self._iterator
+
     def __iter__(self):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
         """
-        return ParticleCollectionIteratorAOS(self)
+        logger.info("Entering ParticleCollectionAOS.__iter__()")
+        # if self._iterator is None:
+        #     self._iterator = iter( ParticleCollectionIteratorAOS(self) )
+        return self.iterator()
+
+    def reverse_iterator(self):
+        logger.info("Entering ParticleCollectionAOS.reverse_iterator():: creating new iterator")
+        # self._riterator = iter(ParticleCollectionIteratorAOS(self, True))
+        self._riterator = ParticleCollectionIteratorAOS(self, True)
+        return self._riterator
 
     def __reversed__(self):
         """Returns an Iterator that allows for backwards iteration over
         the elements in the ParticleCollection (e.g.
         `for p in reversed(pset):`).
         """
-        return ParticleCollectionIteratorAOS(self, True)
+        logger.info("Entering ParticleCollectionAOS.__reversed__()")
+        return self.reverse_iterator()
 
     def __getitem__(self, index):
         """
@@ -220,9 +244,13 @@ class ParticleCollectionAOS(ParticleCollection):
 
         :param name: name of the property
         """
-        if name not in self._ptype.variables:
+        pdtype = None
+        for var in self._ptype.variables:
+            if name == var.name:
+                pdtype = var.dtype
+        if pdtype is None:
             return None
-        result = np.zeros(self._ncount, dtype=self._ptype.variables[name].dtype)
+        result = np.zeros(self._ncount, dtype=pdtype)
         for index in range(self._ncount):
             if hasattr(self._data[index], name):
                 result[index] = getattr(self._data[index], name)
@@ -1004,6 +1032,109 @@ class ParticleCollectionAOS(ParticleCollection):
             raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
 
 
+class ParticleAccessorAOS(BaseParticleAccessor):
+    """Wrapper that provides access to particle data in the collection,
+    as if interacting with the particle itself.
+
+    :param pcoll: ParticleCollection that the represented particle
+                  belongs to.
+    :param index: The index at which the data for the represented
+                  particle is stored in the corresponding data arrays
+                  of the ParticleCollecion.
+    """
+    _index = 0
+    _next_dt = None
+
+    def __init__(self, pcoll, index):
+        """Initializes the ParticleAccessor to provide access to one
+        specific particle.
+        """
+        super(ParticleAccessorAOS, self).__init__(pcoll)
+        self._index = index
+        self._next_dt = None
+
+    def __getattr__(self, name):
+        """Get the value of an attribute of the particle.
+
+        :param name: Name of the requested particle attribute.
+        :return: The value of the particle attribute in the underlying
+                 collection data array.
+        """
+        if name in BaseParticleAccessor.__dict__.keys():
+            result = super(ParticleAccessorAOS, self).__getattr__(name)
+        elif name in type(self).__dict__.keys():
+            result = object.__getattribute__(self, name)
+        else:
+            result = getattr(self._pcoll.data[self._index], name)
+        return result
+
+    def __setattr__(self, name, value):
+        """Set the value of an attribute of the particle.
+
+        :param name: Name of the particle attribute.
+        :param value: Value that will be assigned to the particle
+                      attribute in the underlying collection data array.
+        """
+        if name in BaseParticleAccessor.__dict__.keys():
+            super(ParticleAccessorAOS, self).__setattr__(name, value)
+        elif name in type(self).__dict__.keys():
+            object.__setattr__(self, name, value)
+        else:
+            setattr(self._pcoll.data[self._index], name, value)
+
+    # def delete(self):
+    #     """Signal the underlying particle for deletion."""
+    #     self.state = OperationCode.Delete
+    #     # self.pcoll.data[self._index].state = OperationCode.Delete
+
+    # def set_state(self, state):
+    #     """Syntactic sugar for changing the state of the underlying
+    #     particle.
+    #     """
+    #     self.state = state
+    #     # self.pcoll.data[self._index].state = state
+
+    # def succeeded(self):
+    #     self.state = StateCode.Success
+    #     # self.pcoll.data[self._index].state = StateCode.Success
+
+    # def isComputed(self):
+    #     return self.state == StateCode.Success
+    #     # return self.pcoll.data[self._index].state == StateCode.Success
+
+    # def reset_state(self):
+    #     self.state = StateCode.Evaluate
+    #     # self.pcoll.data[self._index].state = StateCode.Evaluate
+
+    def getPType(self):
+        logger.info("ParticleAccessorAOS::getPType - executing ...")
+        return self._pcoll.data[self._index].getPType()
+        # return self._pcoll.ptype
+
+    def update_next_dt(self, next_dt=None):
+        logger.info("ParticleAccessorAOS::update_next_dt - executing - initial dt = {}".format(self._pcoll.data[self._index].dt))
+        # self._pcoll.data[self._index].update_next_dt(next_dt)
+        if next_dt is None:
+            if self._next_dt is not None:
+                self._pcoll._data[self._index].dt = self._next_dt
+                self._next_dt = None
+        else:
+            self._next_dt = next_dt
+        logger.info("ParticleAccessorAOS::update_next_dt - executed - final dt = {}".format(self._pcoll.data[self._index].dt))
+
+    def __repr__(self):
+        return repr(self._pcoll.data[self._index])
+
+
+class ParticleCollectionIterableAOS(BaseParticleCollectionIterable):
+
+    def __init__(self, pcoll, reverse=False, subset=None):
+        super(ParticleCollectionIterableAOS, self).__init__(pcoll, reverse, subset)
+
+    def __iter__(self):
+        return ParticleCollectionIteratorAOS(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
+
+
 class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
     """Iterator for looping over the particles in the ParticleCollection.
 
@@ -1036,29 +1167,40 @@ class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
 
         self._reverse = reverse
         self._pcoll = pcoll
+        self._prev_index = -1
         self._index = 0
         self._head = None
         self._tail = None
         if len(self._indices) > 0:
-            self._head = pcoll[self._indices[0]]
-            self._tail = pcoll[self._indices[self.max_len - 1]]
-        self.p = self._head
+            self._head = ParticleAccessorAOS(pcoll, self._indices[0])
+            self._tail = ParticleAccessorAOS(pcoll, self._indices[self.max_len - 1])
+        # self.p = self._head
+        self.p = None
 
     def __next__(self):
         """Returns a ParticleAccessor for the next particle in the
         ParticleSet.
         """
+        logger.info("ParticleCollectionIteratorAOS.__next__() - index: {}; max_len: {}".format(self._index, self.max_len))
         if self._index < self.max_len:
-            self.p = self._pcoll[self._indices[self._index]]
+            self._prev_index = self._index
             self._index += 1
-            return self.p
+            return ParticleAccessorAOS(self._pcoll, self._indices[self._prev_index])
 
+        logger.info("ParticleCollectionIteratorAOS.__next__() - raising StopIteration")
         # End of Iteration
         raise StopIteration
 
     @property
     def current(self):
-        return self.p
+        if (self.max_len > self._prev_index) and (self._prev_index > -1):
+            return ParticleAccessorAOS(self._pcoll, self._indices[self._prev_index])
+        raise IndexError
+
+    # def __iter__(self):
+    #     logger.info("ParticleCollectionIteratorAOS.__iter()")
+    #     # return super(ParticleCollectionIteratorAOS, self).__iter__()
+    #     return self
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'

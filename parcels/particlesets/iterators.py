@@ -3,6 +3,21 @@ from abc import abstractmethod
 from parcels.tools.statuscodes import OperationCode, StateCode
 
 
+class BaseParticleCollectionIterable(ABC):
+    _pcoll_immutable = None
+    _reverse = None
+    _subset = None
+
+    def __init__(self, pcoll, reverse=False, subset=None):
+        self._pcoll_immutable = pcoll
+        self._reverse = reverse
+        self._subset = subset
+
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+
 class BaseParticleCollectionIterator(ABC):
     """Interface for the ParticleCollection iterator. Provides the
     ability to iterate over the particles in the ParticleCollection.
@@ -12,8 +27,8 @@ class BaseParticleCollectionIterator(ABC):
         self._tail = None
         self._current = None
 
-    def __iter__(self):
-        return self
+    # def __iter__(self):
+    #     return self
 
     @abstractmethod
     def __next__(self):
@@ -53,11 +68,13 @@ class BaseParticleCollectionIterator(ABC):
 class BaseParticleAccessor(ABC):
     """Interface for the ParticleAccessor. Implements a wrapper around
     particles to provide easy access."""
+    _pcoll = None
+
     def __init__(self, pcoll):
         """Initialize the ParticleAccessor object with at least a
         reference to the ParticleSet it encapsulates.
         """
-        self.pcoll = pcoll
+        self._pcoll = pcoll
 
     @abstractmethod
     def update_next_dt(self, next_dt=None):
@@ -82,21 +99,22 @@ class BaseParticleAccessor(ABC):
     def reset_state(self):
         self.state = StateCode.Evaluate
 
-    @abstractmethod
     def __getattr__(self, name):
         """The ParticleAccessor should provide an implementation of this
         built-in function to allow accessing particle attributes in its
         corresponding ParticleSet datastructure.
         """
-        pass
+        if name in ['_pcoll', ]:
+            return super(BaseParticleAccessor, self).__getattribute__(name)
+        return None
 
-    @abstractmethod
     def __setattr__(self, name, value):
         """The ParticleAccessor should provide an implementation of this
         built-in function to allow setting particle attributes in its
         corresponding ParticleSet datastructure.
         """
-        pass
+        if name in ['_pcoll', ]:
+            super(BaseParticleAccessor, self).__setattr__(name, value)
 
     @abstractmethod
     def __repr__(self):

@@ -15,7 +15,7 @@ except:
     MPI = None
 
 from parcels.basekernel import BaseKernel
-from parcels.compilation.codegenerator import KernelGenerator
+from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError

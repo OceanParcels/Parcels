@@ -1,4 +1,6 @@
 import ast
+from abc import ABC
+from abc import abstractmethod
 import collections
 import math
 import numpy as np
@@ -50,7 +52,12 @@ class FieldSetNode(IntrinsicNode):
 
 
 class FieldNode(IntrinsicNode):
+    # def __getitem__(self, attr):
+    #     logger("Executing FieldNode.__getitem__()  call")
+    #     return FieldEvalCallNode(self)
+
     def __getattr__(self, attr):
+        logger("Executing FieldNode.__getattr__()  call")
         if isinstance(getattr(self.obj, attr), Grid):
             return GridNode(getattr(self.obj, attr),
                             ccode="%s->%s" % (self.ccode, attr))
@@ -204,19 +211,46 @@ class PrintNode(IntrinsicNode):
         self.obj = 'print'
 
 
-class ParticleAttributeNode(IntrinsicNode):
-    def __init__(self, obj, attr):
-        self.obj = obj
+class GenericParticleAttributeNode(IntrinsicNode):
+    def __init__(self, obj, attr, ccode=""):
+        super(GenericParticleAttributeNode, self).__init__(obj, ccode)
         self.attr = attr
-        self.ccode = "%s->%s[pnum]" % (obj.ccode, attr)
+
+
+class ObjectParticleAttributeNode(GenericParticleAttributeNode):
+    def __init__(self, obj, attr):
+        ccode = "%s->%s" % (obj.ccode, attr)
+        super(ObjectParticleAttributeNode, self).__init__(obj, attr, ccode)
+
+
+class ArrayParticleAttributeNode(GenericParticleAttributeNode):
+    def __init__(self, obj, attr):
+        ccode = "%s->%s[pnum]" % (obj.ccode, attr)
+        super(ArrayParticleAttributeNode, self).__init__(obj, attr, ccode)
 
 
 class ParticleNode(IntrinsicNode):
+    attr_node_class = None
+
+    def __init__(self, obj):
+        ccode = ""
+        attr_node_class = None
+        if 'Array' in obj.name:
+            attr_node_class = ArrayParticleAttributeNode
+            ccode = 'particles'
+        elif 'Object' in obj.name:
+            attr_node_class = ObjectParticleAttributeNode
+            ccode = 'particle'
+        else:
+            raise AttributeError("Particle Base Class neither matches an 'Array' nor an 'Object' type - cgen class interpretation invalid.")
+        super(ParticleNode, self).__init__(obj, ccode)
+        self.attr_node_class = attr_node_class
+
     def __getattr__(self, attr):
         if attr in [v.name for v in self.obj.variables]:
-            return ParticleAttributeNode(self, attr)
+            return self.attr_node_class(self, attr)
         elif attr in ['delete']:
-            return ParticleAttributeNode(self, 'state')
+            return self.attr_node_class(self, 'state')
         else:
             raise AttributeError("""Particle type %s does not define attribute "%s".
 Please add '%s' to %s.users_vars or define an appropriate sub-class."""
@@ -250,7 +284,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         if node.id == 'fieldset' and self.fieldset is not None:
             node = FieldSetNode(self.fieldset, ccode='fset')
         elif node.id == 'particle':
-            node = ParticleNode(self.ptype, ccode='particles')
+            node = ParticleNode(self.ptype)
         elif node.id in ['StateCode', 'OperationCode', 'ErrorCode', 'Error']:
             node = StatusCodeNode(math, ccode='')
         elif node.id == 'math':
@@ -361,7 +395,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
         node.args = [self.visit(a) for a in node.args]
         node.keywords = {kw.arg: self.visit(kw.value) for kw in node.keywords}
 
-        if isinstance(node.func, ParticleAttributeNode) \
+        if isinstance(node.func, GenericParticleAttributeNode) \
            and node.func.attr == 'state':
             node = IntrinsicNode(node, "return DELETE")
 
@@ -377,6 +411,7 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
             # convert args to Index(Tuple(*args))
             args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
+            # logger.info("visit_Call::args {}".format(args))
 
             self.stmt_stack += [FieldEvalNode(node.func.field, args, tmp, convert)]
             return ast.Name(id=tmp)
@@ -402,7 +437,7 @@ class TupleSplitter(ast.NodeTransformer):
         return node
 
 
-class KernelGenerator(ast.NodeVisitor):
+class AbstractKernelGenerator(ABC, ast.NodeVisitor):
     """Code generator class that translates simple Python kernel
     functions into C functions by populating and accessing the `ccode`
     attriibute on nodes in the Python AST."""
@@ -455,44 +490,13 @@ class KernelGenerator(ast.NodeVisitor):
         return self.ccode
 
     @staticmethod
+    @abstractmethod
     def _check_FieldSamplingArguments(ccode):
-        if ccode == 'particles':
-            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
-        elif ccode[-1] == 'particles':
-            args = ccode[:-1]
-        else:
-            args = ccode
-        return args
+        return None
 
+    @abstractmethod
     def visit_FunctionDef(self, node):
-        # Generate "ccode" attribute by traversing the Python AST
-        for stmt in node.body:
-            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
-                self.visit(stmt)
-
-        # Create function declaration and argument list
-        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
-        args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
-                c.Value("int", "pnum"),
-                c.Value("double", "time")]
-        for field in self.field_args.values():
-            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
-        for field in self.vector_field_args.values():
-            for fcomponent in ['U', 'V', 'W']:
-                try:
-                    f = getattr(field, fcomponent)
-                    if f.ccode_name not in self.field_args:
-                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
-                        self.field_args[f.ccode_name] = f
-                except:
-                    pass  # field.W does not always exist
-        for const, _ in self.const_args.items():
-            args += [c.Value("float", const)]
-
-        # Create function body as C-code object
-        body = [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
-        body += [c.Statement("return SUCCESS")]
-        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
+        pass
 
     def visit_Call(self, node):
         """Generate C code for simple C-style function calls. Please
@@ -784,115 +788,29 @@ class KernelGenerator(ast.NodeVisitor):
     def visit_ConstNode(self, node):
         self.const_args[node.ccode] = node.obj
 
+    @abstractmethod
     def visit_FieldEvalNode(self, node):
-        self.visit(node.field)
-        self.visit(node.args)
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval(node.var, *args)
-        stmts = [c.Assign("err", ccode_eval)]
+        pass
 
-        if node.convert:
-            ccode_conv = node.field.obj.ccode_convert(*args)
-            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
-            stmts += [conv_stat]
-
-        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS(err)")])
-
+    @abstractmethod
     def visit_VectorFieldEvalNode(self, node):
-        self.visit(node.field)
-        self.visit(node.args)
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        ccode_eval = node.field.obj.ccode_eval(node.var, node.var2, node.var3,
-                                               node.field.obj.U, node.field.obj.V, node.field.obj.W,
-                                               *args)
-        if node.field.obj.U.interp_method != 'cgrid_velocity':
-            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
-            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
-            statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
-                          c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
-        else:
-            statements = []
-        if node.field.obj.vector_type == '3D':
-            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
-            statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
-        conv_stat = c.Block(statements)
-        node.ccode = c.Block([c.Assign("err", ccode_eval),
-                              conv_stat, c.Statement("CHECKSTATUS(err)")])
+        pass
 
+    @abstractmethod
     def visit_SummedFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld, var in zip(node.fields.obj, node.var):
-            ccode_eval = fld.ccode_eval(var, *args)
-            ccode_conv = fld.ccode_convert(*args)
-            conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
-            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
-        node.ccode = c.Block(cstat)
+        pass
 
+    @abstractmethod
     def visit_SummedVectorFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
-            ccode_eval = fld.ccode_eval(var, var2, var3,
-                                        fld.U, fld.V, fld.W,
-                                        *args)
-            if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
-                statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
-                              c.Statement("%s *= %s" % (var2, ccode_conv2))]
-            else:
-                statements = []
-            if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*args)
-                statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
-            cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
-        cstat += [c.Statement("CHECKSTATUS(err)")]
-        node.ccode = c.Block(cstat)
+        pass
 
+    @abstractmethod
     def visit_NestedFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, *args)
-            ccode_conv = fld.ccode_convert(*args)
-            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
-            cstat += [c.Assign("err", ccode_eval),
-                      conv_stat,
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
-        node.ccode = c.While("1==1", c.Block(cstat))
+        pass
 
+    @abstractmethod
     def visit_NestedVectorFieldEvalNode(self, node):
-        self.visit(node.fields)
-        self.visit(node.args)
-        cstat = []
-        args = self._check_FieldSamplingArguments(node.args.ccode)
-        for fld in node.fields.obj:
-            ccode_eval = fld.ccode_eval(node.var, node.var2, node.var3,
-                                        fld.U, fld.V, fld.W,
-                                        *args)
-            if fld.U.interp_method != 'cgrid_velocity':
-                ccode_conv1 = fld.U.ccode_convert(*args)
-                ccode_conv2 = fld.V.ccode_convert(*args)
-                statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
-                              c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
-            else:
-                statements = []
-            if fld.vector_type == '3D':
-                ccode_conv3 = fld.W.ccode_convert(*args)
-                statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
-            cstat += [c.Assign("err", ccode_eval),
-                      c.Block(statements),
-                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
-        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
-        node.ccode = c.While("1==1", c.Block(cstat))
+        pass
 
     def visit_Return(self, node):
         self.visit(node.value)
@@ -925,6 +843,334 @@ class KernelGenerator(ast.NodeVisitor):
             node.ccode = node.s
         else:
             node.ccode = ''
+
+
+class ArrayKernelGenerator(AbstractKernelGenerator):
+
+    def __init__(self, fieldset=None, ptype=JITParticle):
+        super(ArrayKernelGenerator, self).__init__(fieldset, ptype)
+
+    @staticmethod
+    def _check_FieldSamplingArguments(ccode):
+        if ccode == 'particles':
+            args = ('time', 'particles->depth[pnum]', 'particles->lat[pnum]', 'particles->lon[pnum]')
+        elif ccode[-1] == 'particles':
+            args = ccode[:-1]
+        else:
+            args = ccode
+        return args
+
+    def visit_FunctionDef(self, node):
+        # Generate "ccode" attribute by traversing the Python AST
+        for stmt in node.body:
+            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
+                self.visit(stmt)
+
+        # Create function declaration and argument list
+        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
+        args = [c.Pointer(c.Value(self.ptype.name + 'p', "particles")),
+                c.Value("int", "pnum"),
+                c.Value("double", "time")]
+        for field in self.field_args.values():
+            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
+        for field in self.vector_field_args.values():
+            for fcomponent in ['U', 'V', 'W']:
+                try:
+                    f = getattr(field, fcomponent)
+                    if f.ccode_name not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
+                        self.field_args[f.ccode_name] = f
+                except:
+                    pass  # field.W does not always exist
+        for const, _ in self.const_args.items():
+            args += [c.Value("float", const)]
+
+        # Create function body as C-code object
+        body = [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
+        body += [c.Statement("return SUCCESS")]
+        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
+
+    def visit_FieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        ccode_eval = node.field.obj.ccode_eval_array(node.var, *args)
+        stmts = [c.Assign("err", ccode_eval)]
+
+        if node.convert:
+            ccode_conv = node.field.obj.ccode_convert(*args)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+            stmts += [conv_stat]
+
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS(err)")])
+
+    def visit_VectorFieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        ccode_eval = node.field.obj.ccode_eval_array(node.var, node.var2, node.var3,
+                                                     node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
+        if node.field.obj.U.interp_method != 'cgrid_velocity':
+            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
+            statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                          c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+        else:
+            statements = []
+        if node.field.obj.vector_type == '3D':
+            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
+            statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
+        conv_stat = c.Block(statements)
+        node.ccode = c.Block([c.Assign("err", ccode_eval),
+                              conv_stat, c.Statement("CHECKSTATUS(err)")])
+
+    def visit_SummedFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        for fld, var in zip(node.fields.obj, node.var):
+            ccode_eval = fld.ccode_eval_array(var, *args)
+            ccode_conv = fld.ccode_convert(*args)
+            conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
+        node.ccode = c.Block(cstat)
+
+    def visit_SummedVectorFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
+            ccode_eval = fld.ccode_eval_array(var, var2, var3,
+                                              fld.U, fld.V, fld.W, *args)
+            if fld.U.interp_method != 'cgrid_velocity':
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
+                statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
+                              c.Statement("%s *= %s" % (var2, ccode_conv2))]
+            else:
+                statements = []
+            if fld.vector_type == '3D':
+                ccode_conv3 = fld.W.ccode_convert(*args)
+                statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
+            cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
+        cstat += [c.Statement("CHECKSTATUS(err)")]
+        node.ccode = c.Block(cstat)
+
+    def visit_NestedFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        for fld in node.fields.obj:
+            ccode_eval = fld.ccode_eval_array(node.var, *args)
+            ccode_conv = fld.ccode_convert(*args)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval),
+                      conv_stat,
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
+        node.ccode = c.While("1==1", c.Block(cstat))
+
+    def visit_NestedVectorFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        for fld in node.fields.obj:
+            ccode_eval = fld.ccode_eval_array(node.var, node.var2, node.var3,
+                                              fld.U, fld.V, fld.W, *args)
+            if fld.U.interp_method != 'cgrid_velocity':
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
+                statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                              c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+            else:
+                statements = []
+            if fld.vector_type == '3D':
+                ccode_conv3 = fld.W.ccode_convert(*args)
+                statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
+            cstat += [c.Assign("err", ccode_eval),
+                      c.Block(statements),
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
+        node.ccode = c.While("1==1", c.Block(cstat))
+
+
+class ObjectKernelGenerator(AbstractKernelGenerator):
+
+    def __init__(self, fieldset=None, ptype=JITParticle):
+        super(ObjectKernelGenerator, self).__init__(fieldset, ptype)
+
+    @staticmethod
+    def _check_FieldSamplingArguments(ccode):
+        if ccode == 'particle':
+            # ccodes = ('time', 'particles[p].depth', 'particles[p].lat', 'particles[p].lon')
+            ccodes = ('time', 'particle->depth', 'particle->lat', 'particle->lon')
+        elif ccode[-1] == 'particle':
+            ccodes = ccode[:-1]
+        else:
+            ccodes = ccode
+        return ccodes
+
+    def visit_FunctionDef(self, node):
+        # Generate "ccode" attribute by traversing the Python AST
+        for stmt in node.body:
+            if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str):  # ignore docstrings
+                self.visit(stmt)
+
+        # Create function declaration and argument list
+        decl = c.Static(c.DeclSpecifier(c.Value("StatusCode", node.name), spec='inline'))
+        args = [c.Pointer(c.Value(self.ptype.name, "particle")),
+                c.Value("double", "time")]
+        for field in self.field_args.values():
+            args += [c.Pointer(c.Value("CField", "%s" % field.ccode_name))]
+        for field in self.vector_field_args.values():
+            for fcomponent in ['U', 'V', 'W']:
+                try:
+                    f = getattr(field, fcomponent)
+                    if f.ccode_name not in self.field_args:
+                        args += [c.Pointer(c.Value("CField", "%s" % f.ccode_name))]
+                        self.field_args[f.ccode_name] = f
+                except:
+                    pass  # field.W does not always exist
+        for const, _ in self.const_args.items():
+            args += [c.Value("float", const)]
+
+        # Create function body as C-code object
+        body = [stmt.ccode for stmt in node.body if not (hasattr(stmt, 'value') and type(stmt.value) is ast.Str)]
+        body += [c.Statement("return SUCCESS")]
+        node.ccode = c.FunctionBody(c.FunctionDeclaration(decl, args), c.Block(body))
+
+    def visit_FieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        # ccode_eval = node.field.obj.ccode_eval_object(node.var, *node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_FieldEvalNode::args {}".format(args))
+        ccode_eval = node.field.obj.ccode_eval_object(node.var, *args)
+        stmts = [c.Assign("err", ccode_eval)]
+
+        if node.convert:
+            # ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
+            ccode_conv = node.field.obj.ccode_convert(*args)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+            stmts += [conv_stat]
+
+        node.ccode = c.Block(stmts + [c.Statement("CHECKSTATUS(err)")])
+
+    def visit_VectorFieldEvalNode(self, node):
+        self.visit(node.field)
+        self.visit(node.args)
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_VectorFieldEvalNode::args {}".format(node.args.ccode))
+        # ccode_eval = node.field.obj.ccode_eval_object(node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_VectorFieldEvalNode::args {}".format(args))
+        ccode_eval = node.field.obj.ccode_eval_object(node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
+        if node.field.obj.U.interp_method != 'cgrid_velocity':
+            # ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
+            # ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
+            ccode_conv1 = node.field.obj.U.ccode_convert(*args)
+            ccode_conv2 = node.field.obj.V.ccode_convert(*args)
+            statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                          c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+        else:
+            statements = []
+        if node.field.obj.vector_type == '3D':
+            # ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
+            ccode_conv3 = node.field.obj.W.ccode_convert(*args)
+            statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
+        conv_stat = c.Block(statements)
+        node.ccode = c.Block([c.Assign("err", ccode_eval),
+                              conv_stat, c.Statement("CHECKSTATUS(err)")])
+
+    def visit_SummedFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_SummedFieldEvalNode::args {}".format(args))
+        for fld, var in zip(node.fields.obj, node.var):
+            # ccode_eval = fld.ccode_eval_object(var, *node.args.ccode)
+            # ccode_conv = fld.ccode_convert(*node.args.ccode)
+            ccode_eval = fld.ccode_eval_object(var, *args)
+            ccode_conv = fld.ccode_convert(*args)
+            conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval), conv_stat, c.Statement("CHECKSTATUS(err)")]
+        node.ccode = c.Block(cstat)
+
+    def visit_SummedVectorFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_SummedVectorFieldEvalNode::args {}".format(args))
+        for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
+            # ccode_eval = fld.ccode_eval_object(var, var2, var3, fld.U, fld.V, fld.W, *node.args.ccode)
+            ccode_eval = fld.ccode_eval_object(var, var2, var3, fld.U, fld.V, fld.W, *args)
+            if fld.U.interp_method != 'cgrid_velocity':
+                # ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
+                # ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
+                statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
+                              c.Statement("%s *= %s" % (var2, ccode_conv2))]
+            else:
+                statements = []
+            if fld.vector_type == '3D':
+                # ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                ccode_conv3 = fld.W.ccode_convert(*args)
+                statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
+            cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
+        cstat += [c.Statement("CHECKSTATUS(err)")]
+        node.ccode = c.Block(cstat)
+
+    def visit_NestedFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_NestedFieldEvalNode::args {}".format(args))
+        for fld in node.fields.obj:
+            # ccode_eval = fld.ccode_eval_object(node.var, *node.args.ccode)
+            # ccode_conv = fld.ccode_convert(*node.args.ccode)
+            ccode_eval = fld.ccode_eval_object(node.var, *args)
+            ccode_conv = fld.ccode_convert(*args)
+            conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
+            cstat += [c.Assign("err", ccode_eval),
+                      conv_stat,
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
+        node.ccode = c.While("1==1", c.Block(cstat))
+
+    def visit_NestedVectorFieldEvalNode(self, node):
+        self.visit(node.fields)
+        self.visit(node.args)
+        cstat = []
+        args = self._check_FieldSamplingArguments(node.args.ccode)
+        # logger.info("ObjectKernelGenerator.visit_NestedVectorFieldEvalNode::args {}".format(args))
+        for fld in node.fields.obj:
+            # ccode_eval = fld.ccode_eval_object(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *node.args.ccode)
+            ccode_eval = fld.ccode_eval_object(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
+            if fld.U.interp_method != 'cgrid_velocity':
+                # ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
+                # ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
+                ccode_conv1 = fld.U.ccode_convert(*args)
+                ccode_conv2 = fld.V.ccode_convert(*args)
+                statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
+                              c.Statement("%s *= %s" % (node.var2, ccode_conv2))]
+            else:
+                statements = []
+            if fld.vector_type == '3D':
+                # ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
+                ccode_conv3 = fld.W.ccode_convert(*args)
+                statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
+            cstat += [c.Assign("err", ccode_eval),
+                      c.Block(statements),
+                      c.If("err != ERROR_OUT_OF_BOUNDS ", c.Block([c.Statement("CHECKSTATUS(err)"), c.Statement("break")]))]
+        cstat += [c.Statement("CHECKSTATUS(err)"), c.Statement("break")]
+        node.ccode = c.While("1==1", c.Block(cstat))
 
 
 class LoopGenerator(object):
@@ -1177,7 +1423,7 @@ class ParticleObjectLoopGenerator(object):
 
         dt_0_break = c.If("is_zero_dbl(particles[p].dt)", c.Statement("break"))
 
-        notstarted_continue = c.If("(( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles[p].dt)",
+        notstarted_continue = c.If("( ( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particles[p].dt)",
                                    c.Block([
                                        c.If("fabs(particles[p].time) >= fabs(endtime)",
                                             c.Assign("particles[p].state", "SUCCESS")),
@@ -1190,7 +1436,7 @@ class ParticleObjectLoopGenerator(object):
         body += [partdt]
         body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particles[p].state")]
         body += [c.Assign("res", "%s(&(particles[p]), %s)" % (funcname, fargs_str))]
-        body += [c.If("(res==SUCCESS) && (particles[p].state != state_prev)", c.Assign("res", "particles[p].state"))]
+        body += [c.If("(res == SUCCESS) && (particles[p].state != state_prev)", c.Assign("res", "particles[p].state"))]
         body += [check_pdt]
         body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particles[p].time += particles[p].dt"),
                                                                   reset_dt,
@@ -1216,7 +1462,7 @@ class ParticleObjectLoopGenerator(object):
                           c.Block([sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop]))
         fbody = c.Block([c.Value("int", "p, sign_dt, sign_end_part"),
                          c.Value("StatusCode", "res"),
-                         c.Value("double", "reset_dt"),
+                         c.Value("int", "reset_dt"),
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])

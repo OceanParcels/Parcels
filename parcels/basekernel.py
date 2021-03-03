@@ -174,18 +174,26 @@ class BaseKernel(object):
         if self._cleanup_lib is not None:
             self._cleanup_lib.detach()
 
-        BaseKernel.cleanup_unload_lib(self._lib)
-        del self._lib
+        if self._lib is not None:
+            BaseKernel.cleanup_unload_lib(self._lib)
+            del self._lib
         self._lib = None
 
         all_files_array = []
         if self.src_file is None:
             [all_files_array.append(fpath) for fpath in self.dyn_srcs]
         else:
-            all_files_array.append(self.src_file)
-        all_files_array.append(self.log_file)
+            if self.src_file is not None:
+                all_files_array.append(self.src_file)
+        if self.log_file is not None:
+            all_files_array.append(self.log_file)
 
-        BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+        if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
+            BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+        self.dyn_srcs = None
+        self.src_file = None
+        self.log_file = None
+        self.lib_file = None
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
@@ -229,19 +237,24 @@ class BaseKernel(object):
         """ Writes kernel code to file and compiles it."""
         all_files_array = []
         if self.src_file is None:
-            for dyn_src in self.dyn_srcs:
-                with open(dyn_src, 'w') as f:
-                    f.write(self.ccode)
-                all_files_array.append(dyn_src)
-            compiler.compile(self.dyn_srcs, self.lib_file, self.log_file)
+            if self.dyn_srcs is not None:
+                for dyn_src in self.dyn_srcs:
+                    with open(dyn_src, 'w') as f:
+                        f.write(self.ccode)
+                    all_files_array.append(dyn_src)
+                compiler.compile(self.dyn_srcs, self.lib_file, self.log_file)
         else:
-            with open(self.src_file, 'w') as f:
-                f.write(self.ccode)
-            all_files_array.append(self.src_file)
-            compiler.compile(self.src_file, self.lib_file, self.log_file)
-        logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
-        all_files_array.append(self.log_file)
-        self._cleanup_files = finalize(self, BaseKernel.cleanup_remove_files, self.lib_file, all_files_array, self.delete_cfiles)
+            if self.src_file is not None:
+                with open(self.src_file, 'w') as f:
+                    f.write(self.ccode)
+                if self.src_file is not None:
+                    all_files_array.append(self.src_file)
+                compiler.compile(self.src_file, self.lib_file, self.log_file)
+        if len(all_files_array) > 0:
+            logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+            if self.log_file is not None:
+                all_files_array.append(self.log_file)
+            self._cleanup_files = finalize(self, BaseKernel.cleanup_remove_files, self.lib_file, all_files_array, self.delete_cfiles)
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
@@ -273,10 +286,11 @@ class BaseKernel(object):
 
     @staticmethod
     def cleanup_remove_files(lib_file, all_files_array, delete_cfiles):
-        if path.isfile(lib_file):  # and delete_cfiles
-            [remove(s) for s in [lib_file, ] if path.exists(s)]
-        if delete_cfiles and len(all_files_array) > 0:
-            [remove(s) for s in all_files_array if path.exists(s)]
+        if lib_file is not None:
+            if path.isfile(lib_file):  # and delete_cfiles
+                [remove(s) for s in [lib_file, ] if path is not None and path.exists(s)]
+            if delete_cfiles and len(all_files_array) > 0:
+                [remove(s) for s in all_files_array if path is not None and path.exists(s)]
 
     @staticmethod
     def cleanup_unload_lib(lib):
@@ -309,5 +323,5 @@ class BaseKernel(object):
     def execute_python(self, pset, endtime, dt):
         pass
 
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
+    def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         pass
