@@ -52,8 +52,9 @@ def depth_fixture(zdim=2):
     return depth(zdim=zdim)
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_zonal(lon, lat, depth, mode, npart=10):
+def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
@@ -65,7 +66,7 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
     assert fieldset2D.U.creation_log == 'from_data'
 
-    pset2D = ParticleSet(fieldset2D, pclass=ptype[mode],
+    pset2D = pset_type[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
                          lon=np.zeros(npart) + 20.,
                          lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
@@ -73,16 +74,17 @@ def test_advection_zonal(lon, lat, depth, mode, npart=10):
 
     dimensions['depth'] = depth
     fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical', transpose=True)
-    pset3D = ParticleSet(fieldset3D, pclass=ptype[mode],
-                         lon=np.zeros(npart) + 20.,
-                         lat=np.linspace(0, 80, npart),
-                         depth=np.zeros(npart) + 10.)
+    pset3D = pset_type[pset_mode]['pset'](fieldset3D, pclass=ptype[mode],
+                                          lon=np.zeros(npart) + 20.,
+                                          lat=np.linspace(0, 80, npart),
+                                          depth=np.zeros(npart) + 10.)
     pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(pset3D.lon) > 1.e-4).all()
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_meridional(lon, lat, mode, npart=10):
+def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
@@ -91,16 +93,17 @@ def test_advection_meridional(lon, lat, mode, npart=10):
     dimensions = {'lon': lon, 'lat': lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.linspace(-60, 60, npart),
-                       lat=np.linspace(0, 30, npart))
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
+                                        lon=np.linspace(-60, 60, npart),
+                                        lat=np.linspace(0, 30, npart))
     delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.e-4)
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
-def test_advection_3D(mode, npart=11):
+def test_advection_3D(pset_mode, mode, npart=11):
     """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
     """
     xdim = ydim = zdim = 2
@@ -112,19 +115,20 @@ def test_advection_3D(mode, npart=11):
     data['U'][:, :, 0] = 0.
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode],
-                       lon=np.zeros(npart),
-                       lat=np.zeros(npart) + 1e2,
-                       depth=np.linspace(0, 1, npart))
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
+                                        lon=np.zeros(npart),
+                                        lat=np.zeros(npart) + 1e2,
+                                        depth=np.linspace(0, 1, npart))
     time = delta(hours=2).total_seconds()
     pset.execute(AdvectionRK4, runtime=time, dt=delta(seconds=30))
     assert np.allclose(pset.depth*time, pset.lon, atol=1.e-1)
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('direction', ['up', 'down'])
 @pytest.mark.parametrize('wErrorThroughSurface', [True, False])
-def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
+def test_advection_3D_outofbounds(pset_mode, mode, direction, wErrorThroughSurface):
     xdim = ydim = zdim = 2
     dimensions = {'lon': np.linspace(0., 1, xdim, dtype=np.float32),
                   'lat': np.linspace(0., 1, ydim, dtype=np.float32),
@@ -148,7 +152,7 @@ def test_advection_3D_outofbounds(mode, direction, wErrorThroughSurface):
     if wErrorThroughSurface:
         recovery_dict[ErrorCode.ErrorThroughSurface] = SubmergeParticle
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=0.5, lat=0.5, depth=0.9)
     pset.execute(AdvectionRK4_3D, runtime=10., dt=1, recovery=recovery_dict)
 
     if direction == 'up' and wErrorThroughSurface:
@@ -172,30 +176,33 @@ def periodicBC(particle, fieldset, time):
     particle.lat = math.fmod(particle.lat, 1)
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_periodic_zonal(mode, xdim=100, ydim=100, halosize=3):
+def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=3):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
     fieldset.add_periodic_halo(zonal=True, halosize=halosize)
     assert(len(fieldset.U.lon) == xdim + 2 * halosize)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset.lon[0] - 0.15) < 0.1
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_periodic_meridional(mode, xdim=100, ydim=100):
+def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
     fieldset.add_periodic_halo(meridional=True)
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.5], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
+def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
     fieldset.add_periodic_halo(zonal=True, meridional=True)
     assert(len(fieldset.U.lat) == ydim + 10)  # default halo size is 5 grid points
@@ -203,7 +210,7 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
     assert np.allclose(np.diff(fieldset.U.lat), fieldset.U.lat[1]-fieldset.U.lat[0], rtol=0.001)
     assert np.allclose(np.diff(fieldset.U.lon), fieldset.U.lon[1]-fieldset.U.lon[0], rtol=0.001)
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0.4], lat=[0.5])
     pset.execute(AdvectionRK4 + pset.Kernel(periodicBC), runtime=delta(hours=20), dt=delta(seconds=30))
     assert abs(pset.lon[0] - 0.05) < 0.1
     assert abs(pset.lat[0] - 0.15) < 0.1
@@ -215,8 +222,6 @@ def test_advection_periodic_zonal_meridional(mode, xdim=100, ydim=100):
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
 @pytest.mark.parametrize('w', [None, -0.2, np.array(0.7)])
 def test_length1dimensions(pset_mode, mode, u, v, w):
-    # if pset_mode == 'aos' and mode == 'scipy':
-    #     return False
     logger.info("mode: {} pset_mode {}".format(mode, pset_mode))
     (lon, xdim) = (np.linspace(-10, 10, 21), 21) if isinstance(u, np.ndarray) else (0, 1)
     (lat, ydim) = (np.linspace(-15, 15, 31), 31) if isinstance(v, np.ndarray) else (-4, 1)
