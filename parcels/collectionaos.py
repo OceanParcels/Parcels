@@ -690,7 +690,7 @@ class ParticleCollectionAOS(ParticleCollection):
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
             # Update C-pointer on particles
-            for p, pdata in zip(self.particles, self._particle_data):
+            for p, pdata in zip(self._data, self._data_c):
                 # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
@@ -720,7 +720,7 @@ class ParticleCollectionAOS(ParticleCollection):
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
             # Update C-pointer on particles
-            for p, pdata in zip(self.particles, self._particle_data):
+            for p, pdata in zip(self._data, self._data_c):
                 # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
@@ -752,7 +752,7 @@ class ParticleCollectionAOS(ParticleCollection):
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
             # Update C-pointer on particles
-            for p, pdata in zip(self.particles, self._particle_data):
+            for p, pdata in zip(self._data, self._data_c):
                 # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
@@ -771,7 +771,7 @@ class ParticleCollectionAOS(ParticleCollection):
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
             # Update C-pointer on particles
-            for p, pdata in zip(self.particles, self._particle_data):
+            for p, pdata in zip(self._data, self._data_c):
                 # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
