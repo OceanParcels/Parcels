@@ -8,7 +8,7 @@ def fast_distance(lat1, long1, lat2, long2):
 
 
 def relative_3d_distance(lat1_deg, long1_deg, depth1_m, lat2_deg, long2_deg,
-                         depth2_m, interaction_distance, interaction_depth):
+                         depth2_m, interaction_distance=1, interaction_depth=1):
     R_earth = 6371000
     lat1 = np.pi*lat1_deg/180
     long1 = np.pi*long1_deg/180
