@@ -67,8 +67,8 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     assert fieldset2D.U.creation_log == 'from_data'
 
     pset2D = pset_type[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
-                         lon=np.zeros(npart) + 20.,
-                         lat=np.linspace(0, 80, npart))
+                                          lon=np.zeros(npart) + 20.,
+                                          lat=np.linspace(0, 80, npart))
     pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.e-4).all()
 
