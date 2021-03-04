@@ -171,17 +171,24 @@ class BaseKernel(object):
         # (async) unload the currently loaded dynamic linked library to be secure
         if self._cleanup_files is not None:
             self._cleanup_files.detach()
+            self.dyn_srcs = None
+            self.src_file = None
+            self.log_file = None
+            self.lib_file = None
         if self._cleanup_lib is not None:
             self._cleanup_lib.detach()
+            del self._lib
+            self._lib = None
 
         if self._lib is not None:
             BaseKernel.cleanup_unload_lib(self._lib)
             del self._lib
-        self._lib = None
+            self._lib = None
 
         all_files_array = []
         if self.src_file is None:
-            [all_files_array.append(fpath) for fpath in self.dyn_srcs]
+            if self.dyn_srcs is not None:
+                [all_files_array.append(fpath) for fpath in self.dyn_srcs]
         else:
             if self.src_file is not None:
                 all_files_array.append(self.src_file)
@@ -300,7 +307,7 @@ class BaseKernel(object):
         if lib is not None:
             try:
                 _ctypes.FreeLibrary(lib._handle) if platform == 'win32' else _ctypes.dlclose(lib._handle)
-            except (OSError, ):
+            except:  # (OSError, ):
                 logger.warning_once("compiled library already freed.")
 
     def remove_deleted(self, pset, output_file, endtime):
