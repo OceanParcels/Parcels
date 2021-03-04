@@ -171,10 +171,10 @@ class BaseKernel(object):
         # (async) unload the currently loaded dynamic linked library to be secure
         if self._cleanup_files is not None:
             self._cleanup_files.detach()
-            self.dyn_srcs = None
-            self.src_file = None
-            self.log_file = None
-            self.lib_file = None
+            # self.dyn_srcs = None
+            # self.src_file = None
+            # self.log_file = None
+            # self.lib_file = None
         if self._cleanup_lib is not None:
             self._cleanup_lib.detach()
             del self._lib
@@ -197,10 +197,10 @@ class BaseKernel(object):
 
         if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
             BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
-        self.dyn_srcs = None
-        self.src_file = None
-        self.log_file = None
-        self.lib_file = None
+        # self.dyn_srcs = None
+        # self.src_file = None
+        # self.log_file = None
+        # self.lib_file = None
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.

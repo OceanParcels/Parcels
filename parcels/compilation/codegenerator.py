@@ -52,12 +52,8 @@ class FieldSetNode(IntrinsicNode):
 
 
 class FieldNode(IntrinsicNode):
-    # def __getitem__(self, attr):
-    #     logger("Executing FieldNode.__getitem__()  call")
-    #     return FieldEvalCallNode(self)
-
     def __getattr__(self, attr):
-        logger("Executing FieldNode.__getattr__()  call")
+        logger.info("Executing FieldNode.__getattr__()  call")
         if isinstance(getattr(self.obj, attr), Grid):
             return GridNode(getattr(self.obj, attr),
                             ccode="%s->%s" % (self.ccode, attr))
