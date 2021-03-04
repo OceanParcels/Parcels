@@ -169,16 +169,21 @@ class BaseKernel(object):
 
     def remove_lib(self):
         # (async) unload the currently loaded dynamic linked library to be secure
-        if self._cleanup_files is not None:
-            self._cleanup_files.detach()
-            # self.dyn_srcs = None
-            # self.src_file = None
-            # self.log_file = None
-            # self.lib_file = None
-        if self._cleanup_lib is not None:
-            self._cleanup_lib.detach()
-            del self._lib
-            self._lib = None
+
+        # if self._cleanup_lib is not None:
+        #     res = tuple()
+        #     while res is not None:
+        #         res = self._cleanup_lib.detach()
+        #     del self._lib
+        #     self._lib = None
+        # if self._cleanup_files is not None:
+        #     res = tuple()
+        #     while res is not None:
+        #         res = self._cleanup_files.detach()
+        #     # self.dyn_srcs = None
+        #     # self.src_file = None
+        #     # self.log_file = None
+        #     # self.lib_file = None
 
         if self._lib is not None:
             BaseKernel.cleanup_unload_lib(self._lib)
@@ -194,9 +199,9 @@ class BaseKernel(object):
                 all_files_array.append(self.src_file)
         if self.log_file is not None:
             all_files_array.append(self.log_file)
-
         if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
             BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
+
         # self.dyn_srcs = None
         # self.src_file = None
         # self.log_file = None
@@ -261,12 +266,12 @@ class BaseKernel(object):
             logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
             if self.log_file is not None:
                 all_files_array.append(self.log_file)
-            self._cleanup_files = finalize(self, BaseKernel.cleanup_remove_files, self.lib_file, all_files_array, self.delete_cfiles)
+            # self._cleanup_files = finalize(self, BaseKernel.cleanup_remove_files, self.lib_file, all_files_array, self.delete_cfiles)
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
-        self._cleanup_lib = finalize(self, BaseKernel.cleanup_unload_lib, self._lib)
+        # self._cleanup_lib = finalize(self, BaseKernel.cleanup_unload_lib, self._lib)
 
     def merge(self, kernel, kclass):
         funcname = self.funcname + kernel.funcname
