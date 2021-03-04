@@ -261,7 +261,7 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
     *zeta = 0;
 
   if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION_X;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION_Y
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION_Y;
   if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION_Z;
 
   return SUCCESS;
