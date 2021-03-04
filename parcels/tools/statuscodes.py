@@ -21,6 +21,9 @@ class OperationCode(object):
 class ErrorCode(object):
     Error = 5
     ErrorInterpolation = 51
+    ErrorInterpolationx = 52
+    ErrorInterpolationy = 53
+    ErrorInterpolationz = 54
     ErrorOutOfBounds = 6
     ErrorThroughSurface = 61
     ErrorTimeExtrapolation = 7
@@ -135,6 +138,47 @@ class InterpolationError(KernelError):
             )
         super(InterpolationError, self).__init__(particle, fieldset=fieldset, msg=message)
 
+class InterpolationErrorx(KernelError):
+    """Particle kernel error for interpolation error"""
+
+    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
+        if lon and lat:
+            message = "Field interpolation error in xsi at (%f, %f, %f)" % (
+                lon, lat, depth
+            )
+        else:
+            message = "Field interpolation error in xsi for particle at (%f, %f, %f)" % (
+                particle.lon, particle.lat, particle.depth
+            )
+        super(InterpolationErrorx, self).__init__(particle, fieldset=fieldset, msg=message)
+
+class InterpolationErrory(KernelError):
+    """Particle kernel error for interpolation error"""
+
+    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
+        if lon and lat:
+            message = "Field interpolation error in eta at (%f, %f, %f)" % (
+                lon, lat, depth
+            )
+        else:
+            message = "Field interpolation error in eta for particle at (%f, %f, %f)" % (
+                particle.lon, particle.lat, particle.depth
+            )
+        super(InterpolationErrory, self).__init__(particle, fieldset=fieldset, msg=message)
+
+class InterpolationErrorz(KernelError):
+    """Particle kernel error for interpolation error"""
+
+    def __init__(self, particle, fieldset=None, lon=None, lat=None, depth=None):
+        if lon and lat:
+            message = "Field interpolation error in zeta at (%f, %f, %f)" % (
+                lon, lat, depth
+            )
+        else:
+            message = "Field interpolation error in zeta for particle at (%f, %f, %f)" % (
+                particle.lon, particle.lat, particle.depth
+            )
+        super(InterpolationErrorz, self).__init__(particle, fieldset=fieldset, msg=message)
 
 class OutOfBoundsError(KernelError):
     """Particle kernel error for out-of-bounds field sampling"""
@@ -187,6 +231,36 @@ def recovery_kernel_interpolation(particle, fieldset, time):
         error = particle.exception
         raise InterpolationError(particle, fieldset, error.x, error.y, error.z)
 
+def recovery_kernel_interpolationx(particle, fieldset, time):
+    """Default sampling error kernel that throws InterpolationError"""
+    if particle.exception is None:
+        # TODO: JIT does not yet provide the context that created
+        # the exception. We need to pass that info back from C.
+        raise InterpolationErrorx(particle, fieldset)
+    else:
+        error = particle.exception
+        raise InterpolationErrorx(particle, fieldset, error.x, error.y, error.z)
+
+def recovery_kernel_interpolationy(particle, fieldset, time):
+    """Default sampling error kernel that throws InterpolationError"""
+    if particle.exception is None:
+        # TODO: JIT does not yet provide the context that created
+        # the exception. We need to pass that info back from C.
+        raise InterpolationErrory(particle, fieldset)
+    else:
+        error = particle.exception
+        raise InterpolationErrory(particle, fieldset, error.x, error.y, error.z)
+
+def recovery_kernel_interpolationz(particle, fieldset, time):
+    """Default sampling error kernel that throws InterpolationError"""
+    if particle.exception is None:
+        # TODO: JIT does not yet provide the context that created
+        # the exception. We need to pass that info back from C.
+        raise InterpolationErrorz(particle, fieldset)
+    else:
+        error = particle.exception
+        raise InterpolationErrorz(particle, fieldset, error.x, error.y, error.z)
+
 
 def recovery_kernel_out_of_bounds(particle, fieldset, time):
     """Default sampling error kernel that throws OutOfBoundsError"""
@@ -219,6 +293,9 @@ def recovery_kernel_time_extrapolation(particle, fieldset, time):
 # to recovery kernels.
 recovery_map = {ErrorCode.Error: recovery_kernel_error,
                 ErrorCode.ErrorInterpolation: recovery_kernel_interpolation,
+                ErrorCode.ErrorInterpolationx: recovery_kernel_interpolationx,
+                ErrorCode.ErrorInterpolationy: recovery_kernel_interpolationy,
+                ErrorCode.ErrorInterpolationz: recovery_kernel_interpolationz,
                 ErrorCode.ErrorOutOfBounds: recovery_kernel_out_of_bounds,
                 ErrorCode.ErrorTimeExtrapolation: recovery_kernel_time_extrapolation,
                 ErrorCode.ErrorThroughSurface: recovery_kernel_through_surface}

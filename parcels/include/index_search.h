@@ -48,7 +48,7 @@ typedef struct
 
 typedef enum
   {
-    SUCCESS=0, EVALUATE=1, REPEAT=2, DELETE=3, STOP_EXECUTION=4, ERROR=5, ERROR_INTERPOLATION=51, ERROR_OUT_OF_BOUNDS=6, ERROR_THROUGH_SURFACE=61, ERROR_TIME_EXTRAPOLATION=7
+    SUCCESS=0, EVALUATE=1, REPEAT=2, DELETE=3, STOP_EXECUTION=4, ERROR=5, ERROR_INTERPOLATION=51, ERROR_INTERPOLATION_X=52, ERROR_INTERPOLATION=53, ERROR_INTERPOLATION=54, ERROR_OUT_OF_BOUNDS=6, ERROR_THROUGH_SURFACE=61, ERROR_TIME_EXTRAPOLATION=7
   } StatusCode;
 
 typedef enum
@@ -260,9 +260,9 @@ static inline StatusCode search_indices_rectilinear(type_coord x, type_coord y, 
   else
     *zeta = 0;
 
-  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION;
-  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION;
-  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION;
+  if ( (*xsi < 0) || (*xsi > 1) ) return ERROR_INTERPOLATION_X;
+  if ( (*eta < 0) || (*eta > 1) ) return ERROR_INTERPOLATION_Y
+  if ( (*zeta < 0) || (*zeta > 1) ) return ERROR_INTERPOLATION_Z;
 
   return SUCCESS;
 }
