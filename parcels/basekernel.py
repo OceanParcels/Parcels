@@ -7,7 +7,7 @@ from os import path
 from os import remove
 from sys import platform
 from sys import version_info
-from weakref import finalize
+# from weakref import finalize
 from ast import FunctionDef
 from hashlib import md5
 from parcels.tools.loggers import logger
