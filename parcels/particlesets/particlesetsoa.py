@@ -78,36 +78,42 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
+        logger.info("ParticleSetSOA::__init__() - type(pclass) = {}".format(pclass))
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        def ArrayClass_init(self, *args, **kwargs):
-            fieldset = kwargs.get('fieldset', None)
-            ngrids = kwargs.get('ngrids', None)
-            if type(self).ngrids.initial < 0:
-                numgrids = ngrids
-                if numgrids is None and fieldset is not None:
-                    numgrids = fieldset.gridset.size
-                assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-                type(self).ngrids.initial = numgrids
-            self.ngrids = type(self).ngrids.initial
-            if self.ngrids >= 0:
-                for index in ['xi', 'yi', 'zi', 'ti']:
-                    if index != 'ti':
-                        setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
-                    else:
-                        setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
-            super(type(self), self).__init__(*args, **kwargs)
+        class_name = "Array"+pclass.__name__
+        array_class = None
+        if class_name not in dir():
+            def ArrayClass_init(self, *args, **kwargs):
+                fieldset = kwargs.get('fieldset', None)
+                ngrids = kwargs.get('ngrids', None)
+                if type(self).ngrids.initial < 0:
+                    numgrids = ngrids
+                    if numgrids is None and fieldset is not None:
+                        numgrids = fieldset.gridset.size
+                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                    type(self).ngrids.initial = numgrids
+                self.ngrids = type(self).ngrids.initial
+                if self.ngrids >= 0:
+                    for index in ['xi', 'yi', 'zi', 'ti']:
+                        if index != 'ti':
+                            setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
+                        else:
+                            setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
+                super(type(self), self).__init__(*args, **kwargs)
 
-        array_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
-                             "xi": Variable('xi', dtype=np.int32, to_write=False),
-                             "yi": Variable('yi', dtype=np.int32, to_write=False),
-                             "zi": Variable('zi', dtype=np.int32, to_write=False),
-                             "ti": Variable('ti', dtype=np.int32, to_write=False, initial=-1),
-                             "__init__": ArrayClass_init}
-        array_class = type("Array"+pclass.__name__, (pclass, ), array_class_vdict)
+            array_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
+                                 "xi": Variable('xi', dtype=np.int32, to_write=False),
+                                 "yi": Variable('yi', dtype=np.int32, to_write=False),
+                                 "zi": Variable('zi', dtype=np.int32, to_write=False),
+                                 "ti": Variable('ti', dtype=np.int32, to_write=False, initial=-1),
+                                 "__init__": ArrayClass_init}
+            array_class = type(class_name, (pclass, ), array_class_vdict)
+        else:
+            array_class = locals()[class_name]
         # ==== dynamic re-classing completed ==== #
-        pclass = array_class
+        _pclass = array_class
 
         self.fieldset = fieldset
         if self.fieldset is None:
@@ -166,7 +172,7 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
-        self._collection = ParticleCollectionSOA(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
+        self._collection = ParticleCollectionSOA(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -425,6 +431,8 @@ class ParticleSetSOA(BaseParticleSet):
             pclass.setLastID(0)  # reset to zero offset
         else:
             vars['id'] = None
+
+        logger.info("ParticleSetSOA::from_particlefile() - type(pclass) = {}".format(pclass))
 
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],

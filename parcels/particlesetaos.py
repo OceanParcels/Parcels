@@ -84,123 +84,129 @@ class ParticleSetAOS(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetAOS, self).__init__()
+        logger.info("ParticleSetSOA::__init__() - type(pclass) = {}".format(pclass))
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
-        def ObjectScipyClass_init(self, *args, **kwargs):
-            fieldset = kwargs.get('fieldset', None)
-            ngrids = kwargs.get('ngrids', None)
-            if type(self).ngrids.initial < 0:
-                numgrids = ngrids
-                if numgrids is None and fieldset is not None:
-                    numgrids = fieldset.gridset.size
-                assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-                type(self).ngrids.initial = numgrids
-            self.ngrids = type(self).ngrids.initial
-            if self.ngrids >= 0:
-                for index in ['xi', 'yi', 'zi', 'ti']:
-                    if index != 'ti':
-                        setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
-                    else:
-                        setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
-            super(type(self), self).__init__(*args, **kwargs)
-
-        def ObjectJITClass_init(self, *args, **kwargs):
-            super(type(self), self).__init__(*args, **kwargs)  # needs to go first cause it initialises the space for all other variables
-            fieldset = kwargs.get('fieldset', None)
-            ngrids = kwargs.get('ngrids', None)
-            if type(self).ngrids.initial < 0:
-                numgrids = ngrids
-                if numgrids is None and fieldset is not None:
-                    numgrids = fieldset.gridset.size
-                assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-                type(self).ngrids.initial = numgrids
-            self.ngrids = type(self).ngrids.initial
-            if self.ngrids >= 0:
-                for index in ['xi', 'yi', 'zi', 'ti']:
-                    if index != 'ti':
-                        setattr(self, index, np.zeros((self.ngrids), dtype=np.int32))
-                    else:
-                        setattr(self, index, -1*np.ones((self.ngrids), dtype=np.int32))
-                    setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))  # without direct (!) prior recast, throws error that the dtype (here: int32) has no ctypes-property
-                    setattr(self, 'c'+index, getattr(self, index+'p').value)
-
-        def ObjectClass_del_forward(self):
-            super(type(self), self).__del__()
-
-        def ObjectClass_repr_forward(self):
-            return super(type(self), self).__repr__()
-
-        def ObjectClass_eq_forward(self, other):
-            return super(type(self), self).__eq__(other)
-
-        def ObjectClass_ne_forward(self, other):
-            return super(type(self), self).__ne__(other)
-
-        def ObjectClass_lt_forward(self, other):
-            return super(type(self), self).__lt__(other)
-
-        def ObjectClass_le_forward(self, other):
-            return super(type(self), self).__le__(other)
-
-        def ObjectClass_gt_forward(self, other):
-            return super(type(self), self).__gt__(other)
-
-        def ObjectClass_ge_forward(self, other):
-            return super(type(self), self).__ge__(other)
-
-        def ObjectClass_sizeof_forward(self):
-            return super(type(self), self).__sizeof__()
-
-        object_scipy_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
-                                    "xi": np.ndarray((1,)),
-                                    "yi": np.ndarray((1,)),
-                                    "zi": np.ndarray((1,)),
-                                    "ti": np.ndarray((1,)),
-                                    "__init__": ObjectScipyClass_init,
-                                    "__del__": ObjectClass_del_forward,
-                                    "__repr__": ObjectClass_repr_forward,
-                                    "__eq__": ObjectClass_eq_forward,
-                                    "__ne__": ObjectClass_ne_forward,
-                                    "__lt__": ObjectClass_lt_forward,
-                                    "__le__": ObjectClass_le_forward,
-                                    "__gt__": ObjectClass_gt_forward,
-                                    "__ge__": ObjectClass_ge_forward,
-                                    "__sizeof__": ObjectClass_sizeof_forward
-                                    }
-
-        object_jit_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
-                                  "_cptr": None,
-                                  "xi": np.ndarray((1,), dtype=np.int32),
-                                  "yi": np.ndarray((1,), dtype=np.int32),
-                                  "zi": np.ndarray((1,), dtype=np.int32),
-                                  "ti": np.ndarray((1,), dtype=np.int32),
-                                  "xip": c_void_p,
-                                  "yip": c_void_p,
-                                  "zip": c_void_p,
-                                  "tip": c_void_p,
-                                  "cxi": Variable('cxi', dtype=np.dtype(c_void_p), to_write=False),
-                                  "cyi": Variable('cyi', dtype=np.dtype(c_void_p), to_write=False),
-                                  "czi": Variable('czi', dtype=np.dtype(c_void_p), to_write=False),
-                                  "cti": Variable('cti', dtype=np.dtype(c_void_p), to_write=False),
-                                  "__init__": ObjectJITClass_init,
-                                  "__del__": ObjectClass_del_forward,
-                                  "__repr__": ObjectClass_repr_forward,
-                                  "__eq__": ObjectClass_eq_forward,
-                                  "__ne__": ObjectClass_ne_forward,
-                                  "__lt__": ObjectClass_lt_forward,
-                                  "__le__": ObjectClass_le_forward,
-                                  "__gt__": ObjectClass_gt_forward,
-                                  "__ge__": ObjectClass_ge_forward,
-                                  "__sizeof__": ObjectClass_sizeof_forward
-                                  }
+        class_name = "Object"+pclass.__name__
         object_class = None
-        if issubclass(pclass, JITParticle):
-            object_class = type("Object" + pclass.__name__, (pclass, ), object_jit_class_vdict)
-        elif issubclass(pclass, ScipyParticle):
-            object_class = type("Object" + pclass.__name__, (pclass,), object_scipy_class_vdict)
-        if object_class is None:
-            raise TypeError("ParticleSetAOS: Given Particle base class is invalid - derive from either ScipyParticle or JITParticle.")
+        if class_name not in dir():
+            def ObjectScipyClass_init(self, *args, **kwargs):
+                fieldset = kwargs.get('fieldset', None)
+                ngrids = kwargs.get('ngrids', None)
+                if type(self).ngrids.initial < 0:
+                    numgrids = ngrids
+                    if numgrids is None and fieldset is not None:
+                        numgrids = fieldset.gridset.size
+                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                    type(self).ngrids.initial = numgrids
+                self.ngrids = type(self).ngrids.initial
+                if self.ngrids >= 0:
+                    for index in ['xi', 'yi', 'zi', 'ti']:
+                        if index != 'ti':
+                            setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
+                        else:
+                            setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
+                super(type(self), self).__init__(*args, **kwargs)
+
+            def ObjectJITClass_init(self, *args, **kwargs):
+                super(type(self), self).__init__(*args, **kwargs)  # needs to go first cause it initialises the space for all other variables
+                fieldset = kwargs.get('fieldset', None)
+                ngrids = kwargs.get('ngrids', None)
+                if type(self).ngrids.initial < 0:
+                    numgrids = ngrids
+                    if numgrids is None and fieldset is not None:
+                        numgrids = fieldset.gridset.size
+                    assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
+                    type(self).ngrids.initial = numgrids
+                self.ngrids = type(self).ngrids.initial
+                if self.ngrids >= 0:
+                    for index in ['xi', 'yi', 'zi', 'ti']:
+                        if index != 'ti':
+                            setattr(self, index, np.zeros((self.ngrids), dtype=np.int32))
+                        else:
+                            setattr(self, index, -1*np.ones((self.ngrids), dtype=np.int32))
+                        setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))  # without direct (!) prior recast, throws error that the dtype (here: int32) has no ctypes-property
+                        setattr(self, 'c'+index, getattr(self, index+'p').value)
+
+            def ObjectClass_del_forward(self):
+                super(type(self), self).__del__()
+
+            def ObjectClass_repr_forward(self):
+                return super(type(self), self).__repr__()
+
+            def ObjectClass_eq_forward(self, other):
+                return super(type(self), self).__eq__(other)
+
+            def ObjectClass_ne_forward(self, other):
+                return super(type(self), self).__ne__(other)
+
+            def ObjectClass_lt_forward(self, other):
+                return super(type(self), self).__lt__(other)
+
+            def ObjectClass_le_forward(self, other):
+                return super(type(self), self).__le__(other)
+
+            def ObjectClass_gt_forward(self, other):
+                return super(type(self), self).__gt__(other)
+
+            def ObjectClass_ge_forward(self, other):
+                return super(type(self), self).__ge__(other)
+
+            def ObjectClass_sizeof_forward(self):
+                return super(type(self), self).__sizeof__()
+
+            object_scipy_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
+                                        "xi": np.ndarray((1,)),
+                                        "yi": np.ndarray((1,)),
+                                        "zi": np.ndarray((1,)),
+                                        "ti": np.ndarray((1,)),
+                                        "__init__": ObjectScipyClass_init,
+                                        "__del__": ObjectClass_del_forward,
+                                        "__repr__": ObjectClass_repr_forward,
+                                        "__eq__": ObjectClass_eq_forward,
+                                        "__ne__": ObjectClass_ne_forward,
+                                        "__lt__": ObjectClass_lt_forward,
+                                        "__le__": ObjectClass_le_forward,
+                                        "__gt__": ObjectClass_gt_forward,
+                                        "__ge__": ObjectClass_ge_forward,
+                                        "__sizeof__": ObjectClass_sizeof_forward
+                                        }
+
+            object_jit_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
+                                      "_cptr": None,
+                                      "xi": np.ndarray((1,), dtype=np.int32),
+                                      "yi": np.ndarray((1,), dtype=np.int32),
+                                      "zi": np.ndarray((1,), dtype=np.int32),
+                                      "ti": np.ndarray((1,), dtype=np.int32),
+                                      "xip": c_void_p,
+                                      "yip": c_void_p,
+                                      "zip": c_void_p,
+                                      "tip": c_void_p,
+                                      "cxi": Variable('cxi', dtype=np.dtype(c_void_p), to_write=False),
+                                      "cyi": Variable('cyi', dtype=np.dtype(c_void_p), to_write=False),
+                                      "czi": Variable('czi', dtype=np.dtype(c_void_p), to_write=False),
+                                      "cti": Variable('cti', dtype=np.dtype(c_void_p), to_write=False),
+                                      "__init__": ObjectJITClass_init,
+                                      "__del__": ObjectClass_del_forward,
+                                      "__repr__": ObjectClass_repr_forward,
+                                      "__eq__": ObjectClass_eq_forward,
+                                      "__ne__": ObjectClass_ne_forward,
+                                      "__lt__": ObjectClass_lt_forward,
+                                      "__le__": ObjectClass_le_forward,
+                                      "__gt__": ObjectClass_gt_forward,
+                                      "__ge__": ObjectClass_ge_forward,
+                                      "__sizeof__": ObjectClass_sizeof_forward
+                                      }
+            object_class = None
+            if issubclass(pclass, JITParticle):
+                object_class = type("Object" + pclass.__name__, (pclass, ), object_jit_class_vdict)
+            elif issubclass(pclass, ScipyParticle):
+                object_class = type("Object" + pclass.__name__, (pclass,), object_scipy_class_vdict)
+            if object_class is None:
+                raise TypeError("ParticleSetAOS: Given Particle base class is invalid - derive from either ScipyParticle or JITParticle.")
+        else:
+            object_class = locals()[class_name]
         # ==== dynamic re-classing completed ==== #
         pclass = object_class
 
