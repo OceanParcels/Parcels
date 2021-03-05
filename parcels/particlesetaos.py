@@ -208,7 +208,7 @@ class ParticleSetAOS(BaseParticleSet):
         else:
             object_class = locals()[class_name]
         # ==== dynamic re-classing completed ==== #
-        pclass = object_class
+        _pclass = object_class
 
         self.fieldset = fieldset
         if self.fieldset is None:
@@ -267,7 +267,7 @@ class ParticleSetAOS(BaseParticleSet):
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 0
-        self._collection = ParticleCollectionAOS(pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
+        self._collection = ParticleCollectionAOS(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
