@@ -198,13 +198,14 @@ class KernelAOS(BaseKernel):
         else:
             analytical = False
 
-        # back up variables in case of ErrorCode.Repeat
+        # back up variables in case of OperationCode.Repeat
         p_var_back = {}
 
-        for f in self.fieldset.get_fields():
-            if type(f) in [VectorField, NestedField, SummedField]:
-                continue
-            f.data = np.array(f.data)
+        if self.fieldset is not None:
+            for f in self.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                f.data = np.array(f.data)
 
         # for f in pset.fieldset.get_fields():
         # for f in self.fieldset.get_fields():
@@ -250,7 +251,7 @@ class KernelAOS(BaseKernel):
 
             while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
                 if i == 0:
-                    logger.info("P at time={}: {}".format(endtime, p))
+                    logger.info("P at time={}: {}; dt={}; state={}".format(endtime, p, p.dt, p.state))
 
                 # for var in pset.collection.ptype.variables:
                 for var in ptype.variables:
@@ -306,6 +307,7 @@ class KernelAOS(BaseKernel):
                         dt_pos = 0
 
                     p.set_state(res)
+                    logger.info("P at time={}: {}; dt={}; state={}".format(endtime, p, p.dt, p.state))
                     if np.isclose(dt, 0):
                         break
                 else:
@@ -404,7 +406,6 @@ class KernelAOS(BaseKernel):
                 else:
                     logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
                     p.delete()
-                    raise NotImplementedError
                 logger.info("KernelAOS - while-loop - new pstate of P({}): {}".format(p.id, p.state))
 
             # Remove all particles that signalled deletion

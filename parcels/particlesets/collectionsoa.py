@@ -870,7 +870,7 @@ class ParticleCollectionSOA(ParticleCollection):
                         indices_to_write = deleted_only
                 else:
                     indices_to_write = _to_write_particles(self._data, time)
-                if np.any(indices_to_write) > 0:
+                if np.any(indices_to_write):
                     for var in pfile.var_names:
                         data_dict[var] = self._data[var][indices_to_write]
                     pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))

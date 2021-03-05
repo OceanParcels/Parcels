@@ -35,7 +35,6 @@ class ParticleFileSOA(BaseParticleFile):
         super(ParticleFileSOA, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
                                               write_ondelete=write_ondelete, convert_at_end=convert_at_end,
                                               tempwritedir=tempwritedir, pset_info=pset_info)
-        self.maxid_written = -1
 
     def __del__(self):
         super(ParticleFileSOA, self).__del__()

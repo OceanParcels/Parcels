@@ -9,6 +9,7 @@ except:
     MPI = None
 
 from parcels.baseparticlefile import BaseParticleFile
+from parcels.tools.loggers import logger
 
 __all__ = ['ParticleFileAOS']
 
@@ -35,7 +36,6 @@ class ParticleFileAOS(BaseParticleFile):
         super(ParticleFileAOS, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
                                               write_ondelete=write_ondelete, convert_at_end=convert_at_end,
                                               tempwritedir=tempwritedir, pset_info=pset_info)
-        self.maxid_written = -1
 
     def __del__(self):
         super(ParticleFileAOS, self).__del__()
@@ -72,6 +72,7 @@ class ParticleFileAOS(BaseParticleFile):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
+        logger.info("ParticleFileAOS::read_from_npy - maxid_written={}".format(self.maxid_written))
         data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
@@ -119,6 +120,7 @@ class ParticleFileAOS(BaseParticleFile):
         global_maxid_written = -1
         global_time_written = []
         global_file_list = []
+        global_file_list_once = None
         if len(self.var_names_once) > 0:
             global_file_list_once = []
         for tempwritedir in temp_names:

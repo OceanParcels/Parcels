@@ -17,7 +17,7 @@ from parcels.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.collectionaos import ParticleCollectionAOS
-from parcels.collectionaos import ParticleCollectionIteratorAOS
+from parcels.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA
 
 # from .collectionsoa import ParticleCollectionSOA
 # from .collectionsoa import ParticleCollectionIteratorSOA
@@ -157,10 +157,10 @@ class ParticleSetAOS(BaseParticleSet):
                 return super(type(self), self).__sizeof__()
 
             object_scipy_class_vdict = {"ngrids": Variable('ngrids', dtype=np.int32, to_write=False, initial=-1),
-                                        "xi": np.ndarray((1,)),
-                                        "yi": np.ndarray((1,)),
-                                        "zi": np.ndarray((1,)),
-                                        "ti": np.ndarray((1,)),
+                                        "xi": np.ndarray((1,), dtype=np.int32),
+                                        "yi": np.ndarray((1,), dtype=np.int32),
+                                        "zi": np.ndarray((1,), dtype=np.int32),
+                                        "ti": np.ndarray((1,), dtype=np.int32),
                                         "__init__": ObjectScipyClass_init,
                                         "__del__": ObjectClass_del_forward,
                                         "__repr__": ObjectClass_repr_forward,
@@ -349,12 +349,22 @@ class ParticleSetAOS(BaseParticleSet):
         :param default: Default release time.
         :return: Minimum and maximum release times.
         """
-        null_ptimes_p = [p for p in self._collection.data if np.isnan(p.time)]
-        if len(null_ptimes_p) > 0:
-            for p in null_ptimes_p:
+        # null_ptimes_p = [p for p in self._collection.data if np.isnan(p.time)]
+        # if len(null_ptimes_p) > 0:
+        #     for p in null_ptimes_p:
+        #         p.time = default
+        # ptimes = np.array([p.time for p in self._collection.data], dtype=np.float64)
+        # return np.min(ptimes), np.max(ptimes)
+        max_rt = None
+        min_rt = None
+        for p in self:
+            if np.isnan(p.time):
                 p.time = default
-        ptimes = np.array([p.time for p in self._collection.data], dtype=np.float64)
-        return np.min(ptimes), np.max(ptimes)
+            if max_rt is None or max_rt < p.time:
+                max_rt = p.time
+            if min_rt is None or min_rt > p.time:
+                min_rt = p.time
+        return min_rt, max_rt
 
     def data_indices(self, variable_name, compare_values, invert=False):
         """Get the indices of all particles where the value of
@@ -397,8 +407,13 @@ class ParticleSetAOS(BaseParticleSet):
 
         :return: Collection iterator over error particles.
         """
-        error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
-        return ParticleCollectionIteratorAOS(self._collection, subset=error_indices)
+        error_indices = [
+            i for i, p in enumerate(self)
+            if p.state not in [StateCode.Success, StateCode.Evaluate]]
+        return self._collection.get_multi_by_indices(indices=error_indices)
+
+        # error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
+        # return ParticleCollectionIterableAOS(self._collection, subset=error_indices)
 
     @property
     def num_error_particles(self):

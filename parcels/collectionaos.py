@@ -44,7 +44,7 @@ def _to_write_particles(pd, time):
     #         & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
     #         & (np.isfinite(pd['id']))
     #         & (np.isfinite(pd['time'])))
-    return [p for p in pd if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
+    return [i for i, p in enumerate(pd) if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
 
 
 def _is_particle_started_yet(particle, time):
@@ -960,44 +960,56 @@ class ParticleCollectionAOS(ParticleCollection):
 
         indices_to_write = []
         if pfile.lasttime_written != time and \
-           (pfile.write_ondelete is False or deleted_only is not False):
+           (pfile.write_ondelete is False or deleted_only):  # is not False
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
                 # self.max_index_written = -1
-                if deleted_only is not False:
+                if deleted_only:  # is not False
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         data_states = [p.state for p in self._data]
                         indices_to_write = np.where(np.isin(data_states, [OperationCode.Delete]))[0]
-                    elif type(deleted_only) in [list, np.ndarray]:
-                        indices_to_write = deleted_only
+                    elif type(deleted_only) in [list, np.ndarray] and len(deleted_only)>0:
+                        if type(deleted_only[0]) in [int, np.int32, np.uint32]:
+                            indices_to_write = deleted_only
+                        elif isinstance(deleted_only[0], ScipyParticle):
+                            indices_to_write = [i for i, p in self._data if p in deleted_only]
                 else:
                     indices_to_write = _to_write_particles(self._data, time)
-                if np.any(indices_to_write) > 0:
-                    for var in self.var_names:
-                        if type(getattr(self._data[0], var)) in [np.uint64, np.int64, np.uint32]:
+                logger.info("ParticleCollectionAOS::toDictionary - indices_to_write={}".format(indices_to_write))
+                if len(indices_to_write) > 0:
+                    for var in pfile.var_names:
+                        # if type(getattr(self._data[0], var)) in [np.uint64, np.int64, np.uint32]:
+                        #     data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
+                        # else:
+                        #     data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
+                        if 'id' in var:
                             data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
                         else:
                             data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
-                    pfile.maxid_written = np.maximum(self.maxid_written, np.max(data_dict['id']))
+                    pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
+                logger.info("ParticleCollectionAOS::toDictionary - indices_to_write={}".format(indices_to_write))
 
-                pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and np.isfinite(p.time) and abs(time-p.time) > 1e-3]
+                pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and abs(time-p.time) > 1e-3 and np.isfinite(p.time)]
                 for p in pset_errs:
                     logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
 
-                if time not in self.time_written:
+                if time not in pfile.time_written:
                     pfile.time_written.append(time)
 
-                if len(self.var_names_once) > 0:
+                if len(pfile.var_names_once) > 0:
                     # indices_to_write = _to_write_particles(self._data, time)
-                    first_write = [p for p in self._data[indices_to_write] if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
+                    # first_write = [p for p in self._data[indices_to_write] if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
+                    # _to_write_particles(self._data, time)
+                    first_write = [p for p in self._data if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
                     if np.any(first_write):
-                        data_dict_once['id'] = np.array([np.int64(p.id) for p in first_write])
-                        for var in self.var_names_once:
+                        data_dict_once['id'] = np.array([p.id for p in first_write]).astype(dtype=np.int64)
+                        for var in pfile.var_names_once:
                             data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
-                        pfile.written_once.extend(data_dict_once['id'].tolist())
+                        pfile.written_once.extend(np.array(data_dict_once['id']).astype(dtype=np.int64).tolist())
 
-            if not deleted_only:
+            # if not deleted_only:
+            if deleted_only is False:
                 pfile.lasttime_written = time
 
         return data_dict, data_dict_once
@@ -1025,9 +1037,15 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         var_changed = False
         for v in self._ptype.variables:
-            if v.name == var:
+            if v.name == var and hasattr(v, 'to_write'):
                 v.to_write = write_status
                 var_changed = True
+        if var_changed:
+            for p in self._data:
+                attrib = getattr(p, var)
+                if hasattr(attrib, 'to_write'):
+                    attrib.to_write = write_status
+                setattr(p, var, attrib)
         if not var_changed:
             raise SyntaxError('Could not change the write status of %s, because it is not a Variable name' % var)
 
