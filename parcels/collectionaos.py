@@ -969,7 +969,7 @@ class ParticleCollectionAOS(ParticleCollection):
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         data_states = [p.state for p in self._data]
                         indices_to_write = np.where(np.isin(data_states, [OperationCode.Delete]))[0]
-                    elif type(deleted_only) in [list, np.ndarray] and len(deleted_only)>0:
+                    elif type(deleted_only) in [list, np.ndarray] and len(deleted_only) > 0:
                         if type(deleted_only[0]) in [int, np.int32, np.uint32]:
                             indices_to_write = deleted_only
                         elif isinstance(deleted_only[0], ScipyParticle):

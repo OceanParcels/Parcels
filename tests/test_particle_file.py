@@ -1,5 +1,4 @@
-from parcels import (FieldSet, ParticleSet, ScipyParticle, JITParticle,
-                     Variable, ErrorCode)
+from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode)
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
 from parcels import ParticleSet
@@ -197,20 +196,23 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
 
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
 @pytest.mark.parametrize('maxvar', [2, 4, 10])
-def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
+def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode, mode, repeatdt, tmpdir, dt, maxvar, runtime=10):
     fieldset.maxvar = maxvar
+    pset = None
 
     class MyParticle(ptype[mode]):
         sample_var = Variable('sample_var', initial=0.)
         v_once = Variable('v_once', dtype=np.float64, initial=0., to_write='once')
+
     if type == 'repeatdt':
-        pset = ParticleSet(fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=MyParticle, repeatdt=repeatdt)
     elif type == 'timearr':
-        pset = ParticleSet(fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
+        pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(runtime), lat=np.zeros(runtime), pclass=MyParticle, time=list(range(runtime)))
     outfilepath = tmpdir.join("pfile_repeated_release.nc")
     pfile = pset.ParticleFile(outfilepath, outputdt=abs(dt))
 
@@ -236,15 +238,16 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, mode, rep
     ncfile.close()
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_write_timebackward(fieldset, mode, tmpdir):
+def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.nc")
 
     def Update_lon(particle, fieldset, time):
         particle.lon -= 0.1 * particle.dt
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lat=np.linspace(0, 1, 3), lon=[0, 0, 0],
-                       time=[1, 2, 3])
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
+                                        lat=np.linspace(0, 1, 3), lon=[0, 0, 0], time=[1, 2, 3])
     pfile = pset.ParticleFile(name=outfilepath, outputdt=1.)
     pset.execute(pset.Kernel(Update_lon), runtime=4, dt=-1.,
                  output_file=pfile)
@@ -279,8 +282,9 @@ def test_error_duplicate_outputdir(fieldset, tmpdir):
     pfile1.delete_tempwritedir()
 
 
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_reset_dt(fieldset, mode, tmpdir):
+def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
     # for p.dt=0.02 to reach outputdt=0.05 and endtime=0.1, the steps should be [0.2, 0.2, 0.1, 0.2, 0.2, 0.1], resulting in 6 kernel executions
     filepath = tmpdir.join("pfile_reset_dt.nc")
@@ -288,7 +292,7 @@ def test_reset_dt(fieldset, mode, tmpdir):
     def Update_lon(particle, fieldset, time):
         particle.lon += 0.1
 
-    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=[0], lat=[0], lonlatdepth_dtype=np.float64)
     ofile = pset.ParticleFile(name=filepath, outputdt=0.05)
     pset.execute(pset.Kernel(Update_lon), endtime=0.1, dt=0.02, output_file=ofile)
 

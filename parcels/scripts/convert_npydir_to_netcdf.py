@@ -4,7 +4,8 @@ from os import path
 
 import numpy as np
 
-from parcels import ParticleFile, ParticleFileSOA, ParticleFileAOS
+# == here those classes need to be impported to parse available ParticleFile classes and create the type from its name == #
+from parcels import ParticleFile, ParticleFileSOA, ParticleFileAOS  # NOQA
 
 
 def convert_npydir_to_netcdf(tempwritedir_base, delete_tempfiles=False, pfile_class=None):

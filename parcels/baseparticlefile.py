@@ -5,7 +5,6 @@ import shutil
 import string
 from abc import ABC
 from abc import abstractmethod
-from parcels.tools.loggers import logger
 
 import netCDF4
 import numpy as np
@@ -71,6 +70,7 @@ class BaseParticleFile(ABC):
     time_written = None
     tempwritedir_base = None
     tempwritedir = None
+
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
 
@@ -108,8 +108,7 @@ class BaseParticleFile(ABC):
 
         tmp_dir = tempwritedir
         if tempwritedir is None:
-            tmp_dir = os.path.join(os.path.dirname(str(self.name)), "out-%s"
-                                        % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+            tmp_dir = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
         else:
             tmp_dir = tempwritedir
 

@@ -273,14 +273,15 @@ class ParticleSetAOS(BaseParticleSet):
             if len(time) > 0 and time[0] is None:
                 self.repeat_starttime = time[0]
             else:
-                if self._collection.data['time'][0] and not np.allclose(self._collection.data['time'], self._collection.data['time'][0]):
+                collect_time = self._collection.time
+                if collect_time[0] and not np.allclose(collect_time, collect_time[0]):
                     raise ValueError('All Particle.time should be the same when repeatdt is not None')
-                self.repeat_starttime = self._collection.data['time'][0]
-            self.repeatlon = self._collection.data['lon']
-            self.repeatlat = self._collection.data['lat']
-            self.repeatdepth = self._collection.data['depth']
+                self.repeat_starttime = collect_time[0]
+            self.repeatlon = self._collection.lon
+            self.repeatlat = self._collection.lat
+            self.repeatdepth = self._collection.depth
             for kwvar in kwargs:
-                self.repeatkwargs[kwvar] = self._collection.data[kwvar]
+                self.repeatkwargs[kwvar] = getattr(self._collection, kwvar)
 
         if self.repeatdt:
             if MPI and self._collection.pu_indicators is not None:

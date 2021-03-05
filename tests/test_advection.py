@@ -1,7 +1,6 @@
 from parcels import (FieldSet, Field, ScipyParticle, JITParticle, ErrorCode, StateCode,
                      AdvectionEE, AdvectionRK4, AdvectionRK45, AdvectionRK4_3D,
                      AdvectionAnalytical, AdvectionDiffusionM1, AdvectionDiffusionEM)
-from parcels import ParticleSet
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
@@ -333,8 +332,7 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     data = {'U': fld1, 'V': fldzero, 'W': fld2}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon,
-                       lat=lat, depth=depth)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
     exp_lon = [truth_stationary(x, z, endtime)[0] for x, z, in zip(lon, depth)]
     exp_depth = [truth_stationary(x, z, endtime)[1] for x, z, in zip(lon, depth)]
@@ -345,8 +343,7 @@ def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     data = {'U': fldzero, 'V': fld2, 'W': fld1}
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon,
-                       lat=lat, depth=depth)
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=lon, lat=lat, depth=depth)
     pset.execute(AdvectionRK4_3D, dt=delta(minutes=3), endtime=endtime)
     exp_depth = [truth_stationary(z, y, endtime)[0] for z, y, in zip(depth, lat)]
     exp_lat = [truth_stationary(z, y, endtime)[1] for z, y, in zip(depth, lat)]
