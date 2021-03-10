@@ -139,6 +139,7 @@ class ParticleSetSOA(BaseParticleSet):
         interaction_xy = None
         interaction_z = None
         self._dirty_neighbor = True
+        self._neighbor_time = None
         if interaction_distance is not None:
             try:
                 if len(interaction_distance) == 2:
@@ -246,6 +247,15 @@ class ParticleSetSOA(BaseParticleSet):
         """
         error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
         return ParticleCollectionIteratorSOA(self._collection, subset=error_indices)
+
+    def active_particles(self, time, dt):
+        # TODO: make this return an iterator or something.
+
+        active_indices = (time - self._collection.data['time'])/dt < 0
+        non_err_indices = self.data_indices(
+            'state', [StateCode.Success, StateCode.Evaluate])
+        active_indices = np.logical_and(active_indices, non_err_indices)
+        return active_indices
 
     @property
     def num_error_particles(self):
@@ -423,22 +433,33 @@ class ParticleSetSOA(BaseParticleSet):
         return self._collection.toDictionary(pfile=pfile, time=time,
                                              deleted_only=deleted_only)
 
-    def compute_neighbor_tree(self):
+    def compute_neighbor_tree(self, time, dt):
+        if self._neighbor_time is not None and self._neighbor_time == time:
+            return
+
+        self._active_particle_idx = self.active_particles(time, dt)
         values = np.vstack((
-            self._collection.data['lat'],
-            self._collection.data['long'],
-            self._collection.data['depth']
+            self._collection.data['lat'][self._active_particle_idx],
+            self._collection.data['long'][self._active_particle_idx],
+            self._collection.data['depth'][self._active_particle_idx],
         ))
+
+        # TODO: there are issues everywhere, so do the safest one!
+        self._dirty_neighbor = True
         if self._dirty_neighbor:
             self._neighbor_tree.rebuild(values)
             self._dirty_neighbor = False
+            self._neighbor_time = time
         else:
             self._neighbor_tree.update_values(values)
 
     def neighbors_by_index(self, particle_idx):
+        # TODO: yes, slow!
         neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
-        neighbor_ids = self._collection.data['id'][neighbor_idx]
-        return neighbor_ids
+        neighbor_idx = self._active_particle_idx[neighbor_idx]
+        neighbor_idx = neighbor_idx[neighbor_idx != particle_idx]
+        neighbor_id = self._collection.data['id'][neighbor_idx]
+        return neighbor_id
 
     def neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)

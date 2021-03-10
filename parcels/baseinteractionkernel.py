@@ -28,6 +28,7 @@ from parcels.grid import GridCode
 from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.kernels.advection import AdvectionAnalytical
 from parcels.tools.statuscodes import OperationCode
+from parcels.basekernel import BaseKernel
 
 __all__ = ['BaseKernel']
 
@@ -40,9 +41,15 @@ class BaseInteractionKernel(BaseKernel):
     auto-generated code.
     """
 
-    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None,
+    def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
+                 funccode=None, py_ast=None, funcvars=None,
                  c_include="", delete_cfiles=True):
-        raise NotImplementedError
+        super(BaseInteractionKernel, self).__init__(
+            fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname,
+            funccode=funccode, py_ast=py_ast, funcvars=funcvars,
+            c_include=c_include, delete_cfiles=delete_cfiles)
+
+        self._pyfunc = [self._pyfunc]
 
     def __del__(self):
         raise NotImplementedError
@@ -93,6 +100,20 @@ class BaseInteractionKernel(BaseKernel):
         raise NotImplementedError
 
     def __add__(self, kernel):
+        if isinstance(kernel, BaseInteractionKernel):
+            assert self.__class__ == kernel._class__
+            funcname = self.funcname + kernel.funcname
+            delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
+            pyfunc = self._pyfunc + kernel._pyfunc
+
+            # TODO: Not sure what the func_ast is about.
+            new_kernel = self.__class__(
+                self.fieldset, self.ptype, pyfunc=pyfunc,
+                funcname=funcname, funccode=self.funccode + kernel.funccode,
+                py_ast=self.func_ast, funcvars=self.funcvars + kernel.funcvars,
+                c_include=self._c_include + kernel.c_include,
+                delete_cfiles=delete_cfiles)
+            return new_kernel
         raise NotImplementedError
 
     def __radd__(self, kernel):
@@ -110,10 +131,5 @@ class BaseInteractionKernel(BaseKernel):
         raise NotImplementedError
 
     def execute_jit(self, pset, endtime, dt):
-        pass
+        raise NotImplementedError
 
-    def execute_python(self, pset, endtime, dt):
-        pass
-
-    def execute(self, pset, endtime, dt, recovery=None, output_file=None):
-        pass

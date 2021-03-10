@@ -9,11 +9,6 @@ from parcels.interaction.geo_utils import relative_3d_distance
 __all__ = ['DummyMoveNeighbour']
 
 
-def create_mutator():
-    from collections import defaultdict
-    return defaultdict(lambda: [])
-
-
 def DummyMoveNeighbour(particle, fieldset, time, neighbours, mutator):
     """A particle boosts the movement of its nearest neighbour, by adding
     0.1 to its lat position.
@@ -29,13 +24,3 @@ def DummyMoveNeighbour(particle, fieldset, time, neighbours, mutator):
         def f(p):
             p.lat += 0.1
         mutator[true_neighbours[i_min_dist].id].append(f)
-
-
-def apply_mutator(pset, mutator):
-    # Can also do by index I suppose.
-    for p in pset:
-        try:
-            for m in mutator[p.id]:
-                m(p)
-        except KeyError:
-            pass
