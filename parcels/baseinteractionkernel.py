@@ -49,7 +49,11 @@ class BaseInteractionKernel(BaseKernel):
             funccode=funccode, py_ast=py_ast, funcvars=funcvars,
             c_include=c_include, delete_cfiles=delete_cfiles)
 
-        self._pyfunc = [self._pyfunc]
+        if pyfunc is not None:
+            self._pyfunc = [pyfunc]
+            print("here", self.pyfunc)
+#             raise ValueError()
+
 
     def __del__(self):
         raise NotImplementedError
@@ -125,9 +129,6 @@ class BaseInteractionKernel(BaseKernel):
 
     @staticmethod
     def cleanup_unload_lib(lib):
-        raise NotImplementedError
-
-    def remove_deleted(self, pset, output_file, endtime):
         raise NotImplementedError
 
     def execute_jit(self, pset, endtime, dt):

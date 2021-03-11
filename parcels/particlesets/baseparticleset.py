@@ -17,6 +17,7 @@ from parcels.field import SummedField
 from parcels.kernels.advection import AdvectionRK4
 from parcels.kernel import Kernel
 from parcels.tools.loggers import logger
+from parcels.baseinteractionkernel import BaseInteractionKernel
 
 
 class NDCluster(ABC):
@@ -27,6 +28,7 @@ class BaseParticleSet(NDCluster):
     """Base ParticleSet."""
     _collection = None
     kernel = None
+    interaction_kernel = None
     fieldset = None
     time_origin = None
     repeat_starttime = None
@@ -36,7 +38,8 @@ class BaseParticleSet(NDCluster):
     repeatpclass = None
     repeatkwargs = None
 
-    def __init__(self, fieldset=None, pclass=None, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=None, lon=None, lat=None,
+                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         self._collection = None
         self.repeat_starttime = None
         self.repeatlon = None
@@ -45,6 +48,7 @@ class BaseParticleSet(NDCluster):
         self.repeatpclass = None
         self.repeatkwargs = None
         self.kernel = None
+        self.interaction_kernel = None
         self.fieldset = None
         self.time_origin = None
 
@@ -245,6 +249,10 @@ class BaseParticleSet(NDCluster):
         pass
 
     @abstractmethod
+    def InteractionKernel(self, pyfunc_inter):
+        raise NotImplementedError
+
+    @abstractmethod
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
@@ -301,7 +309,7 @@ class BaseParticleSet(NDCluster):
                 min_rt = p.time
         return min_rt, max_rt
 
-    def execute(self, pyfunc=AdvectionRK4, endtime=None, runtime=None, dt=1.,
+    def execute(self, pyfunc=AdvectionRK4, pyfunc_inter=None, endtime=None, runtime=None, dt=1.,
                 moviedt=None, recovery=None, output_file=None, movie_background_field=None,
                 verbose_progress=None, postIterationCallbacks=None, callbackdt=None):
         """Execute a given kernel function over the particle set for
@@ -346,6 +354,14 @@ class BaseParticleSet(NDCluster):
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
+        if self.interaction_kernel is None:
+            print("hi", pyfunc_inter)
+            if isinstance(pyfunc_inter, BaseInteractionKernel):
+                self.interaction_kernel = pyfunc_inter
+            else:
+                self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
+
+        print("oh", self.interaction_kernel.pyfunc)
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
             raise RuntimeError('endtime must be either a datetime or a double')
@@ -446,6 +462,10 @@ class BaseParticleSet(NDCluster):
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
                                 execute_once=execute_once)
+            if self.interaction_kernel is not None:
+                self.interaction_kernel.execute(
+                    self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
+                    execute_once=execute_once)
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,

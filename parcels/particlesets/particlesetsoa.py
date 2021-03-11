@@ -18,6 +18,7 @@ from .collectionsoa import ParticleCollectionIteratorSOA
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
 from parcels.interaction.hash import HashNeighborSearch
+from parcels.interactionkernelsoa import InteractionKernelSOA
 try:
     from mpi4py import MPI
 except:
@@ -76,7 +77,9 @@ class ParticleSetSOA(BaseParticleSet):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, interaction_distance=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
+                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
+                 pid_orig=None, interaction_distance=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
         self.fieldset = fieldset
         if self.fieldset is None:
@@ -150,6 +153,7 @@ class ParticleSetSOA(BaseParticleSet):
             except TypeError:
                 interaction_xy = interaction_distance
                 interaction_z = interaction_distance
+            print(interaction_xy, interaction_xy)
             self._neighbor_tree = HashNeighborSearch(interaction_xy, interaction_z)
 
         if self.repeatdt:
@@ -250,12 +254,10 @@ class ParticleSetSOA(BaseParticleSet):
 
     def active_particles(self, time, dt):
         # TODO: make this return an iterator or something.
-
-        active_indices = (time - self._collection.data['time'])/dt < 0
-        non_err_indices = self.data_indices(
-            'state', [StateCode.Success, StateCode.Evaluate])
+        active_indices = (time - self._collection.data['time'])/dt >= 0
+        non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
-        return active_indices
+        return np.where(active_indices)[0]
 
     @property
     def num_error_particles(self):
@@ -438,9 +440,11 @@ class ParticleSetSOA(BaseParticleSet):
             return
 
         self._active_particle_idx = self.active_particles(time, dt)
+        self.reverse_active_pidx = np.full(len(self._collection), -1, dtype=int)
+        self.reverse_active_pidx[self._active_particle_idx] = np.arange(len(self._active_particle_idx))
         values = np.vstack((
             self._collection.data['lat'][self._active_particle_idx],
-            self._collection.data['long'][self._active_particle_idx],
+            self._collection.data['lon'][self._active_particle_idx],
             self._collection.data['depth'][self._active_particle_idx],
         ))
 
@@ -455,11 +459,13 @@ class ParticleSetSOA(BaseParticleSet):
 
     def neighbors_by_index(self, particle_idx):
         # TODO: yes, slow!
-        neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
+        rel_particle_idx = self.reverse_active_pidx[particle_idx]
+        neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(rel_particle_idx)
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         neighbor_idx = neighbor_idx[neighbor_idx != particle_idx]
         neighbor_id = self._collection.data['id'][neighbor_idx]
-        return neighbor_id
+        # TODO: this iterator probably doesn't do what we want (1x use)
+        return ParticleCollectionIteratorSOA(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
@@ -603,6 +609,9 @@ def search_kernel(particle, fieldset, time):
         """
         return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
+
+    def InteractionKernel(self, pyfunc_inter):
+        return InteractionKernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

@@ -7,12 +7,12 @@ from timeit import timeit
 class BaseNeighborSearch(ABC):
     name = "unknown"
 
-    def __init__(self, values, interaction_distance):
+    def __init__(self, interaction_distance, values=None):
         self._values = values
         self.interaction_distance = interaction_distance
 
     @abstractmethod
-    def find_neighbors(self, particle_id):
+    def find_neighbors_by_idx(self, particle_id):
         '''Find neighbors with particle_id.'''
         pass
 
@@ -65,12 +65,10 @@ class BaseNeighborSearch(ABC):
 
 
 class BaseNeighborSearchGeo3D(BaseNeighborSearch):
-    area = 4*np.pi
-    max_depth = 0.01
-
-    def __init__(self, values, interaction_distance, interaction_depth):
+    # TODO: remove/change max_depth stuff. Should only affect benchmarks.
+    def __init__(self, interaction_distance, interaction_depth, values=None):
         self.interaction_depth = interaction_depth
-        super(BaseNeighborSearchGeo3D, self).__init__(values, interaction_distance)
+        super(BaseNeighborSearchGeo3D, self).__init__(interaction_distance, values=values)
 
     @classmethod
     def create_positions(cls, n_particles):

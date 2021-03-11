@@ -66,12 +66,12 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         true_neigh = []
         for neigh in all_neighbor_points:
             distance = relative_3d_distance(
-                *self._values[:, neigh], *self._values[:, particle_id],
+                *self._values[:, neigh], *coor,
                 interaction_distance=self.interaction_distance,
                 interaction_depth=self.interaction_depth)
             if distance < 1:
                 true_neigh.append(neigh)
-        return true_neigh, len(all_neighbor_points)
+        return true_neigh
 
     def update_values(self, new_values):
         '''Update the locations of (some) of the particles.
@@ -313,13 +313,13 @@ def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
         min_lat = new_i_lat + 1
         circ_small = 2*np.pi*np.cos(min_lat*inter_arc_dist)
         n_new_long = int(max(1, np.floor(circ_small/inter_arc_dist)))
-        d_long = 2*np.pi/n_new_long
+        d_long = 360/n_new_long
         if n_new_long <= 3:
             for new_i_long in range(n_new_long):
                 neighbors.extend(all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
         else:
             start_i_long = int(np.floor(coor[1]/d_long))
-            for d_long in [-1, 0, 1]:
-                new_i_long = (start_i_long+d_long+n_new_long) % n_new_long
+            for delta_long in [-1, 0, 1]:
+                new_i_long = (start_i_long+delta_long+n_new_long) % n_new_long
                 neighbors.extend(all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
     return neighbors

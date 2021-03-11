@@ -19,7 +19,7 @@ class BruteNeighborSearch(BaseNeighborSearchGeo3D):
     '''Brute force implementation to find the neighbors.'''
     name = "brute force"
 
-    def find_neighbors(self, particle_id):
+    def find_neighbors_by_idx(self, particle_id):
         distances = relative_3d_distance(
             *self._values[:, particle_id],
             self._values[0, :], self._values[1, :],
