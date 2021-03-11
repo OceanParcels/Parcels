@@ -39,7 +39,6 @@ class InteractionKernelSOA(BaseInteractionKernel):
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
-#         print("pyfunc", pyfunc)
         super().__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
 
     def execute_jit(self, pset, endtime, dt):
@@ -74,15 +73,12 @@ class InteractionKernelSOA(BaseInteractionKernel):
 
         mutator = defaultdict(lambda: [])
 
-        print(self._pyfunc)
         for pyfunc in self._pyfunc:
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 # Don't use particles that are not started.
-                print((endtime-p.time)/dt)
                 if (endtime-p.time)/dt <= -1e-7:
                     continue
-                print(endtime, p.time, dt)
 
                 neighbors = pset.neighbors_by_index(particle_idx)
                 pyfunc(p, pset.fieldset, p.time, neighbors, mutator)

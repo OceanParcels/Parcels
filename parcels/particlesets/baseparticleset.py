@@ -355,13 +355,11 @@ class BaseParticleSet(NDCluster):
                 self.kernel.load_lib()
 
         if self.interaction_kernel is None:
-            print("hi", pyfunc_inter)
             if isinstance(pyfunc_inter, BaseInteractionKernel):
                 self.interaction_kernel = pyfunc_inter
             else:
                 self.interaction_kernel = self.InteractionKernel(pyfunc_inter)
 
-        print("oh", self.interaction_kernel.pyfunc)
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
             raise RuntimeError('endtime must be either a datetime or a double')

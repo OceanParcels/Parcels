@@ -51,9 +51,6 @@ class BaseInteractionKernel(BaseKernel):
 
         if pyfunc is not None:
             self._pyfunc = [pyfunc]
-            print("here", self.pyfunc)
-#             raise ValueError()
-
 
     def __del__(self):
         raise NotImplementedError
