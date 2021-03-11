@@ -98,7 +98,6 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     res = ErrorCode.Error
                     p.exception = e
 
-        print(mutator)
         for particle_idx in active_idx:
             p = pset[particle_idx]
             try:
