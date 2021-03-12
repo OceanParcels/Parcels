@@ -78,7 +78,6 @@ class ParticleSetSOA(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
-        logger.info("ParticleSetSOA::__init__() - type(pclass) = {}".format(pclass))
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -117,8 +116,7 @@ class ParticleSetSOA(BaseParticleSet):
 
         self.fieldset = fieldset
         if self.fieldset is None:
-            logger.warning_once("No FieldSet provided in ParticleSet generation. "
-                                "This breaks most Parcels functionality")
+            logger.warning_once("No FieldSet provided in ParticleSet generation. This breaks most Parcels functionality")
         else:
             self.fieldset.check_complete()
         partitions = kwargs.pop('partitions', None)
@@ -432,8 +430,6 @@ class ParticleSetSOA(BaseParticleSet):
         else:
             vars['id'] = None
 
-        logger.info("ParticleSetSOA::from_particlefile() - type(pclass) = {}".format(pclass))
-
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
                    lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt, **kwargs)
@@ -487,8 +483,7 @@ class ParticleSetSOA(BaseParticleSet):
         incremental add, the particles will be added to the ParticleSet
         on which this function is called.
 
-        :param particles: Another ParticleSet containing particles to add
-                          to this one.
+        :param particles: Another ParticleSet containing particles to add to this one.
         :return: The current ParticleSet
         """
         if isinstance(particles, BaseParticleSet):
