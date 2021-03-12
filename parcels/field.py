@@ -34,7 +34,6 @@ __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 
 
 def _isParticle(key):
-    # TODO: ideally, we'd like to use isinstance(key, BaseParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet.
     if hasattr(key, '_next_dt'):
         return True
     else:
@@ -487,7 +486,6 @@ class Field(object):
                    interp_method=interp_method, **kwargs)
 
     def reshape(self, data, transpose=False):
-
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
@@ -545,7 +543,6 @@ class Field(object):
 
         * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
         """
-
         if self._scaling_factor:
             raise NotImplementedError(('Scaling factor for field %s already defined.' % self.name))
         self._scaling_factor = factor
@@ -1071,9 +1068,8 @@ class Field(object):
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
     def __getitem__(self, key):
-        # if _isParticle(key) and len(key)<=1 and 'Object' not in type(key).__name__:
-        if _isParticle(key):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)  # this is moronic if Particle is actually a used class ...
+        if _isParticle(key):  # Only works if not isinstance(key, SciPyParticle) [e.g. BaseParticleAccessor]
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
 
@@ -1678,15 +1674,13 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        # if _isParticle(key) and len(key)<=1 and 'Object' not in type(key).__name__:
-        if _isParticle(key):
+        if _isParticle(key):  # Only works if not isinstance(key, SciPyParticle) [e.g. BaseParticleAccessor]
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
 
     def ccode_eval_array(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        logger.info_once("VectorField.pset_type: {}".format('array'))
         ccode_str = ""
         if self.vector_type == '3D':
             ccode_str = "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
@@ -1702,13 +1696,8 @@ class VectorField(object):
                         % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
         return ccode_str
 
-    def ccode_eval_object(self, *args, **kwargs):
-        # logger.info("Field.ccode_eval_obj::args = {}; kwargs = {}".format(args, kwargs))
-        return self._ccode_eval_object_(*args, **kwargs)
-
-    def _ccode_eval_object_(self, varU, varV, varW, U, V, W, t, z, y, x):
+    def ccode_eval_object(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        logger.info_once("VectorField.pset_type: {}".format('object'))
         ccode_str = ""
         if self.vector_type == '3D':
             ccode_str = "temporal_interpolationUVW_pstruct(%s, %s, %s, %s, %s, %s, %s, " \
