@@ -53,7 +53,6 @@ class FieldSetNode(IntrinsicNode):
 
 class FieldNode(IntrinsicNode):
     def __getattr__(self, attr):
-        logger.info("Executing FieldNode.__getattr__()  call")
         if isinstance(getattr(self.obj, attr), Grid):
             return GridNode(getattr(self.obj, attr),
                             ccode="%s->%s" % (self.ccode, attr))
@@ -407,7 +406,6 @@ class IntrinsicTransformer(ast.NodeTransformer):
 
             # convert args to Index(Tuple(*args))
             args = ast.Index(value=ast.Tuple(node.args, ast.Load()))
-            # logger.info("visit_Call::args {}".format(args))
 
             self.stmt_stack += [FieldEvalNode(node.func.field, args, tmp, convert)]
             return ast.Name(id=tmp)
@@ -1002,7 +1000,6 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
     @staticmethod
     def _check_FieldSamplingArguments(ccode):
         if ccode == 'particle':
-            # ccodes = ('time', 'particles[p].depth', 'particles[p].lat', 'particles[p].lon')
             ccodes = ('time', 'particle->depth', 'particle->lat', 'particle->lon')
         elif ccode[-1] == 'particle':
             ccodes = ccode[:-1]
@@ -1043,13 +1040,10 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        # ccode_eval = node.field.obj.ccode_eval_object(node.var, *node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_FieldEvalNode::args {}".format(args))
         ccode_eval = node.field.obj.ccode_eval_object(node.var, *args)
         stmts = [c.Assign("err", ccode_eval)]
 
         if node.convert:
-            # ccode_conv = node.field.obj.ccode_convert(*node.args.ccode)
             ccode_conv = node.field.obj.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
             stmts += [conv_stat]
@@ -1060,13 +1054,8 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.field)
         self.visit(node.args)
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_VectorFieldEvalNode::args {}".format(node.args.ccode))
-        # ccode_eval = node.field.obj.ccode_eval_object(node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_VectorFieldEvalNode::args {}".format(args))
         ccode_eval = node.field.obj.ccode_eval_object(node.var, node.var2, node.var3, node.field.obj.U, node.field.obj.V, node.field.obj.W, *args)
         if node.field.obj.U.interp_method != 'cgrid_velocity':
-            # ccode_conv1 = node.field.obj.U.ccode_convert(*node.args.ccode)
-            # ccode_conv2 = node.field.obj.V.ccode_convert(*node.args.ccode)
             ccode_conv1 = node.field.obj.U.ccode_convert(*args)
             ccode_conv2 = node.field.obj.V.ccode_convert(*args)
             statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
@@ -1074,7 +1063,6 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         else:
             statements = []
         if node.field.obj.vector_type == '3D':
-            # ccode_conv3 = node.field.obj.W.ccode_convert(*node.args.ccode)
             ccode_conv3 = node.field.obj.W.ccode_convert(*args)
             statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
         conv_stat = c.Block(statements)
@@ -1086,10 +1074,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.args)
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_SummedFieldEvalNode::args {}".format(args))
         for fld, var in zip(node.fields.obj, node.var):
-            # ccode_eval = fld.ccode_eval_object(var, *node.args.ccode)
-            # ccode_conv = fld.ccode_convert(*node.args.ccode)
             ccode_eval = fld.ccode_eval_object(var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (var, ccode_conv))
@@ -1101,13 +1086,9 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.args)
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_SummedVectorFieldEvalNode::args {}".format(args))
         for fld, var, var2, var3 in zip(node.fields.obj, node.var, node.var2, node.var3):
-            # ccode_eval = fld.ccode_eval_object(var, var2, var3, fld.U, fld.V, fld.W, *node.args.ccode)
             ccode_eval = fld.ccode_eval_object(var, var2, var3, fld.U, fld.V, fld.W, *args)
             if fld.U.interp_method != 'cgrid_velocity':
-                # ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
-                # ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
                 ccode_conv1 = fld.U.ccode_convert(*args)
                 ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (var, ccode_conv1)),
@@ -1115,7 +1096,6 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
             else:
                 statements = []
             if fld.vector_type == '3D':
-                # ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval), c.Block(statements)]
@@ -1127,10 +1107,7 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.args)
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_NestedFieldEvalNode::args {}".format(args))
         for fld in node.fields.obj:
-            # ccode_eval = fld.ccode_eval_object(node.var, *node.args.ccode)
-            # ccode_conv = fld.ccode_convert(*node.args.ccode)
             ccode_eval = fld.ccode_eval_object(node.var, *args)
             ccode_conv = fld.ccode_convert(*args)
             conv_stat = c.Statement("%s *= %s" % (node.var, ccode_conv))
@@ -1145,13 +1122,9 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
         self.visit(node.args)
         cstat = []
         args = self._check_FieldSamplingArguments(node.args.ccode)
-        # logger.info("ObjectKernelGenerator.visit_NestedVectorFieldEvalNode::args {}".format(args))
         for fld in node.fields.obj:
-            # ccode_eval = fld.ccode_eval_object(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *node.args.ccode)
             ccode_eval = fld.ccode_eval_object(node.var, node.var2, node.var3, fld.U, fld.V, fld.W, *args)
             if fld.U.interp_method != 'cgrid_velocity':
-                # ccode_conv1 = fld.U.ccode_convert(*node.args.ccode)
-                # ccode_conv2 = fld.V.ccode_convert(*node.args.ccode)
                 ccode_conv1 = fld.U.ccode_convert(*args)
                 ccode_conv2 = fld.V.ccode_convert(*args)
                 statements = [c.Statement("%s *= %s" % (node.var, ccode_conv1)),
@@ -1159,7 +1132,6 @@ class ObjectKernelGenerator(AbstractKernelGenerator):
             else:
                 statements = []
             if fld.vector_type == '3D':
-                # ccode_conv3 = fld.W.ccode_convert(*node.args.ccode)
                 ccode_conv3 = fld.W.ccode_convert(*args)
                 statements.append(c.Statement("%s *= %s" % (node.var3, ccode_conv3)))
             cstat += [c.Assign("err", ccode_eval),
@@ -1192,7 +1164,7 @@ class LoopGenerator(object):
         # ==== Generate type definition for particle type ==== #
         vdeclp = [c.Pointer(c.POD(v.dtype, v.name)) for v in self.ptype.variables]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdeclp, declname=pname)))]
-        # Generate type definition for single particle type
+        # ==== Generate type definition for single particle type ==== #
         vdecl = [c.POD(v.dtype, v.name) for v in self.ptype.variables if v.dtype != np.uint64]
         ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
 
@@ -1406,7 +1378,6 @@ class ParticleObjectLoopGenerator(object):
         update_pdt = c.If("_next_dt_set == 1",
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
 
-        # dt_pos = c.Assign("__dt", "fmin(fabs(particles[p].dt), fabs(endtime - particles[p].time))")                   # original
         dt_pos = c.If("fabs(endtime - particles[p].time) < fabs(particles[p].dt)",
                       c.Block([c.Assign("__dt", "fabs(endtime - particles[p].time)"), c.Assign("reset_dt", "1")]),
                       c.Block([c.Assign("__dt", "fabs(particles[p].dt)"), c.Assign("reset_dt", "0")]))
