@@ -1,6 +1,5 @@
 from datetime import timedelta as delta
 from operator import attrgetter  # NOQA
-# from ctypes import Structure, POINTER
 
 from ctypes import c_void_p
 
@@ -26,7 +25,7 @@ if MPI:
         raise EnvironmentError('sklearn needs to be available if MPI is installed. '
                                'See http://oceanparcels.org/#parallel_install for more information')
 
-__all__ = ['ParticleCollectionAOS', 'ParticleCollectionIteratorAOS']
+__all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
 
 """
 Author: Dr. Christian Kehl
@@ -40,10 +39,6 @@ def _to_write_particles(pd, time):
     """We don't want to write a particle that is not started yet.
     Particle will be written if particle.time is between time-dt/2 and time+dt (/2)
     """
-    # return (np.less_equal(time - np.abs(pd['dt']/2), pd['time'], where=np.isfinite(pd['time']))
-    #         & np.greater_equal(time + np.abs(pd['dt'] / 2), pd['time'], where=np.isfinite(pd['time']))
-    #         & (np.isfinite(pd['id']))
-    #         & (np.isfinite(pd['time'])))
     return [i for i, p in enumerate(pd) if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
 
 
@@ -53,7 +48,6 @@ def _is_particle_started_yet(particle, time):
       * particle.time is equal to time argument of pfile.write()
       * particle.time is before time (in case particle was deleted between previous export and current one)
     """
-    # return np.less_equal(pd['dt']*pd['time'], pd['dt']*time) | np.isclose(pd['time'], time)
     return (particle.dt*particle.time <= particle.dt*time or np.isclose(particle.time, time))
 
 
@@ -83,8 +77,6 @@ class ParticleCollectionAOS(ParticleCollection):
 
         assert pid_orig is not None, "particle IDs are None - incompatible with the collection. Invalid state."
         pid = pid_orig + pclass.lastID
-
-        # self._sorted = np.all(np.diff(pid) >= 0)
 
         assert depth is not None, "particle's initial depth is None - incompatible with the collection. Invalid state."
         assert lon.size == lat.size and lon.size == depth.size, (
@@ -143,7 +135,6 @@ class ParticleCollectionAOS(ParticleCollection):
         self._pclass = pclass
 
         self._ptype = self._pclass.getPType()
-        # logger.info("ParticleCollectionAOS.ptype.dtype = {}".format(self._ptype.dtype))
         self._data = np.empty(lon.shape[0], dtype=pclass)
         initialised = set()
 
@@ -200,8 +191,6 @@ class ParticleCollectionAOS(ParticleCollection):
         super().__del__()
 
     def iterator(self):
-        logger.info("Entering ParticleCollectionAOS.iterator():: creating new iterator")
-        # self._iterator = iter(ParticleCollectionIteratorAOS(self))
         self._iterator = ParticleCollectionIteratorAOS(self)
         return self._iterator
 
@@ -209,14 +198,9 @@ class ParticleCollectionAOS(ParticleCollection):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
         """
-        logger.info("Entering ParticleCollectionAOS.__iter__()")
-        # if self._iterator is None:
-        #     self._iterator = iter( ParticleCollectionIteratorAOS(self) )
         return self.iterator()
 
     def reverse_iterator(self):
-        logger.info("Entering ParticleCollectionAOS.reverse_iterator():: creating new iterator")
-        # self._riterator = iter(ParticleCollectionIteratorAOS(self, True))
         self._riterator = ParticleCollectionIteratorAOS(self, True)
         return self._riterator
 
@@ -225,7 +209,6 @@ class ParticleCollectionAOS(ParticleCollection):
         the elements in the ParticleCollection (e.g.
         `for p in reversed(pset):`).
         """
-        logger.info("Entering ParticleCollectionAOS.__reversed__()")
         return self.reverse_iterator()
 
     def __getitem__(self, index):
@@ -420,14 +403,12 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().get_multi_by_IDs(ids)
         if type(ids) is dict:
-            # ids = [[v,] for v in ids.values()]
             ids = list(ids.values())
 
         if len(ids) == 0:
             return None
 
         data_ids = np.array([p.id for p in self._data])
-        # indices = np.where(data_ids == ids)
         indices = np.in1d(ids, data_ids)
         items_found = indices
         indices = np.nonzero(indices)[0]
@@ -460,7 +441,6 @@ class ParticleCollectionAOS(ParticleCollection):
         self._data = np.concatenate([self._data, np.array(results, dtype=self._pclass)])
         if self._ptype.uses_jit:
             self._data_c = np.concatenate([self._data_c, pd_cdata])
-            # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
@@ -505,7 +485,6 @@ class ParticleCollectionAOS(ParticleCollection):
         self._data = np.concatenate([self._data, same_class.data])
         if self._ptype.uses_jit:
             self._data_c = np.concatenate([self._data_c, same_class.data_c])
-            # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
@@ -610,7 +589,6 @@ class ParticleCollectionAOS(ParticleCollection):
             self._data_c = np.delete(self._data_c, index)
             # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
-                # p.set_cptr(pdata)
                 p._cptr = pdata
 
         self._ncount -= 1
@@ -678,22 +656,13 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().remove_same(same_class)
         indices = []
-
         indices = np.in1d(same_class.data, self._data)
         indices = None if len(indices) == 0 else np.nonzero(indices)[0]
-
-        # for item in same_class:
-        #     index = np.where(self._data == item)
-        #     index = None if len(index) == 0 else index[0]
-        #     index = None if index.size == 0 else index[0]
-        #     indices.append(index)
 
         self._data = np.delete(self._data, indices)
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
-            # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
-                # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
 
@@ -713,17 +682,10 @@ class ParticleCollectionAOS(ParticleCollection):
         indices = np.in1d(ids, data_ids)
         indices = None if len(indices) == 0 else np.nonzero(indices)[0]
 
-        # indices = []
-        # for item in pcollection:
-        #     index = self.get_index_by_ID(item.id)
-        #     indices.append(index)
-
         self._data = np.delete(self._data, indices)
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
-            # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
-                # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
 
@@ -739,23 +701,15 @@ class ParticleCollectionAOS(ParticleCollection):
         """
         super().remove_multi_by_PyCollection_Particles(pycollectionp)
         npcollectionp = np.array(pycollectionp, dtype=self._pclass)
-        # npindices = np.where(self._data == npcollectionp)
         npindices = np.in1d(npcollectionp, self._data)
         indices = None if len(npindices) == 0 else np.nonzero(npindices)[0]
         if indices is None:
             return
 
-        # indices = []
-        # for item in pycollectionp:
-        #     index = self.get_index_by_ID(item.id)
-        #     indices.append(index)
-
         self._data = np.delete(self._data, indices)
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
-            # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
-                # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
 
@@ -772,9 +726,7 @@ class ParticleCollectionAOS(ParticleCollection):
         self._data = np.delete(self._data, indices)
         if self.ptype.uses_jit:
             self._data_c = np.delete(self._data_c, indices)
-            # Update C-pointer on particles
             for p, pdata in zip(self._data, self._data_c):
-                # p.set_cptr(pdata)
                 p._cptr = pdata
         self._ncount = self._data.shape[0]
 
@@ -966,7 +918,6 @@ class ParticleCollectionAOS(ParticleCollection):
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                # self.max_index_written = -1
                 if deleted_only:  # is not False
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         data_states = [p.state for p in self._data]
@@ -978,19 +929,13 @@ class ParticleCollectionAOS(ParticleCollection):
                             indices_to_write = [i for i, p in self._data if p in deleted_only]
                 else:
                     indices_to_write = _to_write_particles(self._data, time)
-                logger.info("ParticleCollectionAOS::toDictionary - indices_to_write={}".format(indices_to_write))
                 if len(indices_to_write) > 0:
                     for var in pfile.var_names:
-                        # if type(getattr(self._data[0], var)) in [np.uint64, np.int64, np.uint32]:
-                        #     data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
-                        # else:
-                        #     data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
                         if 'id' in var:
                             data_dict[var] = np.array([np.int64(getattr(p, var)) for p in self._data[indices_to_write]])
                         else:
                             data_dict[var] = np.array([getattr(p, var) for p in self._data[indices_to_write]])
                     pfile.maxid_written = np.maximum(pfile.maxid_written, np.max(data_dict['id']))
-                logger.info("ParticleCollectionAOS::toDictionary - indices_to_write={}".format(indices_to_write))
 
                 pset_errs = [p for p in self._data[indices_to_write] if p.state != OperationCode.Delete and abs(time-p.time) > 1e-3 and np.isfinite(p.time)]
                 for p in pset_errs:
@@ -1000,8 +945,6 @@ class ParticleCollectionAOS(ParticleCollection):
                     pfile.time_written.append(time)
 
                 if len(pfile.var_names_once) > 0:
-                    # indices_to_write = _to_write_particles(self._data, time)
-                    # first_write = [p for p in self._data[indices_to_write] if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
                     # _to_write_particles(self._data, time)
                     first_write = [p for p in self._data if _is_particle_started_yet(p, time) and (np.int64(p.id) not in pfile.written_once)]
                     if np.any(first_write):
@@ -1010,7 +953,6 @@ class ParticleCollectionAOS(ParticleCollection):
                             data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
                         pfile.written_once.extend(np.array(data_dict_once['id']).astype(dtype=np.int64).tolist())
 
-            # if not deleted_only:
             if deleted_only is False:
                 pfile.lasttime_written = time
 
@@ -1102,45 +1044,16 @@ class ParticleAccessorAOS(BaseParticleAccessor):
         else:
             setattr(self._pcoll.data[self._index], name, value)
 
-    # def delete(self):
-    #     """Signal the underlying particle for deletion."""
-    #     self.state = OperationCode.Delete
-    #     # self.pcoll.data[self._index].state = OperationCode.Delete
-
-    # def set_state(self, state):
-    #     """Syntactic sugar for changing the state of the underlying
-    #     particle.
-    #     """
-    #     self.state = state
-    #     # self.pcoll.data[self._index].state = state
-
-    # def succeeded(self):
-    #     self.state = StateCode.Success
-    #     # self.pcoll.data[self._index].state = StateCode.Success
-
-    # def isComputed(self):
-    #     return self.state == StateCode.Success
-    #     # return self.pcoll.data[self._index].state == StateCode.Success
-
-    # def reset_state(self):
-    #     self.state = StateCode.Evaluate
-    #     # self.pcoll.data[self._index].state = StateCode.Evaluate
-
     def getPType(self):
-        logger.info("ParticleAccessorAOS::getPType - executing ...")
         return self._pcoll.data[self._index].getPType()
-        # return self._pcoll.ptype
 
     def update_next_dt(self, next_dt=None):
-        logger.info("ParticleAccessorAOS::update_next_dt - executing - initial dt = {}".format(self._pcoll.data[self._index].dt))
-        # self._pcoll.data[self._index].update_next_dt(next_dt)
         if next_dt is None:
             if self._next_dt is not None:
                 self._pcoll._data[self._index].dt = self._next_dt
                 self._next_dt = None
         else:
             self._next_dt = next_dt
-        logger.info("ParticleAccessorAOS::update_next_dt - executed - final dt = {}".format(self._pcoll.data[self._index].dt))
 
     def __repr__(self):
         return repr(self._pcoll.data[self._index])
@@ -1194,21 +1107,16 @@ class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
         if len(self._indices) > 0:
             self._head = ParticleAccessorAOS(pcoll, self._indices[0])
             self._tail = ParticleAccessorAOS(pcoll, self._indices[self.max_len - 1])
-        # self.p = self._head
         self.p = None
 
     def __next__(self):
         """Returns a ParticleAccessor for the next particle in the
         ParticleSet.
         """
-        logger.info("ParticleCollectionIteratorAOS.__next__() - index: {}; max_len: {}".format(self._index, self.max_len))
         if self._index < self.max_len:
             self._prev_index = self._index
             self._index += 1
             return ParticleAccessorAOS(self._pcoll, self._indices[self._prev_index])
-
-        logger.info("ParticleCollectionIteratorAOS.__next__() - raising StopIteration")
-        # End of Iteration
         raise StopIteration
 
     @property
@@ -1216,11 +1124,6 @@ class ParticleCollectionIteratorAOS(BaseParticleCollectionIterator):
         if (self.max_len > self._prev_index) and (self._prev_index > -1):
             return ParticleAccessorAOS(self._pcoll, self._indices[self._prev_index])
         raise IndexError
-
-    # def __iter__(self):
-    #     logger.info("ParticleCollectionIteratorAOS.__iter()")
-    #     # return super(ParticleCollectionIteratorAOS, self).__iter__()
-    #     return self
 
     def __repr__(self):
         dir_str = 'Backward' if self._reverse else 'Forward'
