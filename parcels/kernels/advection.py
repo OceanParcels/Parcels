@@ -13,7 +13,6 @@ def AdvectionRK4(particle, fieldset, time):
 
     Function needs to be converted to Kernel object before execution"""
     (u1, v1) = fieldset.UV[particle]
-    # (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
     lon1, lat1 = (particle.lon + u1*.5*particle.dt, particle.lat + v1*.5*particle.dt)
     (u2, v2) = fieldset.UV[time + .5 * particle.dt, particle.depth, lat1, lon1, particle]
     lon2, lat2 = (particle.lon + u2*.5*particle.dt, particle.lat + v2*.5*particle.dt)
@@ -29,7 +28,6 @@ def AdvectionRK4_3D(particle, fieldset, time):
 
     Function needs to be converted to Kernel object before execution"""
     (u1, v1, w1) = fieldset.UVW[particle]
-    # (u1, v1, w1) = fieldset.UVW[time, particle.depth, particle.lat, particle.lon]
     lon1 = particle.lon + u1*.5*particle.dt
     lat1 = particle.lat + v1*.5*particle.dt
     dep1 = particle.depth + w1*.5*particle.dt
@@ -51,8 +49,7 @@ def AdvectionEE(particle, fieldset, time):
     """Advection of particles using Explicit Euler (aka Euler Forward) integration.
 
     Function needs to be converted to Kernel object before execution"""
-    # (u1, v1) = fieldset.UV[particle]
-    (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon]
+    (u1, v1) = fieldset.UV[particle]
     particle.lon += u1 * particle.dt
     particle.lat += v1 * particle.dt
 
@@ -74,7 +71,6 @@ def AdvectionRK45(particle, fieldset, time):
     b5 = [16./135., 0., 6656./12825., 28561./56430., -9./50., 2./55.]
 
     (u1, v1) = fieldset.UV[particle]
-    # (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
     lon1, lat1 = (particle.lon + u1 * A[0][0] * particle.dt,
                   particle.lat + v1 * A[0][0] * particle.dt)
     (u2, v2) = fieldset.UV[time + c[0] * particle.dt, particle.depth, lat1, lon1, particle]
