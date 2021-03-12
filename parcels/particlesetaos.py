@@ -12,15 +12,12 @@ from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernelaos import KernelAOS
-from parcels.particle import Variable, ScipyParticle, JITParticle # noqa
+from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
 from parcels.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
 from parcels.particlesets.baseparticleset import BaseParticleSet
 from parcels.collectionaos import ParticleCollectionAOS
 from parcels.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA
-
-# from .collectionsoa import ParticleCollectionSOA
-# from .collectionsoa import ParticleCollectionIteratorSOA
 
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
@@ -28,11 +25,6 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
-# == comment CK: prevents us from adding KDTree as 'mandatory' dependency == #
-try:
-    from pykdtree.kdtree import KDTree
-except:
-    KDTree = None
 
 __all__ = ['ParticleSetAOS']
 
@@ -84,7 +76,6 @@ class ParticleSetAOS(BaseParticleSet):
 
     def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
         super(ParticleSetAOS, self).__init__()
-        logger.info("ParticleSetSOA::__init__() - type(pclass) = {}".format(pclass))
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
         # ==== see dynamic-instantiation trick here: https://www.python-course.eu/python3_classes_and_type.php ==== #
@@ -331,9 +322,6 @@ class ParticleSetAOS(BaseParticleSet):
         """
         p = self._collection.get_single_by_ID(id)
         p.state = OperationCode.Delete
-        # ==== Back-Up if the by-ref setting doesn't work ==== #
-        # index = self._collection.get_index_by_ID(id)
-        # self.delete_by_index(index)
 
     def _set_particle_vector(self, name, value):
         """Set attributes of all particles to new values.
@@ -341,7 +329,6 @@ class ParticleSetAOS(BaseParticleSet):
         :param name: Name of the attribute (str).
         :param value: New value to set the attribute of the particles to.
         """
-        # self.collection._data[name][:] = value
         [setattr(p, name, value) for p in self._collection.data]
 
     def _impute_release_times(self, default):
@@ -350,12 +337,6 @@ class ParticleSetAOS(BaseParticleSet):
         :param default: Default release time.
         :return: Minimum and maximum release times.
         """
-        # null_ptimes_p = [p for p in self._collection.data if np.isnan(p.time)]
-        # if len(null_ptimes_p) > 0:
-        #     for p in null_ptimes_p:
-        #         p.time = default
-        # ptimes = np.array([p.time for p in self._collection.data], dtype=np.float64)
-        # return np.min(ptimes), np.max(ptimes)
         max_rt = None
         min_rt = None
         for p in self:
@@ -378,8 +359,7 @@ class ParticleSetAOS(BaseParticleSet):
                        `compare_values`.
         :return: Numpy array of indices that satisfy the test.
         """
-        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict,
-                                                                                      np.ndarray] else compare_values
+        compare_values = np.array([compare_values, ]) if type(compare_values) not in [list, dict, np.ndarray] else compare_values
         result = []
         if not invert:
             result = [i for i, p in enumerate(self._collection.data) if getattr(p, variable_name) in compare_values]
@@ -413,9 +393,6 @@ class ParticleSetAOS(BaseParticleSet):
             if p.state not in [StateCode.Success, StateCode.Evaluate]]
         return self._collection.get_multi_by_indices(indices=error_indices)
 
-        # error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
-        # return ParticleCollectionIterableAOS(self._collection, subset=error_indices)
-
     @property
     def num_error_particles(self):
         """Get the number of particles that are in an error state.
@@ -425,7 +402,6 @@ class ParticleSetAOS(BaseParticleSet):
         return np.sum([True for p in self._collection if p.state not in [StateCode.Success, StateCode.Evaluate]])
 
     def __iter__(self):
-        logger.info("Entering ParticleSetAOS.__iter__()")
         return super(ParticleSetAOS, self).__iter__()
 
     def iterator(self):
@@ -451,7 +427,6 @@ class ParticleSetAOS(BaseParticleSet):
 
     @property
     def size(self):
-        # ==== to change at some point - len and size are different things ==== #
         return len(self._collection)
 
     def __repr__(self):
