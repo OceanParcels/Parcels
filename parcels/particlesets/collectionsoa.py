@@ -140,16 +140,11 @@ class ParticleCollectionSOA(ParticleCollection):
         self._data = {}
         initialised = set()
 
-        # self._ncount = self._data['lon'].shape[0]
         self._ncount = len(lon)
-
-        # for vname in ['xi', 'yi', 'zi', 'ti']:
-        #     self._data[vname] = np.empty((self._ncount, ngrid), dtype=np.int32)
 
         for v in self.ptype.variables:
             if v.name in ['xi', 'yi', 'zi', 'ti']:
                 self._data[v.name] = np.empty((len(lon), ngrid), dtype=v.dtype)
-                # pass
             else:
                 self._data[v.name] = np.empty(self._ncount, dtype=v.dtype)
 
@@ -210,7 +205,6 @@ class ParticleCollectionSOA(ParticleCollection):
         super().__del__()
 
     def iterator(self):
-        logger.info("Entering ParticleCollectionSOA.iterator():: creating new iterator")
         self._iterator = ParticleCollectionIteratorSOA(self)
         return self._iterator
 
@@ -218,14 +212,9 @@ class ParticleCollectionSOA(ParticleCollection):
         """Returns an Iterator that allows for forward iteration over the
         elements in the ParticleCollection (e.g. `for p in pset:`).
         """
-        logger.info("Entering ParticleCollectionSOA.__iter__()")
-        # if self._iterator is None:
-        #     self._iterator = iter( ParticleCollectionIteratorAOS(self) )
-        # return self._iterator
         return self.iterator()
 
     def reverse_iterator(self):
-        logger.info("Entering ParticleCollectionSOA.reverse_iterator():: creating new iterator")
         self._riterator = ParticleCollectionIteratorSOA(self, True)
         return self._riterator
 
@@ -234,8 +223,6 @@ class ParticleCollectionSOA(ParticleCollection):
         the elements in the ParticleCollection (e.g.
         `for p in reversed(pset):`).
         """
-        logger.info("Entering ParticleCollectionSOA.__reversed__()")
-        # return self._riterator
         return self.reverse_iterator()
 
     def __getitem__(self, index):
@@ -822,11 +809,8 @@ class ParticleCollectionSOA(ParticleCollection):
         """
         'cstruct' returns the ctypes mapping of the particle data. This depends on the specific structure in question.
         """
-        # predefined = [('xi', np.int32), ('yi', np.int32), ('zi', np.int32), ('ti', np.int32)]
         class CParticles(Structure):
-            # TODO adapt naming of _fields_ in CParticles (code generator) into _variables_
             _fields_ = [(v.name, POINTER(np.ctypeslib.as_ctypes_type(v.dtype))) for v in self._ptype.variables]
-            # _fields_ += [(v[0], POINTER(np.ctypeslib.as_ctypes_type(v[1]))) for v in predefined]
 
         def flatten_dense_data_array(vname):
             data_flat = self._data[vname].view()
@@ -834,7 +818,6 @@ class ParticleCollectionSOA(ParticleCollection):
             return np.ctypeslib.as_ctypes(data_flat)
 
         cdata = [flatten_dense_data_array(v.name) for v in self._ptype.variables]
-        # cdata += [flatten_dense_data_array(v[0]) for v in predefined]
         cstruct = CParticles(*cdata)
         return cstruct
 
@@ -1053,11 +1036,7 @@ class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
             self._index += 1
             return self.p
 
-        # End of Iteration
         raise StopIteration
-
-    # def __iter__(self):
-    #     return super(ParticleCollectionIteratorSOA, self).__iter__()
 
     @property
     def current(self):
