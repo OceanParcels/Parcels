@@ -9,7 +9,6 @@ except:
     MPI = None
 
 from parcels.baseparticlefile import BaseParticleFile
-from parcels.tools.loggers import logger
 
 __all__ = ['ParticleFileAOS']
 
@@ -72,7 +71,6 @@ class ParticleFileAOS(BaseParticleFile):
         :param time_steps: Number of time steps that were written in out directory
         :param var: name of the variable to read
         """
-        logger.info("ParticleFileAOS::read_from_npy - maxid_written={}".format(self.maxid_written))
         data = np.nan * np.zeros((self.maxid_written+1, time_steps))
         time_index = np.zeros(self.maxid_written+1, dtype=np.int64)
         t_ind_used = np.zeros(time_steps, dtype=np.int64)
