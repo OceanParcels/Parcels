@@ -113,7 +113,6 @@ class ParticleType(object):
         # Developer note: other dtypes (mostly 2-byte ones) are not supported now
         # because implementing and aligning them in cgen.GenerableStruct is a
         # major headache. Perhaps in a later stage
-        # return [np.int32, np.int64, np.float32, np.double, np.float64, c_void_p]
         return [np.int32, np.uint32, np.int64, np.uint64, np.float32, np.double, np.float64, c_void_p]
 
 
@@ -153,7 +152,6 @@ class _Particle(object):
 
     @classmethod
     def getPType(cls):
-        logger.info("Particle::getPType - executing ...")
         return ParticleType(cls)
 
     @classmethod
@@ -182,11 +180,6 @@ class ScipyParticle(_Particle):
     lat = Variable('lat', dtype=np.float32)
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
-    # ngrids = Variable('ngrids', dtype=np.int32, to_write=False, initial=-1)
-    # xi = Variable('xi', dtype=np.int32, to_write=False)  # np.dtype(c_void_p)
-    # yi = Variable('yi', dtype=np.int32, to_write=False)  # np.dtype(c_void_p)
-    # zi = Variable('zi', dtype=np.int32, to_write=False)  # np.dtype(c_void_p)
-    # ti = Variable('ti', dtype=np.int32, to_write=False, initial=-1)  # np.dtype(c_void_p)
     id = Variable('id', dtype=np.int64)
     fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
     dt = Variable('dt', dtype=np.float64, to_write=False)
@@ -205,18 +198,6 @@ class ScipyParticle(_Particle):
         type(self).fileid.initial = -1
         type(self).dt.initial = None
         type(self).next_dt.initial = np.nan
-
-        # if self.ngrids < 0:
-        #     numgrids = ngrids
-        #     if numgrids is None and fieldset is not None:
-        #         numgrids = fieldset.gridset.size
-        #     assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-        #     type(self).ngrids.initial = numgrids
-        # for index in ['xi', 'yi', 'zi', 'ti']:
-        #     if index != 'ti':
-        #         setattr(self, index, np.zeros(self.ngrids, dtype=np.int32))
-        #     else:
-        #         setattr(self, index, -1*np.ones(self.ngrids, dtype=np.int32))
 
         super(ScipyParticle, self).__init__()
 
@@ -253,14 +234,12 @@ class ScipyParticle(_Particle):
         cls.depth.dtype = dtype
 
     def update_next_dt(self, next_dt=None):
-        logger.info("Particle::update_next_dt - executing - initial dt = {}".format(self.dt))
         if next_dt is None:
             if self._next_dt is not None:
                 self.dt = self._next_dt
                 self._next_dt = None
         else:
             self._next_dt = next_dt
-        logger.info("Particle::update_next_dt - executed - final dt = {}".format(self.dt))
 
     def __eq__(self, other):
         if type(self) is not type(other):
@@ -321,11 +300,6 @@ class JITParticle(ScipyParticle):
 
     """
 
-    # cxi = Variable('cxi', dtype=np.dtype(c_void_p), to_write=False)
-    # cyi = Variable('cyi', dtype=np.dtype(c_void_p), to_write=False)
-    # czi = Variable('czi', dtype=np.dtype(c_void_p), to_write=False)
-    # cti = Variable('cti', dtype=np.dtype(c_void_p), to_write=False)
-
     def __init__(self, *args, **kwargs):
         self._cptr = kwargs.pop('cptr', None)
         if self._cptr is None:
@@ -333,22 +307,6 @@ class JITParticle(ScipyParticle):
             ptype = self.getPType()
             self._cptr = np.empty(1, dtype=ptype.dtype)[0]
         super(JITParticle, self).__init__(*args, **kwargs)
-
-        # fieldset = kwargs.get('fieldset', None)
-        # ngrids = kwargs.get('ngrids', None)
-        # numgrids = ngrids
-        # if numgrids is None and fieldset is not None:
-        #     numgrids = fieldset.gridset.size
-        # assert numgrids is not None, "Neither fieldsets nor number of grids are specified - exiting."
-        # if numgrids is not None:
-        #     for index in ['xi', 'yi', 'zi', 'ti']:
-        #         if index != 'ti':
-        #             setattr(self, index, np.zeros((numgrids), dtype=np.int32))
-        #         else:
-        #             setattr(self, index, -1*np.ones((numgrids), dtype=np.int32))
-        #
-        #         setattr(self, index+'p', getattr(self, index).ctypes.data_as(c_void_p))  # without direct (!) prior recast, throws error that the dtype (here: int32) has no ctypes-property
-        #         setattr(self, 'c'+index, getattr(self, index+'p').value)
 
     def __del__(self):
         super(JITParticle, self).__del__()
