@@ -90,9 +90,7 @@ class KernelAOS(BaseKernel):
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
         self.name = "%s%s" % (self._ptype.name, self.funcname)
-        # logger.info("KernelAOS::__init__.ptype_name = ({}, {}, {}, {})".format(ptype.name, self._ptype.name, self.funcname, self.name))
 
-        # ======== THIS NEEDS TO BE REFACTORED BASED ON THE TYPE OF PARTICLE BEING USED ======== #
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
             kernelgen = KernelGenerator(self.fieldset, ptype)
@@ -114,10 +112,8 @@ class KernelAOS(BaseKernel):
                 c_include_str = c_include
             self.ccode = loopgen.generate(self.funcname, self.field_args, self.const_args,
                                           kernel_ccode, c_include_str)
-            # logger.info("KernelAOS: Generated Kernel - compiling C-code now ...")
 
             src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            # logger.info("KernelAOS: C-code compiled.")
             if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
                 self.dyn_srcs = src_file_or_files
             else:
@@ -176,11 +172,7 @@ class KernelAOS(BaseKernel):
         if self.const_args is not None:
             fargs += [c_double(f) for f in self.const_args.values()]
 
-        # pdata = pset.particle_data.ctypes.data_as(c_void_p)
         pdata = pset.ctypes_struct
-        # logger.info("KernelAOS::execute_jit.pdata = {}".format(pdata))
-        # d_array = pset.particle_data.astype(pset.ptype.dtype)
-        # logger.info("KernelAOS::execute_jit.d_array = {}".format(d_array[0]))
         if len(fargs) > 0:
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt), *fargs)
         else:
@@ -207,29 +199,8 @@ class KernelAOS(BaseKernel):
                     continue
                 f.data = np.array(f.data)
 
-        # for f in pset.fieldset.get_fields():
-        # for f in self.fieldset.get_fields():
-        #     if type(f) in [VectorField, NestedField, SummedField]:
-        #         continue
-        #     if f in pset.fieldset.get_fields():
-        #         f.chunk_data()
-        #     else:
-        #         for block_id in range(len(f.data_chunks)):
-        #             f.data_chunks[block_id] = None
-        #             f.c_data_chunks[block_id] = None
-
-        # for p in pset:
-        prev_i = -1
-        i = -1
-        # for i, p in enumerate(pset.iterator()):
-        # for i, p in enumerate(pset):
         for p in pset:
-            i += 1
-            logger.info("iteration {} - endtime: {} - p.id={} p.time={} p.coord=({}, {}, {})".format(i, endtime, p.id, p.time, p.lon, p.lat, p.depth))
             ptype = p.getPType()
-            if prev_i == i:
-                raise IndexError
-            prev_i = i
             pdt_prekernels = .0
             # Don't execute particles that aren't started yet
             sign_end_part = np.sign(endtime - p.time)
@@ -250,10 +221,6 @@ class KernelAOS(BaseKernel):
                 continue
 
             while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
-                if i == 0:
-                    logger.info("P at time={}: {}; dt={}; state={}".format(endtime, p, p.dt, p.state))
-
-                # for var in pset.collection.ptype.variables:
                 for var in ptype.variables:
                     p_var_back[var.name] = getattr(p, var.name)
                 try:
@@ -307,13 +274,11 @@ class KernelAOS(BaseKernel):
                         dt_pos = 0
 
                     p.set_state(res)
-                    logger.info("P at time={}: {}; dt={}; state={}".format(endtime, p, p.dt, p.state))
                     if np.isclose(dt, 0):
                         break
                 else:
                     p.set_state(res)
                     # Try again without time update
-                    # for var in pset.collection.ptype.variables:
                     for var in ptype.variables:
                         if var.name not in ['dt', 'state']:
                             setattr(p, var.name, p_var_back[var.name])
@@ -331,20 +296,15 @@ class KernelAOS(BaseKernel):
 
     def remove_deleted(self, pset, output_file, endtime):
         """Utility to remove all particles that signalled deletion"""
-        logger.info("KernelAOS::remove_deleted - collect indices ...")
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        logger.info("KernelAOS::remove_deleted - {} indices collect.".format(len(indices)))
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
-        logger.info("KernelAOS::execute() - executing with endtime = {}".format(endtime))
-        logger.info("KernelAOS::execute() - resetting the state ...")
         for p in pset:
             p.reset_state()
-        logger.info("KernelAOS::execute() - state reset.")
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
@@ -362,30 +322,19 @@ class KernelAOS(BaseKernel):
                     g.load_chunk = np.where(g.load_chunk == g.chunk_loaded_touched,
                                             g.chunk_deprecated, g.load_chunk)
 
-        logger.info("KernelAOS::execute() - executing kernel function ...")
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
             self.execute_jit(pset, endtime, dt)
         else:
             self.execute_python(pset, endtime, dt)
-        logger.info("KernelAOS::execute() - kernel function returned.")
 
-        logger.info("KernelAOS::execute() - removing deleted particles ...")
         # Remove all particles that signalled deletion
         self.remove_deleted(pset, output_file=output_file, endtime=endtime)
-        logger.info("KernelAOS::execute() - deleted particles removed.")
 
         # Identify particles that threw errors
-        logger.info("KernelAOS::execute() - collecting erroneous particles ...")
-        for p in pset:
-            logger.info("P({}) - state: {}".format(p.id, p.state))
         error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]
-        logger.info("KernelAOS::execute() - {} erroneous particles collected.".format(len(error_particles)))
-        # error_particles = [p for p in pset.iterator() if p.state not in [StateCode.Success, StateCode.Evaluate]]
 
-        cleanup_iter = 0
         while len(error_particles) > 0:
-            logger.info("KernelAOS::execute() - while-loop - iteration {}".format(cleanup_iter))
             # Apply recovery kernel
             for p in error_particles:
                 if p.state == OperationCode.StopExecution:
@@ -397,34 +346,22 @@ class KernelAOS(BaseKernel):
                     pass
                 elif p.state in recovery_map:
                     recovery_kernel = recovery_map[p.state]
-                    # p.state = StateCode.Success
                     p.set_state(StateCode.Success)
                     recovery_kernel(p, self.fieldset, p.time)
-                    if p.state == StateCode.Success:  # (p.isComputed()):
-                        # p.reset_state()
-                        p.set_state(StateCode.Evaluate)
+                    if (p.isComputed()):  # p.state == StateCode.Success
+                        p.reset_state()
+                        # p.set_state(StateCode.Evaluate)
                 else:
                     logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
                     p.delete()
-                logger.info("KernelAOS - while-loop - new pstate of P({}): {}".format(p.id, p.state))
 
             # Remove all particles that signalled deletion
-            logger.info("KernelAOS::execute() - # particles {} - removing deleted particles in clean-up loop {} ...".format(len(pset), cleanup_iter))
             self.remove_deleted(pset, output_file=output_file, endtime=endtime)
-            logger.info("KernelAOS::execute() - # particles {} - deleted particles in clean-up loop {} removed.".format(len(pset), cleanup_iter))
 
             # Execute core loop again to continue interrupted particles
-            logger.info("KernelAOS::execute() - executing kernel function in clean-up loop {} ...".format(cleanup_iter))
             if self.ptype.uses_jit:
                 self.execute_jit(pset, endtime, dt)
             else:
                 self.execute_python(pset, endtime, dt)
-            logger.info("KernelAOS::execute() - kernel function in clean-up loop {} returned.".format(cleanup_iter))
 
-            logger.info("KernelAOS::execute() - collecting erroneous particles in clean-up loop {} ...".format(cleanup_iter))
-            for p in pset:
-                logger.info("P({}) - state: {}".format(p.id, p.state))
             error_particles = [p for p in pset if p.state not in [StateCode.Success, StateCode.Evaluate]]
-            logger.info("KernelAOS::execute() - {} erroneous particles in clean-up loop {} collected.".format(len(error_particles), cleanup_iter))
-            # error_particles = [p for p in pset.iterator() if p.state not in [StateCode.Success, StateCode.Evaluate]]
-            cleanup_iter += 1
