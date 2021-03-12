@@ -56,31 +56,13 @@ class BaseParticleSet(NDCluster):
         self._collection = None
 
     def iterator(self):
-        # if self._iterator is None:
-        # self._iterator = iter(self._collection)
-        logger.info("Entering BaseParticleSet.iterator()")
-        # return self._iterator
         return self._collection.iterator()
-        # return iter(self._collection)
 
     def __iter__(self):
         """Allows for more intuitive iteration over a particleset, while
         in reality iterating over the particles in the collection.
         """
-        # if self._iterator is None:
-        # self._iterator = iter(self._collection)
-        # return self
-        logger.info("Entering BaseParticleSet.__iter__()")
-        # return self._collection.iterator()
         return self.iterator()
-
-    # def __next__(self):
-    #     if self._iterator is None:
-    #         raise StopIteration
-    #     try:
-    #         return next(self._iterator)
-    #     except StopIteration:
-    #         raise StopIteration
 
     def __getattr__(self, name):
         """
