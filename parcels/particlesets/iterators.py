@@ -27,9 +27,6 @@ class BaseParticleCollectionIterator(ABC):
         self._tail = None
         self._current = None
 
-    # def __iter__(self):
-    #     return self
-
     @abstractmethod
     def __next__(self):
         """Returns a ParticleAccessor for the next particle in the
