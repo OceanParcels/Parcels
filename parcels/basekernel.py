@@ -7,7 +7,6 @@ from os import path
 from os import remove
 from sys import platform
 from sys import version_info
-# from weakref import finalize
 from ast import FunctionDef
 from hashlib import md5
 from parcels.tools.loggers import logger
@@ -146,7 +145,7 @@ class BaseKernel(object):
                             warning = True
                 if warning:
                     logger.warning_once('Note that in AdvectionRK4_3D, vertical velocity is assumed positive towards increasing z.\n'
-                                        '         If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
+                                        '  If z increases downward and w is positive upward you can re-orient it downwards by setting fieldset.W.set_scaling_factor(-1.)')
             elif pyfunc is AdvectionAnalytical:
                 if self._ptype.uses_jit:
                     raise NotImplementedError('Analytical Advection only works in Scipy mode')
@@ -168,23 +167,6 @@ class BaseKernel(object):
         return numkernelargs
 
     def remove_lib(self):
-        # (async) unload the currently loaded dynamic linked library to be secure
-
-        # if self._cleanup_lib is not None:
-        #     res = tuple()
-        #     while res is not None:
-        #         res = self._cleanup_lib.detach()
-        #     del self._lib
-        #     self._lib = None
-        # if self._cleanup_files is not None:
-        #     res = tuple()
-        #     while res is not None:
-        #         res = self._cleanup_files.detach()
-        #     # self.dyn_srcs = None
-        #     # self.src_file = None
-        #     # self.log_file = None
-        #     # self.lib_file = None
-
         if self._lib is not None:
             BaseKernel.cleanup_unload_lib(self._lib)
             del self._lib
@@ -201,11 +183,6 @@ class BaseKernel(object):
             all_files_array.append(self.log_file)
         if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
             BaseKernel.cleanup_remove_files(self.lib_file, all_files_array, self.delete_cfiles)
-
-        # self.dyn_srcs = None
-        # self.src_file = None
-        # self.log_file = None
-        # self.lib_file = None
 
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
@@ -230,7 +207,7 @@ class BaseKernel(object):
             basename = mpi_comm.bcast(basename, root=0)
             basename = basename + "_%d" % mpi_rank
         else:
-            cache_name = self._cache_key    # only required here because loading is done by Kernel class instead of Compiler class
+            cache_name = self._cache_key  # only required here because loading is done by Kernel class instead of Compiler class
             dyn_dir = get_cache_dir()
             basename = "%s_0" % cache_name
         lib_path = "lib" + basename
@@ -266,12 +243,10 @@ class BaseKernel(object):
             logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
             if self.log_file is not None:
                 all_files_array.append(self.log_file)
-            # self._cleanup_files = finalize(self, BaseKernel.cleanup_remove_files, self.lib_file, all_files_array, self.delete_cfiles)
 
     def load_lib(self):
         self._lib = npct.load_library(self.lib_file, '.')
         self._function = self._lib.particle_loop
-        # self._cleanup_lib = finalize(self, BaseKernel.cleanup_unload_lib, self._lib)
 
     def merge(self, kernel, kclass):
         funcname = self.funcname + kernel.funcname
@@ -321,7 +296,6 @@ class BaseKernel(object):
 
         This version is generally applicable to all structures and collections
         """
-        # Indices marked for deletion.
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
         if len(indices) > 0:
             logger.info("Deleted {} particles.".format(len(indices)))
