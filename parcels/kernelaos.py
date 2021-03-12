@@ -340,15 +340,15 @@ class KernelAOS(BaseKernel):
                 if p.state == OperationCode.StopExecution:
                     return
                 if p.state == OperationCode.Repeat:
-                    # p.reset_state()
-                    p.set_state(StateCode.Evaluate)
+                    p.reset_state()
+                    # p.set_state(StateCode.Evaluate)
                 elif p.state == OperationCode.Delete:
                     pass
                 elif p.state in recovery_map:
                     recovery_kernel = recovery_map[p.state]
                     p.set_state(StateCode.Success)
                     recovery_kernel(p, self.fieldset, p.time)
-                    if (p.isComputed()):  # p.state == StateCode.Success
+                    if p.isComputed():  # p.state == StateCode.Success
                         p.reset_state()
                         # p.set_state(StateCode.Evaluate)
                 else:
