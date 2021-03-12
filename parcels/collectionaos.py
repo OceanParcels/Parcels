@@ -475,14 +475,14 @@ class ParticleCollectionAOS(ParticleCollection):
         super().add_single(particle_obj)
         assert isinstance(particle_obj, ScipyParticle)
         self._data = np.concatenate([self._data, particle_obj])
+        self._ncount = self._data.shape[0]
         if self._ptype.uses_jit and isinstance(particle_obj, JITParticle):
             tmp_addr = self._data_c
             prev_ncount = tmp_addr.shape[0]
             self._data_c = np.array(self._ncount, dtype=self._ptype.dtype)
-            self._data_c[0:prev_ncount-1] = tmp_addr[:]
+            self._data_c[0:max(prev_ncount-1, 0)] = tmp_addr[:]
             self._data_c[-1] = particle_obj._cptr
             # particle_obj._cptr = self._data_c[-1]
-        self._ncount = self._data.shape[0]
 
     def add_same(self, same_class):
         """
@@ -497,6 +497,8 @@ class ParticleCollectionAOS(ParticleCollection):
 
         if self._ncount <= 0:
             self._data = same_class._data
+            if same_class.ptype.uses_jit and self._ptype.uses_jit:
+                self._data_c = same_class._data_c
             self._ncount = same_class.ncount
             return
 

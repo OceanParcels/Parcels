@@ -43,7 +43,7 @@ def _convert_to_array(var):
     """
     if isinstance(var, np.ndarray):
         return var.flatten()
-    elif isinstance(var, (int, float, np.float32, np.int32)):
+    elif isinstance(var, (int, float, np.float32, np.float64, np.int32)):
         return np.array([var])
     else:
         return np.array(var)

@@ -1,7 +1,7 @@
 from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode)
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
-from parcels import ParticleSet
+# from parcels import ParticleSet
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
@@ -263,10 +263,11 @@ def test_set_calendar():
     assert _set_calendar('np_datetime64') == 'standard'
 
 
-def test_error_duplicate_outputdir(fieldset, tmpdir):
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
     outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
-    pset1 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
-    pset2 = ParticleSet(fieldset, pclass=JITParticle, lat=0, lon=0)
+    pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
+    pset2 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
 
     py_random.seed(1234)
     pfile1 = pset1.ParticleFile(name=outfilepath, outputdt=1., convert_at_end=False)
