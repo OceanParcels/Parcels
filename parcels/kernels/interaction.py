@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 from parcels.tools.statuscodes import OperationCode, StateCode
-from parcels.interaction.geo_utils import relative_3d_distance
+from parcels.interaction.spherical_utils import relative_3d_distance
 
 
 __all__ = ['DummyMoveNeighbour']

@@ -1,2 +1,2 @@
-from parcels.interaction.hash import HashNeighborSearch
-from parcels.interaction.brute_force import BruteNeighborSearch
+from parcels.interaction.hash_spherical import HashSphericalNeighborSearch
+from parcels.interaction.brute_force import BruteFlatNeighborSearch

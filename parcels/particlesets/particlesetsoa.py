@@ -17,7 +17,7 @@ from .collectionsoa import ParticleCollectionSOA
 from .collectionsoa import ParticleCollectionIteratorSOA
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
-from parcels.interaction.hash import HashNeighborSearch
+from parcels.interaction import HashSphericalNeighborSearch
 from parcels.interactionkernelsoa import InteractionKernelSOA
 try:
     from mpi4py import MPI
@@ -154,7 +154,7 @@ class ParticleSetSOA(BaseParticleSet):
                 interaction_xy = interaction_distance
                 interaction_z = interaction_distance
             print(interaction_xy, interaction_xy)
-            self._neighbor_tree = HashNeighborSearch(interaction_xy, interaction_z)
+            self._neighbor_tree = HashSphericalNeighborSearch(interaction_xy, interaction_z)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:

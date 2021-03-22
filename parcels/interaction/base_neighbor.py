@@ -7,17 +7,28 @@ from timeit import timeit
 class BaseNeighborSearch(ABC):
     name = "unknown"
 
-    def __init__(self, interaction_distance, values=None):
+    def __init__(self, interaction_distance, interaction_depth, values=None,
+                 max_depth=100000):
         self._values = values
+        self.interaction_depth = interaction_depth
         self.interaction_distance = interaction_distance
+        self.inter_dist = np.array([self.interaction_distance, self.interaction_distance, self.interaction_depth]).reshape(3, 1)
+        self.max_depth = max_depth
+
+    def find_neighbors_by_idx(self, particle_idx):
+        '''Find neighbors with particle_id.'''
+        coor = self._values[:, particle_idx].reshape(3, 1)
+        return self.find_neighbors_by_coor(coor)
 
     @abstractmethod
-    def find_neighbors_by_idx(self, particle_id):
-        '''Find neighbors with particle_id.'''
-        pass
+    def find_neighbors_by_coor(self, coor):
+        raise NotImplementedError
 
     def update_values(self, new_values):
         self._values = new_values
+
+    def rebuild(self, values):
+        self._values = values
 
     @classmethod
     def benchmark(cls, max_n_particles=1000, density=1):
@@ -64,12 +75,7 @@ class BaseNeighborSearch(ABC):
         pass
 
 
-class BaseNeighborSearchGeo3D(BaseNeighborSearch):
-    # TODO: remove/change max_depth stuff. Should only affect benchmarks.
-    def __init__(self, interaction_distance, interaction_depth, values=None):
-        self.interaction_depth = interaction_depth
-        super(BaseNeighborSearchGeo3D, self).__init__(interaction_distance, values=values)
-
+class BaseSphericalNeighborSearch(BaseNeighborSearch):
     @classmethod
     def create_positions(cls, n_particles):
         yrange = 2*np.random.rand(n_particles)
@@ -140,20 +146,9 @@ class BaseNeighborSearchGeo3D(BaseNeighborSearch):
         }
 
 
-class BaseNeighborSearchGeo(BaseNeighborSearch):
-    area = 4*np.pi
-
-    @classmethod
-    def create_positions(cls, n_particles):
-        yrange = 2*np.random.rand(n_particles)
-        lat = np.arccos(1-yrange)-0.5*np.pi
-        long = 2*np.pi*np.random.rand(n_particles)
-        return np.array((lat, long))
-
-
-class BaseNeighborSearchCart(BaseNeighborSearch):
+class BaseFlatNeighborSearch(BaseNeighborSearch):
     area = 1
 
     @classmethod
     def create_positions(cls, n_particle):
-        return np.random.rand(n_particle*2).reshape(2, -1)
+        return np.random.rand(n_particle*3).reshape(3, n_particle)

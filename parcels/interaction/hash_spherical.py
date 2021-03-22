@@ -4,11 +4,11 @@ from timeit import timeit
 from numba.core.decorators import njit
 import numpy as np
 
-from parcels.interaction.geo_utils import relative_3d_distance
-from parcels.interaction.base_neighbor import BaseNeighborSearchGeo3D
+from parcels.interaction.spherical_utils import relative_3d_distance
+from parcels.interaction.base_neighbor import BaseSphericalNeighborSearch
 
 
-class HashNeighborSearch(BaseNeighborSearchGeo3D):
+class HashSphericalNeighborSearch(BaseSphericalNeighborSearch):
     '''Neighbor search using a hashtable (similar to octtrees).'''
     name = "hash"
 
@@ -21,13 +21,12 @@ class HashNeighborSearch(BaseNeighborSearchGeo3D):
         :param values: lat, long, depth values for particles.
         :param max_depth: maximum depth of the ocean.
         '''
-        super(HashNeighborSearch, self).__init__(
-            interaction_distance, interaction_depth, values)
+        super().__init__(interaction_distance, interaction_depth, values,
+                         max_depth)
 
-        self.max_depth = max_depth
         self.init_structure()
         if values is not None:
-            self.rebuild_tree(values)
+            self.rebuild(values)
 
     def find_neighbors_by_coor(self, coor):
         '''Get the neighbors around a certain location.
