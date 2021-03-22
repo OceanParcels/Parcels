@@ -331,7 +331,7 @@ class ParticleCollectionAOS(ParticleCollection):
         super().get_same(same_class)
         results = []
         for item in same_class:
-            index = np.where(self._data == item)[0]  # this will require implementing and equals(...) function check between Particle and BaseParticleAccessor
+            index = np.where(self._data == item)[0]  # this will require implementing an equals(...) function to check between Particle and BaseParticleAccessor
             if index.size != 0:
                 index = index[0]
                 results.append(self._data[index])
