@@ -914,7 +914,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         indices_to_write = []
         if pfile.lasttime_written != time and \
-           (pfile.write_ondelete is False or deleted_only):  # is not False
+           (pfile.write_ondelete is False or deleted_only):
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
