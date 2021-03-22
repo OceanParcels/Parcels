@@ -77,11 +77,11 @@ class BaseNeighborSearch(ABC):
 
 class BaseSphericalNeighborSearch(BaseNeighborSearch):
     @classmethod
-    def create_positions(cls, n_particles):
+    def create_positions(cls, n_particles, max_depth=100000):
         yrange = 2*np.random.rand(n_particles)
-        lat = (np.arccos(1-yrange)-0.5*np.pi)/np.pi
+        lat = 180*(np.arccos(1-yrange)-0.5*np.pi)/np.pi
         long = 360*np.random.rand(n_particles)
-        depth = cls.max_depth*np.random.rand(n_particles)
+        depth = max_depth*np.random.rand(n_particles)
         return np.array((lat, long, depth))
 
     @classmethod

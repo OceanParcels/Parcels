@@ -70,7 +70,7 @@ class HashSphericalNeighborSearch(BaseSphericalNeighborSearch):
                 interaction_depth=self.interaction_depth)
             if distance < 1:
                 true_neigh.append(neigh)
-        return true_neigh
+        return np.array(true_neigh)
 
     def update_values(self, new_values):
         '''Update the locations of (some) of the particles.
