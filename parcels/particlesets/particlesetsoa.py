@@ -19,6 +19,8 @@ from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
 from parcels.interaction import HashSphericalNeighborSearch
 from parcels.interactionkernelsoa import InteractionKernelSOA
+from parcels.interaction.brute_force import BruteSphericalNeighborSearch
+from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
 try:
     from mpi4py import MPI
 except:
@@ -144,6 +146,23 @@ class ParticleSetSOA(BaseParticleSet):
         self._dirty_neighbor = True
         self._neighbor_time = None
         if interaction_distance is not None:
+            meshes = [g.mesh for g in fieldset.gridset.grids]
+            # Assert all grids have the same mesh type
+            assert np.all(np.array(meshes) == meshes[0])
+            mesh_type = meshes[0]
+            if mesh_type == "spherical":
+                if len(self) < 1000:
+                    interaction_class = BruteSphericalNeighborSearch
+                else:
+                    interaction_class = HashSphericalNeighborSearch
+            elif mesh_type == "flat":
+                if len(self) < 1000:
+                    interaction_class = BruteSphericalNeighborSearch
+                else:
+                    interaction_class = ScipyFlatNeighborSearch
+            else:
+                assert (False, "Interaction is only possible on 'flat' and "
+                        "'spherical' meshes")
             try:
                 if len(interaction_distance) == 2:
                     interaction_xy, interaction_z = interaction_distance
@@ -153,8 +172,7 @@ class ParticleSetSOA(BaseParticleSet):
             except TypeError:
                 interaction_xy = interaction_distance
                 interaction_z = interaction_distance
-            print(interaction_xy, interaction_xy)
-            self._neighbor_tree = HashSphericalNeighborSearch(interaction_xy, interaction_z)
+            self._neighbor_tree = interaction_class(interaction_xy, interaction_z)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:

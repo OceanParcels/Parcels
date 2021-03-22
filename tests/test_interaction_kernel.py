@@ -38,5 +38,5 @@ def test_simple_interaction_kernel(fieldset, mode):
     interaction_distance = 6371000*0.2*np.pi/180
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats,
                        interaction_distance=interaction_distance)
-    pset.execute(pyfunc_inter=DummyMoveNeighbour, endtime=1., dt=1.)
+    pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbour, endtime=1., dt=1.)
     assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)

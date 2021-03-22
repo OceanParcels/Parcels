@@ -50,7 +50,10 @@ class BaseInteractionKernel(BaseKernel):
             c_include=c_include, delete_cfiles=delete_cfiles)
 
         if pyfunc is not None:
-            self._pyfunc = [pyfunc]
+            if isinstance(pyfunc, list):
+                self._pyfunc = pyfunc
+            else:
+                self._pyfunc = [pyfunc]
 
     def __del__(self):
         raise NotImplementedError

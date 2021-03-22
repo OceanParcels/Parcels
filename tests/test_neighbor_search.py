@@ -1,9 +1,10 @@
-from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
+import numpy as np
+
 from parcels.interaction.brute_force import BruteFlatNeighborSearch
 from parcels.interaction.brute_force import BruteSphericalNeighborSearch
 from parcels.interaction.hash_flat import HashFlatNeighborSearch
-import numpy as np
 from parcels.interaction.hash_spherical import HashSphericalNeighborSearch
+from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
 
 
 def test_flat_neighbors():
@@ -46,7 +47,6 @@ def test_spherical_neighbors():
 
     instances = []
     positions = BruteSphericalNeighborSearch.create_positions(10000, max_depth=100000)
-#     print(np.min(positions[0, :]), np.max(positions[0, :]))
     for cur_class in neighbor_classes:
         cur_instance = cur_class(interaction_distance=1000000, interaction_depth=100000)
         cur_instance.rebuild(positions)

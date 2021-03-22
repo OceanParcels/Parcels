@@ -62,6 +62,7 @@ class HashSphericalNeighborSearch(BaseSphericalNeighborSearch):
                 pass
 
         # Loop over neighbor candidates and check their actual distance.
+        # TODO: use vectorized computation.
         true_neigh = []
         for neigh in all_neighbor_points:
             distance = relative_3d_distance(
