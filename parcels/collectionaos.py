@@ -918,7 +918,7 @@ class ParticleCollectionAOS(ParticleCollection):
             if self._ncount == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
-                if deleted_only:  # is not False
+                if deleted_only:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
                         data_states = [p.state for p in self._data]
                         indices_to_write = np.where(np.isin(data_states, [OperationCode.Delete]))[0]
