@@ -248,7 +248,6 @@ def test_length1dimensions(pset_mode, mode, u, v, w):
     fieldset = FieldSet.from_data(data, dimensions, mesh='flat')
 
     x0, y0, z0 = 2, 8, -4
-    # pset = ParticleSet(fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
     kernel = pset.Kernel(pfunc, delete_cfiles=False)
