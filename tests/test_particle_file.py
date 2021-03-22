@@ -1,7 +1,6 @@
 from parcels import (FieldSet, ScipyParticle, JITParticle, Variable, ErrorCode)
 from parcels.particlefile import _set_calendar
 from parcels.tools.converters import _get_cftime_calendars, _get_cftime_datetimes
-# from parcels import ParticleSet
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
