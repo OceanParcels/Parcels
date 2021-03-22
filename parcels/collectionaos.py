@@ -964,8 +964,8 @@ class ParticleCollectionAOS(ParticleCollection):
         (e.g. Python list or numpy nD array) that can be addressed by index. In the common case of 'no ID recovery',
         the global ID and the index match exactly.
 
-        While this function may be very convenient for may users, it is STRONGLY DISADVISED to use the function to
-        often, and the performance- and memory overhead malus may be exceed any speed-up one could get from optimised
+        While this function may be very convenient for may users, it is STRONGLY DISADVISED to use the function too
+        often, and the performance- and memory overhead malus may exceed any speed-up one could get from optimised
         data structures - in fact, for large collections with an implicit-order structure (i.e. ordered lists, sets,
         trees, etc.), this may be 'the most constly' function in any kind of simulation.
 
