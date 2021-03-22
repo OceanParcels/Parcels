@@ -8,7 +8,6 @@ import xarray as xr
 from ctypes import c_void_p
 
 from parcels.grid import GridCode
-# from parcels.grid import CurvilinearGrid
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernelaos import KernelAOS
