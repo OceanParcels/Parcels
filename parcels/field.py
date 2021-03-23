@@ -1068,7 +1068,7 @@ class Field(object):
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
     def __getitem__(self, key):
-        if _isParticle(key):  # Only works if not isinstance(key, SciPyParticle) [e.g. BaseParticleAccessor]
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
@@ -1674,7 +1674,7 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        if _isParticle(key):  # Only works if not isinstance(key, SciPyParticle) [e.g. BaseParticleAccessor]
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
@@ -1779,7 +1779,7 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                if _isParticle(key) and 'Object' not in type(key).__name__:
+                if _isParticle(key):
                     val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                 else:
                     val = list.__getitem__(self, iField).eval(*key)
