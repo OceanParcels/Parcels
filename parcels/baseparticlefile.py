@@ -81,7 +81,7 @@ class BaseParticleFile(ABC):
 
         self.dataset = None
         self.metadata = {}
-        if pset_info:  # is not None
+        if pset_info:
             for v in pset_info.keys():
                 setattr(self, v, pset_info[v])
         else:
@@ -123,8 +123,6 @@ class BaseParticleFile(ABC):
         if not os.path.exists(self.tempwritedir):
             os.makedirs(self.tempwritedir)
         elif pset_info is None:
-            # logger.warn("output directory %s already exists. Removing directory" % self.tempwritedir)
-            # self.delete_tempwritedir()
             raise IOError("output directory %s already exists. Please remove the directory." % self.tempwritedir)
 
     @abstractmethod
