@@ -1,3 +1,10 @@
+"""
+Author: Dr. Christian Kehl
+github relation: #913 (particleset_class_hierarchy)
+purpose: defines all the specific functions for a ParticleCollection, ParticleAccessor, ParticleSet etc. that relates
+         to a structure-of-array (SoA) data arrangement.
+"""
+
 from datetime import timedelta as delta
 from operator import attrgetter
 from ctypes import Structure, POINTER
@@ -24,13 +31,6 @@ if MPI:
     except:
         raise EnvironmentError('sklearn needs to be available if MPI is installed. '
                                'See http://oceanparcels.org/#parallel_install for more information')
-
-"""
-Author: Dr. Christian Kehl
-github relation: #913 (particleset_class_hierarchy)
-purpose: defines all the specific functions for a ParticleCollection, ParticleAccessor, ParticleSet etc. that relates
-         to a structure-of-array (SoA) data arrangement.
-"""
 
 
 def _to_write_particles(pd, time):

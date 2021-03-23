@@ -1,3 +1,10 @@
+"""
+Author: Dr. Christian Kehl
+github relation: #999 (integrate_AoS_to_master)
+purpose: defines all the specific functions for a ParticleCollection, ParticleAccessor, ParticleSet etc. that relates
+         to a array-of-structure (AoS) data arrangement.
+"""
+
 from datetime import timedelta as delta
 from operator import attrgetter  # NOQA
 
@@ -26,13 +33,6 @@ if MPI:
                                'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleCollectionAOS', 'ParticleCollectionIterableAOS', 'ParticleCollectionIteratorAOS']
-
-"""
-Author: Dr. Christian Kehl
-github relation: #913 (particleset_class_hierarchy)
-purpose: defines all the specific functions for a ParticleCollection, ParticleAccessor, ParticleSet etc. that relates
-         to a structure-of-array (SoA) data arrangement.
-"""
 
 
 def _to_write_particles(pd, time):
@@ -83,7 +83,7 @@ class ParticleCollectionAOS(ParticleCollection):
             'lon, lat, depth don''t all have the same lenghts')
 
         assert lon.size == time.size, (
-            'time and positions (lon, lat, depth) don''t have the same lengths.')
+            'time and positions (lon, lat, depth) do not have the same lengths.')
 
         # If partitions is false, the partitions are already initialised
         if partitions is not None and partitions is not False:
