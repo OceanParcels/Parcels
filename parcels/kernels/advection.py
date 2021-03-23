@@ -124,7 +124,6 @@ def AdvectionAnalytical(particle, fieldset, time):
         time_i = np.linspace(0, fieldset.U.grid.time[ti+1] - fieldset.U.grid.time[ti], I_s)
         ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
 
-    # == Comment: btw - shitty idea to expect U providing the (xi, yi, zi) for ALL fields - missing here a computation for all grids == #
     xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle=particle)
     if withW:
         if abs(xsi - 1) < tol:
@@ -149,7 +148,6 @@ def AdvectionAnalytical(particle, fieldset, time):
                 yi += 1
                 eta = 0
 
-    # == corrected value assignment - previous statement was overwriting the member variable instead of setting its values == #
     particle.xi[:] = xi
     particle.yi[:] = yi
     particle.zi[:] = zi
