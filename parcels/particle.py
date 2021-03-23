@@ -135,7 +135,7 @@ class _Particle(object):
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
                 if v.initial.grid.ti < 0:
-                    v.initial.fieldset.computeTimeChunk(time, 0)  # may it be that this is just plain-stupid ? it will recompute the damn time chunk for every single particle ...
+                    v.initial.fieldset.computeTimeChunk(time, 0)  # performance leak
                 initial = v.initial[time, depth, lat, lon]
                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
@@ -148,7 +148,7 @@ class _Particle(object):
         self.exception = None
 
     def __del__(self):
-        pass
+        pass # superclass is 'object', and object itself has no destructor, hence 'pass'
 
     @classmethod
     def getPType(cls):
