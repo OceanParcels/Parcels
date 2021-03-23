@@ -15,7 +15,6 @@ from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.kernels.advection import AdvectionRK4
-# from parcels.kernel import Kernel
 from parcels.basekernel import BaseKernel as Kernel
 from parcels.particlesets.collections import ParticleCollection
 from parcels.tools.loggers import logger

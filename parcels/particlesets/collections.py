@@ -63,7 +63,6 @@ class Collection(ABC):
 
         This function is an explicit forward to the Collection::__iter__() member function.
         """
-        # return iter(self)
         pass
 
     @abstractmethod
