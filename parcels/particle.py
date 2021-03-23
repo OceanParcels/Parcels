@@ -148,7 +148,7 @@ class _Particle(object):
         self.exception = None
 
     def __del__(self):
-        pass # superclass is 'object', and object itself has no destructor, hence 'pass'
+        pass  # superclass is 'object', and object itself has no destructor, hence 'pass'
 
     @classmethod
     def getPType(cls):
