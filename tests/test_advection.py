@@ -250,18 +250,14 @@ def test_length1dimensions(pset_mode, mode, u, v, w):
     x0, y0, z0 = 2, 8, -4
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode], lon=x0, lat=y0, depth=z0)
     pfunc = AdvectionRK4 if w is None else AdvectionRK4_3D
-    kernel = pset.Kernel(pfunc, delete_cfiles=False)
+    kernel = pset.Kernel(pfunc)
     pset.execute(kernel, runtime=4)
 
-    logger.info("Asserting results ...")
     assert (len(pset.lon) == len([p.lon for p in pset]))
-    # assert np.abs(pset.lon - x0 - 4 * u) < 1e-6
-    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()  # np.abs(pset.lon - x0 - 4 * u) < 1e-6
-    # assert np.abs(pset.lat - y0 - 4 * v) < 1e-6
-    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()  # np.abs(pset.lat - y0 - 4 * v) < 1e-6
+    assert ((np.array([p.lon - x0 for p in pset]) - 4 * u) < 1e-6).all()
+    assert ((np.array([p.lat - y0 for p in pset]) - 4 * v) < 1e-6).all()
     if w:
-        # assert np.abs(pset.depth - z0 - 4 * w) < 1e-6
-        assert ((np.array([p.depth - y0 for p in pset]) - 4 * w) < 1e-6).all()  # np.abs(pset.depth - z0 - 4 * w) < 1e-6
+        assert ((np.array([p.depth - y0 for p in pset]) - 4 * w) < 1e-6).all()
 
 
 def truth_stationary(x_0, y_0, t):
