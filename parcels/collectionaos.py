@@ -1,10 +1,3 @@
-"""
-Author: Dr. Christian Kehl
-github relation: #999 (integrate_AoS_to_master)
-purpose: defines all the specific functions for a ParticleCollection, ParticleAccessor, ParticleSet etc. that relates
-         to a array-of-structure (AoS) data arrangement.
-"""
-
 from datetime import timedelta as delta
 from operator import attrgetter  # NOQA
 
@@ -80,7 +73,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         assert depth is not None, "particle's initial depth is None - incompatible with the collection. Invalid state."
         assert lon.size == lat.size and lon.size == depth.size, (
-            'lon, lat, depth don''t all have the same lenghts')
+            'lon, lat, depth do not all have the same lenghts')
 
         assert lon.size == time.size, (
             'time and positions (lon, lat, depth) do not have the same lengths.')
@@ -91,7 +84,7 @@ class ParticleCollectionAOS(ParticleCollection):
 
         for kwvar in kwargs:
             assert lon.size == kwargs[kwvar].size, (
-                '%s and positions (lon, lat, depth) don''t have the same lengths.' % kwvar)
+                '%s and positions (lon, lat, depth) do nott have the same lengths.' % kwvar)
 
         offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
         if MPI:
