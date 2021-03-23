@@ -52,8 +52,6 @@ def _convert_to_reltime(time):
 class ParticleSetAOS(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
 
-    Please note that this currently only supports fixed size particle sets.
-
     :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
            While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
     :param pclass: Optional :mod:`parcels.particle.JITParticle` or

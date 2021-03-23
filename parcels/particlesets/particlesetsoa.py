@@ -55,7 +55,10 @@ def _convert_to_reltime(time):
 class ParticleSetSOA(BaseParticleSet):
     """Container class for storing particle and executing kernel over them.
 
-    Please note that this currently only supports fixed size particle sets.
+    Please note that this currently only supports fixed size particle sets, meaning that the particle set only
+    holds the particles defined on construction. Individual particles can neither be added nor deleted individually,
+    and individual particles can only be deleted as a set procedually (i.e. by 'particle.delete()'-call during
+    kernel execution).
 
     :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity.
            While fieldset=None is supported, this will throw a warning as it breaks most Parcels functionality
