@@ -17,9 +17,6 @@ except:
 from parcels.basekernel import BaseKernel
 from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
-from parcels.field import FieldOutOfBoundError
-from parcels.field import FieldOutOfBoundSurfaceError
-from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
@@ -124,34 +121,7 @@ class KernelSOA(BaseKernel):
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
-
-        if pset.fieldset is not None:
-            for g in pset.fieldset.gridset.grids:
-                g.cstruct = None  # This force to point newly the grids from Python to C
-            # Make a copy of the transposed array to enforce
-            # C-contiguous memory layout for JIT mode.
-            for f in pset.fieldset.get_fields():
-                if type(f) in [VectorField, NestedField, SummedField]:
-                    continue
-                if f in self.field_args.values():
-                    f.chunk_data()
-                else:
-                    for block_id in range(len(f.data_chunks)):
-                        f.data_chunks[block_id] = None
-                        f.c_data_chunks[block_id] = None
-
-            for g in pset.fieldset.gridset.grids:
-                g.load_chunk = np.where(g.load_chunk == g.chunk_loading_requested,
-                                        g.chunk_loaded_touched, g.load_chunk)
-                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
-                    if not g.load_chunk.flags.c_contiguous:
-                        g.load_chunk = g.load_chunk.copy()
-                if not g.depth.flags.c_contiguous:
-                    g.depth = g.depth.copy()
-                if not g.lon.flags.c_contiguous:
-                    g.lon = g.lon.copy()
-                if not g.lat.flags.c_contiguous:
-                    g.lat = g.lat.copy()
+        self.load_fieldset_jit(pset)
 
         fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
         fargs += [c_double(f) for f in self.const_args.values()]
@@ -161,18 +131,15 @@ class KernelSOA(BaseKernel):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
+        # sign of dt: { [0, 1]: forward simulation; -1: backward simulation }
         sign_dt = np.sign(dt)
 
+        analytical = False
         if 'AdvectionAnalytical' in self._pyfunc.__name__:
             analytical = True
             if not np.isinf(dt):
                 logger.warning_once('dt is not used in AnalyticalAdvection, so is set to np.inf')
             dt = np.inf
-        else:
-            analytical = False
-
-        # back up variables in case of OperationCode.Repeat
-        p_var_back = {}
 
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
@@ -181,99 +148,7 @@ class KernelSOA(BaseKernel):
                 f.data = np.array(f.data)
 
         for p in pset:
-            pdt_prekernels = .0
-            # Don't execute particles that aren't started yet
-            sign_end_part = np.sign(endtime - p.time)
-            # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
-            reset_dt = False
-            if abs(endtime - p.time) < abs(p.dt):
-                dt_pos = abs(endtime - p.time)
-                reset_dt = True
-            else:
-                dt_pos = abs(p.dt)
-                reset_dt = False
-
-            # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
-            # as they fulfil the condition here on entering at the final calculation here. ==== #
-            if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
-                if abs(p.time) >= abs(endtime):
-                    p.set_state(StateCode.Success)
-                continue
-
-            while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
-
-                for var in pset.collection.ptype.variables:
-                    p_var_back[var.name] = getattr(p, var.name)
-                try:
-                    pdt_prekernels = sign_dt * dt_pos
-                    p.dt = pdt_prekernels
-                    state_prev = p.state
-                    res = self._pyfunc(p, pset.fieldset, p.time)
-                    if res is None:
-                        res = StateCode.Success
-
-                    if res is StateCode.Success and p.state != state_prev:
-                        res = p.state
-
-                    if not analytical and res == StateCode.Success and not np.isclose(p.dt, pdt_prekernels):
-                        res = OperationCode.Repeat
-
-                except FieldOutOfBoundError as fse_xy:
-                    res = ErrorCode.ErrorOutOfBounds
-                    p.exception = fse_xy
-                except FieldOutOfBoundSurfaceError as fse_z:
-                    res = ErrorCode.ErrorThroughSurface
-                    p.exception = fse_z
-                except TimeExtrapolationError as fse_t:
-                    res = ErrorCode.ErrorTimeExtrapolation
-                    p.exception = fse_t
-
-                except Exception as e:
-                    res = ErrorCode.Error
-                    p.exception = e
-
-                # Handle particle time and time loop
-                if res in [StateCode.Success, OperationCode.Delete]:
-                    # Update time and repeat
-                    p.time += p.dt
-                    if reset_dt and p.dt == pdt_prekernels:
-                        p.dt = dt
-                    p.update_next_dt()
-                    if analytical:
-                        p.dt = np.inf
-                    if abs(endtime - p.time) < abs(p.dt):
-                        dt_pos = abs(endtime - p.time)
-                        reset_dt = True
-                    else:
-                        dt_pos = abs(p.dt)
-                        reset_dt = False
-
-                    sign_end_part = np.sign(endtime - p.time)
-                    if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
-                        res = StateCode.Evaluate
-                    if sign_end_part != sign_dt:
-                        dt_pos = 0
-
-                    p.set_state(res)
-                    if np.isclose(dt, 0):
-                        break
-                else:
-                    p.set_state(res)
-                    # Try again without time update
-                    for var in pset.collection.ptype.variables:
-                        if var.name not in ['dt', 'state']:
-                            setattr(p, var.name, p_var_back[var.name])
-                    if abs(endtime - p.time) < abs(p.dt):
-                        dt_pos = abs(endtime - p.time)
-                        reset_dt = True
-                    else:
-                        dt_pos = abs(p.dt)
-                        reset_dt = False
-
-                    sign_end_part = np.sign(endtime - p.time)
-                    if sign_end_part != sign_dt:
-                        dt_pos = 0
-                    break
+            self.evaluate_particle(p, endtime, sign_dt, dt, analytical=analytical)
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.

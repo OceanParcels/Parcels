@@ -10,6 +10,7 @@ from sys import version_info
 from ast import FunctionDef
 from hashlib import md5
 from parcels.tools.loggers import logger
+import numpy as np
 from numpy import ndarray
 
 try:
@@ -21,12 +22,16 @@ from parcels.tools.global_statics import get_cache_dir
 
 # === import just necessary field classes to perform setup checks === #
 from parcels.field import Field
+from parcels.field import VectorField
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.grid import GridCode
+from parcels.field import FieldOutOfBoundError
+from parcels.field import FieldOutOfBoundSurfaceError
+from parcels.field import TimeExtrapolationError
+from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.kernels.advection import AdvectionRK4_3D
 from parcels.kernels.advection import AdvectionAnalytical
-from parcels.tools.statuscodes import OperationCode
 
 __all__ = ['BaseKernel']
 
@@ -48,6 +53,10 @@ class BaseKernel(object):
     The py_ast argument may be derived from the code string, but for
     concatenation, the merged AST plus the new header definition is required.
     """
+    _pyfunc = None
+    _fieldset = None
+    _ptype = None
+    funcname = None
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None, funccode=None, py_ast=None, funcvars=None,
                  c_include="", delete_cfiles=True):
@@ -302,6 +311,144 @@ class BaseKernel(object):
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
+
+    def load_fieldset_jit(self, pset):
+        """
+        Updates the loaded fields of pset's fieldset according to the chunk information within their grids
+        """
+        if pset.fieldset is not None:
+            for g in pset.fieldset.gridset.grids:
+                g.cstruct = None  # This force to point newly the grids from Python to C
+            # Make a copy of the transposed array to enforce
+            # C-contiguous memory layout for JIT mode.
+            for f in pset.fieldset.get_fields():
+                if type(f) in [VectorField, NestedField, SummedField]:
+                    continue
+                if f in self.field_args.values():
+                    f.chunk_data()
+                else:
+                    for block_id in range(len(f.data_chunks)):
+                        f.data_chunks[block_id] = None
+                        f.c_data_chunks[block_id] = None
+
+            for g in pset.fieldset.gridset.grids:
+                g.load_chunk = np.where(g.load_chunk == g.chunk_loading_requested,
+                                        g.chunk_loaded_touched, g.load_chunk)
+                if len(g.load_chunk) > g.chunk_not_loaded:  # not the case if a field in not called in the kernel
+                    if not g.load_chunk.flags.c_contiguous:
+                        g.load_chunk = g.load_chunk.copy()
+                if not g.depth.flags.c_contiguous:
+                    g.depth = g.depth.copy()
+                if not g.lon.flags.c_contiguous:
+                    g.lon = g.lon.copy()
+                if not g.lat.flags.c_contiguous:
+                    g.lat = g.lat.copy()
+
+    def evaluate_particle(self, p, endtime, sign_dt, dt, analytical=False):
+        """
+        Execute the kernel evaluation of for an individual particle.
+        :arg p: object of (sub-)type (ScipyParticle, JITParticle) or (sub-)type of BaseParticleAccessor
+        :arg fieldset: fieldset of the containing ParticleSet (e.g. pset.fieldset)
+        :arg analytical: flag indicating the analytical advector or an iterative advection
+        :arg endtime: endtime of this overall kernel evaluation step
+        :arg dt: computational integration timestep
+        """
+        variables = self._ptype.variables
+        # back up variables in case of OperationCode.Repeat
+        p_var_back = {}
+        pdt_prekernels = .0
+        # Don't execute particles that aren't started yet
+        sign_end_part = np.sign(endtime - p.time)
+        # Compute min/max dt for first timestep. Only use endtime-p.time for one timestep
+        reset_dt = False
+        if abs(endtime - p.time) < abs(p.dt):
+            dt_pos = abs(endtime - p.time)
+            reset_dt = True
+        else:
+            dt_pos = abs(p.dt)
+            reset_dt = False
+
+        # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
+        # as they fulfil the condition here on entering at the final calculation here. ==== #
+        if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
+            if abs(p.time) >= abs(endtime):
+                p.set_state(StateCode.Success)
+            return p
+
+        while p.state in [StateCode.Evaluate, OperationCode.Repeat] or np.isclose(dt, 0):
+            for var in variables:
+                p_var_back[var.name] = getattr(p, var.name)
+            try:
+                pdt_prekernels = sign_dt * dt_pos
+                p.dt = pdt_prekernels
+                state_prev = p.state
+                res = self._pyfunc(p, self._fieldset, p.time)
+                if res is None:
+                    res = StateCode.Success
+
+                if res is StateCode.Success and p.state != state_prev:
+                    res = p.state
+
+                if not analytical and res == StateCode.Success and not np.isclose(p.dt, pdt_prekernels):
+                    res = OperationCode.Repeat
+
+            except FieldOutOfBoundError as fse_xy:
+                res = ErrorCode.ErrorOutOfBounds
+                p.exception = fse_xy
+            except FieldOutOfBoundSurfaceError as fse_z:
+                res = ErrorCode.ErrorThroughSurface
+                p.exception = fse_z
+            except TimeExtrapolationError as fse_t:
+                res = ErrorCode.ErrorTimeExtrapolation
+                p.exception = fse_t
+
+            except Exception as e:
+                res = ErrorCode.Error
+                p.exception = e
+
+            # Handle particle time and time loop
+            if res in [StateCode.Success, OperationCode.Delete]:
+                # Update time and repeat
+                p.time += p.dt
+                if reset_dt and p.dt == pdt_prekernels:
+                    p.dt = dt
+                p.update_next_dt()
+                if analytical:
+                    p.dt = np.inf
+                if abs(endtime - p.time) < abs(p.dt):
+                    dt_pos = abs(endtime - p.time)
+                    reset_dt = True
+                else:
+                    dt_pos = abs(p.dt)
+                    reset_dt = False
+
+                sign_end_part = np.sign(endtime - p.time)
+                if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                    res = StateCode.Evaluate
+                if sign_end_part != sign_dt:
+                    dt_pos = 0
+
+                p.set_state(res)
+                if np.isclose(dt, 0):
+                    break
+            else:
+                p.set_state(res)
+                # Try again without time update
+                for var in variables:
+                    if var.name not in ['dt', 'state']:
+                        setattr(p, var.name, p_var_back[var.name])
+                if abs(endtime - p.time) < abs(p.dt):
+                    dt_pos = abs(endtime - p.time)
+                    reset_dt = True
+                else:
+                    dt_pos = abs(p.dt)
+                    reset_dt = False
+
+                sign_end_part = np.sign(endtime - p.time)
+                if sign_end_part != sign_dt:
+                    dt_pos = 0
+                break
+        return p
 
     def execute_jit(self, pset, endtime, dt):
         pass

@@ -96,6 +96,10 @@ class BaseParticleAccessor(ABC):
     def reset_state(self):
         self.state = StateCode.Evaluate
 
+    @abstractmethod
+    def getPType(self):
+        return None
+
     def __getattr__(self, name):
         """The ParticleAccessor should provide an implementation of this
         built-in function to allow accessing particle attributes in its

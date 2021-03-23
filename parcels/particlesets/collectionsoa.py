@@ -952,6 +952,9 @@ class ParticleAccessorSOA(BaseParticleAccessor):
         else:
             self._pcoll.data[name][self._index] = value
 
+    def getPType(self):
+        return self._pcoll.ptype
+
     def update_next_dt(self, next_dt=None):
         if next_dt is None:
             if self._next_dt is not None:
