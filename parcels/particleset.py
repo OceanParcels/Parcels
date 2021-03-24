@@ -135,7 +135,9 @@ class ParticleSet(object):
 
         def convert_to_array(var):
             # Convert lists and single integers/floats to one-dimensional numpy arrays
-            if isinstance(var, np.ndarray):
+            if var is None:
+                return np.array([0])
+            elif isinstance(var, np.ndarray):
                 return var.flatten()
             elif isinstance(var, (int, float, np.float32, np.int32)):
                 return np.array([var])
@@ -156,7 +158,7 @@ class ParticleSet(object):
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        time = convert_to_array(time)
+        time = convert_to_array(time).astype(np.float64)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         def _convert_to_reltime(time):

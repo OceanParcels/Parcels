@@ -40,7 +40,7 @@ global_t_0 = 0
 odir = ""
 
 
-def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, mesh_mask='/scratch/ckehl/experiments/palaeo-parcels/NEMOdata/domain/coordinates.nc'):
+def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, mesh_mask='/scratch/ckehl/experiments/palaeo-parcels/NEMOdata/domain/coordinates.nc', periodicFlag=False):
     bfile_array = bfile
     if not isinstance(bfile_array, list):
         bfile_array = [bfile, ]
@@ -133,13 +133,21 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     #chs = 'auto'
 
     if mesh_mask: # and isinstance(bfile, list) and len(bfile) > 0:
-        try:
-            # fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize='auto')
-            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
-            Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
-        except (SyntaxError,):
-            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
-            Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', chunksize=bchs)
+        if not periodicFlag:
+            try:
+                # fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize='auto')
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+            except (SyntaxError,):
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', chunksize=bchs)
+        else:
+            try:
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, time_periodic=delta(days=366), field_chunksize=chs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', field_chunksize=bchs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_nemo(filenames, variables, dimensions, time_periodic=delta(days=366), chunksize=nchs)
+                Bfield = Field.from_netcdf(bfiles, bvariables, bdimensions, allow_time_extrapolation=True, interp_method='cgrid_tracer', chunksize=bchs)
         fieldset.add_field(Bfield, 'B')
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
@@ -149,11 +157,17 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         filenames.pop('B')
         variables.pop('B')
         dimensions.pop('B')
-        try:
-            # fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs)
-            fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
-        except (SyntaxError, ):
-            fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
+        if not periodicFlag:
+            try:
+                # fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs)
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
+        else:
+            try:
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, time_periodic=delta(days=366), field_chunksize=chs)
+            except (SyntaxError, ):
+                fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, time_periodic=delta(days=366), chunksize=nchs)
         fieldset.U.vmax = 10
         fieldset.V.vmax = 10
         fieldset.W.vmax = 10
@@ -224,6 +238,7 @@ if __name__ == "__main__":
     # parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=int, default=365, help="runtime in days (default: 365)")
     parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=str, default="1*365", help="runtime in days (default: 1*365)")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
+    parser.add_argument("-pr", "--profiling", dest="profiling", action='store_true', default=False, help="tells that the profiling of the script is activates")
     args = parser.parse_args()
 
     sp = args.sp # The sinkspeed m/day
@@ -231,6 +246,7 @@ if __name__ == "__main__":
     imageFileName=args.imageFileName
     periodicFlag=args.periodic
     time_in_days = int(float(eval(args.time_in_days)))
+    time_in_years = int(time_in_days/366.0)
     with_GC = args.useGC
 
     branch = "soa_benchmark"
@@ -268,12 +284,27 @@ if __name__ == "__main__":
         dirread_top = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
 
-    print("running {} on {} (uname: {}) - branch '{}' - headdir: {}; odir: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, headdir, odir, sys.argv[1:]))
+    # print("running {} on {} (uname: {}) - branch '{}' - headdir: {}; odir: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, headdir, odir, sys.argv[1:]))
 
 
     # dirread_pal = '/projects/0/palaeo-parcels/NEMOdata/'
 
-    outfile = 'grid_dd' + str(int(dd)) + '_sp' + str(int(sp))
+    outfile = 'grid_dd' + str(int(dd))
+    outfile += '_sp' + str(int(sp))
+    if periodicFlag:
+        outfile += '_p'
+    if time_in_years != 1:
+        outfile += '_' + str(time_in_years) + 'y'
+    if MPI:
+        mpi_comm = MPI.COMM_WORLD
+        mpi_size = mpi_comm.Get_size()
+        outfile += '_n' + str(mpi_size)
+    if args.profiling:
+        outfile += '_prof'
+    if with_GC:
+        outfile += '_wGC'
+    else:
+        outfile += '_woGC'
     dirwrite = os.path.join(odir, "sp%d_dd%d" % (int(sp),int(dd)))
     if not os.path.exists(dirwrite):
         os.mkdir(dirwrite)
@@ -298,6 +329,8 @@ if __name__ == "__main__":
         depths = np.append(depths, np.zeros(len(lonsz), dtype=np.float32))
         time = np.append(time, np.full(len(lonsz),times[i]))
 
+    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lons.shape[0], sys.argv[1:]))
+
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
@@ -319,7 +352,7 @@ if __name__ == "__main__":
     ifiles = sorted(glob(dirread_top + 'means/ORCA0083-N06_2000????d05I.nc'))
     bfile = dirread_top + 'domain/bathymetry_ORCA12_V3.3.nc'
 
-    fieldset = set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, os.path.join(dirread_pal, "domain/coordinates.nc"))
+    fieldset = set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bfile, os.path.join(dirread_pal, "domain/coordinates.nc"), periodicFlag=periodicFlag)
     fieldset.add_periodic_halo(zonal=True) 
     fieldset.add_constant('dwellingdepth', np.float(dd))
     fieldset.add_constant('sinkspeed', sp/86400.)
@@ -327,6 +360,9 @@ if __name__ == "__main__":
     fieldset.add_constant('surface', 2.5)
 
     print("|lon| = {}; |lat| = {}; |depth| = {}, |times| = {}".format(lonsz.shape[0], latsz.shape[0], dep.shape[0], times.shape[0]))
+
+    # ==== Set min/max depths in the fieldset ==== #
+    fs_depths = fieldset.U.depth
 
     pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
 
@@ -389,8 +425,6 @@ if __name__ == "__main__":
         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
         avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
-
-    pfile.close()
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
