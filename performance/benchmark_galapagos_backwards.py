@@ -33,7 +33,7 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
                  'V': {'lon': meshfile, 'lat': meshfile, 'data': vfiles}}
     nemo_variables = {'U': 'uo', 'V': 'vo'}
     nemo_dimensions = {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}
-    period = delta(days=366) if periodic_wrap else False
+    period = delta(days=366*11) if periodic_wrap else False  # 10 years period
     extrapolation = False if periodic_wrap else True
     # ==== Because the stokes data is a different grid, we actually need to define the chunking ==== #
     # fieldset_nemo = FieldSet.from_nemo(nemofiles, nemovariables, nemodimensions, field_chunksize='auto')
@@ -55,11 +55,12 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
         stokes_nchs = {
             'U': {'lon': ('longitude', 32), 'lat': ('latitude', 16), 'time': ('time', 1)}
         }
+        stokes_period = delta(days=366+2*31) if periodic_wrap else False  # 14 month period
         fieldset_stokes = None
         try:
-            fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, field_chunksize=stokes_chs, time_periodic=period, allow_time_extrapolation=extrapolation)
+            fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, field_chunksize=stokes_chs, time_periodic=stokes_period, allow_time_extrapolation=extrapolation)
         except (SyntaxError, ):
-            fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, chunksize=stokes_nchs, time_periodic=period, allow_time_extrapolation=extrapolation)
+            fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, chunksize=stokes_nchs, time_periodic=stokes_period, allow_time_extrapolation=extrapolation)
         fieldset_stokes.add_periodic_halo(zonal=True, meridional=False, halosize=5)
 
         fieldset = FieldSet(U=fieldset_nemo.U+fieldset_stokes.U, V=fieldset_nemo.V+fieldset_stokes.V)

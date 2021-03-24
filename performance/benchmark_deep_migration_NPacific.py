@@ -9,7 +9,7 @@ import time as ostime
 from glob import glob
 # import matplotlib.pyplot as plt
 import fnmatch
-# import warnings
+import warnings
 import pickle
 # import matplotlib.ticker as mtick
 from numpy import *
