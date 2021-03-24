@@ -135,7 +135,7 @@ class _Particle(object):
                     raise RuntimeError('Cannot initialise a Variable with a Field if no time provided. '
                                        'Add a "time=" to ParticleSet construction')
                 if v.initial.grid.ti < 0:
-                    v.initial.fieldset.computeTimeChunk(time, 0)  # performance leak
+                    v.initial.fieldset.computeTimeChunk(time, 0)
                 initial = v.initial[time, depth, lat, lon]
                 logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
             else:
