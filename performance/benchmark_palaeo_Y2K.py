@@ -101,13 +101,13 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
-                  'T': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'S': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'NO3': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'PP': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'S': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
+                  'T': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
+                  'NO3': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
+                  'PP': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
                   'ICE': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'ICEPRES': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'} } #,
+                  'CO2': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'} } #,
     bfiles = {'lon': mesh_mask, 'lat': mesh_mask, 'data': bfile_array}
     bvariables = ('B', 'Bathymetry')
     bdimensions = {'lon': 'glamf', 'lat': 'gphif'}
