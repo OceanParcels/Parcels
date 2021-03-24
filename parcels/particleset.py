@@ -158,7 +158,7 @@ class ParticleSet(object):
         assert lon.size == lat.size and lon.size == depth.size, (
             'lon, lat, depth don''t all have the same lenghts')
 
-        time = convert_to_array(time).astype(np.float64)
+        time = convert_to_array(time)  # .astype(np.float64)
         time = np.repeat(time, lon.size) if time.size == 1 else time
 
         def _convert_to_reltime(time):
