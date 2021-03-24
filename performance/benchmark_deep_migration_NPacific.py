@@ -382,8 +382,12 @@ if __name__ == "__main__":
 
     kv_or = np.transpose(np.tile(np.array(upsilon_z),(v_lon.shape[0],v_lat.shape[0],1)), (2,0,1))   # kinematic viscosity
     sv_or = np.transpose(np.tile(np.array(mu_z),(v_lon.shape[0],v_lat.shape[0],1)), (2,0,1))        # dynamic viscosity of seawater
-    KV = Field('KV', kv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', field_chunksize=False)#,transpose="True") #,fieldtype='U')
-    SV = Field('SV', sv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', field_chunksize=False)#,transpose="True") #,fieldtype='U')
+    try:
+        KV = Field('KV', kv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', field_chunksize=False)#,transpose="True") #,fieldtype='U')
+        SV = Field('SV', sv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', field_chunksize=False)#,transpose="True") #,fieldtype='U')
+    except (SyntaxError, ):
+        KV = Field('KV', kv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', chunksize=False)#,transpose="True") #,fieldtype='U')
+        SV = Field('SV', sv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', chunksize=False)#,transpose="True") #,fieldtype='U')
     fieldset.add_field(KV, 'KV')
     fieldset.add_field(SV, 'SV')
 
