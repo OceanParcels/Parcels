@@ -1165,7 +1165,7 @@ class Field(object):
                 self.grid.load_chunk[0] = 2
                 self.data_chunks[0] = np.array(self.data)
         except (IndexError, IOError) as error:
-            logger.error("Field '{}' - error: {}".format(self.name, error))
+            logger.error("\nField '{}' - error: {}; field chunks: type = {} length = {}; grid chunks: length = {}\n".format(self.name, error, type(self.data_chunks), len(self.data_chunks), len(self.grid.load_chunk)))
             raise error
 
     @property
