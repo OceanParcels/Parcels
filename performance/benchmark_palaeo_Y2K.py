@@ -365,7 +365,7 @@ if __name__ == "__main__":
     fieldset.add_constant('maxage', 300000.*86400)
     fieldset.add_constant('surface', 2.5)
 
-    print("|lon| = {}; |lat| = {}; |depth| = {}, |times| = {}".format(lonsz.shape[0], latsz.shape[0], dep.shape[0], times.shape[0]))
+    print("|lon| = {}; |lat| = {}; |depth| = {}, |times| = {}, |grids| = {}".format(lonsz.shape[0], latsz.shape[0], dep.shape[0], times.shape[0], len(fieldset.gridset)))
 
     # ==== Set min/max depths in the fieldset ==== #
     fs_depths = fieldset.U.depth
