@@ -1144,25 +1144,28 @@ class Field(object):
         # 1: was asked to load by kernel in JIT
         # 2: is loaded and was touched last C call
         # 3: is loaded
-        if isinstance(self.data, da.core.Array):
-            for block_id in range(len(self.grid.load_chunk)):
-                if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
-                    block = self.get_block(block_id)
-                    self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
-                elif self.grid.load_chunk[block_id] == 0:
-                    if isinstance(self.data_chunks, list):
-                        self.data_chunks[block_id] = None
-                    else:
-                        self.data_chunks[block_id, :] = None
-                    self.c_data_chunks[block_id] = None
-        else:
-            if isinstance(self.data_chunks, list):
-                self.data_chunks[0] = None
+        try:
+            if isinstance(self.data, da.core.Array):
+                for block_id in range(len(self.grid.load_chunk)):
+                    if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
+                        block = self.get_block(block_id)
+                        self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
+                    elif self.grid.load_chunk[block_id] == 0:
+                        if isinstance(self.data_chunks, list):
+                            self.data_chunks[block_id] = None
+                        else:
+                            self.data_chunks[block_id, :] = None
+                        self.c_data_chunks[block_id] = None
             else:
-                self.data_chunks[0, :] = None
-            self.c_data_chunks[0] = None
-            self.grid.load_chunk[0] = 2
-            self.data_chunks[0] = np.array(self.data)
+                if isinstance(self.data_chunks, list):
+                    self.data_chunks[0] = None
+                else:
+                    self.data_chunks[0, :] = None
+                self.c_data_chunks[0] = None
+                self.grid.load_chunk[0] = 2
+                self.data_chunks[0] = np.array(self.data)
+        except (IndexError, IOError) as error:
+            logger.error("Field '{}' - error: {}".format(self.name, error))
 
     @property
     def ctypes_struct(self):
