@@ -5,16 +5,16 @@ from argparse import ArgumentParser
 from datetime import timedelta as delta
 from datetime import  datetime
 import time as ostime
-# import numpy as np
 from glob import glob
-# import matplotlib.pyplot as plt
+import os
+import sys
 import fnmatch
 import warnings
 import pickle
-# import matplotlib.ticker as mtick
-from numpy import *
+# from numpy import *
 # import scipy.linalg
-import math as math
+import math
+import numpy as np
 import gc
 warnings.filterwarnings("ignore")
 
@@ -291,7 +291,6 @@ if __name__ == "__main__":
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
-        if mpi_rank==0:
             # global_t_0 = ostime.time()
             # global_t_0 = MPI.Wtime()
             global_t_0 = ostime.process_time()

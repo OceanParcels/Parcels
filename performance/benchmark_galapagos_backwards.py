@@ -53,7 +53,8 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
         stokes_dimensions = {'lat': 'latitude', 'lon': 'longitude', 'time': 'time'}
         stokes_chs = {'time': 1, 'latitude': 16, 'longitude': 32}
         stokes_nchs = {
-            'U': {'lon': ('longitude', 32), 'lat': ('latitude', 16), 'time': ('time', 1)}
+            'U': {'lon': ('longitude', 32), 'lat': ('latitude', 16), 'time': ('time', 1)},
+            'V': {'lon': ('longitude', 32), 'lat': ('latitude', 16), 'time': ('time', 1)}
         }
         stokes_period = delta(days=366+2*31) if periodic_wrap else False  # 14 month period
         fieldset_stokes = None
