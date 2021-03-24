@@ -291,6 +291,7 @@ if __name__ == "__main__":
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_rank = mpi_comm.Get_rank()
+        if mpi_rank==0:
             # global_t_0 = ostime.time()
             # global_t_0 = MPI.Wtime()
             global_t_0 = ostime.process_time()
