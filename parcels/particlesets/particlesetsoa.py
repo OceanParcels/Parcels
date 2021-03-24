@@ -347,28 +347,6 @@ class ParticleSetSOA(BaseParticleSet):
             raise NotImplementedError('Mode %s not implemented. Please use "monte carlo" algorithm instead.' % mode)
 
     @classmethod
-    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
-        """Initialise the ParticleSet randomly drawn according to distribution from a field
-
-        :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
-        :param pclass: mod:`parcels.particle.JITParticle` or :mod:`parcels.particle.ScipyParticle`
-                 object that defines custom particle
-        :param start_field: Field for initialising particles stochastically (horizontally)  according to the presented density field.
-        :param size: Initial size of particle set
-        :param mode: Type of random sampling. Currently only 'monte_carlo' is implemented
-        :param depth: Optional list of initial depth values for particles. Default is 0m
-        :param time: Optional start time value for particles. Default is fieldset.U.time[0]
-        :param repeatdt: Optional interval (in seconds) on which to repeat the release of the ParticleSet
-        :param lonlatdepth_dtype: Floating precision for lon, lat, depth particle coordinates.
-               It is either np.float32 or np.float64. Default is np.float32 if fieldset.U.interp_method is 'linear'
-               and np.float64 if the interpolation method is 'cgrid_velocity'
-        """
-        lon, lat = cls.monte_carlo_sample(start_field, size, mode)
-
-        return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time,
-                   lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
-
-    @classmethod
     def from_particlefile(cls, fieldset, pclass, filename, restart=True, restarttime=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from a netcdf ParticleFile.
         This creates a new ParticleSet based on locations of all particles written
