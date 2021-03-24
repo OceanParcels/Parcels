@@ -1166,6 +1166,7 @@ class Field(object):
                 self.data_chunks[0] = np.array(self.data)
         except (IndexError, IOError) as error:
             logger.error("Field '{}' - error: {}".format(self.name, error))
+            raise error
 
     @property
     def ctypes_struct(self):
