@@ -142,7 +142,7 @@ if __name__=='__main__':
     elif fnmatch.fnmatchcase(os.uname()[1], "*.bullx*"):  # Cartesius
         CARTESIUS_SCRATCH_USERNAME = 'ckehluu'
         headdir = "/scratch/shared/{}/experiments/galapagos".format(CARTESIUS_SCRATCH_USERNAME)
-        odir = os.path.join(headdir, "/BENCHres")
+        odir = os.path.join(headdir, "BENCHres")
         datahead = "/projects/0/topios/hydrodynamic_data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
         computer_env = "Cartesius"
@@ -234,3 +234,5 @@ if __name__=='__main__':
             pset.plot_and_log(memory_used=Nmem, nparticles=Nparticles, target_N=1, imageFilePath=imageFileName, odir=odir)
     else:
         pset.plot_and_log(target_N=1, imageFilePath=imageFileName, odir=odir)
+
+    print('Execution finished')
