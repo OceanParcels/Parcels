@@ -271,7 +271,7 @@ class ParticleSetSOA(BaseParticleSet):
         return ParticleCollectionIteratorSOA(self._collection, subset=error_indices)
 
     def active_particles(self, time, dt):
-        # TODO: make this return an iterator or something.
+        # TODO: make this into a mask
         active_indices = (time - self._collection.data['time'])/dt >= 0
         non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)

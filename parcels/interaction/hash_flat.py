@@ -1,35 +1,13 @@
-from math import ceil
-
 import numpy as np
 from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
 from numba import njit
 import numba as nb
+from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
 
 
-class HashFlatNeighborSearch(BaseFlatNeighborSearch):
+class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
     '''Neighbor search using a hashtable (similar to octtrees).'''
     name = "hash"
-
-    def __init__(self, interaction_distance, interaction_depth,
-                 values=None):
-        super().__init__(interaction_distance, interaction_depth, values)
-#         self.inter_dist = np.array(
-#             [self.interaction_distance, self.interaction_distance,
-#              self.interaction_depth])
-        if values is not None:
-            self.rebuild(values)
-#         self._box = [[self._values[i, :].min(), self._values[i, :].max()]
-#                      for i in range(self._values.shape[0])]
-#         self.build_tree()
-
-    def find_neighbors_by_coor(self, coor):
-        hash_id = self.values_to_hashes(coor.reshape((3, 1)))
-        return self._find_neighbors(hash_id, coor)
-
-    def find_neighbors_by_idx(self, particle_idx):
-        hash_id = self._particle_hashes[particle_idx]
-        coor = self._values[:, particle_idx].reshape(3, 1)
-        return self._find_neighbors(hash_id, coor)
 
     def _find_neighbors(self, hash_id, coor):
         neighbor_blocks = hash_to_neighbors(hash_id, self._bits)
@@ -45,66 +23,38 @@ class HashFlatNeighborSearch(BaseFlatNeighborSearch):
         neighbors = pot_neighbors[np.where(distances < 1)]
         return neighbors
 
-    def rebuild(self, values=None):
-        if values is None:
-            values = self._values
-        self._values = values
-        self._box = np.array([[self._values[i, :].min(), self._values[i, :].max()]
-                              for i in range(self._values.shape[0])])
+    def rebuild(self, values, active_mask=-1):
+        super().rebuild(values, active_mask)
+        active_values = self._values[self._active_mask]
+
+        self._box = np.array([[active_values[i, :].min(), active_values[i, :].max()]
+                              for i in range(active_values.shape[0])])
 
         epsilon = 1e-8
 
         n_bits = ((self._box[:, 1] - self._box[:, 0])/self.inter_dist.reshape(-1) + epsilon)/np.log(2)
-        bits = np.ceil(n_bits).astype(int)
+        self._bits = np.ceil(n_bits).astype(int)
         self._min_box = self._box[:, 0]
         self._min_box = self._min_box.reshape(-1, 1)
-        box_i = ((values-self._min_box)/self.inter_dist).astype(int)
-        print(bits.shape)
-        particle_hashes = np.bitwise_or(
-            box_i[0, :], np.left_shift(box_i[1, :], bits[0]))
+        particle_hashes = self.values_to_hashes(values, self.active_idx)
         self._hash_table = hash_split(particle_hashes)
         self._particle_hashes = particle_hashes
-        self._bits = bits
 
-    def values_to_hashes(self, values):
-        box_i = ((values-self._min_box)/self.inter_dist).astype(int)
+    def values_to_hashes(self, values, active_idx=None):
+        if active_idx is None:
+            active_values = values
+        else:
+            active_values = values[active_idx]
+        box_i = ((active_values-self._min_box)/self.inter_dist).astype(int)
         particle_hashes = np.bitwise_or(
             box_i[0, :], np.left_shift(box_i[1, :], self._bits[0]))
-        return particle_hashes
 
+        if active_values is None:
+            return particle_hashes
 
-# def build_tree(values, max_dist, box):
-#     bits = []
-#     min_box = []
-#     for interval in box:
-#         epsilon = 1e-8
-#         n_bits = np.log((interval[1] - interval[0])/max_dist+epsilon)/np.log(2)
-#         bits.append(ceil(n_bits))
-#         min_box.append(interval[0])
-# 
-#     #min_box = np.array(min_box)
-#     #particle_hashes = np.empty(values.shape[1], dtype=int)
-#     #for particle_id in range(values.shape[1]):
-#     #    box_f = (values[:, particle_id] - min_box)/max_dist
-#     #    particle_hashes[particle_id] = np.bitwise_or(
-#     #        int(box_f[0]), np.left_shift(int(box_f[1]), bits[0]))
-#     min_box = np.array(min_box).reshape(-1, 1)
-#     box_i = ((values-min_box)/max_dist).astype(int)
-#     particle_hashes = np.bitwise_or(box_i[0, :],
-#                                     np.left_shift(box_i[1, :],
-#                                                   bits[0]))
-#     oct_dict = hash_split(particle_hashes)
-#     return oct_dict, particle_hashes, np.array(bits, dtype=int)
-
-
-def hash_split(hash_ids):
-    sort_idx = np.argsort(hash_ids)
-    a_sorted = hash_ids[sort_idx]
-    unq_first = np.concatenate((np.array([True]), a_sorted[1:] != a_sorted[:-1]))
-    unq_items = a_sorted[unq_first]
-    unq_count = np.diff(np.nonzero(unq_first)[0])
-    unq_idx = np.split(sort_idx, np.cumsum(unq_count))
-    return dict(zip(unq_items, unq_idx))
+        all_hashes = np.empty(values.shape[1], dtype=int)
+        all_hashes[active_idx] = particle_hashes
+        return all_hashes
 
 
 @njit
