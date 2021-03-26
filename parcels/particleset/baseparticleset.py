@@ -14,9 +14,9 @@ from parcels.tools.global_statics import get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
-from parcels.kernels.advection import AdvectionRK4
-from parcels.basekernel import BaseKernel as Kernel
-from parcels.particlesets.collections import ParticleCollection
+from parcels.application_kernels.advection import AdvectionRK4
+from parcels.kernel.basekernel import BaseKernel as Kernel
+from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
 
 
@@ -186,7 +186,7 @@ class BaseParticleSet(NDCluster):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
-        lon, lat = cls.monte_carlo_sample(start_field, mode)
+        lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 

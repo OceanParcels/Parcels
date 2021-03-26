@@ -8,7 +8,7 @@ try:
 except:
     MPI = None
 
-from parcels.baseparticlefile import BaseParticleFile
+from parcels.particlefile.baseparticlefile import BaseParticleFile
 
 __all__ = ['ParticleFileSOA']
 

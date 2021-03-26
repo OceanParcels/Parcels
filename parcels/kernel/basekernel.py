@@ -30,8 +30,8 @@ from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import TimeExtrapolationError
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
-from parcels.kernels.advection import AdvectionRK4_3D
-from parcels.kernels.advection import AdvectionAnalytical
+from parcels.application_kernels.advection import AdvectionRK4_3D
+from parcels.application_kernels.advection import AdvectionAnalytical
 
 __all__ = ['BaseKernel']
 

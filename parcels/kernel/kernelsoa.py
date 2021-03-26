@@ -14,7 +14,7 @@ try:
 except:
     MPI = None
 
-from parcels.basekernel import BaseKernel
+from parcels.kernel.basekernel import BaseKernel
 from parcels.compilation.codegenerator import ArrayKernelGenerator as KernelGenerator
 from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import NestedField

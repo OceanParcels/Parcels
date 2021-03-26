@@ -6,9 +6,9 @@ from math import floor
 
 import numpy as np
 
-from .collections import ParticleCollection
-from .iterators import BaseParticleAccessor
-from .iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
+from parcels.collection.collections import ParticleCollection
+from parcels.collection.iterators import BaseParticleAccessor
+from parcels.collection.iterators import BaseParticleCollectionIterator, BaseParticleCollectionIterable
 from parcels.particle import ScipyParticle, JITParticle  # noqa
 from parcels.field import Field
 from parcels.tools.loggers import logger

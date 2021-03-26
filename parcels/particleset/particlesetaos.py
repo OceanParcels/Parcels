@@ -10,13 +10,13 @@ from ctypes import c_void_p
 from parcels.grid import GridCode
 from parcels.field import NestedField
 from parcels.field import SummedField
-from parcels.kernelaos import KernelAOS
+from parcels.kernel.kernelaos import KernelAOS
 from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
-from parcels.particlefileaos import ParticleFileAOS
+from parcels.particlefile.particlefileaos import ParticleFileAOS
 from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
-from parcels.particlesets.baseparticleset import BaseParticleSet
-from parcels.collectionaos import ParticleCollectionAOS
-from parcels.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA
+from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.collection.collectionaos import ParticleCollectionAOS
+from parcels.collection.collectionaos import ParticleCollectionIteratorAOS, ParticleCollectionIterableAOS  # NOQA
 
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger

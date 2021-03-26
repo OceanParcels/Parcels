@@ -12,10 +12,10 @@ from parcels.kernel import Kernel
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
 from parcels.particlefile import ParticleFile
 from parcels.tools.statuscodes import StateCode
-from .baseparticleset import BaseParticleSet
-from .collectionsoa import ParticleCollectionSOA
-from .collectionsoa import ParticleCollectionIteratorSOA  # noqa
-from .collectionsoa import ParticleCollectionIterableSOA  # noqa
+from parcels.particleset.baseparticleset import BaseParticleSet
+from parcels.collection.collectionsoa import ParticleCollectionSOA
+from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # noqa
+from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
 try:
