@@ -1,1 +1,0 @@
-from .particlesetsoa import *  # noqa
