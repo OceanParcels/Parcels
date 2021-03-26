@@ -549,7 +549,11 @@ class DaskFileBuffer(NetcdfFileBuffer):
         data = self.dataset[self.name]
 
         ti = range(data.shape[0]) if self.ti is None else self.ti
-        data = self._apply_indices(data, ti)
+        try:
+            data = self._apply_indices(data, ti)
+        except (IndexError,) as error_msg:
+            logger.error("\nError applying indices {} for field '{}'.\n".format(self.indices, self.name))
+            raise error_msg
         if isinstance(data, xr.DataArray):
             data = data.data
 
