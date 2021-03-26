@@ -32,7 +32,7 @@ class GridSet(object):
 
             if (g.chunksize != grid.chunksize) and (grid.chunksize not in [False, None]):
                 for dim in grid.chunksize:
-                    if grid.chunksize[dim][1] != g.chunksize[dim][1]:
+                    if dim not in g.chunksize.keys() or grid.chunksize[dim][1] != g.chunksize[dim][1]:
                         sameGrid &= False
                         break
 
