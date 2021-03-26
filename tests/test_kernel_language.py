@@ -1,6 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, StateCode
-from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
-from parcels.kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
+from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
+from parcels.application_kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
 from parcels import ParcelsRandom
 import numpy as np
 import pytest
