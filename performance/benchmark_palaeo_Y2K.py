@@ -44,75 +44,68 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     bfile_array = bfile
     if not isinstance(bfile_array, list):
         bfile_array = [bfile, ]
-    filenames = { 'U': {'lon': mesh_mask,
-                        'lat': mesh_mask,
-                        'depth': [ufiles[0]],
-                        'data':ufiles},
-                'V' : {'lon': mesh_mask,
-                        'lat': mesh_mask,
-                        'depth': [ufiles[0]],
-                        'data':vfiles},
-                'W' : {'lon': mesh_mask,
-                        'lat': mesh_mask,
-                        'depth': [ufiles[0]],
-                        'data':wfiles},  
-                'S' : {'lon': mesh_mask,
-                        'lat': mesh_mask,
-                        'depth': [tfiles[0]],
-                        'data':tfiles},   
-                'T' : {'lon': mesh_mask,
-                        'lat': mesh_mask,
-                        'depth': [tfiles[0]],
-                        'data':tfiles},
-                'NO3':{'lon': mesh_mask,
+    filenames = {'U': {'lon': mesh_mask,
                        'lat': mesh_mask,
-                       'depth': [pfiles[0]],
-                       'data':pfiles},
-                'PP':{'lon': mesh_mask,
+                       'depth': [ufiles[0]],
+                       'data': ufiles},
+                 'V': {'lon': mesh_mask,
                        'lat': mesh_mask,
-                       'depth': [dfiles[0]],
-                       'data':dfiles},
-                'ICE':{'lon': mesh_mask,
+                       'depth': [ufiles[0]],
+                       'data': vfiles},
+                 'W': {'lon': mesh_mask,
                        'lat': mesh_mask,
-                       # 'depth': [ifiles[0]],
-                       'data':ifiles},
-                'ICEPRES':{'lon': mesh_mask,
+                       'depth': [ufiles[0]],
+                       'data': wfiles},
+                 'S': {'lon': mesh_mask,
                        'lat': mesh_mask,
-                       # 'depth': [ifiles[0]],
-                       'data':ifiles},
-                'CO2':{'lon': mesh_mask,
+                       'data': tfiles},
+                 'T': {'lon': mesh_mask,
                        'lat': mesh_mask,
-                       # 'depth': [dfiles[0]],
-                       'data':dfiles},
-                }
+                       'data': tfiles},
+                 'NO3': {'lon': mesh_mask,
+                         'lat': mesh_mask,
+                         'depth': [pfiles[0]],
+                         'data': pfiles},
+                 'ICE': {'lon': mesh_mask,
+                         'lat': mesh_mask,
+                         'data': ifiles},
+                 'ICEPRES': {'lon': mesh_mask,
+                             'lat': mesh_mask,
+                             'data': ifiles},
+                 'CO2': {'lon': mesh_mask,
+                         'lat': mesh_mask,
+                         'data': dfiles},
+                 'PP': {'lon': mesh_mask,
+                        'lat': mesh_mask,
+                        'depth': [dfiles[0]],
+                        'data': dfiles},
+                 }
     if mesh_mask:
         filenames['mesh_mask'] = mesh_mask
-    variables = {'U': 'uo',
-                 'V': 'vo',
-                 'W': 'wo',
-                 'T': 'sst',
-                 'S': 'sss',
-                 'NO3': 'DIN',                 
-                 'PP': 'TPP3',                
-                 'ICE': 'sit',
-                 'ICEPRES': 'ice_pres',
-                 'CO2': 'TCO2' }
+    variables = {'U': 'uo',  # 3D
+                 'V': 'vo',  # 3D
+                 'W': 'wo',  # 3D
+                 'S': 'sss',  # 2D - 'salin' = 3D
+                 'T': 'sst',  # 2D - 'potemp' = 3D
+                 # 'O2': 'OXY',
+                 'NO3': 'DIN',  # 3D
+                 'ICE': 'sit',  # 2D
+                 'ICEPRES': 'ice_pres',  # 2D
+                 'CO2': 'TCO2',  # 2D
+                 'PP': 'TPP3',  # 3D
+                 # 'B': 'Bathymetry',
+                 }
 
     dimensions = {'U': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
                   'V': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
-                  'S': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'T': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'NO3': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'PP': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  # 'S': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
-                  # 'T': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
-                  # 'NO3': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
-                  # 'PP': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
+                  'S': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'NO3': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
                   'ICE': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'ICEPRES': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  # 'CO2': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
-                  'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'}
+                  'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'PP': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
                   }
     bfiles = {'lon': mesh_mask, 'lat': mesh_mask, 'data': bfile_array}
     bvariables = ('B', 'Bathymetry')
@@ -121,21 +114,16 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
 
     chs = {'time_counter': 1, 'depthu': 80, 'depthv': 80, 'depthw': 80, 'deptht': 80, 'y': 200, 'x': 200}
     nchs = {
-        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 80), 'time': ('time_counter', 1)},
-        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 80), 'time': ('time_counter', 1)},
-        'W':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthw', 80), 'time': ('time_counter', 1)},
+        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},
+        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},
+        'W':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},
         'T':       {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
         'S':       {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
+        'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},
         'PP':      {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        # 'T':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 80), 'time': ('time_counter', 1)},
-        # 'S':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 80), 'time': ('time_counter', 1)},
-        # 'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 80), 'time': ('time_counter', 1)},
-        # 'PP':      {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 80), 'time': ('time_counter', 1)},
         'ICE':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
         'ICEPRES': {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        # 'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 80), 'time': ('time_counter', 1)},
-        'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
+        'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},
     }
     #
     #chs = (1, 75, 200, 200)
