@@ -8,12 +8,12 @@ try:
 except:
     MPI = None
 
-from parcels.baseparticlefile import BaseParticleFile
+from parcels.particlefile.baseparticlefile import BaseParticleFile
 
-__all__ = ['ParticleFileSOA']
+__all__ = ['ParticleFileAOS']
 
 
-class ParticleFileSOA(BaseParticleFile):
+class ParticleFileAOS(BaseParticleFile):
     """Initialise trajectory output.
 
     :param name: Basename of the output file
@@ -32,22 +32,21 @@ class ParticleFileSOA(BaseParticleFile):
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
-        super(ParticleFileSOA, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
+        super(ParticleFileAOS, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
                                               write_ondelete=write_ondelete, convert_at_end=convert_at_end,
                                               tempwritedir=tempwritedir, pset_info=pset_info)
-        self.maxid_written = -1
 
     def __del__(self):
-        super(ParticleFileSOA, self).__del__()
+        super(ParticleFileAOS, self).__del__()
 
     def _reserved_var_names(self):
         """
         returns the reserved dimension names not to be written just once.
         """
-        return ['time', 'lat', 'lon', 'depth', 'id']  # , 'index'
+        return ['time', 'lat', 'lon', 'depth', 'id']
 
     def _create_trajectory_records(self, coords):
-        super(ParticleFileSOA, self)._create_trajectory_records(coords=coords)
+        super(ParticleFileAOS, self)._create_trajectory_records(coords=coords)
 
     def get_pset_info_attributes(self):
         """
@@ -103,7 +102,6 @@ class ParticleFileSOA(BaseParticleFile):
         Attention:
         For ParticleSet structures other than SoA, and structures where ID != index, this has to be overridden.
         """
-
         if MPI:
             # The export can only start when all threads are done.
             MPI.COMM_WORLD.Barrier()
@@ -120,6 +118,7 @@ class ParticleFileSOA(BaseParticleFile):
         global_maxid_written = -1
         global_time_written = []
         global_file_list = []
+        global_file_list_once = None
         if len(self.var_names_once) > 0:
             global_file_list_once = []
         for tempwritedir in temp_names:

@@ -51,6 +51,25 @@ class BaseParticleFile(ABC):
     :param pset_info: dictionary of info on the ParticleSet, stored in tempwritedir/XX/pset_info.npy,
                      used to create NetCDF file from npy-files.
     """
+    write_ondelete = None
+    convert_at_end = None
+    outputdt = None
+    lasttime_written = None
+    dataset = None
+    metadata = None
+    name = None
+    particleset = None
+    parcels_mesh = None
+    time_origin = None
+    lonlatdepth_dtype = None
+    var_names = None
+    file_list = None
+    var_names_once = None
+    file_list_once = None
+    maxid_written = -1
+    time_written = None
+    tempwritedir_base = None
+    tempwritedir = None
 
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
@@ -62,7 +81,7 @@ class BaseParticleFile(ABC):
 
         self.dataset = None
         self.metadata = {}
-        if pset_info is not None:
+        if pset_info:
             for v in pset_info.keys():
                 setattr(self, v, pset_info[v])
         else:
@@ -87,22 +106,24 @@ class BaseParticleFile(ABC):
             self.file_list = []
             self.time_written = []
 
+        tmp_dir = tempwritedir
         if tempwritedir is None:
-            tempwritedir = os.path.join(os.path.dirname(str(self.name)), "out-%s"
-                                        % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+            tmp_dir = os.path.join(os.path.dirname(str(self.name)), "out-%s" % ''.join(random.choice(string.ascii_uppercase) for _ in range(8)))
+        else:
+            tmp_dir = tempwritedir
 
         if MPI:
             mpi_rank = MPI.COMM_WORLD.Get_rank()
-            self.tempwritedir_base = MPI.COMM_WORLD.bcast(tempwritedir, root=0)
+            self.tempwritedir_base = MPI.COMM_WORLD.bcast(tmp_dir, root=0)
         else:
-            self.tempwritedir_base = tempwritedir
+            self.tempwritedir_base = tmp_dir
             mpi_rank = 0
         self.tempwritedir = os.path.join(self.tempwritedir_base, "%d" % mpi_rank)
 
         if not os.path.exists(self.tempwritedir):
             os.makedirs(self.tempwritedir)
         elif pset_info is None:
-            raise IOError("output directory %s already exists. Please remove first." % self.tempwritedir)
+            raise IOError("output directory %s already exists. Please remove the directory." % self.tempwritedir)
 
     @abstractmethod
     def _reserved_var_names(self):
@@ -270,6 +291,8 @@ class BaseParticleFile(ABC):
         """
         pset_info = {}
         attrs_to_dump = self.get_pset_info_attributes()
+        if attrs_to_dump is None:
+            return
         for a in attrs_to_dump:
             if hasattr(self, a):
                 pset_info[a] = getattr(self, a)

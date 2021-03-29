@@ -35,6 +35,10 @@ class Grid(object):
     """
 
     def __init__(self, lon, lat, time, time_origin, mesh):
+        self.xi = None
+        self.yi = None
+        self.zi = None
+        self.ti = -1
         self.lon = lon
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
