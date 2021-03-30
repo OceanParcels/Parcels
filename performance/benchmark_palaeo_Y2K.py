@@ -114,16 +114,16 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
 
     chs = {'time_counter': 1, 'depthu': 80, 'depthv': 80, 'depthw': 80, 'deptht': 80, 'y': 200, 'x': 200}
     nchs = {
-        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},
-        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},
-        'W':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},
-        'T':       {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        'S':       {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},
-        'PP':      {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        'ICE':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        'ICEPRES': {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},
-        'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},
+        'U':       {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},
+        'V':       {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},
+        'W':       {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},
+        'T':       {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},
+        'S':       {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},
+        'NO3':     {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},
+        'PP':      {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},
+        'ICE':     {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},
+        'ICEPRES': {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},
+        'CO2':     {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},
     }
     #
     #chs = (1, 75, 200, 200)
@@ -174,28 +174,38 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         
 
 def periodicBC(particle, fieldSet, time):
-    if particle.lon > 180:
-        particle.lon -= 360
-    if particle.lon < -180:
-        particle.lon += 360
+    if particle.lon > 180.0:
+        particle.lon -= 360.0
+    if particle.lon < -180.0:
+        particle.lon += 360.0
 
 def Sink(particle, fieldset, time):
     if(particle.depth>fieldset.dwellingdepth):
         particle.depth = particle.depth + fieldset.sinkspeed * particle.dt
     elif(particle.depth<=fieldset.dwellingdepth and particle.depth>1):
         particle.depth = fieldset.surface
-        particle.temp = fieldset.T[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
-        particle.salin = fieldset.S[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
-        particle.PP = fieldset.PP[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
-        particle.NO3 = fieldset.NO3[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
-        particle.ICE = fieldset.ICE[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
-        particle.ICEPRES = fieldset.ICEPRES[time+particle.dt, fieldset.surface, particle.lat, particle.lon] 
-        particle.CO2 = fieldset.CO2[time+particle.dt, fieldset.surface, particle.lat, particle.lon]  
+        # == Comment: bad idea to do 'time+dt' here cause those data are (likely) not loaded right now == #
+        # particle.temp = fieldset.T[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        # particle.salin = fieldset.S[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        # particle.PP = fieldset.PP[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        # particle.NO3 = fieldset.NO3[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        # particle.ICE = fieldset.ICE[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        # particle.ICEPRES = fieldset.ICEPRES[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        # particle.CO2 = fieldset.CO2[time+particle.dt, fieldset.surface, particle.lat, particle.lon]
+        particle.temp = fieldset.T[time, fieldset.surface, particle.lat, particle.lon]
+        particle.salin = fieldset.S[time, fieldset.surface, particle.lat, particle.lon]
+        particle.PP = fieldset.PP[time, fieldset.surface, particle.lat, particle.lon]
+        particle.NO3 = fieldset.NO3[time, fieldset.surface, particle.lat, particle.lon]
+        particle.ICE = fieldset.ICE[time, fieldset.surface, particle.lat, particle.lon]
+        particle.ICEPRES = fieldset.ICEPRES[time, fieldset.surface, particle.lat, particle.lon]
+        particle.CO2 = fieldset.CO2[time, fieldset.surface, particle.lat, particle.lon]
         particle.delete()
 
 def Age(particle, fieldset, time):
     if particle.state == StateCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
+    if particle.age > fieldset.life_expectancy:
+        particle.delete()
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
@@ -284,8 +294,6 @@ if __name__ == "__main__":
         dirread_top_bgc = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
 
     # print("running {} on {} (uname: {}) - branch '{}' - headdir: {}; odir: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, headdir, odir, sys.argv[1:]))
-
-
     # dirread_pal = '/projects/0/palaeo-parcels/NEMOdata/'
 
     outfile = 'grid_dd' + str(int(dd))
@@ -308,8 +316,9 @@ if __name__ == "__main__":
     if not os.path.exists(dirwrite):
         os.mkdir(dirwrite)
 
-    latsz = np.array(pd.read_csv(os.path.join(headdir,"TF_locationsSurfaceSamples_forPeter.csv")).Latitude.tolist())
-    lonsz = np.array(pd.read_csv(os.path.join(headdir,"TF_locationsSurfaceSamples_forPeter.csv")).Longitude.tolist())
+    latlonstruct = pd.read_csv(os.path.join(headdir,"TF_locationsSurfaceSamples_forPeter.csv"))
+    latsz = np.array(latlonstruct.Latitude.tolist())
+    lonsz = np.array(latlonstruct.Longitude.tolist())
     numlocs = np.logical_and(latsz<1000, lonsz<1000)
     latsz = latsz[numlocs]
     lonsz = lonsz[numlocs]
@@ -317,16 +326,16 @@ if __name__ == "__main__":
     assert ~(np.isnan(latsz)).any(), 'locations should not contain any NaN values'
     dep = dd * np.ones(latsz.shape)
 
-    times = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
-    time = np.empty(shape=(0))
+    timesz = np.array([datetime(2000, 12, 25) - delta(days=x) for x in range(0,int(365),3)])
+    times = np.empty(shape=(0))
     depths = np.empty(shape=(0))
     lons = np.empty(shape=(0))
     lats = np.empty(shape=(0))
-    for i in range(len(times)):
+    for i in range(len(timesz)):
         lons = np.append(lons,lonsz)
         lats = np.append(lats, latsz)
         depths = np.append(depths, np.zeros(len(lonsz), dtype=np.float32))
-        time = np.append(time, np.full(len(lonsz),times[i]))
+        times = np.append(times, np.full(len(lonsz),timesz[i]))
 
     print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lons.shape[0], sys.argv[1:]))
 
@@ -363,7 +372,7 @@ if __name__ == "__main__":
     # ==== Set min/max depths in the fieldset ==== #
     fs_depths = fieldset.U.depth
 
-    pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time = time)
+    pset = ParticleSet_Benchmark.from_list(fieldset=fieldset, pclass=DinoParticle, lon=lons.tolist(), lat=lats.tolist(), depth=depths.tolist(), time=times)
 
     """ Kernal + Execution"""
     postProcessFuncs = []
