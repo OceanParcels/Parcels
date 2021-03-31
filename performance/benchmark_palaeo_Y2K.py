@@ -64,7 +64,8 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
                        'data': tfiles},
                  'NO3': {'lon': mesh_mask,
                          'lat': mesh_mask,
-                         'depth': [pfiles[0]],
+                         'depth': [ufiles[0]],
+                         # 'depth': [pfiles[0]],
                          'data': pfiles},
                  'ICE': {'lon': mesh_mask,
                          'lat': mesh_mask,
@@ -77,7 +78,8 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
                          'data': dfiles},
                  'PP': {'lon': mesh_mask,
                         'lat': mesh_mask,
-                        'depth': [dfiles[0]],
+                        'depth': [ufiles[0]],
+                        # 'depth': [dfiles[0]],
                         'data': dfiles},
                  }
     if mesh_mask:
