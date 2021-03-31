@@ -73,6 +73,8 @@ class BaseHashNeighborSearch(ABC):
 
         n_idx = 0
         for idx_array in self._hashtable.values():
+            for idx in idx_array:
+                assert idx in active_idx
             n_idx += len(idx_array)
         assert n_idx == len(active_idx)
         assert np.all(self.values_to_hashes(self._values[:, active_idx]) == self._particle_hashes[active_idx])

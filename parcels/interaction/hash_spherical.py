@@ -94,7 +94,8 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch, BaseSphericalNeighborS
         active_idx = self.active_idx
 
         # Compute the hash values:
-        self._particle_hashes = self.values_to_hashes(values, active_idx=active_idx)
+        self._particle_hashes = np.empty(self._values.shape[1], dtype=int)
+        self._particle_hashes[active_idx] = self.values_to_hashes(values[:, active_idx])
 
         # Create the hashtable.
         self._hashtable = hash_split(self._particle_hashes,
