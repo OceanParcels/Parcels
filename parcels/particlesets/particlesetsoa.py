@@ -270,12 +270,13 @@ class ParticleSetSOA(BaseParticleSet):
         error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
         return ParticleCollectionIteratorSOA(self._collection, subset=error_indices)
 
-    def active_particles(self, time, dt):
+    def active_particles_mask(self, time, dt):
         # TODO: make this into a mask
         active_indices = (time - self._collection.data['time'])/dt >= 0
         non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
-        return np.where(active_indices)[0]
+        self._active_particle_idx = np.where(active_indices)[0]
+        return active_indices
 
     @property
     def num_error_particles(self):
@@ -457,28 +458,25 @@ class ParticleSetSOA(BaseParticleSet):
         if self._neighbor_time is not None and self._neighbor_time == time:
             return
 
-        self._active_particle_idx = self.active_particles(time, dt)
-        self.reverse_active_pidx = np.full(len(self._collection), -1, dtype=int)
-        self.reverse_active_pidx[self._active_particle_idx] = np.arange(len(self._active_particle_idx))
-        values = np.vstack((
-            self._collection.data['lat'][self._active_particle_idx],
-            self._collection.data['lon'][self._active_particle_idx],
-            self._collection.data['depth'][self._active_particle_idx],
-        ))
+        active_mask = self.active_particles_mask(time, dt)
 
-        # TODO: there are issues everywhere, so do the safest one!
-        self._dirty_neighbor = True
+        # TODO: See if there are issues everywhere
+#         self._dirty_neighbor = True
         if self._dirty_neighbor:
-            self._neighbor_tree.rebuild(values)
+            self._values = np.vstack((
+                self._collection.data['lat'],
+                self._collection.data['lon'],
+                self._collection.data['depth'],
+            ))
+            self._neighbor_tree.rebuild(self._values, active_mask=active_mask)
             self._dirty_neighbor = False
             self._neighbor_time = time
         else:
-            self._neighbor_tree.update_values(values)
+            self._neighbor_tree.update_values(self._values, active_mask=active_mask)
 
     def neighbors_by_index(self, particle_idx):
         # TODO: yes, slow!
-        rel_particle_idx = self.reverse_active_pidx[particle_idx]
-        neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(rel_particle_idx)
+        neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         neighbor_idx = neighbor_idx[neighbor_idx != particle_idx]
         neighbor_id = self._collection.data['id'][neighbor_idx]
