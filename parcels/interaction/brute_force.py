@@ -10,13 +10,10 @@ class BruteFlatNeighborSearch(BaseFlatNeighborSearch):
     name = "brute force"
 
     def find_neighbors_by_coor(self, coor):
-#         coor = self.values[:, particle_idx].reshape(3, 1)
-        distances = np.sqrt(np.sum(((self._values-coor)/self.inter_dist)**2, axis=0))
-#         distances = fast_distance(*self._values[:, particle_idx],
-#                                   self._values[0, :], self._values[1, :])
-        print(distances.shape)
+        active_values = self._values[:, self._active_idx]
+        distances = np.sqrt(np.sum(((active_values-coor)/self.inter_dist)**2, axis=0))
         idx = np.where(distances < 1)[0]
-        return idx
+        return self._active_idx[idx]
 
 
 class BruteSphericalNeighborSearch(BaseSphericalNeighborSearch):
