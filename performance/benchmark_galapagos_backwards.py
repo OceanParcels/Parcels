@@ -223,8 +223,6 @@ if __name__=='__main__':
         avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
 
-    outfile.close()
-
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         # mpi_comm.Barrier()
