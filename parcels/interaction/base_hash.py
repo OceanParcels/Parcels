@@ -59,7 +59,11 @@ class BaseHashNeighborSearch(ABC):
 
     def consistency_check(self):
         '''See if all values are in their proper place.'''
-        for idx in range(self._values.shape[1]):
+        active_idx = self.active_idx
+        if active_idx is None:
+            active_idx = np.arange(self._values.shape[1])
+
+        for idx in active_idx:
             cur_hash = self._particle_hashes[idx]
             hash_idx = self._hash_idx[idx]
             if self._hashtable[cur_hash][hash_idx] != idx:
@@ -69,9 +73,11 @@ class BaseHashNeighborSearch(ABC):
 
         n_idx = 0
         for idx_array in self._hashtable.values():
+            for idx in idx_array:
+                assert idx in active_idx
             n_idx += len(idx_array)
-        assert n_idx == self._values.shape[1]
-        assert np.all(self.values_to_hashes(self._values) == self._particle_hashes)
+        assert n_idx == len(active_idx)
+        assert np.all(self.values_to_hashes(self._values[:, active_idx]) == self._particle_hashes[active_idx])
 
     def update_values(self, new_values, new_active_mask=None):
         '''Update the locations of (some) of the particles.
@@ -83,6 +89,7 @@ class BaseHashNeighborSearch(ABC):
         '''
         if self._values is None:
             self.rebuild(new_values, new_active_mask)
+            return
 
         if new_active_mask is None:
             new_active_mask = np.full(new_values.shape[1], True)
@@ -91,18 +98,23 @@ class BaseHashNeighborSearch(ABC):
         stay_active_mask = np.logical_and(self._active_mask, new_active_mask)
         activated_mask = np.logical_and(np.logical_not(self._active_mask), new_active_mask)
 
+        stay_active_idx = np.where(stay_active_mask)[0]
+
         old_hashes = self._particle_hashes[stay_active_mask]
-        new_hashes = self.values_to_hashes(new_values[stay_active_mask])
+        new_hashes = self.values_to_hashes(new_values[:, stay_active_mask])
 
         # See which particles have crossed cell boundaries.
-        move_idx = np.where(old_hashes != new_hashes)[0]
+        move_idx = stay_active_idx[np.where(old_hashes != new_hashes)[0]]
         remove_idx = np.append(move_idx, np.where(deactivated_mask)[0])
         add_idx = np.append(move_idx, np.where(activated_mask)[0])
+
         self.deactivate_particles(remove_idx)
         self._particle_hashes[stay_active_mask] = new_hashes
-        self._particle_hashes[activated_mask] = self.values_to_hashes(new_values[activated_mask])
+        self._particle_hashes[activated_mask] = self.values_to_hashes(
+            new_values[:, activated_mask])
         self.activate_particles(add_idx)
 
+        self._active_mask = new_active_mask
         self._values = new_values
 
     @abstractmethod
@@ -177,6 +189,8 @@ def hash_split(hash_ids, active_idx=None):
     Multiple particles that are found in the same cell are put in a list
     with that particular hash.
     '''
+    if len(hash_ids) == 0:
+        return {}
     if active_idx is not None:
         sort_idx = active_idx[np.argsort(hash_ids[active_idx])]
     else:

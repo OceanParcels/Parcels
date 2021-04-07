@@ -8,7 +8,6 @@ class BaseNeighborSearch(ABC):
     name = "unknown"
 
     def __init__(self, interaction_distance, interaction_depth, max_depth=100000):
-#         self._values = values
         self.interaction_depth = interaction_depth
         self.interaction_distance = interaction_distance
         self.inter_dist = np.array(
@@ -28,24 +27,24 @@ class BaseNeighborSearch(ABC):
         raise NotImplementedError
 
     def update_values(self, new_values, new_active_mask=None):
-        self._values = new_values
-        self._active_mask = new_active_mask
+        self.rebuild(new_values, new_active_mask)
 
     def rebuild(self, values, active_mask=-1):
         if values is not None:
             self._values = values
         if active_mask is None:
             self._active_mask = np.arange(self._values.shape[1])
-        if active_mask != -1:
+        if not (isinstance(active_mask, int) and active_mask == -1):
             self._active_mask = active_mask
+        self._active_idx = self.active_idx
 #         if self._active_mask is None:
 #             self._active_idx = None
 
     @property
     def active_idx(self):
         if self._active_mask is None:
-            return None
-        return np.where(self._active_maske)[0]
+            return np.arange(self._values.shape[1])
+        return np.where(self._active_mask)[0]
 
     @classmethod
     def benchmark(cls, max_n_particles=1000, density=1):
