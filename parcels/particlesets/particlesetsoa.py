@@ -455,24 +455,24 @@ class ParticleSetSOA(BaseParticleSet):
                                              deleted_only=deleted_only)
 
     def compute_neighbor_tree(self, time, dt):
-        if self._neighbor_time is not None and self._neighbor_time == time:
-            return
+#         if self._neighbor_time is not None and self._neighbor_time == time:
+#             return
 
         active_mask = self.active_particles_mask(time, dt)
 
         # TODO: See if there are issues everywhere
 #         self._dirty_neighbor = True
+        self._values = np.vstack((
+            self._collection.data['lat'],
+            self._collection.data['lon'],
+            self._collection.data['depth'],
+        ))
         if self._dirty_neighbor:
-            self._values = np.vstack((
-                self._collection.data['lat'],
-                self._collection.data['lon'],
-                self._collection.data['depth'],
-            ))
             self._neighbor_tree.rebuild(self._values, active_mask=active_mask)
             self._dirty_neighbor = False
             self._neighbor_time = time
         else:
-            self._neighbor_tree.update_values(self._values, active_mask=active_mask)
+            self._neighbor_tree.update_values(self._values, new_active_mask=active_mask)
 
     def neighbors_by_index(self, particle_idx):
         # TODO: yes, slow!

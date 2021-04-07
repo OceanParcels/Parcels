@@ -48,6 +48,7 @@ def test_concatenate_interaction_kernels(fieldset, mode):
     lats = [0.0, 0.0, 0.0, 0.0]
     # Distance in meters R_earth*0.2 degrees
     interaction_distance = 6371000*0.2*np.pi/180
+
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats,
                        interaction_distance=interaction_distance)
     pset.execute(DoNothing,
