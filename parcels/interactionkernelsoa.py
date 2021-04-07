@@ -38,8 +38,24 @@ class InteractionKernelSOA(BaseInteractionKernel):
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
-                 funccode=None, py_ast=None, funcvars=None, c_include="", delete_cfiles=True):
-        super().__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc, funcname=funcname, funccode=funccode, py_ast=py_ast, funcvars=funcvars, c_include=c_include, delete_cfiles=delete_cfiles)
+                 funccode=None, py_ast=None, funcvars=None, c_include="",
+                 delete_cfiles=True):
+        super().__init__(fieldset=fieldset, ptype=ptype, pyfunc=pyfunc,
+                         funcname=funcname, funccode=funccode, py_ast=py_ast,
+                         funcvars=funcvars, c_include=c_include,
+                         delete_cfiles=delete_cfiles)
+
+        for func in self._pyfunc:
+            self.check_fieldsets_in_kernels(func)
+
+        numkernelargs = self.check_kernel_signature_on_version()
+
+        assert numkernelargs[0] == 5 and \
+            numkernelargs.count(numkernelargs[0]) == len(numkernelargs), \
+            'Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbours, mutator'
+
+        # At this time, JIT mode is not supported for InteractionKernels,
+        # so there is no need for any further "processing" of pyfunc's.
 
     def execute_jit(self, pset, endtime, dt):
         raise NotImplementedError
@@ -51,10 +67,14 @@ class InteractionKernelSOA(BaseInteractionKernel):
         super().__del__()
 
     def __add__(self, kernel):
-        raise NotImplementedError
+        if not isinstance(kernel, InteractionKernelSOA):
+            kernel = InteractionKernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        return self.merge(kernel, InteractionKernelSOA)
 
     def __radd__(self, kernel):
-        raise NotImplementedError
+        if not isinstance(kernel, InteractionKernelSOA):
+            kernel = InteractionKernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        return kernel.merge(self, InteractionKernelSOA)
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -63,17 +83,18 @@ class InteractionKernelSOA(BaseInteractionKernel):
         # back up variables in case of OperationCode.Repeat
         p_var_back = {}
 
-        pset.compute_neighbor_tree(endtime, dt)
-        active_idx = pset._active_particle_idx
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
                 if type(f) in [VectorField, NestedField, SummedField]:
                     continue
                 f.data = np.array(f.data)
 
-        mutator = defaultdict(lambda: [])
-
         for pyfunc in self._pyfunc:
+            pset.compute_neighbor_tree(endtime, dt)
+            active_idx = pset._active_particle_idx
+
+            mutator = defaultdict(lambda: [])
+
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 # Don't use particles that are not started.
@@ -98,13 +119,13 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     res = ErrorCode.Error
                     p.exception = e
 
-        for particle_idx in active_idx:
-            p = pset[particle_idx]
-            try:
-                for m in mutator[p.id]:
-                    m(p)
-            except KeyError:
-                pass
+            for particle_idx in active_idx:
+                p = pset[particle_idx]
+                try:
+                    for m in mutator[p.id]:
+                        m(p)
+                except KeyError:
+                    pass
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps"""
