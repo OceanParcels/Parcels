@@ -627,6 +627,8 @@ def search_kernel(particle, fieldset, time):
                       delete_cfiles=delete_cfiles)
 
     def InteractionKernel(self, pyfunc_inter):
+        if pyfunc_inter is None:
+            return None
         return InteractionKernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
