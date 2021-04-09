@@ -16,8 +16,6 @@ except:
     MPI = None
 
 from parcels.baseinteractionkernel import BaseInteractionKernel
-from parcels.compilation.codegenerator import KernelGenerator
-from parcels.compilation.codegenerator import LoopGenerator
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import TimeExtrapolationError
@@ -94,7 +92,6 @@ class InteractionKernelSOA(BaseInteractionKernel):
             active_idx = pset._active_particle_idx
 
             mutator = defaultdict(lambda: [])
-
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 # Don't use particles that are not started.
@@ -102,7 +99,6 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     continue
 
                 neighbors = pset.neighbors_by_index(particle_idx)
-                pyfunc(p, pset.fieldset, p.time, neighbors, mutator)
                 try:
                     res = pyfunc(p, pset.fieldset, p.time, neighbors, mutator)
                 except FieldOutOfBoundError as fse_xy:

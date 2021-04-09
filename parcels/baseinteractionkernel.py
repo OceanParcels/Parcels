@@ -25,10 +25,10 @@ from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.grid import GridCode
-from parcels.kernels.advection import AdvectionRK4_3D
-from parcels.kernels.advection import AdvectionAnalytical
+from parcels.application_kernels import AdvectionRK4_3D
+from parcels.application_kernels import AdvectionAnalytical
 from parcels.tools.statuscodes import OperationCode
-from parcels.basekernel import BaseKernel
+from parcels.kernel.basekernel import BaseKernel
 
 __all__ = ['BaseKernel']
 

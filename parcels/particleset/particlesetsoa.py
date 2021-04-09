@@ -183,6 +183,7 @@ class ParticleSetSOA(BaseParticleSet):
         interaction_z = None
         self._dirty_neighbor = True
         self._neighbor_time = None
+        self._collection = ParticleCollectionSOA(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
         if interaction_distance is not None:
             meshes = [g.mesh for g in fieldset.gridset.grids]
             # Assert all grids have the same mesh type
@@ -212,7 +213,6 @@ class ParticleSetSOA(BaseParticleSet):
                 interaction_z = interaction_distance
             self._neighbor_tree = interaction_class(interaction_xy, interaction_z)
 
-        self._collection = ParticleCollectionSOA(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -475,9 +475,6 @@ class ParticleSetSOA(BaseParticleSet):
                                              deleted_only=deleted_only)
 
     def compute_neighbor_tree(self, time, dt):
-#         if self._neighbor_time is not None and self._neighbor_time == time:
-#             return
-
         active_mask = self.active_particles_mask(time, dt)
 
         # TODO: See if there are issues everywhere
@@ -501,7 +498,8 @@ class ParticleSetSOA(BaseParticleSet):
         neighbor_idx = neighbor_idx[neighbor_idx != particle_idx]
         neighbor_id = self._collection.data['id'][neighbor_idx]
         # TODO: this iterator probably doesn't do what we want (1x use)
-        return ParticleCollectionIteratorSOA(self._collection, subset=neighbor_idx)
+        print(neighbor_idx)
+        return ParticleCollectionIterableSOA(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
