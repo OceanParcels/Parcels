@@ -14,8 +14,9 @@ from parcels.tools.global_statics import get_package_dir
 from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
-from parcels.kernels.advection import AdvectionRK4
-from parcels.kernel import Kernel
+from parcels.application_kernels.advection import AdvectionRK4
+from parcels.kernel.basekernel import BaseKernel as Kernel
+from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
 from parcels.baseinteractionkernel import BaseInteractionKernel
 
@@ -52,11 +53,19 @@ class BaseParticleSet(NDCluster):
         self.fieldset = None
         self.time_origin = None
 
+    def __del__(self):
+        if self._collection is not None and isinstance(self._collection, ParticleCollection):
+            del self._collection
+        self._collection = None
+
+    def iterator(self):
+        return self._collection.iterator()
+
     def __iter__(self):
         """Allows for more intuitive iteration over a particleset, while
         in reality iterating over the particles in the collection.
         """
-        return iter(self._collection)
+        return self.iterator()
 
     def __getattr__(self, name):
         """
@@ -181,7 +190,7 @@ class BaseParticleSet(NDCluster):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
 
-        lon, lat = cls.monte_carlo_sample(start_field, mode)
+        lon, lat = cls.monte_carlo_sample(start_field, size, mode)
 
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, repeatdt=repeatdt)
 
@@ -207,22 +216,6 @@ class BaseParticleSet(NDCluster):
                and np.float64 if the interpolation method is 'cgrid_velocity'
         """
         pass
-
-    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
-             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
-        """Method to 'show' a Parcels ParticleSet
-
-        :param with_particles: Boolean whether to show particles
-        :param show_time: Time at which to show the ParticleSet
-        :param field: Field to plot under particles (either None, a Field object, or 'vector')
-        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
-        :param projection: type of cartopy projection to use (default PlateCarree)
-        :param land: Boolean whether to show land. This is ignored for flat meshes
-        :param vmin: minimum colour scale (only in single-plot mode)
-        :param vmax: maximum colour scale (only in single-plot mode)
-        :param savefile: Name of a file to save the plot to
-        :param animation: Boolean whether result is a single plot, or an animation
-        """
 
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
         """Method to calculate the density of particles in a ParticleSet from their locations,
@@ -499,3 +492,22 @@ class BaseParticleSet(NDCluster):
             output_file.write(self, time)
         if verbose_progress:
             pbar.finish()
+
+    def show(self, with_particles=True, show_time=None, field=None, domain=None, projection=None,
+             land=True, vmin=None, vmax=None, savefile=None, animation=False, **kwargs):
+        """Method to 'show' a Parcels ParticleSet
+
+        :param with_particles: Boolean whether to show particles
+        :param show_time: Time at which to show the ParticleSet
+        :param field: Field to plot under particles (either None, a Field object, or 'vector')
+        :param domain: dictionary (with keys 'N', 'S', 'E', 'W') defining domain to show
+        :param projection: type of cartopy projection to use (default PlateCarree)
+        :param land: Boolean whether to show land. This is ignored for flat meshes
+        :param vmin: minimum colour scale (only in single-plot mode)
+        :param vmax: maximum colour scale (only in single-plot mode)
+        :param savefile: Name of a file to save the plot to
+        :param animation: Boolean whether result is a single plot, or an animation
+        """
+        from parcels.plotting import plotparticles
+        plotparticles(particles=self, with_particles=with_particles, show_time=show_time, field=field, domain=domain,
+                      projection=projection, land=land, vmin=vmin, vmax=vmax, savefile=savefile, animation=animation, **kwargs)
