@@ -498,7 +498,6 @@ class ParticleSetSOA(BaseParticleSet):
         neighbor_idx = neighbor_idx[neighbor_idx != particle_idx]
         neighbor_id = self._collection.data['id'][neighbor_idx]
         # TODO: this iterator probably doesn't do what we want (1x use)
-        print(neighbor_idx)
         return ParticleCollectionIterableSOA(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
