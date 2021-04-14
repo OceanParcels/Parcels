@@ -6,7 +6,7 @@ from parcels.tools.statuscodes import OperationCode, StateCode
 from parcels.interaction.spherical_utils import relative_3d_distance
 
 
-__all__ = ['DummyMoveNeighbour']
+__all__ = ['DummyMoveNeighbour', 'AsymmetricAttraction']
 
 
 def DummyMoveNeighbour(particle, fieldset, time, neighbours, mutator):
@@ -49,7 +49,7 @@ def AsymmetricAttraction(particle, fieldset, time, neighbours, mutator):
     velocity_param = 0.01
     for n in na_neighbors:
         assert n.dt == particle.dt
-        dx = np.array([particle.lat-n.lat, particle.long-n.long,
+        dx = np.array([particle.lat-n.lat, particle.lon-n.lon,
                        particle.depth-n.depth])
         dx_norm = np.linalg.norm(dx)
         velocity = velocity_param/(dx_norm**2)
@@ -59,7 +59,7 @@ def AsymmetricAttraction(particle, fieldset, time, neighbours, mutator):
 
         def f(n):
             n.lat += d_vec[0]
-            n.long += d_vec[1]
+            n.lon += d_vec[1]
             n.depth += d_vec[2]
 
         mutator[n.id].append(f)
