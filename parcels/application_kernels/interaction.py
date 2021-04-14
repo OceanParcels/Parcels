@@ -26,7 +26,7 @@ def DummyMoveNeighbour(particle, fieldset, time, neighbours, mutator):
 
         def f(p):
             p.lat += 0.1
-        mutator[neighbour_ids[i_min_dist]].append(f)
+        mutator[neighbour_ids[i_min_dist]].append((f,))
 
     return StateCode.Success
 
@@ -56,12 +56,12 @@ def AsymmetricAttraction(particle, fieldset, time, neighbours, mutator):
         distance = velocity*n.dt
         d_vec = distance*dx/dx_norm
 
-        def f(n):
-            n.lat += d_vec[0]
-            n.lon += d_vec[1]
-            n.depth += d_vec[2]
+        def f(n, dlat, dlon, ddepth):
+            n.lat += dlat
+            n.lon += dlon
+            n.depth += ddepth
 
-        mutator[n.id].append(f)
+        mutator[n.id].append((f, d_vec))
 
     return StateCode.Success
 

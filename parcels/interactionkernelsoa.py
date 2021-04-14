@@ -118,8 +118,8 @@ class InteractionKernelSOA(BaseInteractionKernel):
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 try:
-                    for m in mutator[p.id]:
-                        m(p)
+                    for mutator_func, args in mutator[p.id]:
+                        mutator_func(p, *args)
                 except KeyError:
                     pass
 
