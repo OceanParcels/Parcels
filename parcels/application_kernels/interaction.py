@@ -40,9 +40,11 @@ def AsymmetricAttraction(particle, fieldset, time, neighbours, mutator):
     for n in neighbours:
         if n.attractor:
             continue
-        distances.append(
-            relative_3d_distance(particle.lat, particle.lon, particle.depth,
-                                 n.lat, n.lon, n.depth))
+        x_p = np.array([particle.lat, particle.long, particle.depth])
+        x_n = np.array([n.lat, n.long, n.depth])
+        distances.append(np.linalg.norm(x_p-x_n))
+#             relative_3d_distance(particle.lat, particle.lon, particle.depth,
+#                                  n.lat, n.lon, n.depth))
         na_neighbors.append(n)
 
     assert fieldset.mesh == "flat"
@@ -65,3 +67,20 @@ def AsymmetricAttraction(particle, fieldset, time, neighbours, mutator):
         mutator[n.id].append(f)
 
     return StateCode.Success
+
+
+def great_circle(lat_1, long_1, lat_2, long_2):
+    from numpy import cos, sin, arctan2
+    d_lat = long_2-long_1
+    num_alpha_1 = cos(lat_2)*sin(d_lat)
+    denom_alpha_1 = cos(lat_1)*sin(lat_2) - sin(lat_1)*cos(lat_2)*cos(d_lat)
+    alpha_1 = arctan2(num_alpha_1/denom_alpha_1)
+    num_alpha_2 = cos(lat_1)*sin(d_lat)
+    denom_alpha_2 = -cos(lat_2)*sin(lat_1) + sin(lat_2)*cos(lat_1)*cos(d_lat)
+    alpha_2 = arctan2(num_alpha_2/denom_alpha_2)
+    nom_sigma_12 = (cos(lat_1)*sin(lat_2) - sin(lat_1)*cos(lat_2)*cos(d_lat))**2
+    nom_sigma_12 += (cos(lat_2)*sin(d_lat))**2
+    denom_sigma_12 = sin(lat_1)*sin(lat_2) + cos(lat_1)*cos(lat_2)*cos(d_lat)
+    sigma_12 = arctan2(np.sqrt(nom_sigma_12)/denom_sigma_12)
+
+
