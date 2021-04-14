@@ -25,15 +25,15 @@ def test_interaction_example(mode, mesh):
         attractor = Variable('attractor', dtype=np.bool_, to_write=False)
 
     pset = ParticleSet(fieldset=fieldset, pclass=InteractingParticle,
-                       lon=np.zeros(2), lat=np.array([0.0, 1.0]),
-                       interaction_distance=1,
-                       attractor=np.array([False, True]))
+                       lon=np.zeros(5), lat=np.array([0.0, 1.0, 0.5, -0.75, 0.25]),
+                       interaction_distance=2,
+                       attractor=np.array([True, False, False, False, False]))
 
     output_file = pset.ParticleFile(name="InteractingParticles.nc",
-                                    outputdt=timedelta(hours=1))
+                                    outputdt=timedelta(minutes=4))
 
     pset.execute(pyfunc=AdvectionRK4, pyfunc_inter=AsymmetricAttraction,
-                 runtime=runtime, dt=timedelta(hours=1),
+                 runtime=runtime, dt=timedelta(minutes=4),
                  output_file=output_file)
 
     output_file.export()
