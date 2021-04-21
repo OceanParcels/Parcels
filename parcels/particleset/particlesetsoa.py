@@ -184,7 +184,11 @@ class ParticleSetSOA(BaseParticleSet):
         interaction_z = None
         self._dirty_neighbor = True
         self._neighbor_time = None
-        self._collection = ParticleCollectionSOA(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
+
+        self._collection = ParticleCollectionSOA(
+            _pclass, lon=lon, lat=lat, depth=depth, time=time,
+            lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig,
+            partitions=partitions, ngrid=ngrids, **kwargs)
         if interaction_distance is not None:
             meshes = [g.mesh for g in fieldset.gridset.grids]
             # Assert all grids have the same mesh type
@@ -201,8 +205,8 @@ class ParticleSetSOA(BaseParticleSet):
                 else:
                     interaction_class = ScipyFlatNeighborSearch
             else:
-                assert (False, "Interaction is only possible on 'flat' and "
-                        "'spherical' meshes")
+                assert False, ("Interaction is only possible on 'flat' and "
+                               "'spherical' meshes")
             try:
                 if len(interaction_distance) == 2:
                     interaction_xy, interaction_z = interaction_distance
@@ -213,7 +217,6 @@ class ParticleSetSOA(BaseParticleSet):
                 interaction_xy = interaction_distance
                 interaction_z = interaction_distance
             self._neighbor_tree = interaction_class(interaction_xy, interaction_z)
-
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -478,8 +481,6 @@ class ParticleSetSOA(BaseParticleSet):
     def compute_neighbor_tree(self, time, dt):
         active_mask = self.active_particles_mask(time, dt)
 
-        # TODO: See if there are issues everywhere
-#         self._dirty_neighbor = True
         self._values = np.vstack((
             self._collection.data['lat'],
             self._collection.data['lon'],
@@ -493,15 +494,18 @@ class ParticleSetSOA(BaseParticleSet):
             self._neighbor_tree.update_values(self._values, new_active_mask=active_mask)
 
     def neighbors_by_index(self, particle_idx):
-        # TODO: yes, slow!
-        neighbor_idx = self._neighbor_tree.find_neighbors_by_idx(particle_idx)
+        neighbor_idx, distances = self._neighbor_tree.find_neighbors_by_idx(
+            particle_idx)
         neighbor_idx = self._active_particle_idx[neighbor_idx]
-        neighbor_idx = neighbor_idx[neighbor_idx != particle_idx]
-        neighbor_id = self._collection.data['id'][neighbor_idx]
-        # TODO: this iterator probably doesn't do what we want (1x use)
+        mask = (neighbor_idx != particle_idx)
+        neighbor_idx = neighbor_idx[mask]
+        if 'surf_dist' in self._collection.data:
+            self._collection.data['surf_dist'][neighbor_idx] = distances[0, mask]
+            self._collection.data['depth_dist'][neighbor_idx] = distances[1, mask]
         return ParticleCollectionIterableSOA(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
+        # TODO: fix if necessary
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
         neighbor_ids = self._collection.data['id'][neighbor_idx]
         return neighbor_ids

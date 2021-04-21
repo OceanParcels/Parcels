@@ -3,12 +3,13 @@ from parcels import (
     FieldSet, ParticleSet, ScipyParticle, JITParticle, StateCode, OperationCode, ErrorCode, KernelError,
     OutOfBoundsError, AdvectionRK4, DummyMoveNeighbour
 )
+from parcels.particle import ScipyInteractionParticle
 import numpy as np
 import pytest
 import sys
 
 
-ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+ptype = {'scipy': ScipyInteractionParticle, 'jit': JITParticle}
 
 
 def DoNothing(particle, fieldset, time):
