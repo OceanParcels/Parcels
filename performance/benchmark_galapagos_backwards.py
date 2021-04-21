@@ -171,9 +171,10 @@ if __name__=='__main__':
     if with_GC:
         postProcessFuncs.append(perIterGC)
     output_fpath = None
+    outfile = None
     if args.write_out:
         output_fpath = fname
-    outfile = pset.ParticleFile(name=output_fpath, outputdt=delta(days=1))
+        outfile = pset.ParticleFile(name=output_fpath, outputdt=delta(days=1))
     kernel = pset.Kernel(AdvectionRK4)+pset.Kernel(Age)+pset.Kernel(periodicBC)
 
     starttime = 0
