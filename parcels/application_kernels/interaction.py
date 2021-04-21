@@ -33,8 +33,7 @@ def NearestNeighbourWithinRange(particle, fieldset, time, neighbours, mutator):
     min_dist = -1
     neighbour_id = -1
     for n in neighbours:
-        dist = relative_3d_distance(particle.lat, particle.lon, particle.depth,
-                                    n.lat, n.lon, n.depth)
+        dist = np.sqrt(n.surf_dist**2 + n.depth_dist**2)
         # Note that in case of a tie, the particle with the lowest ID
         # wins. In certain adverserial cases, this might lead to
         # undesirable results.
@@ -58,7 +57,7 @@ def MergeWithNearestNeighbour(particle, fieldset, time, neighbours, mutator):
                 # Merge particles
                 def g(p):
                     p.state = OperationCode.Delete
-                mutator[n.id].append((g,()))
+                mutator[n.id].append((g, ()))
 
                 def f(p, nlat, nlon, ndepth, nmass):
                     p.lat = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)

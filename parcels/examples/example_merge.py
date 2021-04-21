@@ -6,7 +6,7 @@ from datetime import timedelta
 from parcels import FieldSet
 from parcels import ParticleSet
 from parcels import Variable
-from parcels import ScipyParticle
+from parcels.particle import ScipyInteractionParticle
 from parcels import AdvectionRK4
 from parcels import NearestNeighbourWithinRange
 from parcels import MergeWithNearestNeighbour
@@ -22,7 +22,7 @@ def test_merge_example(mode, mesh, npart):
 
     # Create custom particle class with extra variables that indicate
     # mass and nearest neighbour.
-    class MergeParticle(ScipyParticle):
+    class MergeParticle(ScipyInteractionParticle):
         nearest_neighbour = Variable('nearest_neighbour', dtype=np.int64, to_write=False)
         mass = Variable('mass', dtype=np.float32)
 
