@@ -205,7 +205,6 @@ class Kernel(BaseKernel):
         if len(fargs) > 0:
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt), *fargs)
         else:
-
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):

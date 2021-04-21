@@ -514,9 +514,6 @@ class Field(object):
     def set_depth_from_field(self, field):
         self.grid.depth_field = field
 
-    def __getitem__(self, key):
-        return self.eval(*key)
-
     def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
                 Currently only works for Rectilinear Grids"""
@@ -937,6 +934,9 @@ class Field(object):
             return len(self.grid.depth) - 2
         else:
             return depth_index.argmin() - 1 if depth_index.any() else 0
+
+    def __getitem__(self, key):
+        return self.eval(*key)
 
     def eval(self, time, z, y, x, applyConversion=True):
         """Interpolate field values in space and time.
