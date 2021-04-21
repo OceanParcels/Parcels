@@ -206,8 +206,8 @@ def Sink(particle, fieldset, time):
 def Age(particle, fieldset, time):
     if particle.state == StateCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
-    if particle.age > fieldset.maxage:
-        particle.delete()
+    # if particle.age > fieldset.maxage:
+    #     particle.delete()
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
