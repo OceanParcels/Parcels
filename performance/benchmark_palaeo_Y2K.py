@@ -57,29 +57,24 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
                         'data':wfiles},  
                 'S' : {'lon': mesh_mask,
                         'lat': mesh_mask,
-                        'depth': [tfiles[0]],
                         'data':tfiles},   
                 'T' : {'lon': mesh_mask,
                         'lat': mesh_mask,
-                        'depth': [tfiles[0]],
                         'data':tfiles},
                 'NO3':{'lon': mesh_mask,
                        'lat': mesh_mask,
                        'depth': [pfiles[0]],
                        'data':pfiles},
-                'PP':{'lon': mesh_mask,
-                       'lat': mesh_mask,
-                       'depth': [dfiles[0]],
-                       'data':dfiles},
                 'ICE':{'lon': mesh_mask,
                        'lat': mesh_mask,
-                       'depth': [ifiles[0]],
                        'data':ifiles},
                 'ICEPRES':{'lon': mesh_mask,
-                       'lat': mesh_mask,
-                       'depth': [ifiles[0]],
-                       'data':ifiles},
+                           'lat': mesh_mask,
+                           'data':ifiles},
                 'CO2':{'lon': mesh_mask,
+                       'lat': mesh_mask,
+                       'data':dfiles},
+                'PP':{'lon': mesh_mask,
                        'lat': mesh_mask,
                        'depth': [dfiles[0]],
                        'data':dfiles},
@@ -102,11 +97,12 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
                   'W': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthu', 'time': 'time_counter'},  #
                   'T': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'S': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'NO3': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'PP': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'NO3': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
                   'ICE': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
                   'ICEPRES': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
-                  'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'} } #,
+                  'CO2': {'lon': 'glamf', 'lat': 'gphif', 'time': 'time_counter'},
+                  'PP': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'deptht', 'time': 'time_counter'},
+                  }
     bfiles = {'lon': mesh_mask, 'lat': mesh_mask, 'data': [bfile, ]}
     bvariables = ('B', 'Bathymetry')
     bdimensions = {'lon': 'glamf', 'lat': 'gphif'}
@@ -126,21 +122,19 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
     #        'CO2': {'x': 128, 'y': 64, 'deptht': 80, 'time_counter': 1},  # dfiles
     #        }
 
-    #chs = (1, 75, 200, 200)
-
-    #dask.config.set({'array.chunk-size': '6MiB'})
-    #chs = 'auto'
+    # dask.config.set({'array.chunk-size': '6MiB'})
+    # chs = 'auto'
     nchs = {
-        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},  # ufiles
-        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},  # vfiles
-        'W':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},  # wfiles
-        'T':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
-        'S':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
-        'NO3':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
-        'PP':      {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
-        'ICE':     {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},  # ifiles
-        'ICEPRES': {'lon': ('x', 64), 'lat': ('y', 32), 'time': ('time_counter', 1)},  # ifiles
-        'CO2':     {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
+        'U':       {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},  # ufiles
+        'V':       {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},  # vfiles
+        'W':       {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},  # wfiles
+        'T':       {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},  # tfiles
+        'S':       {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},  # tfiles
+        'NO3':     {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
+        'ICE':     {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},  # ifiles
+        'ICEPRES': {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},  # ifiles
+        'CO2':     {'lon': ('x', 128), 'lat': ('y', 96), 'time': ('time_counter', 1)},  # dfiles
+        'PP':      {'lon': ('x', 128), 'lat': ('y', 96), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
     }
 
     if mesh_mask: # and isinstance(bfile, list) and len(bfile) > 0:
@@ -176,6 +170,7 @@ def set_nemo_fieldset(ufiles, vfiles, wfiles, tfiles, pfiles, dfiles, ifiles, bf
         dimensions.pop('B')
         if not periodicFlag:
             try:
+                # fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs)
                 fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
             except (SyntaxError, ):
                 fieldset = FieldSet.from_netcdf(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
@@ -213,6 +208,8 @@ def Sink(particle, fieldset, time):
 def Age(particle, fieldset, time):
     if particle.state == ErrorCode.Evaluate:
         particle.age = particle.age + math.fabs(particle.dt)
+    # if particle.age > fieldset.maxage:
+    #     particle.delete()
 
 def DeleteParticle(particle, fieldset, time):
     particle.delete()
@@ -377,6 +374,8 @@ if __name__ == "__main__":
     fieldset.add_constant('maxage', 300000.*86400)
     fieldset.add_constant('surface', 2.5)
 
+    print("|lon| = {}; |lat| = {}; |depth| = {}, |times| = {}".format(lonsz.shape[0], latsz.shape[0], dep.shape[0], times.shape[0]))
+
     # ==== Set min/max depths in the fieldset ==== #
     fs_depths = fieldset.U.depth
     idgen.setDepthLimits(np.min(fs_depths), np.max(fs_depths))
@@ -387,7 +386,10 @@ if __name__ == "__main__":
     postProcessFuncs = []
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    pfile = pset.ParticleFile(os.path.join(dirwrite, outfile), convert_at_end=True, write_ondelete=True)
+    output_fpath = None
+    if args.write_out:
+        output_fpath = os.path.join(dirwrite, outfile)
+    pfile = pset.ParticleFile(output_fpath, convert_at_end=True, write_ondelete=True)
     kernels = pset.Kernel(initials) + Sink + Age  + pset.Kernel(AdvectionRK4_3D) + Age
 
     starttime = 0
@@ -419,11 +421,14 @@ if __name__ == "__main__":
         #endtime = ostime.time()
         endtime = ostime.process_time()
 
+    if args.write_out:
+        pfile.close()
+
+    size_Npart = len(pset.nparticle_log)
+    Npart = pset.nparticle_log.get_param(size_Npart - 1)
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_comm.Barrier()
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart - 1)
         Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
             if size_Npart>0:
@@ -432,15 +437,11 @@ if __name__ == "__main__":
             avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
             sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
     else:
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart-1)
         if size_Npart > 0:
             sys.stdout.write("final # particles: {}\n".format( Npart ))
         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
         avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
-
-    pfile.close()
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD

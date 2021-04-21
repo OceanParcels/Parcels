@@ -40,15 +40,30 @@ def create_galapagos_fieldset(datahead, periodic_wrap, use_stokes):
     # ==== Because the stokes data is a different grid, we actually need to define the chunking ==== #
     # fieldset_nemo = FieldSet.from_nemo(nemofiles, nemovariables, nemodimensions, field_chunksize='auto')
     nemo_chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 100, 'x': 100}
-    fieldset_nemo = FieldSet.from_nemo(nemo_files, nemo_variables, nemo_dimensions, field_chunksize=nemo_chs, time_periodic=period, allow_time_extrapolation=extrapolation)
+    nemo_nchs = {
+        'U':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},  #
+        'V':       {'lon': ('x', 64), 'lat': ('y', 32), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},  #
+    }
+    try:
+        fieldset_nemo = FieldSet.from_nemo(nemo_files, nemo_variables, nemo_dimensions, field_chunksize=nemo_chs, time_periodic=period, allow_time_extrapolation=extrapolation)
+    except (SyntaxError, ):
+        fieldset_nemo = FieldSet.from_nemo(nemo_files, nemo_variables, nemo_dimensions, chunksize=nemo_nchs, time_periodic=period, allow_time_extrapolation=extrapolation)
 
     if wstokes:
         stokes_files = sorted(glob(datahead+"/WaveWatch3data/CFSR/WW3-*_uss.nc"))
         stokes_variables = {'U': 'uuss', 'V': 'vuss'}
         stokes_dimensions = {'lat': 'latitude', 'lon': 'longitude', 'time': 'time'}
         stokes_chs = {'time': 1, 'latitude': 16, 'longitude': 32}
+        stokes_nchs = {
+            'U': {'lon': ('longitude', 32), 'lat': ('latitude', 16), 'time': ('time', 1)},
+            'V': {'lon': ('longitude', 32), 'lat': ('latitude', 16), 'time': ('time', 1)}
+        }
         stokes_period = delta(days=366+2*31) if periodic_wrap else False  # 14 month period
-        fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, field_chunksize=stokes_chs, time_periodic=stokes_period, allow_time_extrapolation=extrapolation)
+        fieldset_stokes = None
+        try:
+            fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, field_chunksize=stokes_chs, time_periodic=stokes_period, allow_time_extrapolation=extrapolation)
+        except (SyntaxError, ):
+            fieldset_stokes = FieldSet.from_netcdf(stokes_files, stokes_variables, stokes_dimensions, chunksize=stokes_nchs, time_periodic=stokes_period, allow_time_extrapolation=extrapolation)
         fieldset_stokes.add_periodic_halo(zonal=True, meridional=False, halosize=5)
 
         fieldset = FieldSet(U=fieldset_nemo.U+fieldset_stokes.U, V=fieldset_nemo.V+fieldset_stokes.V)
@@ -146,6 +161,7 @@ if __name__=='__main__':
         odir = os.path.join(headdir, "BENCHres")
         datahead = "/data"
         ddir_head = os.path.join(datahead, 'NEMO-MEDUSA/ORCA0083-N006/')
+    print("running {} on {} (uname: {}) - branch '{}' - argv: {}".format(scenario, computer_env, os.uname()[1], branch, sys.argv[1:]))
 
 
 
@@ -157,14 +173,18 @@ if __name__=='__main__':
     startlon, startlat = np.meshgrid(np.arange(galapagos_extent[0], galapagos_extent[1], 0.2),
                                      np.arange(galapagos_extent[2], galapagos_extent[3], 0.2))
 
-    print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, startlon.shape[0], sys.argv[1:]))
+    print("|lon| = {}; |lat| = {}".format(startlon.shape[0], startlat.shape[0]))
 
     pset = ParticleSet_Benchmark(fieldset=fieldset, pclass=GalapagosParticle, lon=startlon, lat=startlat, time=fU.grid.time[-1], repeatdt=delta(days=7))
     """ Kernal + Execution"""
     postProcessFuncs = []
     if with_GC:
         postProcessFuncs.append(perIterGC)
-    outfile = pset.ParticleFile(name=fname, outputdt=delta(days=1))
+    output_fpath = None
+    outfile = None
+    if args.write_out:
+        output_fpath = fname
+        outfile = pset.ParticleFile(name=output_fpath, outputdt=delta(days=1))
     kernel = pset.Kernel(AdvectionRK4)+pset.Kernel(Age)+pset.Kernel(periodicBC)
 
     starttime = 0
@@ -193,11 +213,14 @@ if __name__=='__main__':
         # endtime = ostime.time()
         endtime = ostime.process_time()
 
+    if args.write_out:
+        outfile.close()
+
+    size_Npart = len(pset.nparticle_log)
+    Npart = pset.nparticle_log.get_param(size_Npart - 1)
     if MPI:
         mpi_comm = MPI.COMM_WORLD
         mpi_comm.Barrier()
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart - 1)
         Npart = mpi_comm.reduce(Npart, op=MPI.SUM, root=0)
         if mpi_comm.Get_rank() == 0:
             if size_Npart>0:
@@ -206,15 +229,11 @@ if __name__=='__main__':
             avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
             sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time*1000.0))
     else:
-        size_Npart = len(pset.nparticle_log)
-        Npart = pset.nparticle_log.get_param(size_Npart-1)
         if size_Npart > 0:
             sys.stdout.write("final # particles: {}\n".format( Npart ))
         sys.stdout.write("Time of pset.execute(): {} sec.\n".format(endtime - starttime))
         avg_time = np.mean(np.array(pset.total_log.get_values(), dtype=np.float64))
         sys.stdout.write("Avg. kernel update time: {} msec.\n".format(avg_time * 1000.0))
-
-    outfile.close()
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
