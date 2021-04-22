@@ -20,9 +20,7 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
                 pass
 
         pot_neighbors = np.array(all_neighbor_points)
-        distances = np.linalg.norm((self._values[:, pot_neighbors]-coor)/self.inter_dist, axis=0)
-        neighbors = pot_neighbors[np.where(distances < 1)]
-        return neighbors
+        return self._get_close_neighbor_dist(coor, pot_neighbors)
 
     def update_values(self, new_values, new_active_mask=None):
         if not self.check_box(new_values, new_active_mask):

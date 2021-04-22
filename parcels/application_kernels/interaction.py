@@ -3,30 +3,73 @@ import math
 import numpy as np
 
 from parcels.tools.statuscodes import OperationCode, StateCode
-from parcels.interaction.spherical_utils import relative_3d_distance
 
 
-__all__ = ['DummyMoveNeighbour', 'AsymmetricAttraction']
+__all__ = ['DummyMoveNeighbour', 'AsymmetricAttraction', 'NearestNeighbourWithinRange', 'MergeWithNearestNeighbour']
 
 
 def DummyMoveNeighbour(particle, fieldset, time, neighbours, mutator):
     """A particle boosts the movement of its nearest neighbour, by adding
     0.1 to its lat position.
     """
-    distances = []
-    neighbour_ids = []
+    if len(neighbours) == 0:
+        return StateCode.Success
+
+    distances = [np.sqrt(n.surf_dist**2 + n.depth_dist**2) for n in neighbours]
+    i_min_dist = np.argmin(distances)
+
+    def f(p):
+        p.lat += 0.1
+
+    neighbor_id = neighbours[i_min_dist].id
+    mutator[neighbor_id].append((f, ()))
+
+    return StateCode.Success
+
+
+def NearestNeighbourWithinRange(particle, fieldset, time, neighbours, mutator):
+    """Particle has to have the nearest_neighbour property
+    """
+    min_dist = -1
+    neighbour_id = -1
     for n in neighbours:
-        distances.append(
-            relative_3d_distance(particle.lat, particle.lon, particle.depth,
-                                 n.lat, n.lon, n.depth))
-        neighbour_ids.append(n.id)
+        dist = np.sqrt(n.surf_dist**2 + n.depth_dist**2)
+        # Note that in case of a tie, the particle with the lowest ID
+        # wins. In certain adverserial cases, this might lead to
+        # undesirable results.
+        if dist < min_dist or min_dist == -1:
+            min_dist = dist
+            neighbour_id = n.id
 
-    if len(distances):
-        i_min_dist = np.argmin(distances)
+    def f(p, neighbour):
+        p.nearest_neighbour = neighbour
+    mutator[particle.id].append((f, [neighbour_id]))
 
-        def f(p):
-            p.lat += 0.1
-        mutator[neighbour_ids[i_min_dist]].append((f,))
+    return StateCode.Success
+
+
+def MergeWithNearestNeighbour(particle, fieldset, time, neighbours, mutator):
+    """Particle has to have the nearest_neighbour and mass properties
+    """
+    for n in neighbours:
+        if n.id == particle.nearest_neighbour:
+            if n.nearest_neighbour == particle.id and particle.id < n.id:
+                # Merge particles
+                def g(p):
+                    p.state = OperationCode.Delete
+                mutator[n.id].append((g, ()))
+
+                def f(p, nlat, nlon, ndepth, nmass):
+                    p.lat = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
+                    p.lon = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
+                    p.depth = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
+                    p.mass = p.mass + nmass
+                args = np.array([n.lat, n.lon, n.depth, n.mass])
+                mutator[particle.id].append((f, args))
+
+                return StateCode.Success
+            else:
+                return StateCode.Success
 
     return StateCode.Success
 

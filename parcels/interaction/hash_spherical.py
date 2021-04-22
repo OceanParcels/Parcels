@@ -3,7 +3,6 @@ from math import ceil
 from numba.core.decorators import njit
 import numpy as np
 
-from parcels.interaction.spherical_utils import relative_3d_distance
 from parcels.interaction.base_neighbor import BaseSphericalNeighborSearch
 from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
 
@@ -40,15 +39,17 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch, BaseSphericalNeighborS
 
         # Loop over neighbor candidates and check their actual distance.
         # TODO: use vectorized computation.
-        true_neigh = []
-        for neigh in all_neighbor_points:
-            distance = relative_3d_distance(
-                *self._values[:, neigh], *coor,
-                interaction_distance=self.interaction_distance,
-                interaction_depth=self.interaction_depth)
-            if distance < 1:
-                true_neigh.append(neigh)
-        return np.array(true_neigh)
+        potential_neighbors = np.array(all_neighbor_points, dtype=int)
+        return self._get_close_neighbor_dist(coor, potential_neighbors)
+#         true_neigh = []
+#         for neigh in all_neighbor_points:
+#             distance = relative_3d_distance(
+#                 *self._values[:, neigh], *coor,
+#                 interaction_distance=self.interaction_distance,
+#                 interaction_depth=self.interaction_depth)
+#             if distance < 1:
+#                 true_neigh.append(neigh)
+#         return np.array(true_neigh)
 
     def values_to_hashes(self, values, active_idx=None):
         '''Convert coordinates to cell ids.
@@ -123,7 +124,7 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch, BaseSphericalNeighborS
         self._bits = np.array([n_bits_lat, n_bits_long, n_bits_depth])
 
 
-@njit
+# @njit
 def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
     '''Convert longitude and lattitude id's to hash'''
     point_hash = lat_sign
@@ -136,7 +137,6 @@ def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
 
 def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
     '''Compute the hashes of all neighboring cells.'''
-    print(hash_id)
     lat_sign = hash_id & 0x1
     i_lat = (hash_id >> 1) & ((1 << bits[0])-1)
     i_depth = (hash_id >> (1+bits[0]+bits[1])) & ((1 << bits[2])-1)

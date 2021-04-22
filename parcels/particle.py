@@ -285,6 +285,11 @@ class ScipyParticle(_Particle):
         return sum([v.size for v in ptype.variables])
 
 
+class ScipyInteractionParticle(ScipyParticle):
+    surf_dist = Variable("surf_dist", dtype=np.float32)
+    depth_dist = Variable("depth_dist", dtype=np.float32)
+
+
 class JITParticle(ScipyParticle):
     """Particle class for JIT-based (Just-In-Time) Particle objects
 

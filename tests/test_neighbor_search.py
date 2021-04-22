@@ -10,7 +10,7 @@ from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
 def compare_results_by_idx(instances, particle_idx, active_idx=None):
     res = {}
     for instance in instances:
-        cur_neigh = instance.find_neighbors_by_idx(particle_idx)
+        cur_neigh, _ = instance.find_neighbors_by_idx(particle_idx)
         assert instance.name != "unknown"
         res[instance.name] = cur_neigh
         if active_idx is None:
@@ -40,7 +40,8 @@ def test_flat_neighbors():
     ]
 
     instances = []
-    positions = ScipyFlatNeighborSearch.create_positions(1000)
+    n_particle = 1000
+    positions = np.random.rand(n_particle*3).reshape(3, n_particle)
     for cur_class in neighbor_classes:
         cur_instance = cur_class(interaction_distance=0.3, interaction_depth=0.3)
         cur_instance.rebuild(positions)
@@ -50,6 +51,18 @@ def test_flat_neighbors():
         compare_results_by_idx(instances, particle_idx)
 
 
+def create_spherical_positions(n_particles, max_depth=100000):
+    yrange = 2*np.random.rand(n_particles)
+    lat = 180*(np.arccos(1-yrange)-0.5*np.pi)/np.pi
+    long = 360*np.random.rand(n_particles)
+    depth = max_depth*np.random.rand(n_particles)
+    return np.array((lat, long, depth))
+
+
+def create_flat_positions(n_particle):
+    return np.random.rand(n_particle*3).reshape(3, n_particle)
+
+
 def test_spherical_neighbors():
     np.random.seed(9837452)
     neighbor_classes = [
@@ -57,7 +70,7 @@ def test_spherical_neighbors():
     ]
 
     instances = []
-    positions = BruteSphericalNeighborSearch.create_positions(10000, max_depth=100000)
+    positions = create_spherical_positions(10000, max_depth=100000)
     for cur_class in neighbor_classes:
         cur_instance = cur_class(interaction_distance=1000000, interaction_depth=100000)
         cur_instance.rebuild(positions)
@@ -82,7 +95,7 @@ def test_flat_update():
         instances.append(cur_instance)
 
     for _ in range(n_active_mask):
-        positions = ScipyFlatNeighborSearch.create_positions(n_particle) + 10*np.random.rand()
+        positions = create_flat_positions(n_particle) + 10*np.random.rand()
         active_mask = np.random.rand(n_particle) > 0.5
         for cur_instance in instances:
             cur_instance.update_values(positions, active_mask)
@@ -110,7 +123,7 @@ def test_spherical_update():
         instances.append(cur_instance)
 
     for _ in range(n_active_mask):
-        positions = ScipyFlatNeighborSearch.create_positions(n_particle)
+        positions = create_spherical_positions(n_particle)
         active_mask = np.random.rand(n_particle) > 0.5
         for cur_instance in instances:
             cur_instance.update_values(positions, active_mask)

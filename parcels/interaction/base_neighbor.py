@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from timeit import timeit
+from parcels.interaction.distance_utils import spherical_distance
 
 
 class BaseNeighborSearch(ABC):
@@ -37,8 +37,6 @@ class BaseNeighborSearch(ABC):
         if not (isinstance(active_mask, int) and active_mask == -1):
             self._active_mask = active_mask
         self._active_idx = self.active_idx
-#         if self._active_mask is None:
-#             self._active_idx = None
 
     @property
     def active_idx(self):
@@ -46,125 +44,35 @@ class BaseNeighborSearch(ABC):
             return np.arange(self._values.shape[1])
         return np.where(self._active_mask)[0]
 
-    @classmethod
-    def benchmark(cls, max_n_particles=1000, density=1):
-        '''Perform benchmarks to figure out scaling with particles.'''
-        np.random.seed(213874)
-
-        def bench_init(values, interaction_distance):
-            return cls(values, max_dist)
-
-        def bench_search(neigh_search, n_sample):
-            for particle_id in np.random.randint(neigh_search._values.shape[1],
-                                                 size=n_sample):
-                neigh_search.find_neighbors(particle_id)
-
-        all_dt_init = []
-        all_dt_search = []
-        all_n_particles = []
-        n_particles = 30
-        n_init = 100
-        while n_particles < max_n_particles:
-            max_dist = np.sqrt(density*cls.area/(n_particles))
-            n_sample = min(5000, 10*n_particles)
-            if n_particles > 5000:
-                n_init = 10
-            positions = cls.create_positions(n_particles)
-            dt_init = timeit(lambda: bench_init(positions, max_dist),
-                             number=n_init)/n_init
-            neigh_search = bench_init(positions, max_dist)
-            dt_search = timeit(lambda: bench_search(neigh_search, n_sample),
-                               number=1)/n_sample
-            all_dt_init.append(dt_init)
-            all_dt_search.append(dt_search)
-            all_n_particles.append(n_particles)
-            n_particles *= 2
-        return {
-            "name": cls.name,
-            "n_particles": np.array(all_n_particles),
-            "init_time": np.array(all_dt_init),
-            "search_time": np.array(all_dt_search)}
-
-    @classmethod
     @abstractmethod
-    def create_positions(cls, n_particles):
-        pass
+    def _distance(self, coor, subset_idx):
+        raise NotImplementedError
 
-
-class BaseSphericalNeighborSearch(BaseNeighborSearch):
-    @classmethod
-    def create_positions(cls, n_particles, max_depth=100000):
-        yrange = 2*np.random.rand(n_particles)
-        lat = 180*(np.arccos(1-yrange)-0.5*np.pi)/np.pi
-        long = 360*np.random.rand(n_particles)
-        depth = max_depth*np.random.rand(n_particles)
-        return np.array((lat, long, depth))
-
-    @classmethod
-    def benchmark(cls, max_n_particles=1000, density=1, interaction_depth=100,
-                  update_frac=0.01):
-        '''Perform benchmarks to figure out scaling with particles.'''
-        np.random.seed(213874)
-
-        def bench_init(values, *args, **kwargs):
-            return cls(values, *args, **kwargs)
-
-        def bench_search(neigh_search, n_sample):
-            for particle_id in np.random.randint(neigh_search._values.shape[1],
-                                                 size=n_sample):
-                neigh_search.find_neighbors(particle_id)
-
-        def bench_update(neigh_search, n_change):
-            move_values = neigh_search.create_positions(n_change)
-            new_values = neigh_search._values.copy()
-            move_index = np.random.choice(n_particles, size=n_change, replace=False)
-            new_values[:, move_index] = move_values
-            neigh_search.update_values(new_values)
-
-        all_dt_init = []
-        all_dt_search = []
-        all_n_particles = []
-        all_dt_update = []
-        all_max_dist = []
-        n_particles = 30
-        n_init = 100
-        while n_particles < max_n_particles:
-            n_update = int(n_particles*update_frac)
-            inter_dist = (density*cls.area*cls.max_depth /
-                          (n_particles*interaction_depth))**(1/3)
-            kwargs = {"interaction_distance": inter_dist,
-                      "interaction_depth": interaction_depth}
-            n_sample = min(5000, 10*n_particles)
-            n_sample_update = int(n_sample/10)
-            if n_particles > 5000:
-                n_init = 10
-            positions = cls.create_positions(n_particles)
-            dt_init = timeit(lambda: bench_init(positions, **kwargs),
-                             number=n_init)/n_init
-            neigh_search = bench_init(positions, **kwargs)
-            dt_search = timeit(lambda: bench_search(neigh_search, n_sample),
-                               number=1)/n_sample
-            dt_update = timeit(lambda: bench_update(neigh_search, n_update),
-                               number=n_sample_update)/n_sample_update
-            all_dt_init.append(dt_init)
-            all_dt_search.append(dt_search)
-            all_n_particles.append(n_particles)
-            all_dt_update.append(dt_update)
-            all_max_dist.append(inter_dist)
-            n_particles *= 2
-        return {
-            "name": cls.name,
-            "n_particles": np.array(all_n_particles),
-            "init_time": np.array(all_dt_init),
-            "search_time": np.array(all_dt_search),
-            "update_time": np.array(all_dt_update),
-            "max_dist": np.array(all_max_dist),
-        }
+    def _get_close_neighbor_dist(self, coor, subset_idx):
+        surf_distance, depth_distance = self._distance(coor, subset_idx)
+        rel_distances = np.sqrt((surf_distance/self.interaction_distance)**2
+                                + (depth_distance/self.interaction_depth)**2)
+        rel_neighbor_idx = np.where(rel_distances < 1)[0]
+        neighbor_idx = subset_idx[rel_neighbor_idx]
+        distances = np.vstack((surf_distance[rel_neighbor_idx],
+                               depth_distance[rel_neighbor_idx]))
+        return neighbor_idx, distances
 
 
 class BaseFlatNeighborSearch(BaseNeighborSearch):
-    area = 1
+    def _distance(self, coor, subset_idx):
+        surf_distance = np.sqrt(np.sum((
+            self._values[:2, subset_idx] - coor[:2])**2,
+            axis=0))
+        depth_distance = np.abs(self._values[2, subset_idx]-coor[2])
+        return (surf_distance, depth_distance)
 
-    @classmethod
-    def create_positions(cls, n_particle):
-        return np.random.rand(n_particle*3).reshape(3, n_particle)
+
+class BaseSphericalNeighborSearch(BaseNeighborSearch):
+    def _distance(self, coor, subset_idx):
+        return spherical_distance(
+            *coor,
+            self._values[0, subset_idx],
+            self._values[1, subset_idx],
+            self._values[2, subset_idx],
+        )
