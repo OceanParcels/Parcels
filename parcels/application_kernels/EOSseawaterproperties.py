@@ -34,17 +34,17 @@ def AdiabticTemperatureGradient(particle, fieldset, time):
 
     Parameters
     ----------
-    s(p) : array_like
-           salinity [psu (PSS-78)]
-    t(p) : array_like
-           temperature [℃ (ITS-90)]
-    p : array_like
-        pressure [db]
+    :param particle.S: salinity [psu (PSS-78)]
+    :type particle.S: array_like
+    :param particle.T: temperature [℃ (ITS-90)]
+    :type particle.T: array_like
+    :param particle.pressure: pressure [db]
+    :type particle.pressure: array_like
 
     Returns
     -------
-    adtg : array_like
-           adiabatic temperature gradient [℃ db :sup:`-1`]
+    :return: adiabatic temperature gradient [℃ db :sup:`-1`]
+    :type: array_like
 
     References
     ----------
@@ -80,19 +80,19 @@ def PtempFromTemp(particle, fieldset, time):
 
     Parameters
     ----------
-    s(p) : array_like
-           salinity [psu (PSS-78)]
-    t(p) : array_like
-           temperature [℃ (ITS-90)]
-    p : array_like
-        pressure [db].
-    pr : array_like
-        reference pressure [db], default = 0
+    :param particle.S: salinity [psu (PSS-78)]
+    :type particle.S: array_like
+    :param particle.T: temperature [℃ (ITS-90)]
+    :type particle.T: array_like
+    :param particle.pressure: pressure [db]
+    :type particle.pressure: array_like
+    :param fieldset.refpressure: reference pressure [db], default = 0
+    :type fieldset.refpressure: array_like
 
     Returns
     -------
-    pt : array_like
-         potential temperature relative to PR [℃ (ITS-90)]
+    :return: potential temperature relative to PR [℃ (ITS-90)]
+    :type: array_like
 
     References
     ----------
@@ -174,19 +174,19 @@ def TempFromPtemp(particle, fieldset, time):
 
     Parameters
     ----------
-    s(p) : array_like
-           salinity [psu (PSS-78)]
-    pt(p) : array_like
-            potential temperature [℃ (ITS-90)]
-    p : array_like
-        pressure [db].
-    pr : array_like
-         reference pressure [db]
+    :param particle.S: salinity [psu (PSS-78)]
+    :type particle.S: array_like
+    :param particle.T: potential temperature [℃ (ITS-90)]
+    :type particle.T: array_like
+    :param particle.pressure: pressure [db]
+    :type particle.pressure: array_like
+    :param fieldset.refpressure: reference pressure [db], default = 0
+    :type fieldset.refpressure: array_like
 
     Returns
     -------
-    temp : array_like
-           temperature [℃ (ITS-90)]
+    :return: temperature [℃ (ITS-90)]
+    :type: array_like
 
     References
     ----------

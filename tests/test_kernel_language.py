@@ -1,6 +1,6 @@
 from parcels import FieldSet, ParticleSet, ScipyParticle, JITParticle, Kernel, Variable, StateCode
-from parcels.kernels.TEOSseawaterdensity import PolyTEOS10_bsq
-from parcels.kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
+from parcels.application_kernels.TEOSseawaterdensity import PolyTEOS10_bsq
+from parcels.application_kernels.EOSseawaterproperties import PressureFromLatDepth, PtempFromTemp, TempFromPtemp, UNESCODensity
 from parcels import ParcelsRandom
 import numpy as np
 import pytest
@@ -15,7 +15,7 @@ ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 def expr_kernel(name, pset, expr):
     pycode = """def %s(particle, fieldset, time):
     particle.p = %s""" % (name, expr)
-    return Kernel(pset.fieldset, pset.ptype, pyfunc=None,
+    return Kernel(pset.fieldset, pset.collection.ptype, pyfunc=None,
                   funccode=pycode, funcname=name,
                   funcvars=['particle'])
 

@@ -1,3 +1,4 @@
+# flake8: noqa: E999
 import inspect
 from datetime import timedelta as delta
 from math import cos
@@ -53,9 +54,19 @@ class TimeConverter(object):
             return (time - self.time_origin) / np.timedelta64(1, 's')
         elif self.calendar in _get_cftime_calendars():
             if isinstance(time, (list, np.ndarray)):
-                return np.array([(t - self.time_origin).total_seconds() for t in time])
+                try:
+                    return np.array([(t - self.time_origin).total_seconds() for t in time])
+                except ValueError:
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
+                                     "Provide 'time' as a %s object?"
+                                     % (type(time), self.calendar, type(self.time_origin)))
             else:
-                return (time - self.time_origin).total_seconds()
+                try:
+                    return (time - self.time_origin).total_seconds()
+                except ValueError:
+                    raise ValueError("Cannot subtract 'time' (a %s object) from a %s calendar.\n"
+                                     "Provide 'time' as a %s object?"
+                                     % (type(time), self.calendar, type(self.time_origin)))
         elif self.calendar is None:
             return time - self.time_origin
         else:

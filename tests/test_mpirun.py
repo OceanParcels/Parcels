@@ -10,16 +10,17 @@ except:
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
-def test_mpi_run(tmpdir):
+@pytest.mark.parametrize('repeatdt', [200*86400, 10*86400])
+@pytest.mark.parametrize('maxage', [600*86400, 10*86400])
+def test_mpi_run(tmpdir, repeatdt, maxage):
     if MPI:
-        repeatdt = 200*86400
         stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
                                  'examples', 'example_stommel.py')
         outputMPI = tmpdir.join('StommelMPI.nc')
         outputNoMPI = tmpdir.join('StommelNoMPI.nc')
 
-        system('mpirun -np 2 python %s -p 4 -o %s -r %d' % (stommel_file, outputMPI, repeatdt))
-        system('python %s -p 4 -o %s -r %d' % (stommel_file, outputNoMPI, repeatdt))
+        system('mpirun -np 2 python %s -p 4 -o %s -r %d -a %d' % (stommel_file, outputMPI, repeatdt, maxage))
+        system('python %s -p 4 -o %s -r %d -a %d' % (stommel_file, outputNoMPI, repeatdt, maxage))
 
         ncfile1 = Dataset(outputMPI, 'r', 'NETCDF4')
         ncfile2 = Dataset(outputNoMPI, 'r', 'NETCDF4')

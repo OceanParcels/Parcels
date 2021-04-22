@@ -70,7 +70,7 @@ def AdvectionRK45(particle, fieldset, time):
     b4 = [25./216., 0., 1408./2565., 2197./4104., -1./5.]
     b5 = [16./135., 0., 6656./12825., 28561./56430., -9./50., 2./55.]
 
-    (u1, v1) = fieldset.UV[time, particle.depth, particle.lat, particle.lon, particle]
+    (u1, v1) = fieldset.UV[particle]
     lon1, lat1 = (particle.lon + u1 * A[0][0] * particle.dt,
                   particle.lat + v1 * A[0][0] * particle.dt)
     (u2, v2) = fieldset.UV[time + c[0] * particle.dt, particle.depth, lat1, lon1, particle]
@@ -124,8 +124,7 @@ def AdvectionAnalytical(particle, fieldset, time):
         time_i = np.linspace(0, fieldset.U.grid.time[ti+1] - fieldset.U.grid.time[ti], I_s)
         ds_t = min(ds_t, time_i[np.where(time - fieldset.U.grid.time[ti] < time_i)[0][0]])
 
-    xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth,
-                                                           particle=particle)
+    xsi, eta, zeta, xi, yi, zi = fieldset.U.search_indices(particle.lon, particle.lat, particle.depth, particle=particle)
     if withW:
         if abs(xsi - 1) < tol:
             if fieldset.U.data[0, zi+1, yi+1, xi+1] > 0:
@@ -149,7 +148,9 @@ def AdvectionAnalytical(particle, fieldset, time):
                 yi += 1
                 eta = 0
 
-    particle.xi, particle.yi, particle.zi = xi, yi, zi
+    particle.xi[:] = xi
+    particle.yi[:] = yi
+    particle.zi[:] = zi
 
     grid = fieldset.U.grid
     if grid.gtype < 2:

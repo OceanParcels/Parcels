@@ -33,6 +33,13 @@ from parcels.tools.loggers import logger
 __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 
 
+def _isParticle(key):
+    if hasattr(key, '_next_dt'):
+        return True
+    else:
+        return False
+
+
 class Field(object):
     """Class that encapsulates access to field data.
 
@@ -80,7 +87,6 @@ class Field(object):
 
     * `Summed Fields <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_SummedFields.ipynb>`_
     """
-
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
                  interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo', **kwargs):
@@ -192,7 +198,7 @@ class Field(object):
         self.c_data_chunks = []
         self.nchunks = []
         self.chunk_set = False
-        self.filebuffers = [None] * 3
+        self.filebuffers = [None] * 2
         if len(kwargs) > 0:
             raise SyntaxError('Field received an unexpected keyword argument "%s"' % list(kwargs.keys())[0])
 
@@ -384,7 +390,7 @@ class Field(object):
         if 'full_load' in kwargs:  # for backward compatibility with Parcels < v2.0.0
             deferred_load = not kwargs['full_load']
 
-        if grid.time.size <= 3 or deferred_load is False:
+        if grid.time.size <= 2 or deferred_load is False:
             deferred_load = False
 
         if chunksize not in [False, None]:
@@ -480,7 +486,6 @@ class Field(object):
                    interp_method=interp_method, **kwargs)
 
     def reshape(self, data, transpose=False):
-
         # Ensure that field data is the right data type
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
@@ -538,7 +543,6 @@ class Field(object):
 
         * `Unit converters <https://nbviewer.jupyter.org/github/OceanParcels/parcels/blob/master/parcels/examples/tutorial_unitconverters.ipynb>`_
         """
-
         if self._scaling_factor:
             raise NotImplementedError(('Scaling factor for field %s already defined.' % self.name))
         self._scaling_factor = factor
@@ -555,13 +559,6 @@ class Field(object):
         self.grid.depth_field = field
         if self.grid != field.grid:
             field.grid.depth_field = field
-
-    def __getitem__(self, key):
-        # TODO: ideally, we'd like to use isinstance(key, ParticleAssessor) here, but that results in cyclic imports between Field and ParticleSet. Could/should be fixed in #913?
-        if hasattr(key, 'set_index'):
-            return self.eval(key.time, key.depth, key.lat, key.lon, key)
-        else:
-            return self.eval(*key)
 
     def calc_cell_edge_sizes(self):
         """Method to calculate cell sizes based on numpy.gradient method
@@ -1070,6 +1067,12 @@ class Field(object):
         else:
             return (time_index.argmin() - 1 if time_index.any() else 0, 0)
 
+    def __getitem__(self, key):
+        if _isParticle(key):
+            return self.eval(key.time, key.depth, key.lat, key.lon, key)
+        else:
+            return self.eval(*key)
+
     def eval(self, time, z, y, x, particle=None, applyConversion=True):
         """Interpolate field values in space and time.
 
@@ -1096,10 +1099,17 @@ class Field(object):
         else:
             return value
 
-    def ccode_eval(self, var, t, z, y, x):
+    def ccode_eval_array(self, var, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
-        return "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
-            % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        ccode_str = "temporal_interpolation(%s, %s, %s, %s, %s, &particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid], &%s, %s, %s)" \
+                    % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        return ccode_str
+
+    def ccode_eval_object(self, var, t, z, y, x):
+        # Casting interp_methd to int as easier to pass on in C-code
+        ccode_str = "temporal_interpolation_pstruct(%s, %s, %s, %s, %s, particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, %s, %s)" \
+                    % (x, y, z, t, self.ccode_name, var, self.interp_method.upper(), self.gridindexingtype.upper())
+        return ccode_str
 
     def ccode_convert(self, _, z, y, x):
         return self.units.ccode_to_target(x, y, z)
@@ -1139,17 +1149,14 @@ class Field(object):
     def chunk_data(self):
         if not self.chunk_set:
             self.chunk_setup()
-        # self.grid.load_chunk code:
-        # 0: not loaded
-        # 1: was asked to load by kernel in JIT
-        # 2: is loaded and was touched last C call
-        # 3: is loaded
+        g = self.grid
         if isinstance(self.data, da.core.Array):
             for block_id in range(len(self.grid.load_chunk)):
-                if self.grid.load_chunk[block_id] == 1 or self.grid.load_chunk[block_id] > 1 and self.data_chunks[block_id] is None:
+                if g.load_chunk[block_id] == g.chunk_loading_requested \
+                        or g.load_chunk[block_id] in g.chunk_loaded and self.data_chunks[block_id] is None:
                     block = self.get_block(block_id)
                     self.data_chunks[block_id] = np.array(self.data.blocks[(slice(self.grid.tdim),) + block])
-                elif self.grid.load_chunk[block_id] == 0:
+                elif g.load_chunk[block_id] == g.chunk_not_loaded:
                     if isinstance(self.data_chunks, list):
                         self.data_chunks[block_id] = None
                     else:
@@ -1161,7 +1168,7 @@ class Field(object):
             else:
                 self.data_chunks[0, :] = None
             self.c_data_chunks[0] = None
-            self.grid.load_chunk[0] = 2
+            self.grid.load_chunk[0] = g.chunk_loaded_touched
             self.data_chunks[0] = np.array(self.data)
 
     @property
@@ -1182,9 +1189,9 @@ class Field(object):
         allow_time_extrapolation = 1 if self.allow_time_extrapolation else 0
         time_periodic = 1 if self.time_periodic else 0
         for i in range(len(self.grid.load_chunk)):
-            if self.grid.load_chunk[i] == 1:
+            if self.grid.load_chunk[i] == self.grid.chunk_loading_requested:
                 raise ValueError('data_chunks should have been loaded by now if requested. grid.load_chunk[bid] cannot be 1')
-            if self.grid.load_chunk[i] > 1:
+            if self.grid.load_chunk[i] in self.grid.chunk_loaded:
                 if not self.data_chunks[i].flags.c_contiguous:
                     self.data_chunks[i] = self.data_chunks[i].copy()
                 self.c_data_chunks[i] = self.data_chunks[i].ctypes.data_as(POINTER(POINTER(c_float)))
@@ -1320,11 +1327,9 @@ class Field(object):
         if tindex == 0:
             data = lib.concatenate([data_to_concat, data[tindex+1:, :]], axis=0)
         elif tindex == 1:
-            data = lib.concatenate([data[:tindex, :], data_to_concat, data[tindex+1:, :]], axis=0)
-        elif tindex == 2:
             data = lib.concatenate([data[:tindex, :], data_to_concat], axis=0)
         else:
-            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1, 2]")
+            raise ValueError("data_concatenate is used for computeTimeChunk, with tindex in [0, 1]")
         return data
 
     def advancetime(self, field_new, advanceForward):
@@ -1350,12 +1355,13 @@ class Field(object):
                 ti = g.ti + tindex
             timestamp = self.timestamps[np.where(ti < summedlen)[0][0]]
 
+        rechunk_callback_fields = self.chunk_setup if isinstance(tindex, list) else None
         filebuffer = self._field_fb_class(self.dataFiles[g.ti + tindex], self.dimensions, self.indices,
                                           netcdf_engine=self.netcdf_engine, timestamp=timestamp,
                                           interp_method=self.interp_method,
                                           data_full_zdim=self.data_full_zdim,
                                           chunksize=self.chunksize,
-                                          rechunk_callback_fields=self.chunk_setup,
+                                          rechunk_callback_fields=rechunk_callback_fields,
                                           chunkdims_name_map=self.netcdf_chunkdims_name_map)
         filebuffer.__enter__()
         time_data = filebuffer.time
@@ -1668,25 +1674,42 @@ class VectorField(object):
                     return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
-        if hasattr(key, 'set_index'):
+        if _isParticle(key):
             return self.eval(key.time, key.depth, key.lat, key.lon, key)
         else:
             return self.eval(*key)
 
-    def ccode_eval(self, varU, varV, varW, U, V, W, t, z, y, x):
+    def ccode_eval_array(self, varU, varV, varW, U, V, W, t, z, y, x):
         # Casting interp_methd to int as easier to pass on in C-code
+        ccode_str = ""
         if self.vector_type == '3D':
-            return "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
-                   "&%s, &%s, &%s, %s, %s)" \
-                   % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = "temporal_interpolationUVW(%s, %s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
+                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                        "&%s, &%s, &%s, %s, %s)" \
+                        % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
         else:
-            return "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
-                   % (x, y, z, t, U.ccode_name, V.ccode_name) + \
-                   "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
-                   " &%s, &%s, %s, %s)" \
-                   % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+            ccode_str = "temporal_interpolationUV(%s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name) + \
+                        "&particles->xi[pnum*ngrid], &particles->yi[pnum*ngrid], &particles->zi[pnum*ngrid], &particles->ti[pnum*ngrid]," \
+                        " &%s, &%s, %s, %s)" \
+                        % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+        return ccode_str
+
+    def ccode_eval_object(self, varU, varV, varW, U, V, W, t, z, y, x):
+        # Casting interp_methd to int as easier to pass on in C-code
+        ccode_str = ""
+        if self.vector_type == '3D':
+            ccode_str = "temporal_interpolationUVW_pstruct(%s, %s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name, W.ccode_name) + \
+                        "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, &%s, %s, %s)" \
+                        % (varU, varV, varW, U.interp_method.upper(), U.gridindexingtype.upper())
+        else:
+            ccode_str = "temporal_interpolationUV_pstruct(%s, %s, %s, %s, %s, %s, " \
+                        % (x, y, z, t, U.ccode_name, V.ccode_name) + \
+                        "particle->cxi, particle->cyi, particle->czi, particle->cti, &%s, &%s, %s, %s)" \
+                        % (varU, varV, U.interp_method.upper(), U.gridindexingtype.upper())
+        return ccode_str
 
 
 class DeferredArray():
@@ -1756,7 +1779,7 @@ class SummedField(list):
             vals = []
             val = None
             for iField in range(len(self)):
-                if hasattr(key, 'set_index'):
+                if _isParticle(key):
                     val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                 else:
                     val = list.__getitem__(self, iField).eval(*key)
@@ -1816,7 +1839,7 @@ class NestedField(list):
         else:
             for iField in range(len(self)):
                 try:
-                    if hasattr(key, 'set_index'):
+                    if _isParticle(key):
                         val = list.__getitem__(self, iField).eval(key.time, key.depth, key.lat, key.lon, particle=None)
                     else:
                         val = list.__getitem__(self, iField).eval(*key)
