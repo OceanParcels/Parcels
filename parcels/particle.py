@@ -7,7 +7,7 @@ from parcels.field import Field
 from parcels.tools.statuscodes import StateCode, OperationCode
 from parcels.tools.loggers import logger
 
-__all__ = ['ScipyParticle', 'JITParticle', 'Variable']
+__all__ = ['ScipyParticle', 'JITParticle', 'Variable', 'ScipyInteractionParticle']
 
 indicators_64bit = [np.float64, np.uint64, np.int64, c_void_p]
 
