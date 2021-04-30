@@ -490,7 +490,6 @@ class Field(object):
         if not isinstance(data, (np.ndarray, da.core.Array)):
             data = np.array(data)
         if not data.dtype == np.float32:
-            logger.warning_once("Casting field data to np.float32")
             data = data.astype(np.float32)
         lib = np if isinstance(data, np.ndarray) else da
         if transpose:

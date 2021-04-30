@@ -306,8 +306,6 @@ class BaseKernel(object):
         This version is generally applicable to all structures and collections
         """
         indices = [i for i, p in enumerate(pset) if p.state == OperationCode.Delete]
-        if len(indices) > 0:
-            logger.info("Deleted {} particles.".format(len(indices)))
         if len(indices) > 0 and output_file is not None:
             output_file.write(pset, endtime, deleted_only=indices)
         pset.remove_indices(indices)
