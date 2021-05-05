@@ -43,14 +43,11 @@ class Grid(object):
         self.lat = lat
         self.time = np.zeros(1, dtype=np.float64) if time is None else time
         if not self.lon.dtype == np.float32:
-            logger.warning_once("Casting lon data to np.float32")
             self.lon = self.lon.astype(np.float32)
         if not self.lat.dtype == np.float32:
-            logger.warning_once("Casting lat data to np.float32")
             self.lat = self.lat.astype(np.float32)
         if not self.time.dtype == np.float64:
             assert isinstance(self.time[0], (np.integer, np.floating, float, int)), 'Time vector must be an array of int or floats'
-            logger.warning_once("Casting time data to np.float64")
             self.time = self.time.astype(np.float64)
         self.time_full = self.time  # needed for deferred_loaded Fields
         self.time_origin = TimeConverter() if time_origin is None else time_origin
@@ -337,7 +334,6 @@ class RectilinearZGrid(RectilinearGrid):
         self.zdim = self.depth.size
         self.z4d = -1  # only used in RectilinearSGrid
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
 
 
@@ -381,7 +377,6 @@ class RectilinearSGrid(RectilinearGrid):
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
         if self.lat_flipped:
             self.depth = np.flip(self.depth, axis=-2)
@@ -469,7 +464,6 @@ class CurvilinearZGrid(CurvilinearGrid):
         self.zdim = self.depth.size
         self.z4d = -1  # only for SGrid
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
 
 
@@ -512,5 +506,4 @@ class CurvilinearSGrid(CurvilinearGrid):
             assert self.xdim == self.depth.shape[-1], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
             assert self.ydim == self.depth.shape[-2], 'depth dimension has the wrong format. It should be [zdim, ydim, xdim]'
         if not self.depth.dtype == np.float32:
-            logger.warning_once("Casting depth data to np.float32")
             self.depth = self.depth.astype(np.float32)
