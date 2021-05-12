@@ -50,7 +50,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
 
         assert numkernelargs[0] == 5 and \
             numkernelargs.count(numkernelargs[0]) == len(numkernelargs), \
-            'Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbours, mutator'
+            'Interactionkernels take exactly 5 arguments: particle, fieldset, time, neighbors, mutator'
 
         # At this time, JIT mode is not supported for InteractionKernels,
         # so there is no need for any further "processing" of pyfunc's.
