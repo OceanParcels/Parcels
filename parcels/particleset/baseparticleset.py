@@ -18,7 +18,7 @@ from parcels.application_kernels.advection import AdvectionRK4
 from parcels.kernel.basekernel import BaseKernel as Kernel
 from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
-from parcels.baseinteractionkernel import BaseInteractionKernel
+from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 
 
 class NDCluster(ABC):

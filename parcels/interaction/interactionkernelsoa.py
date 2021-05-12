@@ -15,13 +15,13 @@ try:
 except:
     MPI = None
 
-from parcels.baseinteractionkernel import BaseInteractionKernel
 from parcels.field import FieldOutOfBoundError
 from parcels.field import FieldOutOfBoundSurfaceError
 from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
+from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.tools.statuscodes import recovery_map as recovery_base_map

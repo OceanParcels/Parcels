@@ -19,7 +19,7 @@ from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # no
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
 from parcels.interaction import HashSphericalNeighborSearch
-from parcels.interactionkernelsoa import InteractionKernelSOA
+from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.brute_force import BruteSphericalNeighborSearch
 from parcels.interaction.brute_force import BruteFlatNeighborSearch
 from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
