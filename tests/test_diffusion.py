@@ -1,6 +1,8 @@
-from parcels import (FieldSet, Field, RectilinearZGrid, ParticleSet, JITParticle,
+from parcels import (FieldSet, Field, RectilinearZGrid, JITParticle,
                      DiffusionUniformKh, AdvectionDiffusionM1, AdvectionDiffusionEM,
                      ScipyParticle, Variable)
+from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
+from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import ParcelsRandom
 from datetime import timedelta as delta
 import numpy as np
@@ -8,6 +10,8 @@ import pytest
 from scipy import stats
 
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 
 
 def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
@@ -23,7 +27,8 @@ def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
 
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+def test_fieldKh_Brownian(mesh, mode, pset_mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
 
@@ -34,10 +39,8 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
     runtime = delta(days=1)
 
     ParcelsRandom.seed(1234)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
-                       lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(DiffusionUniformKh),
-                 runtime=runtime, dt=delta(hours=1))
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart))
+    pset.execute(pset.Kernel(DiffusionUniformKh), runtime=runtime, dt=delta(hours=1))
 
     expected_std_lon = np.sqrt(2*kh_zonal*mesh_conversion**2*runtime.total_seconds())
     expected_std_lat = np.sqrt(2*kh_meridional*mesh_conversion**2*runtime.total_seconds())
@@ -54,9 +57,10 @@ def test_fieldKh_Brownian(mesh, mode, xdim=200, ydim=100, kh_zonal=100, kh_merid
 
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('kernel', [AdvectionDiffusionM1,
                                     AdvectionDiffusionEM])
-def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=100):
+def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, pset_mode, kernel, xdim=200, ydim=100):
     """Test advection-diffusion kernels on a non-uniform diffusivity field
     with a linear gradient in one direction"""
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
@@ -75,10 +79,8 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
     runtime = delta(days=1)
 
     ParcelsRandom.seed(1636)
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode],
-                       lon=np.zeros(npart), lat=np.zeros(npart))
-    pset.execute(pset.Kernel(kernel),
-                 runtime=runtime, dt=delta(hours=1))
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart))
+    pset.execute(pset.Kernel(kernel), runtime=runtime, dt=delta(hours=1))
 
     lats = pset.lat
     lons = pset.lon
@@ -89,8 +91,9 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, kernel, xdim=200, ydim=10
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('lambd', [1, 5])
-def test_randomexponential(mode, lambd, npart=1000):
+def test_randomexponential(mode, pset_mode, lambd, npart=1000):
     fieldset = zeros_fieldset()
 
     # Rate parameter for random.expovariate
@@ -99,7 +102,8 @@ def test_randomexponential(mode, lambd, npart=1000):
     # Set random seed
     ParcelsRandom.seed(1234)
 
-    pset = ParticleSet(fieldset=fieldset, pclass=ptype[mode], lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=ptype[mode],
+                                        lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     def vertical_randomexponential(particle, fieldset, time):
         # Kernel for random exponential variable in depth direction
@@ -113,9 +117,10 @@ def test_randomexponential(mode, lambd, npart=1000):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mu', [0.8*np.pi, np.pi])
 @pytest.mark.parametrize('kappa', [2, 4])
-def test_randomvonmises(mode, mu, kappa, npart=10000):
+def test_randomvonmises(mode, pset_mode, mu, kappa, npart=10000):
     fieldset = zeros_fieldset()
 
     # Parameters for random.vonmisesvariate
@@ -127,7 +132,7 @@ def test_randomvonmises(mode, mu, kappa, npart=10000):
 
     class AngleParticle(ptype[mode]):
         angle = Variable('angle')
-    pset = ParticleSet(fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
+    pset = pset_type[pset_mode]['pset'](fieldset=fieldset, pclass=AngleParticle, lon=np.zeros(npart), lat=np.zeros(npart), depth=np.zeros(npart))
 
     def vonmises(particle, fieldset, time):
         particle.angle = ParcelsRandom.vonmisesvariate(fieldset.mu, fieldset.kappa)
