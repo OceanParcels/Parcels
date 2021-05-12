@@ -7,7 +7,8 @@ from parcels.interaction.distance_utils import spherical_distance
 class BaseNeighborSearch(ABC):
     name = "unknown"
 
-    def __init__(self, interaction_distance, interaction_depth, max_depth=100000):
+    def __init__(self, interaction_distance, interaction_depth,
+                 max_depth=100000):
         self.interaction_depth = interaction_depth
         self.interaction_distance = interaction_distance
         self.inter_dist = np.array(
@@ -61,6 +62,7 @@ class BaseNeighborSearch(ABC):
 
 class BaseFlatNeighborSearch(BaseNeighborSearch):
     def _distance(self, coor, subset_idx):
+        coor = coor.reshape(3, 1)
         surf_distance = np.sqrt(np.sum((
             self._values[:2, subset_idx] - coor[:2])**2,
             axis=0))

@@ -37,19 +37,8 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch, BaseSphericalNeighborS
             except KeyError:
                 pass
 
-        # Loop over neighbor candidates and check their actual distance.
-        # TODO: use vectorized computation.
         potential_neighbors = np.array(all_neighbor_points, dtype=int)
         return self._get_close_neighbor_dist(coor, potential_neighbors)
-#         true_neigh = []
-#         for neigh in all_neighbor_points:
-#             distance = relative_3d_distance(
-#                 *self._values[:, neigh], *coor,
-#                 interaction_distance=self.interaction_distance,
-#                 interaction_depth=self.interaction_depth)
-#             if distance < 1:
-#                 true_neigh.append(neigh)
-#         return np.array(true_neigh)
 
     def values_to_hashes(self, values, active_idx=None):
         '''Convert coordinates to cell ids.

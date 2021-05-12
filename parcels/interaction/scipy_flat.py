@@ -7,13 +7,11 @@ from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
 class ScipyFlatNeighborSearch(BaseFlatNeighborSearch):
     name = "scipy"
 
-    def __init__(self, interaction_distance, interaction_depth,
-                 values=None):
-        super().__init__(interaction_distance, interaction_depth, values)
-        if self._values is not None:
-            self._kdtree = KDTree(values.T)
+    def __init__(self, interaction_distance, interaction_depth):
+        super().__init__(interaction_distance, interaction_depth)
 
     def find_neighbors_by_coor(self, coor):
+        coor = coor.reshape(3, 1)
         corrected_coor = (coor/self.inter_dist).reshape(-1)
         rel_idx = np.array(self._kdtree.query_ball_point(corrected_coor, r=1))
         neighbor_idx = self.active_idx[rel_idx]

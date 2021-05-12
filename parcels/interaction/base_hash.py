@@ -25,7 +25,7 @@ class BaseHashNeighborSearch(ABC):
         :returns List of particle indices.
         '''
         coor = coor.reshape(3, 1)
-        hash_id = self.values_to_hashes(coor)
+        hash_id = self.values_to_hashes(coor)[0]
         return self._find_neighbors(hash_id, coor)
 
     def find_neighbors_by_idx(self, particle_idx):
@@ -66,9 +66,6 @@ class BaseHashNeighborSearch(ABC):
         for idx in active_idx:
             cur_hash = self._particle_hashes[idx]
             hash_idx = self._hash_idx[idx]
-            if self._hashtable[cur_hash][hash_idx] != idx:
-                print(cur_hash, hash_idx)
-                print(self._hashtable[cur_hash])
             assert self._hashtable[cur_hash][hash_idx] == idx
 
         n_idx = 0

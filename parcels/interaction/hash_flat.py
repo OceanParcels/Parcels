@@ -87,12 +87,12 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
         return all_hashes
 
 
-@njit
+# @njit
 def hash_to_neighbors(hash_id, bits):
-#   coor = np.zeros((len(bits),), dtype=np.int32)
-#   new_coor = np.zeros((len(bits),), dtype=np.int32)
-    coor = np.zeros((len(bits),), dtype=nb.int32)
-    new_coor = np.zeros((len(bits),), dtype=nb.int32)
+    coor = np.zeros((len(bits),), dtype=np.int32)
+    new_coor = np.zeros((len(bits),), dtype=np.int32)
+#     coor = np.zeros((len(bits),), dtype=nb.int32)
+#     new_coor = np.zeros((len(bits),), dtype=nb.int32)
     tot_bits = 0
     for dim in range(len(bits)):
         coor[dim] = (hash_id >> tot_bits) & ((1 << bits[dim])-1)

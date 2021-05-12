@@ -20,6 +20,9 @@ def compare_results_by_idx(instances, particle_idx, active_idx=None):
         for neigh in cur_neigh:
             assert neigh in active_idx, f"Failed on {instance.name}"
         assert set(cur_neigh) <= set(active_idx), f"Failed on {instance.name}"
+        neigh_by_coor, _ = instance.find_neighbors_by_coor(
+            instance._values[:, particle_idx])
+        assert np.allclose(cur_neigh, neigh_by_coor)
 
     assert len(res) == len(instances)
     instance_zero = instances[0]
@@ -94,9 +97,12 @@ def test_flat_update():
         cur_instance = cur_class(interaction_distance=0.3, interaction_depth=0.3)
         instances.append(cur_instance)
 
-    for _ in range(n_active_mask):
+    for i in range(n_active_mask):
         positions = create_flat_positions(n_particle) + 10*np.random.rand()
-        active_mask = np.random.rand(n_particle) > 0.5
+        if i == 0:
+            active_mask = None
+        else:
+            active_mask = np.random.rand(n_particle) > 0.5
         for cur_instance in instances:
             cur_instance.update_values(positions, active_mask)
         active_idx = np.where(active_mask)[0]
