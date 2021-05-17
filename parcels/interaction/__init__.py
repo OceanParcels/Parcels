@@ -1,5 +1,4 @@
-from parcels.interaction.hash_spherical import HashSphericalNeighborSearch
-from parcels.interaction.brute_force import BruteFlatNeighborSearch
-
-
-__all__ = ['HashSphericalNeighborSearch', 'BruteFlatNeighborSearch']
+from .baseinteractionkernel import BaseInteractionKernel  # noqa
+from .interactionkernelsoa import InteractionKernelSOA  # noqa
+from .hash_spherical import HashSphericalNeighborSearch  # noqa
+from .brute_force import BruteFlatNeighborSearch  # noqa
