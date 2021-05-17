@@ -78,3 +78,21 @@ def test_concatenate_interaction_kernels(fieldset, mode):
     # have been executed, so we expect the result to be double the
     # movement from executing the kernel once.
     assert np.allclose(pset.lat, [0.2, 0.4, 0.1, 0.0], rtol=1e-5)
+
+
+@pytest.mark.parametrize('mode', ['scipy'])
+def test_concatenate_interaction_kernels_as_pyfunc(fieldset, mode):
+    lons = [0.0, 0.1, 0.25, 0.44]
+    lats = [0.0, 0.0, 0.0, 0.0]
+    # Distance in meters R_earth*0.2 degrees
+    interaction_distance = 6371000*0.2*np.pi/180
+
+    pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats,
+                       interaction_distance=interaction_distance)
+    pset.execute(DoNothing,
+                 pyfunc_inter=pset.InteractionKernel(DummyMoveNeighbor)
+                 + DummyMoveNeighbor, endtime=1., dt=1.)
+    # The kernel results are only applied after all interactionkernels
+    # have been executed, so we expect the result to be double the
+    # movement from executing the kernel once.
+    assert np.allclose(pset.lat, [0.2, 0.4, 0.1, 0.0], rtol=1e-5)
