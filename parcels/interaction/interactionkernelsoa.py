@@ -1,13 +1,6 @@
-import inspect
 import math  # noqa
 import random  # noqa
-from ast import parse
 from collections import defaultdict
-from copy import deepcopy
-from ctypes import byref
-from ctypes import c_double
-from ctypes import c_int
-from os import path
 
 import numpy as np
 try:
@@ -76,11 +69,6 @@ class InteractionKernelSOA(BaseInteractionKernel):
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
-        sign_dt = np.sign(dt)
-
-        # back up variables in case of OperationCode.Repeat
-        p_var_back = {}
-
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
                 if type(f) in [VectorField, NestedField, SummedField]:
@@ -114,6 +102,10 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 except Exception as e:
                     res = ErrorCode.Error
                     p.exception = e
+
+                # (!) InteractionKernels do not advance time or change state
+                if res != StateCode.Success:
+                    logger.warning_once("Some InteractionKernel was not completed succesfully.")
 
             for particle_idx in active_idx:
                 p = pset[particle_idx]
@@ -185,4 +177,3 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 self.execute_python(pset, endtime, dt)
 
             n_error = pset.num_error_particles
-

@@ -1,33 +1,12 @@
 import re
-import _ctypes
 import inspect
-import numpy.ctypeslib as npct
-from time import time as ostime
-from os import path
-from os import remove
-from sys import platform
 from sys import version_info
-from weakref import finalize
-from ast import FunctionDef
-from hashlib import md5
-from parcels.tools.loggers import logger
-from numpy import ndarray
 
 try:
     from mpi4py import MPI
 except:
     MPI = None
 
-from parcels.tools.global_statics import get_cache_dir
-
-# === import just necessary field classes to perform setup checks === #
-from parcels.field import Field
-from parcels.field import NestedField
-from parcels.field import SummedField
-from parcels.grid import GridCode
-from parcels.application_kernels import AdvectionRK4_3D
-from parcels.application_kernels import AdvectionAnalytical
-from parcels.tools.statuscodes import OperationCode
 from parcels.kernel.basekernel import BaseKernel
 
 __all__ = ['BaseKernel']
@@ -141,7 +120,8 @@ class BaseInteractionKernel(BaseKernel):
         funcname = self.funcname + kernel.funcname
         # delete_cfiles = self.delete_cfiles and kernel.delete_cfiles
         pyfunc = self._pyfunc + kernel._pyfunc
-        return kclass(self._fieldset, self._ptype, pyfunc=pyfunc)
+        return kclass(self._fieldset, self._ptype, pyfunc=pyfunc,
+                      funcname=funcname)
 
     def __add__(self, kernel):
         if not isinstance(kernel, BaseInteractionKernel):
@@ -163,4 +143,3 @@ class BaseInteractionKernel(BaseKernel):
 
     def execute_jit(self, pset, endtime, dt):
         raise NotImplementedError
-
