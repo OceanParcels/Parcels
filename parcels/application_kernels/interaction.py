@@ -1,11 +1,11 @@
 """Collection of pre-built interaction kernels"""
-import math
 import numpy as np
 
 from parcels.tools.statuscodes import OperationCode, StateCode
 
 
-__all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange', 'MergeWithNearestNeighbor']
+__all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange',
+           'MergeWithNearestNeighbor']
 
 
 def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
@@ -88,22 +88,3 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
         mutator[n.id].append((f, d_vec))
 
     return StateCode.Success
-
-
-def great_circle(lat_1, long_1, lat_2, long_2):
-    from numpy import cos, sin, arctan2
-    d_lat = long_2-long_1
-    num_alpha_1 = cos(lat_2)*sin(d_lat)
-    denom_alpha_1 = cos(lat_1)*sin(lat_2) - sin(lat_1)*cos(lat_2)*cos(d_lat)
-    alpha_1 = arctan2(num_alpha_1/denom_alpha_1)
-    num_alpha_2 = cos(lat_1)*sin(d_lat)
-    denom_alpha_2 = -cos(lat_2)*sin(lat_1) + sin(lat_2)*cos(lat_1)*cos(d_lat)
-    alpha_2 = arctan2(num_alpha_2/denom_alpha_2)
-    nom_sigma_12 = (cos(lat_1)*sin(lat_2) - sin(lat_1)*cos(lat_2)*cos(d_lat))**2
-    nom_sigma_12 += (cos(lat_2)*sin(d_lat))**2
-    denom_sigma_12 = sin(lat_1)*sin(lat_2) + cos(lat_1)*cos(lat_2)*cos(d_lat)
-    sigma_12 = arctan2(np.sqrt(nom_sigma_12)/denom_sigma_12)
-    nom_alpha_0 = sin(alpha_1)*cos(lat_1)
-    denom_alpha_0 = cos(alpha_1)**2 + sin(alpha_1)**2*sin(lat_1)**2
-    
-

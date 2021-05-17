@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from timeit import timeit
 
 
 class BaseHashNeighborSearch(ABC):
@@ -74,7 +73,8 @@ class BaseHashNeighborSearch(ABC):
                 assert idx in active_idx
             n_idx += len(idx_array)
         assert n_idx == len(active_idx)
-        assert np.all(self.values_to_hashes(self._values[:, active_idx]) == self._particle_hashes[active_idx])
+        cur_hashes = self.values_to_hashes(self._values[:, active_idx])
+        assert np.all(cur_hashes == self._particle_hashes[active_idx])
 
     def update_values(self, new_values, new_active_mask=None):
         '''Update the locations of (some) of the particles.
@@ -91,9 +91,11 @@ class BaseHashNeighborSearch(ABC):
         if new_active_mask is None:
             new_active_mask = np.full(new_values.shape[1], True)
 
-        deactivated_mask = np.logical_and(self._active_mask, np.logical_not(new_active_mask))
+        deactivated_mask = np.logical_and(
+            self._active_mask, np.logical_not(new_active_mask))
         stay_active_mask = np.logical_and(self._active_mask, new_active_mask)
-        activated_mask = np.logical_and(np.logical_not(self._active_mask), new_active_mask)
+        activated_mask = np.logical_and(
+            np.logical_not(self._active_mask), new_active_mask)
 
         stay_active_idx = np.where(stay_active_mask)[0]
 
@@ -117,67 +119,6 @@ class BaseHashNeighborSearch(ABC):
     @abstractmethod
     def values_to_hashes(self, values):
         raise NotImplementedError
-
-    @classmethod
-    def benchmark(cls, max_n_particles=1000, density=1, interaction_depth=100,
-                  update_frac=0.01):
-        '''Perform benchmarks to figure out scaling with particles.'''
-        np.random.seed(213874)
-
-        def bench_init(values, *args, **kwargs):
-            return cls(values, *args, **kwargs)
-
-        def bench_search(neigh_search, n_sample):
-            for particle_id in np.random.randint(neigh_search._values.shape[1],
-                                                 size=n_sample):
-                neigh_search.find_neighbors(particle_id)
-
-        def bench_update(neigh_search, n_change):
-            move_values = neigh_search.create_positions(n_change)
-            new_values = neigh_search._values.copy()
-            move_index = np.random.choice(n_particles, size=n_change, replace=False)
-            new_values[:, move_index] = move_values
-            neigh_search.update_values(new_values)
-
-        all_dt_init = []
-        all_dt_search = []
-        all_n_particles = []
-        all_dt_update = []
-        all_max_dist = []
-        n_particles = 30
-        n_init = 100
-        while n_particles < max_n_particles:
-            n_update = int(n_particles*update_frac)
-            inter_dist = (density*cls.area*cls.max_depth /
-                          (n_particles*interaction_depth))**(1/3)
-            kwargs = {"interaction_distance": inter_dist,
-                      "interaction_depth": interaction_depth}
-            n_sample = min(5000, 10*n_particles)
-            n_sample_update = int(n_sample/10)
-            if n_particles > 5000:
-                n_init = 10
-            positions = cls.create_positions(n_particles)
-            dt_init = timeit(lambda: bench_init(positions, **kwargs),
-                             number=n_init)/n_init
-            neigh_search = bench_init(positions, **kwargs)
-            dt_search = timeit(lambda: bench_search(neigh_search, n_sample),
-                               number=1)/n_sample
-            dt_update = timeit(lambda: bench_update(neigh_search, n_update),
-                               number=n_sample_update)/n_sample_update
-            all_dt_init.append(dt_init)
-            all_dt_search.append(dt_search)
-            all_n_particles.append(n_particles)
-            all_dt_update.append(dt_update)
-            all_max_dist.append(inter_dist)
-            n_particles *= 2
-        return {
-            "name": cls.name,
-            "n_particles": np.array(all_n_particles),
-            "init_time": np.array(all_dt_init),
-            "search_time": np.array(all_dt_search),
-            "update_time": np.array(all_dt_update),
-            "max_dist": np.array(all_max_dist),
-        }
 
 
 def hash_split(hash_ids, active_idx=None):

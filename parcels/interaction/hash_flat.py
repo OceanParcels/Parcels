@@ -1,7 +1,7 @@
 import numpy as np
 from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
-from numba import njit
-import numba as nb
+# from numba import njit
+# import numba as nb
 from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
 
 
@@ -57,12 +57,14 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
 
         epsilon = 1e-8
 
-        n_bits = ((self._box[:, 1] - self._box[:, 0])/self.inter_dist.reshape(-1) + epsilon)/np.log(2)
+        n_bits = ((self._box[:, 1] - self._box[:, 0]
+                   )/self.inter_dist.reshape(-1) + epsilon)/np.log(2)
         self._bits = np.ceil(n_bits).astype(int)
         self._min_box = self._box[:, 0]
         self._min_box = self._min_box.reshape(-1, 1)
         particle_hashes = self.values_to_hashes(values, self.active_idx)
-        self._hashtable = hash_split(particle_hashes, active_idx=self.active_idx)
+        self._hashtable = hash_split(particle_hashes,
+                                     active_idx=self.active_idx)
         self._particle_hashes = particle_hashes
 
         # Keep track of the position of a particle index within a cell.

@@ -1,20 +1,22 @@
 from math import ceil
 
-from numba.core.decorators import njit
+# from numba.core.decorators import njit
 import numpy as np
 
 from parcels.interaction.base_neighbor import BaseSphericalNeighborSearch
 from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
 
 
-class HashSphericalNeighborSearch(BaseHashNeighborSearch, BaseSphericalNeighborSearch):
+class HashSphericalNeighborSearch(BaseHashNeighborSearch,
+                                  BaseSphericalNeighborSearch):
     '''Neighbor search using a hashtable (similar to octtrees).'''
     name = "hash"
 
-    def __init__(self, interaction_distance, interaction_depth, max_depth=100000):
+    def __init__(self, interaction_distance, interaction_depth,
+                 max_depth=100000):
         '''Initialize the neighbor data structure.
 
-        :param interaction_distance: maximum horizontal distance of interaction.
+        :param interaction_distance: maximum horizontal interaction distance.
         :param interaction_depth: maximum depth of interaction.
         :param values: lat, long, depth values for particles.
         :param max_depth: maximum depth of the ocean.
@@ -85,7 +87,8 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch, BaseSphericalNeighborS
 
         # Compute the hash values:
         self._particle_hashes = np.empty(self._values.shape[1], dtype=int)
-        self._particle_hashes[active_idx] = self.values_to_hashes(values[:, active_idx])
+        self._particle_hashes[active_idx] = self.values_to_hashes(
+            values[:, active_idx])
 
         # Create the hashtable.
         self._hashtable = hash_split(self._particle_hashes,
@@ -154,10 +157,12 @@ def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
         d_long = 360/n_new_long
         if n_new_long <= 3:
             for new_i_long in range(n_new_long):
-                neighbors.extend(all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
+                neighbors.extend(
+                    all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
         else:
             start_i_long = int(np.floor(coor[1]/d_long))
             for delta_long in [-1, 0, 1]:
                 new_i_long = (start_i_long+delta_long+n_new_long) % n_new_long
-                neighbors.extend(all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
+                neighbors.extend(
+                    all_neigh_depth(new_i_lat, new_i_long, new_lat_sign))
     return neighbors
