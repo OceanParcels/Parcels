@@ -69,7 +69,7 @@ def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
         na_neighbors.append(n)
 
 #     assert fieldset.mesh == "flat"
-    velocity_param = 0.000004
+    velocity_param = 0.04
     for n in na_neighbors:
         assert n.dt == particle.dt
         dx = np.array([particle.lat-n.lat, particle.lon-n.lon,
