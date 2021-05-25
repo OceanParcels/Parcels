@@ -10,17 +10,19 @@ except:
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="skipping macOS test as problem with file in pytest")
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('repeatdt', [200*86400, 10*86400])
 @pytest.mark.parametrize('maxage', [600*86400, 10*86400])
-def test_mpi_run(tmpdir, repeatdt, maxage):
+def test_mpi_run(pset_mode, tmpdir, repeatdt, maxage):
     if MPI:
         stommel_file = path.join(path.dirname(__file__), '..', 'parcels',
                                  'examples', 'example_stommel.py')
         outputMPI = tmpdir.join('StommelMPI.nc')
         outputNoMPI = tmpdir.join('StommelNoMPI.nc')
 
-        system('mpirun -np 2 python %s -p 4 -o %s -r %d -a %d' % (stommel_file, outputMPI, repeatdt, maxage))
-        system('python %s -p 4 -o %s -r %d -a %d' % (stommel_file, outputNoMPI, repeatdt, maxage))
+        # ehm, this test doesn't work. I remember that we only employ the actual ParticleSet split _when_ # particles >= 1024. Testing it with 4 particles doesn't test MPI at all.
+        system('mpirun -np 2 python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputMPI, repeatdt, maxage, pset_mode))
+        system('python %s -p 4 -o %s -r %d -a %d -psm %s' % (stommel_file, outputNoMPI, repeatdt, maxage, pset_mode))
 
         ncfile1 = Dataset(outputMPI, 'r', 'NETCDF4')
         ncfile2 = Dataset(outputNoMPI, 'r', 'NETCDF4')
