@@ -53,7 +53,7 @@ def test_pset_get_single_by_index(fieldset, pset_mode, npart=10):
 def test_pset_get_single_by_ID(fieldset, pset_mode, npart=10):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=np.linspace(0, 1, npart), lat=np.zeros(npart), pclass=JITParticle)
     ids = None
-    if pset_mode =='soa':
+    if pset_mode == 'soa':
         ids = pset.collection._data['id']
     elif pset_mode == 'aos':
         ids = np.array([pset.collection._data[i].id for i in range(len(pset))], dtype=np.int64)
