@@ -92,7 +92,6 @@ def test_multi_structured_grids(pset_mode, mode):
     pset.remove_indices(np.array([1]))
     pset.execute(AdvectionRK4, runtime=1, dt=1)
 
-    # assert np.allclose(pset.temp0[0], pset.temp1[0], atol=1e-3)
     assert np.alltrue([np.isclose(p.temp0, p.temp1, atol=1e-3) for p in pset])
 
 
@@ -441,8 +440,6 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    # assert abs(pset.zonal[0] - 1) < 1e-6
-    # assert abs(pset.meridional[0] - 1) < 1e-6
     assert (pset[0].zonal-1) < 1e-6
     assert (pset[0].meridional-1) < 1e-6
 
@@ -505,9 +502,6 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    # assert abs(pset.zonal[0] - 1) < 1e-6
-    # assert abs(pset.meridional[0] - 1) < 1e-6
-    # assert abs(pset.vertical[0] - 1) < 1e-6
     assert (pset[0].zonal-1) < 1e-6
     assert (pset[0].meridional-1) < 1e-6
     assert (pset[0].vertical-1) < 1e-6
@@ -570,9 +564,6 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
     pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
     pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
-    # assert abs(pset.zonal[0] - 1) < 1e-3
-    # assert abs(pset.meridional[0]) < 1e-3
-    # assert abs(pset.vertical[0] - 1) < 1e-3
     assert (pset[0].zonal-1) < 1e-3
     assert (pset[0].meridional-1) < 1e-3
     assert (pset[0].vertical-1) < 1e-3
