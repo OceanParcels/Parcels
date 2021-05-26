@@ -235,6 +235,7 @@ if __name__ == "__main__":
     # parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=int, default=365, help="runtime in days (default: 365)")
     parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=str, default="1*365", help="runtime in days (default: 1*365)")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
+    parser.add_argument("-w", "--writeout", dest="write_out", action='store_false', default=True, help="write data in outfile (default: true)")
     args = parser.parse_args()
 
     imageFileName=args.imageFileName
@@ -417,7 +418,9 @@ if __name__ == "__main__":
         output_fpath = os.path.join(dirwrite, outfile)
     # kernels = pset.Kernel(AdvectionRK4_3D) + pset.Kernel(seawaterdensity.polyTEOS10_bsq) + pset.Kernel(Profiles) + pset.Kernel(Kooi)
     kernels = pset.Kernel(AdvectionRK4_3D_vert) + pset.Kernel(seawaterdensity.polyTEOS10_bsq) + pset.Kernel(Profiles) + pset.Kernel(Kooi)
-    pfile= ParticleFile(output_fpath, pset, outputdt=delta(hours = hrsoutdt))
+    pfile = None
+    if args.write_out:
+        pfile= ParticleFile(output_fpath, pset, outputdt=delta(hours = hrsoutdt))
 
     starttime = 0
     endtime = 0

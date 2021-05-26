@@ -122,6 +122,7 @@ if __name__=='__main__':
     # parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=int, default=365, help="runtime in days (default: 365)")
     parser.add_argument("-t", "--time_in_days", dest="time_in_days", type=str, default="1*365", help="runtime in days (default: 1*365)")
     parser.add_argument("-G", "--GC", dest="useGC", action='store_true', default=False, help="using a garbage collector (default: false)")
+    parser.add_argument("-w", "--writeout", dest="write_out", action='store_false', default=True, help="write data in outfile (default: true)")
     args = parser.parse_args()
 
     wstokes = args.stokes
