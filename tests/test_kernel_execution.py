@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 import sys
 
-
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -34,7 +34,7 @@ def fieldset_fixture(xdim=20, ydim=20):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('start, end, substeps, dt', [
     (0., 10., 1, 1.),
@@ -52,7 +52,7 @@ def test_execution_endtime(fieldset, pset_mode, mode, start, end, substeps, dt, 
     assert np.allclose(pset.time, end)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('start, end, substeps, dt', [
     (0., 10., 1, 1.),
@@ -72,7 +72,7 @@ def test_execution_runtime(fieldset, pset_mode, mode, start, end, substeps, dt, 
     assert np.allclose(pset.time, end)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time', [0., 1])
 @pytest.mark.parametrize('dt', [0., 1])
@@ -95,7 +95,7 @@ def test_pset_execute_dt_0(fieldset, pset_mode, mode, time, dt, npart=2):
     assert np.allclose(pset.time, min([time, dt]))
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_timed(fieldset, pset_mode, mode, npart=10):
     def TimedFail(particle, fieldset, time):
@@ -117,7 +117,7 @@ def test_execution_fail_timed(fieldset, pset_mode, mode, npart=10):
     assert np.allclose(pset.time, 10.)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy'])
 def test_execution_fail_python_exception(fieldset, pset_mode, mode, npart=10):
     def PythonFail(particle, fieldset, time):
@@ -139,7 +139,7 @@ def test_execution_fail_python_exception(fieldset, pset_mode, mode, npart=10):
     assert np.allclose(pset.time, 10.)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     def MoveRight(particle, fieldset, time):
@@ -159,7 +159,7 @@ def test_execution_fail_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     assert (pset.lon - 1. > -1.e12).all()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
     def MoveRight(particle, fieldset, time):
@@ -179,7 +179,7 @@ def test_execution_recover_out_of_bounds(fieldset, pset_mode, mode, npart=2):
     assert np.allclose(pset.lat, lat, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     def MoveRight(particle, fieldset, time):
@@ -197,7 +197,7 @@ def test_execution_delete_out_of_bounds(fieldset, pset_mode, mode, npart=10):
     assert len(pset) == 0
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_kernel_add_no_new_variables(fieldset, pset_mode, mode):
     def MoveEast(particle, fieldset, time):
@@ -213,7 +213,7 @@ def test_kernel_add_no_new_variables(fieldset, pset_mode, mode):
     assert np.allclose(pset.lat, 0.6, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
     # Testing for merging of two Kernels with the same variable declared
@@ -232,7 +232,7 @@ def test_multi_kernel_duplicate_varnames(fieldset, pset_mode, mode):
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_multi_kernel_reuse_varnames(fieldset, pset_mode, mode):
     # Testing for merging of two Kernels with the same variable declared
@@ -250,7 +250,7 @@ def test_multi_kernel_reuse_varnames(fieldset, pset_mode, mode):
     assert np.allclose(pset.lon, [0.9], rtol=1e-5)  # should be 0.5 + 0.2 + 0.2 = 0.9
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_update_kernel_in_script(fieldset, pset_mode, mode):
     # Testing what happens when kernels are updated during runtime of a script
@@ -269,7 +269,7 @@ def test_update_kernel_in_script(fieldset, pset_mode, mode):
     assert np.allclose(pset.lon, 0.3, rtol=1e-5)  # should be 0.5 + 0.1 - 0.3 = 0.3
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_statuscode_repeat(fieldset, pset_mode, mode):
     def simpleKernel(particle, fieldset, time):
@@ -287,7 +287,7 @@ def test_statuscode_repeat(fieldset, pset_mode, mode):
     pset.execute(pset.Kernel(simpleKernel), endtime=3., dt=1.)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('delete_cfiles', [True, False])
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="skipping windows test as windows compiler generates warning")
 def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, delete_cfiles):

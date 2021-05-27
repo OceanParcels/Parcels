@@ -7,7 +7,7 @@ import pytest
 from math import cos, pi
 from datetime import timedelta as delta
 
-
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -136,7 +136,7 @@ def test_fieldset_sample_eval(fieldset, xdim=60, ydim=60):
     assert np.allclose(u_s, lat, rtol=1e-7)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_polar_with_halo(fieldset_geometric_polar, pset_mode, mode):
     fieldset_geometric_polar.add_periodic_halo(zonal=5)
@@ -145,7 +145,7 @@ def test_fieldset_polar_with_halo(fieldset_geometric_polar, pset_mode, mode):
     assert(pset.lon[0] == 0.)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init_from_field(pset_mode, mode, npart=9):
     dims = (2, 2)
@@ -165,7 +165,7 @@ def test_variable_init_from_field(pset_mode, mode, npart=9):
     assert np.all([abs(pset.a[i] - fieldset.P[pset.time[i], pset.depth[i], pset.lat[i], pset.lon[i]]) < 1e-6 for i in range(pset.size)])
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
     np.random.seed(123456)
@@ -189,7 +189,7 @@ def test_pset_from_field(pset_mode, mode, xdim=10, ydim=20, npart=10000):
     assert np.allclose(np.transpose(pdens), startfield/np.sum(startfield), atol=1e-2)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nearest_neighbour_interpolation2D(pset_mode, mode, k_sample_p, npart=81):
     dims = (2, 2)
@@ -208,7 +208,7 @@ def test_nearest_neighbour_interpolation2D(pset_mode, mode, k_sample_p, npart=81
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5)], 0.0, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_nearest_neighbour_interpolation3D(pset_mode, mode, k_sample_p, npart=81):
     dims = (2, 2, 2)
@@ -234,7 +234,7 @@ def test_nearest_neighbour_interpolation3D(pset_mode, mode, k_sample_p, npart=81
     assert np.allclose(pset.p[(pset.lon > 0.5) | (pset.lat < 0.5) & (pset.depth < 0.5)], 0.0, rtol=1e-5)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('arrtype', ['ones', 'rand'])
 def test_inversedistance_nearland(pset_mode, mode, arrtype, k_sample_p, npart=81):
@@ -272,7 +272,7 @@ def test_inversedistance_nearland(pset_mode, mode, arrtype, k_sample_p, npart=81
     assert success
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
 def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=120):
@@ -305,7 +305,7 @@ def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=
     assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_sample_geographic(fieldset_geometric, pset_mode, mode, k_sample_uv, npart=120):
     """ Sample a fieldset with conversion to geographic units (degrees). """
@@ -322,7 +322,7 @@ def test_fieldset_sample_geographic(fieldset_geometric, pset_mode, mode, k_sampl
     assert np.allclose(pset.u, lat, rtol=1e-6)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_sample_geographic_noconvert(fieldset_geometric, pset_mode, mode, k_sample_uv_noconvert, npart=120):
     """ Sample a fieldset without conversion to geographic units. """
@@ -339,7 +339,7 @@ def test_fieldset_sample_geographic_noconvert(fieldset_geometric, pset_mode, mod
     assert np.allclose(pset.u, lat * 1000 * 1.852 * 60, rtol=1e-6)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, mode, k_sample_uv, npart=120):
     """ Sample a fieldset with conversion to geographic units and a pole correction. """
@@ -358,7 +358,7 @@ def test_fieldset_sample_geographic_polar(fieldset_geometric_polar, pset_mode, m
     assert np.allclose(pset.u, lat, rtol=1e-2)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
     """ Create uniform NORTHWARD flow on spherical earth and advect particles
@@ -386,7 +386,7 @@ def test_meridionalflow_spherical(pset_mode, mode, xdim=100, ydim=200):
     assert(pset.lon[1] - lonstart[1] < 1e-4)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
     """ Create uniform EASTWARD flow on spherical earth and advect particles
@@ -421,7 +421,7 @@ def test_zonalflow_spherical(pset_mode, mode, k_sample_p, xdim=100, ydim=200):
     assert(abs(pset.p[1] - p_fld) < 1e-4)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
     """Sampling test that tests for overshoots by sampling a field of
@@ -443,7 +443,7 @@ def test_random_field(pset_mode, mode, k_sample_p, xdim=20, ydim=20, npart=100):
     assert((sampled >= 0.).all())
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('allow_time_extrapolation', [True, False])
 def test_sampling_out_of_bounds_time(pset_mode, mode, allow_time_extrapolation, k_sample_p,
@@ -486,7 +486,7 @@ def test_sampling_out_of_bounds_time(pset_mode, mode, allow_time_extrapolation, 
             pset.execute(k_sample_p, runtime=0.1, dt=0.1)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('npart', [1, 10])
 @pytest.mark.parametrize('chs', [False, 'auto', {'lat': ('y', 10), 'lon': ('x', 10)}])
@@ -561,7 +561,7 @@ def test_sampling_multigrids_non_vectorfield_from_file(pset_mode, mode, npart, t
             assert np.alltrue([p.yi[0] < ydim for p in pset])
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('npart', [1, 10])
 def test_sampling_multigrids_non_vectorfield(pset_mode, mode, npart):
@@ -617,7 +617,7 @@ def test_sampling_multigrids_non_vectorfield(pset_mode, mode, npart):
             assert np.alltrue([p.yi[0] < ydim for p in pset])
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('ugridfactor', [1, 10])
 def test_sampling_multiple_grid_sizes(pset_mode, mode, ugridfactor):
@@ -664,7 +664,7 @@ def test_multiple_grid_addlater_error():
     assert fail
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('with_W', [True, False])
 @pytest.mark.parametrize('mesh', ['flat', 'spherical'])
@@ -713,7 +713,7 @@ def test_summedfields(pset_mode, mode, with_W, k_sample_p, mesh):
     assert np.allclose(fieldsetS.UV[0][0, 0, 0, 0], [.2/conv, 0])
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_nestedfields(pset_mode, mode, k_sample_p):
     xdim = 10

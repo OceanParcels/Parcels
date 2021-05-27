@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from operator import attrgetter
 
-
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -24,7 +24,7 @@ def fieldset_fixture(xdim=100, ydim=100):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_init(fieldset, pset_mode, mode, npart=10):
     """Test that checks correct initialisation of custom variables"""
@@ -47,7 +47,7 @@ def test_variable_init(fieldset, pset_mode, mode, npart=10):
     assert np.allclose([p.p_int for p in pset], 13, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit'])
 @pytest.mark.parametrize('type', ['np.int8', 'mp.float', 'np.int16'])
 def test_variable_unsupported_dtypes(fieldset, pset_mode, mode, type):
@@ -62,7 +62,7 @@ def test_variable_unsupported_dtypes(fieldset, pset_mode, mode, type):
     assert error_thrown
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_special_names(fieldset, pset_mode, mode):
     """Test that checks errors thrown for special names"""
@@ -77,7 +77,7 @@ def test_variable_special_names(fieldset, pset_mode, mode):
         assert error_thrown
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('coord_type', [np.float32, np.float64])
 def test_variable_init_relative(fieldset, pset_mode, mode, coord_type, npart=10):
