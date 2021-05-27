@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -27,7 +28,7 @@ def zeros_fieldset(mesh='spherical', xdim=200, ydim=100, mesh_conversion=1):
 
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_fieldKh_Brownian(mesh, mode, pset_mode, xdim=200, ydim=100, kh_zonal=100, kh_meridional=50):
     mesh_conversion = 1/1852./60 if mesh == 'spherical' else 1
     fieldset = zeros_fieldset(mesh=mesh, xdim=xdim, ydim=ydim, mesh_conversion=mesh_conversion)
@@ -57,7 +58,7 @@ def test_fieldKh_Brownian(mesh, mode, pset_mode, xdim=200, ydim=100, kh_zonal=10
 
 @pytest.mark.parametrize('mesh', ['spherical', 'flat'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('kernel', [AdvectionDiffusionM1,
                                     AdvectionDiffusionEM])
 def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, pset_mode, kernel, xdim=200, ydim=100):
@@ -91,7 +92,7 @@ def test_fieldKh_SpatiallyVaryingDiffusion(mesh, mode, pset_mode, kernel, xdim=2
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('lambd', [1, 5])
 def test_randomexponential(mode, pset_mode, lambd, npart=1000):
     fieldset = zeros_fieldset()
@@ -117,7 +118,7 @@ def test_randomexponential(mode, pset_mode, lambd, npart=1000):
 
 
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mu', [0.8*np.pi, np.pi])
 @pytest.mark.parametrize('kappa', [2, 4])
 def test_randomvonmises(mode, pset_mode, mu, kappa, npart=10000):

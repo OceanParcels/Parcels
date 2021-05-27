@@ -16,7 +16,7 @@ from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import timer
 from parcels import Variable
 
-
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 method = {'RK4': AdvectionRK4, 'EE': AdvectionEE, 'RK45': AdvectionRK45}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
@@ -125,7 +125,7 @@ def stommel_example(npart=1, mode='jit', verbose=False, method=AdvectionRK4, gri
     return pset
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('grid_type', ['A', 'C'])
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_stommel_fieldset(pset_mode, mode, grid_type, tmpdir):

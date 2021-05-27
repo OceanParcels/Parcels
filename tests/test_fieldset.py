@@ -17,7 +17,7 @@ import psutil
 import os
 import sys
 
-
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -257,7 +257,7 @@ def test_add_duplicate_field(dupobject):
     assert error_thrown
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('fieldtype', ['normal', 'vector'])
 def test_add_field_after_pset(pset_mode, fieldtype):
     data, dimensions = generate_fieldset(100, 100)
@@ -452,7 +452,7 @@ def addConst(particle, fieldset, time):
     particle.lon = particle.lon + fieldset.movewest + fieldset.moveeast
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_constant(pset_mode, mode):
     data, dimensions = generate_fieldset(100, 100)
@@ -468,7 +468,7 @@ def test_fieldset_constant(pset_mode, mode):
     assert abs(pset.lon[0] - (0.5 + westval + eastval)) < 1e-4
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('swapUV', [False, True])
 def test_vector_fields(pset_mode, mode, swapUV):
@@ -494,7 +494,7 @@ def test_vector_fields(pset_mode, mode, swapUV):
         assert abs(pset.lat[0] - .5) < 1e-9
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_add_second_vector_field(pset_mode, mode):
     lon = np.linspace(0., 10., 12, dtype=np.float32)
@@ -525,7 +525,7 @@ def test_add_second_vector_field(pset_mode, mode):
     assert abs(pset.lat[0] - .5) < 1e-9
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('dt', [-3600, 3600])
@@ -596,7 +596,7 @@ def test_from_netcdf_memory_containment(pset_mode, mode, time_periodic, dt, chun
     assert not mem_exhausted
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [4*86400.0, False])
 @pytest.mark.parametrize('chunksize', [False, 'auto', {'lat': ('y', 32), 'lon': ('x', 32)}, {'time': ('time_counter', 1), 'lat': ('y', 32), 'lon': ('x', 32)}])
@@ -647,7 +647,7 @@ def test_timestamps(datetype, tmpdir):
         assert np.allclose(fieldset3.U.data, fieldset4.U.data)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('time_periodic', [86400., False])
 @pytest.mark.parametrize('dt_sign', [-1, 1])
@@ -705,7 +705,7 @@ def test_periodic(pset_mode, mode, time_periodic, dt_sign):
     assert np.allclose(pset.v1[0], pset.v2[0])
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('fail', [False, pytest.param(True, marks=pytest.mark.xfail(strict=True))])
 def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, filename='test_parcels_defer_loading'):
     filepath = tmpdir.join(filename)
@@ -734,7 +734,7 @@ def test_fieldset_defer_loading_with_diff_time_origin(pset_mode, tmpdir, fail, f
     pset.execute(AdvectionRK4_3D, runtime=delta(hours=4), dt=delta(hours=1))
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('zdim', [2, 8])
 @pytest.mark.parametrize('scale_fac', [0.2, 4, 1])
 def test_fieldset_defer_loading_function(pset_mode, zdim, scale_fac, tmpdir, filename='test_parcels_defer_loading'):
@@ -812,7 +812,7 @@ def test_fieldset_initialisation_kernel_dask(time2, tmpdir, filename='test_parce
         assert isinstance(fieldset.U.data, da.core.Array)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('tdim', [10, None])
 def test_fieldset_from_xarray(pset_mode, tdim):
     def generate_dataset(xdim, ydim, zdim=1, tdim=1):
@@ -855,7 +855,7 @@ def test_fieldset_from_xarray(pset_mode, tdim):
         assert np.allclose(pset.lon[0], 5.0) and np.allclose(pset.lat[0], 10)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_fieldset_frompop(pset_mode, mode):
     filenames = path.join(path.join(path.dirname(__file__), 'test_data'), 'POPtestdata_time.nc')
@@ -867,7 +867,7 @@ def test_fieldset_frompop(pset_mode, mode):
     pset.execute(AdvectionRK4, runtime=3, dt=1)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
     """ Simple test for fieldset initialisation from data. """
     lon = np.linspace(0., 10., xdim, dtype=np.float32)
@@ -920,7 +920,7 @@ def test_fieldset_from_data_gridtypes(pset_mode, xdim=20, ydim=10, zdim=4):
     assert np.allclose(plat, pset.lat)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('direction', [1, -1])
 @pytest.mark.parametrize('time_extrapolation', [True, False])
