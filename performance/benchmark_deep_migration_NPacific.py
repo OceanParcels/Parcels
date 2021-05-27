@@ -1,6 +1,8 @@
-from parcels import FieldSet, JITParticle, ScipyParticle, AdvectionRK4_3D, AdvectionRK4, ErrorCode, ParticleFile, Variable, Field, NestedField, VectorField, timer
+from parcels import FieldSet, JITParticle, ScipyParticle, AdvectionRK4_3D, AdvectionRK4, ErrorCode, Variable, Field, NestedField, VectorField, timer
 from parcels.particleset_node_benchmark import ParticleSet_Benchmark
+from parcels.particlefile_node import ParticleFile
 # from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
+# from parcels.particlefile_vectorized import ParticleFile
 from parcels.tools import idgen
 from parcels.kernels import seawaterdensity
 from argparse import ArgumentParser

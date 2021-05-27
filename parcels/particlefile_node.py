@@ -252,7 +252,7 @@ class ParticleFile(object):
 
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
-            if pset.size == 0:
+            if len(pset) == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
                 if deleted_only:
