@@ -10,6 +10,7 @@ from netCDF4 import Dataset
 import cftime
 import random as py_random
 
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -55,7 +56,7 @@ def close_and_compare_netcdffiles(filepath, ofile, assystemcall=False):
     return ncfile1
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_array_remove_particles.nc")
@@ -70,7 +71,7 @@ def test_pfile_array_remove_particles(fieldset, pset_mode, mode, tmpdir, npart=1
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     filepath = tmpdir.join("pfile_set_towrite_False.nc")
@@ -96,7 +97,7 @@ def test_pfile_set_towrite_False(fieldset, pset_mode, mode, tmpdir, npart=10):
     pset.set_variable_write_status('lat', True)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npart=10):
 
@@ -114,7 +115,7 @@ def test_pfile_array_remove_all_particles(fieldset, pset_mode, mode, tmpdir, npa
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('assystemcall', [True, False])
 def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemcall, npart=3):
@@ -148,7 +149,7 @@ def test_variable_written_ondelete(fieldset, pset_mode, mode, tmpdir, assystemca
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     filepath = tmpdir.join("pfile_variable_write_double.nc")
@@ -166,7 +167,7 @@ def test_variable_write_double(fieldset, pset_mode, mode, tmpdir):
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('npart', [1, 2, 5])
 def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
@@ -195,7 +196,7 @@ def test_variable_written_once(fieldset, pset_mode, mode, tmpdir, npart):
 
 
 @pytest.mark.parametrize('type', ['repeatdt', 'timearr'])
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('repeatdt', range(1, 3))
 @pytest.mark.parametrize('dt', [-1, 1])
@@ -237,7 +238,7 @@ def test_pset_repeated_release_delayed_adding_deleting(type, fieldset, pset_mode
     ncfile.close()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_write_timebackward(fieldset, pset_mode, mode, tmpdir):
     outfilepath = tmpdir.join("pfile_write_timebackward.nc")
@@ -262,7 +263,7 @@ def test_set_calendar():
     assert _set_calendar('np_datetime64') == 'standard'
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
     outfilepath = tmpdir.join("error_duplicate_outputdir.nc")
     pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lat=0, lon=0)
@@ -282,7 +283,7 @@ def test_error_duplicate_outputdir(fieldset, tmpdir, pset_mode):
     pfile1.delete_tempwritedir()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_reset_dt(fieldset, pset_mode, mode, tmpdir):
     # Assert that p.dt gets reset when a write_time is not a multiple of dt
