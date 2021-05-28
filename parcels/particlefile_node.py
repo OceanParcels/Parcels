@@ -252,7 +252,8 @@ class ParticleFile(object):
 
         if self.lasttime_written != time and \
            (self.write_ondelete is False or deleted_only is True):
-            if len(pset) == 0:
+            # if len(pset) == 0:
+            if pset.size == 0:
                 logger.warning("ParticleSet is empty on writing as array at time %g" % time)
             else:
                 if deleted_only:
@@ -315,6 +316,75 @@ class ParticleFile(object):
 
         return data_dict, data_dict_once
 
+    def convert_parray_to_dict(self, parray, time, deleted_only=False):
+        """Convert all Particle data from one time step to a python dictionary.
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        returns two dictionaries: one for all variables to be written each outputdt,
+         and one for all variables to be written once
+        """
+        data_dict = {}
+        data_dict_once = {}
+
+        time = time.total_seconds() if isinstance(time, delta) else time
+
+        if self.lasttime_written != time and \
+           (self.write_ondelete is False or deleted_only is True):
+            if len(parray) == 0:
+                logger.warning("ParticleSet is empty on writing as array at time %g" % time)
+            else:
+                pset_towrite = None
+                if deleted_only:
+                    pset_towrite = parray
+                else:
+                    # == commented due to git rebase to master 27 02 2020 == #
+                    # elif pset[0].dt > 0:
+                    #     pset_towrite = [p for p in pset if time - p.dt/2 <= p.time < time + p.dt and np.isfinite(p.id)]
+                    # else:
+                    #     pset_towrite = [p for p in pset if time + p.dt < p.time <= time - p.dt/2 and np.isfinite(p.id)]
+                    # else:
+                    #     pset_towrite = [p for p in pset if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
+                    pset_towrite = [p for p in parray if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
+                if len(pset_towrite) > 0:
+                    for var in self.var_names:
+                        # if type(getattr(pset_towrite[0], var)) in [np.uint64, np.int64, np.uint32]:
+                        #     data_dict[var] = np.array([np.int32(getattr(p, var)) for p in pset_towrite])
+                        # else:
+                        data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
+                    # ---- this doesn't work anymore cause the number of particles cannot be inferred from the IDs anymore ---- #
+                    # self.maxid_written = np.max([self.maxid_written, np.max(data_dict['id'])])
+                    # ==== does not work because the index changes depending on the MPI environment - it needs a running overview of how many particles there are ==== #
+                    self.max_index_written = np.max([self.max_index_written, np.max(data_dict['index'])])
+
+                pset_errs = [p for p in pset_towrite if p.state != ErrorCode.Delete and abs(time-p.time) > 1e-3]
+                for p in pset_errs:
+                    logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
+                pset_towrite.clear()
+
+                if time not in self.time_written:
+                    self.time_written.append(time)
+
+                if len(self.var_names_once) > 0:
+                    # ------ ------ ------ ------ ------ ------ #
+                    # first_write = [p for p in pset if (np.int32(p.id) not in self.written_once) and _is_particle_started_yet(p, time)]
+                    # data_dict_once['id'] = np.array([np.int32(p.id) for p in first_write])
+                    # for var in self.var_names_once:
+                    #     data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                    # self.written_once += data_dict_once['id'].tolist()
+                    # ------ ------ ------ ------ ------ ------ #
+                    first_write = [p for p in parray if (p.index not in self.written_once) and _is_particle_started_yet(p, time)]
+                    data_dict_once['id'] = np.array([p.id for p in first_write])
+                    for var in self.var_names_once:
+                        data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                    self.written_once += data_dict_once['index'].tolist()
+                    first_write.clear()
+
+            if not deleted_only:
+                self.lasttime_written = time
+
+        return data_dict, data_dict_once
+
     def dump_dict_to_npy(self, data_dict, data_dict_once):
         """Buffer data to set of temporary numpy files, using np.save"""
 
@@ -354,8 +424,30 @@ class ParticleFile(object):
         :param time: Time at which to write ParticleSet
         :param deleted_only: Flag to write only the deleted Particles
         """
+        if isinstance(pset, list) or isinstance(pset, np.ndarray):
+            self._write_by_array(pset, time, deleted_only)
+        else:
+            self._write_by_set_(pset, time, deleted_only)
 
+    def _write_by_set_(self, pset, time, deleted_only=False):
+        """Write all data from one time step to a temporary npy-file
+        using a python dictionary. The data is saved in the folder 'out'.
+        :param pset: ParticleSet object to write
+        :param time: Time at which to write ParticleSet
+        :param deleted_only: Flag to write only the deleted Particles
+        """
         data_dict, data_dict_once = self.convert_pset_to_dict(pset, time, deleted_only=deleted_only)
+        self.dump_dict_to_npy(data_dict, data_dict_once)
+        self.dump_psetinfo_to_npy()
+
+    def _write_by_array(self, parray, time, deleted_only=False):
+        """Write all data from one time step to a temporary npy-file
+        using a python dictionary. The data is saved in the folder 'out'.
+        :param pset: array (.i.e. Python list) of particles
+        :param time: Time at which to write the particles
+        :param deleted_only: Flag to write only the deleted Particles
+        """
+        data_dict, data_dict_once = self.convert_parray_to_dict(parray, time, deleted_only=deleted_only)
         self.dump_dict_to_npy(data_dict, data_dict_once)
         self.dump_psetinfo_to_npy()
 
