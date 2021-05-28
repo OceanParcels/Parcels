@@ -23,7 +23,7 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
         '''
         super().__init__(interaction_distance, interaction_depth, max_depth)
 
-        self.init_structure()
+        self._init_structure()
 
     def _find_neighbors(self, hash_id, coor):
         '''Get neighbors from hash_id and location.'''
@@ -42,7 +42,7 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
         potential_neighbors = np.array(all_neighbor_points, dtype=int)
         return self._get_close_neighbor_dist(coor, potential_neighbors)
 
-    def values_to_hashes(self, values, active_idx=None):
+    def _values_to_hashes(self, values, active_idx=None):
         '''Convert coordinates to cell ids.
 
         :param values: positions of particles to convert.
@@ -87,7 +87,7 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
 
         # Compute the hash values:
         self._particle_hashes = np.empty(self._values.shape[1], dtype=int)
-        self._particle_hashes[active_idx] = self.values_to_hashes(
+        self._particle_hashes[active_idx] = self._values_to_hashes(
             values[:, active_idx])
 
         # Create the hashtable.
@@ -99,7 +99,7 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
         for idx_array in self._hashtable.values():
             self._hash_idx[idx_array] = np.arange(len(idx_array))
 
-    def init_structure(self):
+    def _init_structure(self):
         '''Initialize the basic tree properties without building'''
         epsilon = 1e-12
         R_earth = 6371000
