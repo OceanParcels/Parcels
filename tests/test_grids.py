@@ -441,8 +441,8 @@ def test_cgrid_uniform_2dvel(pset_mode, mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    assert (pset[0].zonal-1) < 1e-6
-    assert (pset[0].meridional-1) < 1e-6
+    assert (pset[0].zonal - 1) < 1e-6
+    assert (pset[0].meridional - 1) < 1e-6
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -503,9 +503,9 @@ def test_cgrid_uniform_3dvel(pset_mode, mode, vert_mode, time):
 
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=.7, lat=.3, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    assert abs(pset[0].zonal-1) < 1e-6
-    assert abs(pset[0].meridional) < 1e-6
-    assert abs(pset[0].vertical-1) < 1e-6
+    assert abs(pset[0].zonal - 1) < 1e-6
+    assert abs(pset[0].meridional - 1) < 1e-6
+    assert abs(pset[0].vertical - 1) < 1e-6
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
@@ -563,11 +563,15 @@ def test_cgrid_uniform_3dvel_spherical(pset_mode, mode, vert_mode, time):
     latp = 81.35
     pset = pset_type[pset_mode]['pset'].from_list(fieldset, MyParticle, lon=lonp, lat=latp, depth=.2)
     pset.execute(pset.Kernel(sampleVel), runtime=0, dt=0)
-    pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
-    pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
-    assert abs(pset[0].zonal-1) < 1e-3
+    if pset_mode == 'soa':
+        pset.zonal[0] = fieldset.U.units.to_source(pset.zonal[0], lonp, latp, 0)
+        pset.meridional[0] = fieldset.V.units.to_source(pset.meridional[0], lonp, latp, 0)
+    elif pset_mode == 'aos':
+        pset[0].zonal = fieldset.U.units.to_source(pset[0].zonal, lonp, latp, 0)
+        pset[0].meridional = fieldset.V.units.to_source(pset[0].meridional, lonp, latp, 0)
+    assert abs(pset[0].zonal - 1) < 1e-3
     assert abs(pset[0].meridional) < 1e-3
-    assert abs(pset[0].vertical-1) < 1e-3
+    assert abs(pset[0].vertical - 1) < 1e-3
 
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
