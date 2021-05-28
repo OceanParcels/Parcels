@@ -1,12 +1,9 @@
-from os import path
 from parcels import (
-    FieldSet, ParticleSet, ScipyParticle, JITParticle, StateCode, OperationCode, ErrorCode, KernelError,
-    OutOfBoundsError, AdvectionRK4
+    FieldSet, ParticleSet, JITParticle, StateCode
 )
 from parcels.particle import ScipyInteractionParticle
 import numpy as np
 import pytest
-import sys
 
 ptype = {'scipy': ScipyInteractionParticle, 'jit': JITParticle}
 
