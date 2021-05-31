@@ -74,7 +74,6 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
         point_hash = i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, self._bits)
         point_array = np.empty(values.shape[1], dtype=int)
         point_array[active_idx] = point_hash
-        print(values.shape[1])
         return point_array
 
     def rebuild(self, values, active_mask=-1):
