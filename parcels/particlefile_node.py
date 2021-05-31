@@ -345,22 +345,28 @@ class ParticleFile(object):
                     #     pset_towrite = [p for p in pset if time + p.dt < p.time <= time - p.dt/2 and np.isfinite(p.id)]
                     # else:
                     #     pset_towrite = [p for p in pset if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
-                    pset_towrite = [p for p in parray if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
+                    # --- memory-heavy action --- #
+                    # pset_towrite = [p for p in parray if time - np.abs(p.dt/2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
+                    pset_towrite = [i for i, p in enumerate(parray) if time - np.abs(p.dt / 2) <= p.time < time + np.abs(p.dt) and np.isfinite(p.id)]
                 if len(pset_towrite) > 0:
                     for var in self.var_names:
                         # if type(getattr(pset_towrite[0], var)) in [np.uint64, np.int64, np.uint32]:
                         #     data_dict[var] = np.array([np.int32(getattr(p, var)) for p in pset_towrite])
                         # else:
-                        data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
+                        # --- memory-heavy action --- #
+                        # data_dict[var] = np.array([getattr(p, var) for p in pset_towrite])
+                        data_dict[var] = np.array([getattr(parray[i], var) for i in pset_towrite])
                     # ---- this doesn't work anymore cause the number of particles cannot be inferred from the IDs anymore ---- #
                     # self.maxid_written = np.max([self.maxid_written, np.max(data_dict['id'])])
                     # ==== does not work because the index changes depending on the MPI environment - it needs a running overview of how many particles there are ==== #
                     self.max_index_written = np.max([self.max_index_written, np.max(data_dict['index'])])
 
-                pset_errs = [p for p in pset_towrite if p.state != ErrorCode.Delete and abs(time-p.time) > 1e-3]
+                # pset_errs = [p for p in pset_towrite if p.state != ErrorCode.Delete and abs(time-p.time) > 1e-3]
+                pset_errs = [parray[i] for i in pset_towrite if parray[i].state != ErrorCode.Delete and abs(time - parray[i].time) > 1e-3]
                 for p in pset_errs:
                     logger.warning_once('time argument in pfile.write() is %g, but a particle has time % g.' % (time, p.time))
-                pset_towrite.clear()
+                # pset_towrite.clear()
+                del pset_towrite
 
                 if time not in self.time_written:
                     self.time_written.append(time)
@@ -373,12 +379,17 @@ class ParticleFile(object):
                     #     data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
                     # self.written_once += data_dict_once['id'].tolist()
                     # ------ ------ ------ ------ ------ ------ #
-                    first_write = [p for p in parray if (p.index not in self.written_once) and _is_particle_started_yet(p, time)]
-                    data_dict_once['id'] = np.array([p.id for p in first_write])
+                    # --- memory-heavy action --- #
+                    # first_write = [p for p in parray if (p.index not in self.written_once) and _is_particle_started_yet(p, time)]
+                    first_write = [i for i, p in enumerate(parray) if (p.index not in self.written_once) and _is_particle_started_yet(p, time)]
+                    # data_dict_once['id'] = np.array([p.id for p in first_write])
+                    data_dict_once['id'] = np.array([parray[i].id for i in first_write])
                     for var in self.var_names_once:
-                        data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                        # data_dict_once[var] = np.array([getattr(p, var) for p in first_write])
+                        data_dict_once[var] = np.array([getattr(parray[i], var) for i in first_write])
                     self.written_once += data_dict_once['index'].tolist()
-                    first_write.clear()
+                    # first_write.clear()
+                    del first_write
 
             if not deleted_only:
                 self.lasttime_written = time
