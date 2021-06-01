@@ -159,6 +159,9 @@ class BaseParticleFile(ABC):
         self.dataset.close()
 
     def _create_trajectory_file(self, fname, data_shape):
+        # ==== This is the line that currently fails the tests - the new netcdf package seems to
+        # ==== use a different signature, making that call fail with an internal pedantic-warning
+        # ==== interpretation of the underlying HDF5 library.
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", data_shape[1])
         self.dataset.createDimension("traj", data_shape[0])
