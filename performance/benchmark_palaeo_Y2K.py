@@ -262,7 +262,9 @@ if __name__ == "__main__":
     time_in_years = int(time_in_days/366.0)
     with_GC = args.useGC
 
-    idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+    # ==== this is not a good choice for long-running simulations (e.g. 10y+) - needs to be adapted to scale ==== #
+    # idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
+    idgen.setTimeLine(0, time_in_days)
 
     branch = "nodes"
     computer_env = "local/unspecified"
