@@ -278,7 +278,7 @@ class ParticleSet(object):
                     pdata_id = pid[i]
                 else:
                     index = idgen.total_length
-                    pdata_id = idgen.nextID(lon[i], lat[i], depth[i], time[i])
+                    pdata_id = idgen.nextID(lon[i], lat[i], depth[i], abs(time[i]))
                 pdata = self._pclass(lon[i], lat[i], pid=pdata_id, fieldset=self._fieldset, depth=depth[i], time=time[i], index=index)
                 # Set other Variables if provided
                 for kwvar in kwargs:
