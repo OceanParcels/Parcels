@@ -243,6 +243,17 @@ class CCompiler_SS(CCompiler):
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         super(CCompiler_SS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
 
+    def __str__(self):
+        output = "[CCompiler_SS]: "
+        output += "('cc': {}), ".format(self._cc)
+        output += "('cppargs': {}), ".format(self._cppargs)
+        output += "('ldargs': {}), ".format(self._ldargs)
+        output += "('incdirs': {}), ".format(self._incdirs)
+        output += "('libdirs': {}), ".format(self._libdirs)
+        output += "('libs': {}), ".format(self._libs)
+        output += "('tmp_dir': {}), ".format(self._tmp_dir)
+        return output
+
     def compile(self, src, obj, log):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
         with open(log, 'w') as logfile:

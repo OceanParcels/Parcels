@@ -336,7 +336,7 @@ class ParticleFile(object):
             else:
                 pset_towrite = None
                 if deleted_only:
-                    pset_towrite = parray
+                    pset_towrite = [i for i in range(len(parray))]
                 else:
                     # == commented due to git rebase to master 27 02 2020 == #
                     # elif pset[0].dt > 0:
