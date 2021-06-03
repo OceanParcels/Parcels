@@ -31,3 +31,4 @@ dependencies:
   - nbval
   - scikit-learn
   - pykdtree
+  - sortedcontainers>=2.2.2
