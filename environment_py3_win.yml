@@ -27,3 +27,4 @@ dependencies:
   - pytest
   - nbval
   - pykdtree
+  - sortedcontainers>=2.2.2
