@@ -18,7 +18,7 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
         # Note that in case of a tie, the particle with the lowest ID
         # wins. In certain adverserial cases, this might lead to
         # undesirable results.
-        if dist < min_dist or min_dist == -1:
+        if dist < min_dist or min_dist < 0:
             min_dist = dist
             neighbor_id = n.id
 

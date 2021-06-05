@@ -447,16 +447,34 @@ class BaseParticleSet(NDCluster):
                                 'to a NetCDF file during the run.' % output_file.tempwritedir_base)
                 pbar = self.__create_progressbar(_starttime, endtime)
                 verbose_progress = True
+
             if dt > 0:
-                time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+                next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
-                time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            self.kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
-                                execute_once=execute_once)
-            if self.interaction_kernel is not None:
-                self.interaction_kernel.execute(
-                    self, endtime=time, dt=dt, recovery=recovery, output_file=output_file,
-                    execute_once=execute_once)
+                next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+
+            # qubixes: I am not sure if this is how it is supposed to work..
+            if self.interaction_kernel is None:
+                self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
+                                    execute_once=execute_once)
+            else:
+                cur_time = time
+                while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
+                    if dt > 0:
+                        cur_end_time = min(cur_time+dt, next_time)
+                    else:
+                        cur_end_time = max(cur_time+dt, next_time)
+                    self.kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        output_file=output_file, execute_once=execute_once)
+
+                    self.interaction_kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        output_file=output_file, execute_once=execute_once)
+                    cur_time += dt
+                    if dt == 0:
+                        break
+            time = next_time
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
