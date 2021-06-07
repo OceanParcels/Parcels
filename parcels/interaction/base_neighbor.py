@@ -26,7 +26,7 @@ class BaseNeighborSearch(ABC):
         self.inter_dist_horiz = inter_dist_horiz
         self.inter_dist = np.array(
             [inter_dist_vert, inter_dist_horiz, inter_dist_horiz]
-            ).reshape(3, 1)
+        ).reshape(3, 1)
         self.max_depth = max_depth  # Maximum depth of particles.
         self._values = None  # Coordinates of the particles.
 
