@@ -7,7 +7,7 @@ class BaseHashNeighborSearch(ABC):
     def find_neighbors_by_coor(self, coor):
         '''Get the neighbors around a certain location.
 
-        :param coor: Numpy array with [lat, long, depth].
+        :param coor: Numpy array with [depth, lat, lon].
         :returns List of particle indices.
         '''
         coor = coor.reshape(3, 1)
@@ -59,7 +59,7 @@ class BaseHashNeighborSearch(ABC):
         Particles that stay in the same location are computationally cheap.
         The order and number of the particles is assumed to remain the same.
 
-        :param new_values: new (lat, long, depth) values for particles.
+        :param new_values: new (depth, lat, lon) values for particles.
         '''
         if self._values is None:
             self.rebuild(new_values, new_active_mask)

@@ -36,8 +36,8 @@ def test_flat_neighbors(test_class):
     ref_class = BruteFlatNeighborSearch
     n_particle = 1000
     positions = np.random.rand(n_particle*3).reshape(3, n_particle)
-    ref_instance = ref_class(interaction_distance=0.3, interaction_depth=0.3)
-    test_instance = test_class(interaction_distance=0.3, interaction_depth=0.3)
+    ref_instance = ref_class(inter_dist_vert=0.3, inter_dist_horiz=0.3)
+    test_instance = test_class(inter_dist_vert=0.3, inter_dist_horiz=0.3)
     ref_instance.rebuild(positions)
     test_instance.rebuild(positions)
 
@@ -49,9 +49,9 @@ def test_flat_neighbors(test_class):
 def create_spherical_positions(n_particles, max_depth=100000):
     yrange = 2*np.random.rand(n_particles)
     lat = 180*(np.arccos(1-yrange)-0.5*np.pi)/np.pi
-    long = 360*np.random.rand(n_particles)
+    lon = 360*np.random.rand(n_particles)
     depth = max_depth*np.random.rand(n_particles)
-    return np.array((lat, long, depth))
+    return np.array((depth, lat, lon))
 
 
 def create_flat_positions(n_particle):
@@ -65,10 +65,10 @@ def test_spherical_neighbors(test_class):
     ref_class = BruteSphericalNeighborSearch
 
     positions = create_spherical_positions(10000, max_depth=100000)
-    ref_instance = ref_class(interaction_distance=1000000,
-                             interaction_depth=100000)
-    test_instance = test_class(interaction_distance=1000000,
-                               interaction_depth=100000)
+    ref_instance = ref_class(inter_dist_vert=100000,
+                             inter_dist_horiz=1000000)
+    test_instance = test_class(inter_dist_vert=100000,
+                               inter_dist_horiz=1000000)
     ref_instance.rebuild(positions)
     test_instance.rebuild(positions)
 
@@ -86,8 +86,8 @@ def test_flat_update(test_class):
     n_test_particle = 10
     n_active_mask = 10
     ref_class = BruteFlatNeighborSearch
-    ref_instance = ref_class(interaction_distance=0.3, interaction_depth=0.3)
-    test_instance = test_class(interaction_distance=0.3, interaction_depth=0.3)
+    ref_instance = ref_class(inter_dist_vert=0.3, inter_dist_horiz=0.3)
+    test_instance = test_class(inter_dist_vert=0.3, inter_dist_horiz=0.3)
 
     for i in range(n_active_mask):
         positions = create_flat_positions(n_particle) + 10*np.random.rand()
@@ -117,8 +117,8 @@ def test_spherical_update(test_class):
     n_active_mask = 10
     ref_class = BruteSphericalNeighborSearch
 
-    ref_instance = ref_class(interaction_distance=1000000, interaction_depth=100000)
-    test_instance = test_class(interaction_distance=1000000, interaction_depth=100000)
+    ref_instance = ref_class(inter_dist_vert=100000, inter_dist_horiz=1000000)
+    test_instance = test_class(inter_dist_vert=100000, inter_dist_horiz=1000000)
 
     for _ in range(n_active_mask):
         positions = create_spherical_positions(n_particle)

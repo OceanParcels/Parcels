@@ -286,8 +286,8 @@ class ScipyParticle(_Particle):
 
 
 class ScipyInteractionParticle(ScipyParticle):
-    surf_dist = Variable("surf_dist", dtype=np.float32)
-    depth_dist = Variable("depth_dist", dtype=np.float32)
+    vert_dist = Variable("vert_dist", dtype=np.float32)
+    horiz_dist = Variable("horiz_dist", dtype=np.float32)
 
 
 class JITParticle(ScipyParticle):

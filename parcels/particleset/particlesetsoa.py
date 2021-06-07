@@ -182,8 +182,8 @@ class ParticleSetSOA(BaseParticleSet):
         ngrids = fieldset.gridset.size if fieldset is not None else 1
 
         # Variables used for interaction kernels.
-        interaction_xy = None
-        interaction_z = None
+        inter_dist_horiz = None
+        inter_dist_vert = None
         self._dirty_neighbor = True
         self._neighbor_time = None
 
@@ -213,15 +213,16 @@ class ParticleSetSOA(BaseParticleSet):
                                "'spherical' meshes")
             try:
                 if len(interaction_distance) == 2:
-                    interaction_xy, interaction_z = interaction_distance
+                    inter_dist_vert, inter_dist_horiz = interaction_distance
                 else:
-                    interaction_xy = interaction_distance[0]
-                    interaction_z = interaction_distance[0]
+                    inter_dist_vert = interaction_distance[0]
+                    inter_dist_horiz = interaction_distance[0]
             except TypeError:
-                interaction_xy = interaction_distance
-                interaction_z = interaction_distance
-            self._neighbor_tree = interaction_class(interaction_xy,
-                                                    interaction_z)
+                inter_dist_vert = interaction_distance
+                inter_dist_horiz = interaction_distance
+            self._neighbor_tree = interaction_class(
+                inter_dist_vert=inter_dist_vert,
+                inter_dist_horiz=inter_dist_horiz)
         # End of neighbor search data structure initialization.
 
         if self.repeatdt:
@@ -487,9 +488,9 @@ class ParticleSetSOA(BaseParticleSet):
         active_mask = self.active_particles_mask(time, dt)
 
         self._values = np.vstack((
+            self._collection.data['depth'],
             self._collection.data['lat'],
             self._collection.data['lon'],
-            self._collection.data['depth'],
         ))
         if self._dirty_neighbor:
             self._neighbor_tree.rebuild(self._values, active_mask=active_mask)
@@ -504,9 +505,9 @@ class ParticleSetSOA(BaseParticleSet):
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = (neighbor_idx != particle_idx)
         neighbor_idx = neighbor_idx[mask]
-        if 'surf_dist' in self._collection._ptype.variables:
-            self._collection.data['surf_dist'][neighbor_idx] = distances[0, mask]
-            self._collection.data['depth_dist'][neighbor_idx] = distances[1, mask]
+        if 'horiz_dist' in self._collection._ptype.variables:
+            self._collection.data['vert_dist'][neighbor_idx] = distances[0, mask]
+            self._collection.data['horiz_dist'][neighbor_idx] = distances[1, mask]
         return ParticleCollectionIterableSOA(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):

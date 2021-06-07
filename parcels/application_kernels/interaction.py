@@ -20,7 +20,7 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
         # Note that with interacting particles p.surf_dist, p.depth_dist are
         # automatically set to be the distance along the surface and
         # z-direction respectively.
-        dist = np.sqrt(n.surf_dist**2 + n.depth_dist**2)
+        dist = np.sqrt(n.horiz_dist**2 + n.vert_dist**2)
         # Note that in case of a tie, the particle with the lowest ID
         # wins. In certain adverserial cases, this might lead to
         # undesirable results.

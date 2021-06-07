@@ -5,10 +5,7 @@ from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
 
 
 class ScipyFlatNeighborSearch(BaseFlatNeighborSearch):
-    name = "scipy"
-
-    def __init__(self, interaction_distance, interaction_depth):
-        super().__init__(interaction_distance, interaction_depth)
+    name = "scipy kdtree"
 
     def find_neighbors_by_coor(self, coor):
         coor = coor.reshape(3, 1)

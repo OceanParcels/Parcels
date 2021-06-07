@@ -19,7 +19,7 @@ def DummyMoveNeighbor(particle, fieldset, time, neighbors, mutator):
     if len(neighbors) == 0:
         return StateCode.Success
 
-    distances = [np.sqrt(n.surf_dist**2 + n.depth_dist**2) for n in neighbors]
+    distances = [np.sqrt(n.vert_dist**2 + n.horiz_dist**2) for n in neighbors]
     i_min_dist = np.argmin(distances)
 
     def f(p):
@@ -64,6 +64,7 @@ def test_simple_interaction_kernel(fieldset, mode):
     pset = ParticleSet(fieldset, pclass=ptype[mode], lon=lons, lat=lats,
                        interaction_distance=interaction_distance)
     pset.execute(DoNothing, pyfunc_inter=DummyMoveNeighbor, endtime=1., dt=1.)
+    print(pset.lat)
     assert np.allclose(pset.lat, [0.1, 0.2, 0.1, 0.0], rtol=1e-5)
 
 

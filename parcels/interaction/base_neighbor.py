@@ -14,13 +14,19 @@ class BaseNeighborSearch(ABC):
     """
     name = "unknown"
 
-    def __init__(self, interaction_distance, interaction_depth,
+    def __init__(self, inter_dist_vert, inter_dist_horiz,
                  max_depth=100000):
-        self.interaction_depth = interaction_depth
-        self.interaction_distance = interaction_distance
+        """Initialize neighbor search
+
+        :param inter_dist_vert: interaction distance (vertical) in m
+        :param inter_dist_horiz: interaction distance (horizontal in m
+        :param max_depth: maximum depth of the particles (i.e. 100km)
+        """
+        self.inter_dist_vert = inter_dist_vert
+        self.inter_dist_horiz = inter_dist_horiz
         self.inter_dist = np.array(
-            [self.interaction_distance, self.interaction_distance,
-             self.interaction_depth]).reshape(3, 1)
+            [inter_dist_vert, inter_dist_horiz, inter_dist_horiz]
+            ).reshape(3, 1)
         self.max_depth = max_depth  # Maximum depth of particles.
         self._values = None  # Coordinates of the particles.
 
@@ -35,7 +41,7 @@ class BaseNeighborSearch(ABC):
     def find_neighbors_by_coor(self, coor):
         '''Get the neighbors around a certain location.
 
-        :param coor: Numpy array with [lat, long, depth].
+        :param coor: Numpy array with [depth, lat, lon].
         :returns List of particle indices.
         '''
         raise NotImplementedError
@@ -57,7 +63,7 @@ class BaseNeighborSearch(ABC):
         This is a default implementation simply rebuilds the structure.
         If the rebuilding is slow, a faster implementation can be provided.
 
-        :param new_values: numpy array ([lat, long, depth], n_particles) with
+        :param new_values: numpy array ([depth, lat, lon], n_particles) with
                            new coordinates of the particles.
         :param new_active_mask: boolean array indicating active particles.
         '''
@@ -94,28 +100,28 @@ class BaseNeighborSearch(ABC):
 
         Distance depends on the mesh (spherical/flat).
 
-        :param coor: Numpy array with 3D coordinates ([lat, long, depth]).
+        :param coor: Numpy array with 3D coordinates ([depth, lat, lon]).
         :param subset_idx: Indices of the particles to compute the distance to.
-        :returns surface_dist: distance along the surface
-        :returns depth_dist: distance in the z-direction.
+        :returns horiz_dist: distance in the horizontal direction
+        :returns vert_dist: distance in the vertical direction.
         """
         raise NotImplementedError
 
     def _get_close_neighbor_dist(self, coor, subset_idx):
         """Compute distances and remove non-neighbors.
 
-        :param coor: Numpy array with 3D coordinates ([lat, long, depth]).
+        :param coor: Numpy array with 3D coordinates ([depth, lat, lon]).
         :param subset_idx: Indices of the particles to compute the distance to.
         :returns neighbor_idx: Indices within the interaction distance.
         :returns distances: Distance between coor and the neighbor particles.
         """
-        surf_distance, depth_distance = self._distance(coor, subset_idx)
-        rel_distances = np.sqrt((surf_distance/self.interaction_distance)**2
-                                + (depth_distance/self.interaction_depth)**2)
+        vert_distance, horiz_distance = self._distance(coor, subset_idx)
+        rel_distances = np.sqrt((horiz_distance/self.inter_dist_horiz)**2
+                                + (vert_distance/self.inter_dist_vert)**2)
         rel_neighbor_idx = np.where(rel_distances < 1)[0]
         neighbor_idx = subset_idx[rel_neighbor_idx]
-        distances = np.vstack((surf_distance[rel_neighbor_idx],
-                               depth_distance[rel_neighbor_idx]))
+        distances = np.vstack((vert_distance[rel_neighbor_idx],
+                               horiz_distance[rel_neighbor_idx]))
         return neighbor_idx, distances
 
 
@@ -123,11 +129,11 @@ class BaseFlatNeighborSearch(BaseNeighborSearch):
     "Base class for neighbor searches with a flat mesh."
     def _distance(self, coor, subset_idx):
         coor = coor.reshape(3, 1)
-        surf_distance = np.sqrt(np.sum((
-            self._values[:2, subset_idx] - coor[:2])**2,
+        horiz_distance = np.sqrt(np.sum((
+            self._values[1:, subset_idx] - coor[1:])**2,
             axis=0))
-        depth_distance = np.abs(self._values[2, subset_idx]-coor[2])
-        return (surf_distance, depth_distance)
+        vert_distance = np.abs(self._values[0, subset_idx]-coor[0])
+        return (vert_distance, horiz_distance)
 
 
 class BaseSphericalNeighborSearch(BaseNeighborSearch):
