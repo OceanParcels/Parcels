@@ -400,16 +400,16 @@ if __name__ == "__main__":
     fieldset.add_field(SV, 'SV')
 
     """ Defining the particle set """
-    pset = ParticleSet_Benchmark.from_list(fieldset=fieldset,         # the fields on which the particles are advected
-                                 pclass=plastic_particle,   # the type of particles (JITParticle or ScipyParticle)
-                                 lon= lon_release, #-160.,  # a vector of release longitudes
-                                 lat= lat_release, #36.,
+    pset = ParticleSet_Benchmark.from_list(fieldset=fieldset,  # the fields on which the particles are advected
+                                 pclass=plastic_particle,      # the type of particles (JITParticle or ScipyParticle)
+                                 lon= lon_release,             # a vector of release longitudes
+                                 lat= lat_release,
                                  time = time0,
-                                 depth = z_release) #[1.]
+                                 depth = z_release)
 
     # perflog = PerformanceLog()
     # perflog.pset = pset
-    #postProcessFuncs = [perflog.advance,]
+    # postProcessFuncs = [perflog.advance,]
 
     """ Kernal + Execution"""
     postProcessFuncs = []
