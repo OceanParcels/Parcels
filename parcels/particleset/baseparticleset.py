@@ -346,7 +346,7 @@ class BaseParticleSet(NDCluster):
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
-        if self.interaction_kernel is None and pyfunc_inter not is None:
+        if self.interaction_kernel is None and pyfunc_inter is not None:
             if isinstance(pyfunc_inter, BaseInteractionKernel):
                 self.interaction_kernel = pyfunc_inter
             else:
