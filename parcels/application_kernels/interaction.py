@@ -9,11 +9,17 @@ __all__ = ['AsymmetricAttraction', 'NearestNeighborWithinRange',
 
 
 def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
-    """Particle has to have the nearest_neighbor property
+    """Computes the nearest neighbor within range for each particle
+
+    Particle has to have the nearest_neighbor property. If no particle
+    is in range, set nearest_neighbor property to -1.
     """
     min_dist = -1
     neighbor_id = -1
     for n in neighbors:
+        # Note that with interacting particles p.surf_dist, p.depth_dist are
+        # automatically set to be the distance along the surface and
+        # z-direction respectively.
         dist = np.sqrt(n.surf_dist**2 + n.depth_dist**2)
         # Note that in case of a tie, the particle with the lowest ID
         # wins. In certain adverserial cases, this might lead to
@@ -30,23 +36,31 @@ def NearestNeighborWithinRange(particle, fieldset, time, neighbors, mutator):
 
 
 def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
-    """Particle has to have the nearest_neighbor and mass properties
+    """Perform merge action with nearest neighbor.
+
+    Depends on NearestNeighborWithinRange kernel, or one that provides similar
+    functionality. Particle has to have the nearest_neighbor and mass
+    properties. Only pairs of particles that have each other as nearest
+    neighbors will be merged.
     """
+    def delete_particle(p):
+        p.state = OperationCode.Delete
+
+    def merge_with_neighbor(p, nlat, nlon, ndepth, nmass):
+        p.lat = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
+        p.lon = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
+        p.depth = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
+        p.mass = p.mass + nmass
+
     for n in neighbors:
         if n.id == particle.nearest_neighbor:
             if n.nearest_neighbor == particle.id and particle.id < n.id:
-                # Merge particles
-                def g(p):
-                    p.state = OperationCode.Delete
-                mutator[n.id].append((g, ()))
-
-                def f(p, nlat, nlon, ndepth, nmass):
-                    p.lat = (p.mass * p.lat + nmass * nlat) / (p.mass + nmass)
-                    p.lon = (p.mass * p.lon + nmass * nlon) / (p.mass + nmass)
-                    p.depth = (p.mass * p.depth + nmass * ndepth) / (p.mass + nmass)
-                    p.mass = p.mass + nmass
+                # Merge particles:
+                # Delete neighbor
+                mutator[n.id].append((delete_particle, ()))
+                # Take position at the mid point and sum of masses
                 args = np.array([n.lat, n.lon, n.depth, n.mass])
-                mutator[particle.id].append((f, args))
+                mutator[particle.id].append((merge_with_neighbor, args))
 
                 return StateCode.Success
             else:
@@ -56,19 +70,21 @@ def MergeWithNearestNeighbor(particle, fieldset, time, neighbors, mutator):
 
 
 def AsymmetricAttraction(particle, fieldset, time, neighbors, mutator):
-    distances = []
+    """Example of asymmetric attraction between particles.
+
+    Particles should have the attractor attribute. If attractor==True, then
+    it attracts particles around it, but doesn't experience any attraction
+    itself. Particles with attractor=False are only attracted to attractors.
+    Works only properly on a flat mesh (because of vector calculations).
+    """
     na_neighbors = []
     if not particle.attractor:
         return StateCode.Success
     for n in neighbors:
         if n.attractor:
             continue
-        x_p = np.array([particle.lat, particle.lon, particle.depth])
-        x_n = np.array([n.lat, n.lon, n.depth])
-        distances.append(np.linalg.norm(x_p-x_n))
         na_neighbors.append(n)
 
-#     assert fieldset.mesh == "flat"
     velocity_param = 0.04
     for n in na_neighbors:
         assert n.dt == particle.dt

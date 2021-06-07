@@ -1,6 +1,5 @@
 from math import ceil
 
-# from numba.core.decorators import njit
 import numpy as np
 
 from parcels.interaction.base_neighbor import BaseSphericalNeighborSearch
@@ -45,7 +44,8 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
     def _values_to_hashes(self, values, active_idx=None):
         '''Convert coordinates to cell ids.
 
-        :param values: positions of particles to convert.
+        :param values: array of positions of particles to convert
+                       ([lat, long, depth], # of particles to convert).
         :returns array of cell ids.
         '''
         if active_idx is None:
@@ -115,7 +115,6 @@ class HashSphericalNeighborSearch(BaseHashNeighborSearch,
         self._bits = np.array([n_bits_lat, n_bits_long, n_bits_depth])
 
 
-# @njit
 def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
     '''Convert longitude and lattitude id's to hash'''
     point_hash = lat_sign
@@ -127,7 +126,7 @@ def i_3d_to_hash(i_lat, i_long, i_depth, lat_sign, bits):
 
 
 def geo_hash_to_neighbors(hash_id, coor, bits, inter_arc_dist):
-    '''Compute the hashes of all neighboring cells.'''
+    '''Compute the hashes of all neighboring cells in a 3x3x3 neighborhood.'''
     lat_sign = hash_id & 0x1
     i_lat = (hash_id >> 1) & ((1 << bits[0])-1)
     i_depth = (hash_id >> (1+bits[0]+bits[1])) & ((1 << bits[2])-1)

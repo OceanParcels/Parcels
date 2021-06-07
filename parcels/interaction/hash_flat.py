@@ -1,7 +1,5 @@
 import numpy as np
 from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
-# from numba import njit
-# import numba as nb
 from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
 
 
@@ -100,7 +98,6 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
         return all_hashes
 
 
-# @njit
 def hash_to_neighbors(hash_id, bits):
     """Compute neighboring cells from a hash.
 
@@ -110,8 +107,6 @@ def hash_to_neighbors(hash_id, bits):
     """
     coor = np.zeros((len(bits),), dtype=np.int32)
     new_coor = np.zeros((len(bits),), dtype=np.int32)
-#     coor = np.zeros((len(bits),), dtype=nb.int32)
-#     new_coor = np.zeros((len(bits),), dtype=nb.int32)
 
     # Compute the (ix, iy, iz) coordinates of the hash.
     tot_bits = 0

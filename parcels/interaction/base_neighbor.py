@@ -5,7 +5,13 @@ from parcels.interaction.distance_utils import spherical_distance
 
 
 class BaseNeighborSearch(ABC):
-    """Base class for searching particles in the neighborhood."""
+    """Base class for searching particles in the neighborhood.
+
+    The data structure of the class (and subclasses) only contain spatial
+    information. Additionally its input is in array format (3, n_particles),
+    which makes it the most efficient with the SoA (structure of arrays) data
+    structure.
+    """
     name = "unknown"
 
     def __init__(self, interaction_distance, interaction_depth,
@@ -15,8 +21,14 @@ class BaseNeighborSearch(ABC):
         self.inter_dist = np.array(
             [self.interaction_distance, self.interaction_distance,
              self.interaction_depth]).reshape(3, 1)
-        self.max_depth = max_depth
-        self._values = None
+        self.max_depth = max_depth  # Maximum depth of particles.
+        self._values = None  # Coordinates of the particles.
+
+        # Boolean array denoting active particles.
+        # These are particles 1) already started at the current time and
+        # 2) are set to a positive state (Success/Evaluate).
+        # Thus, this mask allows for particles do be deactivated without
+        # needing to completely rebuild the tree.
         self._active_mask = None
 
     @abstractmethod
@@ -45,7 +57,8 @@ class BaseNeighborSearch(ABC):
         This is a default implementation simply rebuilds the structure.
         If the rebuilding is slow, a faster implementation can be provided.
 
-        :param new_values: new coordinates of the particles.
+        :param new_values: numpy array ([lat, long, depth], n_particles) with
+                           new coordinates of the particles.
         :param new_active_mask: boolean array indicating active particles.
         '''
         self.rebuild(new_values, new_active_mask)
@@ -53,7 +66,8 @@ class BaseNeighborSearch(ABC):
     def rebuild(self, values, active_mask=-1):
         """Rebuild the neighbor structure from scratch.
 
-        :param values: new coordinates of the particles.
+        :param values: numpy array with coordinates of particles
+                       (same as update).
         :param active_mask: boolean array indicating active particles.
         """
         if values is not None:
@@ -69,6 +83,7 @@ class BaseNeighborSearch(ABC):
     @property
     def active_idx(self):
         "Indices of the currently active mask."
+        # See __init__ comments for a more detailed explanation.
         if self._active_mask is None:
             return np.arange(self._values.shape[1])
         return np.where(self._active_mask)[0]
@@ -79,7 +94,7 @@ class BaseNeighborSearch(ABC):
 
         Distance depends on the mesh (spherical/flat).
 
-        :param coor: Numpy array with 3D coordinates.
+        :param coor: Numpy array with 3D coordinates ([lat, long, depth]).
         :param subset_idx: Indices of the particles to compute the distance to.
         :returns surface_dist: distance along the surface
         :returns depth_dist: distance in the z-direction.
@@ -89,7 +104,7 @@ class BaseNeighborSearch(ABC):
     def _get_close_neighbor_dist(self, coor, subset_idx):
         """Compute distances and remove non-neighbors.
 
-        :param coor: Numpy array with 3D coordinates.
+        :param coor: Numpy array with 3D coordinates ([lat, long, depth]).
         :param subset_idx: Indices of the particles to compute the distance to.
         :returns neighbor_idx: Indices within the interaction distance.
         :returns distances: Distance between coor and the neighbor particles.

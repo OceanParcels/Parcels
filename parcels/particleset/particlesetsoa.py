@@ -180,6 +180,8 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
+
+        # Variables used for interaction kernels.
         interaction_xy = None
         interaction_z = None
         self._dirty_neighbor = True
@@ -189,6 +191,8 @@ class ParticleSetSOA(BaseParticleSet):
             _pclass, lon=lon, lat=lat, depth=depth, time=time,
             lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig,
             partitions=partitions, ngrid=ngrids, **kwargs)
+
+        # Initialize neighbor search data structure (used for interaction).
         if interaction_distance is not None:
             meshes = [g.mesh for g in fieldset.gridset.grids]
             # Assert all grids have the same mesh type
@@ -216,7 +220,9 @@ class ParticleSetSOA(BaseParticleSet):
             except TypeError:
                 interaction_xy = interaction_distance
                 interaction_z = interaction_distance
-            self._neighbor_tree = interaction_class(interaction_xy, interaction_z)
+            self._neighbor_tree = interaction_class(interaction_xy,
+                                                    interaction_z)
+        # End of neighbor search data structure initialization.
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -317,7 +323,6 @@ class ParticleSetSOA(BaseParticleSet):
         return ParticleCollectionIterableSOA(self._collection, subset=error_indices)
 
     def active_particles_mask(self, time, dt):
-        # TODO: make this into a mask
         active_indices = (time - self._collection.data['time'])/dt >= 0
         non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
         active_indices = np.logical_and(active_indices, non_err_indices)
@@ -499,13 +504,12 @@ class ParticleSetSOA(BaseParticleSet):
         neighbor_idx = self._active_particle_idx[neighbor_idx]
         mask = (neighbor_idx != particle_idx)
         neighbor_idx = neighbor_idx[mask]
-        if 'surf_dist' in self._collection.data:
+        if 'surf_dist' in self._collection._ptype.variables:
             self._collection.data['surf_dist'][neighbor_idx] = distances[0, mask]
             self._collection.data['depth_dist'][neighbor_idx] = distances[1, mask]
         return ParticleCollectionIterableSOA(self._collection, subset=neighbor_idx)
 
     def neighbors_by_coor(self, coor):
-        # TODO: fix if necessary
         neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
         neighbor_ids = self._collection.data['id'][neighbor_idx]
         return neighbor_ids
