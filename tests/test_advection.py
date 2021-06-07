@@ -10,6 +10,7 @@ from netCDF4 import Dataset
 from datetime import timedelta as delta
 from parcels import logger
 
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -51,7 +52,7 @@ def depth_fixture(zdim=2):
     return depth(zdim=zdim)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
@@ -81,7 +82,7 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     assert (np.diff(pset3D.lon) > 1.e-4).all()
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
@@ -100,7 +101,7 @@ def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.e-4)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 def test_advection_3D(pset_mode, mode, npart=11):
     """ 'Flat' 2D zonal flow that increases linearly with depth from 0 m/s to 1 m/s
@@ -123,7 +124,7 @@ def test_advection_3D(pset_mode, mode, npart=11):
     assert np.allclose(pset.depth*time, pset.lon, atol=1.e-1)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['jit', 'scipy'])
 @pytest.mark.parametrize('direction', ['up', 'down'])
 @pytest.mark.parametrize('wErrorThroughSurface', [True, False])
@@ -175,7 +176,7 @@ def periodicBC(particle, fieldset, time):
     particle.lat = math.fmod(particle.lat, 1)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=3):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=0.)
@@ -187,7 +188,7 @@ def test_advection_periodic_zonal(pset_mode, mode, xdim=100, ydim=100, halosize=
     assert abs(pset.lon[0] - 0.15) < 0.1
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=0., vvel=1.)
@@ -199,7 +200,7 @@ def test_advection_periodic_meridional(pset_mode, mode, xdim=100, ydim=100):
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100):
     fieldset = periodicfields(xdim, ydim, uvel=1., vvel=1.)
@@ -215,7 +216,7 @@ def test_advection_periodic_zonal_meridional(pset_mode, mode, xdim=100, ydim=100
     assert abs(pset.lat[0] - 0.15) < 0.1
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('u', [-0.3, np.array(0.2)])
 @pytest.mark.parametrize('v', [0.2, np.array(1)])
@@ -282,7 +283,7 @@ def fieldset_stationary(xdim=100, ydim=100, maxtime=delta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('method, rtol, diffField', [
     ('EE', 1e-2, False),
@@ -307,7 +308,7 @@ def test_stationary_eddy(pset_mode, fieldset_stationary, mode, method, rtol, dif
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_stationary_eddy_vertical(pset_mode, mode, npart=1):
     lon = np.linspace(12000, 21000, npart)
@@ -369,7 +370,7 @@ def fieldset_moving(xdim=100, ydim=100, maxtime=delta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('method, rtol, diffField', [
     ('EE', 1e-2, False),
@@ -420,7 +421,7 @@ def fieldset_decaying(xdim=100, ydim=100, maxtime=delta(hours=6)):
     return FieldSet.from_data(data, dimensions, mesh='flat', transpose=True)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('method, rtol, diffField', [
     ('EE', 1e-2, False),
@@ -445,7 +446,7 @@ def test_decaying_eddy(pset_mode, fieldset_decaying, mode, method, rtol, diffFie
     assert np.allclose(pset.lat, exp_lat, rtol=rtol)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_analyticalAgrid(pset_mode, mode):
     lon = np.arange(0, 15, dtype=np.float32)
@@ -462,7 +463,7 @@ def test_analyticalAgrid(pset_mode, mode):
     assert failed
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy'])  # JIT not implemented
 @pytest.mark.parametrize('u', [1, -0.2, -0.3, 0])
 @pytest.mark.parametrize('v', [1, -0.3, 0, -1])
