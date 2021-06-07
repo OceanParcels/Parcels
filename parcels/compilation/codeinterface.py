@@ -1,10 +1,10 @@
-import os
+import os  # noqa
 import sys
 import _ctypes
 from time import sleep
 import numpy.ctypeslib as npct
 from parcels.tools import get_cache_dir, get_package_dir
-from .code_compiler import *
+from .codecompiler import *
 # from parcels.tools.loggers import logger
 
 try:
@@ -33,15 +33,16 @@ class LibraryRegisterC:
             entry.unload_library()
             del entry
 
+    def add_entry(self, libname, interface_c_instance):
+        if not self.is_created(libname):
+            self._data[libname] = interface_c_instance
+
     def load(self, libname, src_dir=get_package_dir()):
         if libname is None or (libname in self._data.keys() and self._data[libname].is_loaded()):
             return
         if libname not in self._data.keys():
             # cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
-            cppargs = []
-            # , libs=["node"]
-            ccompiler = GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()])
-            self._data[libname] = InterfaceC("node", ccompiler, src_dir)
+            return
         if not self._data[libname].is_compiled():
             self._data[libname].compile_library()
         if not self._data[libname].is_loaded():
@@ -50,7 +51,6 @@ class LibraryRegisterC:
     def unload(self, libname):
         if libname in self._data.keys():
             self._data[libname].unload_library()
-        #    del self._data[libname]
 
     def is_created(self, libname):
         return libname in self._data.keys()
@@ -68,23 +68,17 @@ class LibraryRegisterC:
         return self.get(item)
 
     def get(self, libname):
-        #if libname not in self._data.keys():
-        #    self.load(libname)
         if libname in self._data.keys():
             return self._data[libname]
         return None
 
     def register(self, libname):
-        #if libname not in self._data.keys():
-        #    self.load(libname)
         if libname in self._data.keys():
             self._data[libname].register()
 
     def deregister(self, libname):
         if libname in self._data.keys():
             self._data[libname].unregister()
-        #    if self._data[libname].register_count <= 0:
-        #        self.unload(libname)
 
 class InterfaceC:
 
@@ -117,7 +111,6 @@ class InterfaceC:
         if os.path.exists(self.lib_file):
             self.compiled = True
 
-        # self.compiler = GNUCompiler()
         self.compiler = compiler
         self.compiled = False
         self.loaded = False
@@ -164,11 +157,9 @@ class InterfaceC:
 
     def register(self):
         self.register_count += 1
-        # print("lib '{}' register (count: {})".format(self.lib_file, self.register_count))
 
     def unregister(self):
         self.register_count -= 1
-        # print("lib '{}' de-register (count: {})".format(self.lib_file, self.register_count))
 
     def load_functions(self, function_param_array=[]):
         """
