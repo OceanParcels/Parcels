@@ -1,4 +1,3 @@
-import re
 import inspect
 from sys import version_info
 
@@ -9,10 +8,7 @@ except:
 
 from parcels.kernel.basekernel import BaseKernel
 
-__all__ = ['BaseKernel']
-
-
-re_indent = re.compile(r"^(\s+)")
+__all__ = ['BaseInteractionKernel']
 
 
 class BaseInteractionKernel(BaseKernel):
@@ -44,30 +40,6 @@ class BaseInteractionKernel(BaseKernel):
         if self._ptype.uses_jit:
             raise NotImplementedError("Interaction Kernels do not support"
                                       " JIT mode currently.")
-
-    def __del__(self):
-        # Clean-up the in-memory dynamic linked libraries.
-        # This is not really necessary, as these programs are not that large, but with the new random
-        # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
-        # It is particularly unneccessary for Interaction Kernels at this time (as this functionality
-        # is as of yet not implemented).
-        super().__del__()
-
-    @property
-    def ptype(self):
-        return self._ptype
-
-    @property
-    def pyfunc(self):
-        return self._pyfunc
-
-    @property
-    def fieldset(self):
-        return self._fieldset
-
-    @property
-    def c_include(self):
-        return self._c_include
 
     @property
     def _cache_key(self):

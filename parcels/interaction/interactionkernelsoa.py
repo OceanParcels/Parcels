@@ -105,7 +105,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
 
                 # (!) InteractionKernels do not advance time or change state
                 if res != StateCode.Success:
-                    logger.warning_once("Some InteractionKernel was not completed succesfully.")
+                    logger.warning_once("Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.")
 
             for particle_idx in active_idx:
                 p = pset[particle_idx]

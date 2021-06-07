@@ -242,8 +242,7 @@ class BaseParticleSet(NDCluster):
         pass
 
     def InteractionKernel(self, pyfunc_inter):
-        logger.warning_once("Particle set type is not compatible with interaction.")
-        return None
+        raise NotImplementedError("Particle set type is not compatible with interaction.")
 
     @abstractmethod
     def ParticleFile(self, *args, **kwargs):
