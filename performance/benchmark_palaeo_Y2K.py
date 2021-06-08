@@ -12,6 +12,7 @@ from parcels import (FieldSet, JITParticle, AdvectionRK4_3D,
 # from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
 from parcels.particleset_node_benchmark import ParticleSet_Benchmark
 from parcels.tools import idgen
+from parcels.tools import GenerateID_Service, SpatioTemporalIdGenerator, SequentialIdGenerator
 from argparse import ArgumentParser
 from datetime import timedelta as delta
 from datetime import datetime
@@ -264,6 +265,7 @@ if __name__ == "__main__":
 
     # ==== this is not a good choice for long-running simulations (e.g. 10y+) - needs to be adapted to scale ==== #
     # ==== also, it is a backward simulation, so the high-value should be first.                             ==== #
+    idgen = GenerateID_Service(SequentialIdGenerator)
     idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
     # idgen.setTimeLine(delta(days=time_in_days).total_seconds(), 0)
 
@@ -347,6 +349,9 @@ if __name__ == "__main__":
         lats = np.append(lats, latsz)
         depths = np.append(depths, np.zeros(len(lonsz), dtype=np.float32))
         times = np.append(times, np.full(len(lonsz),timesz[i]))
+    del timesz
+    del lonsz
+    del latsz
 
     print("running {} on {} (uname: {}) - branch '{}' - (target) N: {} - argv: {}".format(scenario, computer_env, os.uname()[1], branch, lons.shape[0], sys.argv[1:]))
 
