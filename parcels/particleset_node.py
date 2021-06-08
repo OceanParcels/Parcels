@@ -616,9 +616,12 @@ class ParticleSet(object):
                 self.add_entity(data_array.pop(i))
         elif isinstance(data_array, np.ndarray):
             if data_array.dtype == self._ptype:
-                for i in itertools.islice(itertools.count(), 0, data_array.shape[0]):
-                    ndata = self._nclass(id=data_array[i].id, data=data_array[i])
-                    self._nodes.add(ndata)
+                for i in itertools.islice(itertools.count(), 0, data_array.shape[0]):  # BAD MISTAKE - ALSO NEEDS TO BE CHECKED AND DISTRIBUTED!
+                    # ndata = self._nclass(id=data_array[i].id, data=data_array[i])
+                    # self._nodes.add(ndata)
+                    # results.append(self._nodes.bisect_right(ndata))
+                    pdata = data_array[i]
+                    self.add_entity(pdata)
             else:
                 # expect this to be a nD (2 <= n <= 5) array with [lon, lat, [depth, [time, [dt]]]]
                 pu_data = None
@@ -989,7 +992,7 @@ class ParticleSet(object):
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             self._kernel.execute(self, endtime=time, dt=dt, recovery=recovery, output_file=output_file, execute_once=execute_once)
-            if abs(time-next_prelease) < tol:
+            if abs(time-next_prelease) < tol:  # if that is true, 'rparam' is
                 if self.rparam.get_particle_id(0) is None:
                     pdata = np.array(self.rparam.lon, dtype=self._lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))
                     pdata = np.concatenate((pdata, np.array(self.rparam.lat, dtype=self.lonlatdepth_dtype).reshape((self.rparam.num_pts, 1))), axis=1)
