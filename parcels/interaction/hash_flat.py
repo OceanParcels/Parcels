@@ -62,12 +62,18 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
 
         epsilon = 1e-8
 
-        # Compute hash tables and the bits to compute it.
+        # Compute the number of bits in each of the three dimensions
+        # E.g. if we have 3 bits (depth), we must have less than 2^3 cells in
+        # that direction.
         n_bits = ((self._box[:, 1] - self._box[:, 0]
                    )/self.inter_dist.reshape(-1) + epsilon)/np.log(2)
         self._bits = np.ceil(n_bits).astype(int)
+
+        # Compute the starting point of the cell (0, 0, 0).
         self._min_box = self._box[:, 0]
         self._min_box = self._min_box.reshape(-1, 1)
+
+        # Compute the hash table.
         particle_hashes = self._values_to_hashes(values, self.active_idx)
         self._hashtable = hash_split(particle_hashes,
                                      active_idx=self.active_idx)
