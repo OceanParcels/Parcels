@@ -18,11 +18,11 @@ from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # no
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
-from parcels.interaction import HashSphericalNeighborSearch
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
 from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
 from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
 from parcels.interaction.neighborsearch import KDTreeFlatNeighborSearch
+from parcels.interaction.neighborsearch import HashSphericalNeighborSearch
 try:
     from mpi4py import MPI
 except:
