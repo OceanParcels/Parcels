@@ -268,6 +268,7 @@ if __name__ == "__main__":
 
     # ==== this is not a good choice for long-running simulations (e.g. 10y+) - needs to be adapted to scale ==== #
     # ==== also, it is a backward simulation, so the high-value should be first.                             ==== #
+    global idgen
     idgen = GenerateID_Service(SequentialIdGenerator)
     idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
     # idgen.setTimeLine(delta(days=time_in_days).total_seconds(), 0)

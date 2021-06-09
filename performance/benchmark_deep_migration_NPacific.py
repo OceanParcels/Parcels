@@ -3,7 +3,7 @@ from parcels.particleset_node_benchmark import ParticleSet_Benchmark
 from parcels.particlefile_node import ParticleFile
 # from parcels.particleset_vectorized_benchmark import ParticleSet_Benchmark
 # from parcels.particlefile_vectorized import ParticleFile
-from parcels.tools import idgen
+from parcels.tools import idgen, GenerateID_Service, SpatioTemporalIdGenerator, SequentialIdGenerator
 from parcels.kernels import seawaterdensity
 from argparse import ArgumentParser
 from datetime import timedelta as delta
@@ -248,6 +248,8 @@ if __name__ == "__main__":
     time_in_days = int(float(eval(args.time_in_days)))
     with_GC = args.useGC
 
+    global idgen
+    idgen = GenerateID_Service(SequentialIdGenerator)
     idgen.setTimeLine(0, delta(days=time_in_days).total_seconds())
 
     branch = "nodes"
