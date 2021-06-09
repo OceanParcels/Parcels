@@ -713,7 +713,7 @@ class ParticleSet(object):
                 else:
                     pid = pdata.id
                     index = pdata.index
-                node = NodeJIT(id=pid, data=pdata)
+                node = self._nclass(id=pid, data=pdata)
                 self._nodes.add(node)
                 index = self._nodes.bisect_right(node)
             if index >= 0:

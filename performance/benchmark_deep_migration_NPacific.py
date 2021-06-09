@@ -48,7 +48,8 @@ time0 = 0
 simhours = 1
 simmins = 30
 secsdt = 30
-hrsoutdt = 5
+# hrsoutdt = 5  # this is the original that shall be used!
+hrsoutdt = 24
 
 #--------- Choose below: NOTE- MUST ALSO MANUALLY CHANGE IT IN THE KOOI KERNAL BELOW -----
 rho_pl = 920.                 # density of plastic (kg m-3): DEFAULT FOR FIG 1 in Kooi: 920 but full range is: 840, 920, 940, 1050, 1380 (last 2 are initially non-buoyant)
@@ -351,17 +352,17 @@ if __name__ == "__main__":
 
     chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 200, 'x': 200}
     nchs = {
-        'U':                {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},
-        'V':                {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},
-        'W':                {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},
-        'd_phy':            {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
-        'nd_phy':           {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
-        'euph_z':           {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
+        'U':                {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},
+        'V':                {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},
+        'W':                {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('depthw', 25), 'time': ('time_counter', 1)},
+        'd_phy':            {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
+        'nd_phy':           {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # pfiles
+        'euph_z':           {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
         # 'd_tpp':            {'lon': ('x', 96), 'lat': ('y', 48), 'time': ('time_counter', 1)},  # dfiles
         # 'nd_tpp':           {'lon': ('x', 96), 'lat': ('y', 48), 'time': ('time_counter', 1)},  # dfiles
-        'tpp3':             {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
-        'cons_temperature': {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
-        'abs_salinity':     {'lon': ('x', 96), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
+        'tpp3':             {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # dfiles
+        'cons_temperature': {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
+        'abs_salinity':     {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
     }
     try:
         fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs, time_periodic=delta(days=365))
