@@ -263,6 +263,9 @@ if __name__ == "__main__":
     time_in_years = int(time_in_days/366.0)
     with_GC = args.useGC
 
+    outdt = 24
+    cbdt = 24  # np.infty
+
     # ==== this is not a good choice for long-running simulations (e.g. 10y+) - needs to be adapted to scale ==== #
     # ==== also, it is a backward simulation, so the high-value should be first.                             ==== #
     idgen = GenerateID_Service(SequentialIdGenerator)
@@ -399,7 +402,7 @@ if __name__ == "__main__":
     pfile = None
     if args.write_out:
         output_fpath = os.path.join(dirwrite, outfile)
-        pfile = pset.ParticleFile(output_fpath, convert_at_end=True, write_ondelete=True)
+        pfile = pset.ParticleFile(output_fpath, outputdt=outdt, convert_at_end=True, write_ondelete=True)
     kernels = pset.Kernel(initials) + Sink + Age  + pset.Kernel(AdvectionRK4_3D) + Age
 
     starttime = 0
@@ -414,11 +417,10 @@ if __name__ == "__main__":
     else:
         # starttime = ostime.time()
         starttime = ostime.process_time()
-
     # pset.execute(kernels, runtime=delta(days=365*9), dt=delta(minutes=-20), output_file=pfile, verbose_progress=False,
     # recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs)
     # postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours=12)
-    pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(hours=-12), output_file=pfile, verbose_progress=False, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=np.infty)
+    pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(hours=-12), output_file=pfile, verbose_progress=False, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=cbdt)
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD

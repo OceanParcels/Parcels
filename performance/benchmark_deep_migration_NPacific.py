@@ -50,6 +50,7 @@ simmins = 30
 secsdt = 30
 hrsoutdt = 5  # this is the original that shall be used!
 # hrsoutdt = 24
+hrscbdt = 48
 
 #--------- Choose below: NOTE- MUST ALSO MANUALLY CHANGE IT IN THE KOOI KERNAL BELOW -----
 rho_pl = 920.                 # density of plastic (kg m-3): DEFAULT FOR FIG 1 in Kooi: 920 but full range is: 840, 920, 940, 1050, 1380 (last 2 are initially non-buoyant)
@@ -440,7 +441,7 @@ if __name__ == "__main__":
         starttime = ostime.process_time()
 
     # postIterationCallbacks = postProcessFuncs, callbackdt = delta(hours=hrsoutdt)
-    pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(seconds = secsdt), output_file=pfile, verbose_progress=True, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours = hrsoutdt))
+    pset.execute(kernels, runtime=delta(days=time_in_days), dt=delta(seconds = secsdt), output_file=pfile, verbose_progress=True, recovery={ErrorCode.ErrorOutOfBounds: DeleteParticle}, postIterationCallbacks=postProcessFuncs, callbackdt=delta(hours = hrscbdt))
 
     if MPI:
         mpi_comm = MPI.COMM_WORLD
