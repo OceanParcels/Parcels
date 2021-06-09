@@ -184,8 +184,13 @@ class ParticleSetSOA(BaseParticleSet):
         # Variables used for interaction kernels.
         inter_dist_horiz = None
         inter_dist_vert = None
+        # The _dirty_neighbor attribute keeps track of whether
+        # the neighbor search structure needs to be rebuilt.
+        # If indices change (for example adding/deleting a particle)
+        # The NS structure needs to be rebuilt and _dirty_neighbor should be
+        # set to true. Since the NS structure isn't immediately initialized,
+        # it is set to True here.
         self._dirty_neighbor = True
-        self._neighbor_time = None
 
         self._collection = ParticleCollectionSOA(
             _pclass, lon=lon, lat=lat, depth=depth, time=time,
@@ -495,7 +500,6 @@ class ParticleSetSOA(BaseParticleSet):
         if self._dirty_neighbor:
             self._neighbor_tree.rebuild(self._values, active_mask=active_mask)
             self._dirty_neighbor = False
-            self._neighbor_time = time
         else:
             self._neighbor_tree.update_values(self._values, new_active_mask=active_mask)
 
@@ -558,11 +562,13 @@ class ParticleSetSOA(BaseParticleSet):
         if isinstance(particles, BaseParticleSet):
             particles = particles.collection
         self._collection += particles
+        # Adding particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         return self
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
+        # Removing particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         if type(indices) in [int, np.int32, np.intp]:
             self._collection.remove_single_by_index(indices)
@@ -571,6 +577,7 @@ class ParticleSetSOA(BaseParticleSet):
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        # Removing particles invalidates the neighbor search structure.
         self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
