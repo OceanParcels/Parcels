@@ -1,3 +1,5 @@
 from .baseinteractionkernel import BaseInteractionKernel  # noqa
 from .interactionkernelsoa import InteractionKernelSOA  # noqa
-from .neighborsearch import *
+
+
+__all__ = ["BaseInteractionKernel", "InteractionKernelSOA"]

@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
 
-from parcels.interaction import BruteFlatNeighborSearch
-from parcels.interaction import BruteSphericalNeighborSearch
-from parcels.interaction import HashFlatNeighborSearch
-from parcels.interaction import HashSphericalNeighborSearch
-from parcels.interaction import KDTreeFlatNeighborSearch
+from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
+from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
+from parcels.interaction.neighborsearch import HashFlatNeighborSearch
+from parcels.interaction.neighborsearch import HashSphericalNeighborSearch
+from parcels.interaction.neighborsearch import KDTreeFlatNeighborSearch
 from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
 
 
