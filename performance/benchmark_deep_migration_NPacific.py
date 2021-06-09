@@ -48,8 +48,8 @@ time0 = 0
 simhours = 1
 simmins = 30
 secsdt = 30
-# hrsoutdt = 5  # this is the original that shall be used!
-hrsoutdt = 24
+hrsoutdt = 5  # this is the original that shall be used!
+# hrsoutdt = 24
 
 #--------- Choose below: NOTE- MUST ALSO MANUALLY CHANGE IT IN THE KOOI KERNAL BELOW -----
 rho_pl = 920.                 # density of plastic (kg m-3): DEFAULT FOR FIG 1 in Kooi: 920 but full range is: 840, 920, 940, 1050, 1380 (last 2 are initially non-buoyant)
@@ -231,6 +231,7 @@ def Profiles(particle, fieldset, time):
     particle.sw_visc = fieldset.SV[time,particle.depth,particle.lat,particle.lon] 
     particle.w = fieldset.W[time,particle.depth,particle.lat,particle.lon]
 
+# test with t={1, 2, 4, 7, 11, 16, 22, 29, 37, 46, 56}
 if __name__ == "__main__":
     parser = ArgumentParser(description="Example of particle advection using in-memory stommel test case")
     parser.add_argument("-i", "--imageFileName", dest="imageFileName", type=str, default="mpiChunking_plot_MPI.png", help="image file name of the plot")
@@ -365,9 +366,9 @@ if __name__ == "__main__":
         'abs_salinity':     {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
     }
     try:
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs, time_periodic=delta(days=365))
+        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs, time_periodic=delta(days=366))
     except (SyntaxError, ):
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, chunksize=nchs, time_periodic=delta(days=365))
+        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, chunksize=nchs, time_periodic=delta(days=366))
     depths = fieldset.U.depth
 
     idgen.setDepthLimits(np.min(depths), np.max(depths))
