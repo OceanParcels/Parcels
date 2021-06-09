@@ -2,7 +2,11 @@ import numpy as np
 
 
 def fast_distance(lat1, lon1, lat2, lon2):
-    '''Compute the arc distance assuming the earth is a sphere.'''
+    '''Compute the arc distance assuming the earth is a sphere.
+
+    This is not the only possible implementation. It was taken from:
+    https://www.mkompf.com/gps/distcalc.html
+    '''
     g = np.sin(lat1)*np.sin(lat2)+np.cos(lat1)*np.cos(lat2)*np.cos(lon1-lon2)
     return np.arccos(np.minimum(1, g))
 
