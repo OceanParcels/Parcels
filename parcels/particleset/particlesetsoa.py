@@ -20,9 +20,9 @@ from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
 from parcels.interaction import HashSphericalNeighborSearch
 from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
-from parcels.interaction.brute_force import BruteSphericalNeighborSearch
-from parcels.interaction.brute_force import BruteFlatNeighborSearch
-from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
+from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
+from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
+from parcels.interaction.neighborsearch import KDTreeFlatNeighborSearch
 try:
     from mpi4py import MPI
 except:
@@ -212,7 +212,7 @@ class ParticleSetSOA(BaseParticleSet):
                 if len(self) < 1000:
                     interaction_class = BruteFlatNeighborSearch
                 else:
-                    interaction_class = ScipyFlatNeighborSearch
+                    interaction_class = KDTreeFlatNeighborSearch
             else:
                 assert False, ("Interaction is only possible on 'flat' and "
                                "'spherical' meshes")

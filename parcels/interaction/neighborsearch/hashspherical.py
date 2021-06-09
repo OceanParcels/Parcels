@@ -2,15 +2,14 @@ from math import ceil
 
 import numpy as np
 
-from parcels.interaction.base_neighbor import BaseSphericalNeighborSearch
-from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
+from parcels.interaction.neighborsearch.base import BaseSphericalNeighborSearch
+from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
+from parcels.interaction.neighborsearch.basehash import hash_split
 
 
 class HashSphericalNeighborSearch(BaseHashNeighborSearch,
                                   BaseSphericalNeighborSearch):
     '''Neighbor search using a hashtable (similar to octtrees).'''
-    name = "hash"
-
     def __init__(self, inter_dist_vert, inter_dist_horiz,
                  max_depth=100000):
         '''Initialize the neighbor data structure.

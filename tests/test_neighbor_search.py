@@ -1,21 +1,21 @@
 import pytest
 import numpy as np
 
-from parcels.interaction.brute_force import BruteFlatNeighborSearch
-from parcels.interaction.brute_force import BruteSphericalNeighborSearch
-from parcels.interaction.hash_flat import HashFlatNeighborSearch
-from parcels.interaction.hash_spherical import HashSphericalNeighborSearch
-from parcels.interaction.scipy_flat import ScipyFlatNeighborSearch
+from parcels.interaction import BruteFlatNeighborSearch
+from parcels.interaction import BruteSphericalNeighborSearch
+from parcels.interaction import HashFlatNeighborSearch
+from parcels.interaction import HashSphericalNeighborSearch
+from parcels.interaction import KDTreeFlatNeighborSearch
+from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
 
 
 def compare_results_by_idx(instance, particle_idx, ref_result, active_idx=None):
     cur_neigh, _ = instance.find_neighbors_by_idx(particle_idx)
-    assert instance.name != "unknown"
     assert isinstance(cur_neigh, np.ndarray)
     assert len(cur_neigh) == len(set(cur_neigh))
     if active_idx is None:
         active_idx = np.arange(instance._values.shape[1])
-    if instance.name == "hash":
+    if isinstance(instance, BaseHashNeighborSearch):
         instance.consistency_check()
     for neigh in cur_neigh:
         assert neigh in active_idx
@@ -29,7 +29,7 @@ def compare_results_by_idx(instance, particle_idx, ref_result, active_idx=None):
 
 
 @pytest.mark.parametrize(
-    "test_class", [ScipyFlatNeighborSearch, HashFlatNeighborSearch,
+    "test_class", [KDTreeFlatNeighborSearch, HashFlatNeighborSearch,
                    BruteFlatNeighborSearch])
 def test_flat_neighbors(test_class):
     np.random.seed(129873)
@@ -78,7 +78,7 @@ def test_spherical_neighbors(test_class):
 
 
 @pytest.mark.parametrize(
-    "test_class", [ScipyFlatNeighborSearch, HashFlatNeighborSearch,
+    "test_class", [KDTreeFlatNeighborSearch, HashFlatNeighborSearch,
                    BruteFlatNeighborSearch])
 def test_flat_update(test_class):
     np.random.seed(9182741)

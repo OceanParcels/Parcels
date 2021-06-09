@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from parcels.interaction.distance_utils import spherical_distance
+from parcels.interaction.neighborsearch.distanceutils import spherical_distance
 
 
 class BaseNeighborSearch(ABC):
@@ -12,7 +12,6 @@ class BaseNeighborSearch(ABC):
     which makes it the most efficient with the SoA (structure of arrays) data
     structure.
     """
-    name = "unknown"
 
     def __init__(self, inter_dist_vert, inter_dist_horiz,
                  max_depth=100000):

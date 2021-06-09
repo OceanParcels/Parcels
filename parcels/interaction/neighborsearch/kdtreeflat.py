@@ -1,12 +1,10 @@
 import numpy as np
 from scipy.spatial import KDTree
 
-from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
+from parcels.interaction.neighborsearch.base import BaseFlatNeighborSearch
 
 
-class ScipyFlatNeighborSearch(BaseFlatNeighborSearch):
-    name = "scipy kdtree"
-
+class KDTreeFlatNeighborSearch(BaseFlatNeighborSearch):
     def find_neighbors_by_coor(self, coor):
         coor = coor.reshape(3, 1)
         corrected_coor = (coor/self.inter_dist).reshape(-1)

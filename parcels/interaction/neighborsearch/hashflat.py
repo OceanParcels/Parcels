@@ -1,11 +1,12 @@
 import numpy as np
-from parcels.interaction.base_neighbor import BaseFlatNeighborSearch
-from parcels.interaction.base_hash import BaseHashNeighborSearch, hash_split
+
+from parcels.interaction.neighborsearch.base import BaseFlatNeighborSearch
+from parcels.interaction.neighborsearch.basehash import BaseHashNeighborSearch
+from parcels.interaction.neighborsearch.basehash import hash_split
 
 
 class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
     '''Neighbor search using a hashtable (similar to octtrees).'''
-    name = "hash"
     _box = None
 
     def _find_neighbors(self, hash_id, coor):
