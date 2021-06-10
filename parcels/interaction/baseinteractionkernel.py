@@ -19,6 +19,12 @@ class BaseInteractionKernel(BaseKernel):
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
                  funccode=None, py_ast=None, funcvars=None,
                  c_include="", delete_cfiles=True):
+        if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
+            raise NotImplementedError("InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI.")
+
+        if self._ptype.uses_jit:
+            raise NotImplementedError("JIT mode is not supported for InteractionKernels. Please run your simulation in SciPy mode.")
+
         if pyfunc is not None:
             if isinstance(pyfunc, list):
                 funcname = ''.join([func.__name__ for func in pyfunc])
