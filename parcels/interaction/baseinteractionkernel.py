@@ -14,6 +14,11 @@ __all__ = ['BaseInteractionKernel']
 class BaseInteractionKernel(BaseKernel):
     """Base super class for Interaction Kernel objects that encapsulates
     auto-generated code.
+
+    InteractionKernels do not implement ways to catch or recover from
+    errors caused during execution of the kernel function(s).
+    It is strongly recommended not to sample from fields inside an
+    InteractionKernel.
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
@@ -21,9 +26,6 @@ class BaseInteractionKernel(BaseKernel):
                  c_include="", delete_cfiles=True):
         if MPI is not None and MPI.COMM_WORLD.Get_size() > 1:
             raise NotImplementedError("InteractionKernels are not supported in an MPI environment. Please run your simulation outside MPI.")
-
-        if self._ptype.uses_jit:
-            raise NotImplementedError("JIT mode is not supported for InteractionKernels. Please run your simulation in SciPy mode.")
 
         if pyfunc is not None:
             if isinstance(pyfunc, list):
@@ -42,10 +44,10 @@ class BaseInteractionKernel(BaseKernel):
             else:
                 self._pyfunc = [pyfunc]
 
-        # Generate the kernel function and add the outer loop
         if self._ptype.uses_jit:
-            raise NotImplementedError("Interaction Kernels do not support"
-                                      " JIT mode currently.")
+            raise NotImplementedError("JIT mode is not supported for"
+                                      " InteractionKernels. Please run your"
+                                      " simulation in SciPy mode.")
 
     @property
     def _cache_key(self):
@@ -120,4 +122,6 @@ class BaseInteractionKernel(BaseKernel):
         raise NotImplementedError
 
     def execute_jit(self, pset, endtime, dt):
-        raise NotImplementedError
+        raise NotImplementedError("JIT mode is not supported for"
+                                  " InteractionKernels. Please run your"
+                                  " simulation in SciPy mode.")

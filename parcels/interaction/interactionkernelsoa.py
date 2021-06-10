@@ -8,16 +8,12 @@ try:
 except:
     MPI = None
 
-from parcels.field import FieldOutOfBoundError
-from parcels.field import FieldOutOfBoundSurfaceError
-from parcels.field import TimeExtrapolationError
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
 import parcels.rng as ParcelsRandom  # noqa
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
-from parcels.tools.statuscodes import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
 
 
@@ -26,6 +22,11 @@ __all__ = ['InteractionKernelSOA']
 
 class InteractionKernelSOA(BaseInteractionKernel):
     """InteractionKernel object that encapsulates auto-generated code.
+
+    InteractionKernels do not implement ways to catch or recover from
+    errors caused during execution of the kernel function(s).
+    It is strongly recommended not to sample from fields inside an
+    InteractionKernel.
     """
 
     def __init__(self, fieldset, ptype, pyfunc=None, funcname=None,
@@ -49,7 +50,9 @@ class InteractionKernelSOA(BaseInteractionKernel):
         # so there is no need for any further "processing" of pyfunc's.
 
     def execute_jit(self, pset, endtime, dt):
-        raise NotImplementedError
+        raise NotImplementedError("JIT mode is not supported for"
+                                  " InteractionKernels. Please run your"
+                                  " simulation in SciPy mode.")
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -68,7 +71,13 @@ class InteractionKernelSOA(BaseInteractionKernel):
         return kernel.merge(self, InteractionKernelSOA)
 
     def execute_python(self, pset, endtime, dt):
-        """Performs the core update loop via Python"""
+        """Performs the core update loop via Python
+
+        InteractionKernels do not implement ways to catch or recover from
+        errors caused during execution of the kernel function(s).
+        It is strongly recommended not to sample from fields inside an
+        InteractionKernel.
+        """
         if self.fieldset is not None:
             for f in self.fieldset.get_fields():
                 if type(f) in [VectorField, NestedField, SummedField]:
@@ -89,21 +98,12 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 neighbors = pset.neighbors_by_index(particle_idx)
                 try:
                     res = pyfunc(p, pset.fieldset, p.time, neighbors, mutator)
-                except FieldOutOfBoundError as fse_xy:
-                    res = ErrorCode.ErrorOutOfBounds
-                    p.exception = fse_xy
-                except FieldOutOfBoundSurfaceError as fse_z:
-                    res = ErrorCode.ErrorThroughSurface
-                    p.exception = fse_z
-                except TimeExtrapolationError as fse_t:
-                    res = ErrorCode.ErrorTimeExtrapolation
-                    p.exception = fse_t
-
                 except Exception as e:
                     res = ErrorCode.Error
                     p.exception = e
 
-                # (!) InteractionKernels do not advance time or change state
+                # InteractionKernels do not implement a way to recover
+                # from errors.
                 if res != StateCode.Success:
                     logger.warning_once("Some InteractionKernel was not completed succesfully, likely because a Particle threw an error that was not captured.")
 
@@ -116,18 +116,17 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     pass
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
-        """Execute this Kernel over a ParticleSet for several timesteps"""
+        """Execute this Kernel over a ParticleSet for several timesteps
+
+        InteractionKernels do not implement ways to catch or recover from
+        errors caused during execution of the kernel function(s).
+        It is strongly recommended not to sample from fields inside an
+        InteractionKernel.
+        """
         pset.collection.state[:] = StateCode.Evaluate
 
         if abs(dt) < 1e-6 and not execute_once:
             logger.warning_once("'dt' is too small, causing numerical accuracy limit problems. Please chose a higher 'dt' and rather scale the 'time' axis of the field accordingly. (related issue #762)")
-
-        if recovery is None:
-            recovery = {}
-        elif ErrorCode.ErrorOutOfBounds in recovery and ErrorCode.ErrorThroughSurface not in recovery:
-            recovery[ErrorCode.ErrorThroughSurface] = recovery[ErrorCode.ErrorOutOfBounds]
-        recovery_map = recovery_base_map.copy()
-        recovery_map.update(recovery)
 
         if pset.fieldset is not None:
             for g in pset.fieldset.gridset.grids:
@@ -137,6 +136,8 @@ class InteractionKernelSOA(BaseInteractionKernel):
 
         # Execute the kernel over the particle set
         if self.ptype.uses_jit:
+            # This should never happen, as it is already checked in the
+            # initialization.
             self.execute_jit(pset, endtime, dt)
         else:
             self.execute_python(pset, endtime, dt)
@@ -157,12 +158,6 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     p.set_state(StateCode.Evaluate)
                 elif p.state == OperationCode.Delete:
                     pass
-                elif p.state in recovery_map:
-                    recovery_kernel = recovery_map[p.state]
-                    p.set_state(StateCode.Success)
-                    recovery_kernel(p, self.fieldset, p.time)
-                    if p.state == StateCode.Success:
-                        p.set_state(StateCode.Evaluate)
                 else:
                     logger.warning_once('Deleting particle {} because of non-recoverable error'.format(p.id))
                     p.delete()
