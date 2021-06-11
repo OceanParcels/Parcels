@@ -8,6 +8,7 @@ import random
 
 
 class Node(object):
+    # theoretical size: 97 bytes
     prev = None
     next = None
     id = None
@@ -28,8 +29,16 @@ class Node(object):
             self.next = None
         if id is not None and (isinstance(id, int) or type(id) in [int32, uint32, int64, uint64]) and (id >= 0):
             self.id = id
-        elif id is None:
-            self.id = idgen.nextID(random.uniform(-180.0, 180.0), random.uniform(-90.0, 90.0), random.uniform(0., 75.0), 0.)
+        elif id is None and data is not None:
+            try:
+                self.id = data.id
+            except (ValueError, AttributeError):
+                self.id = None
+            if self.id is None:
+                try:
+                    self.id = idgen.nextID(data.lon, data.lat, data.depth, data.time)
+                except (ValueError, AttributeError):
+                    self.id = None
         else:
             self.id = None
         self.data = data
@@ -145,6 +154,7 @@ c_funcs = None
 
 
 class NodeJIT(Node, ctypes.Structure):
+    # theoretical size: 97 bytes + 260 bytes (ctypes data structure) + 56 bytes (ctypes func-refs) + [616 (one time - having the ctypes function link)]
     _fields_ = [('_c_prev_p', ctypes.c_void_p),
                 ('_c_next_p', ctypes.c_void_p),
                 ('_c_data_p', ctypes.c_void_p),
