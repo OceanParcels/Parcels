@@ -41,16 +41,16 @@ lat_release = lat_release0.T
 lon_release = np.tile(np.linspace(-165,-156,10),[10,1]) 
 z_release = np.tile(1,[10,10])
 
+time0 = 0
 # Choose:
 simdays = 50.0 * 365.0
 #simdays = 5
-time0 = 0
 simhours = 1
 simmins = 30
 secsdt = 30
-hrsoutdt = 5  # this is the original that shall be used!
-# hrsoutdt = 24
-hrscbdt = 48
+# hrsoutdt = 5  # this is the original that should be used
+hrsoutdt = 24
+hrscbdt = 12  # callback-dt (if callback is garbage collection) should be less than the output
 
 #--------- Choose below: NOTE- MUST ALSO MANUALLY CHANGE IT IN THE KOOI KERNAL BELOW -----
 rho_pl = 920.                 # density of plastic (kg m-3): DEFAULT FOR FIG 1 in Kooi: 920 but full range is: 840, 920, 940, 1050, 1380 (last 2 are initially non-buoyant)
@@ -354,7 +354,7 @@ if __name__ == "__main__":
                   'cons_temperature': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw','time': 'time_counter'},
                   'abs_salinity': {'lon': 'glamf', 'lat': 'gphif', 'depth': 'depthw','time': 'time_counter'}}
 
-    chs = {'time_counter': 1, 'depthu': 75, 'depthv': 75, 'depthw': 75, 'deptht': 75, 'y': 200, 'x': 200}
+    chs = {'time_counter': 1, 'depthu': 25, 'depthv': 25, 'depthw': 25, 'deptht': 25, 'y': 64, 'x': 64}
     nchs = {
         'U':                {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('depthu', 25), 'time': ('time_counter', 1)},
         'V':                {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('depthv', 25), 'time': ('time_counter', 1)},
@@ -368,10 +368,16 @@ if __name__ == "__main__":
         'cons_temperature': {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
         'abs_salinity':     {'lon': ('x', 64), 'lat': ('y', 48), 'depth': ('deptht', 25), 'time': ('time_counter', 1)},  # tfiles
     }
-    try:
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs, time_periodic=delta(days=366))
-    except (SyntaxError, ):
-        fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, chunksize=nchs, time_periodic=delta(days=366))
+    if periodicFlag:
+        try:
+            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, field_chunksize=chs, time_periodic=delta(days=366))
+        except (SyntaxError, ):
+            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=False, chunksize=nchs, time_periodic=delta(days=366))
+    else:
+        try:
+            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, field_chunksize=chs)
+        except (SyntaxError, ):
+            fieldset = FieldSet.from_nemo(filenames, variables, dimensions, allow_time_extrapolation=True, chunksize=nchs)
     depths = fieldset.U.depth
 
     idgen.setDepthLimits(np.min(depths), np.max(depths))
@@ -386,14 +392,14 @@ if __name__ == "__main__":
     # profile_auxin_path = '/scratch/ckehl/experiments/deep_migration_behaviour/aux_in/profiles.pickle'
     profile_auxin_path = os.path.join(headdir, 'aux_in/profiles.pickle')
     with open(profile_auxin_path, 'rb') as f:
-        depth,T_z,S_z,rho_z,upsilon_z,mu_z = pickle.load(f)
+        depth,T_z,S_z,rho_z,epsilon_z,mu_z = pickle.load(f)
 
     v_lon = np.array([minlon,maxlon])
     v_lat = np.array([minlat,maxlat])
 
-    print("|lon| = {}; |lat| = {}".format(v_lon.shape[0], v_lat.shape[0]))
+    print("|lon| = {}; |lat| = {}".format(lon_release.shape[0], lat_release.shape[0]))
 
-    kv_or = np.transpose(np.tile(np.array(upsilon_z),(len(v_lon),len(v_lat),1)), (2,0,1))   # kinematic viscosity
+    kv_or = np.transpose(np.tile(np.array(epsilon_z),(len(v_lon),len(v_lat),1)), (2,0,1))   # kinematic viscosity
     sv_or = np.transpose(np.tile(np.array(mu_z),(len(v_lon),len(v_lat),1)), (2,0,1))        # dynamic viscosity of seawater
     try:
         KV = Field('KV', kv_or, lon=v_lon, lat=v_lat, depth=depths, mesh='spherical', field_chunksize=False)#,transpose="True") #,fieldtype='U')
