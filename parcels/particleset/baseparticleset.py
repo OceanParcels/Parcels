@@ -346,6 +346,7 @@ class BaseParticleSet(NDCluster):
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
                 self.kernel.load_lib()
 
+        # Set up the interaction kernel(s) if not set and given.
         if self.interaction_kernel is None and pyfunc_inter is not None:
             if isinstance(pyfunc_inter, BaseInteractionKernel):
                 self.interaction_kernel = pyfunc_inter
@@ -452,10 +453,12 @@ class BaseParticleSet(NDCluster):
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
 
-            # qubixes: I am not sure if this is how it is supposed to work..
+            # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
                 self.kernel.execute(self, endtime=next_time, dt=dt, recovery=recovery, output_file=output_file,
                                     execute_once=execute_once)
+            # Interaction: interleave the interaction and non-interaction kernel for each time step.
+            # E.g. Inter -> Normal -> Inter -> Normal if endtime-time == 2*dt
             else:
                 cur_time = time
                 while (cur_time < next_time and dt > 0) or (cur_time > next_time and dt < 0) or dt == 0:
@@ -469,10 +472,10 @@ class BaseParticleSet(NDCluster):
                     self.kernel.execute(
                         self, endtime=cur_end_time, dt=dt, recovery=recovery,
                         output_file=output_file, execute_once=execute_once)
-
                     cur_time += dt
                     if dt == 0:
                         break
+            # End of interaction specific code
             time = next_time
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(

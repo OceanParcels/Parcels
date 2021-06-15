@@ -145,24 +145,32 @@ def test_asymmetric_attraction(fieldset, mode):
     assert len(pset) == 3
 
 
-def DoNothingInteraction(particle, fieldset, time, neighbors, mutator):
+def ConstantMoveInteraction(particle, fieldset, time, neighbors, mutator):
     def f(p):
         p.lat += p.dt
     mutator[particle.id].append((f, ()))
 
 
-def test_do_nothing():
+def test_pseudo_interaction():
+    # A linear field where advected particles are moving at
+    # 1 m/s in the longitudinal direction.
     xdim, ydim = (10, 20)
     Uflow = Field('U', np.ones((ydim, xdim), dtype=np.float64),
                   lon=np.linspace(0., 1e3, xdim, dtype=np.float64),
                   lat=np.linspace(0., 1e3, ydim, dtype=np.float64))
     Vflow = Field('V', np.zeros((ydim, xdim), dtype=np.float64), grid=Uflow.grid)
     fieldset = FieldSet(Uflow, Vflow)
+
+    # Execute the advection kernel only
     pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0], lat=[0])
     pset.execute(AdvectionRK4, runtime=1, dt=1e-4)
+
+    # Execute both the advection and interaction kernel.
     pset2 = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[0], lat=[0], interaction_distance=1)
-    pyfunc_inter = pset2.InteractionKernel(DoNothingInteraction)
+    pyfunc_inter = pset2.InteractionKernel(ConstantMoveInteraction)
     pset2.execute(AdvectionRK4, pyfunc_inter=pyfunc_inter, runtime=1, dt=1e-4)
+
+    # Check to see whether they have moved as predicted.
     assert np.all(pset.lon == pset2.lon)
     assert np.all(pset2.lat == pset2.lon)
     assert np.all(pset2._collection.data["time"][0] == pset._collection.data["time"][0])
