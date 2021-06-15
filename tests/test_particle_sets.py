@@ -5,6 +5,7 @@ from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 import numpy as np
 import pytest
 
+pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
@@ -26,7 +27,7 @@ def fieldset_fixture(xdim=40, ydim=100):
     return fieldset(xdim=xdim, ydim=ydim)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_lon_lat(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -36,7 +37,7 @@ def test_pset_create_lon_lat(fieldset, pset_mode, mode, npart=100):
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
 def test_pset_create_line(fieldset, pset_mode, mode, lonlatdepth_dtype, npart=100):
@@ -49,7 +50,7 @@ def test_pset_create_line(fieldset, pset_mode, mode, lonlatdepth_dtype, npart=10
     assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -65,7 +66,7 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
     assert np.allclose([p.v for p in pset], v_vals, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('restart', [True, False])
 def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir):
@@ -101,7 +102,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
     assert len(pset_new) == 3*len(pset)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy'])
 @pytest.mark.parametrize('lonlatdepth_dtype', [np.float64, np.float32])
 def test_pset_create_field(fieldset, pset_mode, mode, lonlatdepth_dtype, npart=100):
@@ -118,7 +119,7 @@ def test_pset_create_field(fieldset, pset_mode, mode, lonlatdepth_dtype, npart=1
     assert isinstance(pset[0].lat, lonlatdepth_dtype)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_pset_create_field_curvi(pset_mode, npart=100):
     np.random.seed(123456)
     r_v = np.linspace(.25, 2, 20)
@@ -151,7 +152,7 @@ def test_pset_create_field_curvi(pset_mode, npart=100):
     assert np.all(test)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_create_with_time(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart)
@@ -167,7 +168,7 @@ def test_pset_create_with_time(fieldset, pset_mode, mode, npart=100):
     assert np.allclose([p.time for p in pset], time, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
     time = np.arange(0, npart, 1)  # release 1 particle every second
@@ -181,7 +182,7 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
     assert np.allclose([p.lon for p in pset], np.arange(npart, 0, -1))
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
@@ -194,7 +195,7 @@ def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
     assert np.allclose([p.time for p in pset], 0.)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 def test_pset_repeatdt_check_dt(pset_mode, fieldset):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5)
 
@@ -204,7 +205,7 @@ def test_pset_repeatdt_check_dt(pset_mode, fieldset):
     assert np.allclose([p.lon for p in pset], 1)  # if p.dt is nan, it won't be executed so p.lon will be 0
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
     class MyParticle(ptype[mode]):
@@ -219,7 +220,7 @@ def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
     assert np.allclose([p.sample_var for p in pset], 5.)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_stop_simulation(fieldset, pset_mode, mode):
     pset = pset_type[pset_mode]['pset'](fieldset, lon=0, lat=0, pclass=ptype[mode])
@@ -232,7 +233,7 @@ def test_pset_stop_simulation(fieldset, pset_mode, mode):
     assert pset[0].time == 4
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_access(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -243,7 +244,7 @@ def test_pset_access(fieldset, pset_mode, mode, npart=100):
     assert np.allclose([pset[i].lat for i in range(pset.size)], lat, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
     class TestParticle(ptype[mode]):
@@ -258,7 +259,7 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
     assert np.allclose([p.n - 2 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart)
@@ -273,7 +274,7 @@ def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart, dtype=np.float32)
@@ -286,7 +287,7 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
     assert np.allclose([p.lat for p in pset], lat, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
     def AddLat(particle, fieldset, time):
@@ -300,7 +301,7 @@ def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
     assert np.allclose(np.array([p.lat for p in pset]), 0.4, rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
     pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
@@ -316,7 +317,7 @@ def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
 
 
 @pytest.mark.xfail(reason="ParticleSet duplication has not been implemented yet")
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_merge_duplicate(fieldset, pset_mode, mode, npart=100):
     pset1 = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
@@ -331,7 +332,7 @@ def test_pset_merge_duplicate(fieldset, pset_mode, mode, npart=100):
     assert(pset3.size == 200)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_remove_index(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart)
@@ -345,7 +346,7 @@ def test_pset_remove_index(fieldset, pset_mode, mode, npart=100):
 
 
 @pytest.mark.xfail(reason="Particle removal has not been implemented yet")
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_remove_particle(fieldset, pset_mode, mode, npart=100):
     lon = np.linspace(0, 1, npart)
@@ -358,7 +359,7 @@ def test_pset_remove_particle(fieldset, pset_mode, mode, npart=100):
     assert(pset.size == 0)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
     def DeleteKernel(particle, fieldset, time):
@@ -372,7 +373,7 @@ def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
     assert(pset.size == 40)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
     def AddLat(particle, fieldset, time):
@@ -387,7 +388,7 @@ def test_pset_multi_execute(fieldset, pset_mode, mode, npart=10, n=5):
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart), rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_pset_multi_execute_delete(fieldset, pset_mode, mode, npart=10, n=5):
     def AddLat(particle, fieldset, time):
@@ -403,7 +404,7 @@ def test_pset_multi_execute_delete(fieldset, pset_mode, mode, npart=10, n=5):
     assert np.allclose([p.lat - n*0.1 for p in pset], np.zeros(npart - n), rtol=1e-12)
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('area_scale', [True, False])
 def test_density(fieldset, pset_mode, mode, area_scale):
@@ -420,7 +421,7 @@ def test_density(fieldset, pset_mode, mode, area_scale):
             assert np.allclose(fieldset.U.lat[inds[0][i]], pset[i].lat, atol=fieldset.U.lat[1]-fieldset.U.lat[0])
 
 
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('staggered_grid', ['Agrid', 'Cgrid'])
 def test_from_field_exact_val(pset_mode, staggered_grid):
     xdim = 4
