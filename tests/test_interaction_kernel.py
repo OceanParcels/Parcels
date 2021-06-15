@@ -151,7 +151,11 @@ def ConstantMoveInteraction(particle, fieldset, time, neighbors, mutator):
     mutator[particle.id].append((f, ()))
 
 
-def test_pseudo_interaction():
+@pytest.mark.parametrize('runtime,dt',
+                         [(1, 1e-4),
+                          (1, -2.1234e-3),
+                          (1, -3.12452-3)])
+def test_pseudo_interaction(runtime, dt):
     # A linear field where advected particles are moving at
     # 1 m/s in the longitudinal direction.
     xdim, ydim = (10, 20)
@@ -162,13 +166,13 @@ def test_pseudo_interaction():
     fieldset = FieldSet(Uflow, Vflow)
 
     # Execute the advection kernel only
-    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0], lat=[0])
-    pset.execute(AdvectionRK4, runtime=1, dt=1e-4)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[2], lat=[2])
+    pset.execute(AdvectionRK4, runtime=runtime, dt=dt)
 
     # Execute both the advection and interaction kernel.
-    pset2 = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[0], lat=[0], interaction_distance=1)
+    pset2 = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[2], lat=[2], interaction_distance=1)
     pyfunc_inter = pset2.InteractionKernel(ConstantMoveInteraction)
-    pset2.execute(AdvectionRK4, pyfunc_inter=pyfunc_inter, runtime=1, dt=1e-4)
+    pset2.execute(AdvectionRK4, pyfunc_inter=pyfunc_inter, runtime=runtime, dt=dt)
 
     # Check to see whether they have moved as predicted.
     assert np.all(pset.lon == pset2.lon)
