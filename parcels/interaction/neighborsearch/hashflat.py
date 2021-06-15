@@ -30,7 +30,7 @@ class HashFlatNeighborSearch(BaseHashNeighborSearch, BaseFlatNeighborSearch):
     def _check_box(self, new_values, new_active_mask):
         """Check whether particles have moved out of the overall box.
 
-        :param new_values: New particle coordinates to be checked.
+        :param new_values: New particle coordinates (depth, lat, lon) to be checked.
         :param new_active_mask: New active mask for the particles.
         :returns True if box is still big enough, False if not.
         """
