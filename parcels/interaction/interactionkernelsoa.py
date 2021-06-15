@@ -84,6 +84,7 @@ class InteractionKernelSOA(BaseInteractionKernel):
                     continue
                 f.data = np.array(f.data)
 
+        reset_particle_idx = []
         for pyfunc in self._pyfunc:
             pset.compute_neighbor_tree(endtime, dt)
             active_idx = pset._active_particle_idx
@@ -94,6 +95,9 @@ class InteractionKernelSOA(BaseInteractionKernel):
                 # Don't use particles that are not started.
                 if (endtime-p.time)/dt <= -1e-7:
                     continue
+                elif (endtime-p.time)/dt < 1:
+                    p.dt = endtime-p.time
+                    reset_particle_idx.append(particle_idx)
 
                 neighbors = pset.neighbors_by_index(particle_idx)
                 try:
@@ -114,6 +118,8 @@ class InteractionKernelSOA(BaseInteractionKernel):
                         mutator_func(p, *args)
                 except KeyError:
                     pass
+            for particle_idx in reset_particle_idx:
+                pset[particle_idx].dt = dt
 
     def execute(self, pset, endtime, dt, recovery=None, output_file=None, execute_once=False):
         """Execute this Kernel over a ParticleSet for several timesteps

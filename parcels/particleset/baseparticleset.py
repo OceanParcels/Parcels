@@ -463,13 +463,13 @@ class BaseParticleSet(NDCluster):
                         cur_end_time = min(cur_time+dt, next_time)
                     else:
                         cur_end_time = max(cur_time+dt, next_time)
+                    self.interaction_kernel.execute(
+                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
+                        output_file=output_file, execute_once=execute_once)
                     self.kernel.execute(
                         self, endtime=cur_end_time, dt=dt, recovery=recovery,
                         output_file=output_file, execute_once=execute_once)
 
-                    self.interaction_kernel.execute(
-                        self, endtime=cur_end_time, dt=dt, recovery=recovery,
-                        output_file=output_file, execute_once=execute_once)
                     cur_time += dt
                     if dt == 0:
                         break

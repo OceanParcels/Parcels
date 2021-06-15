@@ -1,13 +1,15 @@
 import numpy as np
 import pytest
+import xarray as xr
 
 from parcels import (
-    FieldSet, ParticleSet, JITParticle, StateCode
+    FieldSet, ParticleSet, JITParticle, StateCode, Field
 )
-from parcels.particle import ScipyInteractionParticle, Variable
+from parcels.particle import ScipyInteractionParticle, Variable, ScipyParticle
 from parcels.application_kernels.interaction import NearestNeighborWithinRange,\
     AsymmetricAttraction
 from parcels.application_kernels.interaction import MergeWithNearestNeighbor
+from parcels.application_kernels.advection import AdvectionRK4
 
 ptype = {'scipy': ScipyInteractionParticle, 'jit': JITParticle}
 
@@ -142,3 +144,27 @@ def test_asymmetric_attraction(fieldset, mode):
     assert lons[1] > pset.lon[1]
     assert lons[2] > pset.lon[2]
     assert len(pset) == 3
+
+
+def DoNothingInteraction(particle, fieldset, time, neighbors, mutator):
+    def f(p):
+        p.lat += p.dt
+    mutator[particle.id].append((f, ()))
+
+
+def test_do_nothing():
+    xdim, ydim = (10, 20)
+    Uflow = Field('U', np.ones((ydim, xdim), dtype=np.float64),
+                  lon=np.linspace(0., 1e3, xdim, dtype=np.float64),
+                  lat=np.linspace(0., 1e3, ydim, dtype=np.float64))
+    Vflow = Field('V', np.zeros((ydim, xdim), dtype=np.float64), grid=Uflow.grid)
+    fieldset = FieldSet(Uflow, Vflow)
+    pset = ParticleSet(fieldset, pclass=ScipyParticle, lon=[0], lat=[0])
+    pset.execute(AdvectionRK4, runtime=1, dt=1e-4)
+    pset2 = ParticleSet(fieldset, pclass=ScipyInteractionParticle, lon=[0], lat=[0], interaction_distance=1)
+    pyfunc_inter = pset2.InteractionKernel(DoNothingInteraction)
+    pset2.execute(AdvectionRK4, pyfunc_inter=pyfunc_inter, runtime=1, dt=1e-4)
+    assert np.all(pset.lon == pset2.lon)
+    assert np.all(pset2.lat == pset2.lon)
+    assert np.all(pset2._collection.data["time"][0] == pset._collection.data["time"][0])
+    
