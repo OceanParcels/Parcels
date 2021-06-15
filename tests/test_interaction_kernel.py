@@ -1,13 +1,12 @@
 import numpy as np
 import pytest
-import xarray as xr
 
 from parcels import (
     FieldSet, ParticleSet, JITParticle, StateCode, Field
 )
 from parcels.particle import ScipyInteractionParticle, Variable, ScipyParticle
-from parcels.application_kernels.interaction import NearestNeighborWithinRange,\
-    AsymmetricAttraction
+from parcels.application_kernels.interaction import NearestNeighborWithinRange
+from parcels.application_kernels.interaction import AsymmetricAttraction
 from parcels.application_kernels.interaction import MergeWithNearestNeighbor
 from parcels.application_kernels.advection import AdvectionRK4
 
@@ -167,4 +166,3 @@ def test_do_nothing():
     assert np.all(pset.lon == pset2.lon)
     assert np.all(pset2.lat == pset2.lon)
     assert np.all(pset2._collection.data["time"][0] == pset._collection.data["time"][0])
-    
