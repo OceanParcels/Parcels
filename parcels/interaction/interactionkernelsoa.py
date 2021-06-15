@@ -90,6 +90,8 @@ class InteractionKernelSOA(BaseInteractionKernel):
             active_idx = pset._active_particle_idx
 
             mutator = defaultdict(lambda: [])
+
+            # Loop only over particles that are in a positive state and have started.
             for particle_idx in active_idx:
                 p = pset[particle_idx]
                 # Don't use particles that are not started.
