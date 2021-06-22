@@ -140,6 +140,8 @@ class ParticleFile(object):
         fname = self.name if extension in ['.nc', '.nc4'] else "%s.nc" % self.name
         if os.path.exists(str(fname)):
             os.remove(str(fname))
+
+        # ==== coords = self._create_trajectory_file(fname, data_shape) ==== #
         self.dataset = netCDF4.Dataset(fname, "w", format="NETCDF4")
         self.dataset.createDimension("obs", data_shape[1])
         self.dataset.createDimension("traj", data_shape[0])
@@ -150,6 +152,7 @@ class ParticleFile(object):
         self.dataset.parcels_version = parcels_version
         self.dataset.parcels_mesh = self.parcels_mesh
 
+        # ==== self._create_trajectory_records(coords=coords) ==== #
         # Create ID variable according to CF conventions
         # self.id = self.dataset.createVariable("trajectory", "i4", coords, fill_value=-2**(31))  # maxint32 fill_value
         self.id = self.dataset.createVariable("trajectory", "u8", coords, fill_value=np.iinfo(np.uint64).max)
@@ -210,6 +213,7 @@ class ParticleFile(object):
             getattr(self, vname).standard_name = vname
             getattr(self, vname).units = "unknown"
 
+        # ==== self._create_metadata_records() ==== #
         for name, message in self.metadata.items():
             setattr(self.dataset, name, message)
 
