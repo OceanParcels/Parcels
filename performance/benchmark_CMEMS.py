@@ -247,15 +247,37 @@ if __name__=='__main__':
         if agingParticles:
             if repeatdtFlag:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
-                pset.add(psetA)
+                if args.vmode:
+                    # ==== VECTOR VERSION OF THE ADD ==== #
+                    psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                    pset.add(psetA)
+                else:
+                    # ==== NODE VERSION OF THE ADD ==== #
+                    lonlat_field = np.random.rand(int(Nparticle/2.0), 2)
+                    lonlat_field *= np.array([360.0, 160.0])
+                    lonlat_field[:, 0] -= 180.0
+                    lonlat_field[:, 1] -= 80.0
+                    time_field = np.ones((int(Nparticle/2.0), 1), dtype=np.float64) * simStart
+                    pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
+                    pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
         else:
             if repeatdtFlag:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
-                pset.add(psetA)
+                if args.vmode:
+                    # ==== VECTOR VERSION OF THE ADD ==== #
+                    psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                    pset.add(psetA)
+                else:
+                    # ==== NODE VERSION OF THE ADD ==== #
+                    lonlat_field = np.random.rand(int(Nparticle/2.0), 2)
+                    lonlat_field *= np.array([360.0, 160.0])
+                    lonlat_field[:, 0] -= 180.0
+                    lonlat_field[:, 1] -= 80.0
+                    time_field = np.ones((int(Nparticle/2.0), 1), dtype=np.float64) * simStart
+                    pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
+                    pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
     else:
@@ -263,15 +285,37 @@ if __name__=='__main__':
         if agingParticles:
             if repeatdtFlag:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
-                pset.add(psetA)
+                if args.vmode:
+                    # ==== VECTOR VERSION OF THE ADD ==== #
+                    psetA = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                    pset.add(psetA)
+                else:
+                    # ==== NODE VERSION OF THE ADD ==== #
+                    lonlat_field = np.random.rand(int(Nparticle/2.0), 2)
+                    lonlat_field *= np.array([360.0, 160.0])
+                    lonlat_field[:, 0] -= 180.0
+                    lonlat_field[:, 1] -= 80.0
+                    time_field = np.ones((int(Nparticle/2.0), 1), dtype=np.float64) * simStart
+                    pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
+                    pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=age_ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
         else:
             if repeatdtFlag:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(start_N_particles, 1) * 360.0 -180.0, lat=np.random.rand(start_N_particles, 1) * 160.0 - 80.0, time=simStart, repeatdt=delta(minutes=repeatRateMinutes))
-                psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
-                pset.add(psetA)
+                if args.vmode:
+                    # ==== VECTOR VERSION OF THE ADD ==== #
+                    psetA = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(int(Nparticle/2.0), 1) * 360.0 -180.0, lat=np.random.rand(int(Nparticle/2.0), 1) * 160.0 - 80.0, time=simStart)
+                    pset.add(psetA)
+                else:
+                    # ==== NODE VERSION OF THE ADD ==== #
+                    lonlat_field = np.random.rand(int(Nparticle/2.0), 2)
+                    lonlat_field *= np.array([360.0, 160.0])
+                    lonlat_field[:, 0] -= 180.0
+                    lonlat_field[:, 1] -= 80.0
+                    time_field = np.ones((int(Nparticle/2.0), 1), dtype=np.float64) * simStart
+                    pdata = np.concatenate( (lonlat_field, time_field), axis=1 )
+                    pset.add(pdata)
             else:
                 pset = ParticleSet(fieldset=fieldset, pclass=ptype[(args.compute_mode).lower()], lon=np.random.rand(Nparticle, 1) * 360.0 -180.0, lat=np.random.rand(Nparticle, 1) * 160.0 - 80.0, time=simStart)
 
