@@ -111,8 +111,8 @@ class GNU_parameters(Compiler_parameters):
         if len(lflags) > 0:
             self._ldargs += lflags
         self._ldargs += ldargs
-        if len(Lflags) > 0:
-            self._ldargs += ['-Wl, -rpath=%s' % (":".join(libdirs))]
+        # if len(Lflags) > 0:
+        #     self._ldargs += ['-Wl, -rpath=%s' % (":".join(libdirs))]
         self._ldargs += arch_flag
         self._incdirs = incdirs
         self._libdirs = libdirs
