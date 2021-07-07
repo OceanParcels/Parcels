@@ -2,37 +2,44 @@ from parcels.nodes.PyNode import *
 from sortedcontainers import SortedList
 from numpy import int32, int64, uint32, uint64
 from copy import deepcopy
-
+from parcels.tools import logger
+import gc
 
 class DoubleLinkedNodeList(SortedList):
     dtype = None
+    _c_lib_register = None
 
-    def __init__(self, iterable=None, dtype=Node):
+    def __init__(self, iterable=None, dtype=Node, c_lib_register=None):
         super(DoubleLinkedNodeList, self).__init__(iterable)
         self.dtype = dtype
+        self._c_lib_register = c_lib_register
 
     def __del__(self):
+        # logger.info("DoubleLinkedNodeList.del() called.")
         self.clear()
+        # super(DoubleLinkedNodeList, self).__del__()
 
     def clear(self):
         """Remove all the elements from the list."""
         n = self.__len__()
-        # print("# remaining items: {}".format(n))
+        # logger.info("DoubleLinkedNodeList.clear() - # remaining items: {}".format(n))
         if n > 0:
-            # print("Deleting {} elements ...".format(n))
+            # logger.info("Deleting {} elements ...".format(n))
             while (n > 0):
                 # val = self.pop(); del val
                 # super().__delitem__(n-1)
                 # self.pop()
 
                 self.__getitem__(-1).unlink()
-                self.__delitem__(-1)
+                # self.__delitem__(-1)
+                del self[-1]
                 n = self.__len__()
-                # print("Deleting {} elements ...".format(n))
-        # gc.collect()
+                # logger.info("Deleting {} elements ...".format(n))
+        gc.collect()
+        # logger.info("DoubleLinkedNodeList.clear() - list empty.")
         super()._clear()
 
-    def __new__(cls, iterable=None, key=None, load=1000, dtype=Node):
+    def __new__(cls, iterable=None, key=None, load=1000, dtype=Node, c_lib_register=None):
         return object.__new__(cls)
 
     def add(self, val):
@@ -74,11 +81,11 @@ class DoubleLinkedNodeList(SortedList):
             prev_node = self.__getitem__(index - 1)
         else:
             prev_node = None
-        new_node = self.dtype(prev=prev_node, next=next_node, id=val)
+        new_node = self.dtype(prev=prev_node, next=next_node, id=val, c_lib_register=self._c_lib_register)
         super().add(new_node)
 
     def _add_by_pdata(self, val):
-        new_node = self.dtype(data=val)
+        new_node = self.dtype(data=val, c_lib_register=self._c_lib_register)
         super().add(new_node)
         n = self.__len__()
         index = self.index(new_node)
