@@ -111,10 +111,14 @@ class KernelAOS(BaseKernel):
                                           kernel_ccode, c_include_str)
 
             src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.dyn_srcs = src_file_or_files
+            # if type(src_file_or_files) in (list, dict, tuple, np.ndarray):
+            #     self.dyn_srcs = src_file_or_files
+            # else:
+            #     self.src_file = src_file_or_files
+
+    def generate_sources(self):
+        pass
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
