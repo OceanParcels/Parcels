@@ -565,6 +565,7 @@ class ParticleSetAOS(BaseParticleSet):
             pclass.setLastID(0)  # reset to zero offset
         else:
             vars['id'] = None
+        pfile.close()
 
         return cls(fieldset=fieldset, pclass=pclass, lon=vars['lon'], lat=vars['lat'],
                    depth=vars['depth'], time=vars['time'], pid_orig=vars['id'],
@@ -606,6 +607,30 @@ class ParticleSetAOS(BaseParticleSet):
             particles = particles.collection
         self._collection += particles
         return self
+
+    def __isub__(self, pset):
+        if isinstance(pset, type(self)):
+            self._collection -= pset.collection
+        elif isinstance(pset, BaseParticleSet):
+            self._collection.remove_collection(pset.collection)
+        else:
+            pass
+        return self
+
+    def remove(self, value):
+        """
+        Removes a particles by index from the array. The indices can either be given directly as integer- or array-of-integer,
+        or deduced by the collection itself.
+        :param ndata: ParticleSet object, array of integer indices or a single integer index
+        """
+        if isinstance(value, type(self)):
+            self._collection.remove_same(value.collection)
+        elif isinstance(value, BaseParticleSet):
+            self._collection.remove_collection(value.collection)
+        elif type(value) in [int, np.int32, np.intp]:
+            self._collection.remove_single_by_index(value)
+        else:
+            self._collection.remove_multi_by_indices(value)
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
