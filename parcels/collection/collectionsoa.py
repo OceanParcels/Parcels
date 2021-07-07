@@ -153,7 +153,7 @@ class ParticleCollectionSOA(ParticleCollection):
             self._data['depth'][:] = depth
             self._data['time'][:] = time
             self._data['id'][:] = pid
-            self._data['fileid'][:] = -1
+            # self._data['fileid'][:] = -1
 
             # special case for exceptions which can only be handled from scipy
             self._data['exception'] = np.empty(self.ncount, dtype=object)
@@ -797,7 +797,13 @@ class ParticleCollectionSOA(ParticleCollection):
         This function physically removes all elements of the collection, yielding an empty collection as result of the
         operation.
         """
-        raise NotImplementedError
+        if self._data is not None:
+            del self._data
+            self._data = {}
+        if self._data_c is not None:
+            del self._data_c
+            self._data_c = None
+        self._ncount = 0
 
     def cstruct(self):
         """
