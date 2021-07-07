@@ -54,9 +54,21 @@ class BaseParticleSet(NDCluster):
         self.time_origin = None
 
     def __del__(self):
+        # logger.info("BaseParticleSet.del() called.")
         if self._collection is not None and isinstance(self._collection, ParticleCollection):
+            # logger.info("BaseParticleSet.del() - deleting collection of type '{}'.".format(type(self._collection)))
             del self._collection
+        else:
+            # logger.info("BaseParticleSet.del() - no collection available.")
+            pass
         self._collection = None
+        # super(BaseParticleSet, self).__del__()
+
+    def clear(self):
+        try:
+            self._collection.clear()
+        except (AttributeError):
+            pass
 
     def iterator(self):
         return self._collection.iterator()
@@ -129,7 +141,7 @@ class BaseParticleSet(NDCluster):
         return cls(fieldset=fieldset, pclass=pclass, lon=lon, lat=lat, depth=depth, time=time, repeatdt=repeatdt, lonlatdepth_dtype=lonlatdepth_dtype, **kwargs)
 
     @classmethod
-    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_line(cls, fieldset, pclass, start, finish, size, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet from start/finish coordinates with equidistant spacing
         Note that this method uses simple numpy.linspace calls and does not take into account
         great circles, so may not be a exact on a globe
@@ -167,7 +179,7 @@ class BaseParticleSet(NDCluster):
         pass
 
     @classmethod
-    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None):
+    def from_field(cls, fieldset, pclass, start_field, size, mode='monte_carlo', depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, **kwargs):
         """Initialise the ParticleSet randomly drawn according to distribution from a field
 
         :param fieldset: :mod:`parcels.fieldset.FieldSet` object from which to sample velocity
@@ -471,6 +483,7 @@ class BaseParticleSet(NDCluster):
                         break
             # End of interaction specific code
             time = next_time
+            logger.info("time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,
