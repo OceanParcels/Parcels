@@ -1,2 +1,2 @@
 from .nodelist import *  # noqa
-# from .PyNode import *  # noqa
+from .PyNode import *  # noqa
