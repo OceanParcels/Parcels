@@ -32,6 +32,7 @@ from parcels.field import TimeExtrapolationError
 from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.application_kernels.advection import AdvectionRK4_3D
 from parcels.application_kernels.advection import AdvectionAnalytical
+from parcels.compilation import CCompiler_MS, CCompiler_SS
 
 __all__ = ['BaseKernel']
 
@@ -74,23 +75,19 @@ class BaseKernel(object):
         self._pyfunc = None
         self.funcname = funcname or pyfunc.__name__
         self.name = "%s%s" % (ptype.name, self.funcname)
-        self.ccode = ""
+        self.ccode = None  # is either a single string (if just 1 dynamic source) or a list of strings (one for each dyn_src)
         self.funcvars = funcvars
         self.funccode = funccode
         self.py_ast = py_ast
-        self.dyn_srcs = []
-        self.static_srcs = []
-        self.src_file = None
+        self.dyn_srcs = None  # holds paths to all dynamically-created source files, either single string or list (corresponding to ccode)
+        self.static_srcs = None  # all static source files
+        self._src_files = None  # all to-be-considered source files - should be private (no set by subclass)
         self.lib_file = None
         self.log_file = None
 
         # Generate the kernel function and add the outer loop
         if self._ptype.uses_jit:
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.generate_sources()
 
     def __del__(self):
         # Clean-up the in-memory dynamic linked libraries.
@@ -140,6 +137,12 @@ class BaseKernel(object):
             lines = [line.replace(indent.groups()[0], '', 1) for line in lines]
         return "\n".join(lines)
 
+    def generate_sources(self):
+        src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
+        # if type(src_file_or_files) in (list, dict, tuple, ndarray):
+        self.dyn_srcs = src_file_or_files
+        # self._src_files = self.dyn_srcs
+
     def check_fieldsets_in_kernels(self, pyfunc):
         """
         function checks the integrity of the fieldset with the kernels.
@@ -185,12 +188,10 @@ class BaseKernel(object):
             self._lib = None
 
         all_files_array = []
-        if self.src_file is None:
-            if self.dyn_srcs is not None:
-                [all_files_array.append(fpath) for fpath in self.dyn_srcs]
-        else:
-            if self.src_file is not None:
-                all_files_array.append(self.src_file)
+        if self.dyn_srcs is not None:
+            if type(self.dyn_srcs) not in (list, dict, tuple) or isinstance(self.dyn_srcs, str):
+                self.dyn_srcs = [self.dyn_srcs, ]
+            [all_files_array.append(fpath) for fpath in self.dyn_srcs]
         if self.log_file is not None:
             all_files_array.append(self.log_file)
         if self.lib_file is not None and all_files_array is not None and self.delete_cfiles is not None:
@@ -199,11 +200,7 @@ class BaseKernel(object):
         # If file already exists, pull new names. This is necessary on a Windows machine, because
         # Python's ctype does not deal in any sort of manner well with dynamic linked libraries on this OS.
         if self._ptype.uses_jit:
-            src_file_or_files, self.lib_file, self.log_file = self.get_kernel_compile_files()
-            if type(src_file_or_files) in (list, dict, tuple, ndarray):
-                self.dyn_srcs = src_file_or_files
-            else:
-                self.src_file = src_file_or_files
+            self.generate_sources()
 
     def get_kernel_compile_files(self):
         """
@@ -236,21 +233,31 @@ class BaseKernel(object):
 
     def compile(self, compiler):
         """ Writes kernel code to file and compiles it."""
-        all_files_array = []
-        if self.src_file is None:
-            if self.dyn_srcs is not None:
-                for dyn_src in self.dyn_srcs:
-                    with open(dyn_src, 'w') as f:
-                        f.write(self.ccode)
-                    all_files_array.append(dyn_src)
-                compiler.compile(self.dyn_srcs, self.lib_file, self.log_file)
+        if type(self.dyn_srcs) not in (list, dict, tuple) or isinstance(self.dyn_srcs, str):
+            self.dyn_srcs = [self.dyn_srcs, ]
+        if type(self.ccode) not in (list, dict, tuple) or isinstance(self.ccode, str):
+            self.ccode = [self.ccode, ]
+        if self.static_srcs is None:
+            self.static_srcs = []
         else:
-            if self.src_file is not None:
-                with open(self.src_file, 'w') as f:
-                    f.write(self.ccode)
-                if self.src_file is not None:
-                    all_files_array.append(self.src_file)
-                compiler.compile(self.src_file, self.lib_file, self.log_file)
+            assert isinstance(compiler, CCompiler_MS)
+            if type(self.static_srcs) not in (list, dict, tuple) or isinstance(self.static_srcs, str):
+                self.static_srcs = [self.static_srcs, ]
+        self._src_files = self.dyn_srcs + self.static_srcs
+        all_files_array = []
+        if isinstance(compiler, CCompiler_SS):  # if we only have a single-stage compiler, we can only have one source file, so take the first (dynamic) source
+            self.dyn_srcs = [self.dyn_srcs[0], ]
+            self.ccode = [self.ccode[0], ]
+            self._src_files = self._src_files[0]  # shall not be a list, cause the single-stage compiler expects a single source file string
+        if self.dyn_srcs is not None:
+            assert len(self.dyn_srcs) == len(self.ccode)
+            for i in range(len(self.dyn_srcs)):
+                dyn_src = self.dyn_srcs[i]
+                ccode_str = self.ccode[i]
+                with open(dyn_src, 'w') as f:
+                    f.write(ccode_str)
+                all_files_array.append(dyn_src)
+        compiler.compile(self._src_files, self.lib_file, self.log_file)  # self._src_files includes dyn. & stat. source files
         if len(all_files_array) > 0:
             logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
             if self.log_file is not None:
@@ -373,7 +380,7 @@ class BaseKernel(object):
 
         # ==== numerically stable; also making sure that continuously-recovered particles do end successfully,
         # as they fulfil the condition here on entering at the final calculation here. ==== #
-        if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0)) and not np.isclose(dt, 0):
+        if ((sign_end_part != sign_dt) or np.isclose(dt_pos, 0, equal_nan=True)) and not np.isclose(dt, 0, equal_nan=True):
             if abs(p.time) >= abs(endtime):
                 p.set_state(StateCode.Success)
             return p
@@ -426,7 +433,7 @@ class BaseKernel(object):
                     reset_dt = False
 
                 sign_end_part = np.sign(endtime - p.time)
-                if res != OperationCode.Delete and not np.isclose(dt_pos, 0) and (sign_end_part == sign_dt):
+                if res != OperationCode.Delete and not np.isclose(dt_pos, 0, equal_nan=True) and (sign_end_part == sign_dt):
                     res = StateCode.Evaluate
                 if sign_end_part != sign_dt:
                     dt_pos = 0
