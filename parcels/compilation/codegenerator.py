@@ -1377,6 +1377,7 @@ class ParticleObjectLoopGenerator(object):
         sign_end_part = c.Assign("sign_end_part", "(endtime - particles[p].time) > 0 ? 1 : -1")
         reset_res_state = c.Assign("res", "particles[p].state")
         update_state = c.Assign("particles[p].state", "res")
+
         update_pdt = c.If("_next_dt_set == 1",
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles[p].dt", "_next_dt")]))
 
@@ -1385,7 +1386,6 @@ class ParticleObjectLoopGenerator(object):
                       c.Block([c.Assign("__dt", "fabs(particles[p].dt)"), c.Assign("reset_dt", "0")]))
         reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles[p].dt)",
                         c.Block([c.Assign("particles[p].dt", "dt")]))
-
         pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
         partdt = c.Assign("particles[p].dt", "__pdt_prekernels")
         check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particles[p].dt)", c.Assign("res", "REPEAT"))
@@ -1435,6 +1435,170 @@ class ParticleObjectLoopGenerator(object):
                          c.Value("double", "__pdt_prekernels"),
                          c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
                          sign_dt, particle_backup, part_loop])
+        fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
+        ccode += [str(c.FunctionBody(fdecl, fbody))]
+        return "\n\n".join(ccode)
+
+
+class NodeLoopGenerator(object):
+    """Code generator class that adds type definitions and the outer
+    loop around kernel functions to generate compilable C code."""
+
+    def __init__(self, fieldset=None, ptype=None):
+        self.fieldset = fieldset
+        self.ptype = ptype
+
+    def generate(self, funcname, field_args, const_args, kernel_ast, c_include):
+        ccode = []
+
+        # Add include for Parcels and math header
+        ccode += [str(c.Include("parcels.h", system=False))]
+        ccode += [str(c.Include("math.h", system=False))]
+        ccode += [str(c.Include('node.h', system=False))]
+        ccode += [str(c.Assign('double _next_dt', '0'))]
+        ccode += [str(c.Assign('size_t _next_dt_set', '0'))]
+        ccode += [str(c.Assign('const int ngrid', str(self.fieldset.gridset.size if self.fieldset is not None else 1)))]
+
+        # Generate type definition for particle type
+        vdecl = []
+        for v in self.ptype.variables:
+            if v.dtype == np.uint64:
+                vdecl.append(c.Pointer(c.POD(np.void, v.name)))
+            else:
+                vdecl.append(c.POD(v.dtype, v.name))
+
+        ccode += [str(c.Typedef(c.GenerableStruct("", vdecl, declname=self.ptype.name)))]
+
+        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
+                c.Pointer(c.Value(self.ptype.name, "particle"))]
+        p_back_set_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "set_particle_backup"),
+                                                         spec='inline')), args)
+        body = []
+        for v in self.ptype.variables:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+                body += [c.Assign(("particle_backup->%s" % v.name), ("particle->%s" % v.name))]
+        p_back_set_body = c.Block(body)
+        p_back_set = str(c.FunctionBody(p_back_set_decl, p_back_set_body))
+        ccode += [p_back_set]
+
+        args = [c.Pointer(c.Value(self.ptype.name, "particle_backup")),
+                c.Pointer(c.Value(self.ptype.name, "particle"))]
+        p_back_get_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "get_particle_backup"),
+                                                         spec='inline')), args)
+        body = []
+        for v in self.ptype.variables:
+            if v.dtype != np.uint64 and v.name not in ['dt', 'state']:
+                body += [c.Assign(("particle->%s" % v.name), ("particle_backup->%s" % v.name))]
+        p_back_get_body = c.Block(body)
+        p_back_get = str(c.FunctionBody(p_back_get_decl, p_back_get_body))
+        ccode += [p_back_get]
+
+        update_next_dt_decl = c.FunctionDeclaration(c.Static(c.DeclSpecifier(c.Value("void", "update_next_dt"),
+                                                             spec='inline')), [c.Value('double', 'dt')])
+        if 'update_next_dt' in str(kernel_ast):
+            body = []
+            body += [c.Assign("_next_dt", "dt")]
+            body += [c.Assign("_next_dt_set", "1")]
+            update_next_dt_body = c.Block(body)
+            update_next_dt = str(c.FunctionBody(update_next_dt_decl, update_next_dt_body))
+            ccode += [update_next_dt]
+
+        if c_include:
+            ccode += [c_include]
+
+        # ==== Insert kernel code ==== #
+        ccode += [str(kernel_ast)]
+
+        # Generate outer loop for repeated kernel invocation
+        args = [c.Value("int", "num_particles"),
+                c.Pointer(c.Value("NodeJIT", "node_begin")),
+                c.Value("double", "endtime"),
+                c.Value("double", "dt")]
+        if field_args is not None:
+            for field, _ in field_args.items():
+                args += [c.Pointer(c.Value("CField", "%s" % field))]
+        else:
+            pass
+        if const_args is not None:
+            for const, _ in const_args.items():
+                args += [c.Value("double", const)]
+        else:
+            pass
+
+        # construct function argument list - here: 'function' = 'the kernel function(s) given by the user
+        fargs_lst = ['particle->time']
+        if field_args is not None:
+            fargs_lst += list(field_args.keys())
+        if const_args is not None:
+            fargs_lst += list(const_args.keys())
+        fargs_str = ", ".join(fargs_lst)
+
+        # Inner loop nest for forward runs
+        progress_loop = c.Assign("node", "(%s*)(node->_c_next_p)" % ("NodeJIT"))
+        reset_res_state = c.Assign("res", "particle->state")
+        update_state = c.Assign("particle->state", "res")
+        sign_dt = c.Assign("sign_dt", "dt > 0 ? 1 : -1")
+        particle_backup = c.Statement("%s particle_backup" % self.ptype.name)
+        sign_end_part = c.Assign("sign_end_part", "endtime - particle->time > 0 ? 1 : -1")
+
+        update_pdt = c.If("_next_dt_set == 1",
+                          c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particle->dt", "_next_dt")]))
+        dt_pos = c.If("fabs(endtime - particle->time) < fabs(particle->dt)",
+                      c.Block([c.Assign("__dt", "fabs(endtime - particle->time)"), c.Assign("reset_dt", "1")]),
+                      c.Block([c.Assign("__dt", "fabs(particle->dt)"), c.Assign("reset_dt", "0")]))
+
+        reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particle->dt)",
+                        c.Block([c.Assign("particle->dt", "dt")]))
+        pdt_eq_dt_pos = c.Assign("__pdt_prekernels", "__dt * sign_dt")
+        partdt = c.Assign("particle->dt", "__pdt_prekernels")
+        check_pdt = c.If("(res == SUCCESS) & !is_equal_dbl(__pdt_prekernels, particle->dt)", c.Assign("res", "REPEAT"))
+        dt_0_break = c.If("is_zero_dbl(particle->dt)", c.Statement("break"))
+        notstarted_continue = c.If("( ( sign_end_part != sign_dt) || is_close_dbl(__dt, 0) ) && !is_zero_dbl(particle->dt)",
+                                   c.Block([
+                                       c.If("fabs(particle->time) >= fabs(endtime)",
+                                            c.Assign("particle->state", "SUCCESS")),
+                                       c.Statement("continue")
+                                   ]))
+
+        # ==== main computation body ==== #
+        body = [c.Statement("set_particle_backup(&particle_backup, particle)")]
+        body += [pdt_eq_dt_pos]
+        body += [partdt]
+        body += [c.Value("StatusCode", "state_prev"), c.Assign("state_prev", "particle->state")]
+        body += [c.Assign("res", "%s(particle, %s)" % (funcname, fargs_str))]
+        body += [c.If("(res==SUCCESS) && (particle->state != state_prev)", c.Assign("res", "particle->state"))]
+        body += [check_pdt]
+        body += [c.If("res == SUCCESS || res == DELETE", c.Block([c.Statement("particle->time += particle->dt"),
+                                                                  reset_dt,
+                                                                  update_pdt,
+                                                                  dt_pos,
+                                                                  sign_end_part,
+                                                                  c.If("(res != DELETE) && !is_close_dbl(__dt, 0) && (sign_dt == sign_end_part)",
+                                                                       c.Assign("res", "EVALUATE")),
+                                                                  c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
+                                                                  update_state,
+                                                                  dt_0_break
+                                                                  ]),
+                      c.Block([c.Statement("get_particle_backup(&particle_backup, particle)"),
+                               dt_pos,
+                               sign_end_part,
+                               c.If("sign_dt != sign_end_part", c.Assign("__dt", "0")),
+                               update_state,
+                               c.Statement("break")])
+                      )]
+
+        time_loop = c.While("(particle->state == EVALUATE || particle->state == REPEAT) || is_zero_dbl(particle->dt)", c.Block(body))
+        node_loop = c.While("node != NULL", c.Block([c.Assign("particle", "(%s*)(node->_c_data_p)" % (self.ptype.name)),
+                                                     sign_end_part, reset_res_state, dt_pos, notstarted_continue, time_loop, progress_loop]))
+
+        fbody = c.Block([c.Value("int", "sign_dt, sign_end_part"),  # p,
+                         c.Value("StatusCode", "res"),
+                         c.Value("int", "reset_dt"),
+                         c.Value("double", "__pdt_prekernels"),
+                         c.Value("double", "__dt"),  # 1e-8 = built-in tolerance for np.isclose()
+                         c.Pointer(c.Value("NodeJIT", "node")), c.Assign("node", "node_begin"),
+                         c.Pointer(c.Value(self.ptype.name, "particle")), c.Assign("particle", "(%s*)(node->_c_data_p)" % (self.ptype.name)),
+                         sign_dt, particle_backup, node_loop])  # part_loop
         fdecl = c.FunctionDeclaration(c.Value("void", "particle_loop"), args)
         ccode += [str(c.FunctionBody(fdecl, fbody))]
         return "\n\n".join(ccode)
