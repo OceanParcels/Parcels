@@ -88,7 +88,7 @@ class ParticleCollectionAOS(ParticleCollection):
             assert lon.size == kwargs[kwvar].size, (
                 '%s and positions (lon, lat, depth) do nott have the same lengths.' % kwvar)
 
-        offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1
+        offset = np.max(pid) if (pid is not None) and len(pid) > 0 else -1  # this 'len(pid)' may not work
         if MPI:
             mpi_comm = MPI.COMM_WORLD
             mpi_rank = mpi_comm.Get_rank()
@@ -165,7 +165,7 @@ class ParticleCollectionAOS(ParticleCollection):
                 if isinstance(v.initial, Field):
                     init_field = v.initial
                     if init_field.grid.ti != 0:
-                        init_field.fieldset.computeTimeChunk(time[i], 0)
+                        init_field.fieldset.computeTimeChunk(time[0], 0)
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
@@ -456,7 +456,7 @@ class ParticleCollectionAOS(ParticleCollection):
             prev_ncount = tmp_addr.shape[0]
             self._data_c = np.array(self._ncount, dtype=self._ptype.dtype)
             self._data_c[0:max(prev_ncount-1, 0)] = tmp_addr[:]
-            self._data_c[-1] = particle_obj._cptr
+            self._data_c[-1] = particle_obj.get_cptr()
             # particle_obj._cptr = self._data_c[-1]
 
     def add_same(self, same_class):
@@ -522,7 +522,7 @@ class ParticleCollectionAOS(ParticleCollection):
             if self._ptype.uses_jit and isinstance(obj, JITParticle):
                 top_array = self._data_c[0:index-1]
                 bottom_array = self._data_c[index:]
-                splice_array = np.concatenate([top_array, obj._cptr])
+                splice_array = np.concatenate([top_array, obj.get_cptr()])
                 self._data_c = np.concatenate([splice_array, bottom_array])
             self._ncount = self._data.shape[0]
 
@@ -879,8 +879,12 @@ class ParticleCollectionAOS(ParticleCollection):
         This function physically removes all elements of the collection, yielding an empty collection as result of the
         operation.
         """
-        del self._data[:]
-        del self._data_c[:]
+        if self._data is not None:
+            del self._data
+            self._data = None
+        if self._data_c is not None:
+            del self._data_c
+            self._data_c = None
         self._ncount = 0
 
     def cstruct(self):
