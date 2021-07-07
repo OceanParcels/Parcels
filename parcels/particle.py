@@ -33,7 +33,8 @@ class Variable(object):
         if instance is None:
             return self
         if issubclass(cls, JITParticle):
-            return instance._cptr.__getitem__(self.name)
+            # return instance._cptr.__getitem__(self.name)  # otherwise accessing pset[index].var returns an array instead of the value
+            return instance.get_cptr().__getitem__(self.name)
         else:
             return getattr(instance, "_%s" % self.name, self.initial)
 
@@ -41,7 +42,7 @@ class Variable(object):
         if isinstance(instance, JITParticle):
             instance._cptr.__setitem__(self.name, value)
         else:
-            setattr(instance, "_%s" % self.name, value)
+            setattr(instance, "_%s" % (self.name,), value)
 
     def __repr__(self):
         return "PVar<%s|%s>" % (self.name, self.dtype)
@@ -181,13 +182,12 @@ class ScipyParticle(_Particle):
     depth = Variable('depth', dtype=np.float32)
     time = Variable('time', dtype=np.float64)
     id = Variable('id', dtype=np.int64)
-    fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)
+    # fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)  # Q: when did this variable snuck in there ? It does bloat the memory requirements.
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
     next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
-
         # Enforce default values through Variable descriptor
         type(self).lon.initial = lon
         type(self).lat.initial = lat
@@ -195,8 +195,9 @@ class ScipyParticle(_Particle):
         type(self).time.initial = time
         type(self).id.initial = pid
         _Particle.lastID = max(_Particle.lastID, pid)
-        type(self).fileid.initial = -1
-        type(self).dt.initial = None
+        # type(self).fileid.initial = -1
+        # type(self).dt.initial = None
+        type(self).dt.initial = 0.
         type(self).next_dt.initial = np.nan
 
         super(ScipyParticle, self).__init__()
@@ -205,7 +206,8 @@ class ScipyParticle(_Particle):
         super(ScipyParticle, self).__del__()
 
     def __repr__(self):
-        time_string = 'not_yet_set' if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        # time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else "{:f}".format(self.time)
+        time_string = "not_yet_set" if self.time is None or np.isnan(self.time) else "%f" % self.time
         str = "P[%d](lon=%f, lat=%f, depth=%f, " % (self.id, self.lon, self.lat, self.depth)
         for var in vars(type(self)):
             if type(getattr(type(self), var)) is Variable and getattr(type(self), var).to_write is True:
@@ -234,10 +236,11 @@ class ScipyParticle(_Particle):
         cls.depth.dtype = dtype
 
     def update_next_dt(self, next_dt=None):
-        if next_dt is None:
-            if self._next_dt is not None:
+        if next_dt is None or np.isnan(next_dt):
+            if self._next_dt is not None and not np.isnan(self._next_dt):
                 self.dt = self._next_dt
-                self._next_dt = None
+                # self._next_dt = None
+                self._next_dt = np.nan
         else:
             self._next_dt = next_dt
 
@@ -310,7 +313,7 @@ class JITParticle(ScipyParticle):
         if self._cptr is None:
             # Allocate data for a single particle
             ptype = self.getPType()
-            self._cptr = np.empty(1, dtype=ptype.dtype)[0]
+            self._cptr = np.empty(1, dtype=ptype.dtype) # [0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
     def __del__(self):
