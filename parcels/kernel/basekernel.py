@@ -237,7 +237,7 @@ class BaseKernel(object):
             self.dyn_srcs = [self.dyn_srcs, ]
         if type(self.ccode) not in (list, dict, tuple) or isinstance(self.ccode, str):
             self.ccode = [self.ccode, ]
-        if self.static_srcs is None:
+        if self.static_srcs is None or (type(self.static_srcs) is list and len(self.static_srcs) == 0):
             self.static_srcs = []
         else:
             assert isinstance(compiler, CCompiler_MS)
