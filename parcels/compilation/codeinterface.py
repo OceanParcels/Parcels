@@ -270,6 +270,7 @@ class InterfaceC(object):
                 except (AttributeError, ValueError, KeyError, IndexError) as e:
                     result = None
                     logger.error("Failed to load function '{}' from library '{}.".format(function_param["name"], self.basename))
+                    e.print_stack()
         return result
 
     def close(self):
