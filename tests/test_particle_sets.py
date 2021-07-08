@@ -4,7 +4,7 @@ from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
 from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
 from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
-from parcels.tools import logger
+# from parcels.tools import logger
 import numpy as np
 import pytest
 
@@ -46,7 +46,7 @@ def test_pset_create_lon_lat(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode], c_lib_register=c_lib_register)
 
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
@@ -78,7 +78,7 @@ def test_pset_create_line(fieldset, pset_mode, mode, lonlatdepth_dtype, npart=10
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'].from_line(fieldset, size=npart, start=(0, 1), finish=(1, 0),
                                                       pclass=ptype[mode], lonlatdepth_dtype=lonlatdepth_dtype,
                                                       idgen=idgen, c_lib_register=c_lib_register)
@@ -117,7 +117,7 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'].from_list(fieldset, lon=lon, lat=lat, v=v_vals, pclass=MyParticle,
                                                       idgen=idgen, c_lib_register=c_lib_register)
     assert np.allclose([p.lon for p in pset], lon, rtol=1e-12)
@@ -160,7 +160,7 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 4.0)
         idgen.setTimeLine(0.0, 4.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, depth=[4]*len(lon),
                                             pclass=TestParticle, p3=np.arange(len(lon)), c_lib_register=c_lib_register)
 
@@ -230,7 +230,7 @@ def test_pset_create_field(fieldset, pset_mode, mode, lonlatdepth_dtype, npart=1
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=npart, pclass=ptype[mode],
                                                        start_field=K, lonlatdepth_dtype=lonlatdepth_dtype,
                                                        idgen=idgen, c_lib_register=c_lib_register)
@@ -280,7 +280,7 @@ def test_pset_create_field_curvi(pset_mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'].from_field(fieldset, size=npart, pclass=ptype['scipy'],
                                                        start_field=fieldset.V, idgen=idgen, c_lib_register=c_lib_register)
 
@@ -329,7 +329,7 @@ def test_pset_create_with_time(fieldset, pset_mode, mode, npart=100):
         idgen.recover_ids = True
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 5.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode], time=time,
                                             c_lib_register=c_lib_register)
         assert np.allclose([p.time for p in pset], time, rtol=1e-12)
@@ -381,7 +381,7 @@ def test_pset_repeated_release(fieldset, pset_mode, mode, npart=10):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
                                             pclass=ptype[mode], time=time, c_lib_register=c_lib_register)
     assert np.allclose([p.time for p in pset], time)
@@ -414,7 +414,7 @@ def test_pset_dt0(fieldset, pset_mode, mode, npart=10):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=np.zeros(npart), lat=np.zeros(npart),
                                             pclass=ptype[mode], c_lib_register=c_lib_register)
 
@@ -445,7 +445,7 @@ def test_pset_repeatdt_check_dt(pset_mode, fieldset):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[0], lat=[0], pclass=ScipyParticle, repeatdt=5,
                                             c_lib_register=c_lib_register)
 
@@ -479,7 +479,7 @@ def test_pset_repeatdt_custominit(fieldset, pset_mode, mode):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=0, lat=0, pclass=MyParticle, repeatdt=1, sample_var=5,
                                             c_lib_register=c_lib_register)
 
@@ -511,7 +511,7 @@ def test_pset_stop_simulation(fieldset, pset_mode, mode):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=0, lat=0, pclass=ptype[mode],
                                             c_lib_register=c_lib_register)
 
@@ -547,7 +547,7 @@ def test_pset_access(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode],
                                             c_lib_register=c_lib_register)
 
@@ -582,7 +582,7 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=np.linspace(0, 1, npart),
                                             lat=np.linspace(1, 0, npart), c_lib_register=c_lib_register)
 
@@ -597,6 +597,7 @@ def test_pset_custom_ptype(fieldset, pset_mode, mode, npart=100):
     if c_lib_register is not None:
         c_lib_register.clear()
         del c_lib_register
+
 
 # =============================================================== #
 # ==== Adding individual particles by constructing a whole   ==== #
@@ -629,7 +630,7 @@ def test_pset_add_explicit(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode],
                                             lonlatdepth_dtype=np.float64, c_lib_register=c_lib_register)
         for i in range(npart):
@@ -667,7 +668,7 @@ def test_pset_add_shorthand(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode], c_lib_register=c_lib_register)
         for i in range(npart):
             pset += pset_type[pset_mode]['pset'](idgen, pclass=ptype[mode], lon=lon[i], lat=lat[i],
@@ -704,7 +705,7 @@ def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=[], lat=[], pclass=ptype[mode], c_lib_register=c_lib_register)
         for i in range(npart):
             pset += pset_type[pset_mode]['pset'](idgen, pclass=ptype[mode], lon=0.1, lat=0.1,
@@ -721,6 +722,7 @@ def test_pset_add_execute(fieldset, pset_mode, mode, npart=10):
     if c_lib_register is not None:
         c_lib_register.clear()
         del c_lib_register
+
 
 # ======================================================================== #
 # ==== semantically, the function of 'merge' and 'add' are different. ==== #
@@ -749,7 +751,7 @@ def test_pset_merge_inplace(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset1 = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
                                              lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart),
                                              c_lib_register=c_lib_register)
@@ -791,7 +793,7 @@ def test_pset_merge_duplicate(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset1 = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
                                              lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart),
                                              c_lib_register=c_lib_register)
@@ -829,7 +831,7 @@ def test_pset_remove_index(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat, pclass=ptype[mode],
                                             lonlatdepth_dtype=np.float64, c_lib_register=c_lib_register)
 
@@ -869,7 +871,7 @@ def test_pset_remove_particle(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, lon=lon, lat=lat,
                                             pclass=ptype[mode], c_lib_register=c_lib_register)
 
@@ -911,7 +913,7 @@ def test_pset_remove_kernel(fieldset, pset_mode, mode, npart=100):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
                                             lon=np.linspace(0, 1, npart), lat=np.linspace(1, 0, npart),
                                             c_lib_register=c_lib_register)

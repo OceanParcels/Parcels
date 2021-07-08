@@ -1,10 +1,10 @@
 import ctypes
 import sys
 import os
-from parcels.compilation import *
+from parcels.compilation import InterfaceC, GNUCompiler_SS, GNUCompiler_MS  # noqa: F401
 from parcels.tools import get_cache_dir, get_package_dir
-from numpy import int32, int64, uint32, uint64
-from parcels.tools import logger
+# from numpy import int32, int64, uint32, uint64
+# from parcels.tools import logger
 
 LIB_LOAD_MAX_REPEAT = 10
 
@@ -12,6 +12,7 @@ LIB_LOAD_MAX_REPEAT = 10
 # filename "PyNode.py" is given because the wrap-compilation of "node.c" and "node.h" will result in      #
 # an auto-generated "node.py", which would then clash with this manually-defined superclass that uses it. #
 # ======================================================================================================= #
+
 
 class Node(object):
     prev = None
@@ -21,7 +22,7 @@ class Node(object):
     data = None
     registered = False
 
-    def __init__(self, prev=None, next=None, id=None, data=None, c_lib_register=None, idgen = None):
+    def __init__(self, prev=None, next=None, id=None, data=None, c_lib_register=None, idgen=None):
         if prev is not None:
             assert (isinstance(prev, Node))
             # self.prev = prev
@@ -247,7 +248,7 @@ class NodeJIT(Node, ctypes.Structure):
     reset_data_ptr_c = None
     c_lib_register_ref = None
 
-    def __init__(self, prev=None, next=None, id=None, data=None, c_lib_register=None, idgen = None):
+    def __init__(self, prev=None, next=None, id=None, data=None, c_lib_register=None, idgen=None):
         # super().__init__(prev=prev, next=next, id=id, data=data, idgen=idgen)
         super().__init__(prev=None, next=None, id=id, data=None, idgen=idgen)
         libname = "node"
@@ -278,28 +279,28 @@ class NodeJIT(Node, ctypes.Structure):
         self.init_node_c(self)
 
         if prev is not None and isinstance(prev, NodeJIT):
-        #     self.set_prev_ptr_c(self, self.prev)
+            # self.set_prev_ptr_c(self, self.prev)
             self.set_prev(prev)
         else:
-        #     self.reset_prev_ptr_c(self)
+            # self.reset_prev_ptr_c(self)
             self.reset_prev()
 
         if next is not None and isinstance(next, NodeJIT):
-        #     self.set_next_ptr_c(self, self.next)
+            # self.set_next_ptr_c(self, self.next)
             self.set_next(next)
         else:
-        #     self.reset_next_ptr_c(self)
+            # self.reset_next_ptr_c(self)
             self.reset_next()
 
         if data is not None:
-        #     try:
-        #         self.set_data_ptr_c(self, self.data.cdata())
-        #     except AttributeError:
-        #         logger.warn("Node's data container casting error - output of data.cdata(): {}".format(self.data.cdata()))
-        #         self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
+            # try:
+            #     self.set_data_ptr_c(self, self.data.cdata())
+            # except AttributeError:
+            #     logger.warn("Node's data container casting error - output of data.cdata(): {}".format(self.data.cdata()))
+            #     self.set_data_ptr_c(self, ctypes.cast(self.data, ctypes.c_void_p))
             self.set_data(data)
         else:
-        #     self.reset_data_ptr_c(self)
+            # self.reset_data_ptr_c(self)
             self.reset_data()
 
         self.link()
@@ -344,9 +345,9 @@ class NodeJIT(Node, ctypes.Structure):
         return result
 
     def __del__(self):
-        nid = -1
-        if self.data is not None:
-            nid = self.data.id
+        # nid = -1
+        # if self.data is not None:
+        #     nid = self.data.id
         # logger.info("NodeJIT.del() {} is called.".format(nid))
         # self.unlink()
 
@@ -369,9 +370,9 @@ class NodeJIT(Node, ctypes.Structure):
         super(NodeJIT, self).link()
 
     def unlink(self):
-        nid = -1
-        if self.data is not None:
-            nid = self.data.id
+        # nid = -1
+        # if self.data is not None:
+        #     nid = self.data.id
         # logger.info("NodeJIT.unlink() {} is called.".format(nid))
         super(NodeJIT, self).unlink()
 
@@ -537,6 +538,3 @@ def NodeJIT_func_params():
             {"name": 'reset_next_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
             {"name": 'reset_data_ptr', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]},
             {"name": 'reset_pu_affinity', "return": None, "arguments": [ctypes.POINTER(NodeJIT)]}]
-
-
-

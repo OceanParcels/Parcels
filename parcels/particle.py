@@ -313,7 +313,7 @@ class JITParticle(ScipyParticle):
         if self._cptr is None:
             # Allocate data for a single particle
             ptype = self.getPType()
-            self._cptr = np.empty(1, dtype=ptype.dtype) # [0]
+            self._cptr = np.empty(1, dtype=ptype.dtype)  # [0]
         super(JITParticle, self).__init__(*args, **kwargs)
 
     def __del__(self):

@@ -30,11 +30,12 @@ class ParticleFileNodes(BaseParticleFile):
                      used to create NetCDF file from npy-files.
     """
     max_index_written = -1
+
     def __init__(self, name, particleset, outputdt=np.infty, write_ondelete=False, convert_at_end=True,
                  tempwritedir=None, pset_info=None):
         super(ParticleFileNodes, self).__init__(name=name, particleset=particleset, outputdt=outputdt,
-                                              write_ondelete=write_ondelete, convert_at_end=convert_at_end,
-                                              tempwritedir=tempwritedir, pset_info=pset_info)
+                                                write_ondelete=write_ondelete, convert_at_end=convert_at_end,
+                                                tempwritedir=tempwritedir, pset_info=pset_info)
         self.var_names.append('index')
         self.max_index_written = 0
 
