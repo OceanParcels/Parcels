@@ -103,7 +103,7 @@ class ParticleFileNodes(BaseParticleFile):
                 getattr(self, vname).units = "unknown"
 
         for vname in self.var_names_once:
-                # hm, shouldn't that be adaptive instead of "f4" ? I think I looked that up already once and if violates the CF convention, sadly
+            # hm, shouldn't that be adaptive instead of "f4" ? I think I looked that up already once and if violates the CF convention, sadly
             setattr(self, vname, self.dataset.createVariable(vname, "f4", "traj", fill_value=np.nan))
             getattr(self, vname).long_name = ""
             getattr(self, vname).standard_name = vname

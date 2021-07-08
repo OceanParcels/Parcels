@@ -438,7 +438,7 @@ class NodeJIT(Node, ctypes.Structure):
                 self.reset_data_ptr_c()
                 self.unlink_c_functions()
                 if self.c_lib_register_ref is not None:
-                        self.c_lib_register_ref.deregister("node")
+                    self.c_lib_register_ref.deregister("node")
             except:
                 pass
         self.registered = False
