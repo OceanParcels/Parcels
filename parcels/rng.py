@@ -70,8 +70,6 @@ extern float pcls_vonmisesvariate(float mu, float kappa){
         self.ccode += self.fnct_expovariate
         self.ccode += self.fnct_vonmisesvariate
         self._loaded = False
-        self.compile()
-        self.load_lib()
 
     def __del__(self):
         self.unload_lib()
