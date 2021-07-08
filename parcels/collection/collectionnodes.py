@@ -1,7 +1,7 @@
 from datetime import timedelta as delta
-from operator import attrgetter  # NOQA
+from operator import attrgetter  # noqa: F401
 
-from ctypes import c_void_p
+from ctypes import c_void_p  # noqa: F401
 
 import numpy as np
 import sys
@@ -10,7 +10,7 @@ from parcels.collection.collections import ParticleCollection
 from parcels.collection.iterators import BaseParticleAccessor
 from parcels.collection.iterators import BaseParticleCollectionIterator
 from parcels.collection.iterators import BaseParticleCollectionIterable
-from parcels.particle import ScipyParticle, JITParticle  # noqa
+from parcels.particle import ScipyParticle, JITParticle  # noqa: F401
 from parcels.nodes.PyNode import Node, NodeJIT
 from parcels.nodes.nodelist import DoubleLinkedNodeList
 from parcels.field import Field
@@ -159,14 +159,14 @@ class ParticleCollectionNodes(ParticleCollection):
                 'Size of ParticleSet does not match length of lon and lat.')
 
             for i in range(len(lon)):
-                init_time = time[i] if time is not None and len(time)>0 and time[i] is not None else 0
+                init_time = time[i] if time is not None and len(time) > 0 and time[i] is not None else 0
                 pdata_id = None
-                index = -1
+                # index = -1
                 if pid is not None and (isinstance(pid, list) or isinstance(pid, np.ndarray)):
-                    index = pid[i]
+                    # index = pid[i]
                     pdata_id = pid[i]
                 else:
-                    index = idgen.total_length
+                    # index = idgen.total_length
                     pdata_id = idgen.nextID(lon[i], lat[i], depth[i], abs(init_time))
                 pdata = self._pclass(lon[i], lat[i], pid=pdata_id, ngrids=ngrid, depth=depth[i], time=init_time)
                 # Set other Variables if provided
@@ -187,7 +187,7 @@ class ParticleCollectionNodes(ParticleCollection):
                 if v.name in initialised:
                     continue
                 if isinstance(v.initial, Field):
-                    init_time = np.min(time) if time is not None and len(time) > 0 and np.count_nonzero([tval != None for tval in time]) == len(time) is not None else 0
+                    init_time = np.min(time) if time is not None and len(time) > 0 and np.count_nonzero([tval is not None for tval in time]) == len(time) is not None else 0
                     init_field = v.initial
                     if init_field.grid.ti != 0:
                         init_field.fieldset.computeTimeChunk(init_time, 0)
@@ -216,7 +216,7 @@ class ParticleCollectionNodes(ParticleCollection):
             for i in range(len(self._data)):
                 node = self._data[i]
                 self._data_c.append(node.data.get_cptr())
-            #self._data_c = np.array(self.data_c, dtype=self._ptype.dtype)
+            # self._data_c = np.array(self.data_c, dtype=self._ptype.dtype)
 
         self._iterator = None
         self._riterator = None
@@ -235,7 +235,6 @@ class ParticleCollectionNodes(ParticleCollection):
             del self._data_c
         self._data_c = None
         super(ParticleCollectionNodes, self).__del__()
-
 
     def iterator(self):
         """
@@ -592,7 +591,7 @@ class ParticleCollectionNodes(ParticleCollection):
         for item in pcollection:
             # here, we really need a 'contains_ID' function
             node = self.get_node_by_ID(item.id)
-            if node != None:
+            if node is not None:
                 results.append(node)
         if len(results) == 0:
             results = None
@@ -615,7 +614,7 @@ class ParticleCollectionNodes(ParticleCollection):
         for item in pycollectionp:
             # here, we really need a 'contains_ID' function
             node = self.get_node_by_ID(item.id)
-            if node != None:
+            if node is not None:
                 results.append(node)
         if len(results) == 0:
             results = None
@@ -714,7 +713,7 @@ class ParticleCollectionNodes(ParticleCollection):
                         self._pu_indicators = np.concatenate((self._pu_indicators, min_pu), axis=0)
                     min_pu = mpi_comm.bcast(min_pu, root=0)
                     self._pu_indicators = mpi_comm.bcast(self._pu_indicators, root=0)
-                    pu_data = data_array[ min_pu == mpi_rank ]
+                    pu_data = data_array[min_pu == mpi_rank]
                     pu_center = np.array(np.mean(spdata, axis=0), dtype=self._lonlatdepth_dtype)
                     n_pu_data = pu_data.shape[0]
                     pu_ncenters = None
@@ -731,15 +730,15 @@ class ParticleCollectionNodes(ParticleCollection):
                     pu_data = data_array
                 for i in range(pu_data.shape[0]):
                     pdata = self._pclass(lon=pu_data[i, 0], lat=pu_data[i, 1], pid=np.iinfo(np.uint64).max, ngrids=self._ngrids)
-                    if pu_data.shape[1]>2:
+                    if pu_data.shape[1] > 2:
                         pdata.depth = pu_data[i, 2]
-                    if pu_data.shape[1]>3:
+                    if pu_data.shape[1] > 3:
                         pdata.time = pu_data[i, 3]
-                    if pu_data.shape[1]>4:
+                    if pu_data.shape[1] > 4:
                         pdata.dt = pu_data[i, 4]
-                    if pu_data.shape[1]>5:  # that is the provided ID that we skip - should not be defined
+                    if pu_data.shape[1] > 5:  # that is the provided ID that we skip - should not be defined
                         pass
-                    if pu_data.shape[1]>6:
+                    if pu_data.shape[1] > 6:
                         attr_index = 6
                         for key in self._kwarg_keys:
                             setattr(pdata, key, pu_data[i, attr_index])
@@ -835,7 +834,7 @@ class ParticleCollectionNodes(ParticleCollection):
         for i in range(len(same_class)):
             pdata = same_class.get_single_by_index(i)  # get() returns the particle data
             # pdata = same_class.pop(i).data  # pop() returns the node
-            results.append(self.add_single( pdata ))
+            results.append(self.add_single(pdata))
         # self._ncount = len(self._data) -> done by add_single()
         return results
 
@@ -1212,7 +1211,7 @@ class ParticleCollectionNodes(ParticleCollection):
         while node is not None:
             # ==== we need to skip here deleted nodes that have been queued for deletion, but are still bound in memory ==== #
             if not node.is_valid():
-                ndode = node.next
+                node = node.next
                 continue
             next_node = node.next
             if node.data.state == OperationCode.Delete:
@@ -1220,8 +1219,6 @@ class ParticleCollectionNodes(ParticleCollection):
                 self._data.remove(node)
             node = next_node
         self._ncount = len(self._data)
-
-
 
     # ================================================================================================================ #
     def merge(self, same_class=None):
@@ -1266,8 +1263,6 @@ class ParticleCollectionNodes(ParticleCollection):
         # TODO
         raise NotImplementedError
     # ================================================================================================================ #
-
-
 
     # ==== high-level functions to execute operations (Add, Delete, Merge, Split) requested by the ==== #
     # ==== internal :variables Particle.state of each Node.                                        ==== #
@@ -1349,7 +1344,7 @@ class ParticleCollectionNodes(ParticleCollection):
             else:
                 if deleted_only:
                     if type(deleted_only) not in [list, np.ndarray] and deleted_only in [True, 1]:
-                        indices_to_write = [self.get_index_by_node(ndata) for ndata in self._data if ndata.data.state in [OperationCode.Delete,]]
+                        indices_to_write = [self.get_index_by_node(ndata) for ndata in self._data if ndata.data.state in [OperationCode.Delete, ]]
                     elif type(deleted_only) in [list, np.ndarray] and len(deleted_only) > 0:
                         if type(deleted_only[0]) in [int, np.int32, np.uint32]:
                             indices_to_write = deleted_only

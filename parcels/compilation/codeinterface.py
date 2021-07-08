@@ -1,12 +1,10 @@
 import os  # noqa
 import sys
 import _ctypes
-from time import sleep
 import numpy.ctypeslib as npct
 from parcels.tools import get_cache_dir, get_package_dir
-from .codecompiler import *
+from .codecompiler import *  # noqa: F401
 from parcels.tools.loggers import logger
-from sys import stdout
 
 try:
     from mpi4py import MPI
@@ -39,7 +37,7 @@ class LibraryRegisterC:
         # while len(self._data) > 0:
         for item in self._data.items():
             # entry = self._data.popitem()
-            libname = item[0]
+            # libname = item[0]
             entry = item[1]
             # logger.info("Closing library '{}' ...".format(entry.basename))
             # while entry.is_registered() and entry.is_loaded():
@@ -51,7 +49,7 @@ class LibraryRegisterC:
             entry.cleanup_files()
         while len(self._data) > 0:
             entry = self._data.popitem()
-            libname = entry[0]
+            # libname = entry[0]
             entry = entry[1]
             # logger.info("Deleteing library '{}'".format(libname))
             del entry
@@ -78,7 +76,6 @@ class LibraryRegisterC:
     def remove(self, libname):
         if libname in self._data.keys():
             del self._data[libname]
-
 
     def is_created(self, libname):
         return libname in self._data.keys()
@@ -112,6 +109,7 @@ class LibraryRegisterC:
             self._data[libname].unregister()
         #     logger.info("Library '{}' deregistered - remaining registrations: {}.".format(libname, self._data[libname].register_count))
 
+
 class InterfaceC(object):
     basename = ""
     compiled = False
@@ -137,7 +135,7 @@ class InterfaceC(object):
         # == handle case where multiple simultaneous instances of node-library are required == #
         libinstance = 0
         while os.path.exists("%s-%d.%s" % (os.path.join(get_cache_dir(), lib_path), libinstance, libext)):
-            libinstance+=1
+            libinstance += 1
         lib_pathfile = "%s-%d" % (lib_pathfile, libinstance)
         lib_path = os.path.join(lib_pathdir, lib_pathfile)
         # == handle multi-lib in an MPI setup == #

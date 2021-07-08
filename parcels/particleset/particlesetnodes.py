@@ -4,27 +4,30 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta as delta
 
-
-import sys  # noqa
-import numpy as np  # noqa
+import os  # noqa: F401
+import sys  # noqa: F401
+import numpy as np  # noqa: F401
 import xarray as xr
 from ctypes import c_void_p
 import cftime
 
 from parcels.grid import GridCode
+from parcels.field import Field
 from parcels.field import NestedField
 from parcels.field import SummedField
-from parcels.nodes.nodelist import *
+from parcels.compilation import GNUCompiler_MS
+from parcels.tools import get_cache_dir, get_package_dir
+# from parcels.nodes.nodelist import *
 # from parcels.nodes.PyNode import Node, NodeJIT
 from parcels.tools import GenerateID_Service, SequentialIdGenerator
 from parcels.compilation import LibraryRegisterC
-from parcels.kernel.kernelnodes import KernelNodes  # TODO
-from parcels.particle import Variable, ScipyParticle, JITParticle # NOQA
-from parcels.particlefile.particlefilenodes import ParticleFileNodes  # TODO
-from parcels.tools.statuscodes import StateCode, OperationCode  # NOQA
+from parcels.kernel.kernelnodes import KernelNodes
+from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa: F401
+from parcels.particlefile.particlefilenodes import ParticleFileNodes
+from parcels.tools.statuscodes import StateCode, OperationCode    # noqa: F401
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.collection.collectionnodes import ParticleCollectionNodes
-from parcels.collection.collectionnodes import ParticleCollectionIteratorNodes, ParticleCollectionIterableNodes  # NOQA
+from parcels.collection.collectionnodes import ParticleCollectionIteratorNodes, ParticleCollectionIterableNodes  # noqa: F401
 
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
@@ -33,12 +36,13 @@ try:
     from mpi4py import MPI
 except:
     MPI = None
-if MPI:
-    try:
-        from sklearn.cluster import KMeans
-    except:
-        raise EnvironmentError('sklearn needs to be available if MPI is installed. '
-                               'See http://oceanparcels.org/#parallel_install for more information')
+
+# if MPI:
+#     try:
+#         from sklearn.cluster import KMeans
+#     except:
+#         raise EnvironmentError('sklearn needs to be available if MPI is installed. '
+#                                'See http://oceanparcels.org/#parallel_install for more information')
 
 __all__ = ['ParticleSetNodes']
 
@@ -102,7 +106,7 @@ class ParticleSetNodes(BaseParticleSet):
     # _lonlatdepth_dtype = None
 
     def __init__(self, idgen, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None,
-                 repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, c_lib_register = LibraryRegisterC(), **kwargs):
+                 repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, c_lib_register=LibraryRegisterC(), **kwargs):
         super(ParticleSetNodes, self).__init__()
         self._idgen = idgen
         self._c_lib_register = c_lib_register
@@ -234,7 +238,7 @@ class ParticleSetNodes(BaseParticleSet):
         self.fieldset = fieldset
         if self.fieldset is None:
             logger.warninging_once("No FieldSet provided in ParticleSet generation. "
-                                "This breaks most Parcels functionality")
+                                   "This breaks most Parcels functionality")
         else:
             self.fieldset.check_complete()
         ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
@@ -1216,7 +1220,7 @@ class ParticleSetNodes(BaseParticleSet):
             callbackdt = np.min(np.array(interupt_dts))
 
         time = _starttime
-        if self.repeatdt: #  and self.rparam is not None:
+        if self.repeatdt:  # and self.rparam is not None:
             next_prelease = self.repeat_starttime + (abs(time - self.repeat_starttime) // self.repeatdt + 1) * self.repeatdt * np.sign(dt)
         else:
             next_prelease = np.infty if dt > 0 else - np.infty
@@ -1235,7 +1239,6 @@ class ParticleSetNodes(BaseParticleSet):
             walltime_start = time_module.time()
         if verbose_progress:
             pbar = self._create_progressbar_(_starttime, endtime)
-
 
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
 
@@ -1274,8 +1277,8 @@ class ParticleSetNodes(BaseParticleSet):
                     lat = self.repeatlat[add_iter]
                     pdepth = self.repeatdepth[add_iter]
                     ptime = time if self.release_starttime is None else self.release_starttime
-                    # pid = self._idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
-                    pid = self._idgen.nextID(lon, lat, pdepth, ptime)
+                    pid = self._idgen.nextID(lon, lat, pdepth, ptime) if gen_id is None else gen_id
+                    # pid = self._idgen.nextID(lon, lat, pdepth, ptime)
                     pdata = self.repeatpclass(lon, lat, pid=pid, ngrids=ngrids, depth=pdepth, time=ptime)
                     pdata.dt = dt
                     # Set other Variables if provided

@@ -6,7 +6,7 @@ from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC 
 import numpy as np
 import pytest
 from operator import attrgetter
-from parcels.tools import logger
+# from parcels.tools import logger
 
 pset_modes = ['soa', 'aos', 'nodes']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
@@ -49,11 +49,11 @@ def test_variable_init(fieldset, pset_mode, mode, npart=10):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle,
                                             lon=np.linspace(0, 1, npart),
                                             lat=np.linspace(1, 0, npart),
-                                            c_lib_register = c_lib_register)
+                                            c_lib_register=c_lib_register)
 
     def addOne(particle, fieldset, time):
         particle.p_float += 1.
@@ -109,7 +109,7 @@ def test_variable_unsupported_dtypes(fieldset, pset_mode, mode, type):
             idgen = GenerateID_Service(SequentialIdGenerator)
             idgen.setDepthLimits(0., 1.0)
             idgen.setTimeLine(0.0, 1.0)
-            c_lib_register =  LibraryRegisterC()
+            c_lib_register = LibraryRegisterC()
             pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=[0], lat=[0], c_lib_register=c_lib_register)
         del pset
     except (RuntimeError, TypeError):
@@ -134,7 +134,7 @@ def test_variable_special_names(fieldset, pset_mode, mode):
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
     for vars in ['z', 'lon']:
         class TestParticle(ptype[mode]):
             tmp = Variable(vars, dtype=np.float32, initial=10.)
@@ -186,7 +186,7 @@ def test_variable_init_relative(fieldset, pset_mode, mode, coord_type, npart=10)
         idgen = GenerateID_Service(SequentialIdGenerator)
         idgen.setDepthLimits(0., 1.0)
         idgen.setTimeLine(0.0, 1.0)
-        c_lib_register =  LibraryRegisterC()
+        c_lib_register = LibraryRegisterC()
         pset = pset_type[pset_mode]['pset'](idgen, fieldset, pclass=TestParticle, lon=lon, lat=lat, lonlatdepth_dtype=coord_type, c_lib_register=c_lib_register)
 
     # Adjust base variable to test for aliasing effects

@@ -1,6 +1,6 @@
 import inspect
-import math  # noqa
-import random  # noqa
+import math  # noqa: F401
+import random  # noqa: F401
 from ast import parse
 from copy import deepcopy
 from ctypes import byref
@@ -21,11 +21,8 @@ from parcels.compilation.codegenerator import NodeLoopGenerator
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.field import VectorField
-from parcels.field import FieldOutOfBoundError
-from parcels.field import FieldOutOfBoundSurfaceError
-from parcels.field import TimeExtrapolationError
-import parcels.rng as ParcelsRandom  # noqa
-from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode  # noqa
+import parcels.rng as ParcelsRandom  # noqa: F401
+from parcels.tools.statuscodes import StateCode, OperationCode, ErrorCode
 from parcels.tools.statuscodes import recovery_map as recovery_base_map
 from parcels.tools.loggers import logger
 from parcels.tools.global_statics import get_package_dir

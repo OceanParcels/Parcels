@@ -177,7 +177,7 @@ class SpatialIdGenerator(BaseIdGenerator):
     def setDepthLimits(self, min_depth=0.0, max_depth=1.0):
         self._depthbounds = np.array([min_depth, max_depth], dtype=np.float32)
 
-    def getID(self, lon, lat, depth, time = None):
+    def getID(self, lon, lat, depth, time=None):
         idlon = lon  # avoid original 'lon' changes from change-by-ref artefacts
         idlat = lat  # avoid original 'lon' changes from change-by-ref artefacts
         iddepth = depth  # avoid original 'lon' changes from change-by-ref artefacts
@@ -232,7 +232,7 @@ class SpatialIdGenerator(BaseIdGenerator):
     def get_total_length(self):
         return self.total_length
 
-    def _get_next_id(self, lon_index, lat_index, depth_index, time_index = None):
+    def _get_next_id(self, lon_index, lat_index, depth_index, time_index=None):
         local_index = -1
         lon_shift = 32-int(np.ceil(np.log2(self._lon_bins)))
         lat_shift = lon_index-int(np.ceil(np.log2(self._lat_bins)))
@@ -268,8 +268,8 @@ class SpatioTemporalIdGenerator(BaseIdGenerator):
 
     def __init__(self):
         super(SpatioTemporalIdGenerator, self).__init__()
-        self.timebounds = np.zeros([0,0, 1.0], dtype=np.float64)
-        self.depthbounds = np.zeros([0,0, 1.0], dtype=np.float32)
+        self.timebounds = np.zeros([0, 0, 1.0], dtype=np.float64)
+        self.depthbounds = np.zeros([0, 0, 1.0], dtype=np.float32)
         self.local_ids = np.zeros((360, 180, 128, 256), dtype=np.uint32)
         self.released_ids = {}  # 32-bit spatio-temporal index => []
         self._total_ids = 0
