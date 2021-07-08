@@ -293,7 +293,7 @@ def test_statuscode_repeat(fieldset, pset_mode, mode):
 def test_execution_keep_cfiles_and_nocompilation_warnings(pset_mode, fieldset, delete_cfiles):
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=JITParticle, lon=[0.], lat=[0.])
     pset.execute(pset.Kernel(AdvectionRK4, delete_cfiles=delete_cfiles), endtime=1., dt=1.)
-    cfile = pset.kernel.src_file
+    cfile = pset.kernel.dyn_srcs[0]
     logfile = pset.kernel.log_file
     del pset.kernel
     if delete_cfiles:
