@@ -9,9 +9,9 @@ from copy import copy
 
 from parcels.grid import GridCode
 from parcels.grid import CurvilinearGrid
-from parcels.kernel import Kernel
+from parcels.kernel import KernelSOA
 from parcels.particle import Variable, ScipyParticle, JITParticle  # noqa
-from parcels.particlefile import ParticleFile
+from parcels.particlefile import ParticleFileSOA
 from parcels.tools.statuscodes import StateCode
 from parcels.particleset.baseparticleset import BaseParticleSet
 from parcels.collection.collectionsoa import ParticleCollectionSOA
@@ -365,6 +365,10 @@ class ParticleSetSOA(BaseParticleSet):
     def ctypes_struct(self):
         return self.cstruct()
 
+    @property
+    def kernelclass(self):
+        return KernelSOA
+
     @classmethod
     def monte_carlo_sample(cls, start_field, size, mode='monte_carlo'):
         """
@@ -446,8 +450,9 @@ class ParticleSetSOA(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'state'] \
                     and v.to_write:
+                # , 'fileid'
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
             to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
@@ -632,7 +637,7 @@ def search_kernel(particle, fieldset, time):
     x = fieldset.{}[time, particle.depth, particle.lat, particle.lon]
         """.format(field_name)
 
-        k = Kernel(
+        k = KernelSOA(
             self.fieldset,
             self._collection.ptype,
             funcname="search_kernel",
@@ -671,7 +676,7 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
+        return KernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
 
     def InteractionKernel(self, pyfunc_inter):
@@ -682,7 +687,7 @@ def search_kernel(particle, fieldset, time):
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
         object from the ParticleSet"""
-        return ParticleFile(*args, particleset=self, **kwargs)
+        return ParticleFileSOA(*args, particleset=self, **kwargs)
 
     def set_variable_write_status(self, var, write_status):
         """

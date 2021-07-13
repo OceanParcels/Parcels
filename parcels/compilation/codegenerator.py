@@ -1229,7 +1229,7 @@ class LoopGenerator(object):
         update_pdt = c.If("_next_dt_set == 1",
                           c.Block([c.Assign("_next_dt_set", "0"), c.Assign("particles->dt[pnum]", "_next_dt")]))
 
-        dt_pos = c.If("fabs(endtime - particles->time[pnum])<fabs(particles->dt[pnum])",
+        dt_pos = c.If("fabs(endtime - particles->time[pnum]) < fabs(particles->dt[pnum])",
                       c.Block([c.Assign("__dt", "fabs(endtime - particles->time[pnum])"), c.Assign("reset_dt", "1")]),
                       c.Block([c.Assign("__dt", "fabs(particles->dt[pnum])"), c.Assign("reset_dt", "0")]))
         reset_dt = c.If("(reset_dt == 1) && is_equal_dbl(__pdt_prekernels, particles->dt[pnum])",

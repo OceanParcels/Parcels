@@ -127,14 +127,20 @@ class KernelNodes(BaseKernel):
         super(KernelNodes, self).__del__()
 
     def __add__(self, kernel):
-        if not isinstance(kernel, KernelNodes):
-            kernel = KernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, KernelNodes)
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseKernel):
+            mkernel = KernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, KernelNodes) and kernel.pyfunc is not None:
+            mkernel = KernelNodes(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return self.merge(mkernel, KernelNodes)
 
     def __radd__(self, kernel):
-        if not isinstance(kernel, KernelNodes):
-            kernel = KernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, KernelNodes)
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseKernel):
+            mkernel = KernelNodes(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, KernelNodes) and kernel.pyfunc is not None:
+            mkernel = KernelNodes(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return mkernel.merge(self, KernelNodes)
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""

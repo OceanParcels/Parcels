@@ -107,12 +107,12 @@ class GNU_parameters(Compiler_parameters):
         self._cppargs += opt_flags + cppargs + arch_flag
         self._ldargs = ['-shared']
         if len(Lflags) > 0:
+            self._ldargs += ['-Wl, -rpath=%s' % (":".join(libdirs))]
+        if len(Lflags) > 0:
             self._ldargs += Lflags
         if len(lflags) > 0:
             self._ldargs += lflags
         self._ldargs += ldargs
-        # if len(Lflags) > 0:
-        #     self._ldargs += ['-Wl, -rpath=%s' % (":".join(libdirs))]
         self._ldargs += arch_flag
         self._incdirs = incdirs
         self._libdirs = libdirs

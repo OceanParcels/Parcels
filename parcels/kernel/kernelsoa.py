@@ -6,6 +6,7 @@ from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
 from ctypes import c_int
+from ctypes import pointer
 from os import path
 
 import numpy as np
@@ -87,13 +88,14 @@ class KernelSOA(BaseKernel):
         assert numkernelargs == 3, \
             'Since Parcels v2.0, kernels do only take 3 arguments: particle, fieldset, time !! AND !! Argument order in field interpolation is time, depth, lat, lon.'
 
-        self.name = "%s%s" % (ptype.name, self.funcname)
+        # self.name = "%s%s" % (ptype.name, self.funcname)
+        self.name = "%s%s" % (self.ptype.name, self.funcname)
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            kernelgen = KernelGenerator(fieldset, ptype)
-            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast),
-                                              self.funcvars)
+            # kernelgen = KernelGenerator(fieldset, ptype)
+            kernelgen = KernelGenerator(self.fieldset, self.ptype)
+            kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
             fieldset = self.fieldset
@@ -105,6 +107,7 @@ class KernelSOA(BaseKernel):
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
             loopgen = LoopGenerator(fieldset, ptype)
+            # loopgen = LoopGenerator(self.fieldset, self.ptype)
             if path.isfile(self._c_include):
                 with open(self._c_include, 'r') as f:
                     c_include_str = f.read()
@@ -120,18 +123,48 @@ class KernelSOA(BaseKernel):
             # else:
             #     self.src_file = src_file_or_files
 
+    def __add__(self, kernel):
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseKernel):
+            mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, KernelSOA) and kernel.pyfunc is not None:
+            mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return self.merge(mkernel, KernelSOA)
+
+    def __radd__(self, kernel):
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseKernel):
+            mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, KernelSOA) and kernel.pyfunc is not None:
+            mkernel = KernelSOA(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return mkernel.merge(self, KernelSOA)
+
     def generate_sources(self):
         pass
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
+        # logger.info("Loading fieldset data into jit.")
         self.load_fieldset_jit(pset)
+        # logger.info("Fieldset loaded.")
 
-        fargs = [byref(f.ctypes_struct) for f in self.field_args.values()]
-        fargs += [c_double(f) for f in self.const_args.values()]
+
+        #fargs += [c_double(f) for f in self.const_args.values()]
+        # logger.info("Adding struct-params for field args ...")
+        fargs = []
+        if self.field_args is not None:
+            fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
+        # logger.info("Added struct-params for field args.")
+        # logger.info("Adding double-params for const args ...")
+        if self.const_args is not None:
+            fargs += [c_double(f) for f in self.const_args.values()]
+        # logger.info("Added double-params for const args.")
+
         particle_data = byref(pset.ctypes_struct)
-        return self._function(c_int(len(pset)), particle_data,
-                              c_double(endtime), c_double(dt), *fargs)
+        # logger.info("Executing kernel with field args.")
+        result = self._function(c_int(len(pset)), particle_data, c_double(endtime), c_double(dt), *fargs)
+        # logger.info("Finished kernel execution.")
+        return result
 
     def execute_python(self, pset, endtime, dt):
         """Performs the core update loop via Python"""
@@ -159,16 +192,6 @@ class KernelSOA(BaseKernel):
         # This is not really necessary, as these programs are not that large, but with the new random
         # naming scheme which is required on Windows OS'es to deal with updates to a Parcels' kernel.)
         super(KernelSOA, self).__del__()
-
-    def __add__(self, kernel):
-        if not isinstance(kernel, KernelSOA):
-            kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, KernelSOA)
-
-    def __radd__(self, kernel):
-        if not isinstance(kernel, KernelSOA):
-            kernel = KernelSOA(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, KernelSOA)
 
     def remove_deleted(self, pset, output_file, endtime):
         """

@@ -444,6 +444,10 @@ class ParticleSetAOS(BaseParticleSet):
         return self.cstruct()
 
     @property
+    def kernelclass(self):
+        return KernelAOS
+
+    @property
     def ptype(self):
         return self._collection.ptype
 
@@ -535,8 +539,9 @@ class ParticleSetAOS(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 vars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'state'] \
                     and v.to_write:
+                # , 'fileid'
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
             to_write[v.name] = v.to_write
         vars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
