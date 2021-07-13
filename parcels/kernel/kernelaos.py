@@ -127,29 +127,43 @@ class KernelAOS(BaseKernel):
         super(KernelAOS, self).__del__()
 
     def __add__(self, kernel):
-        if not isinstance(kernel, KernelAOS):
-            kernel = KernelAOS(self.fieldset, self.ptype, pyfunc=kernel)
-        return self.merge(kernel, KernelAOS)
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseKernel):
+            mkernel = KernelAOS(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, KernelAOS) and kernel.pyfunc is not None:
+            mkernel = KernelAOS(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return self.merge(mkernel, KernelAOS)
 
     def __radd__(self, kernel):
-        if not isinstance(kernel, KernelAOS):
-            kernel = KernelAOS(self.fieldset, self.ptype, pyfunc=kernel)
-        return kernel.merge(self, KernelAOS)
+        mkernel = kernel  # do this to avoid rewriting the object put in as parameter
+        if not isinstance(mkernel, BaseKernel):
+            mkernel = KernelAOS(self.fieldset, self.ptype, pyfunc=kernel)
+        elif not isinstance(mkernel, KernelAOS) and kernel.pyfunc is not None:
+            mkernel = KernelAOS(self.fieldset, self.ptype, pyfunc=mkernel.pyfunc)
+        return mkernel.merge(self, KernelAOS)
 
     def execute_jit(self, pset, endtime, dt):
         """Invokes JIT engine to perform the core update loop"""
+        # logger.info("Loading fieldset data into jit.")
         self.load_fieldset_jit(pset)
+        # logger.info("Fieldset loaded.")
 
+        # logger.info("Adding struct-params for field args ...")
         fargs = []
         if self.field_args is not None:
             fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
+        # logger.info("Added struct-params for field args.")
+        # logger.info("Adding double-params for const args ...")
         if self.const_args is not None:
             fargs += [c_double(f) for f in self.const_args.values()]
+        # logger.info("Added double-params for const args.")
 
         pdata = pset.ctypes_struct
         if len(fargs) > 0:
+            # logger.info("Executing kernel with field args")
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt), *fargs)
         else:
+            # logger.info("Executing kernel without field args")
             self._function(c_int(len(pset)), pdata, c_double(endtime), c_double(dt))
 
     def execute_python(self, pset, endtime, dt):

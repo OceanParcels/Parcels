@@ -6,6 +6,7 @@ from datetime import timedelta as delta
 from os import path
 import time as time_module
 import cftime
+import sys  # noqa: F401
 
 from tqdm import tqdm
 
@@ -15,7 +16,7 @@ from parcels.compilation.codecompiler import GNUCompiler
 from parcels.field import NestedField
 from parcels.field import SummedField
 from parcels.application_kernels.advection import AdvectionRK4
-from parcels.kernel.basekernel import BaseKernel as Kernel
+from parcels.kernel.basekernel import BaseKernel  # as Kernel
 from parcels.collection.collections import ParticleCollection
 from parcels.tools.loggers import logger
 from parcels.interaction.baseinteractionkernel import BaseInteractionKernel
@@ -107,6 +108,10 @@ class BaseParticleSet(NDCluster):
     @property
     def collection(self):
         return self._collection
+
+    @property
+    def kernelclass(self):
+        return BaseKernel
 
     @abstractmethod
     def cstruct(self):
@@ -338,15 +343,23 @@ class BaseParticleSet(NDCluster):
         :param postIterationCallbacks: (Optional) Array of functions that are to be called after each iteration (post-process, non-Kernel)
         :param callbackdt: (Optional, in conjecture with 'postIterationCallbacks) timestep inverval to (latestly) interrupt the running kernel and invoke post-iteration callbacks from 'postIterationCallbacks'
         """
-        # check if pyfunc has changed since last compile. If so, recompile
+        # check if pyfunc has changed since last compile. If so, recompile.
+        # COMMENT #1034: this still needs to check that the ParticleClass name also didn't change!
         if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
             # Generate and store Kernel
-            if isinstance(pyfunc, Kernel):
-                self.kernel = pyfunc
+            if isinstance(pyfunc, BaseKernel):
+                assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
+                if pyfunc.ptype.name == self.collection.ptype.name:
+                    self.kernel = pyfunc
+                elif pyfunc.pyfunc is not None:
+                    self.kernel = self.Kernel(pyfunc.pyfunc)
+                else:
+                    raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
             else:
                 self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
             if self.collection.ptype.uses_jit:
+                # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))
                 self.kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.collection.lonlatdepth_dtype else None
                 self.kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[path.join(get_package_dir(), 'include'), "."]))
@@ -405,7 +418,8 @@ class BaseParticleSet(NDCluster):
             endtime = maxtime if dt >= 0 else mintime
 
         execute_once = False
-        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
+        # if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
+        if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
             dt = 0
             runtime = 0
             endtime = _starttime
@@ -436,9 +450,14 @@ class BaseParticleSet(NDCluster):
         next_output = time + outputdt if dt > 0 else time - outputdt
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
+        # logger.info("compute time-chunk input for time = {} and dt = {} ...".format(time, dt))
         next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
+        # logger.info("Time-chunk input for time = {} and dt = {} computed.".format(time, dt))
 
         tol = 1e-12
+
+        pbar = None
+        walltime_start = None
         if verbose_progress is None:
             walltime_start = time_module.time()
         if verbose_progress:
@@ -458,6 +477,7 @@ class BaseParticleSet(NDCluster):
                 next_time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 next_time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
+            # logger.info("Executing next timestep is time = {} ...".format(next_time))
 
             # If we don't perform interaction, only execute the normal kernel efficiently.
             if self.interaction_kernel is None:
@@ -483,7 +503,7 @@ class BaseParticleSet(NDCluster):
                         break
             # End of interaction specific code
             time = next_time
-            logger.info("time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
+            # logger.info("Kernel executed - time: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 pset_new = self.__class__(
                     fieldset=self.fieldset, time=time, lon=self.repeatlon,

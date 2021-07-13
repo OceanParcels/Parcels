@@ -176,10 +176,13 @@ class ParticleCollectionSOA(ParticleCollection):
                     for i in range(self.ncount):
                         if (time[i] is None) or (np.isnan(time[i])):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
-                        v.initial.fieldset.computeTimeChunk(time[i], 0)
-                        self._data[v.name][i] = v.initial[
-                            time[i], depth[i], lat[i], lon[i]
-                        ]
+                        init_time = time[i] if time is not None and len(time) > 0 and np.count_nonzero([tval is not None for tval in time]) == len(time) else 0
+                        init_field = v.initial
+                        init_field.fieldset.computeTimeChunk(init_time, 0)
+                        # v.initial.fieldset.computeTimeChunk(time[i], 0)
+                        # v.initial.fieldset.computeTimeChunk(time[0], 0)
+                        # self._data[v.name][i] = v.initial[time[i], depth[i], lat[i], lon[i]]
+                        self._data[v.name][i] = v.initial[init_time, depth[i], lat[i], lon[i]]
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
                 elif isinstance(v.initial, attrgetter):
                     self._data[v.name][:] = v.initial(self)

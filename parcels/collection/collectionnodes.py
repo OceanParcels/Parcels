@@ -187,10 +187,6 @@ class ParticleCollectionNodes(ParticleCollection):
                 if v.name in initialised:
                     continue
                 if isinstance(v.initial, Field):
-                    init_time = np.min(time) if time is not None and len(time) > 0 and np.count_nonzero([tval is not None for tval in time]) == len(time) is not None else 0
-                    init_field = v.initial
-                    if init_field.grid.ti != 0:
-                        init_field.fieldset.computeTimeChunk(init_time, 0)
                     i = 0
                     ndata = self.begin()
                     while i < len(self._data):
@@ -198,7 +194,11 @@ class ParticleCollectionNodes(ParticleCollection):
                         # ==== ==== ==== #
                         if (pdata.time is None) or (np.isnan(pdata.time)):
                             raise RuntimeError('Cannot initialise a Variable with a Field if no time provided (time-type: {} values: {}). Add a "time=" to ParticleSet construction'.format(type(time), time))
-                        setattr(pdata, v.name, init_field[pdata.time, pdata.depth, pdata.lat, pdata.lon])
+                        init_time = pdata.time if pdata.time not in [None, np.nan] and np.count_nonzero([tval is not None for tval in time]) == len(time) else 0
+                        init_field = v.initial
+                        init_field.fieldset.computeTimeChunk(init_time, 0)
+                        # setattr(pdata, v.name, init_field[pdata.time, pdata.depth, pdata.lat, pdata.lon])
+                        setattr(pdata, v.name, init_field[init_time, pdata.depth, pdata.lat, pdata.lon])
                         logger.warning_once("Particle initialisation from field can be very slow as it is computed in scipy mode.")
                         # ==== ==== ==== #
                         ndata.set_data(pdata)

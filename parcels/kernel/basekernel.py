@@ -102,6 +102,12 @@ class BaseKernel(object):
         self.const_args = None
         self.funcvars = None
         self.funccode = None
+        self.py_ast = None
+        self.dyn_srcs = None
+        self.static_srcs = None
+        self._src_files = None
+        self.lib_file = None
+        self.log_file = None
 
     @property
     def ptype(self):

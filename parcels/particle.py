@@ -236,11 +236,13 @@ class ScipyParticle(_Particle):
         cls.depth.dtype = dtype
 
     def update_next_dt(self, next_dt=None):
-        if next_dt is None or np.isnan(next_dt):
-            if self._next_dt is not None and not np.isnan(self._next_dt):
+        # if next_dt is None or np.isnan(next_dt):
+        if next_dt is None:
+            # if self._next_dt is not None and not np.isnan(self._next_dt):
+            if self._next_dt is not None:
                 self.dt = self._next_dt
-                # self._next_dt = None
-                self._next_dt = np.nan
+                self._next_dt = None
+                # self._next_dt = np.nan
         else:
             self._next_dt = next_dt
 

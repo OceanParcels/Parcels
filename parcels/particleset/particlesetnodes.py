@@ -810,6 +810,10 @@ class ParticleSetNodes(BaseParticleSet):
     def ctypes_struct(self):
         raise NotImplementedError("A node-based collection does not comprise into a contiguous-memory structure (i.e. cstruct). For using the structure in ctypes, please just start with 'pset.begin()' the ctypes-function.")
 
+    @property
+    def kernelclass(self):
+        return KernelNodes
+
     def __repr__(self):
         return repr(self._collection)
 
@@ -1040,8 +1044,9 @@ class ParticleSetNodes(BaseParticleSet):
         for v in pclass.getPType().variables:
             if v.name in pfile_vars:
                 pvars[v.name] = np.ma.filled(pfile.variables[v.name], np.nan)
-            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'fileid', 'index', 'state'] \
+            elif v.name not in ['xi', 'yi', 'zi', 'ti', 'dt', '_next_dt', 'depth', 'id', 'index', 'state'] \
                     and v.to_write:
+                # , 'fileid'
                 raise RuntimeError('Variable %s is in pclass but not in the particlefile' % v.name)
             to_write[v.name] = v.to_write
         pvars['depth'] = np.ma.filled(pfile.variables['z'], np.nan)
@@ -1108,20 +1113,27 @@ class ParticleSetNodes(BaseParticleSet):
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
-        if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
+        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
             # Generate and store Kernel
             if isinstance(pyfunc, self._kclass):
-                self._kernel = pyfunc
+                assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
+                if pyfunc.ptype.name == self.collection.ptype.name:
+                    self.kernel = pyfunc
+                elif pyfunc.pyfunc is not None:
+                    self.kernel = self.Kernel(pyfunc.pyfunc)
+                else:
+                    raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
             else:
-                self._kernel = self.Kernel(pyfunc)
+                self.kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
-            # ================================= THIS IS WHERE RERUNS PROBABLY FAIL - TO-BE-CHECKED =================== #
-            if self._collection.ptype.uses_jit:
+            if self.collection.ptype.uses_jit:
+                # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))
                 self._kernel.remove_lib()
                 cppargs = ['-DDOUBLE_COORD_VARIABLES'] if self.lonlatdepth_dtype == np.float64 else None
                 # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
                 self._kernel.compile(compiler=GNUCompiler_MS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], tmp_dir=get_cache_dir()))
                 self._kernel.load_lib()
+
 
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
@@ -1174,7 +1186,7 @@ class ParticleSetNodes(BaseParticleSet):
         # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
-        if abs(endtime-_starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
+        if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
             dt = 0
             runtime = 0
             endtime = _starttime
@@ -1229,7 +1241,7 @@ class ParticleSetNodes(BaseParticleSet):
         next_movie = time + moviedt if dt > 0 else time - moviedt
         next_callback = time + callbackdt if dt > 0 else time - callbackdt
 
-        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt))
+        next_input = self.fieldset.computeTimeChunk(time, np.sign(dt)) if self.fieldset is not None else np.inf
 
         tol = 1e-12
 
@@ -1267,7 +1279,8 @@ class ParticleSetNodes(BaseParticleSet):
             # while ndata is not None:
             #     logger.info("\t{} - dt: {}".format(ndata.data, ndata.data.dt))
             #     ndata = ndata.next
-            logger.info("time: {}; startime: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, _starttime, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
+
+            # logger.info("time: {}; startime: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, _starttime, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
                 add_iter = 0
