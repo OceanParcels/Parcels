@@ -424,6 +424,7 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
 
+        outputcounter = 0
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
@@ -453,7 +454,12 @@ class BaseParticleSet(NDCluster):
             if abs(time-next_output) < tol:
                 if output_file:
                     output_file.write(self, time)
+                for fld in self.fieldset.get_fields():
+                    if fld.to_write:
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % outputcounter)
+                        fld.write(fldfilename)
                 next_output += outputdt * np.sign(dt)
+                outputcounter += 1
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)

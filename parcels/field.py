@@ -111,6 +111,7 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.fieldtype = self.name if fieldtype is None else fieldtype
+        self.to_write = False
         if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
@@ -1304,7 +1305,7 @@ class Field(object):
                                                       'nav_lat': nav_lat,
                                                       'time_counter': time_counter,
                                                       vname_depth: self.grid.depth}, attrs=attrs)
-        dset.to_netcdf(filepath)
+        dset.to_netcdf(filepath, unlimited_dims='time_counter')
 
     def rescale_and_set_minmax(self, data):
         data[np.isnan(data)] = 0
@@ -1404,6 +1405,7 @@ class VectorField(object):
         self.V = V
         self.W = W
         self.vector_type = '3D' if W else '2D'
+        self.to_write = False
         self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
@@ -1769,6 +1771,7 @@ class SummedField(list):
                 assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
                     'F, V and W components of a SummedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
+        self.to_write = False
         self.name = name
 
     def __getitem__(self, key):
@@ -1830,6 +1833,7 @@ class NestedField(list):
                 assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
                     'F, V and W components of a NestedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
+        self.to_write = False
         self.name = name
 
     def __getitem__(self, key):
