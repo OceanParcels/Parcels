@@ -712,7 +712,9 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
+        # logger.info("called ParticleSetAOS::Kernel()")
+        return KernelAOS(self.fieldset, self.collection.ptype, pyfunc=pyfunc,
+                         c_include=c_include, delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

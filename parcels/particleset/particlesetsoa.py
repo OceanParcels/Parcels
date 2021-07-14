@@ -676,8 +676,9 @@ def search_kernel(particle, fieldset, time):
 
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
+        # logger.info("called ParticleSetSOA::Kernel()")
         return KernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
-                      delete_cfiles=delete_cfiles)
+                         delete_cfiles=delete_cfiles)
 
     def InteractionKernel(self, pyfunc_inter):
         if pyfunc_inter is None:

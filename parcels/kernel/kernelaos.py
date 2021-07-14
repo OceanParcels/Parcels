@@ -90,7 +90,8 @@ class KernelAOS(BaseKernel):
 
         # Generate the kernel function and add the outer loop
         if self.ptype.uses_jit:
-            kernelgen = KernelGenerator(self.fieldset, ptype)
+            # kernelgen = KernelGenerator(self.fieldset, ptype)
+            kernelgen = KernelGenerator(self.fieldset, self.ptype)
             kernel_ccode = kernelgen.generate(deepcopy(self.py_ast), self.funcvars)
             self.field_args = kernelgen.field_args
             self.vector_field_args = kernelgen.vector_field_args
@@ -101,7 +102,8 @@ class KernelAOS(BaseKernel):
                         if sF_name != 'not_defined':
                             self.field_args[sF_name] = getattr(f, sF_component)
             self.const_args = kernelgen.const_args
-            loopgen = ParticleObjectLoopGenerator(self.fieldset, ptype)
+            # loopgen = ParticleObjectLoopGenerator(self.fieldset, ptype)
+            loopgen = ParticleObjectLoopGenerator(self.fieldset, self.ptype)
             if path.isfile(c_include):
                 with open(c_include, 'r') as f:
                     c_include_str = f.read()

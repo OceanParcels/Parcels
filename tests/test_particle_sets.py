@@ -133,10 +133,11 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
         del c_lib_register
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
-# @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+# @pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 # @pytest.mark.parametrize('mode', ['jit'])
-@pytest.mark.parametrize('mode', ['scipy'])
+# @pytest.mark.parametrize('mode', ['scipy'])
 @pytest.mark.parametrize('restart', [True, False])
 def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir):
     filename = tmpdir.join("pset_fromparticlefile.nc")
@@ -173,7 +174,8 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
 
     pset.execute(Kernel, runtime=2, dt=1, output_file=pfile)
     pfile.close()
-    # logger.info("initial simulation concluded and file written.")
+    from parcels.tools import logger
+    logger.info("initial simulation concluded and file written.")
 
     pset_new = None
     if pset_mode != 'nodes':
@@ -183,15 +185,15 @@ def test_pset_create_fromparticlefile(fieldset, pset_mode, mode, restart, tmpdir
         pset_new = pset_type[pset_mode]['pset'].from_particlefile(fieldset, pclass=TestParticle,
                                                                   filename=filename, restart=restart, repeatdt=1,
                                                                   idgen=idgen, c_lib_register=c_lib_register)
-    # logger.info("ParticleSet initialized from written file.")
+    logger.info("ParticleSet initialized from written file.")
 
     for var in ['lon', 'lat', 'depth', 'time', 'p', 'p2', 'p3']:
         assert np.allclose([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
-        # logger.info("Checked similarity of results for variable '{}'.".format(var))
+        logger.info("Checked similarity of results for variable '{}'.".format(var))
 
     if restart and 'nodes' not in pset_mode:
         assert np.allclose([p.id for p in pset], [p.id for p in pset_new])
-        # logger.info("Checked field for restart")
+        logger.info("Checked field for restart")
 
     # for var in ['time', 'p', 'p2', 'p3', 'dt']:
     #     printarray = ([getattr(p, var) for p in pset], [getattr(p, var) for p in pset_new])
