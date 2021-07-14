@@ -6,7 +6,6 @@ from copy import deepcopy
 from ctypes import byref
 from ctypes import c_double
 from ctypes import c_int
-from ctypes import pointer
 from os import path
 
 import numpy as np
@@ -148,17 +147,16 @@ class KernelSOA(BaseKernel):
         self.load_fieldset_jit(pset)
         # logger.info("Fieldset loaded.")
 
-
-        #fargs += [c_double(f) for f in self.const_args.values()]
         # logger.info("Adding struct-params for field args ...")
         fargs = []
         if self.field_args is not None:
             fargs += [byref(f.ctypes_struct) for f in self.field_args.values()]
         # logger.info("Added struct-params for field args.")
         # logger.info("Adding double-params for const args ...")
+        # fargs += [c_double(f) for f in self.const_args.values()]
         if self.const_args is not None:
             fargs += [c_double(f) for f in self.const_args.values()]
-        # logger.info("Added double-params for const args.")
+        # # logger.info("Added double-params for const args.")
 
         particle_data = byref(pset.ctypes_struct)
         # logger.info("Executing kernel with field args.")

@@ -185,7 +185,8 @@ class ScipyParticle(_Particle):
     # fileid = Variable('fileid', dtype=np.int32, initial=-1, to_write=False)  # Q: when did this variable snuck in there ? It does bloat the memory requirements.
     dt = Variable('dt', dtype=np.float64, to_write=False)
     state = Variable('state', dtype=np.int32, initial=StateCode.Evaluate, to_write=False)
-    next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
+    # next_dt = Variable('_next_dt', dtype=np.float64, initial=np.nan, to_write=False)
+    next_dt = Variable('next_dt', dtype=np.float64, initial=np.nan, to_write=False)
 
     def __init__(self, lon, lat, pid, fieldset=None, ngrids=None, depth=0., time=0., cptr=None):
         # Enforce default values through Variable descriptor
@@ -238,13 +239,16 @@ class ScipyParticle(_Particle):
     def update_next_dt(self, next_dt=None):
         # if next_dt is None or np.isnan(next_dt):
         if next_dt is None:
-            # if self._next_dt is not None and not np.isnan(self._next_dt):
-            if self._next_dt is not None:
-                self.dt = self._next_dt
-                self._next_dt = None
-                # self._next_dt = np.nan
+            # if self.next_dt is not None:
+            if self.next_dt is not None and not np.isnan(self.next_dt):
+                self.dt = self.next_dt
+                # self._next_dt = None
+
+                # self.next_dt = None
+                self.next_dt = np.nan
         else:
-            self._next_dt = next_dt
+            # self._next_dt = next_dt
+            self.next_dt = next_dt
 
     def __eq__(self, other):
         if type(self) is not type(other):

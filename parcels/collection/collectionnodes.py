@@ -1484,7 +1484,7 @@ class ParticleAccessorNodes(BaseParticleAccessor):
         """
         super(ParticleAccessorNodes, self).__init__(pcoll)
         self._ndata = node_data
-        self._next_dt = None
+        # self._next_dt = None
 
     def __getattr__(self, name):
         """Get the value of an attribute of the particle.

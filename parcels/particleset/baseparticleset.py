@@ -424,8 +424,8 @@ class BaseParticleSet(NDCluster):
             endtime = maxtime if dt >= 0 else mintime
 
         execute_once = False
-        # if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
-        if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
+        # if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
+        if abs(endtime-_starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
             endtime = _starttime

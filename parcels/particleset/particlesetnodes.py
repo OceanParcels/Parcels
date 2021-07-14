@@ -631,14 +631,6 @@ class ParticleSetNodes(BaseParticleSet):
         return self._collection.ptype
 
     @property
-    def kernel_class(self):
-        return self._kclass
-
-    @kernel_class.setter
-    def kernel_class(self, value):
-        self._kclass = value
-
-    @property
     def size(self):
         return len(self._collection)
 
@@ -812,7 +804,11 @@ class ParticleSetNodes(BaseParticleSet):
 
     @property
     def kernelclass(self):
-        return KernelNodes
+        return self._kclass
+
+    @kernelclass.setter
+    def kernelclass(self, value):
+        self._kclass = value
 
     def __repr__(self):
         return repr(self._collection)
@@ -1088,7 +1084,7 @@ class ParticleSetNodes(BaseParticleSet):
         for particle output.
 
         :param pyfunc: Kernel function to execute. This can be the name of a
-                       defined Python function or a :class:`parcels.kernel.Kernel` object.
+                       defined Python function or a :class:`parcels.kernel.BaseKernel` object.
                        Kernels can be concatenated using the + operator
         :param endtime: End time for the timestepping loop.
                         It is either a datetime object or a positive double.
@@ -1113,18 +1109,17 @@ class ParticleSetNodes(BaseParticleSet):
         """
 
         # check if pyfunc has changed since last compile. If so, recompile
-        if self.kernel is None or (self.kernel.pyfunc is not pyfunc and self.kernel is not pyfunc):
+        if self._kernel is None or (self._kernel.pyfunc is not pyfunc and self._kernel is not pyfunc):
             # Generate and store Kernel
-            if isinstance(pyfunc, self._kclass):
-                assert isinstance(pyfunc, self.kernelclass), "Trying to mix kernels of different particle set structures - action prohibited. Please construct the kernel for this specific particle set '{}'.".format(type(self).__name__)
+            if isinstance(pyfunc, self.kernelclass):
                 if pyfunc.ptype.name == self.collection.ptype.name:
-                    self.kernel = pyfunc
+                    self._kernel = pyfunc
                 elif pyfunc.pyfunc is not None:
-                    self.kernel = self.Kernel(pyfunc.pyfunc)
+                    self._kernel = self.Kernel(pyfunc.pyfunc)
                 else:
                     raise RuntimeError("Cannot reuse concatenated kernels that were compiled for different particle types. Please rebuild the 'pyfunc' or 'kernel' given to the execute function.")
             else:
-                self.kernel = self.Kernel(pyfunc)
+                self._kernel = self.Kernel(pyfunc)
             # Prepare JIT kernel execution
             if self.collection.ptype.uses_jit:
                 # logger.info("Compiling particle class {} with kernel function {} into KernelName {}".format(self.collection.pclass, self.kernel.funcname, self.kernel.name))
@@ -1133,7 +1128,6 @@ class ParticleSetNodes(BaseParticleSet):
                 # self._kernel.compile(compiler=GNUCompiler(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], libdirs=[".", get_cache_dir()], libs=["node"]))
                 self._kernel.compile(compiler=GNUCompiler_MS(cppargs=cppargs, incdirs=[os.path.join(get_package_dir(), 'include'), os.path.join(get_package_dir(), 'nodes'), "."], tmp_dir=get_cache_dir()))
                 self._kernel.load_lib()
-
 
         # Convert all time variables to seconds
         if isinstance(endtime, delta):
@@ -1186,7 +1180,8 @@ class ParticleSetNodes(BaseParticleSet):
         # print("starttime={} to endtime={} (runtime={})".format(_starttime, endtime, runtime))
 
         execute_once = False
-        if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
+        # if abs(endtime - _starttime) < 1e-5 or np.isclose(dt, 0) or (runtime is None or np.isclose(runtime, 0)):
+        if abs(endtime - _starttime) < 1e-5 or dt == 0 or runtime == 0:
             dt = 0
             runtime = 0
             endtime = _starttime
@@ -1267,7 +1262,7 @@ class ParticleSetNodes(BaseParticleSet):
                 time = min(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
             else:
                 time = max(next_prelease, next_input, next_output, next_movie, next_callback, endtime)
-            # logger.info("Computing kernel {} with t={} and dt={} ...".format(self._kernel, time, dt))
+            logger.info("Computing kernel {} with t={} and dt={} ...".format(self._kernel, time, dt))
             # logger.info("active particles before kernel execution:")
             # ndata = self._collection.begin()
             # while ndata is not None:
@@ -1280,7 +1275,7 @@ class ParticleSetNodes(BaseParticleSet):
             #     logger.info("\t{} - dt: {}".format(ndata.data, ndata.data.dt))
             #     ndata = ndata.next
 
-            # logger.info("time: {}; startime: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, _starttime, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
+            logger.info("time: {}; startime: {}; repeatdt: {}; repeat_starttime: {}; next_prelease: {}; repeatlon: {}".format(time, _starttime, self.repeatdt, self.repeat_starttime, next_prelease, self.repeatlon))
             if abs(time-next_prelease) < tol:
                 ngrids = self.fieldset.gridset.size if self.fieldset is not None else 0
                 add_iter = 0
@@ -1414,7 +1409,8 @@ def search_kernel(particle, fieldset, time):
         based on `fieldset` and `ptype` of the ParticleSet
         :param delete_cfiles: Boolean whether to delete the C-files after compilation in JIT mode (default is True)
         """
-        return self._kclass(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
+        # logger.info("called ParticleSetNodes::Kernel()")
+        return self.kernelclass(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include, delete_cfiles=delete_cfiles)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`
