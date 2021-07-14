@@ -133,8 +133,8 @@ def test_pset_create_list_with_customvariable(fieldset, pset_mode, mode, npart=1
         del c_lib_register
 
 
-# @pytest.mark.parametrize('pset_mode', pset_modes)
-@pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
+@pytest.mark.parametrize('pset_mode', pset_modes)
+# @pytest.mark.parametrize('pset_mode', ['soa', 'aos'])
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 # @pytest.mark.parametrize('mode', ['jit'])
 # @pytest.mark.parametrize('mode', ['scipy'])
