@@ -456,10 +456,10 @@ class BaseParticleSet(NDCluster):
                     output_file.write(self, time)
                 for fld in self.fieldset.get_fields():
                     if hasattr(fld, 'to_write') and fld.to_write:
-                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % outputcounter)
+                        fldfilename = str(output_file.name).replace('.nc', '_%.4d' % fld.to_write)
                         fld.write(fldfilename)
+                        fld.to_write += 1
                 next_output += outputdt * np.sign(dt)
-                outputcounter += 1
             if abs(time-next_movie) < tol:
                 self.show(field=movie_background_field, show_time=time, animation=True)
                 next_movie += moviedt * np.sign(dt)

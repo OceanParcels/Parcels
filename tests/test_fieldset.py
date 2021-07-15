@@ -551,7 +551,7 @@ def test_fieldset_write(pset_mode, tmpdir):
 
     assert fieldset.U.data[0, 1, 0] == 11
 
-    da = xr.open_dataset(str(filepath).replace('.nc', '_0004U.nc'))
+    da = xr.open_dataset(str(filepath).replace('.nc', '_0005U.nc'))
     assert np.allclose(fieldset.U.data, da['U'].values)
 
 
