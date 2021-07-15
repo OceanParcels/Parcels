@@ -455,7 +455,7 @@ class BaseParticleSet(NDCluster):
                 if output_file:
                     output_file.write(self, time)
                 for fld in self.fieldset.get_fields():
-                    if fld.to_write:
+                    if hasattr(fld, 'to_write') and fld.to_write:
                         fldfilename = str(output_file.name).replace('.nc', '_%.4d' % outputcounter)
                         fld.write(fldfilename)
                 next_output += outputdt * np.sign(dt)

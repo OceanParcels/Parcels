@@ -80,6 +80,8 @@ class Field(object):
            This flag overrides the allow_time_interpolation and sets it to False
     :param chunkdims_name_map (opt.): gives a name map to the FieldFileBuffer that declared a mapping between chunksize name, NetCDF dimension and Parcels dimension;
            required only if currently incompatible OCM field is loaded and chunking is used by 'chunksize' (which is the default)
+    :param to_write: Write the Field in NetCDF format at the same frequency as the ParticleFile outputdt,
+           using a filenaming scheme based on the ParticleFile name
 
     For usage examples see the following tutorials:
 
@@ -89,7 +91,8 @@ class Field(object):
     """
     def __init__(self, name, data, lon=None, lat=None, depth=None, time=None, grid=None, mesh='flat', timestamps=None,
                  fieldtype=None, transpose=False, vmin=None, vmax=None, time_origin=None,
-                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo', **kwargs):
+                 interp_method='linear', allow_time_extrapolation=None, time_periodic=False, gridindexingtype='nemo',
+                 to_write=False, **kwargs):
         if not isinstance(name, tuple):
             self.name = name
             self.filebuffername = name
@@ -111,7 +114,7 @@ class Field(object):
         self.lat = self.grid.lat
         self.depth = self.grid.depth
         self.fieldtype = self.name if fieldtype is None else fieldtype
-        self.to_write = False
+        self.to_write = to_write
         if self.grid.mesh == 'flat' or (self.fieldtype not in unitconverters_map.keys()):
             self.units = UnitConverter()
         elif self.grid.mesh == 'spherical':
@@ -1405,7 +1408,6 @@ class VectorField(object):
         self.V = V
         self.W = W
         self.vector_type = '3D' if W else '2D'
-        self.to_write = False
         self.gridindexingtype = U.gridindexingtype
         if self.U.interp_method == 'cgrid_velocity':
             assert self.V.interp_method == 'cgrid_velocity', (
@@ -1771,7 +1773,6 @@ class SummedField(list):
                 assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
                     'F, V and W components of a SummedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
-        self.to_write = False
         self.name = name
 
     def __getitem__(self, key):
@@ -1833,7 +1834,6 @@ class NestedField(list):
                 assert isinstance(Fi, Field) and isinstance(Vi, Field) and isinstance(Wi, Field), \
                     'F, V and W components of a NestedField must be Field'
                 self.append(VectorField(name+'_%d' % i, Fi, Vi, Wi))
-        self.to_write = False
         self.name = name
 
     def __getitem__(self, key):
