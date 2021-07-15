@@ -424,7 +424,6 @@ class BaseParticleSet(NDCluster):
         if verbose_progress:
             pbar = self.__create_progressbar(_starttime, endtime)
 
-        outputcounter = 0
         while (time < endtime and dt > 0) or (time > endtime and dt < 0) or dt == 0:
             if verbose_progress is None and time_module.time() - walltime_start > 10:
                 # Showing progressbar if runtime > 10 seconds
