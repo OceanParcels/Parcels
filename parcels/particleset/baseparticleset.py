@@ -450,7 +450,7 @@ class BaseParticleSet(NDCluster):
                     p.dt = dt
                 self.add(pset_new)
                 next_prelease += self.repeatdt * np.sign(dt)
-            if abs(time-next_output) < tol:
+            if abs(time-next_output) < tol or dt == 0:
                 if output_file:
                     output_file.write(self, time)
                 for fld in self.fieldset.get_fields():
