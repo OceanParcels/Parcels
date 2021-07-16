@@ -274,6 +274,25 @@ def test_inversedistance_nearland(pset_mode, mode, arrtype, k_sample_p, npart=81
 
 @pytest.mark.parametrize('pset_mode', pset_modes)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
+def test_partialslip_nearland(pset_mode, mode, npart=5):
+    dims = (1, 3, 1)
+    U = 0.1*np.ones(dims, dtype=np.float32)
+    U[:, 0, :] = np.nan
+    dimensions = {'lon': 0,
+                  'lat': np.linspace(0., 1., dims[1], dtype=np.float32),
+                  'depth': 0}
+    data = {'U': U, 'V': np.zeros(dims, dtype=np.float32)}
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method='partialslip')
+
+    pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lon=np.zeros(npart),
+                                        lat=np.linspace(0.1, 0.9, npart), depth=np.zeros(npart))
+    pset.execute(AdvectionRK4, endtime=2, dt=1)
+
+    assert False  # TODO assert statement to be implemented
+
+
+@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('mode', ['scipy', 'jit'])
 @pytest.mark.parametrize('lat_flip', [False, True])
 def test_fieldset_sample_particle(pset_mode, mode, k_sample_uv, lat_flip, npart=120):
     """ Sample the fieldset using an array of particles.

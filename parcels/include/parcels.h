@@ -130,6 +130,19 @@ static inline StatusCode spatial_interpolation_bilinear_invdist_land(double xsi,
   return SUCCESS;
 }
 
+static inline StatusCode spatial_interpolation_partialslip_2D(double xsi, double eta, float data[2][2], float *value)
+{
+  *value = 0.;  // TODO: FIX
+  return SUCCESS;
+}
+
+static inline StatusCode spatial_interpolation_partialslip_3D(double xsi, double eta, double zeta,
+                                                              float data[2][2][2], float *value)
+{
+  *value = 0.;  // TODO: FIX
+  return SUCCESS;
+}
+
 /* Trilinear interpolation routine for 3D grid */
 static inline StatusCode spatial_interpolation_trilinear(double xsi, double eta, double zeta,
                                                         float data[2][2][2], float *value)
@@ -578,6 +591,8 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     }
   } else if (interp_method == LINEAR_INVDIST_LAND_TRACER) {
     INTERP(spatial_interpolation_bilinear_invdist_land, spatial_interpolation_trilinear_invdist_land);
+  } else if (interp_method == PARTIALSLIP) {
+    INTERP(spatial_interpolation_partialslip_2D, spatial_interpolation_partialslip_3D);
   } else {
     return ERROR;
   }
