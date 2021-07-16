@@ -213,7 +213,7 @@ class Grid(object):
                 if signdt == -1 and self.ti == 0 and (time - periods*(self.time_full[-1]-self.time_full[0])) == self.time[0] and f.time_periodic:
                     self.ti = len(self.time)-1
                     periods -= 1
-                if signdt == -1 and self.ti > 0:
+                if signdt == -1 and self.ti > 0 and self.time_full[self.ti] == time:
                     self.ti -= 1
                 if self.ti >= len(self.time_full) - 1:
                     self.ti = len(self.time_full) - 2
