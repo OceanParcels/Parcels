@@ -18,6 +18,11 @@ from parcels.collection.collectionsoa import ParticleCollectionIteratorSOA  # no
 from parcels.collection.collectionsoa import ParticleCollectionIterableSOA  # noqa
 from parcels.tools.converters import _get_cftime_calendars
 from parcels.tools.loggers import logger
+from parcels.interaction.interactionkernelsoa import InteractionKernelSOA
+from parcels.interaction.neighborsearch import BruteSphericalNeighborSearch
+from parcels.interaction.neighborsearch import BruteFlatNeighborSearch
+from parcels.interaction.neighborsearch import KDTreeFlatNeighborSearch
+from parcels.interaction.neighborsearch import HashSphericalNeighborSearch
 try:
     from mpi4py import MPI
 except:
@@ -79,7 +84,9 @@ class ParticleSetSOA(BaseParticleSet):
     Other Variables can be initialised using further arguments (e.g. v=... for a Variable named 'v')
     """
 
-    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None, depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None, pid_orig=None, **kwargs):
+    def __init__(self, fieldset=None, pclass=JITParticle, lon=None, lat=None,
+                 depth=None, time=None, repeatdt=None, lonlatdepth_dtype=None,
+                 pid_orig=None, interaction_distance=None, **kwargs):
         super(ParticleSetSOA, self).__init__()
 
         # ==== first: create a new subclass of the pclass that includes the required variables ==== #
@@ -173,7 +180,55 @@ class ParticleSetSOA(BaseParticleSet):
             self.repeatkwargs = kwargs
 
         ngrids = fieldset.gridset.size if fieldset is not None else 1
-        self._collection = ParticleCollectionSOA(_pclass, lon=lon, lat=lat, depth=depth, time=time, lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig, partitions=partitions, ngrid=ngrids, **kwargs)
+
+        # Variables used for interaction kernels.
+        inter_dist_horiz = None
+        inter_dist_vert = None
+        # The _dirty_neighbor attribute keeps track of whether
+        # the neighbor search structure needs to be rebuilt.
+        # If indices change (for example adding/deleting a particle)
+        # The NS structure needs to be rebuilt and _dirty_neighbor should be
+        # set to true. Since the NS structure isn't immediately initialized,
+        # it is set to True here.
+        self._dirty_neighbor = True
+
+        self._collection = ParticleCollectionSOA(
+            _pclass, lon=lon, lat=lat, depth=depth, time=time,
+            lonlatdepth_dtype=lonlatdepth_dtype, pid_orig=pid_orig,
+            partitions=partitions, ngrid=ngrids, **kwargs)
+
+        # Initialize neighbor search data structure (used for interaction).
+        if interaction_distance is not None:
+            meshes = [g.mesh for g in fieldset.gridset.grids]
+            # Assert all grids have the same mesh type
+            assert np.all(np.array(meshes) == meshes[0])
+            mesh_type = meshes[0]
+            if mesh_type == "spherical":
+                if len(self) < 1000:
+                    interaction_class = BruteSphericalNeighborSearch
+                else:
+                    interaction_class = HashSphericalNeighborSearch
+            elif mesh_type == "flat":
+                if len(self) < 1000:
+                    interaction_class = BruteFlatNeighborSearch
+                else:
+                    interaction_class = KDTreeFlatNeighborSearch
+            else:
+                assert False, ("Interaction is only possible on 'flat' and "
+                               "'spherical' meshes")
+            try:
+                if len(interaction_distance) == 2:
+                    inter_dist_vert, inter_dist_horiz = interaction_distance
+                else:
+                    inter_dist_vert = interaction_distance[0]
+                    inter_dist_horiz = interaction_distance[0]
+            except TypeError:
+                inter_dist_vert = interaction_distance
+                inter_dist_horiz = interaction_distance
+            self._neighbor_tree = interaction_class(
+                inter_dist_vert=inter_dist_vert,
+                inter_dist_horiz=inter_dist_horiz)
+        # End of neighbor search data structure initialization.
 
         if self.repeatdt:
             if len(time) > 0 and time[0] is None:
@@ -272,6 +327,13 @@ class ParticleSetSOA(BaseParticleSet):
         """
         error_indices = self.data_indices('state', [StateCode.Success, StateCode.Evaluate], invert=True)
         return ParticleCollectionIterableSOA(self._collection, subset=error_indices)
+
+    def active_particles_mask(self, time, dt):
+        active_indices = (time - self._collection.data['time'])/dt >= 0
+        non_err_indices = np.isin(self._collection.data['state'], [StateCode.Success, StateCode.Evaluate])
+        active_indices = np.logical_and(active_indices, non_err_indices)
+        self._active_particle_idx = np.where(active_indices)[0]
+        return active_indices
 
     @property
     def num_error_particles(self):
@@ -427,6 +489,36 @@ class ParticleSetSOA(BaseParticleSet):
         return self._collection.toDictionary(pfile=pfile, time=time,
                                              deleted_only=deleted_only)
 
+    def compute_neighbor_tree(self, time, dt):
+        active_mask = self.active_particles_mask(time, dt)
+
+        self._values = np.vstack((
+            self._collection.data['depth'],
+            self._collection.data['lat'],
+            self._collection.data['lon'],
+        ))
+        if self._dirty_neighbor:
+            self._neighbor_tree.rebuild(self._values, active_mask=active_mask)
+            self._dirty_neighbor = False
+        else:
+            self._neighbor_tree.update_values(self._values, new_active_mask=active_mask)
+
+    def neighbors_by_index(self, particle_idx):
+        neighbor_idx, distances = self._neighbor_tree.find_neighbors_by_idx(
+            particle_idx)
+        neighbor_idx = self._active_particle_idx[neighbor_idx]
+        mask = (neighbor_idx != particle_idx)
+        neighbor_idx = neighbor_idx[mask]
+        if 'horiz_dist' in self._collection._ptype.variables:
+            self._collection.data['vert_dist'][neighbor_idx] = distances[0, mask]
+            self._collection.data['horiz_dist'][neighbor_idx] = distances[1, mask]
+        return ParticleCollectionIterableSOA(self._collection, subset=neighbor_idx)
+
+    def neighbors_by_coor(self, coor):
+        neighbor_idx = self._neighbor_tree.find_neighbors_by_coor(coor)
+        neighbor_ids = self._collection.data['id'][neighbor_idx]
+        return neighbor_ids
+
     @property
     def size(self):
         # ==== to change at some point - len and size are different things ==== #
@@ -470,10 +562,14 @@ class ParticleSetSOA(BaseParticleSet):
         if isinstance(particles, BaseParticleSet):
             particles = particles.collection
         self._collection += particles
+        # Adding particles invalidates the neighbor search structure.
+        self._dirty_neighbor = True
         return self
 
     def remove_indices(self, indices):
         """Method to remove particles from the ParticleSet, based on their `indices`"""
+        # Removing particles invalidates the neighbor search structure.
+        self._dirty_neighbor = True
         if type(indices) in [int, np.int32, np.intp]:
             self._collection.remove_single_by_index(indices)
         else:
@@ -481,6 +577,8 @@ class ParticleSetSOA(BaseParticleSet):
 
     def remove_booleanvector(self, indices):
         """Method to remove particles from the ParticleSet, based on an array of booleans"""
+        # Removing particles invalidates the neighbor search structure.
+        self._dirty_neighbor = True
         self.remove_indices(np.where(indices)[0])
 
     def density(self, field_name=None, particle_val=None, relative=False, area_scale=False):
@@ -547,6 +645,11 @@ def search_kernel(particle, fieldset, time):
         """
         return Kernel(self.fieldset, self.collection.ptype, pyfunc=pyfunc, c_include=c_include,
                       delete_cfiles=delete_cfiles)
+
+    def InteractionKernel(self, pyfunc_inter):
+        if pyfunc_inter is None:
+            return None
+        return InteractionKernelSOA(self.fieldset, self.collection.ptype, pyfunc=pyfunc_inter)
 
     def ParticleFile(self, *args, **kwargs):
         """Wrapper method to initialise a :class:`parcels.particlefile.ParticleFile`

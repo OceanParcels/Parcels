@@ -980,6 +980,14 @@ class ParticleCollectionIterableSOA(BaseParticleCollectionIterable):
     def __iter__(self):
         return ParticleCollectionIteratorSOA(pcoll=self._pcoll_immutable, reverse=self._reverse, subset=self._subset)
 
+    def __len__(self):
+        """Implementation needed for particle-particle interaction"""
+        return len(self._subset)
+
+    def __getitem__(self, items):
+        """Implementation needed for particle-particle interaction"""
+        return ParticleAccessorSOA(self._pcoll_immutable, self._subset[items])
+
 
 class ParticleCollectionIteratorSOA(BaseParticleCollectionIterator):
     """Iterator for looping over the particles in the ParticleCollection.
