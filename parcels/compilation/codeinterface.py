@@ -129,9 +129,9 @@ class InterfaceC(object):
         lib_pathdir = os.path.dirname(self.basename)
         libext = 'dll' if sys.platform == 'win32' else 'so'
         # == handle case that compiler auto-prefixed 'lib' with the libfile == #
-        if lib_pathfile[0:3] != "lib":
+        if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
-            lib_path = os.path.join(lib_pathdir, lib_pathfile)
+        lib_path = os.path.join(lib_pathdir, lib_pathfile)
         # == handle case where multiple simultaneous instances of node-library are required == #
         libinstance = 0
         while os.path.exists("%s-%d.%s" % (os.path.join(get_cache_dir(), lib_path), libinstance, libext)):
@@ -200,7 +200,7 @@ class InterfaceC(object):
         """ Writes kernel code to file and compiles it."""
         if not self.compiled:
             self.compiler.compile(self.src_file, self.lib_file, self.log_file)
-            # logger.info("Compiled %s ==> %s" % (self.name, self.lib_file))
+            logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
             # self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
             self.compiled = True
 
