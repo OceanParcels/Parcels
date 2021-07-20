@@ -112,7 +112,7 @@ class GNU_parameters(Compiler_parameters):
             if sys.platform != 'darwin':
                 self._ldargs += ['-Wl,-rpath=%s' % (":".join(libdirs))]
             else:
-                self._ldargs += ['-Wl,-rpath=%s' % (",".join(libdirs))]
+                self._ldargs += ['-Wl,-rpath,%s' % (",-rpath,".join(libdirs))]
 
             # # rpstring = '-Wl'
             # rpstring = '-Wl,-rpath='
