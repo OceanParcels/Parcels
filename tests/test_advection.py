@@ -3,6 +3,8 @@ from parcels import (FieldSet, Field, ScipyParticle, JITParticle, ErrorCode, Sta
                      AdvectionAnalytical, AdvectionDiffusionM1, AdvectionDiffusionEM)
 from parcels import ParticleSetSOA, ParticleFileSOA, KernelSOA  # noqa
 from parcels import ParticleSetAOS, ParticleFileAOS, KernelAOS  # noqa
+from parcels import ParticleSetNodes, ParticleFileNodes, KernelNodes  # noqa
+from parcels import GenerateID_Service, SequentialIdGenerator, LibraryRegisterC  # noqa
 import numpy as np
 import pytest
 import math
@@ -10,8 +12,12 @@ from netCDF4 import Dataset
 from datetime import timedelta as delta
 from parcels import logger
 
+pset_modes_new = ['soa', 'aos', 'nodes']
 pset_modes = ['soa', 'aos']
 ptype = {'scipy': ScipyParticle, 'jit': JITParticle}
+pset_type_new = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
+             'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS},
+             'nodes': {'pset': ParticleSetNodes, 'pfile': ParticleFileNodes, 'kernel': KernelNodes}}
 pset_type = {'soa': {'pset': ParticleSetSOA, 'pfile': ParticleFileSOA, 'kernel': KernelSOA},
              'aos': {'pset': ParticleSetAOS, 'pfile': ParticleFileAOS, 'kernel': KernelAOS}}
 kernel = {'EE': AdvectionEE, 'RK4': AdvectionRK4, 'RK45': AdvectionRK45,
@@ -52,12 +58,15 @@ def depth_fixture(zdim=2):
     return depth(zdim=zdim)
 
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
+    idgen = None
+    c_lib_register = None
+
     data2D = {'U': np.ones((lon.size, lat.size), dtype=np.float32),
               'V': np.zeros((lon.size, lat.size), dtype=np.float32)}
     data3D = {'U': np.ones((lon.size, lat.size, depth.size), dtype=np.float32),
@@ -66,36 +75,79 @@ def test_advection_zonal(lon, lat, depth, pset_mode, mode, npart=10):
     fieldset2D = FieldSet.from_data(data2D, dimensions, mesh='spherical', transpose=True)
     assert fieldset2D.U.creation_log == 'from_data'
 
-    pset2D = pset_type[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
-                                          lon=np.zeros(npart) + 20.,
-                                          lat=np.linspace(0, 80, npart))
+    pset2D = None
+    if pset_mode != 'nodes':
+        pset2D = pset_type_new[pset_mode]['pset'](fieldset2D, pclass=ptype[mode],
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart))
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset2D = pset_type_new[pset_mode]['pset'](idgen, fieldset2D, pclass=ptype[mode],
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
+                                              c_lib_register=c_lib_register)
+
     pset2D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(pset2D.lon) > 1.e-4).all()
 
     dimensions['depth'] = depth
     fieldset3D = FieldSet.from_data(data3D, dimensions, mesh='spherical', transpose=True)
-    pset3D = pset_type[pset_mode]['pset'](fieldset3D, pclass=ptype[mode],
-                                          lon=np.zeros(npart) + 20.,
-                                          lat=np.linspace(0, 80, npart),
-                                          depth=np.zeros(npart) + 10.)
+
+    pset3D = None
+    if pset_mode != 'nodes':
+        pset3D = pset_type_new[pset_mode]['pset'](fieldset3D, pclass=ptype[mode],
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
+                                              depth=np.zeros(npart) + 10.)
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset3D = pset_type_new[pset_mode]['pset'](idgen, fieldset3D, pclass=ptype[mode],
+                                              lon=np.zeros(npart) + 20., lat=np.linspace(0, 80, npart),
+                                              depth=np.zeros(npart) + 10., c_lib_register=c_lib_register)
+
     pset3D.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert (np.diff(pset3D.lon) > 1.e-4).all()
 
+    del pset2D
+    del pset3D
+    if idgen is not None:
+        idgen.close()
+        del idgen
+    if c_lib_register is not None:
+        c_lib_register.clear()
+        del c_lib_register
 
-@pytest.mark.parametrize('pset_mode', pset_modes)
+
+@pytest.mark.parametrize('pset_mode', pset_modes_new)
 @pytest.mark.parametrize('mode', ['scipy', 'jit'])
 def test_advection_meridional(lon, lat, pset_mode, mode, npart=10):
     """ Particles at high latitude move geographically faster due to
         the pole correction in `GeographicPolar`.
     """
+    idgen = None
+    c_lib_register = None
+
     data = {'U': np.zeros((lon.size, lat.size), dtype=np.float32),
             'V': np.ones((lon.size, lat.size), dtype=np.float32)}
     dimensions = {'lon': lon, 'lat': lat}
     fieldset = FieldSet.from_data(data, dimensions, mesh='spherical', transpose=True)
 
-    pset = pset_type[pset_mode]['pset'](fieldset, pclass=ptype[mode],
-                                        lon=np.linspace(-60, 60, npart),
-                                        lat=np.linspace(0, 30, npart))
+    pset = None
+    if pset_mode != 'nodes':
+        pset = pset_type_new[pset_mode]['pset'](fieldset, pclass=ptype[mode],
+                                            lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart))
+    else:
+        idgen = GenerateID_Service(SequentialIdGenerator)
+        idgen.setDepthLimits(0., 1.0)
+        idgen.setTimeLine(0.0, 1.0)
+        c_lib_register = LibraryRegisterC()
+        pset = pset_type_new[pset_mode]['pset'](idgen, fieldset, pclass=ptype[mode],
+                                            lon=np.linspace(-60, 60, npart), lat=np.linspace(0, 30, npart),
+                                            c_lib_register=c_lib_register)
+
     delta_lat = np.diff(pset.lat)
     pset.execute(AdvectionRK4, runtime=delta(hours=2), dt=delta(seconds=30))
     assert np.allclose(np.diff(pset.lat), delta_lat, rtol=1.e-4)
