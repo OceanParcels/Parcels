@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 from struct import calcsize
 
@@ -107,15 +108,19 @@ class GNU_parameters(Compiler_parameters):
         self._cppargs += opt_flags + cppargs + arch_flag
         self._ldargs = ['-shared']
         if len(Lflags) > 0 and len(libdirs) > 0:
-            self._ldargs += ['-Wl,-rpath=%s' % (":".join(libdirs))]
+            # possible platform values: https://stackoverflow.com/questions/446209/possible-values-from-sys-platform/13874620#13874620
+            if sys.platform != 'darwin':
+                self._ldargs += ['-Wl,-rpath=%s' % (":".join(libdirs))]
+            else:
+                self._ldargs += ['-Wl,-rpath=%s' % (",".join(libdirs))]
 
-            # rpstring = '-Wl'
-            #rpstring = '-Wl,-rpath='
-            #for ldir in libdirs:
-                # rpstring += ',rpath,%s' % (ldir)
-                # rpstring += ',%s' % (ldir)
+            # # rpstring = '-Wl'
+            # rpstring = '-Wl,-rpath='
+            # for ldir in libdirs:
+            #     # rpstring += ',rpath,%s' % (ldir)
+            #     # rpstring += ',%s' % (ldir)
             #    rpstring += ":".join(ldir)
-            #self._ldargs += [rpstring]
+            # self._ldargs += [rpstring]
         if len(Lflags) > 0:
             self._ldargs += Lflags
         if len(lflags) > 0:
