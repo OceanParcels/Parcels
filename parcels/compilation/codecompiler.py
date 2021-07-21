@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 from struct import calcsize
+from parcels.tools import logger  # noqa: F401
 
 try:
     from mpi4py import MPI
@@ -281,7 +282,15 @@ class CCompiler_SS(CCompiler):
         cc = [self._cc] + self._cppargs + ['-o', obj, src] + self._ldargs
         with open(log, 'w') as logfile:
             logfile.write("Compiling: %s\n" % " ".join(cc))
-        self._create_compile_process_(cc, src, log)
+        success = self._create_compile_process_(cc, obj, log)
+        if success and os.path.exists(log):
+            os.remove(log)
+            logger.info("Successfully compiled and linked {} into {}.".format(src, obj))
+        else:
+            logger.error("Error during linking of {} from {}:".format(obj, src))
+            if os.path.exists(log):
+                with open(log, 'r') as liblog:
+                    logger.info("Log output: %s" % (liblog.read()))
 
 
 class CCompiler_MS(CCompiler):
@@ -290,6 +299,17 @@ class CCompiler_MS(CCompiler):
     """
     def __init__(self, cc=None, cppargs=None, ldargs=None, incdirs=None, libdirs=None, libs=None, tmp_dir=os.getcwd()):
         super(CCompiler_MS, self).__init__(cc=cc, cppargs=cppargs, ldargs=ldargs, incdirs=incdirs, libdirs=libdirs, libs=libs, tmp_dir=tmp_dir)
+
+    def __str__(self):
+        output = "[CCompiler_MS]: "
+        output += "('cc': {}), ".format(self._cc)
+        output += "('cppargs': {}), ".format(self._cppargs)
+        output += "('ldargs': {}), ".format(self._ldargs)
+        output += "('incdirs': {}), ".format(self._incdirs)
+        output += "('libdirs': {}), ".format(self._libdirs)
+        output += "('libs': {}), ".format(self._libs)
+        output += "('tmp_dir': {}), ".format(self._tmp_dir)
+        return output
 
     def compile(self, src, obj, log):
         objs = []
@@ -305,13 +325,27 @@ class CCompiler_MS(CCompiler):
             with open(log, 'w') as logfile:
                 logfile.write("Compiling: %s\n" % " ".join(cc))
             success = self._create_compile_process_(cc, src_file, slog_file)
-            if success and os._exists(slog_file):
+            if success and os.path.exists(slog_file):
                 os.remove(slog_file)
+                logger.info("Successfully compiled {} into {}.".format(src_file, obj_file))
+            else:
+                logger.error("Error during compilation of {} from {}:".format(src_file, obj_file))
+                if os.path.exists(slog_file):
+                    with open(slog_file, 'r') as objlog:
+                        logger.info("Log output: %s" % (objlog.read()))
         # see 'Compiler_parameters':  self._libdirs and self._libs *should* already included in self._ldargs
         cc = [self._cc] + objs + ['-o', obj] + self._ldargs
         with open(log, 'a') as logfile:
             logfile.write("Linking: %s\n" % " ".join(cc))
-        self._create_compile_process_(cc, obj, log)
+        success = self._create_compile_process_(cc, obj, log)
+        if success and os.path.exists(log):
+            os.remove(log)
+            logger.info("Successfully linked {} into {}.".format(objs, obj))
+        else:
+            logger.error("Error during linking of {} from {}:".format(obj, objs))
+            if os.path.exists(log):
+                with open(log, 'r') as liblog:
+                    logger.info("Log output: %s" % (liblog.read()))
         for fpath in objs:
             if os.path.exists(fpath):
                 os.remove(fpath)
