@@ -229,6 +229,8 @@ class InterfaceC(object):
             libfile = ""
             for entry in liblist:
                 libfile += entry
+            if libfile[0:3] == "lib":
+                libfile = libfile[3:len(libfile)]
             # self.libc = npct.load_library(self.lib_file, '.')
             self.libc = npct.load_library(libfile, libdir)
             # self.libc = _ctypes.LoadLibrary(self.lib_file) if sys.platform == 'win32' else _ctypes.dlopen(self.lib_file)
