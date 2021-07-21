@@ -284,7 +284,6 @@ class CCompiler_SS(CCompiler):
             logfile.write("Compiling: %s\n" % " ".join(cc))
         success = self._create_compile_process_(cc, obj, log)
         if success and os.path.exists(log):
-            os.remove(log)
             logger.info("Successfully compiled and linked {} into {}.".format(src, obj))
         else:
             logger.error("Error during linking of {} from {}:".format(obj, src))
@@ -339,7 +338,6 @@ class CCompiler_MS(CCompiler):
             logfile.write("Linking: %s\n" % " ".join(cc))
         success = self._create_compile_process_(cc, obj, log)
         if success and os.path.exists(log):
-            os.remove(log)
             logger.info("Successfully linked {} into {}.".format(objs, obj))
         else:
             logger.error("Error during linking of {} from {}:".format(obj, objs))
@@ -390,7 +388,8 @@ class GNUCompiler_MS(CCompiler_MS):
     def compile(self, src, obj, log):
         lib_pathfile = os.path.basename(obj)
         lib_pathdir = os.path.dirname(obj)
-        if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
+        # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
+        if lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
         obj = os.path.join(lib_pathdir, lib_pathfile)
 
