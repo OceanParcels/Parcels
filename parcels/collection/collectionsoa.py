@@ -855,10 +855,6 @@ class ParticleCollectionSOA(ParticleCollection):
                 if np.count_nonzero(pset_errs) > 0:
                     logger.warning_once('time argument in pfile.write() is {}, but particles have time {}'.format(time, self._data['time'][pset_errs]))
 
-                # ==== this function should probably move back somewhere into the particle-file instead of the to_dict ==== #
-                if time not in pfile.time_written:
-                    pfile.time_written.append(time)
-
                 if len(pfile.var_names_once) > 0:
                     first_write = (_to_write_particles(self._data, time) & _is_particle_started_yet(self._data, time) & np.isin(self._data['id'], pfile.written_once, invert=True))
                     if np.any(first_write):
