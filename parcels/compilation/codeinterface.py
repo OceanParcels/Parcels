@@ -129,7 +129,8 @@ class InterfaceC(object):
         lib_pathdir = os.path.dirname(self.basename)
         libext = 'dll' if sys.platform == 'win32' else 'so'
         # == handle case that compiler auto-prefixed 'lib' with the libfile == #
-        if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
+        # if sys.platform == 'linux' and lib_pathfile[0:3] != "lib":
+        if lib_pathfile[0:3] != "lib":
             lib_pathfile = "lib"+lib_pathfile
         lib_path = os.path.join(lib_pathdir, lib_pathfile)
         # == handle case where multiple simultaneous instances of node-library are required == #
