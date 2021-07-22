@@ -1,6 +1,7 @@
 import os  # noqa
-import sys
+import sys  # noqa
 import _ctypes
+import random as PyRandom
 import numpy.ctypeslib as npct
 from parcels.tools import get_cache_dir, get_package_dir
 from .codecompiler import *  # noqa: F401
@@ -136,7 +137,8 @@ class InterfaceC(object):
         # == handle case where multiple simultaneous instances of node-library are required == #
         libinstance = 0
         while os.path.exists("%s-%d.%s" % (os.path.join(get_cache_dir(), lib_path), libinstance, libext)):
-            libinstance += 1
+            # libinstance += 1
+            libinstance = PyRandom.randint(0, 10000)
         lib_pathfile = "%s-%d" % (lib_pathfile, libinstance)
         lib_path = os.path.join(lib_pathdir, lib_pathfile)
         # == handle multi-lib in an MPI setup == #
@@ -202,6 +204,7 @@ class InterfaceC(object):
         if not self.compiled:
             self.compiler.compile(self.src_file, self.lib_file, self.log_file)
             logger.info("Compiled %s ==> %s" % (self.basename, self.lib_file))
+            assert os.path.exists(self.lib_file)
             # self._cleanup_files = finalize(self, package_globals.cleanup_remove_files, self.lib_file, self.log_file)
             self.compiled = True
 
