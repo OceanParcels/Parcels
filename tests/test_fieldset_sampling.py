@@ -311,7 +311,7 @@ def test_partialslip_nearland_meridional(pset_mode, mode, boundaryslip, npart=20
     V[:, :, -1] = np.nan
     dimensions = {'lon': np.linspace(0., 4., dims[2], dtype=np.float32), 'lat': 0, 'depth': 0}
     data = {'U': U, 'V': V}
-    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method=boundaryslip)
+    fieldset = FieldSet.from_data(data, dimensions, mesh='flat', interp_method={'U': boundaryslip, 'V': boundaryslip})
 
     pset = pset_type[pset_mode]['pset'](fieldset, pclass=pclass(mode), lat=np.zeros(npart),
                                         lon=np.linspace(0.1, 3.9, npart), depth=np.zeros(npart))
