@@ -226,7 +226,7 @@ class BaseKernel(object):
             dyn_dir = get_cache_dir()
             basename = "%s_0" % cache_name
         lib_path = None
-        if platform == 'linux':
+        if platform == 'linux' or platform == 'darwin':
             lib_path = "lib" + basename
         else:
             lib_path = basename
