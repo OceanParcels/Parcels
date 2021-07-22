@@ -38,6 +38,7 @@ class ParticleFileNodes(BaseParticleFile):
                                                 tempwritedir=tempwritedir, pset_info=pset_info)
         self.var_names.append('index')
         self.max_index_written = 0
+        self.time_written = []
 
     def __del__(self):
         super(ParticleFileNodes, self).__del__()
