@@ -880,7 +880,7 @@ class Field(object):
             xii = xi if xsi <= .5 else xi+1
             yii = yi if eta <= .5 else yi+1
             return self.data[ti, yii, xii]
-        elif self.interp_method in ['linear', 'bgrid_velocity']:
+        elif self.interp_method in ['linear', 'bgrid_velocity', 'partialslip', 'freeslip']:
             val = (1-xsi)*(1-eta) * self.data[ti, yi, xi] + \
                 xsi*(1-eta) * self.data[ti, yi, xi+1] + \
                 xsi*eta * self.data[ti, yi+1, xi+1] + \
@@ -968,7 +968,7 @@ class Field(object):
                     xsi * eta * data[yi + 1, xi + 1] + \
                     (1 - xsi) * eta * data[yi + 1, xi]
                 return (1 - zeta) * f0 + zeta * f1
-        elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity']:
+        elif self.interp_method in ['linear', 'bgrid_velocity', 'bgrid_w_velocity', 'partialslip', 'freeslip']:
             if self.interp_method == 'bgrid_velocity':
                 if self.gridindexingtype == 'mom5':
                     zeta = 1.
@@ -1631,8 +1631,72 @@ class VectorField(object):
             w = self.W.units.to_target(w, x, y, z)
         return (u, v, w)
 
+    def _is_land2D(self, di, yi, xi):
+        return (self.U.data[di, yi, xi] == 0.) and (self.V.data[di, yi, xi] == 0.)
+
+    def spatial_partialslip_interpolation2D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
+
+        f_u, f_v = 1, 1
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1):
+            f_u = f_u * (.5 + .5 * eta) / eta
+        if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1):
+            f_u = f_u * (1 - .5 * eta) / (1 - eta)
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi):
+            f_v = f_v * (.5 + .5 * xsi) / xsi
+        if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1):
+            f_v = f_v * (1 - .5 * xsi) / (1 - xsi)
+        u = f_u * self.U.eval(time, z, y, x, particle)
+        v = f_v * self.V.eval(time, z, y, x, particle)
+        return u, v
+
+    def spatial_freeslip_interpolation2D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+        di = ti if self.U.grid.zdim == 1 else zi  # general third dimension
+
+        f_u, f_v = 1, 1
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi, xi+1):
+            f_u = f_u / eta
+        if self._is_land2D(di, yi+1, xi) and self._is_land2D(di, yi+1, xi+1):
+            f_u = f_u / (1 - eta)
+        if self._is_land2D(di, yi, xi) and self._is_land2D(di, yi+1, xi):
+            f_v = f_v / xsi
+        if self._is_land2D(di, yi, xi+1) and self._is_land2D(di, yi+1, xi+1):
+            f_v = f_v / (1 - xsi)
+        u = f_u * self.U.eval(time, z, y, x, particle)
+        v = f_v * self.V.eval(time, z, y, x, particle)
+        return u, v
+
+    def _is_land3D(self, ti, zi, yi, xi):
+        return (self.U.data[ti, zi, yi, xi] == 0.) and (self.V.data[ti, zi, yi, xi] == 0.) and (self.W.data[ti, zi, yi, xi] == 0.)
+
+    def spatial_partialslip_interpolation3D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+
+        f_u, f_v, f_w = 1, 1, 1
+
+        # TODO: implement 3D
+        u = f_u * self.U.eval(time, z, y, x, particle)
+        v = f_v * self.V.eval(time, z, y, x, particle)
+        w = f_w * self.W.eval(time, z, y, x, particle)
+
+        return u, v, w
+
+    def spatial_freeslip_interpolation3D(self, ti, z, y, x, time, particle=None):
+        (xsi, eta, zeta, xi, yi, zi) = self.U.search_indices(x, y, z, ti, time, particle=particle)
+
+        f_u, f_v, f_w = 1, 1, 1
+
+        # TODO: implement 3D
+        u = f_u * self.U.eval(time, z, y, x, particle)
+        v = f_v * self.V.eval(time, z, y, x, particle)
+        w = f_w * self.W.eval(time, z, y, x, particle)
+
+        return u, v, w
+
     def eval(self, time, z, y, x, particle=None):
-        if self.U.interp_method != 'cgrid_velocity':
+        if self.U.interp_method not in ['cgrid_velocity', 'partialslip', 'freeslip']:
             u = self.U.eval(time, z, y, x, particle=particle, applyConversion=False)
             v = self.V.eval(time, z, y, x, particle=particle, applyConversion=False)
             u = self.U.units.to_target(u, x, y, z)
@@ -1644,6 +1708,9 @@ class VectorField(object):
             else:
                 return (u, v)
         else:
+            interp = {'cgrid_velocity': {'2D': self.spatial_c_grid_interpolation2D, '3D': self.spatial_c_grid_interpolation3D},
+                      'partialslip': {'2D': self.spatial_partialslip_interpolation2D, '3D': self.spatial_partialslip_interpolation3D},
+                      'freeslip': {'2D': self.spatial_freeslip_interpolation2D, '3D': self.spatial_freeslip_interpolation3D}}
             grid = self.U.grid
             (ti, periods) = self.U.time_index(time)
             time -= periods*(grid.time_full[-1]-grid.time_full[0])
@@ -1651,12 +1718,12 @@ class VectorField(object):
                 t0 = grid.time[ti]
                 t1 = grid.time[ti + 1]
                 if self.vector_type == '3D':
-                    (u0, v0, w0) = self.spatial_c_grid_interpolation3D(ti, z, y, x, time, particle=particle)
-                    (u1, v1, w1) = self.spatial_c_grid_interpolation3D(ti + 1, z, y, x, time, particle=particle)
+                    (u0, v0, w0) = interp[self.U.interp_method]['3D'](ti, z, y, x, time, particle=particle)
+                    (u1, v1, w1) = interp[self.U.interp_method]['3D'](ti + 1, z, y, x, time, particle=particle)
                     w = w0 + (w1 - w0) * ((time - t0) / (t1 - t0))
                 else:
-                    (u0, v0) = self.spatial_c_grid_interpolation2D(ti, z, y, x, time, particle=particle)
-                    (u1, v1) = self.spatial_c_grid_interpolation2D(ti + 1, z, y, x, time, particle=particle)
+                    (u0, v0) = interp[self.U.interp_method]['2D'](ti, z, y, x, time, particle=particle)
+                    (u1, v1) = interp[self.U.interp_method]['2D'](ti + 1, z, y, x, time, particle=particle)
                 u = u0 + (u1 - u0) * ((time - t0) / (t1 - t0))
                 v = v0 + (v1 - v0) * ((time - t0) / (t1 - t0))
                 if self.vector_type == '3D':
@@ -1668,9 +1735,9 @@ class VectorField(object):
                 # of the defined time range or if we have hit an
                 # exact value in the time array.
                 if self.vector_type == '3D':
-                    return self.spatial_c_grid_interpolation3D(ti, z, y, x, grid.time[ti], particle=particle)
+                    return interp[self.U.interp_method]['3D'](ti, z, y, x, grid.time[ti], particle=particle)
                 else:
-                    return self.spatial_c_grid_interpolation2D(ti, z, y, x, grid.time[ti], particle=particle)
+                    return interp[self.U.interp_method]['2D'](ti, z, y, x, grid.time[ti], particle=particle)
 
     def __getitem__(self, key):
         if _isParticle(key):

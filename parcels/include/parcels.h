@@ -130,19 +130,6 @@ static inline StatusCode spatial_interpolation_bilinear_invdist_land(double xsi,
   return SUCCESS;
 }
 
-static inline StatusCode spatial_interpolation_partialslip_2D(double xsi, double eta, float data[2][2], float *value)
-{
-  *value = 0.;  // TODO: FIX
-  return SUCCESS;
-}
-
-static inline StatusCode spatial_interpolation_partialslip_3D(double xsi, double eta, double zeta,
-                                                              float data[2][2][2], float *value)
-{
-  *value = 0.;  // TODO: FIX
-  return SUCCESS;
-}
-
 /* Trilinear interpolation routine for 3D grid */
 static inline StatusCode spatial_interpolation_trilinear(double xsi, double eta, double zeta,
                                                         float data[2][2][2], float *value)
@@ -591,8 +578,6 @@ static inline StatusCode temporal_interpolation_structured_grid(type_coord x, ty
     }
   } else if (interp_method == LINEAR_INVDIST_LAND_TRACER) {
     INTERP(spatial_interpolation_bilinear_invdist_land, spatial_interpolation_trilinear_invdist_land);
-  } else if (interp_method == PARTIALSLIP) {
-    INTERP(spatial_interpolation_partialslip_2D, spatial_interpolation_partialslip_3D);
   } else {
     return ERROR;
   }
@@ -969,6 +954,102 @@ static inline StatusCode temporal_interpolationUVW_c_grid(type_coord x, type_coo
   }
 }
 
+static inline StatusCode calculate_slip_conditions(double xsi, double eta, float dataU[2][2], float dataV[2][2],
+                                                    float *u, float *v, int interp_method)
+{
+      float f_u = 1, f_v = 1;
+      if ((is_zero_flt(dataU[0][0])) && (is_zero_flt(dataU[0][1])) &&
+          (is_zero_flt(dataV[0][0])) && (is_zero_flt(dataV[0][1]))){
+        if (interp_method == PARTIALSLIP) {
+          f_u = f_u * (.5 + .5 * eta) / eta;
+        } else if (interp_method == FREESLIP) {
+          f_u = f_u / eta;
+        }
+      }
+      if ((is_zero_flt(dataU[1][0])) && (is_zero_flt(dataU[1][1])) &&
+          (is_zero_flt(dataV[1][0])) && (is_zero_flt(dataV[1][1]))){
+        if (interp_method == PARTIALSLIP) {
+          f_u = f_u * (1 - .5 * eta) / (1 - eta);
+        } else if (interp_method == FREESLIP) {
+          f_u = f_u / (1 - eta);
+        }
+      }
+      if ((is_zero_flt(dataU[0][0])) && (is_zero_flt(dataU[1][0])) &&
+          (is_zero_flt(dataV[0][0])) && (is_zero_flt(dataV[1][0]))){
+        if (interp_method == PARTIALSLIP) {
+          f_v = f_v * (.5 + .5 * xsi) / xsi;
+        } else if (interp_method == FREESLIP) {
+          f_v = f_v / xsi;
+        }
+      }
+      if ((is_zero_flt(dataU[0][1])) && (is_zero_flt(dataU[1][1])) &&
+          (is_zero_flt(dataV[0][1])) && (is_zero_flt(dataV[1][1]))){
+        if (interp_method == PARTIALSLIP) {
+          f_v = f_v * (1 - .5 * xsi) / (1 - xsi);
+        } else if (interp_method == FREESLIP) {
+          f_v = f_v / (1 - xsi);
+        }
+      }
+      *u *= f_u;
+      *v *= f_v;
+
+  return SUCCESS;
+}
+
+static inline StatusCode temporal_interpolationUV_slip(type_coord x, type_coord y, type_coord z, double time, CField *U, CField *V,
+                                                         GridCode gcode, int *xi, int *yi, int *zi, int *ti,
+                                                         float *u, float *v, int interp_method, int gridindexingtype)
+{
+  StatusCode status;
+  CStructuredGrid *grid = U->grid->grid;
+  int igrid = U->igrid;
+
+  /* Find time index for temporal interpolation */
+  if (U->time_periodic == 0 && U->allow_time_extrapolation == 0 && (time < grid->time[0] || time > grid->time[grid->tdim-1])){
+    return ERROR_TIME_EXTRAPOLATION;
+  }
+  status = search_time_index(&time, grid->tdim, grid->time, &ti[igrid], U->time_periodic, grid->tfull_min, grid->tfull_max, grid->periods); CHECKSTATUS(status);
+
+  double xsi, eta, zeta;
+
+  if (ti[igrid] < grid->tdim-1 && time > grid->time[ti[igrid]]) {
+    float u0, u1, v0, v1;
+    double t0 = grid->time[ti[igrid]]; double t1 = grid->time[ti[igrid]+1];
+    /* Identify grid cell to sample through local linear search */
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], time, t0, t1, interp_method, gridindexingtype); CHECKSTATUS(status);
+    if (grid->zdim==1){
+      float data2D_U[2][2][2], data2D_V[2][2][2];
+      status = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data2D_U, 0); CHECKSTATUS(status);
+      status = getCell2D(V, xi[igrid], yi[igrid], ti[igrid], data2D_V, 0); CHECKSTATUS(status);
+
+      status = spatial_interpolation_bilinear(xsi, eta, data2D_U[0], &u0); CHECKSTATUS(status);
+      status = spatial_interpolation_bilinear(xsi, eta, data2D_V[0], &v0); CHECKSTATUS(status);
+      status = calculate_slip_conditions(xsi, eta, data2D_U[0], data2D_V[0], &u0, &v0, interp_method); CHECKSTATUS(status);
+
+      status = spatial_interpolation_bilinear(xsi, eta, data2D_U[1], &u1); CHECKSTATUS(status);
+      status = spatial_interpolation_bilinear(xsi, eta, data2D_V[1], &v1); CHECKSTATUS(status);
+      status = calculate_slip_conditions(xsi, eta, data2D_U[1], data2D_V[1], &u1, &v1, interp_method); CHECKSTATUS(status);
+    }
+    *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
+    *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
+
+  } else {
+    double t0 = grid->time[ti[igrid]];
+    status = search_indices(x, y, z, grid, &xi[igrid], &yi[igrid], &zi[igrid], &xsi, &eta, &zeta, gcode, ti[igrid], t0, t0, t0+1, interp_method, gridindexingtype); CHECKSTATUS(status);
+    if (grid->zdim==1){
+      float data2D_U[2][2][2], data2D_V[2][2][2];
+      status = getCell2D(U, xi[igrid], yi[igrid], ti[igrid], data2D_U, 1); CHECKSTATUS(status);
+      status = getCell2D(V, xi[igrid], yi[igrid], ti[igrid], data2D_V, 1); CHECKSTATUS(status);
+
+      status = spatial_interpolation_bilinear(xsi, eta, data2D_U[0], u); CHECKSTATUS(status);
+      status = spatial_interpolation_bilinear(xsi, eta, data2D_V[0], v); CHECKSTATUS(status);
+
+      status = calculate_slip_conditions(xsi, eta, data2D_U[0], data2D_V[0], u, v, interp_method); CHECKSTATUS(status);
+    }
+  }
+  return SUCCESS;
+}
+
 static inline StatusCode temporal_interpolation(type_coord x, type_coord y, type_coord z, double time, CField *f,
                                                int *xi, int *yi, int *zi, int *ti,
                                                float *value, int interp_method, int gridindexingtype)
@@ -1007,6 +1088,12 @@ static inline StatusCode temporal_interpolationUV(type_coord x, type_coord y, ty
     status = temporal_interpolationUV_c_grid(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV, gridindexingtype); CHECKSTATUS(status);
     return SUCCESS;
   }
+  else if ((interp_method == PARTIALSLIP) || (interp_method == FREESLIP)){
+    CGrid *_grid = U->grid;
+    GridCode gcode = _grid->gtype;
+    status = temporal_interpolationUV_slip(x, y, z, time, U, V, gcode, xi, yi, zi, ti, valueU, valueV, interp_method, gridindexingtype); CHECKSTATUS(status);
+    return SUCCESS;
+    }
   else{
     status = temporal_interpolation(x, y, z, time, U, xi, yi, zi, ti, valueU, interp_method, gridindexingtype); CHECKSTATUS(status);
     status = temporal_interpolation(x, y, z, time, V, xi, yi, zi, ti, valueV, interp_method, gridindexingtype); CHECKSTATUS(status);
