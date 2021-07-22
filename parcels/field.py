@@ -34,7 +34,7 @@ __all__ = ['Field', 'VectorField', 'SummedField', 'NestedField']
 
 
 def _isParticle(key):
-    if hasattr(key, '_next_dt'):
+    if hasattr(key, 'next_dt'):
         return True
     else:
         return False
