@@ -236,7 +236,15 @@ class InterfaceC(object):
             #     libfile = libfile[3:len(libfile)]
             #
             # self.libc = npct.load_library(self.lib_file, '.')
-            self.libc = npct.load_library(libfile, libdir)
+            try:
+                self.libc = npct.load_library(libfile, libdir)
+            except (OSError, ) as e:
+                from glob import glob
+                libext = 'dll' if sys.platform == 'win32' else 'so'
+                alllibfiles = sorted(glob(os.path.join(libdir, "*.%s" % (libext, ))))
+                logger.error("Did not locate {} in folder {} among files: {}".format(libfile, libdir, alllibfiles))
+                raise e
+
             # self.libc = _ctypes.LoadLibrary(self.lib_file) if sys.platform == 'win32' else _ctypes.dlopen(self.lib_file)
             # self._cleanup_lib = finalize(self, package_globals.cleanup_unload_lib, self.libc)
             self.loaded = True
