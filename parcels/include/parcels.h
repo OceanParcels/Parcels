@@ -1029,9 +1029,9 @@ static inline StatusCode temporal_interpolationUV_slip(type_coord x, type_coord 
       status = spatial_interpolation_bilinear(xsi, eta, data2D_U[1], &u1); CHECKSTATUS(status);
       status = spatial_interpolation_bilinear(xsi, eta, data2D_V[1], &v1); CHECKSTATUS(status);
       status = calculate_slip_conditions(xsi, eta, data2D_U[1], data2D_V[1], &u1, &v1, interp_method); CHECKSTATUS(status);
+      *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
+      *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
     }
-    *u = u0 + (u1 - u0) * (float)((time - t0) / (t1 - t0));
-    *v = v0 + (v1 - v0) * (float)((time - t0) / (t1 - t0));
 
   } else {
     double t0 = grid->time[ti[igrid]];
